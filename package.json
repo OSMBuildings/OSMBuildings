@@ -1,0 +1,26 @@
+{
+  "name": "osmbuildings-gl",
+  "private": false,
+  "description": "OSM Buildings GL",
+  "version": "0.1.0",
+  "homepage": "http://osmbuildings.org",
+  "author": "@osmbuildings",
+  "contributors": [],
+  "maintainers": [],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:OSMBuildings/GL.git"
+  },
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {
+    "Color": "git+https://github.com/kekscom/Color.js",
+    "GLMap": "git+https://github.com/OSMBuildings/GLMap",
+    "earcut": "~1.1.0",
+    "grunt": "~0.4.4",
+    "grunt-contrib-concat": "~0.4.0",
+    "grunt-contrib-uglify": "~0.4.0",
+    "grunt-contrib-jshint": "~0.11.0"
+  },
+  "optionalDependencies": {}
+}

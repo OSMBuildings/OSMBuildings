@@ -1,0 +1,131 @@
+<html>
+<head>
+  <title>OSM Buildings GL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .control {
+      position: absolute;
+      left: 0;
+      z-index: 1000;
+    }
+
+    .control.tilt {
+      top: 0;
+    }
+
+    .control.rotation {
+      top: 45px;
+    }
+
+    .control.zoom {
+      top: 90px;
+    }
+
+    .control.zoom button{
+      font-weight: normal;
+    }
+
+    .control button {
+      width: 30px;
+      height: 30px;
+      margin: 15px 0 0 15px;
+      border: 1px solid #999999;
+      background: #ffffff;
+      opacity: 0.6;
+      border-radius: 5px;
+			box-shadow: 0 0 5px #666666;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .control button:hover {
+      opacity: 1;
+      cursor: pointer;
+    }
+  </style>
+  <script src="../node_modules/glmap/dist/GLMap.debug.js"></script>
+  <script>var baseURL = '../';</script>
+  <script src="loader.js"></script>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <div class="control tilt">
+    <button class="dec">&#8601;</button>
+    <button class="inc">&#8599;</button>
+  </div>
+
+  <div class="control rotation">
+    <button class="inc">&#8630;</button>
+    <button class="dec">&#8631;</button>
+  </div>
+
+  <div class="control zoom">
+    <button class="dec">-</button>
+    <button class="inc">+</button>
+  </div>
+
+  <script>
+    var map = new GLMap('map', {
+      center: { latitude:52.52000, longitude:13.41000 },
+//    tilt: 0,
+//    rotation: 0,
+      zoom: 16,
+      minZoom: 14.5,
+      maxZoom: 22
+    });
+
+//  new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
+    new GLMap.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
+
+    var osmb = new OSMBuildings({
+//    src: 'tiles/{x},{y},{z}.json'
+//    map: map
+    })
+//    .addObject('OBJ', '../scratch/obj-loader/PLAN_BASIC.obj', { latitude:52.5429942, longitude:13.4279453 })
+//    .addObject('GeoJSON', 'tiles/35209,21492,16.json')
+      .addTo(map);
+
+    //*************************************************************************
+
+    var controlButtons = document.querySelectorAll('.control button');
+
+    for (var i = 0, il = controlButtons.length; i < il; i++) {
+      controlButtons[i].addEventListener('click', function(e) {
+        var button = this;
+        var parentClassList = button.parentNode.classList;
+        var direction = button.classList.contains('inc') ? 1 : -1;
+        var increment;
+        var property;
+
+        if (parentClassList.contains('tilt')) {
+          property = 'Tilt';
+          increment = direction*10;
+        }
+        if (parentClassList.contains('rotation')) {
+          property = 'Rotation';
+          increment = direction*10;
+        }
+        if (parentClassList.contains('zoom')) {
+          property = 'Zoom';
+          increment = direction*1;
+        }
+        if (property) {
+          map['set'+ property](map['get'+ property]()+increment);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

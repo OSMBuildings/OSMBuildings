@@ -1,0 +1,38 @@
+{
+  "shaders": {
+    "default": {
+      "attributes": ["aPosition", "aColor", "aNormal"],
+      "uniforms": ["uNormalTransform", "uMatrix", "uAlpha", "uLightColor", "uLightDirection"]
+    }
+  },
+
+  "lib": [
+    "node_modules/earcut/dist/earcut.dev.js",
+    "node_modules/color/dist/Color.debug.js"
+  ],
+
+  "src": [
+    "src/OSMBuildings.js",
+    "src/variables.js",
+    "src/XHR.js",
+    "src/util.js",
+    "src/shaders.js",
+    "src/Triangulate.js",
+
+    "src/data/Grid.js",
+    "src/data/Tile.js",
+
+    "src/data/DataObjects.js",
+    "src/data/DataItem.js",
+
+    "src/formats/GeoJSON.js",
+    "src/formats/OBJ.js",
+    "src/geometry.js",
+    "src/Matrix.js",
+
+    "src/gl/Renderer.js",
+    "src/gl/Shader.js",
+    "src/gl/FrameBuffer.js",
+    "src/gl/Texture.js"
+  ]
+}
