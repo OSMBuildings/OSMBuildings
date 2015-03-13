@@ -20,15 +20,13 @@ GLRenderer.prototype = {
     var program;
 		var i, il;
 
-//    this.clear();
-
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
 
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-    gl.cullFace(gl.FRONT);
+    gl.cullFace(gl.FRONT); // TODO: fix this
 
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -36,7 +34,7 @@ GLRenderer.prototype = {
 //  gl.disable(gl.DEPTH_TEST);
 
     var items = Data.getVisibleItems();
-    var objects = DataObjects.getVisibleItems();
+    var models = Repo.getVisibleItems();
 
     program = this.shaderPrograms.default.use();
 
@@ -53,8 +51,8 @@ GLRenderer.prototype = {
       items[i].render(program, this.projections.perspective);
     }
 
-    for (i = 0, il = objects.length; i < il; i++) {
-      objects[i].render(program, this.projections.perspective);
+    for (i = 0, il = models.length; i < il; i++) {
+      models[i].render(program, this.projections.perspective);
     }
 
     program.end();

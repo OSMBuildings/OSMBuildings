@@ -87,8 +87,8 @@ var OSMBuildings = function(options) {
       return this;
     },
 
-    addObject: function(type, url, position) {
-      DataObjects.load(type, url, position);
+    addModel: function(url, position, options) {
+      Repo.load(url, position, options);
       return this;
     }
   };

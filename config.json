@@ -7,7 +7,7 @@
   },
 
   "lib": [
-    "node_modules/earcut/dist/earcut.dev.js",
+    "lib/earcut.js",
     "node_modules/color/dist/Color.debug.js"
   ],
 
@@ -22,8 +22,8 @@
     "src/data/Grid.js",
     "src/data/Tile.js",
 
-    "src/data/DataObjects.js",
-    "src/data/DataItem.js",
+    "src/data/Repo.js",
+    "src/data/Model.js",
 
     "src/formats/GeoJSON.js",
     "src/formats/OBJ.js",
