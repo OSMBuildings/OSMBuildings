@@ -26,7 +26,7 @@ GLRenderer.prototype = {
 
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-    gl.cullFace(gl.FRONT); // TODO: fix this
+    gl.cullFace(gl.BACK);
 
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);

@@ -25,8 +25,11 @@ var XHR = {};
 
       if (req.responseText) {
         try {
-          callback(JSON.parse(req.responseText));
-        } catch(ex) {}
+          var json = JSON.parse(req.responseText);
+        } catch(ex) {
+          console.error('Could not parse JSON from '+ url +'\n'+ ex.message);
+        }
+        callback(json);
       }
     };
 

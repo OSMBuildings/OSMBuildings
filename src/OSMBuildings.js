@@ -87,8 +87,12 @@ var OSMBuildings = function(options) {
       return this;
     },
 
-    addModel: function(url, position, options) {
-      Repo.load(url, position, options);
+    addMesh: function(url, position, options) {
+      if (typeof url === 'object') {
+        Repo.add(url, position, options);
+      } else {
+        Repo.load(url, position, options);
+      }
       return this;
     }
   };

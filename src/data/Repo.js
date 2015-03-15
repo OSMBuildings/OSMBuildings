@@ -15,21 +15,12 @@ var Repo = {
   },
 
   load: function(url, position, options) {
-    if (typeof url === 'object') {
-      this.addItems(url, position, options);
-    } else if (typeof url === 'string') {
-      XHR.loadJSON(url, function(data) {
-        this.addItems(data, position, options);
-      }.bind(this));
-    }
+    XHR.loadJSON(url, function(data) {
+      this.add(data, position, options);
+    }.bind(this));
   },
 
-  addItems: function(data, position, options) {
-    var mesh;
-    for (var i = 0, il = data.meshes.length; i < il; i++) {
-      mesh = data.meshes[i];
-      mesh.offset = data.offset;
-      this.items.push(new Model(mesh, position, options));
-    }
+  add: function(data, position, options) {
+    this.items.push(new Mesh(data, position, options));
   }
 };

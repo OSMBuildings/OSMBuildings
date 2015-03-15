@@ -23,7 +23,7 @@
     "src/data/Tile.js",
 
     "src/data/Repo.js",
-    "src/data/Model.js",
+    "src/data/Mesh.js",
 
     "src/formats/GeoJSON.js",
     "src/formats/OBJ.js",
