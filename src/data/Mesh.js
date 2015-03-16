@@ -1,17 +1,60 @@
 
-var Model = function(data, position, options) {
+var Mesh = function(data, position, options) {
   this.options = options || {};
+
+  this.zoom = 16;
+
+//  this.offset = data.offset;
+
+  if (data.meshes) {
+    this.offset = data.offset;
+
+    var worldSize = TILE_SIZE * Math.pow(2, 16);
+    var p = project(data.offset.latitude, data.offset.longitude, worldSize);
+
+    data = triangulate(p.x, p.y, 0, data.meshes);
+  }
 
   this.vertexBuffer = this.createBuffer(3, new Float32Array(data.vertices));
   this.normalBuffer = this.createBuffer(3, new Float32Array(data.normals));
   this.colorBuffer  = this.createBuffer(3, new Uint8Array(data.colors));
 
-  this.offset = data.offset;
-
-  this.position = position;
+//  this.offset = position;
 };
 
-Model.prototype = {
+function triangulate(offsetX, offsetY, offsetZ, meshes) {
+  var
+    data = {
+      vertices: [],
+      normals: [],
+      colors: []
+    },
+    polygon3d;
+
+  for (var i = 0, il = meshes.length; i < il; i++) {
+    polygon3d = transform(offsetX, offsetY, offsetZ, meshes[i].coordinates);
+    Triangulate.polygon3d(data, polygon3d, meshes[i].color);
+  }
+
+  return data;
+}
+
+function transform(offsetX, offsetY, offsetZ, coordinates) {
+  var
+    worldSize = TILE_SIZE * Math.pow(2, 16),
+    p;
+
+  for (var i = 0, il = coordinates.length-2; i < il; i+=3) {
+    p = project(coordinates[i+1], coordinates[i], worldSize);
+    coordinates[i]   = p.x-offsetX;
+    coordinates[i+1] = p.y-offsetY;
+    coordinates[i+2] -= offsetZ;
+  }
+
+  return coordinates;
+}
+
+Mesh.prototype = {
 
   createBuffer: function(itemSize, data) {
     var buffer = gl.createBuffer();
@@ -23,16 +66,15 @@ Model.prototype = {
   },
 
   render: function(program, projection) {
-    var ratio = 1/Math.pow(2, 16-Map.zoom) * (this.options.scale || 1);
+    var ratio = 1/Math.pow(2, 16-Map.zoom); // * (this.options.scale || 1);
 
     var size = Map.size;
     var origin = Map.origin;
-    var pos = project(this.position.latitude, this.position.longitude, TILE_SIZE * Math.pow(2, Map.zoom));
+    var position = project(this.offset.latitude, this.offset.longitude, TILE_SIZE * Math.pow(2, Map.zoom));
 
     var matrix = Matrix.create();
-    matrix = Matrix.translate(matrix, -this.offset.x, -this.offset.y, -this.offset.z);
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.75);
-    matrix = Matrix.translate(matrix, pos.x-origin.x, pos.y-origin.y, 0);
+    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
