@@ -31,12 +31,13 @@ var Tile = function(tileX, tileY, zoom) {
   Tile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
     var gridBounds = Grid.bounds;
-    return (!this.isLoading && this.zoom === gridBounds.zoom &&
+
+    return (this.zoom === gridBounds.zoom &&
       (this.tileX >= gridBounds.minX-buffer && this.tileX <= gridBounds.maxX+buffer && this.tileY >= gridBounds.minY-buffer && this.tileY <= gridBounds.maxY+buffer));
   };
 
   Tile.prototype.render = function(program, projection) {
-    if (!this.isVisible()) {
+    if (this.isLoading || !this.isVisible()) {
       return;
     }
 

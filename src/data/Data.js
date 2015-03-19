@@ -3,8 +3,8 @@ var Data = {
 
   items: [],
 
-  add: function(data) {
-    this.items.push(new Mesh(data));
+  add: function(mesh) {
+    this.items.push(mesh);
   },
 
   remove: function(item) {

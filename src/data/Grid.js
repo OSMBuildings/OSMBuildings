@@ -50,7 +50,7 @@ var Grid = {};
         if (index[key]) {
           continue;
         }
-        queue.push({ tileX:tileX, tileY:tileY, zoom:gridBounds.zoom });
+        queue.push({ tileX:tileX, tileY:tileY, zoom:gridBounds.zoom, key:key });
       }
     }
 
@@ -81,7 +81,7 @@ var Grid = {};
 
   function purge() {
     for (var key in index) {
-      if (!index[key].isVisible(0)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+      if (!index[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
         Data.remove(index[key]);
         delete index[key];
       }
