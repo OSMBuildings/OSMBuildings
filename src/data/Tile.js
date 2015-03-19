@@ -1,39 +1,57 @@
 
-var Tile = function(x, y, z, geojson) {
-  this.x = x;
-  this.y = y;
-  this.z = z;
-
-  var data = GeoJSON.read(x, y, z, geojson);
-  this.vertexBuffer = this.createBuffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = this.createBuffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = this.createBuffer(3, new Uint8Array(data.colors));
+var Tile = function(tileX, tileY, zoom) {
+  this.tileX = tileX;
+  this.tileY = tileY;
+  this.zoom = zoom;
 };
 
-Tile.prototype = {
+(function() {
 
-  createBuffer: function(itemSize, data) {
+  function createBuffer(itemSize, data) {
     var buffer = gl.createBuffer();
     buffer.itemSize = itemSize;
     buffer.numItems = data.length/itemSize;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     return buffer;
-  },
+  }
 
-  render: function(program, projection) {
-    var ratio = 1/Math.pow(2, this.z-Map.zoom);
-    var adaptedTileSize = TILE_SIZE*ratio;
-    var size = Map.size;
+  //***************************************************************************
+
+  Tile.prototype.load = function(url) {
+    this.isLoading = XHR.loadJSON(url, function(json) {
+      this.isLoading = null;
+      var geom = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, json);
+      this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
+      this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
+      this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    }.bind(this));
+  };
+
+  Tile.prototype.isVisible = function(buffer) {
+    buffer = buffer || 0;
+    var gridBounds = Grid.bounds;
+    return (!this.isLoading && this.zoom === gridBounds.zoom &&
+      (this.tileX >= gridBounds.minX-buffer && this.tileX <= gridBounds.maxX+buffer && this.tileY >= gridBounds.minY-buffer && this.tileY <= gridBounds.maxY+buffer));
+  };
+
+  Tile.prototype.render = function(program, projection) {
+    if (!this.isVisible()) {
+      return;
+    }
+
+    var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
+    var viewport = Map.size;
     var origin = Map.origin;
+    var adaptedTileSize = TILE_SIZE*ratio;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.x*adaptedTileSize - origin.x, this.y*adaptedTileSize - origin.y, 0);
+    matrix = Matrix.translate(matrix, this.tileX*adaptedTileSize - origin.x, this.tileY*adaptedTileSize - origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
-    matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
+    matrix = Matrix.translate(matrix, viewport.width/2, viewport.height/2, 0);
     matrix = Matrix.multiply(matrix, projection);
 
     gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
@@ -48,11 +66,16 @@ Tile.prototype = {
     gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
-  },
+  };
 
-  destroy: function() {
+  Tile.prototype.destroy = function() {
     gl.deleteBuffer(this.vertexBuffer);
     gl.deleteBuffer(this.normalBuffer);
     gl.deleteBuffer(this.colorBuffer);
-  }
-};
+
+    if (this.isLoading) {
+      this.isLoading.abort();
+    }
+  };
+
+}());
