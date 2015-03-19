@@ -1,8 +1,17 @@
 
+var Map, Renderer;
+
 var OSMBuildings = function(options) {
   options = options || {};
 
-  Data = new Grid(options.src || DATA_SRC.replace('{k}', options.dataKey || DATA_KEY), { fixedZoom: 16 });
+  Grid.fixedZoom = 16;
+
+  // src=false and src=null would disable the data grid
+  if (options.src === undefined) {
+    Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
+  } else if (typeof options.src === 'string') {
+    Grid.src = options.src;
+  }
 
   if (options.map) {
     this.addTo(options.map);
@@ -16,14 +25,12 @@ var OSMBuildings = function(options) {
 (function() {
 
   function onMapChange() {
-    Data.updateTileBounds();
-    Data.update(100);
+    Grid.onMapChange();
   }
 
   function onMapResize() {
-    Data.updateTileBounds();
-    Data.update();
-    Renderer.resize();
+    Grid.onMapResize();
+    Renderer.onMapResize();
   }
 
   OSMBuildings.VERSION     = '0.1.5';
@@ -76,7 +83,7 @@ var OSMBuildings = function(options) {
     },
 
     destroy: function() {
-      Data.destroy();
+      Grid.destroy();
     },
 
     setStyle: function(style) {
@@ -87,11 +94,13 @@ var OSMBuildings = function(options) {
       return this;
     },
 
-    addMesh: function(url, position, options) {
+    addMesh: function(url) {
       if (typeof url === 'object') {
-        Repo.add(url, position, options);
+        Data.add(new Mesh(url));
       } else {
-        Repo.load(url, position, options);
+        var mesh = new Mesh();
+        Data.add(mesh);
+        mesh.load(url);
       }
       return this;
     }

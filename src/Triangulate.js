@@ -27,13 +27,52 @@ var Triangulate = {
 
   polygon: function(data, polygon, z, color) {
     var triangles = earcut(polygon);
-
     for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
       this.addTriangle(
         data,
         [ triangles[t+0][0], triangles[t+0][1], z ],
         [ triangles[t+1][0], triangles[t+1][1], z ],
         [ triangles[t+2][0], triangles[t+2][1], z ],
+        color
+      );
+    }
+  },
+
+  polygon3d: function(data, polygon, color) {
+    var polygonLength = polygon.length;
+    if (polygonLength <= 15) { // 12: a triangle
+      this.addTriangle(
+        data,
+        [ polygon[0], polygon[1], polygon[2] ],
+        [ polygon[6], polygon[7], polygon[8] ],
+        [ polygon[3], polygon[4], polygon[5] ],
+        color
+      );
+      if (polygonLength === 15) { // 15: a quad (2 triangles)
+        this.addTriangle(
+          data,
+        [ polygon[0], polygon[1], polygon[2] ],
+          [ polygon[9], polygon[10], polygon[11] ],
+          [ polygon[6], polygon[7],  polygon[8] ],
+          color
+        );
+      }
+      return;
+    }
+
+    var poly = [];
+    for (var i = 0; i < polygon.length; i+=3) {
+      poly.push([ polygon[i], polygon[i+1], polygon[i+2] ]);
+    }
+
+    var triangles = earcut([poly]);
+
+    for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
+      this.addTriangle(
+        data,
+        [ triangles[t+0][0], triangles[t+0][1], triangles[t+0][2] ],
+        [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
+        [ triangles[t+2][0], triangles[t+2][1], triangles[t+2][2] ],
         color
       );
     }
@@ -172,8 +211,8 @@ var Triangulate = {
   addTriangle: function(data, a, b, c, color) {
     data.vertices.push(
       a[0], a[1], a[2],
-      b[0], b[1], b[2],
-      c[0], c[1], c[2]
+      c[0], c[1], c[2],
+      b[0], b[1], b[2]
     );
 
     var n = this.computeNormal(

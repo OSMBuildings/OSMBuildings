@@ -1,8 +1,9 @@
-<DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <title>OSM Buildings GL</title>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     html, body {
       margin: 0;
@@ -82,9 +83,10 @@
   <script>
     var map = new GLMap('map', {
       center: { latitude:52.52000, longitude:13.41000 },
-//    tilt: 0,
-//    rotation: 0,
       zoom: 16,
+//    rotation: 0,
+//    tilt: 0,
+//    disabled: true,
       minZoom: 14.5,
       maxZoom: 22
     });
@@ -93,12 +95,12 @@
     new GLMap.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
 
     var osmb = new OSMBuildings({
-//    src: 'tiles/{x},{y},{z}.json'
+//    tiles: null, // 'mp/tiles/{x},{y},{z}.json',
 //    map: map
-    })
-//    .addObject('OBJ', '../scratch/obj-loader/PLAN_BASIC.obj', { latitude:52.5429942, longitude:13.4279453 })
-//    .addObject('GeoJSON', 'tiles/35209,21492,16.json')
-      .addTo(map);
+    }).addTo(map);
+
+    //osmb.addMesh('mp/fernsehturm.3d.json', { latitude:52.52000, longitude:13.41000 }, { scale:0.02 });
+    //osmb.addMesh('mp/Mitte.3d.json');
 
     //*************************************************************************
 

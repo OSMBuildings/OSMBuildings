@@ -22,7 +22,7 @@
     "src/data/Grid.js",
     "src/data/Tile.js",
 
-    "src/data/Repo.js",
+    "src/data/Data.js",
     "src/data/Mesh.js",
 
     "src/formats/GeoJSON.js",

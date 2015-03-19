@@ -865,10 +865,18 @@ Color.prototype = {
 
 return Color; }(this));
 
+var Map, Renderer;
+
 var OSMBuildings = function(options) {
   options = options || {};
 
-  Data = new Grid(options.src || DATA_SRC.replace('{k}', options.dataKey || DATA_KEY), { fixedZoom: 16 });
+  Grid.fixedZoom = 16;
+  // src=false and src=null would disable the data grid
+  if (options.src === undefined) {
+    Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
+  } else if (typeof options.src === 'string') {
+    Grid.src = options.src;
+  }
 
   if (options.map) {
     this.addTo(options.map);
@@ -882,14 +890,12 @@ var OSMBuildings = function(options) {
 (function() {
 
   function onMapChange() {
-    Data.updateTileBounds();
-    Data.update(100);
+    Grid.onMapChange();
   }
 
   function onMapResize() {
-    Data.updateTileBounds();
-    Data.update();
-    Renderer.resize();
+    Grid.onMapResize();
+    Renderer.onMapResize();
   }
 
   OSMBuildings.VERSION     = '0.1.5';
@@ -942,7 +948,7 @@ var OSMBuildings = function(options) {
     },
 
     destroy: function() {
-      Data.destroy();
+      Grid.destroy();
     },
 
     setStyle: function(style) {
@@ -953,11 +959,13 @@ var OSMBuildings = function(options) {
       return this;
     },
 
-    addMesh: function(url, position, options) {
+    addMesh: function(url) {
       if (typeof url === 'object') {
-        Repo.add(url, position, options);
+        Data.add(new Mesh(url));
       } else {
-        Repo.load(url, position, options);
+        var mesh = new Mesh();
+        Data.add(mesh);
+        mesh.load(url);
       }
       return this;
     }
@@ -985,7 +993,6 @@ var STYLE = {
   }
 };
 
-var Map, Data, Renderer;
 
 var XHR = {};
 
@@ -1328,66 +1335,58 @@ var Triangulate = {
 };
 
 
-var Grid = function(url, options) {
-  this.url = url;
+var Grid = {};
 
-  options = options || {};
-  this.tileSize  = options.tileSize || 256;
-  this.fixedZoom = options.fixedZoom;
+(function() {
 
-  this.tiles = {};
-  this.loading = {};
-};
+  var isDelayed;
+  var index = {};
 
-Grid.prototype = {
+  function update(delay) {
+    var zoom = Grid.fixedZoom || Math.round(Map.zoom);
 
-  updateTileBounds: function() {
     var
-      bounds = Map.bounds,
-      tileSize = this.tileSize,
-      zoom = this.zoom = this.fixedZoom || Math.round(Map.zoom),
-      worldSize = tileSize <<zoom,
-      min = project(bounds.n, bounds.w, worldSize),
-      max = project(bounds.s, bounds.e, worldSize);
+      mapBounds = Map.bounds,
+      worldSize = TILE_SIZE <<zoom,
+      min = project(mapBounds.n, mapBounds.w, worldSize),
+      max = project(mapBounds.s, mapBounds.e, worldSize);
 
-    this.tileBounds = {
-      minX: min.x/tileSize <<0,
-      minY: min.y/tileSize <<0,
-      maxX: Math.ceil(max.x/tileSize),
-      maxY: Math.ceil(max.y/tileSize)
+    Grid.bounds = {
+      zoom: zoom,
+      minX: min.x/TILE_SIZE <<0,
+      minY: min.y/TILE_SIZE <<0,
+      maxX: Math.ceil(max.x/TILE_SIZE),
+      maxY: Math.ceil(max.y/TILE_SIZE)
     };
-  },
 
-  update: function(delay) {
+    // TODO: signal, if bbox changed => for loadTiles() + Data.getVisibleItems()
+
     if (!delay) {
-      this.loadTiles();
+      loadTiles();
       return;
     }
 
-    if (!this.isWaiting) {
-      this.isWaiting = setTimeout(function() {
-        this.isWaiting = null;
-        this.loadTiles();
-      }.bind(this), delay);
+    if (!isDelayed) {
+      isDelayed = setTimeout(function() {
+        isDelayed = null;
+        loadTiles();
+      }, delay);
     }
-  },
+  }
 
-  loadTiles: function() {
-    var
-      tileBounds = this.tileBounds,
-      zoom = this.zoom,
-      tiles = this.tiles,
-      loading = this.loading,
-      x, y, key,
-      queue = [], queueLength;
+  function loadTiles() {
+    var tileX, tileY;
+    var queue = [], queueLength;
+    var gridBounds = Grid.bounds;
+    var key;
 
-    for (y = tileBounds.minY; y <= tileBounds.maxY; y++) {
-      for (x = tileBounds.minX; x <= tileBounds.maxX; x++) {
-        key = [x, y, zoom].join(',');
-        if (tiles[key] || loading[key]) {
+    for (y = gridBounds.minY; tileY <= gridBounds.maxY; tileY++) {
+      for (tileX = gridBounds.minX; tileX <= gridBounds.maxX; tileX++) {
+        key = [tileX, tileY, gridBounds.zoom].join(',');
+        if (index[key]) {
           continue;
         }
-        queue.push({ x:x, y:y, z:zoom });
+        queue.push({ tileX:tileX, tileY:tileY, zoom:gridBounds.zoom });
       }
     }
 
@@ -1397,138 +1396,116 @@ Grid.prototype = {
 
     // TODO: currently viewport center but could be aligned to be camera pos
     var tileAnchor = {
-      x:tileBounds.minX + (tileBounds.maxX-tileBounds.minX-1)/2,
-      y:tileBounds.minY + (tileBounds.maxY-tileBounds.minY-1)/2
+      x:gridBounds.minX + (gridBounds.maxX-gridBounds.minX-1)/2,
+      y:gridBounds.minY + (gridBounds.maxY-gridBounds.minY-1)/2
     };
 
     queue.sort(function(b, a) {
       return distance2(a, tileAnchor) - distance2(b, tileAnchor);
     });
 
+    var tile, q;
     for (var i = 0; i < queueLength; i++) {
-      this.loadTile(queue[i].x, queue[i].y, queue[i].z);
+      q = queue[i];
+      Data.add( tile = new Tile(q.tileX, q.tileY, q.zoom) );
+      tile.load(getURL(q.tileX, q.tileY, q.zoom));
+      index[q.key] = tile;
     }
 
-    this.purge();
-  },
-
-  getURL: function(x, y, z) {
-    var s = 'abcd'[(x+y) % 4];
-    return pattern(this.url, { s:s, x:x, y:y, z:z });
-  },
-
-  loadTile: function(x, y, z) {
-    var key = [x, y, z].join(',');
-    this.loading[key] = XHR.loadJSON(this.getURL(x, y, z), function(data) {
-      delete this.loading[key];
-      this.tiles[key] = new Tile(x, y, z, data);
-    }.bind(this));
-  },
-
-  purge: function() {
-    var
-      key,
-      tiles = this.tiles,
-      loading = this.loading;
-
-    for (key in tiles) {
-      if (!this.isVisible(key, 2)) {
-        tiles[key].destroy();
-        delete tiles[key];
-      }
-    }
-
-    for (key in loading) {
-      if (!this.isVisible(key)) {
-        loading[key].abort();
-        delete loading[key];
-      }
-    }
-  },
-
-  // TODO: maybe make isVisible() a Tile method. Then create the tile early in order to profit in loading()
-  isVisible: function(key, buffer) {
-    buffer = buffer || 0;
-
-    var
-      tileSize = this.tileSize,
-      tileBounds = this.tileBounds,
-      xyz = key.split(','),
-      x = parseInt(xyz[0], 10), y = parseInt(xyz[1], 10), z = parseInt(xyz[2], 10);
-
-    if (z !== this.zoom) {
-      return false;
-    }
-
-    return (x >= tileBounds.minX-buffer-tileSize && x <= tileBounds.maxX+buffer && y >= tileBounds.minY-buffer-tileSize && y <= tileBounds.maxY+buffer);
-  },
-
-  getVisibleItems: function() {
-    var
-      tiles = this.tiles,
-      key,
-      items = [];
-
-    for (key in tiles) {
-      if (this.isVisible(key)) {
-        items.push(tiles[key]);
-      }
-    }
-
-    return items;
-  },
-
-  destroy: function() {
-    clearTimeout(this.isWaiting);
-
-    for (var key in this.tiles) {
-      this.tiles[key].destroy();
-    }
-    this.tiles = null;
-
-    for (key in this.loading) {
-      this.loading[key].abort();
-    }
-    this.loading = null;
+    purge();
   }
+
+  function purge() {
+    for (var key in index) {
+      if (!index[key].isVisible(2)) { // testing with buffer of n tiles around viewport
+        Data.remove(index[key]);
+        delete index[key];
+      }
+    }
+  }
+
+  function getURL(x, y, z) {
+    var s = 'abcd'[(x+y) % 4];
+    return pattern(Grid.src, { s:s, x:x, y:y, z:z });
+  }
+  //***************************************************************************
+
+  Grid.onMapChange = function() {
+    if (!this.src) {
+      return;
+    }
+    updateBBox();
+    update(100);
+  };
+
+  Grid.onMapResize = function() {
+    if (!this.src) {
+      return;
+    }
+    updateBBox();
+    update();
+  };
+
+  Grid.destroy = function() {
+    clearTimeout(isDelayed);
+  };
+
+}());
+
+
+var Tile = function(tileX, tileY, zoom) {
+  this.tileX = tileX;
+  this.tileY = tileY;
+  this.zoom = zoom;
 };
 
+(function() {
 
-var Tile = function(x, y, z, geojson) {
-  this.x = x;
-  this.y = y;
-  this.z = z;
-
-  var data = GeoJSON.read(x, y, z, geojson);
-  this.vertexBuffer = this.createBuffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = this.createBuffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = this.createBuffer(3, new Uint8Array(data.colors));
-};
-
-Tile.prototype = {
-
-  createBuffer: function(itemSize, data) {
+  function createBuffer(itemSize, data) {
     var buffer = gl.createBuffer();
     buffer.itemSize = itemSize;
     buffer.numItems = data.length/itemSize;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     return buffer;
-  },
+  }
 
-  render: function(program, projection) {
-    var ratio = 1/Math.pow(2, this.z-Map.zoom);
-    var adaptedTileSize = TILE_SIZE*ratio;
-    var size = Map.size;
+  //***************************************************************************
+
+  Tile.prototype.load = function(url) {
+    this.isLoading = XHR.loadJSON(url, function(json) {
+      this.isLoading = null;
+      var geom = GeoJSON.read(x, y, z, json);
+      this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
+      this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
+      this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    }.bind(this));
+  };
+
+  Tile.prototype.isVisible = function(buffer) {
+    buffer = buffer || 0;
+    var gridBounds = Grid.bounds;
+    return (!this.isLoading && this.zoom === gridBounds.zoom &&
+      (this.tileX >= gridBounds.minX-buffer && this.tileX <= gridBounds.maxX+buffer && this.tileY >= gridBounds.minY-buffer && this.tileY <= gridBounds.maxY+buffer));
+  };
+
+  Tile.prototype.render = function(program, projection) {
+    if (!this.isVisible()) {
+      return;
+    }
+
+    var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
+    var viewport = Map.size;
     var origin = Map.origin;
+    var adaptedTileSize = TILE_SIZE*ratio;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.x*adaptedTileSize - origin.x, this.y*adaptedTileSize - origin.y, 0);
+    matrix = Matrix.translate(matrix, this.tileX*adaptedTileSize - origin.x, this.tileY*adaptedTileSize - origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
-    matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
+    matrix = Matrix.translate(matrix, viewport.width/2, viewport.height/2, 0);
     matrix = Matrix.multiply(matrix, projection);
 
     gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
@@ -1543,144 +1520,148 @@ Tile.prototype = {
     gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
-  },
+  };
 
-  destroy: function() {
+  Tile.prototype.destroy = function() {
     gl.deleteBuffer(this.vertexBuffer);
     gl.deleteBuffer(this.normalBuffer);
     gl.deleteBuffer(this.colorBuffer);
-  }
-};
+
+    if (this.isLoading) {
+      this.isLoading.abort();
+    }
+  };
+
+}());
 
 
-// TODO: maybe let grid data sources store their items here
-
-var Repo = {
+var Data = {
 
   items: [],
 
-  getVisibleItems: function() {
-    var items = [];
-    for (var i = 0, il = this.items.length; i < il; i++) {
-      // TODO: check visiblity => know the bbox
-      items.push(this.items[i]);
+  add: function(data) {
+    this.items.push(new Mesh(data));
+  },
+
+  remove: function(item) {
+    var items = this.items;
+    for (var i = 0, il = items.length; i < il; i++) {
+      if (items[i] === item) {
+        items[i].destroy();
+        items.splice(i, 1);
+        return;
+      }
     }
-    return items;
-  },
-
-  load: function(url, position, options) {
-    XHR.loadJSON(url, function(data) {
-      this.add(data, position, options);
-    }.bind(this));
-  },
-
-  add: function(data, position, options) {
-    this.items.push(new Mesh(data, position, options));
   }
 };
 
 
-var Mesh = function(data, position, options) {
-  this.options = options || {};
+var Mesh = function(data) {
+  // TODO: handle passed data
+};
 
-  this.zoom = 16;
+(function() {
 
-//  this.offset = data.offset;
+  function init(data) {
+    this.zoom = 16;
 
-  if (data.meshes) {
     this.offset = data.offset;
 
     var worldSize = TILE_SIZE * Math.pow(2, 16);
     var p = project(data.offset.latitude, data.offset.longitude, worldSize);
 
     data = triangulate(p.x, p.y, 0, data.meshes);
+
+    this.vertexBuffer = this.createBuffer(3, new Float32Array(data.vertices));
+    this.normalBuffer = this.createBuffer(3, new Float32Array(data.normals));
+    this.colorBuffer  = this.createBuffer(3, new Uint8Array(data.colors));
   }
 
-  this.vertexBuffer = this.createBuffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = this.createBuffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = this.createBuffer(3, new Uint8Array(data.colors));
+  function triangulate(offsetX, offsetY, offsetZ, meshes) {
+    var
+      data = {
+        vertices: [],
+        normals: [],
+        colors: []
+      },
+      polygon3d;
 
-//  this.offset = position;
-};
+    for (var i = 0, il = meshes.length; i < il; i++) {
+      polygon3d = transform(offsetX, offsetY, offsetZ, meshes[i].coordinates);
+      Triangulate.polygon3d(data, polygon3d, meshes[i].color);
+    }
 
-function triangulate(offsetX, offsetY, offsetZ, meshes) {
-  var
-    data = {
-      vertices: [],
-      normals: [],
-      colors: []
+    return data;
+  }
+
+  function transform(offsetX, offsetY, offsetZ, coordinates) {
+    var
+      worldSize = TILE_SIZE * Math.pow(2, 16),
+      p;
+
+    for (var i = 0, il = coordinates.length-2; i < il; i+=3) {
+      p = project(coordinates[i+1], coordinates[i], worldSize);
+      coordinates[i]   = p.x-offsetX;
+      coordinates[i+1] = p.y-offsetY;
+      coordinates[i+2] -= offsetZ;
+    }
+
+    return coordinates;
+  }
+
+  Mesh.prototype = {
+
+    render: function(program, projection) {
+      var ratio = 1/Math.pow(2, 16-Map.zoom);
+
+      var size = Map.size;
+      var origin = Map.origin;
+      var position = project(this.offset.latitude, this.offset.longitude, TILE_SIZE * Math.pow(2, Map.zoom));
+
+      var matrix = Matrix.create();
+      matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.75);
+      matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+      matrix = Matrix.rotateZ(matrix, Map.rotation);
+      matrix = Matrix.rotateX(matrix, Map.tilt);
+      matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
+      matrix = Matrix.multiply(matrix, projection);
+
+      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+      gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+      gl.vertexAttribPointer(program.attributes.aNormal, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+      gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
     },
-    polygon3d;
 
-  for (var i = 0, il = meshes.length; i < il; i++) {
-    polygon3d = transform(offsetX, offsetY, offsetZ, meshes[i].coordinates);
-    Triangulate.polygon3d(data, polygon3d, meshes[i].color);
-  }
+    isVisible: function(key, buffer) {
+      buffer = buffer || 0;
 
-  return data;
-}
+      var
+        xyz = key.split(','),
+        x = parseInt(xyz[0], 10), y = parseInt(xyz[1], 10), z = parseInt(xyz[2], 10);
 
-function transform(offsetX, offsetY, offsetZ, coordinates) {
-  var
-    worldSize = TILE_SIZE * Math.pow(2, 16),
-    p;
+      if (z !== zoom) {
+        return false;
+      }
 
-  for (var i = 0, il = coordinates.length-2; i < il; i+=3) {
-    p = project(coordinates[i+1], coordinates[i], worldSize);
-    coordinates[i]   = p.x-offsetX;
-    coordinates[i+1] = p.y-offsetY;
-    coordinates[i+2] -= offsetZ;
-  }
+      return (x >= tileBounds.minX-buffer-tileSize && x <= tileBounds.maxX+buffer && y >= tileBounds.minY-buffer-tileSize && y <= tileBounds.maxY+buffer);
+    },
 
-  return coordinates;
-}
+    destroy: function() {
+      gl.deleteBuffer(this.vertexBuffer);
+      gl.deleteBuffer(this.normalBuffer);
+      gl.deleteBuffer(this.colorBuffer);
+    }
+  };
 
-Mesh.prototype = {
-
-  createBuffer: function(itemSize, data) {
-    var buffer = gl.createBuffer();
-    buffer.itemSize = itemSize;
-    buffer.numItems = data.length/itemSize;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    return buffer;
-  },
-
-  render: function(program, projection) {
-    var ratio = 1/Math.pow(2, 16-Map.zoom); // * (this.options.scale || 1);
-
-    var size = Map.size;
-    var origin = Map.origin;
-    var position = project(this.offset.latitude, this.offset.longitude, TILE_SIZE * Math.pow(2, Map.zoom));
-
-    var matrix = Matrix.create();
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.75);
-    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
-    matrix = Matrix.rotateZ(matrix, Map.rotation);
-    matrix = Matrix.rotateX(matrix, Map.tilt);
-    matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
-    matrix = Matrix.multiply(matrix, projection);
-
-    gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-    gl.vertexAttribPointer(program.attributes.aNormal, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
-  },
-
-  destroy: function() {
-    gl.deleteBuffer(this.vertexBuffer);
-    gl.deleteBuffer(this.normalBuffer);
-    gl.deleteBuffer(this.colorBuffer);
-  }
-};
+}());
 
 
 var GeoJSON = {};
@@ -2338,7 +2319,7 @@ var gl;
 var GLRenderer = function(gl_) {
   gl = gl_;
   this.shaderPrograms.default = new Shader('default');
-  this.resize();
+  this.onMapResize();
 };
 
 GLRenderer.prototype = {
@@ -2367,9 +2348,6 @@ GLRenderer.prototype = {
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    var items = Data.getVisibleItems();
-    var models = Repo.getVisibleItems();
-
     program = this.shaderPrograms.default.use();
 
     // TODO: suncalc
@@ -2381,18 +2359,15 @@ GLRenderer.prototype = {
     var normalMatrix = Matrix.invert3(Matrix.create());
     gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
-    for (i = 0, il = items.length; i < il; i++) {
-      items[i].render(program, this.projections.perspective);
-    }
-
-    for (i = 0, il = models.length; i < il; i++) {
-      models[i].render(program, this.projections.perspective);
+    var dataItems = Data.items;
+    for (i = 0, il = dataItems.length; i < il; i++) {
+      dataItems[i].render(program, this.projections.perspective);
     }
 
     program.end();
   },
 
-  resize: function() {
+  onMapResize: function() {
     var size = Map.size;
     gl.viewport(0, 0, size.width, size.height);
     this.projections.perspective = Matrix.perspective(20, size.width, size.height, 40000);

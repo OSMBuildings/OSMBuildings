@@ -153,11 +153,9 @@ var GeoJSON = {};
     }
   }
 
-  function transform(x, y, z, coordinates) {
+  function transform(offsetX, offsetY, zoom, coordinates) {
     var
-      worldSize = TILE_SIZE * Math.pow(2, z),
-      offX = x*TILE_SIZE,
-      offY = y*TILE_SIZE,
+      worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
@@ -167,14 +165,14 @@ var GeoJSON = {};
       res[c] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
         p = project(ring[r][1], ring[r][0], worldSize);
-        res[c][r] = [p.x-offX, p.y-offY];
+        res[c][r] = [p.x-offsetX, p.y-offsetY];
       }
     }
 
     return res;
   }
 
-  GeoJSON.read = function(x, y, z, geojson) {
+  GeoJSON.read = function(offsetX, offsetY, zoom, geojson) {
     if (!geojson || geojson.type !== 'FeatureCollection') {
       return [];
     }
@@ -201,7 +199,7 @@ var GeoJSON = {};
       geometries = getGeometries(feature.geometry);
 
       for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(x, y, z, geometries[j]);
+        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
 
         if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
           item.shape = 'cylinder';

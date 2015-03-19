@@ -4,7 +4,7 @@ var gl;
 var GLRenderer = function(gl_) {
   gl = gl_;
   this.shaderPrograms.default = new Shader('default');
-  this.resize();
+  this.onMapResize();
 };
 
 GLRenderer.prototype = {
@@ -33,9 +33,6 @@ GLRenderer.prototype = {
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    var items = Data.getVisibleItems();
-    var models = Repo.getVisibleItems();
-
     program = this.shaderPrograms.default.use();
 
     // TODO: suncalc
@@ -47,18 +44,15 @@ GLRenderer.prototype = {
     var normalMatrix = Matrix.invert3(Matrix.create());
     gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
-    for (i = 0, il = items.length; i < il; i++) {
-      items[i].render(program, this.projections.perspective);
-    }
-
-    for (i = 0, il = models.length; i < il; i++) {
-      models[i].render(program, this.projections.perspective);
+    var dataItems = Data.items;
+    for (i = 0, il = dataItems.length; i < il; i++) {
+      dataItems[i].render(program, this.projections.perspective);
     }
 
     program.end();
   },
 
-  resize: function() {
+  onMapResize: function() {
     var size = Map.size;
     gl.viewport(0, 0, size.width, size.height);
     this.projections.perspective = Matrix.perspective(20, size.width, size.height, 40000);
