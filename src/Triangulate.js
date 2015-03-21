@@ -115,7 +115,24 @@ var Triangulate = {
     }
   },
 
-  Sphere: function(data, center, radius, minHeight, height, color) {
+  pyramid: function(data, polygon, center, minHeight, height, color) {
+    var polygon = polygon[0];
+    for (var i = 0, il = polygon.length-1; i < il; i++) {
+      this.addTriangle(
+        data,
+        [ polygon[i  ][0], polygon[i  ][1], minHeight ],
+        [ polygon[i+1][0], polygon[i+1][1], minHeight ],
+        [ center[0], center[1], height ],
+        color
+      );
+    }
+  },
+
+  _dome: function(data, center, radius, minHeight, height, color) {
+    var latSegments = this.LAT_SEGMENTS/2;
+  },
+
+  _sphere: function(data, center, radius, minHeight, height, color) {
     var latSegments = this.LAT_SEGMENTS;
 
     var theta, sinTheta, cosTheta;
@@ -132,11 +149,7 @@ var Triangulate = {
     }
   },
 
-  Dome: function(data, center, radius, minHeight, height, color) {
-    var latSegments = this.LAT_SEGMENTS/2;
-  },
-
-//Sphere: function(radius) {
+//_sphere: function(radius) {
 //  var lat = 0, lon = 0;
 //  var maxLat = 10, maxLon = 10;
 //
@@ -176,6 +189,10 @@ var Triangulate = {
 //    }
 //  }
 //},
+
+  Pyramid: function() {
+
+  },
 
   extrusion: function(data, polygon, minHeight, height, color) {
     var

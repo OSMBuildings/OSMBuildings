@@ -206,10 +206,11 @@ var GeoJSON = {};
           item.isRotational = true;
         }
 
+        bbox = getBBox(polygon);
+        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
+
         if (item.isRotational) {
-          bbox = getBBox(polygon);
           radius = (bbox.maxX-bbox.minX)/2;
-          center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
         }
 
 //      if (feature.id || feature.properties.id) {
@@ -235,8 +236,9 @@ var GeoJSON = {};
           break;
 
           case 'pyramid':
-//          Pyramid.draw(context, footprint, item.center, h, mh, wallColor);
+            Triangulate.pyramid(data, polygon, center, item.minHeight, item.height, item.wallColor);
           break;
+
           default:
             Triangulate.extrusion(data, polygon, item.minHeight, item.height, item.wallColor);
             Triangulate.polygon(data, polygon, item.height, item.roofColor);
@@ -253,7 +255,7 @@ var GeoJSON = {};
           break;
 
           case 'pyramid':
-//          Pyramid.draw(context, footprint, item.center, h+item.roofHeight, h, roofColor);
+            Triangulate.pyramid(data, polygon, center, item.height, item.height+item.roofHeight, item.roofColor);
           break;
         }
       }

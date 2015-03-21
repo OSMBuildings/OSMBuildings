@@ -871,6 +871,7 @@ var OSMBuildings = function(options) {
   options = options || {};
 
   Grid.fixedZoom = 16;
+
   // src=false and src=null would disable the data grid
   if (options.src === undefined) {
     Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
@@ -1380,13 +1381,13 @@ var Grid = {};
     var gridBounds = Grid.bounds;
     var key;
 
-    for (y = gridBounds.minY; tileY <= gridBounds.maxY; tileY++) {
+    for (tileY = gridBounds.minY; tileY <= gridBounds.maxY; tileY++) {
       for (tileX = gridBounds.minX; tileX <= gridBounds.maxX; tileX++) {
         key = [tileX, tileY, gridBounds.zoom].join(',');
         if (index[key]) {
           continue;
         }
-        queue.push({ tileX:tileX, tileY:tileY, zoom:gridBounds.zoom });
+        queue.push({ tileX:tileX, tileY:tileY, zoom:gridBounds.zoom, key:key });
       }
     }
 
@@ -1417,7 +1418,7 @@ var Grid = {};
 
   function purge() {
     for (var key in index) {
-      if (!index[key].isVisible(2)) { // testing with buffer of n tiles around viewport
+      if (!index[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
         Data.remove(index[key]);
         delete index[key];
       }
@@ -1434,7 +1435,6 @@ var Grid = {};
     if (!this.src) {
       return;
     }
-    updateBBox();
     update(100);
   };
 
@@ -1442,7 +1442,6 @@ var Grid = {};
     if (!this.src) {
       return;
     }
-    updateBBox();
     update();
   };
 
@@ -1475,7 +1474,7 @@ var Tile = function(tileX, tileY, zoom) {
   Tile.prototype.load = function(url) {
     this.isLoading = XHR.loadJSON(url, function(json) {
       this.isLoading = null;
-      var geom = GeoJSON.read(x, y, z, json);
+      var geom = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, json);
       this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
       this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
       this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
@@ -1485,12 +1484,13 @@ var Tile = function(tileX, tileY, zoom) {
   Tile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
     var gridBounds = Grid.bounds;
-    return (!this.isLoading && this.zoom === gridBounds.zoom &&
+
+    return (this.zoom === gridBounds.zoom &&
       (this.tileX >= gridBounds.minX-buffer && this.tileX <= gridBounds.maxX+buffer && this.tileY >= gridBounds.minY-buffer && this.tileY <= gridBounds.maxY+buffer));
   };
 
   Tile.prototype.render = function(program, projection) {
-    if (!this.isVisible()) {
+    if (this.isLoading || !this.isVisible()) {
       return;
     }
 
@@ -1539,8 +1539,8 @@ var Data = {
 
   items: [],
 
-  add: function(data) {
-    this.items.push(new Mesh(data));
+  add: function(mesh) {
+    this.items.push(mesh);
   },
 
   remove: function(item) {
@@ -1818,11 +1818,9 @@ var GeoJSON = {};
     }
   }
 
-  function transform(x, y, z, coordinates) {
+  function transform(offsetX, offsetY, zoom, coordinates) {
     var
-      worldSize = TILE_SIZE * Math.pow(2, z),
-      offX = x*TILE_SIZE,
-      offY = y*TILE_SIZE,
+      worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
@@ -1832,14 +1830,14 @@ var GeoJSON = {};
       res[c] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
         p = project(ring[r][1], ring[r][0], worldSize);
-        res[c][r] = [p.x-offX, p.y-offY];
+        res[c][r] = [p.x-offsetX, p.y-offsetY];
       }
     }
 
     return res;
   }
 
-  GeoJSON.read = function(x, y, z, geojson) {
+  GeoJSON.read = function(offsetX, offsetY, zoom, geojson) {
     if (!geojson || geojson.type !== 'FeatureCollection') {
       return [];
     }
@@ -1866,7 +1864,7 @@ var GeoJSON = {};
       geometries = getGeometries(feature.geometry);
 
       for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(x, y, z, geometries[j]);
+        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
 
         if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
           item.shape = 'cylinder';
