@@ -961,11 +961,9 @@ var OSMBuildings = function(options) {
     },
 
     addMesh: function(url) {
-      if (typeof url === 'object') {
-        Data.add(new Mesh(url));
-      } else {
-        var mesh = new Mesh();
-        Data.add(mesh);
+      var mesh = new Mesh(url);
+      Data.add(mesh);
+      if (typeof url === 'string') {
         mesh.load(url);
       }
       return this;
@@ -1083,6 +1081,23 @@ function pattern(str, param) {
 var SHADERS = {"default":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n//  float fog = clamp((10.0-vPosition.y)/20.0, 0.0, 0.5);\n//  gl_FragColor = vec4(vColor - shading, uAlpha-fog);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
+function isVertical(a, b, c) {
+  var d1x = a[0]-b[0];
+  var d1y = a[1]-b[1];
+  var d1z = a[2]-b[2];
+
+  var d2x = b[0]-c[0];
+  var d2y = b[1]-c[1];
+  var d2z = b[2]-c[2];
+
+  var nx = d1y*d2z - d1z*d2y;
+  var ny = d1z*d2x - d1x*d2z;
+  var nz = d1x*d2y - d1y*d2x;
+
+  var n = unit(nx, ny, nz);
+  return Math.round(n[2]*5000) === 0;
+}
+
 var Triangulate = {
 
   LAT_SEGMENTS: 32,
@@ -1114,7 +1129,7 @@ var Triangulate = {
     for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
       this.addTriangle(
         data,
-        [ triangles[t+0][0], triangles[t+0][1], z ],
+        [ triangles[t  ][0], triangles[t  ][1], z ],
         [ triangles[t+1][0], triangles[t+1][1], z ],
         [ triangles[t+2][0], triangles[t+2][1], z ],
         color
@@ -1123,38 +1138,79 @@ var Triangulate = {
   },
 
   polygon3d: function(data, polygon, color) {
-    var polygonLength = polygon.length;
-    if (polygonLength <= 15) { // 12: a triangle
+    var ring = polygon[0];
+    var ringLength = ring.length;
+    var triangles, t, tl;
+
+//  { r:255, g:0, b:0 }
+
+    if (ringLength <= 4) { // 3: a triangle
       this.addTriangle(
         data,
-        [ polygon[0], polygon[1], polygon[2] ],
-        [ polygon[6], polygon[7], polygon[8] ],
-        [ polygon[3], polygon[4], polygon[5] ],
+        ring[0],
+        ring[2],
+        ring[1],
         color
       );
-      if (polygonLength === 15) { // 15: a quad (2 triangles)
+
+      if (ringLength === 4) { // 4: a quad (2 triangles)
         this.addTriangle(
           data,
-        [ polygon[0], polygon[1], polygon[2] ],
-          [ polygon[9], polygon[10], polygon[11] ],
-          [ polygon[6], polygon[7],  polygon[8] ],
+          ring[0],
+          ring[3],
+          ring[2],
           color
         );
       }
       return;
     }
 
-    var poly = [];
-    for (var i = 0; i < polygon.length; i+=3) {
-      poly.push([ polygon[i], polygon[i+1], polygon[i+2] ]);
+    if (isVertical(ring[0], ring[1], ring[2])) {
+      for (var i = 0, il = polygon[0].length; i < il; i++) {
+        polygon[0][i] = [
+          polygon[0][i][2],
+          polygon[0][i][1],
+          polygon[0][i][0]
+        ];
+      }
+
+      triangles = earcut(polygon);
+      for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
+        this.addTriangle(
+          data,
+          [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
+          [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
+          [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
+          color
+        );
+
+        //if (n[0] < 0) { //  NE & SE
+        //  this.addTriangle(
+        //    data,
+        //    [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
+        //    [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
+        //    [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
+        //    color
+        //  );
+        //} else { // NW & SW
+        //  this.addTriangle(
+        //    data,
+        //    [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
+        //    [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
+        //    [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
+        //    color
+        //  );
+        //}
+      }
+
+      return;
     }
 
-    var triangles = earcut([poly]);
-
-    for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
+    triangles = earcut(polygon);
+    for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
       this.addTriangle(
         data,
-        [ triangles[t+0][0], triangles[t+0][1], triangles[t+0][2] ],
+        [ triangles[t  ][0], triangles[t  ][1], triangles[t  ][2] ],
         [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
         [ triangles[t+2][0], triangles[t+2][1], triangles[t+2][2] ],
         color
@@ -1199,7 +1255,24 @@ var Triangulate = {
     }
   },
 
-  Sphere: function(data, center, radius, minHeight, height, color) {
+  pyramid: function(data, polygon, center, minHeight, height, color) {
+    polygon = polygon[0];
+    for (var i = 0, il = polygon.length-1; i < il; i++) {
+      this.addTriangle(
+        data,
+        [ polygon[i  ][0], polygon[i  ][1], minHeight ],
+        [ polygon[i+1][0], polygon[i+1][1], minHeight ],
+        [ center[0], center[1], height ],
+        color
+      );
+    }
+  },
+
+  _dome: function(data, center, radius, minHeight, height, color) {
+    var latSegments = this.LAT_SEGMENTS/2;
+  },
+
+  _sphere: function(data, center, radius, minHeight, height, color) {
     var latSegments = this.LAT_SEGMENTS;
 
     var theta, sinTheta, cosTheta;
@@ -1216,11 +1289,7 @@ var Triangulate = {
     }
   },
 
-  Dome: function(data, center, radius, minHeight, height, color) {
-    var latSegments = this.LAT_SEGMENTS/2;
-  },
-
-//Sphere: function(radius) {
+//_sphere: function(radius) {
 //  var lat = 0, lon = 0;
 //  var maxLat = 10, maxLon = 10;
 //
@@ -1260,6 +1329,8 @@ var Triangulate = {
 //    }
 //  }
 //},
+
+  Pyramid: function() {},
 
   extrusion: function(data, polygon, minHeight, height, color) {
     var
@@ -1453,8 +1524,8 @@ var Grid = {};
 
 
 var Tile = function(tileX, tileY, zoom) {
-  this.tileX = tileX;
-  this.tileY = tileY;
+  this.x = tileX*TILE_SIZE;
+  this.y = tileY*TILE_SIZE;
   this.zoom = zoom;
 };
 
@@ -1472,21 +1543,27 @@ var Tile = function(tileX, tileY, zoom) {
   //***************************************************************************
 
   Tile.prototype.load = function(url) {
-    this.isLoading = XHR.loadJSON(url, function(json) {
-      this.isLoading = null;
-      var geom = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, json);
-      this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
-      this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
-      this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
-    }.bind(this));
+    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+  };
+
+  Tile.prototype.setData = function(json) {
+    this.isLoading = null;
+    var geom = GeoJSON.read(this.x, this.y, this.zoom, json);
+    this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    geom = null; json = null;
   };
 
   Tile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
-    var gridBounds = Grid.bounds;
+    var
+      gridBounds = Grid.bounds,
+      tileX = this.x/TILE_SIZE,
+      tileY = this.y/TILE_SIZE;
 
     return (this.zoom === gridBounds.zoom &&
-      (this.tileX >= gridBounds.minX-buffer && this.tileX <= gridBounds.maxX+buffer && this.tileY >= gridBounds.minY-buffer && this.tileY <= gridBounds.maxY+buffer));
+      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   };
 
   Tile.prototype.render = function(program, projection) {
@@ -1497,12 +1574,11 @@ var Tile = function(tileX, tileY, zoom) {
     var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
     var viewport = Map.size;
     var origin = Map.origin;
-    var adaptedTileSize = TILE_SIZE*ratio;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.tileX*adaptedTileSize - origin.x, this.tileY*adaptedTileSize - origin.y, 0);
+    matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, viewport.width/2, viewport.height/2, 0);
@@ -1557,107 +1633,91 @@ var Data = {
 
 
 var Mesh = function(data) {
-  // TODO: handle passed data
+  this.zoom = 16;
+
+  if (typeof data === 'object') {
+    this.setData(data);
+  }
 };
 
 (function() {
 
-  function init(data) {
-    this.zoom = 16;
-
-    this.offset = data.offset;
-
-    var worldSize = TILE_SIZE * Math.pow(2, 16);
-    var p = project(data.offset.latitude, data.offset.longitude, worldSize);
-
-    data = triangulate(p.x, p.y, 0, data.meshes);
-
-    this.vertexBuffer = this.createBuffer(3, new Float32Array(data.vertices));
-    this.normalBuffer = this.createBuffer(3, new Float32Array(data.normals));
-    this.colorBuffer  = this.createBuffer(3, new Uint8Array(data.colors));
+  function createBuffer(itemSize, data) {
+    var buffer = gl.createBuffer();
+    buffer.itemSize = itemSize;
+    buffer.numItems = data.length/itemSize;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    return buffer;
   }
 
-  function triangulate(offsetX, offsetY, offsetZ, meshes) {
-    var
-      data = {
-        vertices: [],
-        normals: [],
-        colors: []
-      },
-      polygon3d;
+  //***************************************************************************
 
-    for (var i = 0, il = meshes.length; i < il; i++) {
-      polygon3d = transform(offsetX, offsetY, offsetZ, meshes[i].coordinates);
-      Triangulate.polygon3d(data, polygon3d, meshes[i].color);
+  Mesh.prototype.load = function(url) {
+    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+  };
+
+  Mesh.prototype.setData = function(json) {
+    this.isLoading = null;
+
+    var
+      worldSize = TILE_SIZE * Math.pow(2, this.zoom),
+      p = project(json.offset.latitude, json.offset.longitude, worldSize);
+
+    this.x = p.x;
+    this.y = p.y;
+
+    var geom = JS3D.read(this.x, this.y, this.zoom, json);
+    this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    geom = null; json = null;
+  };
+
+  Mesh.prototype.render = function(program, projection) {
+    if (this.isLoading || !this.isVisible()) {
+      return;
     }
 
-    return data;
-  }
+    var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
+    var size = Map.size;
+    var origin = Map.origin;
 
-  function transform(offsetX, offsetY, offsetZ, coordinates) {
-    var
-      worldSize = TILE_SIZE * Math.pow(2, 16),
-      p;
+    var matrix = Matrix.create();
 
-    for (var i = 0, il = coordinates.length-2; i < il; i+=3) {
-      p = project(coordinates[i+1], coordinates[i], worldSize);
-      coordinates[i]   = p.x-offsetX;
-      coordinates[i+1] = p.y-offsetY;
-      coordinates[i+2] -= offsetZ;
-    }
+    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
+    matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
+    matrix = Matrix.rotateZ(matrix, Map.rotation);
+    matrix = Matrix.rotateX(matrix, Map.tilt);
+    matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
+    matrix = Matrix.multiply(matrix, projection);
 
-    return coordinates;
-  }
+    gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
 
-  Mesh.prototype = {
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    render: function(program, projection) {
-      var ratio = 1/Math.pow(2, 16-Map.zoom);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+    gl.vertexAttribPointer(program.attributes.aNormal, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      var size = Map.size;
-      var origin = Map.origin;
-      var position = project(this.offset.latitude, this.offset.longitude, TILE_SIZE * Math.pow(2, Map.zoom));
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+    gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
-      var matrix = Matrix.create();
-      matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.75);
-      matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
-      matrix = Matrix.rotateZ(matrix, Map.rotation);
-      matrix = Matrix.rotateX(matrix, Map.tilt);
-      matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
-      matrix = Matrix.multiply(matrix, projection);
+    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+  };
 
-      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+  Mesh.prototype.isVisible = function(key, buffer) {
+    buffer = buffer || 0;
+return true;
+  };
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-      gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+  Mesh.prototype.destroy = function() {
+    gl.deleteBuffer(this.vertexBuffer);
+    gl.deleteBuffer(this.normalBuffer);
+    gl.deleteBuffer(this.colorBuffer);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-      gl.vertexAttribPointer(program.attributes.aNormal, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-      gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
-
-      gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
-    },
-
-    isVisible: function(key, buffer) {
-      buffer = buffer || 0;
-
-      var
-        xyz = key.split(','),
-        x = parseInt(xyz[0], 10), y = parseInt(xyz[1], 10), z = parseInt(xyz[2], 10);
-
-      if (z !== zoom) {
-        return false;
-      }
-
-      return (x >= tileBounds.minX-buffer-tileSize && x <= tileBounds.maxX+buffer && y >= tileBounds.minY-buffer-tileSize && y <= tileBounds.maxY+buffer);
-    },
-
-    destroy: function() {
-      gl.deleteBuffer(this.vertexBuffer);
-      gl.deleteBuffer(this.normalBuffer);
-      gl.deleteBuffer(this.colorBuffer);
+    if (this.isLoading) {
+      this.isLoading.abort();
     }
   };
 
@@ -1871,10 +1931,11 @@ var GeoJSON = {};
           item.isRotational = true;
         }
 
+        bbox = getBBox(polygon);
+        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
+
         if (item.isRotational) {
-          bbox = getBBox(polygon);
           radius = (bbox.maxX-bbox.minX)/2;
-          center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
         }
 
 //      if (feature.id || feature.properties.id) {
@@ -1900,8 +1961,9 @@ var GeoJSON = {};
           break;
 
           case 'pyramid':
-//          Pyramid.draw(context, footprint, item.center, h, mh, wallColor);
+            Triangulate.pyramid(data, polygon, center, item.minHeight, item.height, item.wallColor);
           break;
+
           default:
             Triangulate.extrusion(data, polygon, item.minHeight, item.height, item.wallColor);
             Triangulate.polygon(data, polygon, item.height, item.roofColor);
@@ -1918,7 +1980,7 @@ var GeoJSON = {};
           break;
 
           case 'pyramid':
-//          Pyramid.draw(context, footprint, item.center, h+item.roofHeight, h, roofColor);
+            Triangulate.pyramid(data, polygon, center, item.height, item.height+item.roofHeight, item.roofColor);
           break;
         }
       }
@@ -1930,69 +1992,54 @@ var GeoJSON = {};
 }());
 
 
-var OBJ = {};
+var JS3D = {};
 
 (function() {
 
-  function addVertex(index, line) {
-    var x = parseFloat(line[1]);
-    var y = parseFloat(line[2]);
-    var z = parseFloat(line[3]);
-    index.vertices.push([x, z, y]);
-  }
+  function transform(offsetX, offsetY, zoom, ring) {
+    var
+      worldSize = TILE_SIZE * Math.pow(2, zoom),
+      res = [],
+      p;
 
-  function addNormal(index, line) {
-    index.normals.push([ parseFloat(line[1]), parseFloat(line[2]), parseFloat(line[3]) ]);
-  }
-
-  function addTexCoord(index, line) {
-    index.texCoords.push([ parseFloat(line[1]), parseFloat(line[2]) ]);
-  }
-
-  function addFace(model, polygon, index) {
-    var vertex, normal, color = [240, 220, 200], texCoord, attr;
-
-
-    for (var i = 1, il = 4; i < il; i++) { // il = polygon.length
-      attr = polygon[i].split('/');
-
-      vertex   = index.vertices[  attr[0]-1 ];
-      normal   = index.normals[   attr[2]-1 ];
-      texCoord = index.texCoords[ attr[1]-1 ];
-
-      model.vertices.push( vertex[0],   vertex[1], vertex[2]);
-      model.normals.push(  normal[0],   normal[1], normal[2]);
-      model.colors.push(   color[0],    color[1],  color[2]);
-      model.texCoords.push(texCoord[0], texCoord[1]);
+    for (var j = 0, jl = ring.length-2; j < jl; j+=3) {
+      p = project(ring[j+1], ring[j], worldSize);
+      res[j/3] = [p.x-offsetX, p.y-offsetY, ring[j+2]];
     }
+
+    return res;
   }
 
-  OBJ.read = function(str) {
-    var index = {
-      vertices: [],
-      normals: [],
-      texCoords: []
-    };
+  JS3D.read = function(offsetX, offsetY, zoom, json) {
+    var
+      buildings = json.meshes,
+      bld,
+      color,
+      data = {
+        vertices: [],
+        normals: [],
+        colors: []
+      },
+      j, jl,
+      polygon;
 
-    var model = {
-      vertices: [],
-      normals: [],
-      colors: [],
-      texCoords: []
-    };
+    for (var i = 0, il = buildings.length; i < il; i++) {
+      bld = buildings[i];
 
-    var lines = str.split('\n'), line;
-    for (var i = 0, il = lines.length; i < il; i++) {
-      line = lines[i].split(' ');
-      switch (line[0]) {
-        case 'v':  addVertex(index, line); break;
-        case 'vn': addNormal(index, line); break;
-        case 'vt': addTexCoord(index, line); break;
-        case 'f':  addFace(model, line, index); break;
+      color = { r:bld.wallColor[0], g:bld.wallColor[1], b:bld.wallColor[2] };
+      for (j = 0, jl = bld.walls.length; j < jl; j++) {
+        polygon = transform(offsetX, offsetY, zoom, bld.walls[j]);
+        Triangulate.polygon3d(data, [polygon], color);
+      }
+
+      color = { r:bld.roofColor[0], g:bld.roofColor[1], b:bld.roofColor[2] };
+      for (j = 0, jl = bld.roofs.length; j < jl; j++) {
+        polygon = transform(offsetX, offsetY, zoom, bld.roofs[j]);
+        Triangulate.polygon3d(data, [polygon], color);
       }
     }
 
-    return model;
+    return data;
   };
 
 }());
@@ -2337,7 +2384,7 @@ GLRenderer.prototype = {
       return;
     }
 
-    gl.enable(gl.CULL_FACE);
+    gl.disable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.cullFace(gl.BACK);
 

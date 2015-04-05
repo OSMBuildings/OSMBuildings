@@ -1,80 +1,59 @@
 
-var Mesh = function(data, position, options) {
-  this.options = options || {};
-
+var Mesh = function(data) {
   this.zoom = 16;
 
-//  this.offset = data.offset;
-
-  if (data.meshes) {
-    this.offset = data.offset;
-
-    var worldSize = TILE_SIZE * Math.pow(2, 16);
-    var p = project(data.offset.latitude, data.offset.longitude, worldSize);
-
-    data = triangulate(p.x, p.y, 0, data.meshes);
+  if (typeof data === 'object') {
+    this.setData(data);
   }
-
-  this.vertexBuffer = this.createBuffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = this.createBuffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = this.createBuffer(3, new Uint8Array(data.colors));
-
-//  this.offset = position;
 };
 
-function triangulate(offsetX, offsetY, offsetZ, meshes) {
-  var
-    data = {
-      vertices: [],
-      normals: [],
-      colors: []
-    },
-    polygon3d;
+(function() {
 
-  for (var i = 0, il = meshes.length; i < il; i++) {
-    polygon3d = transform(offsetX, offsetY, offsetZ, meshes[i].coordinates);
-    Triangulate.polygon3d(data, polygon3d, meshes[i].color);
-  }
-
-  return data;
-}
-
-function transform(offsetX, offsetY, offsetZ, coordinates) {
-  var
-    worldSize = TILE_SIZE * Math.pow(2, 16),
-    p;
-
-  for (var i = 0, il = coordinates.length-2; i < il; i+=3) {
-    p = project(coordinates[i+1], coordinates[i], worldSize);
-    coordinates[i]   = p.x-offsetX;
-    coordinates[i+1] = p.y-offsetY;
-    coordinates[i+2] -= offsetZ;
-  }
-
-  return coordinates;
-}
-
-Mesh.prototype = {
-
-  createBuffer: function(itemSize, data) {
+  function createBuffer(itemSize, data) {
     var buffer = gl.createBuffer();
     buffer.itemSize = itemSize;
     buffer.numItems = data.length/itemSize;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     return buffer;
-  },
+  }
 
-  render: function(program, projection) {
-    var ratio = 1/Math.pow(2, 16-Map.zoom); // * (this.options.scale || 1);
+  //***************************************************************************
 
+  Mesh.prototype.load = function(url) {
+    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+  };
+
+  Mesh.prototype.setData = function(json) {
+    this.isLoading = null;
+
+    var
+      worldSize = TILE_SIZE * Math.pow(2, this.zoom),
+      p = project(json.offset.latitude, json.offset.longitude, worldSize);
+
+    this.x = p.x;
+    this.y = p.y;
+
+    var geom = JS3D.read(this.x, this.y, this.zoom, json);
+    this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    geom = null; json = null;
+  };
+
+  Mesh.prototype.render = function(program, projection) {
+    if (this.isLoading || !this.isVisible()) {
+      return;
+    }
+
+    var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
     var size = Map.size;
     var origin = Map.origin;
-    var position = project(this.offset.latitude, this.offset.longitude, TILE_SIZE * Math.pow(2, Map.zoom));
 
     var matrix = Matrix.create();
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.75);
-    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+
+    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
+    matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
@@ -92,11 +71,21 @@ Mesh.prototype = {
     gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
-  },
+  };
 
-  destroy: function() {
+  Mesh.prototype.isVisible = function(key, buffer) {
+    buffer = buffer || 0;
+return true;
+  };
+
+  Mesh.prototype.destroy = function() {
     gl.deleteBuffer(this.vertexBuffer);
     gl.deleteBuffer(this.normalBuffer);
     gl.deleteBuffer(this.colorBuffer);
-  }
-};
+
+    if (this.isLoading) {
+      this.isLoading.abort();
+    }
+  };
+
+}());

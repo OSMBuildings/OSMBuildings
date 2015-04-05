@@ -91,16 +91,18 @@
       maxZoom: 22
     });
 
+    new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
 //  new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
-    new GLMap.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
+//  new GLMap.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', { fixedZoom:16 }).addTo(map);
+//  new GLMap.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
 
     var osmb = new OSMBuildings({
-//    tiles: null, // 'mp/tiles/{x},{y},{z}.json',
+      src: null // 'mp/tiles/{x},{y},{z}.json'
 //    map: map
     }).addTo(map);
 
-    //osmb.addMesh('mp/fernsehturm.3d.json', { latitude:52.52000, longitude:13.41000 }, { scale:0.02 });
-    //osmb.addMesh('mp/Mitte.3d.json');
+    osmb.addMesh('mp/Mitte.3d.json');
+    osmb.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
 
     //*************************************************************************
 

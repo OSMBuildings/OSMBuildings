@@ -26,7 +26,7 @@
     "src/data/Mesh.js",
 
     "src/formats/GeoJSON.js",
-    "src/formats/OBJ.js",
+    "src/formats/JS3D.js",
     "src/geometry.js",
     "src/Matrix.js",
 

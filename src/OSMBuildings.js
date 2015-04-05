@@ -95,11 +95,9 @@ var OSMBuildings = function(options) {
     },
 
     addMesh: function(url) {
-      if (typeof url === 'object') {
-        Data.add(new Mesh(url));
-      } else {
-        var mesh = new Mesh();
-        Data.add(mesh);
+      var mesh = new Mesh(url);
+      Data.add(mesh);
+      if (typeof url === 'string') {
         mesh.load(url);
       }
       return this;

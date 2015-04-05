@@ -1,7 +1,7 @@
 
 var Tile = function(tileX, tileY, zoom) {
-  this.tileX = tileX;
-  this.tileY = tileY;
+  this.x = tileX*TILE_SIZE;
+  this.y = tileY*TILE_SIZE;
   this.zoom = zoom;
 };
 
@@ -19,21 +19,27 @@ var Tile = function(tileX, tileY, zoom) {
   //***************************************************************************
 
   Tile.prototype.load = function(url) {
-    this.isLoading = XHR.loadJSON(url, function(json) {
-      this.isLoading = null;
-      var geom = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, json);
-      this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
-      this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
-      this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
-    }.bind(this));
+    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+  };
+
+  Tile.prototype.setData = function(json) {
+    this.isLoading = null;
+    var geom = GeoJSON.read(this.x, this.y, this.zoom, json);
+    this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    geom = null; json = null;
   };
 
   Tile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
-    var gridBounds = Grid.bounds;
+    var
+      gridBounds = Grid.bounds,
+      tileX = this.x/TILE_SIZE,
+      tileY = this.y/TILE_SIZE;
 
     return (this.zoom === gridBounds.zoom &&
-      (this.tileX >= gridBounds.minX-buffer && this.tileX <= gridBounds.maxX+buffer && this.tileY >= gridBounds.minY-buffer && this.tileY <= gridBounds.maxY+buffer));
+      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   };
 
   Tile.prototype.render = function(program, projection) {
@@ -44,12 +50,11 @@ var Tile = function(tileX, tileY, zoom) {
     var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
     var viewport = Map.size;
     var origin = Map.origin;
-    var adaptedTileSize = TILE_SIZE*ratio;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.tileX*adaptedTileSize - origin.x, this.tileY*adaptedTileSize - origin.y, 0);
+    matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, viewport.width/2, viewport.height/2, 0);
