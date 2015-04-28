@@ -4,7 +4,6 @@ var Renderer;
 var OSMBuildings = function(containerId, options) {
   options = options || {};
 
-  this._layers = [];
   this._container = document.getElementById(containerId);
 
   Map.setState(options);
@@ -12,8 +11,11 @@ var OSMBuildings = function(containerId, options) {
   this._initRenderer(this._container);
 
 
-  Grid.fixedZoom = 16;
+  if (options.tileSource) {
+    TileGrid.setSource(options.tileSource);
+  }
 
+  Grid.fixedZoom = 16;
   // dataSource=false and dataSource=null would disable the data grid
   if (options.dataSource === undefined) {
     Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
@@ -38,7 +40,7 @@ var OSMBuildings = function(containerId, options) {
 
   //  this.addAttribution(OSMBuildings.ATTRIBUTION);
 
-  Renderer = new GLRenderer(this.getContext());
+  Renderer = new GLRenderer(gl);
 
   Grid.onMapChange();
   Grid.onMapResize();
@@ -49,10 +51,6 @@ OSMBuildings.VERSION = '0.1.5';
 OSMBuildings.ATTRIBUTION = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
 OSMBuildings.prototype = {
-
-addLayer: function(layer) {
-  this._layers.push(layer);
-},
 
   setStyle: function(style) {
     var color = style.color || style.wallColor;
@@ -186,19 +184,10 @@ addLayer: function(layer) {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 // TODO: do this rarely
 var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
+
+      TileGrid.render(projection);
       Renderer.render(projection); // Data
-      for (var i = 0; i<this._layers.length; i++) {
-        this._layers[i].render(projection); // Tiles
-      }
     }.bind(this));
-  },
-
-  addLayer: function(layer) {
-    this._layers.push(layer);
-  },
-
-  getContext: function() {
-    return gl;
   },
 
   destroy: function() {
@@ -209,11 +198,7 @@ var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
     // TODO: stop render loop
     //  clearInterval(...);
 
-    for (var i = 0; i<this._layers.length; i++) {
-      this._layers[i].destroy();
-    }
-    this._layers = null;
-
+    TileGrid.destroy();
     Grid.destroy();
   }
 };

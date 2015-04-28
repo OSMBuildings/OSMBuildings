@@ -32,9 +32,7 @@ GL.createBuffer = function(itemSize, data) {
 
 //*****************************************************************************
 
-function MapTile(grid, tileX, tileY, zoom) {
-  this.grid = grid;
-
+function MapTile(tileX, tileY, zoom) {
   this.tileX = tileX;
   this.tileY = tileY;
   this.zoom = zoom;
@@ -57,22 +55,22 @@ MapTile.prototype = {
     this.isReady = true;
   },
 
-  render: function(program, projection, map) {
+  render: function(program, projection) {
     if (!this.isReady || !this.isVisible()) {
       return;
     }
 
-    var ratio = 1 / Math.pow(2, this.zoom - map.getZoom());
+    var ratio = 1 / Math.pow(2, this.zoom - Map.zoom);
     var adaptedTileSize = TILE_SIZE * ratio;
-    var size = map.getSize();
-    var origin = map.getOrigin();
+    var size = Map.size;
+    var origin = Map.origin;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
     matrix = Matrix.translate(matrix, this.tileX * adaptedTileSize - origin.x, this.tileY * adaptedTileSize - origin.y, 0);
-    matrix = Matrix.rotateZ(matrix, map.getRotation());
-    matrix = Matrix.rotateX(matrix, map.getTilt());
+    matrix = Matrix.rotateZ(matrix, Map.rotation);
+    matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, size.width / 2, size.height / 2, 0);
     matrix = Matrix.multiply(matrix, projection);
 
@@ -104,7 +102,7 @@ MapTile.prototype = {
     buffer = buffer || 0;
 
     var
-      gridBounds = this.grid.bounds,
+      gridBounds = TileGrid.bounds,
       tileX = this.tileX,
       tileY = this.tileY;
 

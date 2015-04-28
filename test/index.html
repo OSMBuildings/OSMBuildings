@@ -83,21 +83,20 @@
     var map = new OSMBuildings('map', {
       center: { latitude:52.52000, longitude:13.41000 },
       zoom: 16,
-//    rotation: 0,
-//    tilt: 0,
-//    disabled: true,
+      // rotation: 0,
+      // tilt: 0,
+      // disabled: true,
       minZoom: 14.5,
-      maxZoom: 22
-      //dataSource: null // disables default OSM data
+      maxZoom: 22,
+      tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png'
+      // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png'
+      // tileSource: 'http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg'
+      // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png'
+      // dataSource: null // null disables default OSM data
     });
 
-    new OSMBuildings.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png').addTo(map);
-//  new OSMBuildings.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
-//  new OSMBuildings.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg').addTo(map);
-//  new OSMBuildings.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png').addTo(map);
-
-//    map.addMesh('mp/Mitte.3d.json');
-//    map.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
+    // map.addMesh('mp/Mitte.3d.json');
+    // map.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
 
     //*************************************************************************
 
