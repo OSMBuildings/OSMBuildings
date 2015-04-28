@@ -1,5 +1,5 @@
 
-var Tile = function(tileX, tileY, zoom) {
+var DataTile = function(tileX, tileY, zoom) {
   this.x = tileX*TILE_SIZE;
   this.y = tileY*TILE_SIZE;
   this.zoom = zoom;
@@ -18,20 +18,21 @@ var Tile = function(tileX, tileY, zoom) {
 
   //***************************************************************************
 
-  Tile.prototype.load = function(url) {
-    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+  DataTile.prototype.load = function(url) {
+    this.request = XHR.loadJSON(url, this.onLoad.bind(this));
   };
 
-  Tile.prototype.setData = function(json) {
-    this.isLoading = null;
+  DataTile.prototype.onLoad = function(json) {
+    this.request = null;
     var geom = GeoJSON.read(this.x, this.y, this.zoom, json);
     this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
     geom = null; json = null;
+    this.isReady = true;
   };
 
-  Tile.prototype.isVisible = function(buffer) {
+  DataTile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
     var
       gridBounds = Grid.bounds,
@@ -39,11 +40,11 @@ var Tile = function(tileX, tileY, zoom) {
       tileY = this.y/TILE_SIZE;
 
     return (this.zoom === gridBounds.zoom &&
-      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
+      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer-1 && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer-1));
   };
 
-  Tile.prototype.render = function(program, projection) {
-    if (this.isLoading || !this.isVisible()) {
+  DataTile.prototype.render = function(program, projection) {
+    if (!this.isReady || !this.isVisible()) {
       return;
     }
 
@@ -74,13 +75,13 @@ var Tile = function(tileX, tileY, zoom) {
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
   };
 
-  Tile.prototype.destroy = function() {
+  DataTile.prototype.destroy = function() {
     gl.deleteBuffer(this.vertexBuffer);
     gl.deleteBuffer(this.normalBuffer);
     gl.deleteBuffer(this.colorBuffer);
 
-    if (this.isLoading) {
-      this.isLoading.abort();
+    if (this.request) {
+      this.request.abort();
     }
   };
 

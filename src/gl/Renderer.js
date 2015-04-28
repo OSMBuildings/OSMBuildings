@@ -1,6 +1,4 @@
 
-var gl;
-
 var GLRenderer = function(gl_) {
   gl = gl_;
   this.shaderPrograms.default = new Shader('default');

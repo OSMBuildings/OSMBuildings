@@ -865,6 +865,468 @@ Color.prototype = {
 
 return Color; }(this));
 
+var GLMap = function(containerId, options) {
+
+  options = options || {};
+
+  this._listeners = {};
+  this._layers = [];
+  this._container = document.getElementById(containerId);
+
+  this.minZoom = parseFloat(options.minZoom) || 10;
+  this.maxZoom = parseFloat(options.maxZoom) || 20;
+
+  if (this.maxZoom < this.minZoom) {
+    this.maxZoom = this.minZoom;
+  }
+
+  this._initState(options);
+  this._initEvents(this._container);
+  this._initRenderer(this._container);
+
+  this.setDisabled(options.disabled);
+};
+
+GLMap.prototype = {
+
+  _initState: function(options) {
+    this._center = {};
+    this._size = { width:0, height:0 };
+    options = State.load(options);
+    this.setCenter(options.center || { latitude:52.52000, longitude:13.41000 });
+    this.setZoom(options.zoom || this.minZoom);
+    this.setRotation(options.rotation || 0);
+    this.setTilt(options.tilt || 0);
+
+    this.on('change', function() {
+      State.save(this);
+    }.bind(this));
+
+    State.save(this);
+  },
+
+  _initEvents: function(container) {
+    this._startX = 0;
+    this._startY = 0;
+    this._startRotation = 0;
+    this._startZoom = 0;
+
+    this._hasTouch = ('ontouchstart' in window);
+    this._dragStartEvent = this._hasTouch ? 'touchstart' : 'mousedown';
+    this._dragMoveEvent  = this._hasTouch ? 'touchmove'  : 'mousemove';
+    this._dragEndEvent   = this._hasTouch ? 'touchend'   : 'mouseup';
+
+    addListener(container, this._dragStartEvent, this._onDragStart.bind(this));
+    addListener(container, 'dblclick',   this._onDoubleClick.bind(this));
+    addListener(document, this._dragMoveEvent, this._onDragMove.bind(this));
+    addListener(document, this._dragEndEvent,  this._onDragEnd.bind(this));
+
+    if (this._hasTouch) {
+      addListener(container, 'gesturechange', this._onGestureChange.bind(this));
+    } else {
+      addListener(container, 'mousewheel',     this._onMouseWheel.bind(this));
+      addListener(container, 'DOMMouseScroll', this._onMouseWheel.bind(this));
+    }
+
+    addListener(window, 'resize', this._onResize.bind(this));
+  },
+
+  _initRenderer: function(container) {
+    var canvas = document.createElement('CANVAS');
+    canvas.style.position = 'absolute';
+    canvas.style.pointerEvents = 'none';
+
+    container.appendChild(canvas);
+
+    // TODO: handle context loss
+    try {
+      gl = canvas.getContext('experimental-webgl', {
+        antialias: true,
+        depth: true,
+        premultipliedAlpha: false
+      });
+    } catch(ex) {
+      throw ex;
+    }
+
+    addListener(canvas, 'webglcontextlost', function(e) {
+      cancelEvent(e);
+      clearInterval(this._loop);
+    }.bind(this));
+
+    addListener(canvas, 'webglcontextrestored', this._initGL.bind(this));
+
+    this._initGL();
+  },
+
+  _initGL: function() {
+    this.setSize({ width:this._container.offsetWidth, height:this._container.offsetHeight });
+
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+
+    this._loop = setInterval(this._render.bind(this), 17);
+  },
+
+  _render: function() {
+    requestAnimationFrame(function() {
+      gl.clearColor(0.5, 0.5, 0.5, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+//    for (var i = this._layers.length-1; i >= 0; i--) {
+      for (var i = 0; i < this._layers.length; i++) {
+        this._layers[i].render(this._projection);
+      }
+    }.bind(this));
+  },
+
+  _onDragStart: function(e) {
+    if (this._isDisabled || (e.button !== undefined && e.button !== 0)) {
+      return;
+    }
+
+    cancelEvent(e);
+
+    if (e.touches !== undefined) {
+      this._startRotation = this._rotation;
+      this._startZoom = this._zoom;
+      if (e.touches.length > 1) {
+        return;
+      }
+      e = e.touches[0];
+    }
+
+    this._startX = e.clientX;
+    this._startY = e.clientY;
+
+    this._isDragging = true;
+  },
+
+  _onDragMove: function(e) {
+    if (this._isDisabled || !this._isDragging) {
+      return;
+    }
+
+    if (e.touches !== undefined) {
+      if (e.touches.length > 1) {
+        return;
+      }
+      e = e.touches[0];
+    }
+
+    var dx = e.clientX-this._startX;
+    var dy = e.clientY-this._startY;
+    var r = this._rotatePoint(dx, dy, this._rotation * Math.PI / 180);
+    this.setCenter(unproject(this._origin.x-r.x, this._origin.y-r.y, this._worldSize));
+
+    this._startX = e.clientX;
+    this._startY = e.clientY;
+  },
+
+  _onDragEnd: function(e) {
+    if (this._isDisabled || !this._isDragging) {
+      return;
+    }
+
+    if (e.touches !== undefined) {
+      if (e.touches.length > 1) {
+        return;
+      }
+      e = e.touches[0];
+    }
+
+    this._isDragging = false;
+
+    var dx = e.clientX-this._startX;
+    var dy = e.clientY-this._startY;
+    var r = this._rotatePoint(dx, dy, this._rotation * Math.PI / 180);
+    this.setCenter(unproject(this._origin.x-r.x, this._origin.y-r.y, this._worldSize));
+  },
+
+  _rotatePoint: function(x, y, angle) {
+    return {
+      x: Math.cos(angle)*x - Math.sin(angle)*y,
+      y: Math.sin(angle)*x + Math.cos(angle)*y
+    };
+  },
+
+  _onGestureChange: function(e) {
+    if (this._isDisabled) {
+      return;
+    }
+    cancelEvent(e);
+    this.setRotation(this._startRotation-e.rotation);
+    this.setZoom(this._startZoom + (e.scale - 1));
+  },
+
+  _onDoubleClick: function(e) {
+    if (this._isDisabled) {
+      return;
+    }
+    cancelEvent(e);
+    this.setZoom(this._zoom + 1, e);
+  },
+
+  _onMouseWheel: function(e) {
+    if (this._isDisabled) {
+      return;
+    }
+    cancelEvent(e);
+    var delta = 0;
+    if (e.wheelDeltaY) {
+      delta = e.wheelDeltaY;
+    } else if (e.wheelDelta) {
+      delta = e.wheelDelta;
+    } else if (e.detail) {
+      delta = -e.detail;
+    }
+
+    var adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
+
+    this.setZoom(this._zoom + adjust, e);
+  },
+
+  _onResize: function() {
+    clearTimeout(this._resizeTimer);
+    this._resizeTimer = setTimeout(function() {
+      var container = this._container;
+      if (this._size.width !== container.offsetWidth || this._size.height !== container.offsetHeight) {
+        this.setSize({ width:container.offsetWidth, height:container.offsetHeight });
+      }
+    }.bind(this), 250);
+  },
+
+  _emit: function(type) {
+    if (!this._listeners[type]) {
+      return;
+    }
+    var listeners = this._listeners[type];
+    for (var i = 0, il = listeners.length; i < il; i++) {
+      listeners[i]();
+    }
+  },
+
+  addLayer: function(layer) {
+    this._layers.push(layer);
+  },
+
+  removeLayer: function(layer) {
+    for (var i = 0; i < this._layers.length; i++) {
+      if (this._layers[i] === layer) {
+        this._layers[i].splice(i, 1);
+        return;
+      }
+    }
+  },
+
+  setDisabled: function(flag) {
+    this._isDisabled = !!flag;
+  },
+
+  on: function(type, listener) {
+    var listeners = this._listeners[type] || (this._listeners[type] = []);
+    listeners.push(listener);
+    return this;
+  },
+
+  _setOrigin: function(origin) {
+    this._origin = origin;
+  },
+
+  off: function(type, listener) {
+    return this;
+  },
+
+  getZoom: function() {
+    return this._zoom;
+  },
+
+  setZoom: function(zoom, e) {
+    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
+
+    if (this._zoom !== zoom) {
+      if (!e) {
+        this._zoom = zoom;
+        this._worldSize = TILE_SIZE * Math.pow(2, zoom);
+        this._setOrigin(project(this._center.latitude, this._center.longitude, this._worldSize));
+      } else {
+        var size = this.getSize();
+        var dx = size.width /2 - e.clientX;
+        var dy = size.height/2 - e.clientY;
+        var geoPos = unproject(this._origin.x - dx, this._origin.y - dy, this._worldSize);
+
+        this._zoom = zoom;
+        this._worldSize = TILE_SIZE * Math.pow(2, zoom);
+
+        var pxPos = project(geoPos.latitude, geoPos.longitude, this._worldSize);
+        this._setOrigin({ x:pxPos.x+dx, y:pxPos.y+dy });
+        this._center = unproject(this._origin.x, this._origin.y, this._worldSize);
+      }
+
+      this._emit('change');
+    }
+
+    return this;
+  },
+
+  getCenter: function() {
+    return this._center;
+  },
+
+  setCenter: function(center) {
+    center.latitude  = clamp(parseFloat(center.latitude),   -90,  90);
+    center.longitude = clamp(parseFloat(center.longitude), -180, 180);
+
+    if (this._center.latitude !== center.latitude || this._center.longitude !== center.longitude) {
+      this._center = center;
+      this._setOrigin(project(center.latitude, center.longitude, this._worldSize));
+      this._emit('change');
+    }
+
+    return this;
+  },
+
+  getBounds: function() {
+    var centerXY = project(this._center.latitude, this._center.longitude, this._worldSize);
+
+    var size = this.getSize();
+    var halfWidth  = size.width/2;
+    var halfHeight = size.height/2;
+
+    var nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, this._worldSize);
+    var se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, this._worldSize);
+
+    return {
+      n: nw.latitude,
+      w: nw.longitude,
+      s: se.latitude,
+      e: se.longitude
+    };
+  },
+
+  setSize: function(size) {
+    var canvas = gl.canvas;
+    if (size.width !== this._size.width || size.height !== this._size.height) {
+      canvas.width  = this._size.width  = size.width;
+      canvas.height = this._size.height = size.height;
+      gl.viewport(0, 0, size.width, size.height);
+      this._projection = Matrix.perspective(20, size.width, size.height, 40000);
+      this._emit('resize');
+    }
+
+    return this;
+  },
+
+  getSize: function() {
+    return this._size;
+  },
+
+  getOrigin: function() {
+    return this._origin;
+  },
+
+  getRotation: function() {
+    return this._rotation;
+  },
+
+  setRotation: function(rotation) {
+    rotation = parseFloat(rotation)%360;
+    if (this._rotation !== rotation) {
+      this._rotation = rotation;
+      this._emit('change');
+    }
+    return this;
+  },
+
+  getTilt: function() {
+    return this._tilt;
+  },
+
+  setTilt: function(tilt) {
+    tilt = clamp(parseFloat(tilt), 0, 70);
+    if (this._tilt !== tilt) {
+      this._tilt = tilt;
+      this._emit('change');
+    }
+    return this;
+  },
+
+  getContext: function() {
+    return gl;
+  },
+
+  destroy: function() {
+    var canvas = gl.canvas;
+    canvas.parentNode.removeChild(canvas);
+    gl = null;
+
+    // TODO: stop render loop
+//  clearInterval(...);
+    this._listeners = null;
+
+    for (var i = 0; i < this._layers.length; i++) {
+      this._layers[i].destroy();
+    }
+    this._layers = null;
+  }
+};
+
+
+var State = {};
+
+(function() {
+
+  function save(map) {
+    if (!history.replaceState) {
+      return;
+    }
+
+    var params = [];
+    var center = map.getCenter();
+    params.push('latitude=' + center.latitude.toFixed(5));
+    params.push('longitude=' + center.longitude.toFixed(5));
+    params.push('zoom=' + map.getZoom().toFixed(1));
+    params.push('tilt=' + map.getTilt().toFixed(1));
+    params.push('rotation=' + map.getRotation().toFixed(1));
+    history.replaceState({}, '', '?'+ params.join('&'));
+  }
+
+  State.load = function(options) {
+    var query = location.search;
+    if (query) {
+      var state = {};
+      query = query.substring(1).replace( /(?:^|&)([^&=]*)=?([^&]*)/g, function ($0, $1, $2) {
+        if ($1) {
+          state[$1] = $2;
+        }
+      });
+
+      if (state.latitude !== undefined && state.longitude !== undefined) {
+        options.center = { latitude:parseFloat(state.latitude), longitude:parseFloat(state.longitude) };
+      }
+      if (state.zoom !== undefined) {
+        options.zoom = parseFloat(state.zoom);
+      }
+      if (state.rotation !== undefined) {
+        options.rotation = parseFloat(state.rotation);
+      }
+      if (state.tilt !== undefined) {
+        options.tilt = parseFloat(state.tilt);
+      }
+    }
+    return options;
+  };
+
+  var timer;
+  State.save = function(map) {
+    clearTimeout(timer);
+    timer = setTimeout(function() {
+      save(map);
+    }, 1000);
+  };
+
+}());
+
+
 var Map, Renderer;
 
 var OSMBuildings = function(options) {
@@ -992,6 +1454,8 @@ var STYLE = {
   }
 };
 
+var gl;
+
 
 var XHR = {};
 
@@ -1072,13 +1536,37 @@ function project(latitude, longitude, worldSize) {
   return { x: x*worldSize, y: y*worldSize };
 }
 
+function unproject(x, y, worldSize) {
+  x /= worldSize;
+  y /= worldSize;
+  return {
+    latitude: (2 * Math.atan(Math.exp(Math.PI * (1 - 2*y))) - Math.PI/2) * (180/Math.PI),
+    longitude: x*360 - 180
+  };
+}
+
 function pattern(str, param) {
   return str.replace(/\{(\w+)\}/g, function(tag, key) {
     return param[key] || tag;
   });
 }
 
-var SHADERS = {"default":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n//  float fog = clamp((10.0-vPosition.y)/20.0, 0.0, 0.5);\n//  gl_FragColor = vec4(vColor - shading, uAlpha-fog);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn, false);
+}
+
+function removeListener(target, type, fn) {
+  target.removeEventListener(type, fn, false);
+}
+
+function cancelEvent(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  e.returnValue = false;
+}
+
+var SHADERS = {"tileplane":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"default":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n//  float fog = clamp((10.0-vPosition.y)/20.0, 0.0, 0.5);\n//  gl_FragColor = vec4(vColor - shading, uAlpha-fog);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 function isVertical(a, b, c) {
@@ -1479,7 +1967,7 @@ var Grid = {};
     var tile, q;
     for (var i = 0; i < queueLength; i++) {
       q = queue[i];
-      Data.add( tile = new Tile(q.tileX, q.tileY, q.zoom) );
+      Data.add( tile = new DataTile(q.tileX, q.tileY, q.zoom) );
       tile.load(getURL(q.tileX, q.tileY, q.zoom));
       index[q.key] = tile;
     }
@@ -1523,7 +2011,7 @@ var Grid = {};
 }());
 
 
-var Tile = function(tileX, tileY, zoom) {
+var DataTile = function(tileX, tileY, zoom) {
   this.x = tileX*TILE_SIZE;
   this.y = tileY*TILE_SIZE;
   this.zoom = zoom;
@@ -1542,20 +2030,25 @@ var Tile = function(tileX, tileY, zoom) {
 
   //***************************************************************************
 
-  Tile.prototype.load = function(url) {
-    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+  DataTile.prototype.load = function(url) {
+    this.request = XHR.loadJSON(url, this.onLoad.bind(this));
   };
 
-  Tile.prototype.setData = function(json) {
-    this.isLoading = null;
+  DataTile.prototype.onLoad = function(json) {
+    this.request = null;
     var geom = GeoJSON.read(this.x, this.y, this.zoom, json);
     this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
     geom = null; json = null;
+    this.isReady = true;
   };
 
-  Tile.prototype.isVisible = function(buffer) {
+  DataTile.prototype.isVisible = function(buffer) {
+    if (!this.isReady) {
+      return false;
+    }
+
     buffer = buffer || 0;
     var
       gridBounds = Grid.bounds,
@@ -1566,8 +2059,8 @@ var Tile = function(tileX, tileY, zoom) {
       (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   };
 
-  Tile.prototype.render = function(program, projection) {
-    if (this.isLoading || !this.isVisible()) {
+  DataTile.prototype.render = function(program, projection) {
+    if (!this.isVisible()) {
       return;
     }
 
@@ -1598,17 +2091,310 @@ var Tile = function(tileX, tileY, zoom) {
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
   };
 
-  Tile.prototype.destroy = function() {
+  DataTile.prototype.destroy = function() {
     gl.deleteBuffer(this.vertexBuffer);
     gl.deleteBuffer(this.normalBuffer);
     gl.deleteBuffer(this.colorBuffer);
 
-    if (this.isLoading) {
-      this.isLoading.abort();
+    if (this.request) {
+      this.request.abort();
     }
   };
 
 }());
+
+
+function TileGrid(url, options) {
+  this._url = url;
+
+  options = options || {};
+  this._tileSize  = options.tileSize || TILE_SIZE;
+
+  this._tiles = {};
+
+  this._shader = new Shader('tileplane');
+}
+
+GLMap.TileLayer = TileGrid;
+
+TileGrid.prototype = {
+
+  _updateTileBounds: function() {
+    var
+      bounds = this._map.getBounds(),
+      tileSize = this._tileSize,
+      zoom = this._zoom = Math.round(this._map.getZoom()),
+      worldSize = tileSize <<zoom,
+      min = project(bounds.n, bounds.w, worldSize),
+      max = project(bounds.s, bounds.e, worldSize);
+
+
+    this._tileBounds = {
+      minX: min.x/tileSize <<0,
+      minY: min.y/tileSize <<0,
+      maxX: Math.ceil(max.x/tileSize),
+      maxY: Math.ceil(max.y/tileSize)
+    };
+  },
+
+  _loadTiles: function() {
+    var
+      tileBounds = this._tileBounds,
+      zoom = this._zoom,
+      tiles = this._tiles,
+      x, y, key,
+      queue = [], queueLength;
+
+    var tileAnchor = [
+      tileBounds.minX + (tileBounds.maxX-tileBounds.minX-1)/2,
+      tileBounds.maxY
+    ];
+
+    for (y = tileBounds.minY; y < tileBounds.maxY; y++) {
+      for (x = tileBounds.minX; x < tileBounds.maxX; x++) {
+        key = [x, y, zoom].join(',');
+        if (tiles[key]) {
+          continue;
+        }
+        tiles[key] = new MapTile(x, y, zoom);
+        queue.push({ tile:tiles[key], dist:distance2([x, y], tileAnchor) });
+      }
+    }
+
+    if (!(queueLength = queue.length)) {
+      return;
+    }
+
+    queue.sort(function(a, b) {
+      return a.dist-b.dist;
+    });
+
+    for (var i = 0; i < queueLength; i++) {
+      queue[i].tile.load(this._getURL(queue[i].tile.tileX, queue[i].tile.tileY, queue[i].tile.zoom));
+    }
+
+    this._purge();
+  },
+
+  _getURL: function(x, y, z) {
+    var s = 'abcd'[(x+y) % 4];
+    return pattern(this._url, { s:s, x:x, y:y, z:z });
+  },
+
+  _purge: function() {
+    var
+      key,
+      tiles = this._tiles;
+return
+    for (key in tiles) {
+      if (!tiles[key].isVisible(1)) {
+        tiles[key].destroy();
+        delete tiles[key];
+      }
+    }
+  },
+
+  addTo: function(map) {
+    this._map = map;
+
+    map.addLayer(this);
+
+    this._updateTileBounds();
+    this.update();
+
+    map.on('change', function() {
+      this._updateTileBounds();
+      this.update(100);
+    }.bind(this));
+
+    map.on('resize', function() {
+      this._updateTileBounds();
+      this.update();
+    }.bind(this));
+  },
+
+  remove: function() {
+    this._map.remove(this);
+    this._map = null;
+  },
+
+  update: function(delay) {
+    if (!delay) {
+      this._loadTiles();
+      return;
+    }
+
+    if (!this._isWaiting) {
+      this._isWaiting = setTimeout(function() {
+        this._isWaiting = null;
+        this._loadTiles();
+      }.bind(this), delay);
+    }
+  },
+
+  // TODO: try to use tiles from other zoom levels when some are missing
+  render: function(projection) {
+    var program = this._shader.use();
+    var tiles = this._tiles;
+
+    for (var key in tiles) {
+      if (tiles[key].isVisible()) {
+        tiles[key].render(program, projection, this._map);
+      }
+    }
+    program.end();
+  },
+
+  destroy: function() {
+    clearTimeout(this._isWaiting);
+
+    for (var key in this._tiles) {
+      this._tiles[key].destroy();
+    }
+    this._tiles = null;
+  }
+};
+
+var GL = {};
+
+GL.createTexture = function(img) {
+  var texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.generateMipmap(gl.TEXTURE_2D);
+
+  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+//  img = null;
+  return texture;
+};
+
+GL.createBuffer = function(itemSize, data) {
+  var buffer = gl.createBuffer();
+  buffer.itemSize = itemSize;
+  buffer.numItems = data.length / itemSize;
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+  data = null;
+  return buffer;
+};
+
+//*****************************************************************************
+
+function MapTile(tileX, tileY, zoom) {
+  this.tileX = tileX;
+  this.tileY = tileY;
+  this.zoom = zoom;
+
+  this._vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+  this._texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+}
+
+MapTile.prototype = {
+
+  load: function(url) {
+    var img = this._image = new Image();
+    img.crossOrigin = '*';
+    img.onload = this.onLoad.bind(this);
+    img.src = url;
+  },
+
+  onLoad: function() {
+    this._texture = GL.createTexture(this._image);
+    this.isReady = true;
+  },
+
+  render: function(program, projection, map) {
+    if (!this.isVisible()) {
+      return;
+    }
+
+    var ratio = 1 / Math.pow(2, this.zoom - map.getZoom());
+    var adaptedTileSize = TILE_SIZE * ratio;
+    var size = map.getSize();
+    var origin = map.getOrigin();
+
+    var matrix = Matrix.create();
+
+    matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
+    matrix = Matrix.translate(matrix, this.tileX * adaptedTileSize - origin.x, this.tileY * adaptedTileSize - origin.tileY, 0);
+    matrix = Matrix.rotateZ(matrix, map.getRotation());
+    matrix = Matrix.rotateX(matrix, map.getTilt());
+    matrix = Matrix.translate(matrix, size.width / 2, size.height / 2, 0);
+    matrix = Matrix.multiply(matrix, projection);
+
+    gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
+    gl.vertexAttribPointer(program.attributes.aPosition, this._vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._texCoordBuffer);
+    gl.vertexAttribPointer(program.attributes.aTexCoord, this._texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._texture);
+    gl.uniform1i(program.uniforms.uTileImage, 0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this._vertexBuffer.numItems);
+  },
+
+    //var
+    //  tileBounds = this._tileBounds,
+    //  xyz = key.split(','),
+    //  x = parseInt(xyz[0], 10), y = parseInt(xyz[1], 10), z = parseInt(xyz[2], 10);
+    //
+    //// TODO: do not invalidate all zoom levels immediately
+    //if (z !== this._zoom) {
+    //  return false;
+    //}
+    //
+    //return (x >= tileBounds.minX-buffer && x <= tileBounds.maxX+buffer-1 && y >= tileBounds.minY-buffer && y <= tileBounds.maxY+buffer-1);
+
+  isVisible: function(buffer) {
+    if (!this.isReady) {
+      return false;
+    }
+
+return true;
+
+    buffer = buffer || 0;
+    var
+      gridBounds = TileGrid.bounds,
+      tileX = this.tileX,
+      tileY = this.tileY;
+
+  //  return (this.zoom === gridBounds.zoom &&
+  //  (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer-1 && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer-1));
+  },
+
+  getMatrix: function() {
+  //  var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
+  //  var origin = Map.origin;
+  //  var matrix = Matrix.create();
+  //  matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
+  //  matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
+  //  return matrix;
+  },
+
+  destroy: function() {
+    gl.deleteBuffer(this._vertexBuffer);
+    gl.deleteBuffer(this._texCoordBuffer);
+
+    this._image.src = '';
+
+    if (this._texture) {
+      gl.deleteTexture(this._texture);
+    }
+  }
+};
 
 
 var Data = {
@@ -1636,7 +2422,7 @@ var Mesh = function(data) {
   this.zoom = 16;
 
   if (typeof data === 'object') {
-    this.setData(data);
+    this.onLoad(data);
   }
 };
 
@@ -1654,11 +2440,11 @@ var Mesh = function(data) {
   //***************************************************************************
 
   Mesh.prototype.load = function(url) {
-    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+    this.request = XHR.loadJSON(url, this.onLoad.bind(this));
   };
 
-  Mesh.prototype.setData = function(json) {
-    this.isLoading = null;
+  Mesh.prototype.onLoad = function(json) {
+    this.request = null;
 
     var
       worldSize = TILE_SIZE * Math.pow(2, this.zoom),
@@ -1672,10 +2458,11 @@ var Mesh = function(data) {
     this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
     geom = null; json = null;
+    this.isReady = true;
   };
 
   Mesh.prototype.render = function(program, projection) {
-    if (this.isLoading || !this.isVisible()) {
+    if (!this.isVisible()) {
       return;
     }
 
@@ -1707,6 +2494,10 @@ var Mesh = function(data) {
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
+    if (!this.isReady) {
+      return false;
+    }
+
     buffer = buffer || 0;
 return true;
   };
@@ -1716,8 +2507,8 @@ return true;
     gl.deleteBuffer(this.normalBuffer);
     gl.deleteBuffer(this.colorBuffer);
 
-    if (this.isLoading) {
-      this.isLoading.abort();
+    if (this.request) {
+      this.request.abort();
     }
   };
 
@@ -2358,8 +3149,6 @@ var Matrix = {
   }
 };
 
-
-var gl;
 
 var GLRenderer = function(gl_) {
   gl = gl_;

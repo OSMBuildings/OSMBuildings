@@ -47,7 +47,7 @@
       background: #ffffff;
       opacity: 0.6;
       border-radius: 5px;
-			box-shadow: 0 0 5px #666666;
+      box-shadow: 0 0 5px #666666;
       font-weight: bold;
       text-align: center;
     }
@@ -57,7 +57,6 @@
       cursor: pointer;
     }
   </style>
-  <script src="../node_modules/glmap/dist/GLMap.debug.js"></script>
   <script>var baseURL = '../';</script>
   <script src="loader.js"></script>
 </head>
@@ -91,18 +90,17 @@
       maxZoom: 22
     });
 
-    new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
-//  new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
-//  new GLMap.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', { fixedZoom:16 }).addTo(map);
-//  new GLMap.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
+    new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png').addTo(map);
+//  new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
+//  new GLMap.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg').addTo(map);
+//  new GLMap.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png').addTo(map);
 
     var osmb = new OSMBuildings({
-      src: null // 'mp/tiles/{x},{y},{z}.json'
-//    map: map
+      //src: null // 'mp/tiles/{x},{y},{z}.json'
     }).addTo(map);
 
-    osmb.addMesh('mp/Mitte.3d.json');
-    osmb.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
+//    osmb.addMesh('mp/Mitte.3d.json');
+//    osmb.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
 
     //*************************************************************************
 

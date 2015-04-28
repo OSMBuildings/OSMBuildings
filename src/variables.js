@@ -17,3 +17,5 @@ var STYLE = {
     max: { zoom: 20, alpha: 1.0 }
   }
 };
+
+var gl;

@@ -71,7 +71,7 @@ var Grid = {};
     var tile, q;
     for (var i = 0; i < queueLength; i++) {
       q = queue[i];
-      Data.add( tile = new Tile(q.tileX, q.tileY, q.zoom) );
+      Data.add( tile = new DataTile(q.tileX, q.tileY, q.zoom) );
       tile.load(getURL(q.tileX, q.tileY, q.zoom));
       index[q.key] = tile;
     }

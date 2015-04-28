@@ -21,8 +21,32 @@ function project(latitude, longitude, worldSize) {
   return { x: x*worldSize, y: y*worldSize };
 }
 
+function unproject(x, y, worldSize) {
+  x /= worldSize;
+  y /= worldSize;
+  return {
+    latitude: (2 * Math.atan(Math.exp(Math.PI * (1 - 2*y))) - Math.PI/2) * (180/Math.PI),
+    longitude: x*360 - 180
+  };
+}
+
 function pattern(str, param) {
   return str.replace(/\{(\w+)\}/g, function(tag, key) {
     return param[key] || tag;
   });
+}
+
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn, false);
+}
+
+function removeListener(target, type, fn) {
+  target.removeEventListener(type, fn, false);
+}
+
+function cancelEvent(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  e.returnValue = false;
 }

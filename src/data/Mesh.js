@@ -3,7 +3,7 @@ var Mesh = function(data) {
   this.zoom = 16;
 
   if (typeof data === 'object') {
-    this.setData(data);
+    this.onLoad(data);
   }
 };
 
@@ -21,11 +21,11 @@ var Mesh = function(data) {
   //***************************************************************************
 
   Mesh.prototype.load = function(url) {
-    this.isLoading = XHR.loadJSON(url, this.setData.bind(this));
+    this.request = XHR.loadJSON(url, this.onLoad.bind(this));
   };
 
-  Mesh.prototype.setData = function(json) {
-    this.isLoading = null;
+  Mesh.prototype.onLoad = function(json) {
+    this.request = null;
 
     var
       worldSize = TILE_SIZE * Math.pow(2, this.zoom),
@@ -39,10 +39,11 @@ var Mesh = function(data) {
     this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
     geom = null; json = null;
+    this.isReady = true;
   };
 
   Mesh.prototype.render = function(program, projection) {
-    if (this.isLoading || !this.isVisible()) {
+    if (!this.isReady || !this.isVisible()) {
       return;
     }
 
@@ -83,8 +84,8 @@ return true;
     gl.deleteBuffer(this.normalBuffer);
     gl.deleteBuffer(this.colorBuffer);
 
-    if (this.isLoading) {
-      this.isLoading.abort();
+    if (this.request) {
+      this.request.abort();
     }
   };
 

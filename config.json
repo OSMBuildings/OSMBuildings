@@ -1,5 +1,9 @@
 {
   "shaders": {
+    "tileplane": {
+      "attributes": ["aPosition", "aTexCoord"],
+      "uniforms": ["uMatrix", "uTileImage"]
+    },
     "default": {
       "attributes": ["aPosition", "aColor", "aNormal"],
       "uniforms": ["uNormalTransform", "uMatrix", "uAlpha", "uLightColor", "uLightDirection"]
@@ -12,6 +16,9 @@
   ],
 
   "src": [
+    "src/GLMap.js",
+    "src/State.js",
+
     "src/OSMBuildings.js",
     "src/variables.js",
     "src/XHR.js",
@@ -20,7 +27,10 @@
     "src/Triangulate.js",
 
     "src/data/Grid.js",
-    "src/data/Tile.js",
+    "src/data/DataTile.js",
+
+    "src/data/TileGrid.js",
+    "src/data/MapTile.js",
 
     "src/data/Data.js",
     "src/data/Mesh.js",
