@@ -10,13 +10,13 @@ function TileGrid(url, options) {
   this._shader = new Shader('tileplane');
 }
 
-GLMap.TileLayer = TileGrid;
+OSMBuildings.TileLayer = TileGrid;
 
 TileGrid.prototype = {
 
   _updateTileBounds: function() {
     var
-      bounds = this._map.getBounds(),
+      bounds = Map.bounds,
       tileSize = this._tileSize,
       zoom = this._zoom = Math.round(this._map.getZoom()),
       worldSize = tileSize <<zoom,

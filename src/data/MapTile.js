@@ -109,7 +109,8 @@ MapTile.prototype = {
       tileY = this.tileY;
 
     return (this.zoom === gridBounds.zoom &&
-      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer-1 && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer-1));
+      // TODO: factor in tile origin
+      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   },
 
   getMatrix: function() {

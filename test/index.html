@@ -80,7 +80,7 @@
   </div>
 
   <script>
-    var map = new GLMap('map', {
+    var map = new OSMBuildings('map', {
       center: { latitude:52.52000, longitude:13.41000 },
       zoom: 16,
 //    rotation: 0,
@@ -88,19 +88,16 @@
 //    disabled: true,
       minZoom: 14.5,
       maxZoom: 22
+      //dataSource: null // disables default OSM data
     });
 
-    new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png').addTo(map);
-//  new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
-//  new GLMap.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg').addTo(map);
-//  new GLMap.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png').addTo(map);
+    new OSMBuildings.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png').addTo(map);
+//  new OSMBuildings.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
+//  new OSMBuildings.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg').addTo(map);
+//  new OSMBuildings.TileLayer('http://tile.stamen.com/toner/{z}/{x}/{y}.png').addTo(map);
 
-    var osmb = new OSMBuildings({
-      //src: null // 'mp/tiles/{x},{y},{z}.json'
-    }).addTo(map);
-
-//    osmb.addMesh('mp/Mitte.3d.json');
-//    osmb.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
+//    map.addMesh('mp/Mitte.3d.json');
+//    map.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
 
     //*************************************************************************
 

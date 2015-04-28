@@ -16,7 +16,6 @@
   ],
 
   "src": [
-    "src/GLMap.js",
     "src/State.js",
 
     "src/OSMBuildings.js",
