@@ -78,3 +78,10 @@ function unit(x, y, z) {
 
   return [x/m, y/m, z/m];
 }
+
+function rotatePoint(x, y, angle) {
+  return {
+    x: Math.cos(angle)*x - Math.sin(angle)*y,
+    y: Math.sin(angle)*x + Math.cos(angle)*y
+  };
+}

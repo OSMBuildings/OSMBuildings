@@ -9,12 +9,12 @@ var State = {};
     }
 
     var params = [];
-    var center = map.getCenter();
+    var center = map.center;
     params.push('latitude=' + center.latitude.toFixed(5));
     params.push('longitude=' + center.longitude.toFixed(5));
-    params.push('zoom=' + map.getZoom().toFixed(1));
-    params.push('tilt=' + map.getTilt().toFixed(1));
-    params.push('rotation=' + map.getRotation().toFixed(1));
+    params.push('zoom=' + map.zoom.toFixed(1));
+    params.push('tilt=' + map.tilt.toFixed(1));
+    params.push('rotation=' + map.rotation.toFixed(1));
     history.replaceState({}, '', '?'+ params.join('&'));
   }
 

@@ -16,9 +16,12 @@
   ],
 
   "src": [
+    "src/OSMBuildings.js",
+    "src/Map.js",
+    "src/Events.js",
+
     "src/State.js",
 
-    "src/OSMBuildings.js",
     "src/variables.js",
     "src/XHR.js",
     "src/util.js",

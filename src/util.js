@@ -35,18 +35,3 @@ function pattern(str, param) {
     return param[key] || tag;
   });
 }
-
-function addListener(target, type, fn) {
-  target.addEventListener(type, fn, false);
-}
-
-function removeListener(target, type, fn) {
-  target.removeEventListener(type, fn, false);
-}
-
-function cancelEvent(e) {
-  if (e.preventDefault) {
-    e.preventDefault();
-  }
-  e.returnValue = false;
-}
