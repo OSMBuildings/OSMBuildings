@@ -24,7 +24,7 @@ var Buildings = {};
       return;
     }
 
-    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.cullFace(gl.BACK);
 

@@ -35,8 +35,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  addMesh: function(url) {
-    var mesh = new Mesh(url);
+  addMesh: function(url, position) {
+    var mesh = new Mesh(url, position);
     if (typeof url === 'string') {
       mesh.load(url);
     }
@@ -150,7 +150,7 @@ OSMBuildings.prototype = {
 
   _render: function() {
     requestAnimationFrame(function() {
-      gl.clearColor(0.5, 0.5, 0.5, 1);
+      gl.clearColor(0.75, 0.75, 0.75, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       Basemap.render();
       Buildings.render();

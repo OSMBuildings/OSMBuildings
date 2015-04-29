@@ -288,7 +288,7 @@ var Triangulate = {
       b[0], b[1], b[2]
     );
 
-    var n = this.computeNormal(
+    var n = normal(
       a[0], a[1], a[2],
       b[0], b[1], b[2],
       c[0], c[1], c[2]
@@ -305,21 +305,5 @@ var Triangulate = {
       color.r, color.g, color.b,
       color.r, color.g, color.b
     );
-  },
-
-  computeNormal: function(ax, ay, az, bx, by, bz, cx, cy, cz) {
-    var d1x = ax-bx;
-    var d1y = ay-by;
-    var d1z = az-bz;
-
-    var d2x = bx-cx;
-    var d2y = by-cy;
-    var d2z = bz-cz;
-
-    var nx = d1y*d2z - d1z*d2y;
-    var ny = d1z*d2x - d1x*d2z;
-    var nz = d1x*d2y - d1y*d2x;
-
-    return unit(nx, ny, nz);
   }
 };

@@ -1,6 +1,11 @@
 
-var Mesh = function(data) {
-  this.zoom = 16;
+var Mesh = function(data, options) {
+  options = options || {};
+  if (options.color) {
+    this.color = Color.parse(options.color);
+  }
+  this.position = options.position;
+//  this.zoom = 16;
 
   if (typeof data === 'object') {
     this.onLoad(data);
@@ -29,14 +34,18 @@ var Mesh = function(data) {
   Mesh.prototype.onLoad = function(json) {
     this.request = null;
 
-    var
-      worldSize = TILE_SIZE * Math.pow(2, this.zoom),
-      p = project(json.offset.latitude, json.offset.longitude, worldSize);
+    //var
+    //  worldSize = TILE_SIZE * Math.pow(2, this.zoom),
+    //  p = project(json.offset.latitude, json.offset.longitude, worldSize);
+    //this.x = p.x;
+    //this.y = p.y;
 
-    this.x = p.x;
-    this.y = p.y;
+    if (!this.position) {
+      this.position = json.position || {};
+    }
 
-    var geom = JS3D.read(this.x, this.y, this.zoom, json);
+//  var geom = JS3D.read(this.x, this.y, this.zoom, json);
+    var geom = JS3D.read(json, this.color);
     this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
@@ -49,14 +58,20 @@ var Mesh = function(data) {
       return;
     }
 
-    var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
+    var
+      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+      pos = project(this.position.latitude, this.position.longitude, worldSize);
+
+var zoom = 16; // TODO: this can't stay fixed
+    var ratio = 1/Math.pow(2, zoom-Map.zoom);
     var size = Map.size;
     var origin = Map.origin;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
+//  matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
+    matrix = Matrix.translate(matrix, pos.x-origin.x, pos.y-origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
