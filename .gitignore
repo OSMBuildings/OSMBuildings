@@ -1,2 +1,4 @@
-/node_modules
-/test/mp
+node_modules/
+test/mp/
+.DS_Store
+.idea/

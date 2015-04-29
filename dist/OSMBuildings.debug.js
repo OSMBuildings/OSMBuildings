@@ -1,6 +1,4 @@
-var OSMBuildings = (function(window) {
-
-
+(function(window) {
 var earcut = (function() {
 
 'use strict'
@@ -865,70 +863,146 @@ Color.prototype = {
 
 return Color; }(this));
 
-var GLMap = function(containerId, options) {
+var Renderer;
 
+var OSMBuildings = function(containerId, options) {
   options = options || {};
 
-  this._listeners = {};
-  this._layers = [];
   this._container = document.getElementById(containerId);
 
-  this.minZoom = parseFloat(options.minZoom) || 10;
-  this.maxZoom = parseFloat(options.maxZoom) || 20;
-
-  if (this.maxZoom < this.minZoom) {
-    this.maxZoom = this.minZoom;
-  }
-
-  this._initState(options);
-  this._initEvents(this._container);
+  Map.setState(options);
+  Events.init(this._container);
   this._initRenderer(this._container);
 
+
+  if (options.tileSource) {
+    TileGrid.setSource(options.tileSource);
+  }
+
+  Grid.fixedZoom = 16;
+  // dataSource=false and dataSource=null would disable the data grid
+  if (options.dataSource === undefined) {
+    Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
+  } else if (typeof options.dataSource === 'string') {
+    Grid.src = options.dataSource;
+  }
+
   this.setDisabled(options.disabled);
+
+  if (options.style) {
+    this.setStyle(options.style);
+  }
+
+  this.on('change', function() {
+    Grid.onMapChange();
+  });
+
+  this.on('resize', function() {
+    Grid.onMapResize();
+    Renderer.onMapResize();
+  });
+
+  //  this.addAttribution(OSMBuildings.ATTRIBUTION);
+
+  Renderer = new GLRenderer(gl);
+
+  Grid.onMapChange();
+  Grid.onMapResize();
+  Renderer.onMapResize();
 };
 
-GLMap.prototype = {
+OSMBuildings.VERSION = '0.1.5';
+OSMBuildings.ATTRIBUTION = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-  _initState: function(options) {
-    this._center = {};
-    this._size = { width:0, height:0 };
-    options = State.load(options);
-    this.setCenter(options.center || { latitude:52.52000, longitude:13.41000 });
-    this.setZoom(options.zoom || this.minZoom);
-    this.setRotation(options.rotation || 0);
-    this.setTilt(options.tilt || 0);
+OSMBuildings.prototype = {
 
-    this.on('change', function() {
-      State.save(this);
-    }.bind(this));
-
-    State.save(this);
+  setStyle: function(style) {
+    var color = style.color || style.wallColor;
+    if (color) {
+      DEFAULT_COLOR = Color.parse(color).toRGBA();
+    }
+    return this;
   },
 
-  _initEvents: function(container) {
-    this._startX = 0;
-    this._startY = 0;
-    this._startRotation = 0;
-    this._startZoom = 0;
-
-    this._hasTouch = ('ontouchstart' in window);
-    this._dragStartEvent = this._hasTouch ? 'touchstart' : 'mousedown';
-    this._dragMoveEvent  = this._hasTouch ? 'touchmove'  : 'mousemove';
-    this._dragEndEvent   = this._hasTouch ? 'touchend'   : 'mouseup';
-
-    addListener(container, this._dragStartEvent, this._onDragStart.bind(this));
-    addListener(container, 'dblclick',   this._onDoubleClick.bind(this));
-    addListener(document, this._dragMoveEvent, this._onDragMove.bind(this));
-    addListener(document, this._dragEndEvent,  this._onDragEnd.bind(this));
-
-    if (this._hasTouch) {
-      addListener(container, 'gesturechange', this._onGestureChange.bind(this));
-    } else {
-      addListener(container, 'mousewheel',     this._onMouseWheel.bind(this));
-      addListener(container, 'DOMMouseScroll', this._onMouseWheel.bind(this));
+  addMesh: function(url) {
+    var mesh = new Mesh(url);
+    Data.add(mesh);
+    if (typeof url === 'string') {
+      mesh.load(url);
     }
+    return this;
+  },
 
-    addListener(window, 'resize', this._onResize.bind(this));
+  setDisabled: function(flag) {
+    this._isDisabled = !!flag;
+    return this;
+  },
+
+  isDisabled: function() {
+    return !!this._isDisabled;
+  },
+
+  on: function(type, fn) {
+    Events.on(type, fn);
+    return this;
+  },
+
+  off: function(type, fn) {
+    Events.off(type, fn);
+    return this;
+  },
+
+  setZoom: function(zoom) {
+    Map.setZoom(zoom);
+    return this;
+  },
+
+  getZoom: function() {
+    return Map.zoom;
+  },
+
+  setCenter: function(center) {
+    Map.setCenter(center);
+    return this;
+  },
+
+  getCenter: function() {
+    return Map.center;
+  },
+
+  getBounds: function() {
+    return Map.bounds();
+  },
+
+  setSize: function(size) {
+    Map.setSize(size);
+    return this;
+  },
+
+  getSize: function() {
+    return Map.size;
+  },
+
+  getOrigin: function() {
+    return Map.origin;
+  },
+
+  setRotation: function(rotation) {
+    Map.setRotation(rotation);
+    return this;
+  },
+
+  getRotation: function() {
+    return Map.rotation;
+  },
+
+  setTilt: function(tilt) {
+    Map.setTilt(tilt);
+    return this;
+  },
+
+  getTilt: function() {
+    return Map.tilt;
   },
 
   _initRenderer: function(container) {
@@ -945,7 +1019,7 @@ GLMap.prototype = {
         depth: true,
         premultipliedAlpha: false
       });
-    } catch(ex) {
+    } catch (ex) {
       throw ex;
     }
 
@@ -960,7 +1034,7 @@ GLMap.prototype = {
   },
 
   _initGL: function() {
-    this.setSize({ width:this._container.offsetWidth, height:this._container.offsetHeight });
+    this.setSize({ width: this._container.offsetWidth, height: this._container.offsetHeight });
 
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -972,102 +1046,263 @@ GLMap.prototype = {
     requestAnimationFrame(function() {
       gl.clearColor(0.5, 0.5, 0.5, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-//    for (var i = this._layers.length-1; i >= 0; i--) {
-      for (var i = 0; i < this._layers.length; i++) {
-        this._layers[i].render(this._projection);
-      }
+// TODO: do this rarely
+var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
+
+      TileGrid.render(projection);
+      Renderer.render(projection); // Data
     }.bind(this));
   },
 
-  _onDragStart: function(e) {
-    if (this._isDisabled || (e.button !== undefined && e.button !== 0)) {
-      return;
-    }
+  destroy: function() {
+    var canvas = gl.canvas;
+    canvas.parentNode.removeChild(canvas);
+    gl = null;
 
-    cancelEvent(e);
+    // TODO: stop render loop
+    //  clearInterval(...);
 
-    if (e.touches !== undefined) {
-      this._startRotation = this._rotation;
-      this._startZoom = this._zoom;
-      if (e.touches.length > 1) {
-        return;
-      }
-      e = e.touches[0];
-    }
+    TileGrid.destroy();
+    Grid.destroy();
+  }
+};
 
-    this._startX = e.clientX;
-    this._startY = e.clientY;
+//*****************************************************************************
 
-    this._isDragging = true;
-  },
+if (typeof define === 'function') {
+  define([], OSMBuildings);
+} else if (typeof exports === 'object') {
+  module.exports = OSMBuildings;
+} else {
+  window.OSMBuildings = OSMBuildings;
+}
 
-  _onDragMove: function(e) {
-    if (this._isDisabled || !this._isDragging) {
-      return;
-    }
 
-    if (e.touches !== undefined) {
-      if (e.touches.length > 1) {
-        return;
-      }
-      e = e.touches[0];
-    }
+var Map = {};
 
-    var dx = e.clientX-this._startX;
-    var dy = e.clientY-this._startY;
-    var r = this._rotatePoint(dx, dy, this._rotation * Math.PI / 180);
-    this.setCenter(unproject(this._origin.x-r.x, this._origin.y-r.y, this._worldSize));
+(function() {
 
-    this._startX = e.clientX;
-    this._startY = e.clientY;
-  },
+  function updateOrigin(origin) {
+    Map.origin = origin;
+  }
 
-  _onDragEnd: function(e) {
-    if (this._isDisabled || !this._isDragging) {
-      return;
-    }
+  function updateBounds() {
+    var centerXY = project(Map.center.latitude, Map.center.longitude, Map.worldSize);
 
-    if (e.touches !== undefined) {
-      if (e.touches.length > 1) {
-        return;
-      }
-      e = e.touches[0];
-    }
+    var halfWidth = Map.size.width/2;
+    var halfHeight = Map.size.height/2;
 
-    this._isDragging = false;
+    var nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, Map.worldSize);
+    var se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, Map.worldSize);
 
-    var dx = e.clientX-this._startX;
-    var dy = e.clientY-this._startY;
-    var r = this._rotatePoint(dx, dy, this._rotation * Math.PI / 180);
-    this.setCenter(unproject(this._origin.x-r.x, this._origin.y-r.y, this._worldSize));
-  },
-
-  _rotatePoint: function(x, y, angle) {
-    return {
-      x: Math.cos(angle)*x - Math.sin(angle)*y,
-      y: Math.sin(angle)*x + Math.cos(angle)*y
+    Map.bounds = {
+      n: nw.latitude,
+      w: nw.longitude,
+      s: se.latitude,
+      e: se.longitude
     };
-  },
+  }
 
-  _onGestureChange: function(e) {
-    if (this._isDisabled) {
+  //***************************************************************************
+
+  Map.center = {};
+  Map.size = { width: 0, height: 0 };
+
+  Map.setState = function(options) {
+    Map.minZoom = parseFloat(options.minZoom) || 10;
+    Map.maxZoom = parseFloat(options.maxZoom) || 20;
+
+    if (Map.maxZoom<Map.minZoom) {
+      Map.maxZoom = Map.minZoom;
+    }
+
+    options = State.load(options);
+    Map.setCenter(options.center || { latitude: 52.52000, longitude: 13.41000 });
+    Map.setZoom(options.zoom || Map.minZoom);
+    Map.setRotation(options.rotation || 0);
+    Map.setTilt(options.tilt || 0);
+
+    Events.on('change', function() {
+      State.save(Map);
+    });
+
+    State.save(Map);
+  };
+
+  Map.setZoom = function(zoom, e) {
+    zoom = clamp(parseFloat(zoom), Map.minZoom, Map.maxZoom);
+
+    if (Map.zoom !== zoom) {
+      if (!e) {
+        Map.zoom = zoom;
+        Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
+        updateOrigin(project(Map.center.latitude, Map.center.longitude, Map.worldSize));
+      } else {
+        var dx = Map.size.width/2 - e.clientX;
+        var dy = Map.size.height/2 - e.clientY;
+        var geoPos = unproject(Map.origin.x - dx, Map.origin.y - dy, Map.worldSize);
+
+        Map.zoom = zoom;
+        Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
+
+        var pxPos = project(geoPos.latitude, geoPos.longitude, Map.worldSize);
+        updateOrigin({ x: pxPos.x + dx, y: pxPos.y + dy });
+        Map.center = unproject(Map.origin.x, Map.origin.y, Map.worldSize);
+      }
+
+      updateBounds();
+      Events.emit('change');
+    }
+  };
+
+  Map.setCenter = function(center) {
+    center.latitude = clamp(parseFloat(center.latitude), -90, 90);
+    center.longitude = clamp(parseFloat(center.longitude), -180, 180);
+
+    if (Map.center.latitude !== center.latitude || Map.center.longitude !== center.longitude) {
+      Map.center = center;
+      updateOrigin(project(center.latitude, center.longitude, Map.worldSize));
+      updateBounds();
+      Events.emit('change');
+    }
+  };
+
+  Map.setSize = function(size) {
+    var canvas = gl.canvas;
+    if (size.width !== Map.size.width || size.height !== Map.size.height) {
+      canvas.width = Map.size.width = size.width;
+      canvas.height = Map.size.height = size.height;
+      gl.viewport(0, 0, size.width, size.height);
+      updateBounds();
+      Events.emit('resize');
+    }
+  };
+
+  Map.setRotation = function(rotation) {
+    rotation = parseFloat(rotation)%360;
+    if (Map.rotation !== rotation) {
+      Map.rotation = rotation;
+      updateBounds();
+      Events.emit('change');
+    }
+  };
+
+  Map.setTilt = function(tilt) {
+    tilt = clamp(parseFloat(tilt), 0, 70);
+    if (Map.tilt !== tilt) {
+      Map.tilt = tilt;
+      updateBounds();
+      Events.emit('change');
+    }
+  };
+
+  Map.destroy = function() {
+  };
+
+}());
+
+
+var Events = {};
+
+(function() {
+
+  var
+    listeners = {},
+
+    hasTouch = ('ontouchstart' in window),
+    dragStartEvent = hasTouch ? 'touchstart' : 'mousedown',
+    dragMoveEvent = hasTouch ? 'touchmove' : 'mousemove',
+    dragEndEvent = hasTouch ? 'touchend' : 'mouseup',
+
+    startX = 0,
+    startY = 0,
+    startRotation = 0,
+    startZoom = 0,
+    isDisabled = false,
+    isDragging = false;
+
+  function onDragStart(e) {
+    if (isDisabled || (e.button !== undefined && e.button !== 0)) {
+      return;
+    }
+
+    cancelEvent(e);
+
+    if (e.touches !== undefined) {
+      startRotation = Map.rotation;
+      startZoom = Map.zoom;
+      if (e.touches.length>1) {
+        return;
+      }
+      e = e.touches[0];
+    }
+
+    startX = e.clientX;
+    startY = e.clientY;
+
+    isDragging = true;
+  }
+
+  function onDragMove(e) {
+    if (isDisabled || !isDragging) {
+      return;
+    }
+
+    if (e.touches !== undefined) {
+      if (e.touches.length>1) {
+        return;
+      }
+      e = e.touches[0];
+    }
+
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
+    Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
+
+    startX = e.clientX;
+    startY = e.clientY;
+  }
+
+  function onDragEnd(e) {
+    if (isDisabled || !isDragging) {
+      return;
+    }
+
+    if (e.touches !== undefined) {
+      if (e.touches.length>1) {
+        return;
+      }
+      e = e.touches[0];
+    }
+
+    isDragging = false;
+
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
+    Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
+  }
+
+  function onGestureChange(e) {
+    if (isDisabled) {
       return;
     }
     cancelEvent(e);
-    this.setRotation(this._startRotation-e.rotation);
-    this.setZoom(this._startZoom + (e.scale - 1));
-  },
+    Map.setRotation(startRotation - e.rotation);
+    Map.setZoom(startZoom + (e.scale - 1));
+  }
 
-  _onDoubleClick: function(e) {
-    if (this._isDisabled) {
+  function onDoubleClick(e) {
+    if (isDisabled) {
       return;
     }
     cancelEvent(e);
-    this.setZoom(this._zoom + 1, e);
-  },
+    Map.setZoom(Map.zoom + 1, e);
+  }
 
-  _onMouseWheel: function(e) {
-    if (this._isDisabled) {
+  function onMouseWheel(e) {
+    if (isDisabled) {
       return;
     }
     cancelEvent(e);
@@ -1080,195 +1315,74 @@ GLMap.prototype = {
       delta = -e.detail;
     }
 
-    var adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
+    var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+    Map.setZoom(Map.zoom + adjust, e);
+  }
 
-    this.setZoom(this._zoom + adjust, e);
-  },
+  //***************************************************************************
 
-  _onResize: function() {
-    clearTimeout(this._resizeTimer);
-    this._resizeTimer = setTimeout(function() {
-      var container = this._container;
-      if (this._size.width !== container.offsetWidth || this._size.height !== container.offsetHeight) {
-        this.setSize({ width:container.offsetWidth, height:container.offsetHeight });
-      }
-    }.bind(this), 250);
-  },
+  Events.init = function(container) {
+    addListener(container, dragStartEvent, onDragStart);
+    addListener(container, 'dblclick', onDoubleClick);
+    addListener(document, dragMoveEvent, onDragMove);
+    addListener(document, dragEndEvent, onDragEnd);
 
-  _emit: function(type) {
-    if (!this._listeners[type]) {
+    if (hasTouch) {
+      addListener(container, 'gesturechange', onGestureChange);
+    } else {
+      addListener(container, 'mousewheel', onMouseWheel);
+      addListener(container, 'DOMMouseScroll', onMouseWheel);
+    }
+
+    addListener(window, 'resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+  //      if (Map.size.width !== container.offsetWidth || Map.size.height !== container.offsetHeight) {
+  //        Map.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+  //      }
+      }, 250);
+    });
+  };
+
+  Events.on = function(type, fn) {
+    if (!listeners[type]) {
+     listeners[type] = [];
+    }
+    listeners[type].push(fn);
+  };
+
+  Events.off = function(type, fn) {};
+
+  Events.emit = function(type) {
+    if (!listeners[type]) {
       return;
     }
-    var listeners = this._listeners[type];
-    for (var i = 0, il = listeners.length; i < il; i++) {
-      listeners[i]();
+    for (var i = 0, il = listeners[type].length; i<il; i++) {
+      listeners[type][i]();
     }
-  },
+  };
 
-  addLayer: function(layer) {
-    this._layers.push(layer);
-  },
+  Events.destroy = function() {
+    listeners = null;
+  };
+}());
 
-  removeLayer: function(layer) {
-    for (var i = 0; i < this._layers.length; i++) {
-      if (this._layers[i] === layer) {
-        this._layers[i].splice(i, 1);
-        return;
-      }
-    }
-  },
+//*****************************************************************************
 
-  setDisabled: function(flag) {
-    this._isDisabled = !!flag;
-  },
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn, false);
+}
 
-  on: function(type, listener) {
-    var listeners = this._listeners[type] || (this._listeners[type] = []);
-    listeners.push(listener);
-    return this;
-  },
+function removeListener(target, type, fn) {
+  target.removeEventListener(type, fn, false);
+}
 
-  _setOrigin: function(origin) {
-    this._origin = origin;
-  },
-
-  off: function(type, listener) {
-    return this;
-  },
-
-  getZoom: function() {
-    return this._zoom;
-  },
-
-  setZoom: function(zoom, e) {
-    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
-
-    if (this._zoom !== zoom) {
-      if (!e) {
-        this._zoom = zoom;
-        this._worldSize = TILE_SIZE * Math.pow(2, zoom);
-        this._setOrigin(project(this._center.latitude, this._center.longitude, this._worldSize));
-      } else {
-        var size = this.getSize();
-        var dx = size.width /2 - e.clientX;
-        var dy = size.height/2 - e.clientY;
-        var geoPos = unproject(this._origin.x - dx, this._origin.y - dy, this._worldSize);
-
-        this._zoom = zoom;
-        this._worldSize = TILE_SIZE * Math.pow(2, zoom);
-
-        var pxPos = project(geoPos.latitude, geoPos.longitude, this._worldSize);
-        this._setOrigin({ x:pxPos.x+dx, y:pxPos.y+dy });
-        this._center = unproject(this._origin.x, this._origin.y, this._worldSize);
-      }
-
-      this._emit('change');
-    }
-
-    return this;
-  },
-
-  getCenter: function() {
-    return this._center;
-  },
-
-  setCenter: function(center) {
-    center.latitude  = clamp(parseFloat(center.latitude),   -90,  90);
-    center.longitude = clamp(parseFloat(center.longitude), -180, 180);
-
-    if (this._center.latitude !== center.latitude || this._center.longitude !== center.longitude) {
-      this._center = center;
-      this._setOrigin(project(center.latitude, center.longitude, this._worldSize));
-      this._emit('change');
-    }
-
-    return this;
-  },
-
-  getBounds: function() {
-    var centerXY = project(this._center.latitude, this._center.longitude, this._worldSize);
-
-    var size = this.getSize();
-    var halfWidth  = size.width/2;
-    var halfHeight = size.height/2;
-
-    var nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, this._worldSize);
-    var se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, this._worldSize);
-
-    return {
-      n: nw.latitude,
-      w: nw.longitude,
-      s: se.latitude,
-      e: se.longitude
-    };
-  },
-
-  setSize: function(size) {
-    var canvas = gl.canvas;
-    if (size.width !== this._size.width || size.height !== this._size.height) {
-      canvas.width  = this._size.width  = size.width;
-      canvas.height = this._size.height = size.height;
-      gl.viewport(0, 0, size.width, size.height);
-      this._projection = Matrix.perspective(20, size.width, size.height, 40000);
-      this._emit('resize');
-    }
-
-    return this;
-  },
-
-  getSize: function() {
-    return this._size;
-  },
-
-  getOrigin: function() {
-    return this._origin;
-  },
-
-  getRotation: function() {
-    return this._rotation;
-  },
-
-  setRotation: function(rotation) {
-    rotation = parseFloat(rotation)%360;
-    if (this._rotation !== rotation) {
-      this._rotation = rotation;
-      this._emit('change');
-    }
-    return this;
-  },
-
-  getTilt: function() {
-    return this._tilt;
-  },
-
-  setTilt: function(tilt) {
-    tilt = clamp(parseFloat(tilt), 0, 70);
-    if (this._tilt !== tilt) {
-      this._tilt = tilt;
-      this._emit('change');
-    }
-    return this;
-  },
-
-  getContext: function() {
-    return gl;
-  },
-
-  destroy: function() {
-    var canvas = gl.canvas;
-    canvas.parentNode.removeChild(canvas);
-    gl = null;
-
-    // TODO: stop render loop
-//  clearInterval(...);
-    this._listeners = null;
-
-    for (var i = 0; i < this._layers.length; i++) {
-      this._layers[i].destroy();
-    }
-    this._layers = null;
+function cancelEvent(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
   }
-};
+  e.returnValue = false;
+}
 
 
 var State = {};
@@ -1281,12 +1395,12 @@ var State = {};
     }
 
     var params = [];
-    var center = map.getCenter();
+    var center = map.center;
     params.push('latitude=' + center.latitude.toFixed(5));
     params.push('longitude=' + center.longitude.toFixed(5));
-    params.push('zoom=' + map.getZoom().toFixed(1));
-    params.push('tilt=' + map.getTilt().toFixed(1));
-    params.push('rotation=' + map.getRotation().toFixed(1));
+    params.push('zoom=' + map.zoom.toFixed(1));
+    params.push('tilt=' + map.tilt.toFixed(1));
+    params.push('rotation=' + map.rotation.toFixed(1));
     history.replaceState({}, '', '?'+ params.join('&'));
   }
 
@@ -1322,114 +1436,6 @@ var State = {};
     timer = setTimeout(function() {
       save(map);
     }, 1000);
-  };
-
-}());
-
-
-var Map, Renderer;
-
-var OSMBuildings = function(options) {
-  options = options || {};
-
-  Grid.fixedZoom = 16;
-
-  // src=false and src=null would disable the data grid
-  if (options.src === undefined) {
-    Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
-  } else if (typeof options.src === 'string') {
-    Grid.src = options.src;
-  }
-
-  if (options.map) {
-    this.addTo(options.map);
-  }
-
-  if (options.style) {
-    this.setStyle(options.style);
-  }
-};
-
-(function() {
-
-  function onMapChange() {
-    Grid.onMapChange();
-  }
-
-  function onMapResize() {
-    Grid.onMapResize();
-    Renderer.onMapResize();
-  }
-
-  OSMBuildings.VERSION     = '0.1.5';
-  OSMBuildings.ATTRIBUTION = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
-
-  OSMBuildings.prototype = {
-
-    addTo: function(map) {
-      map.addLayer(this);
-
-      Map = {};
-
-      map.on('change', function() {
-        Map.zoom     = map.getZoom();
-        Map.bounds   = map.getBounds();
-        Map.origin   = map.getOrigin();
-        Map.rotation = map.getRotation();
-        Map.tilt     = map.getTilt();
-        onMapChange();
-      });
-
-      map.on('resize', function() {
-        Map.size   = map.getSize();
-        Map.bounds = map.getBounds();
-        onMapResize();
-      });
-
-  //  map.addAttribution(OSMBuildings.ATTRIBUTION);
-
-      Map.size     = map.getSize();
-      Map.zoom     = map.getZoom();
-      Map.bounds   = map.getBounds();
-      Map.origin   = map.getOrigin();
-      Map.rotation = map.getRotation();
-      Map.tilt     = map.getTilt();
-
-      Renderer = new GLRenderer(map.getContext());
-
-      onMapChange();
-      onMapResize();
-
-      return this;
-    },
-
-    remove: function() {},
-
-    render: function() {
-      Renderer.render();
-      return this;
-    },
-
-    destroy: function() {
-      Grid.destroy();
-    },
-
-    setStyle: function(style) {
-      var color = style.color || style.wallColor;
-      if (color) {
-        DEFAULT_COLOR = Color.parse(color).toRGBA();
-      }
-      return this;
-    },
-
-    addMesh: function(url) {
-      var mesh = new Mesh(url);
-      Data.add(mesh);
-      if (typeof url === 'string') {
-        mesh.load(url);
-      }
-      return this;
-    }
   };
 
 }());
@@ -1549,21 +1555,6 @@ function pattern(str, param) {
   return str.replace(/\{(\w+)\}/g, function(tag, key) {
     return param[key] || tag;
   });
-}
-
-function addListener(target, type, fn) {
-  target.addEventListener(type, fn, false);
-}
-
-function removeListener(target, type, fn) {
-  target.removeEventListener(type, fn, false);
-}
-
-function cancelEvent(e) {
-  if (e.preventDefault) {
-    e.preventDefault();
-  }
-  e.returnValue = false;
 }
 
 var SHADERS = {"tileplane":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"default":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n//  float fog = clamp((10.0-vPosition.y)/20.0, 0.0, 0.5);\n//  gl_FragColor = vec4(vColor - shading, uAlpha-fog);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
@@ -2045,10 +2036,6 @@ var DataTile = function(tileX, tileY, zoom) {
   };
 
   DataTile.prototype.isVisible = function(buffer) {
-    if (!this.isReady) {
-      return false;
-    }
-
     buffer = buffer || 0;
     var
       gridBounds = Grid.bounds,
@@ -2056,11 +2043,12 @@ var DataTile = function(tileX, tileY, zoom) {
       tileY = this.y/TILE_SIZE;
 
     return (this.zoom === gridBounds.zoom &&
+      // TODO: factor in tile origin
       (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   };
 
   DataTile.prototype.render = function(program, projection) {
-    if (!this.isVisible()) {
+    if (!this.isReady || !this.isVisible()) {
       return;
     }
 
@@ -2104,54 +2092,47 @@ var DataTile = function(tileX, tileY, zoom) {
 }());
 
 
-function TileGrid(url, options) {
-  this._url = url;
+var TileGrid = {};
 
-  options = options || {};
-  this._tileSize  = options.tileSize || TILE_SIZE;
+(function() {
 
-  this._tiles = {};
+  var
+    tileSize = TILE_SIZE,
+    source,
+    tiles = {},
+    isDelayed,
+    shader;
 
-  this._shader = new Shader('tileplane');
-}
-
-GLMap.TileLayer = TileGrid;
-
-TileGrid.prototype = {
-
-  _updateTileBounds: function() {
+  function updateTileBounds() {
     var
-      bounds = this._map.getBounds(),
-      tileSize = this._tileSize,
-      zoom = this._zoom = Math.round(this._map.getZoom()),
+      bounds = Map.bounds,
+      zoom = Math.round(Map.zoom),
       worldSize = tileSize <<zoom,
       min = project(bounds.n, bounds.w, worldSize),
       max = project(bounds.s, bounds.e, worldSize);
 
-
-    this._tileBounds = {
+    TileGrid.bounds = {
+      zoom: zoom,
       minX: min.x/tileSize <<0,
       minY: min.y/tileSize <<0,
       maxX: Math.ceil(max.x/tileSize),
       maxY: Math.ceil(max.y/tileSize)
     };
-  },
+  }
 
-  _loadTiles: function() {
+  function loadTiles() {
     var
-      tileBounds = this._tileBounds,
-      zoom = this._zoom,
-      tiles = this._tiles,
-      x, y, key,
-      queue = [], queueLength;
+      bounds = TileGrid.bounds,
+      x, y, zoom = bounds.zoom,
+      key,
+      queue = [], queueLength,
+      tileAnchor = [
+        bounds.minX + (bounds.maxX-bounds.minX-1)/2,
+        bounds.maxY
+      ];
 
-    var tileAnchor = [
-      tileBounds.minX + (tileBounds.maxX-tileBounds.minX-1)/2,
-      tileBounds.maxY
-    ];
-
-    for (y = tileBounds.minY; y < tileBounds.maxY; y++) {
-      for (x = tileBounds.minX; x < tileBounds.maxX; x++) {
+    for (y = bounds.minY; y < bounds.maxY; y++) {
+      for (x = bounds.minX; x < bounds.maxX; x++) {
         key = [x, y, zoom].join(',');
         if (tiles[key]) {
           continue;
@@ -2170,90 +2151,77 @@ TileGrid.prototype = {
     });
 
     for (var i = 0; i < queueLength; i++) {
-      queue[i].tile.load(this._getURL(queue[i].tile.tileX, queue[i].tile.tileY, queue[i].tile.zoom));
+      queue[i].tile.load(getURL(queue[i].tile.tileX, queue[i].tile.tileY, queue[i].tile.zoom));
     }
 
-    this._purge();
-  },
+    purge();
+  }
 
-  _getURL: function(x, y, z) {
+  function getURL(x, y, z) {
     var s = 'abcd'[(x+y) % 4];
-    return pattern(this._url, { s:s, x:x, y:y, z:z });
-  },
+    return pattern(source, { s:s, x:x, y:y, z:z });
+  }
 
-  _purge: function() {
-    var
-      key,
-      tiles = this._tiles;
-return
-    for (key in tiles) {
+  function purge() {
+    for (var key in tiles) {
       if (!tiles[key].isVisible(1)) {
         tiles[key].destroy();
         delete tiles[key];
       }
     }
-  },
+  }
 
-  addTo: function(map) {
-    this._map = map;
+  function update(delay) {
+    updateTileBounds();
 
-    map.addLayer(this);
-
-    this._updateTileBounds();
-    this.update();
-
-    map.on('change', function() {
-      this._updateTileBounds();
-      this.update(100);
-    }.bind(this));
-
-    map.on('resize', function() {
-      this._updateTileBounds();
-      this.update();
-    }.bind(this));
-  },
-
-  remove: function() {
-    this._map.remove(this);
-    this._map = null;
-  },
-
-  update: function(delay) {
     if (!delay) {
-      this._loadTiles();
+      loadTiles();
       return;
     }
 
-    if (!this._isWaiting) {
-      this._isWaiting = setTimeout(function() {
-        this._isWaiting = null;
-        this._loadTiles();
-      }.bind(this), delay);
+    if (!isDelayed) {
+      isDelayed = setTimeout(function() {
+        isDelayed = null;
+        loadTiles();
+      }, delay);
     }
-  },
+  }
+
+  //***************************************************************************
+
+  TileGrid.setSource = function(src) {
+    source = src;
+    shader = new Shader('tileplane');
+
+    Events.on('change', function() {
+      update(100);
+    });
+
+    Events.on('resize', function() {
+      update();
+    });
+
+    update();
+  };
 
   // TODO: try to use tiles from other zoom levels when some are missing
-  render: function(projection) {
-    var program = this._shader.use();
-    var tiles = this._tiles;
-
+  TileGrid.render = function(projection) {
+    var program = shader.use();
     for (var key in tiles) {
-      if (tiles[key].isVisible()) {
-        tiles[key].render(program, projection, this._map);
-      }
+      tiles[key].render(program, projection);
     }
     program.end();
-  },
+  };
 
-  destroy: function() {
-    clearTimeout(this._isWaiting);
-
-    for (var key in this._tiles) {
-      this._tiles[key].destroy();
+  TileGrid.destroy = function() {
+    clearTimeout(isDelayed);
+    for (var key in tiles) {
+      tiles[key].destroy();
     }
-    this._tiles = null;
-  }
-};
+    tiles = null;
+  };
+
+}());
 
 var GL = {};
 
@@ -2312,22 +2280,22 @@ MapTile.prototype = {
     this.isReady = true;
   },
 
-  render: function(program, projection, map) {
-    if (!this.isVisible()) {
+  render: function(program, projection) {
+    if (!this.isReady || !this.isVisible()) {
       return;
     }
 
-    var ratio = 1 / Math.pow(2, this.zoom - map.getZoom());
+    var ratio = 1 / Math.pow(2, this.zoom - Map.zoom);
     var adaptedTileSize = TILE_SIZE * ratio;
-    var size = map.getSize();
-    var origin = map.getOrigin();
+    var size = Map.size;
+    var origin = Map.origin;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
-    matrix = Matrix.translate(matrix, this.tileX * adaptedTileSize - origin.x, this.tileY * adaptedTileSize - origin.tileY, 0);
-    matrix = Matrix.rotateZ(matrix, map.getRotation());
-    matrix = Matrix.rotateX(matrix, map.getTilt());
+    matrix = Matrix.translate(matrix, this.tileX * adaptedTileSize - origin.x, this.tileY * adaptedTileSize - origin.y, 0);
+    matrix = Matrix.rotateZ(matrix, Map.rotation);
+    matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, size.width / 2, size.height / 2, 0);
     matrix = Matrix.multiply(matrix, projection);
 
@@ -2347,7 +2315,6 @@ MapTile.prototype = {
   },
 
     //var
-    //  tileBounds = this._tileBounds,
     //  xyz = key.split(','),
     //  x = parseInt(xyz[0], 10), y = parseInt(xyz[1], 10), z = parseInt(xyz[2], 10);
     //
@@ -2355,24 +2322,18 @@ MapTile.prototype = {
     //if (z !== this._zoom) {
     //  return false;
     //}
-    //
-    //return (x >= tileBounds.minX-buffer && x <= tileBounds.maxX+buffer-1 && y >= tileBounds.minY-buffer && y <= tileBounds.maxY+buffer-1);
 
   isVisible: function(buffer) {
-    if (!this.isReady) {
-      return false;
-    }
-
-return true;
-
     buffer = buffer || 0;
+
     var
       gridBounds = TileGrid.bounds,
       tileX = this.tileX,
       tileY = this.tileY;
 
-  //  return (this.zoom === gridBounds.zoom &&
-  //  (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer-1 && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer-1));
+    return (this.zoom === gridBounds.zoom &&
+      // TODO: factor in tile origin
+      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   },
 
   getMatrix: function() {
@@ -2462,7 +2423,7 @@ var Mesh = function(data) {
   };
 
   Mesh.prototype.render = function(program, projection) {
-    if (!this.isVisible()) {
+    if (!this.isReady || !this.isVisible()) {
       return;
     }
 
@@ -2494,10 +2455,6 @@ var Mesh = function(data) {
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
-    if (!this.isReady) {
-      return false;
-    }
-
     buffer = buffer || 0;
 return true;
   };
@@ -2915,6 +2872,14 @@ function unit(x, y, z) {
 
   return [x/m, y/m, z/m];
 }
+
+function rotatePoint(x, y, angle) {
+  return {
+    x: Math.cos(angle)*x - Math.sin(angle)*y,
+    y: Math.sin(angle)*x + Math.cos(angle)*y
+  };
+}
+
 
 var Matrix = {
 
@@ -3399,5 +3364,4 @@ Texture.prototype = {
     return texture;
   };
 
-*/
-return OSMBuildings; }(this));
+*/}(this));

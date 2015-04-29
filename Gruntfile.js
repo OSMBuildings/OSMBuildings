@@ -9,8 +9,8 @@ module.exports = function(grunt) {
     concat: {
       options: {
         separator: '\n',
-        banner: 'var <%=product%> = (function(window) {\n\n',
-        footer: '\nreturn <%=product%>; }(this));'
+        banner: "(function(window) {",
+        footer: '}(this));'
       },
       dist: {
         src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],

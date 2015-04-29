@@ -202,3 +202,13 @@ var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
     Grid.destroy();
   }
 };
+
+//*****************************************************************************
+
+if (typeof define === 'function') {
+  define([], OSMBuildings);
+} else if (typeof exports === 'object') {
+  module.exports = OSMBuildings;
+} else {
+  window.OSMBuildings = OSMBuildings;
+}
