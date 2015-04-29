@@ -868,24 +868,14 @@ var Renderer;
 var OSMBuildings = function(containerId, options) {
   options = options || {};
 
-  this._container = document.getElementById(containerId);
+  var container = document.getElementById(containerId);
 
   Map.setState(options);
-  Events.init(this._container);
-  this._initRenderer(this._container);
+  Events.init(container);
+  this._initRenderer(container);
 
-
-  if (options.tileSource) {
-    TileGrid.setSource(options.tileSource);
-  }
-
-  Grid.fixedZoom = 16;
-  // dataSource=false and dataSource=null would disable the data grid
-  if (options.dataSource === undefined) {
-    Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
-  } else if (typeof options.dataSource === 'string') {
-    Grid.src = options.dataSource;
-  }
+  TileGrid.setSource(options.tileSource);
+  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
   this.setDisabled(options.disabled);
 
@@ -893,22 +883,13 @@ var OSMBuildings = function(containerId, options) {
     this.setStyle(options.style);
   }
 
-  this.on('change', function() {
-    Grid.onMapChange();
-  });
-
-  this.on('resize', function() {
-    Grid.onMapResize();
+  Renderer = new GLRenderer(gl);
+  Events.on('resize', function() {
     Renderer.onMapResize();
   });
-
-  //  this.addAttribution(OSMBuildings.ATTRIBUTION);
-
-  Renderer = new GLRenderer(gl);
-
-  Grid.onMapChange();
-  Grid.onMapResize();
   Renderer.onMapResize();
+
+  // this.addAttribution(OSMBuildings.ATTRIBUTION);
 };
 
 OSMBuildings.VERSION = '0.1.5';
@@ -926,20 +907,10 @@ OSMBuildings.prototype = {
 
   addMesh: function(url) {
     var mesh = new Mesh(url);
-    Data.add(mesh);
     if (typeof url === 'string') {
       mesh.load(url);
     }
     return this;
-  },
-
-  setDisabled: function(flag) {
-    this._isDisabled = !!flag;
-    return this;
-  },
-
-  isDisabled: function() {
-    return !!this._isDisabled;
   },
 
   on: function(type, fn) {
@@ -950,6 +921,15 @@ OSMBuildings.prototype = {
   off: function(type, fn) {
     Events.off(type, fn);
     return this;
+  },
+
+  setDisabled: function(flag) {
+    Events.setDisabled(flag);
+    return this;
+  },
+
+  isDisabled: function() {
+    return Events.isDisabled();
   },
 
   setZoom: function(zoom) {
@@ -1028,13 +1008,9 @@ OSMBuildings.prototype = {
       clearInterval(this._loop);
     }.bind(this));
 
-    addListener(canvas, 'webglcontextrestored', this._initGL.bind(this));
+//    addListener(canvas, 'webglcontextrestored', INIT GL);
 
-    this._initGL();
-  },
-
-  _initGL: function() {
-    this.setSize({ width: this._container.offsetWidth, height: this._container.offsetHeight });
+    this.setSize({ width: container.offsetWidth, height: container.offsetHeight });
 
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -1063,7 +1039,7 @@ var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
     //  clearInterval(...);
 
     TileGrid.destroy();
-    Grid.destroy();
+    DataGrid.destroy();
   }
 };
 
@@ -1218,8 +1194,10 @@ var Events = {};
     startY = 0,
     startRotation = 0,
     startZoom = 0,
+
     isDisabled = false,
-    isDragging = false;
+    isDragging = false,
+    resizeTimer;
 
   function onDragStart(e) {
     if (isDisabled || (e.button !== undefined && e.button !== 0)) {
@@ -1360,6 +1338,14 @@ var Events = {};
     for (var i = 0, il = listeners[type].length; i<il; i++) {
       listeners[type][i]();
     }
+  };
+
+  Events.setDisabled = function(flag) {
+    isDisabled = !!flag;
+  };
+
+  Events.isDisabled = function() {
+    return !!isDisabled;
   };
 
   Events.destroy = function() {
@@ -1886,31 +1872,18 @@ var Triangulate = {
 };
 
 
-var Grid = {};
+var DataGrid = {};
 
 (function() {
 
-  var isDelayed;
-  var index = {};
+  var
+    source,
+    isDelayed,
+    tiles = {},
+    fixedZoom = 16;
 
   function update(delay) {
-    var zoom = Grid.fixedZoom || Math.round(Map.zoom);
-
-    var
-      mapBounds = Map.bounds,
-      worldSize = TILE_SIZE <<zoom,
-      min = project(mapBounds.n, mapBounds.w, worldSize),
-      max = project(mapBounds.s, mapBounds.e, worldSize);
-
-    Grid.bounds = {
-      zoom: zoom,
-      minX: min.x/TILE_SIZE <<0,
-      minY: min.y/TILE_SIZE <<0,
-      maxX: Math.ceil(max.x/TILE_SIZE),
-      maxY: Math.ceil(max.y/TILE_SIZE)
-    };
-
-    // TODO: signal, if bbox changed => for loadTiles() + Data.getVisibleItems()
+    updateTileBounds();
 
     if (!delay) {
       loadTiles();
@@ -1925,19 +1898,43 @@ var Grid = {};
     }
   }
 
-  function loadTiles() {
-    var tileX, tileY;
-    var queue = [], queueLength;
-    var gridBounds = Grid.bounds;
-    var key;
+  // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
+  function updateTileBounds() {
+    var
+      zoom = fixedZoom || Math.round(Map.zoom),
+      bounds = Map.bounds,
+      worldSize = TILE_SIZE <<zoom,
+      min = project(bounds.n, bounds.w, worldSize),
+      max = project(bounds.s, bounds.e, worldSize);
 
-    for (tileY = gridBounds.minY; tileY <= gridBounds.maxY; tileY++) {
-      for (tileX = gridBounds.minX; tileX <= gridBounds.maxX; tileX++) {
-        key = [tileX, tileY, gridBounds.zoom].join(',');
-        if (index[key]) {
+    DataGrid.bounds = {
+      zoom: zoom,
+      minX: min.x/TILE_SIZE <<0,
+      minY: min.y/TILE_SIZE <<0,
+      maxX: Math.ceil(max.x/TILE_SIZE),
+      maxY: Math.ceil(max.y/TILE_SIZE)
+    };
+  }
+
+  function loadTiles() {
+    var
+      bounds = DataGrid.bounds,
+      tileX, tileY, zoom = bounds.zoom,
+      key,
+      queue = [], queueLength,
+      tileAnchor = [
+        bounds.minX + (bounds.maxX-bounds.minX-1)/2,
+        bounds.maxY
+      ];
+
+    for (tileY = bounds.minY; tileY <= bounds.maxY; tileY++) {
+      for (tileX = bounds.minX; tileX <= bounds.maxX; tileX++) {
+        key = [tileX, tileY, zoom].join(',');
+        if (tiles[key]) {
           continue;
         }
-        queue.push({ tileX:tileX, tileY:tileY, zoom:gridBounds.zoom, key:key });
+        tiles[key] = new DataTile(tileX, tileY, zoom);
+        queue.push({ tile:tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }
 
@@ -1945,67 +1942,76 @@ var Grid = {};
       return;
     }
 
-    // TODO: currently viewport center but could be aligned to be camera pos
-    var tileAnchor = {
-      x:gridBounds.minX + (gridBounds.maxX-gridBounds.minX-1)/2,
-      y:gridBounds.minY + (gridBounds.maxY-gridBounds.minY-1)/2
-    };
-
-    queue.sort(function(b, a) {
-      return distance2(a, tileAnchor) - distance2(b, tileAnchor);
+    queue.sort(function(a, b) {
+      return a.dist-b.dist;
     });
 
-    var tile, q;
+    var tile;
     for (var i = 0; i < queueLength; i++) {
-      q = queue[i];
-      Data.add( tile = new DataTile(q.tileX, q.tileY, q.zoom) );
-      tile.load(getURL(q.tileX, q.tileY, q.zoom));
-      index[q.key] = tile;
+      tile = queue[i].tile;
+      tile.load(getURL(tile.tileX, tile.tileY, tile.zoom));
     }
 
     purge();
   }
 
   function purge() {
-    for (var key in index) {
-      if (!index[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
-        Data.remove(index[key]);
-        delete index[key];
+    for (var key in tiles) {
+      if (!tiles[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+        Data.remove(tiles[key]);
+        delete tiles[key];
       }
     }
   }
 
   function getURL(x, y, z) {
     var s = 'abcd'[(x+y) % 4];
-    return pattern(Grid.src, { s:s, x:x, y:y, z:z });
+    return pattern(source, { s:s, x:x, y:y, z:z });
   }
+
   //***************************************************************************
 
-  Grid.onMapChange = function() {
-    if (!this.src) {
-      return;
+  DataGrid.setSource = function(src, dataKey) {
+    if (src === undefined || src === false) {
+      src = DATA_SRC.replace('{k}', dataKey);
     }
-    update(100);
-  };
 
-  Grid.onMapResize = function() {
-    if (!this.src) {
+    if (!src) {
       return;
     }
+
+    source = src;
+
+    Events.on('change', function() {
+      update(100);
+    });
+
+    Events.on('resize', function() {
+      update();
+    });
+
     update();
   };
 
-  Grid.destroy = function() {
+  DataGrid.destroy = function() {
     clearTimeout(isDelayed);
+    for (var key in tiles) {
+      tiles[key].destroy();
+    }
+    tiles = null;
   };
 
 }());
 
 
 var DataTile = function(tileX, tileY, zoom) {
+  this.tileX = tileX;
+  this.tileY = tileY;
   this.x = tileX*TILE_SIZE;
   this.y = tileY*TILE_SIZE;
   this.zoom = zoom;
+
+  Data.add(this);
 };
 
 (function() {
@@ -2038,9 +2044,9 @@ var DataTile = function(tileX, tileY, zoom) {
   DataTile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
     var
-      gridBounds = Grid.bounds,
-      tileX = this.x/TILE_SIZE,
-      tileY = this.y/TILE_SIZE;
+      gridBounds = DataGrid.bounds,
+      tileX = this.tileX,
+      tileY = this.tileY;
 
     return (this.zoom === gridBounds.zoom &&
       // TODO: factor in tile origin
@@ -2097,33 +2103,49 @@ var TileGrid = {};
 (function() {
 
   var
-    tileSize = TILE_SIZE,
     source,
     tiles = {},
     isDelayed,
     shader;
 
+  function update(delay) {
+    updateTileBounds();
+
+    if (!delay) {
+      loadTiles();
+      return;
+    }
+
+    if (!isDelayed) {
+      isDelayed = setTimeout(function() {
+        isDelayed = null;
+        loadTiles();
+      }, delay);
+    }
+  }
+
+  // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
     var
-      bounds = Map.bounds,
       zoom = Math.round(Map.zoom),
-      worldSize = tileSize <<zoom,
+      bounds = Map.bounds,
+      worldSize = TILE_SIZE <<zoom,
       min = project(bounds.n, bounds.w, worldSize),
       max = project(bounds.s, bounds.e, worldSize);
 
     TileGrid.bounds = {
       zoom: zoom,
-      minX: min.x/tileSize <<0,
-      minY: min.y/tileSize <<0,
-      maxX: Math.ceil(max.x/tileSize),
-      maxY: Math.ceil(max.y/tileSize)
+      minX: min.x/TILE_SIZE <<0,
+      minY: min.y/TILE_SIZE <<0,
+      maxX: Math.ceil(max.x/TILE_SIZE),
+      maxY: Math.ceil(max.y/TILE_SIZE)
     };
   }
 
   function loadTiles() {
     var
       bounds = TileGrid.bounds,
-      x, y, zoom = bounds.zoom,
+      tileX, tileY, zoom = bounds.zoom,
       key,
       queue = [], queueLength,
       tileAnchor = [
@@ -2131,14 +2153,14 @@ var TileGrid = {};
         bounds.maxY
       ];
 
-    for (y = bounds.minY; y < bounds.maxY; y++) {
-      for (x = bounds.minX; x < bounds.maxX; x++) {
-        key = [x, y, zoom].join(',');
+    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
+      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
+        key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;
         }
-        tiles[key] = new MapTile(x, y, zoom);
-        queue.push({ tile:tiles[key], dist:distance2([x, y], tileAnchor) });
+        tiles[key] = new MapTile(tileX, tileY, zoom);
+        queue.push({ tile:tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }
 
@@ -2150,8 +2172,10 @@ var TileGrid = {};
       return a.dist-b.dist;
     });
 
+    var tile;
     for (var i = 0; i < queueLength; i++) {
-      queue[i].tile.load(getURL(queue[i].tile.tileX, queue[i].tile.tileY, queue[i].tile.zoom));
+      tile = queue[i].tile;
+      tile.load(getURL(tile.tileX, tile.tileY, tile.zoom));
     }
 
     purge();
@@ -2171,25 +2195,13 @@ var TileGrid = {};
     }
   }
 
-  function update(delay) {
-    updateTileBounds();
-
-    if (!delay) {
-      loadTiles();
-      return;
-    }
-
-    if (!isDelayed) {
-      isDelayed = setTimeout(function() {
-        isDelayed = null;
-        loadTiles();
-      }, delay);
-    }
-  }
-
   //***************************************************************************
 
   TileGrid.setSource = function(src) {
+    if (!src) {
+      return;
+    }
+
     source = src;
     shader = new Shader('tileplane');
 
@@ -2385,6 +2397,8 @@ var Mesh = function(data) {
   if (typeof data === 'object') {
     this.onLoad(data);
   }
+
+  Data.add(this);
 };
 
 (function() {

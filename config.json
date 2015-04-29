@@ -28,7 +28,7 @@
     "src/shaders.js",
     "src/Triangulate.js",
 
-    "src/data/Grid.js",
+    "src/data/DataGrid.js",
     "src/data/DataTile.js",
 
     "src/data/TileGrid.js",

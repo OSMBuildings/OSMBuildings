@@ -1,13 +1,13 @@
 
-var TileGrid = {};
+var DataGrid = {};
 
 (function() {
 
   var
     source,
-    tiles = {},
     isDelayed,
-    shader;
+    tiles = {},
+    fixedZoom = 16;
 
   function update(delay) {
     updateTileBounds();
@@ -28,13 +28,13 @@ var TileGrid = {};
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
     var
-      zoom = Math.round(Map.zoom),
+      zoom = fixedZoom || Math.round(Map.zoom),
       bounds = Map.bounds,
       worldSize = TILE_SIZE <<zoom,
       min = project(bounds.n, bounds.w, worldSize),
       max = project(bounds.s, bounds.e, worldSize);
 
-    TileGrid.bounds = {
+    DataGrid.bounds = {
       zoom: zoom,
       minX: min.x/TILE_SIZE <<0,
       minY: min.y/TILE_SIZE <<0,
@@ -45,7 +45,7 @@ var TileGrid = {};
 
   function loadTiles() {
     var
-      bounds = TileGrid.bounds,
+      bounds = DataGrid.bounds,
       tileX, tileY, zoom = bounds.zoom,
       key,
       queue = [], queueLength,
@@ -54,13 +54,13 @@ var TileGrid = {};
         bounds.maxY
       ];
 
-    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
+    for (tileY = bounds.minY; tileY <= bounds.maxY; tileY++) {
+      for (tileX = bounds.minX; tileX <= bounds.maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;
         }
-        tiles[key] = new MapTile(tileX, tileY, zoom);
+        tiles[key] = new DataTile(tileX, tileY, zoom);
         queue.push({ tile:tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }
@@ -82,29 +82,32 @@ var TileGrid = {};
     purge();
   }
 
-  function getURL(x, y, z) {
-    var s = 'abcd'[(x+y) % 4];
-    return pattern(source, { s:s, x:x, y:y, z:z });
-  }
-
   function purge() {
     for (var key in tiles) {
-      if (!tiles[key].isVisible(1)) {
-        tiles[key].destroy();
+      if (!tiles[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+        Data.remove(tiles[key]);
         delete tiles[key];
       }
     }
   }
 
+  function getURL(x, y, z) {
+    var s = 'abcd'[(x+y) % 4];
+    return pattern(source, { s:s, x:x, y:y, z:z });
+  }
+
   //***************************************************************************
 
-  TileGrid.setSource = function(src) {
+  DataGrid.setSource = function(src, dataKey) {
+    if (src === undefined || src === false) {
+      src = DATA_SRC.replace('{k}', dataKey);
+    }
+
     if (!src) {
       return;
     }
 
     source = src;
-    shader = new Shader('tileplane');
 
     Events.on('change', function() {
       update(100);
@@ -117,16 +120,7 @@ var TileGrid = {};
     update();
   };
 
-  // TODO: try to use tiles from other zoom levels when some are missing
-  TileGrid.render = function(projection) {
-    var program = shader.use();
-    for (var key in tiles) {
-      tiles[key].render(program, projection);
-    }
-    program.end();
-  };
-
-  TileGrid.destroy = function() {
+  DataGrid.destroy = function() {
     clearTimeout(isDelayed);
     for (var key in tiles) {
       tiles[key].destroy();

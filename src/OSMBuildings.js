@@ -4,24 +4,14 @@ var Renderer;
 var OSMBuildings = function(containerId, options) {
   options = options || {};
 
-  this._container = document.getElementById(containerId);
+  var container = document.getElementById(containerId);
 
   Map.setState(options);
-  Events.init(this._container);
-  this._initRenderer(this._container);
+  Events.init(container);
+  this._initRenderer(container);
 
-
-  if (options.tileSource) {
-    TileGrid.setSource(options.tileSource);
-  }
-
-  Grid.fixedZoom = 16;
-  // dataSource=false and dataSource=null would disable the data grid
-  if (options.dataSource === undefined) {
-    Grid.src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
-  } else if (typeof options.dataSource === 'string') {
-    Grid.src = options.dataSource;
-  }
+  TileGrid.setSource(options.tileSource);
+  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
   this.setDisabled(options.disabled);
 
@@ -29,22 +19,13 @@ var OSMBuildings = function(containerId, options) {
     this.setStyle(options.style);
   }
 
-  this.on('change', function() {
-    Grid.onMapChange();
-  });
-
-  this.on('resize', function() {
-    Grid.onMapResize();
+  Renderer = new GLRenderer(gl);
+  Events.on('resize', function() {
     Renderer.onMapResize();
   });
-
-  //  this.addAttribution(OSMBuildings.ATTRIBUTION);
-
-  Renderer = new GLRenderer(gl);
-
-  Grid.onMapChange();
-  Grid.onMapResize();
   Renderer.onMapResize();
+
+  // this.addAttribution(OSMBuildings.ATTRIBUTION);
 };
 
 OSMBuildings.VERSION = '0.1.5';
@@ -62,20 +43,10 @@ OSMBuildings.prototype = {
 
   addMesh: function(url) {
     var mesh = new Mesh(url);
-    Data.add(mesh);
     if (typeof url === 'string') {
       mesh.load(url);
     }
     return this;
-  },
-
-  setDisabled: function(flag) {
-    this._isDisabled = !!flag;
-    return this;
-  },
-
-  isDisabled: function() {
-    return !!this._isDisabled;
   },
 
   on: function(type, fn) {
@@ -86,6 +57,15 @@ OSMBuildings.prototype = {
   off: function(type, fn) {
     Events.off(type, fn);
     return this;
+  },
+
+  setDisabled: function(flag) {
+    Events.setDisabled(flag);
+    return this;
+  },
+
+  isDisabled: function() {
+    return Events.isDisabled();
   },
 
   setZoom: function(zoom) {
@@ -164,13 +144,9 @@ OSMBuildings.prototype = {
       clearInterval(this._loop);
     }.bind(this));
 
-    addListener(canvas, 'webglcontextrestored', this._initGL.bind(this));
+//    addListener(canvas, 'webglcontextrestored', INIT GL);
 
-    this._initGL();
-  },
-
-  _initGL: function() {
-    this.setSize({ width: this._container.offsetWidth, height: this._container.offsetHeight });
+    this.setSize({ width: container.offsetWidth, height: container.offsetHeight });
 
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
@@ -199,7 +175,7 @@ var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
     //  clearInterval(...);
 
     TileGrid.destroy();
-    Grid.destroy();
+    DataGrid.destroy();
   }
 };
 

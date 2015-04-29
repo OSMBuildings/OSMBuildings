@@ -1,8 +1,12 @@
 
 var DataTile = function(tileX, tileY, zoom) {
+  this.tileX = tileX;
+  this.tileY = tileY;
   this.x = tileX*TILE_SIZE;
   this.y = tileY*TILE_SIZE;
   this.zoom = zoom;
+
+  Data.add(this);
 };
 
 (function() {
@@ -35,9 +39,9 @@ var DataTile = function(tileX, tileY, zoom) {
   DataTile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
     var
-      gridBounds = Grid.bounds,
-      tileX = this.x/TILE_SIZE,
-      tileY = this.y/TILE_SIZE;
+      gridBounds = DataGrid.bounds,
+      tileX = this.tileX,
+      tileY = this.tileY;
 
     return (this.zoom === gridBounds.zoom &&
       // TODO: factor in tile origin

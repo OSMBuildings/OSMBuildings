@@ -5,6 +5,8 @@ var Mesh = function(data) {
   if (typeof data === 'object') {
     this.onLoad(data);
   }
+
+  Data.add(this);
 };
 
 (function() {

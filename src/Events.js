@@ -15,8 +15,10 @@ var Events = {};
     startY = 0,
     startRotation = 0,
     startZoom = 0,
+
     isDisabled = false,
-    isDragging = false;
+    isDragging = false,
+    resizeTimer;
 
   function onDragStart(e) {
     if (isDisabled || (e.button !== undefined && e.button !== 0)) {
@@ -157,6 +159,14 @@ var Events = {};
     for (var i = 0, il = listeners[type].length; i<il; i++) {
       listeners[type][i]();
     }
+  };
+
+  Events.setDisabled = function(flag) {
+    isDisabled = !!flag;
+  };
+
+  Events.isDisabled = function() {
+    return !!isDisabled;
   };
 
   Events.destroy = function() {
