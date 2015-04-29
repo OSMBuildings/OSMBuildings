@@ -1,129 +1,128 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>OSM Buildings GL</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-    }
+    <title>OSM Buildings GL</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
 
-    #map {
-      width: 100%;
-      height: 100%;
-    }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
 
-    .control {
-      position: absolute;
-      left: 0;
-      z-index: 1000;
-    }
+        .control {
+            position: absolute;
+            left: 0;
+            z-index: 1000;
+        }
 
-    .control.tilt {
-      top: 0;
-    }
+        .control.tilt {
+            top: 0;
+        }
 
-    .control.rotation {
-      top: 45px;
-    }
+        .control.rotation {
+            top: 45px;
+        }
 
-    .control.zoom {
-      top: 90px;
-    }
+        .control.zoom {
+            top: 90px;
+        }
 
-    .control.zoom button{
-      font-weight: normal;
-    }
+        .control.zoom button{
+            font-weight: normal;
+        }
 
-    .control button {
-      width: 30px;
-      height: 30px;
-      margin: 15px 0 0 15px;
-      border: 1px solid #999999;
-      background: #ffffff;
-      opacity: 0.6;
-      border-radius: 5px;
-			box-shadow: 0 0 5px #666666;
-      font-weight: bold;
-      text-align: center;
-    }
+        .control button {
+            width: 30px;
+            height: 30px;
+            margin: 15px 0 0 15px;
+            border: 1px solid #999999;
+            background: #ffffff;
+            opacity: 0.6;
+            border-radius: 5px;
+            box-shadow: 0 0 5px #666666;
+            font-weight: bold;
+            text-align: center;
+        }
 
-    .control button:hover {
-      opacity: 1;
-      cursor: pointer;
-    }
-  </style>
-
-  <script src="GLMap.js"></script>
-  <script src="OSMBuildings.js"></script>
+        .control button:hover {
+            opacity: 1;
+            cursor: pointer;
+        }
+    </style>
+    <script src="OSMBuildings.js"></script>
 </head>
 
 <body>
-  <div id="map"></div>
+<div id="map"></div>
 
-  <div class="control tilt">
+<div class="control tilt">
     <button class="dec">&#8601;</button>
     <button class="inc">&#8599;</button>
-  </div>
+</div>
 
-  <div class="control rotation">
+<div class="control rotation">
     <button class="inc">&#8630;</button>
     <button class="dec">&#8631;</button>
-  </div>
+</div>
 
-  <div class="control zoom">
+<div class="control zoom">
     <button class="dec">-</button>
     <button class="inc">+</button>
-  </div>
+</div>
 
-  <script>
-    var map = new GLMap('map', {
-      center: { latitude:52.52000, longitude:13.41000 },
-      zoom: 16,
-//    rotation: 0,
-//    tilt: 0,
-//    disabled: true,
-      minZoom: 14.5,
-      maxZoom: 22
+<script>
+    var map = new OSMBuildings('map', {
+        center: { latitude:52.52000, longitude:13.41000 },
+        zoom: 16,
+        // rotation: 0, // optional
+        // tilt: 0, // optional
+        // disabled: true, // disables user input - optional
+        minZoom: 14.5,
+        maxZoom: 22,
+        tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png'
+        // dataSource: null // null: disables default OSM data
     });
 
-    new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png', { fixedZoom:16 }).addTo(map);
-
-    var osmb = new OSMBuildings().addTo(map);
+    // test for custom mesh
+    // map.addMesh('fernsehturm.3d.json', { position:{ latitude:52.52101, longitude:13.40889 }, color:'#ffcc00'} );
 
     //*************************************************************************
 
     var controlButtons = document.querySelectorAll('.control button');
 
     for (var i = 0, il = controlButtons.length; i < il; i++) {
-      controlButtons[i].addEventListener('click', function(e) {
-        var button = this;
-        var parentClassList = button.parentNode.classList;
-        var direction = button.classList.contains('inc') ? 1 : -1;
-        var increment;
-        var property;
+        controlButtons[i].addEventListener('click', function(e) {
+            var button = this;
+            var parentClassList = button.parentNode.classList;
+            var direction = button.classList.contains('inc') ? 1 : -1;
+            var increment;
+            var property;
 
-        if (parentClassList.contains('tilt')) {
-          property = 'Tilt';
-          increment = direction*10;
-        }
-        if (parentClassList.contains('rotation')) {
-          property = 'Rotation';
-          increment = direction*10;
-        }
-        if (parentClassList.contains('zoom')) {
-          property = 'Zoom';
-          increment = direction*1;
-        }
-        if (property) {
-          map['set'+ property](map['get'+ property]()+increment);
-        }
-      });
+            if (parentClassList.contains('tilt')) {
+                property = 'Tilt';
+                increment = direction*10;
+            }
+            if (parentClassList.contains('rotation')) {
+                property = 'Rotation';
+                increment = direction*10;
+            }
+            if (parentClassList.contains('zoom')) {
+                property = 'Zoom';
+                increment = direction*1;
+            }
+            if (property) {
+                map['set'+ property](map['get'+ property]()+increment);
+            }
+        });
     }
-  </script>
+</script>
 </body>
 </html>

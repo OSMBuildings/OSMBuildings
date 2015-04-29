@@ -899,8 +899,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  addMesh: function(url) {
-    var mesh = new Mesh(url);
+  addMesh: function(url, position) {
+    var mesh = new Mesh(url, position);
     if (typeof url === 'string') {
       mesh.load(url);
     }
@@ -1014,7 +1014,7 @@ OSMBuildings.prototype = {
 
   _render: function() {
     requestAnimationFrame(function() {
-      gl.clearColor(0.5, 0.5, 0.5, 1);
+      gl.clearColor(0.75, 0.75, 0.75, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       Basemap.render();
       Buildings.render();
@@ -1826,7 +1826,7 @@ var Triangulate = {
       b[0], b[1], b[2]
     );
 
-    var n = this.computeNormal(
+    var n = normal(
       a[0], a[1], a[2],
       b[0], b[1], b[2],
       c[0], c[1], c[2]
@@ -1843,22 +1843,6 @@ var Triangulate = {
       color.r, color.g, color.b,
       color.r, color.g, color.b
     );
-  },
-
-  computeNormal: function(ax, ay, az, bx, by, bz, cx, cy, cz) {
-    var d1x = ax-bx;
-    var d1y = ay-by;
-    var d1z = az-bz;
-
-    var d2x = bx-cx;
-    var d2y = by-cy;
-    var d2z = bz-cz;
-
-    var nx = d1y*d2z - d1z*d2y;
-    var ny = d1z*d2x - d1x*d2z;
-    var nz = d1x*d2y - d1y*d2x;
-
-    return unit(nx, ny, nz);
   }
 };
 
@@ -2375,8 +2359,13 @@ var Data = {
 };
 
 
-var Mesh = function(data) {
-  this.zoom = 16;
+var Mesh = function(data, options) {
+  options = options || {};
+  if (options.color) {
+    this.color = Color.parse(options.color);
+  }
+  this.position = options.position;
+//  this.zoom = 16;
 
   if (typeof data === 'object') {
     this.onLoad(data);
@@ -2405,14 +2394,18 @@ var Mesh = function(data) {
   Mesh.prototype.onLoad = function(json) {
     this.request = null;
 
-    var
-      worldSize = TILE_SIZE * Math.pow(2, this.zoom),
-      p = project(json.offset.latitude, json.offset.longitude, worldSize);
+    //var
+    //  worldSize = TILE_SIZE * Math.pow(2, this.zoom),
+    //  p = project(json.offset.latitude, json.offset.longitude, worldSize);
+    //this.x = p.x;
+    //this.y = p.y;
 
-    this.x = p.x;
-    this.y = p.y;
+    if (!this.position) {
+      this.position = json.position || {};
+    }
 
-    var geom = JS3D.read(this.x, this.y, this.zoom, json);
+//  var geom = JS3D.read(this.x, this.y, this.zoom, json);
+    var geom = JS3D.read(json, this.color);
     this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
@@ -2425,14 +2418,20 @@ var Mesh = function(data) {
       return;
     }
 
-    var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
+    var
+      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+      pos = project(this.position.latitude, this.position.longitude, worldSize);
+
+var zoom = 16; // TODO: this can't stay fixed
+    var ratio = 1/Math.pow(2, zoom-Map.zoom);
     var size = Map.size;
     var origin = Map.origin;
 
     var matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
+//  matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
+    matrix = Matrix.translate(matrix, pos.x-origin.x, pos.y-origin.y, 0);
     matrix = Matrix.rotateZ(matrix, Map.rotation);
     matrix = Matrix.rotateX(matrix, Map.tilt);
     matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
@@ -2756,33 +2755,78 @@ var JS3D = {};
     return res;
   }
 
-  JS3D.read = function(offsetX, offsetY, zoom, json) {
+  function createNormals(vertices) {
+    var normals = [], n;
+    for (var i = 0, il = vertices.length-8; i < il; i+=9) {
+      n = normal(
+        vertices[i+0], vertices[i+1], vertices[i+2],
+        vertices[i+3], vertices[i+4], vertices[i+5],
+        vertices[i+6], vertices[i+7], vertices[i+8]
+      );
+      normals.push(
+        n[0], n[1], n[2],
+        n[0], n[1], n[2],
+        n[0], n[1], n[2]
+      );
+    }
+    return normals;
+  }
+
+  function createColors(vertexNum, color) {
+    var colors = [], c = color ? color.toRGBA() : { r:255*0.75, g:255*0.75, b:255*0.75 };
+    for (var i = 0; i < vertexNum; i++) {
+      colors.push(c.r, c.g, c.b);
+    }
+    return colors;
+  }
+
+  //JS3D.read = function(offsetX, offsetY, zoom, json) {
+  //  var
+  //    buildings = json.meshes,
+  //    bld,
+  //    color,
+  //    data = {
+  //      vertices: [],
+  //      normals: [],
+  //      colors: []
+  //    },
+  //    j, jl,
+  //    polygon;
+  //
+  //  for (var i = 0, il = buildings.length; i < il; i++) {
+  //    bld = buildings[i];
+  //
+  //    color = { r:bld.wallColor[0], g:bld.wallColor[1], b:bld.wallColor[2] };
+  //    for (j = 0, jl = bld.walls.length; j < jl; j++) {
+  //      polygon = transform(offsetX, offsetY, zoom, bld.walls[j]);
+  //      Triangulate.polygon3d(data, [polygon], color);
+  //    }
+  //
+  //    color = { r:bld.roofColor[0], g:bld.roofColor[1], b:bld.roofColor[2] };
+  //    for (j = 0, jl = bld.roofs.length; j < jl; j++) {
+  //      polygon = transform(offsetX, offsetY, zoom, bld.roofs[j]);
+  //      Triangulate.polygon3d(data, [polygon], color);
+  //    }
+  //  }
+  //
+  //  return data;
+  //};
+
+  JS3D.read = function(json, color) {
     var
-      buildings = json.meshes,
-      bld,
-      color,
+      collection = json.collection,
+      mesh,
       data = {
         vertices: [],
         normals: [],
         colors: []
-      },
-      j, jl,
-      polygon;
+      };
 
-    for (var i = 0, il = buildings.length; i < il; i++) {
-      bld = buildings[i];
-
-      color = { r:bld.wallColor[0], g:bld.wallColor[1], b:bld.wallColor[2] };
-      for (j = 0, jl = bld.walls.length; j < jl; j++) {
-        polygon = transform(offsetX, offsetY, zoom, bld.walls[j]);
-        Triangulate.polygon3d(data, [polygon], color);
-      }
-
-      color = { r:bld.roofColor[0], g:bld.roofColor[1], b:bld.roofColor[2] };
-      for (j = 0, jl = bld.roofs.length; j < jl; j++) {
-        polygon = transform(offsetX, offsetY, zoom, bld.roofs[j]);
-        Triangulate.polygon3d(data, [polygon], color);
-      }
+    for (var i = 0, il = collection.length; i < il; i++) {
+      mesh = collection[i];
+      data.vertices.push.apply(data.vertices, mesh.vertices);
+      data.normals.push.apply(data.normals, mesh.normals || createNormals(mesh.vertices));
+      data.colors.push.apply(data.colors, mesh.colors || createColors(mesh.vertices.length/3, color));
     }
 
     return data;
@@ -2859,6 +2903,22 @@ function rad(deg) {
 
 function deg(rad) {
   return rad / PI * 180;
+}
+
+function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
+  var d1x = ax-bx;
+  var d1y = ay-by;
+  var d1z = az-bz;
+
+  var d2x = bx-cx;
+  var d2y = by-cy;
+  var d2z = bz-cz;
+
+  var nx = d1y*d2z - d1z*d2y;
+  var ny = d1z*d2x - d1x*d2z;
+  var nz = d1x*d2y - d1y*d2x;
+
+  return unit(nx, ny, nz);
 }
 
 function unit(x, y, z) {
@@ -3173,7 +3233,7 @@ var Buildings = {};
       return;
     }
 
-    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.cullFace(gl.BACK);
 
