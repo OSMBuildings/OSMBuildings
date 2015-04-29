@@ -1,10 +1,10 @@
 {
   "shaders": {
-    "tileplane": {
+    "basemap": {
       "attributes": ["aPosition", "aTexCoord"],
       "uniforms": ["uMatrix", "uTileImage"]
     },
-    "default": {
+    "buildings": {
       "attributes": ["aPosition", "aColor", "aNormal"],
       "uniforms": ["uNormalTransform", "uMatrix", "uAlpha", "uLightColor", "uLightDirection"]
     }
@@ -42,7 +42,8 @@
     "src/geometry.js",
     "src/Matrix.js",
 
-    "src/gl/Renderer.js",
+    "src/layers/Basemap.js",
+    "src/layers/Buildings.js",
     "src/gl/Shader.js",
     "src/gl/FrameBuffer.js",
     "src/gl/Texture.js"

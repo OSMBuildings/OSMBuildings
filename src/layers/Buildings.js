@@ -1,23 +1,25 @@
 
-var GLRenderer = function(gl_) {
-  gl = gl_;
-  this.shaderPrograms.default = new Shader('default');
-  this.onMapResize();
-};
+var Buildings = {};
 
-GLRenderer.prototype = {
+(function() {
 
-  projections: {},
-  shaderPrograms: {},
+  var shader;
+  var projection;
 
-  clear: function() {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  },
+  function onResize() {
+    var size = Map.size;
+    gl.viewport(0, 0, size.width, size.height);
+    projection = Matrix.perspective(20, size.width, size.height, 40000);
+//  projectionOrtho = Matrix.ortho(size.width, size.height, 40000);
+  }
 
-  render: function() {
-    var program;
-		var i, il;
+  Buildings.initShader = function() {
+    shader = new Shader('buildings');
+    Events.on('resize', onResize);
+    onResize();
+  };
 
+  Buildings.render = function() {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -31,7 +33,7 @@ GLRenderer.prototype = {
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    program = this.shaderPrograms.default.use();
+    var program = shader.use();
 
     // TODO: suncalc
     gl.uniform3fv(program.uniforms.uLightColor, [0.5, 0.5, 0.5]);
@@ -43,17 +45,11 @@ GLRenderer.prototype = {
     gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
     var dataItems = Data.items;
-    for (i = 0, il = dataItems.length; i < il; i++) {
-      dataItems[i].render(program, this.projections.perspective);
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      dataItems[i].render(program, projection);
     }
 
     program.end();
-  },
+  };
 
-  onMapResize: function() {
-    var size = Map.size;
-    gl.viewport(0, 0, size.width, size.height);
-    this.projections.perspective = Matrix.perspective(20, size.width, size.height, 40000);
-    this.projections.ortho = Matrix.ortho(size.width, size.height, 40000);
-  }
-};
+}());

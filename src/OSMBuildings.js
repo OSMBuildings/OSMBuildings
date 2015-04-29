@@ -1,6 +1,4 @@
 
-var Renderer;
-
 var OSMBuildings = function(containerId, options) {
   options = options || {};
 
@@ -10,22 +8,18 @@ var OSMBuildings = function(containerId, options) {
   Events.init(container);
   this._initRenderer(container);
 
-  TileGrid.setSource(options.tileSource);
-  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
-
   this.setDisabled(options.disabled);
-
   if (options.style) {
     this.setStyle(options.style);
   }
 
-  Renderer = new GLRenderer(gl);
-  Events.on('resize', function() {
-    Renderer.onMapResize();
-  });
-  Renderer.onMapResize();
+  TileGrid.setSource(options.tileSource);
+  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
-  // this.addAttribution(OSMBuildings.ATTRIBUTION);
+  Basemap.initShader();
+  Buildings.initShader();
+
+//this.addAttribution(OSMBuildings.ATTRIBUTION);
 };
 
 OSMBuildings.VERSION = '0.1.5';
@@ -158,11 +152,8 @@ OSMBuildings.prototype = {
     requestAnimationFrame(function() {
       gl.clearColor(0.5, 0.5, 0.5, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-// TODO: do this rarely
-var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
-
-      TileGrid.render(projection);
-      Renderer.render(projection); // Data
+      Basemap.render();
+      Buildings.render();
     }.bind(this));
   },
 

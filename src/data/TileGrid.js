@@ -6,8 +6,7 @@ var TileGrid = {};
   var
     source,
     tiles = {},
-    isDelayed,
-    shader;
+    isDelayed;
 
   function update(delay) {
     updateTileBounds();
@@ -104,7 +103,6 @@ var TileGrid = {};
     }
 
     source = src;
-    shader = new Shader('tileplane');
 
     Events.on('change', function() {
       update(100);
@@ -117,13 +115,8 @@ var TileGrid = {};
     update();
   };
 
-  // TODO: try to use tiles from other zoom levels when some are missing
-  TileGrid.render = function(projection) {
-    var program = shader.use();
-    for (var key in tiles) {
-      tiles[key].render(program, projection);
-    }
-    program.end();
+  TileGrid.getTiles = function() {
+    return tiles;
   };
 
   TileGrid.destroy = function() {

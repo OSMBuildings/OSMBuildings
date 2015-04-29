@@ -863,8 +863,6 @@ Color.prototype = {
 
 return Color; }(this));
 
-var Renderer;
-
 var OSMBuildings = function(containerId, options) {
   options = options || {};
 
@@ -874,22 +872,18 @@ var OSMBuildings = function(containerId, options) {
   Events.init(container);
   this._initRenderer(container);
 
-  TileGrid.setSource(options.tileSource);
-  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
-
   this.setDisabled(options.disabled);
-
   if (options.style) {
     this.setStyle(options.style);
   }
 
-  Renderer = new GLRenderer(gl);
-  Events.on('resize', function() {
-    Renderer.onMapResize();
-  });
-  Renderer.onMapResize();
+  TileGrid.setSource(options.tileSource);
+  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
-  // this.addAttribution(OSMBuildings.ATTRIBUTION);
+  Basemap.initShader();
+  Buildings.initShader();
+
+//this.addAttribution(OSMBuildings.ATTRIBUTION);
 };
 
 OSMBuildings.VERSION = '0.1.5';
@@ -1022,11 +1016,8 @@ OSMBuildings.prototype = {
     requestAnimationFrame(function() {
       gl.clearColor(0.5, 0.5, 0.5, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-// TODO: do this rarely
-var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
-
-      TileGrid.render(projection);
-      Renderer.render(projection); // Data
+      Basemap.render();
+      Buildings.render();
     }.bind(this));
   },
 
@@ -1543,7 +1534,7 @@ function pattern(str, param) {
   });
 }
 
-var SHADERS = {"tileplane":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"default":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n//  float fog = clamp((10.0-vPosition.y)/20.0, 0.0, 0.5);\n//  gl_FragColor = vec4(vColor - shading, uAlpha-fog);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n//  float fog = clamp((10.0-vPosition.y)/20.0, 0.0, 0.5);\n//  gl_FragColor = vec4(vColor - shading, uAlpha-fog);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 function isVertical(a, b, c) {
@@ -2105,8 +2096,7 @@ var TileGrid = {};
   var
     source,
     tiles = {},
-    isDelayed,
-    shader;
+    isDelayed;
 
   function update(delay) {
     updateTileBounds();
@@ -2203,7 +2193,6 @@ var TileGrid = {};
     }
 
     source = src;
-    shader = new Shader('tileplane');
 
     Events.on('change', function() {
       update(100);
@@ -2216,13 +2205,8 @@ var TileGrid = {};
     update();
   };
 
-  // TODO: try to use tiles from other zoom levels when some are missing
-  TileGrid.render = function(projection) {
-    var program = shader.use();
-    for (var key in tiles) {
-      tiles[key].render(program, projection);
-    }
-    program.end();
+  TileGrid.getTiles = function() {
+    return tiles;
   };
 
   TileGrid.destroy = function() {
@@ -3129,25 +3113,62 @@ var Matrix = {
 };
 
 
-var GLRenderer = function(gl_) {
-  gl = gl_;
-  this.shaderPrograms.default = new Shader('default');
-  this.onMapResize();
-};
+var Basemap = {};
 
-GLRenderer.prototype = {
+// TODO: try to use tiles from other zoom levels when some are missing
 
-  projections: {},
-  shaderPrograms: {},
+(function() {
 
-  clear: function() {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  },
+  var shader;
+  var projection;
 
-  render: function() {
-    var program;
-		var i, il;
+  function onResize() {
+    var size = Map.size;
+    gl.viewport(0, 0, size.width, size.height);
+    projection = Matrix.perspective(20, size.width, size.height, 40000);
+//  projectionOrtho = Matrix.ortho(size.width, size.height, 40000);
+  }
 
+  Basemap.initShader = function() {
+    shader = new Shader('basemap');
+    Events.on('resize', onResize);
+    onResize();
+  };
+
+  Basemap.render = function() {
+    var
+      program = shader.use(),
+      tiles = TileGrid.getTiles();
+    for (var key in tiles) {
+      tiles[key].render(program, projection);
+    }
+    program.end();
+  };
+
+}());
+
+
+var Buildings = {};
+
+(function() {
+
+  var shader;
+  var projection;
+
+  function onResize() {
+    var size = Map.size;
+    gl.viewport(0, 0, size.width, size.height);
+    projection = Matrix.perspective(20, size.width, size.height, 40000);
+//  projectionOrtho = Matrix.ortho(size.width, size.height, 40000);
+  }
+
+  Buildings.initShader = function() {
+    shader = new Shader('buildings');
+    Events.on('resize', onResize);
+    onResize();
+  };
+
+  Buildings.render = function() {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -3161,7 +3182,7 @@ GLRenderer.prototype = {
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    program = this.shaderPrograms.default.use();
+    var program = shader.use();
 
     // TODO: suncalc
     gl.uniform3fv(program.uniforms.uLightColor, [0.5, 0.5, 0.5]);
@@ -3173,20 +3194,14 @@ GLRenderer.prototype = {
     gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
     var dataItems = Data.items;
-    for (i = 0, il = dataItems.length; i < il; i++) {
-      dataItems[i].render(program, this.projections.perspective);
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      dataItems[i].render(program, projection);
     }
 
     program.end();
-  },
+  };
 
-  onMapResize: function() {
-    var size = Map.size;
-    gl.viewport(0, 0, size.width, size.height);
-    this.projections.perspective = Matrix.perspective(20, size.width, size.height, 40000);
-    this.projections.ortho = Matrix.ortho(size.width, size.height, 40000);
-  }
-};
+}());
 
 
 var Shader = function(name) {
