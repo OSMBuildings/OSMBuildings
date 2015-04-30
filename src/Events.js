@@ -13,23 +13,34 @@ var Events = {};
 
     startX = 0,
     startY = 0,
-    startRotation = 0,
     startZoom = 0,
+    startRotation = 0,
+    startTilt = 0,
+
+    button,
+    stepX, stepY,
 
     isDisabled = false,
     isDragging = false,
     resizeTimer;
 
   function onDragStart(e) {
-    if (isDisabled || (e.button !== undefined && e.button !== 0)) {
+    if (isDisabled) {
       return;
     }
 
     cancelEvent(e);
 
-    if (e.touches !== undefined) {
-      startRotation = Map.rotation;
-      startZoom = Map.zoom;
+    startZoom = Map.zoom;
+    startRotation = Map.rotation;
+    startTilt = Map.tilt;
+
+    stepX = 360/innerWidth;
+    stepY = 360/innerHeight;
+
+    if (e.touches === undefined) {
+      button = e.button;
+    } else {
       if (e.touches.length>1) {
         return;
       }
@@ -54,10 +65,14 @@ var Events = {};
       e = e.touches[0];
     }
 
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
-    var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
-    Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
+    if (e.touches !== undefined || button === 0) {
+      moveMap(e);
+    } else {
+      startRotation += (e.clientX - startX)*stepX;
+      startTilt     -= (e.clientY - startY)*stepY;
+      Map.setRotation(startRotation);
+      Map.setTilt(startTilt);
+    }
 
     startX = e.clientX;
     startY = e.clientY;
@@ -75,12 +90,16 @@ var Events = {};
       e = e.touches[0];
     }
 
-    isDragging = false;
+    if (e.touches !== undefined || button === 0) {
+      moveMap(e);
+    } else {
+      startRotation += (e.clientX - startX)*stepX;
+      startTilt     -= (e.clientY - startY)*stepY;
+      Map.setRotation(startRotation);
+      Map.setTilt(startTilt);
+    }
 
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
-    var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
-    Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
+    isDragging = false;
   }
 
   function onGestureChange(e) {
@@ -88,8 +107,9 @@ var Events = {};
       return;
     }
     cancelEvent(e);
-    Map.setRotation(startRotation - e.rotation);
     Map.setZoom(startZoom + (e.scale - 1));
+    Map.setRotation(startRotation - e.rotation);
+//  Map.setTilt(startTilt ...);
   }
 
   function onDoubleClick(e) {
@@ -116,6 +136,15 @@ var Events = {};
 
     var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
     Map.setZoom(Map.zoom + adjust, e);
+  }
+
+  //***************************************************************************
+
+  function moveMap(e) {
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
+    Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
   }
 
   //***************************************************************************
@@ -187,6 +216,9 @@ function removeListener(target, type, fn) {
 function cancelEvent(e) {
   if (e.preventDefault) {
     e.preventDefault();
+  }
+  if (e.stopPropagation) {
+    e.stopPropagation();
   }
   e.returnValue = false;
 }
