@@ -16,17 +16,6 @@ var Mesh = function(data, options) {
 
 (function() {
 
-  function createBuffer(itemSize, data) {
-    var buffer = gl.createBuffer();
-    buffer.itemSize = itemSize;
-    buffer.numItems = data.length/itemSize;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    return buffer;
-  }
-
-  //***************************************************************************
-
   Mesh.prototype.load = function(url) {
     this.request = XHR.loadJSON(url, this.onLoad.bind(this));
   };
@@ -46,9 +35,9 @@ var Mesh = function(data, options) {
 
 //  var geom = JS3D.read(this.x, this.y, this.zoom, json);
     var geom = JS3D.read(json, this.color);
-    this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
-    this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
-    this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer  = GL.createBuffer(3, new Uint8Array(geom.colors));
     geom = null; json = null;
     this.isReady = true;
   };
@@ -97,9 +86,9 @@ return true;
   };
 
   Mesh.prototype.destroy = function() {
-    gl.deleteBuffer(this.vertexBuffer);
-    gl.deleteBuffer(this.normalBuffer);
-    gl.deleteBuffer(this.colorBuffer);
+    GL.deleteBuffer(this.vertexBuffer);
+    GL.deleteBuffer(this.normalBuffer);
+    GL.deleteBuffer(this.colorBuffer);
 
     if (this.request) {
       this.request.abort();

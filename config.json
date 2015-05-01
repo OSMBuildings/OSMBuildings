@@ -40,6 +40,7 @@
     "src/formats/GeoJSON.js",
     "src/formats/JS3D.js",
     "src/geometry.js",
+    "src/GL.js",
     "src/Matrix.js",
 
     "src/layers/Basemap.js",

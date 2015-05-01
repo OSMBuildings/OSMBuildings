@@ -1,38 +1,42 @@
 
-function isVertical(a, b, c) {
-  var d1x = a[0]-b[0];
-  var d1y = a[1]-b[1];
-  var d1z = a[2]-b[2];
 
-  var d2x = b[0]-c[0];
-  var d2y = b[1]-c[1];
-  var d2z = b[2]-c[2];
+var Triangulate = {};
 
-  var nx = d1y*d2z - d1z*d2y;
-  var ny = d1z*d2x - d1x*d2z;
-  var nz = d1x*d2y - d1y*d2x;
+(function() {
 
-  var n = unit(nx, ny, nz);
-  return Math.round(n[2]*5000) === 0;
-}
+  var LAT_SEGMENTS = 32, LON_SEGMENTS = 32;
 
-var Triangulate = {
+  function isVertical(a, b, c) {
+    var d1x = a[0]-b[0];
+    var d1y = a[1]-b[1];
+    var d1z = a[2]-b[2];
 
-  LAT_SEGMENTS: 32,
-  LON_SEGMENTS: 32,
+    var d2x = b[0]-c[0];
+    var d2y = b[1]-c[1];
+    var d2z = b[2]-c[2];
 
-  quad: function(data, a, b, c, d, color) {
-    this.addTriangle(data, a, b, c, color);
-    this.addTriangle(data, b, d, c, color);
-  },
+    var nx = d1y*d2z - d1z*d2y;
+    var ny = d1z*d2x - d1x*d2z;
+    var nz = d1x*d2y - d1y*d2x;
 
-  circle: function(data, center, radius, z, color) {
-    var lonSegments = this.LON_SEGMENTS;
+    var n = unit(nx, ny, nz);
+    return Math.round(n[2]*5000) === 0;
+  }
+
+
+
+
+  Triangulate.quad = function(data, a, b, c, d, color) {
+    Triangulate.addTriangle(data, a, b, c, color);
+    Triangulate.addTriangle(data, b, d, c, color);
+  };
+
+  Triangulate.circle = function(data, center, radius, z, color) {
     var u, v;
-    for (var i = 0; i < lonSegments; i++) {
-      u = i/lonSegments;
-      v = (i+1)/lonSegments;
-      this.addTriangle(
+    for (var i = 0; i < LON_SEGMENTS; i++) {
+      u = i/LON_SEGMENTS;
+      v = (i+1)/LON_SEGMENTS;
+      Triangulate.addTriangle(
         data,
         [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), z ],
         [ center[0],                                  center[1],                                  z ],
@@ -40,12 +44,12 @@ var Triangulate = {
         color
       );
     }
-  },
+  };
 
-  polygon: function(data, polygon, z, color) {
+  Triangulate.polygon = function(data, polygon, z, color) {
     var triangles = earcut(polygon);
     for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
-      this.addTriangle(
+      Triangulate.addTriangle(
         data,
         [ triangles[t  ][0], triangles[t  ][1], z ],
         [ triangles[t+1][0], triangles[t+1][1], z ],
@@ -53,9 +57,9 @@ var Triangulate = {
         color
       );
     }
-  },
+  };
 
-  polygon3d: function(data, polygon, color) {
+  Triangulate.polygon3d = function(data, polygon, color) {
     var ring = polygon[0];
     var ringLength = ring.length;
     var triangles, t, tl;
@@ -63,7 +67,7 @@ var Triangulate = {
 //  { r:255, g:0, b:0 }
 
     if (ringLength <= 4) { // 3: a triangle
-      this.addTriangle(
+      Triangulate.addTriangle(
         data,
         ring[0],
         ring[2],
@@ -94,31 +98,13 @@ var Triangulate = {
 
       triangles = earcut(polygon);
       for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
-        this.addTriangle(
+        Triangulate.addTriangle(
           data,
           [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
           [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
           [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
           color
         );
-
-        //if (n[0] < 0) { //  NE & SE
-        //  this.addTriangle(
-        //    data,
-        //    [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
-        //    [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
-        //    [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
-        //    color
-        //  );
-        //} else { // NW & SW
-        //  this.addTriangle(
-        //    data,
-        //    [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
-        //    [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
-        //    [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
-        //    color
-        //  );
-        //}
       }
 
       return;
@@ -126,7 +112,7 @@ var Triangulate = {
 
     triangles = earcut(polygon);
     for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
-      this.addTriangle(
+      Triangulate.addTriangle(
         data,
         [ triangles[t  ][0], triangles[t  ][1], triangles[t  ][2] ],
         [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
@@ -134,18 +120,16 @@ var Triangulate = {
         color
       );
     }
-  },
+  };
 
-  cylinder: function(data, center, radiusBottom, radiusTop, minHeight, height, color) {
-    var lonSegments = this.LON_SEGMENTS;
-
+  Triangulate.cylinder = function(data, center, radiusBottom, radiusTop, minHeight, height, color) {
     var u, v;
     var sinPhi1, cosPhi1;
     var sinPhi2, cosPhi2;
 
-    for (var i = 0; i < lonSegments; i++) {
-      u = i    /lonSegments;
-      v = (i+1)/lonSegments;
+    for (var i = 0; i < LON_SEGMENTS; i++) {
+      u = i    /LON_SEGMENTS;
+      v = (i+1)/LON_SEGMENTS;
 
       sinPhi1 = Math.sin(u*Math.PI*2);
       cosPhi1 = Math.cos(u*Math.PI*2);
@@ -153,7 +137,7 @@ var Triangulate = {
       sinPhi2 = Math.sin(v*Math.PI*2);
       cosPhi2 = Math.cos(v*Math.PI*2);
 
-      this.addTriangle(
+      Triangulate.addTriangle(
         data,
         [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ],
         [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
@@ -162,7 +146,7 @@ var Triangulate = {
       );
 
       if (radiusTop !== 0) {
-        this.addTriangle(
+        Triangulate.addTriangle(
           data,
           [ center[0] + radiusTop   *sinPhi1, center[1] + radiusTop   *cosPhi1, height    ],
           [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
@@ -171,12 +155,12 @@ var Triangulate = {
         );
       }
     }
-  },
+  };
 
-  pyramid: function(data, polygon, center, minHeight, height, color) {
+  Triangulate.pyramid = function(data, polygon, center, minHeight, height, color) {
     polygon = polygon[0];
     for (var i = 0, il = polygon.length-1; i < il; i++) {
-      this.addTriangle(
+      Triangulate.addTriangle(
         data,
         [ polygon[i  ][0], polygon[i  ][1], minHeight ],
         [ polygon[i+1][0], polygon[i+1][1], minHeight ],
@@ -184,19 +168,16 @@ var Triangulate = {
         color
       );
     }
-  },
+  };
 
-  _dome: function(data, center, radius, minHeight, height, color) {
-    var latSegments = this.LAT_SEGMENTS/2;
-  },
+  Triangulate.dome = function(data, center, radius, minHeight, height, color) {
+  };
 
-  _sphere: function(data, center, radius, minHeight, height, color) {
-    var latSegments = this.LAT_SEGMENTS;
-
+  Triangulate.sphere = function(data, center, radius, minHeight, height, color) {
     var theta, sinTheta, cosTheta;
 
     for (var i = 0; i < latSegments; i++) {
-      theta = i * Math.PI / latSegments;
+      theta = i * Math.PI / LAT_SEGMENTS;
       sinTheta = Math.sin(theta);
       cosTheta = Math.cos(theta);
       Triangulate.cylinder(data, center, radiusBottom, radiusTop, minHeight, height, color);
@@ -205,9 +186,9 @@ var Triangulate = {
   //  z = sinPhi * sinTheta;
   //  vertexPos.push(x*radius, y*radius, z*radius);
     }
-  },
+  };
 
-//_sphere: function(radius) {
+//Triangulate._sphere = function(radius) {
 //  var lat = 0, lon = 0;
 //  var maxLat = 10, maxLon = 10;
 //
@@ -246,11 +227,9 @@ var Triangulate = {
 //      indexData.push(first + 1);
 //    }
 //  }
-//},
+//};
 
-  Pyramid: function() {},
-
-  extrusion: function(data, polygon, minHeight, height, color) {
+  Triangulate.extrusion = function(data, polygon, minHeight, height, color) {
     var
       ring, last,
       a, b, z0, z1;
@@ -269,7 +248,7 @@ var Triangulate = {
         b = ring[r+1];
         z0 = minHeight;
         z1 = height;
-        this.quad(
+        Triangulate.quad(
           data,
           [ a[0], a[1], z0 ],
           [ b[0], b[1], z0 ],
@@ -279,9 +258,9 @@ var Triangulate = {
         );
       }
     }
-  },
+  };
 
-  addTriangle: function(data, a, b, c, color) {
+  Triangulate.addTriangle = function(data, a, b, c, color) {
     data.vertices.push(
       a[0], a[1], a[2],
       c[0], c[1], c[2],
@@ -305,5 +284,6 @@ var Triangulate = {
       color.r, color.g, color.b,
       color.r, color.g, color.b
     );
-  }
-};
+  };
+
+}());

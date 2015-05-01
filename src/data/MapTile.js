@@ -1,57 +1,24 @@
-var GL = {};
-
-GL.createTexture = function(img) {
-  var texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.generateMipmap(gl.TEXTURE_2D);
-
-  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-//  img = null;
-  return texture;
-};
-
-GL.createBuffer = function(itemSize, data) {
-  var buffer = gl.createBuffer();
-  buffer.itemSize = itemSize;
-  buffer.numItems = data.length / itemSize;
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-  data = null;
-  return buffer;
-};
-
-//*****************************************************************************
 
 function MapTile(tileX, tileY, zoom) {
   this.tileX = tileX;
   this.tileY = tileY;
   this.zoom = zoom;
 
-  this._vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-  this._texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+  this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+  this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
 }
 
 MapTile.prototype = {
 
   load: function(url) {
-    var img = this._image = new Image();
+    var img = this.image = new Image();
     img.crossOrigin = '*';
     img.onload = this.onLoad.bind(this);
     img.src = url;
   },
 
   onLoad: function() {
-    this._texture = GL.createTexture(this._image);
+    this.texture = GL.createTexture(this.image);
     this.isReady = true;
   },
 
@@ -76,17 +43,17 @@ MapTile.prototype = {
 
     gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexBuffer);
-    gl.vertexAttribPointer(program.attributes.aPosition, this._vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this._texCoordBuffer);
-    gl.vertexAttribPointer(program.attributes.aTexCoord, this._texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
+    gl.vertexAttribPointer(program.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this._texture);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.uniform1i(program.uniforms.uTileImage, 0);
 
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this._vertexBuffer.numItems);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.vertexBuffer.numItems);
   },
 
     //var
@@ -94,7 +61,7 @@ MapTile.prototype = {
     //  x = parseInt(xyz[0], 10), y = parseInt(xyz[1], 10), z = parseInt(xyz[2], 10);
     //
     //// TODO: do not invalidate all zoom levels immediately
-    //if (z !== this._zoom) {
+    //if (z !== this.zoom) {
     //  return false;
     //}
 
@@ -121,13 +88,13 @@ MapTile.prototype = {
   },
 
   destroy: function() {
-    gl.deleteBuffer(this._vertexBuffer);
-    gl.deleteBuffer(this._texCoordBuffer);
+    GL.deleteBuffer(this.vertexBuffer);
+    GL.deleteBuffer(this.texCoordBuffer);
 
-    this._image.src = '';
+    this.image.src = '';
 
-    if (this._texture) {
-      gl.deleteTexture(this._texture);
+    if (this.texture) {
+      GL.deleteTexture(this.texture);
     }
   }
 };

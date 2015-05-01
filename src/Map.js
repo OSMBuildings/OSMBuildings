@@ -8,13 +8,14 @@ var Map = {};
   }
 
   function updateBounds() {
-    var centerXY = project(Map.center.latitude, Map.center.longitude, Map.worldSize);
+    var
+      centerXY = project(Map.center.latitude, Map.center.longitude, Map.worldSize),
 
-    var halfWidth = Map.size.width/2;
-    var halfHeight = Map.size.height/2;
+      halfWidth = Map.size.width/2,
+      halfHeight = Map.size.height/2,
 
-    var nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, Map.worldSize);
-    var se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, Map.worldSize);
+      nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, Map.worldSize),
+      se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, Map.worldSize);
 
     Map.bounds = {
       n: nw.latitude,

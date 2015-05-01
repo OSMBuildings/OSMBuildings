@@ -25,7 +25,7 @@ var Events = {};
     resizeTimer;
 
   function onDragStart(e) {
-    if (isDisabled) {
+    if (isDisabled || e.button > 1) {
       return;
     }
 

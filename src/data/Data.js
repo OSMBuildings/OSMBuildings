@@ -16,5 +16,9 @@ var Data = {
         return;
       }
     }
+  },
+
+  destroy: function() {
+    this.items = null;
   }
 };

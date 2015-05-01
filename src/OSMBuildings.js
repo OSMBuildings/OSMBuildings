@@ -30,6 +30,7 @@ OSMBuildings.prototype = {
   setStyle: function(style) {
     var color = style.color || style.wallColor;
     if (color) {
+      // TODO: move this to Renderer
       DEFAULT_COLOR = Color.parse(color).toRGBA();
     }
     return this;
@@ -81,7 +82,7 @@ OSMBuildings.prototype = {
   },
 
   getBounds: function() {
-    return Map.bounds();
+    return Map.bounds;
   },
 
   setSize: function(size) {

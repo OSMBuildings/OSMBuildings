@@ -23,13 +23,33 @@ var Shader = function(name) {
 };
 
 Shader.prototype = {
+
+  _locateAttribute: function(name) {
+    var loc = gl.getAttribLocation(this.id, name);
+    if (loc < 0) {
+      console.error('unable to locate attribute "'+ name +'" in shader "'+ this.name +'"');
+      return;
+    }
+    gl.enableVertexAttribArray(loc);
+    this.attributes[name] = loc;
+  },
+
+  _locateUniform: function(name) {
+    var loc = gl.getUniformLocation(this.id, name);
+    if (loc < 0) {
+      console.error('unable to locate uniform "'+ name +'" in shader "'+ this.name +'"');
+      return;
+    }
+    this.uniforms[name] = loc;
+  },
+
   _attach: function(type, src) {
     var shader = gl.createShader(type);
     gl.shaderSource(shader, src);
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      throw new Error(gl.getShaderInfoLog(shader));
+      throw new Error('('+ this.name +') '+ gl.getShaderInfoLog(shader));
     }
 
     gl.attachShader(this.id, shader);
@@ -38,32 +58,19 @@ Shader.prototype = {
   use: function() {
     gl.useProgram(this.id);
 
-    var i, name, loc;
+    var i;
 
     if (this.attributeNames) {
       this.attributes = {};
       for (i = 0; i < this.attributeNames.length; i++) {
-        name = this.attributeNames[i];
-        loc = gl.getAttribLocation(this.id, name);
-        if (loc < 0) {
-          console.error('could not locate attribute "'+ name +'" in shader "'+ this.name +'"');
-        } else {
-          gl.enableVertexAttribArray(loc);
-          this.attributes[name] = loc;
-        }
+        this._locateAttribute(this.attributeNames[i]);
       }
     }
 
     if (this.uniformNames) {
       this.uniforms = {};
       for (i = 0; i < this.uniformNames.length; i++) {
-        name = this.uniformNames[i];
-        loc = gl.getUniformLocation(this.id, name);
-        if (loc < 0) {
-          console.error('could not locate uniform "'+ name +'" in shader "'+ this.name +'"');
-        } else {
-          this.uniforms[name] = loc;
-        }
+        this._locateUniform(this.uniformNames[i]);
       }
     }
 
@@ -71,8 +78,6 @@ Shader.prototype = {
   },
 
   end: function() {
-    gl.useProgram(null);
-
     if (this.attributes) {
       for (var name in this.attributes) {
         gl.disableVertexAttribArray(this.attributes[name]);

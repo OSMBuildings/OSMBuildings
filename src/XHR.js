@@ -53,4 +53,9 @@ var XHR = {};
     loading = {};
   };
 
+  XHR.destroy = function() {
+    XHR.abortAll();
+    loading = null;
+  };
+
 }());

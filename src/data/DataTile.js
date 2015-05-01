@@ -11,17 +11,6 @@ var DataTile = function(tileX, tileY, zoom) {
 
 (function() {
 
-  function createBuffer(itemSize, data) {
-    var buffer = gl.createBuffer();
-    buffer.itemSize = itemSize;
-    buffer.numItems = data.length/itemSize;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    return buffer;
-  }
-
-  //***************************************************************************
-
   DataTile.prototype.load = function(url) {
     this.request = XHR.loadJSON(url, this.onLoad.bind(this));
   };
@@ -29,9 +18,9 @@ var DataTile = function(tileX, tileY, zoom) {
   DataTile.prototype.onLoad = function(json) {
     this.request = null;
     var geom = GeoJSON.read(this.x, this.y, this.zoom, json);
-    this.vertexBuffer = createBuffer(3, new Float32Array(geom.vertices));
-    this.normalBuffer = createBuffer(3, new Float32Array(geom.normals));
-    this.colorBuffer  = createBuffer(3, new Uint8Array(geom.colors));
+    this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer  = GL.createBuffer(3, new Uint8Array(geom.colors));
     geom = null; json = null;
     this.isReady = true;
   };
@@ -81,9 +70,9 @@ var DataTile = function(tileX, tileY, zoom) {
   };
 
   DataTile.prototype.destroy = function() {
-    gl.deleteBuffer(this.vertexBuffer);
-    gl.deleteBuffer(this.normalBuffer);
-    gl.deleteBuffer(this.colorBuffer);
+    GL.deleteBuffer(this.vertexBuffer);
+    GL.deleteBuffer(this.normalBuffer);
+    GL.deleteBuffer(this.colorBuffer);
 
     if (this.request) {
       this.request.abort();
