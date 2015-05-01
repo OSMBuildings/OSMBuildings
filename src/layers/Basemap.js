@@ -5,8 +5,7 @@ var Basemap = {};
 
 (function() {
 
-  var shader;
-  var projection;
+  var shader, projection;
 
   function onResize() {
     var size = Map.size;
@@ -25,9 +24,11 @@ var Basemap = {};
     var
       program = shader.use(),
       tiles = TileGrid.getTiles();
+
     for (var key in tiles) {
       tiles[key].render(program, projection);
     }
+
     program.end();
   };
 

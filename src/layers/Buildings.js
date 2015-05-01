@@ -3,8 +3,7 @@ var Buildings = {};
 
 (function() {
 
-  var shader;
-  var projection;
+  var shader, projection;
 
   function onResize() {
     var size = Map.size;
