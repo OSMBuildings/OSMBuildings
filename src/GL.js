@@ -1,6 +1,8 @@
 
 var gl;
 
+var loop;
+
 var GL = {
 
   createContext: function(container) {
@@ -22,16 +24,22 @@ var GL = {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
-    //GL.setSize({ width:container.offsetWidth, height:container.offsetHeight });
-    //
-    //addListener(canvas, 'webglcontextlost', function(e) {
-    //  cancelEvent(e);
-    //  Renderer.stop();
-    //});
+    Map.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+
+    addListener(canvas, 'webglcontextlost', function(e) {
+      clearInterval(loop);
+    });
 
     //addListener(canvas, 'webglcontextrestored', ...);
 
-    return gl;
+    loop = setInterval(function() {
+      requestAnimationFrame(function() {
+        gl.clearColor(0.75, 0.75, 0.75, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        Basemap.render();
+        Buildings.render();
+      });
+    }, 17);
   },
 
   createBuffer: function(itemSize, data) {
@@ -69,6 +77,7 @@ var GL = {
   },
 
   destroy: function() {
+    clearInterval(loop);
     gl.canvas.parentNode.removeChild(gl.canvas);
     gl = null;
   }

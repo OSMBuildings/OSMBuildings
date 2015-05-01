@@ -6,7 +6,7 @@ var OSMBuildings = function(containerId, options) {
 
   Map.setState(options);
   Events.init(container);
-  this._initRenderer(container);
+  GL.createContext(container);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -116,56 +116,7 @@ OSMBuildings.prototype = {
     return Map.tilt;
   },
 
-  _initRenderer: function(container) {
-    var canvas = document.createElement('CANVAS');
-    canvas.style.position = 'absolute';
-    canvas.style.pointerEvents = 'none';
-
-    container.appendChild(canvas);
-
-    // TODO: handle context loss
-    try {
-      gl = canvas.getContext('experimental-webgl', {
-        antialias: true,
-        depth: true,
-        premultipliedAlpha: false
-      });
-    } catch (ex) {
-      throw ex;
-    }
-
-    addListener(canvas, 'webglcontextlost', function(e) {
-      cancelEvent(e);
-      clearInterval(this._loop);
-    }.bind(this));
-
-//    addListener(canvas, 'webglcontextrestored', INIT GL);
-
-    this.setSize({ width: container.offsetWidth, height: container.offsetHeight });
-
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-
-    this._loop = setInterval(this._render.bind(this), 17);
-  },
-
-  _render: function() {
-    requestAnimationFrame(function() {
-      gl.clearColor(0.75, 0.75, 0.75, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      Basemap.render();
-      Buildings.render();
-    }.bind(this));
-  },
-
   destroy: function() {
-    var canvas = gl.canvas;
-    canvas.parentNode.removeChild(canvas);
-    gl = null;
-
-    // TODO: stop render loop
-    //  clearInterval(...);
-
     TileGrid.destroy();
     DataGrid.destroy();
   }
