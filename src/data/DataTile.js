@@ -16,9 +16,10 @@ var DataTile = function(tileX, tileY, zoom) {
   DataTile.prototype.onLoad = function(json) {
     this.request = null;
     var geom = GeoJSON.read(this.tileX * TILE_SIZE, this.tileY * TILE_SIZE, this.zoom, json);
-    this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
-    this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
-    this.colorBuffer  = GL.createBuffer(3, new Uint8Array(geom.colors));
+    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer  = GL.createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(geom.colors));
+    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(geom.idColors));
     geom = null; json = null;
     this.isReady = true;
   };

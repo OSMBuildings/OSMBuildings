@@ -16,9 +16,6 @@ var OSMBuildings = function(containerId, options) {
   TileGrid.setSource(options.tileSource);
   DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
-  Basemap.initShader();
-  Buildings.initShader();
-
 //this.addAttribution(OSMBuildings.ATTRIBUTION);
 };
 

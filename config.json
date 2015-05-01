@@ -7,10 +7,14 @@
     "buildings": {
       "attributes": ["aPosition", "aColor", "aNormal"],
       "uniforms": ["uNormalTransform", "uMatrix", "uAlpha", "uLightColor", "uLightDirection"]
+    },
+    "interaction": {
+      "attributes": ["aPosition", "aColor"],
+      "uniforms": ["uMatrix"]
     }
   },
 
-  "lib": [
+"lib": [
     "lib/earcut.js",
     "node_modules/color/dist/Color.debug.js"
   ],
@@ -45,6 +49,8 @@
 
     "src/layers/Basemap.js",
     "src/layers/Buildings.js",
+    "src/layers/Interaction.js",
+
     "src/gl/Shader.js",
     "src/gl/FrameBuffer.js",
     "src/gl/Texture.js"

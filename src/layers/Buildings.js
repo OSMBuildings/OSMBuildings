@@ -3,13 +3,11 @@ var Buildings = {};
 
 (function() {
 
-  var shader, projection;
+  var shader;
 
+  // TODO: move this
   function onResize() {
-    var size = Map.size;
-    gl.viewport(0, 0, size.width, size.height);
-    projection = Matrix.perspective(20, size.width, size.height, 40000);
-//  projectionOrtho = Matrix.ortho(size.width, size.height, 40000);
+    gl.viewport(0, 0, Map.size.width, Map.size.height);
   }
 
   Buildings.initShader = function() {
@@ -18,7 +16,7 @@ var Buildings = {};
     onResize();
   };
 
-  Buildings.render = function() {
+  Buildings.render = function(mapMatrix) {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -51,11 +49,7 @@ var Buildings = {};
         continue;
       }
 
-      // TODO: do this once outside the loop
-      matrix = Matrix.rotateZ(matrix, Map.rotation);
-      matrix = Matrix.rotateX(matrix, Map.tilt);
-      matrix = Matrix.translate(matrix, Map.size.width/2, Map.size.height/2, 0);
-      matrix = Matrix.multiply(matrix, projection);
+      matrix = Matrix.multiply(matrix, mapMatrix);
 
       gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
 

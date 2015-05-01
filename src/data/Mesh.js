@@ -29,9 +29,10 @@ var Mesh = function(dataOrURL, options) {
     }
 
     var geom = JS3D.read(json, this.color);
-    this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
-    this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
-    this.colorBuffer  = GL.createBuffer(3, new Uint8Array(geom.colors));
+    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer  = GL.createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(geom.colors));
+    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(geom.idColors));
     geom = null; json = null;
     this.isReady = true;
   };

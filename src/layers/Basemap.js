@@ -5,13 +5,11 @@ var Basemap = {};
 
 (function() {
 
-  var shader, projection;
+  var shader;
 
+  // TODO: move this
   function onResize() {
-    var size = Map.size;
-    gl.viewport(0, 0, size.width, size.height);
-    projection = Matrix.perspective(20, size.width, size.height, 40000);
-//  projectionOrtho = Matrix.ortho(size.width, size.height, 40000);
+    gl.viewport(0, 0, Map.size.width, Map.size.height);
   }
 
   Basemap.initShader = function() {
@@ -20,38 +18,34 @@ var Basemap = {};
     onResize();
   };
 
-  Basemap.render = function() {
+  Basemap.render = function(mapMatrix) {
     var
       program = shader.use(),
-      tiles = TileGrid.getTiles(), tile,
+      tiles = TileGrid.getTiles(), item,
       matrix;
 
     for (var key in tiles) {
-      tile = tiles[key];
+      item = tiles[key];
 
-      if (!(matrix = tile.getMatrix())) {
+      if (!(matrix = item.getMatrix())) {
         continue;
       }
 
-      // TODO: do this once outside the loop
-      matrix = Matrix.rotateZ(matrix, Map.rotation);
-      matrix = Matrix.rotateX(matrix, Map.tilt);
-      matrix = Matrix.translate(matrix, Map.size.width / 2, Map.size.height / 2, 0);
-      matrix = Matrix.multiply(matrix, projection);
+      matrix = Matrix.multiply(matrix, mapMatrix);
 
       gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
-      gl.vertexAttribPointer(program.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      gl.vertexAttribPointer(program.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, tile.texCoordBuffer);
-      gl.vertexAttribPointer(program.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.texCoordBuffer);
+      gl.vertexAttribPointer(program.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, tile.texture);
+      gl.bindTexture(gl.TEXTURE_2D, item.texture);
       gl.uniform1i(program.uniforms.uTileImage, 0);
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     }
 
     program.end();

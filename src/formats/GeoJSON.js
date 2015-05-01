@@ -184,10 +184,11 @@ var GeoJSON = {};
       data = {
         vertices: [],
         normals: [],
-        colors: []
+        colors: [],
+        idColors: []
       },
       j, jl,
-      item, polygon, bbox, radius, center;
+      item, polygon, bbox, radius, center, id;
 
     for (var i = 0, il = collection.length; i < il; i++) {
       feature = collection[i];
@@ -213,49 +214,48 @@ var GeoJSON = {};
           radius = (bbox.maxX-bbox.minX)/2;
         }
 
-//      if (feature.id || feature.properties.id) {
-//        item.id = feature.id || feature.properties.id;
-//      }
+        idColor = Interaction.idToColor(feature.id || feature.properties.id);
+
 //      if (feature.properties.relationId) {
 //        item.relationId = feature.properties.relationId;
 //      }
 
         switch (item.shape) {
           case 'cylinder':
-            Triangulate.cylinder(data, center, radius, radius, item.minHeight, item.height, item.wallColor);
-            Triangulate.circle(data, center, radius, item.height, item.roofColor);
+            Triangulate.cylinder(data, center, radius, radius, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.circle(data, center, radius, item.height, item.roofColor, idColor);
           break;
 
           case 'cone':
-            Triangulate.cylinder(data, center, radius, 0, item.minHeight, item.height, item.wallColor);
+            Triangulate.cylinder(data, center, radius, 0, item.minHeight, item.height, item.wallColor, idColor);
           break;
 
           case 'sphere':
-            Triangulate.cylinder(data, center, radius, radius/2, item.minHeight, item.height, item.wallColor);
-            Triangulate.circle(data, center, radius/2, item.height, item.roofColor);
+            Triangulate.cylinder(data, center, radius, radius/2, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.circle(data, center, radius/2, item.height, item.roofColor, idColor);
           break;
 
           case 'pyramid':
-            Triangulate.pyramid(data, polygon, center, item.minHeight, item.height, item.wallColor);
+            Triangulate.pyramid(data, polygon, center, item.minHeight, item.height, item.wallColor, idColor);
           break;
 
           default:
-            Triangulate.extrusion(data, polygon, item.minHeight, item.height, item.wallColor);
-            Triangulate.polygon(data, polygon, item.height, item.roofColor);
+            Triangulate.extrusion(data, polygon, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.polygon(data, polygon, item.height, item.roofColor, idColor);
         }
 
         switch (item.roofShape) {
           case 'cone':
-            Triangulate.cylinder(data, center, radius, 0, item.height, item.height+item.roofHeight, item.roofColor);
+            Triangulate.cylinder(data, center, radius, 0, item.height, item.height+item.roofHeight, item.roofColor, idColor);
           break;
 
           case 'dome':
-            Triangulate.cylinder(data, center, radius, radius/2, item.height, item.height+item.roofHeight, item.roofColor);
-            Triangulate.circle(data, center, radius/2, item.height+item.roofHeight, item.roofColor);
+            Triangulate.cylinder(data, center, radius, radius/2, item.height, item.height+item.roofHeight, item.roofColor, idColor);
+            Triangulate.circle(data, center, radius/2, item.height+item.roofHeight, item.roofColor, idColor);
           break;
 
           case 'pyramid':
-            Triangulate.pyramid(data, polygon, center, item.height, item.height+item.roofHeight, item.roofColor);
+            Triangulate.pyramid(data, polygon, center, item.height, item.height+item.roofHeight, item.roofColor, idColor);
           break;
         }
       }

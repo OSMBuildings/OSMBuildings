@@ -81,7 +81,8 @@ var JS3D = {};
       data = {
         vertices: [],
         normals: [],
-        colors: []
+        colors: [],
+        idColors: []
       };
 
     for (var i = 0, il = collection.length; i < il; i++) {
@@ -89,6 +90,7 @@ var JS3D = {};
       data.vertices.push.apply(data.vertices, mesh.vertices);
       data.normals.push.apply(data.normals, mesh.normals || createNormals(mesh.vertices));
       data.colors.push.apply(data.colors, mesh.colors || createColors(mesh.vertices.length/3, color));
+      data.idColors.push.apply(data.idColors, Interaction.idToColor(mesh.id));
     }
 
     return data;
