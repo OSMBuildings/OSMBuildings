@@ -23,10 +23,35 @@ var Basemap = {};
   Basemap.render = function() {
     var
       program = shader.use(),
-      tiles = TileGrid.getTiles();
+      tiles = TileGrid.getTiles(), tile,
+      matrix;
 
     for (var key in tiles) {
-      tiles[key].render(program, projection);
+      tile = tiles[key];
+
+      if (!(matrix = tile.getMatrix())) {
+        continue;
+      }
+
+      // TODO: do this once outside the loop
+      matrix = Matrix.rotateZ(matrix, Map.rotation);
+      matrix = Matrix.rotateX(matrix, Map.tilt);
+      matrix = Matrix.translate(matrix, Map.size.width / 2, Map.size.height / 2, 0);
+      matrix = Matrix.multiply(matrix, projection);
+
+      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
+      gl.vertexAttribPointer(program.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, tile.texCoordBuffer);
+      gl.vertexAttribPointer(program.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tile.texture);
+      gl.uniform1i(program.uniforms.uTileImage, 0);
+
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     }
 
     program.end();
