@@ -1,14 +1,15 @@
 
-var Mesh = function(data, options) {
+var Mesh = function(dataOrURL, options) {
   options = options || {};
   if (options.color) {
     this.color = Color.parse(options.color);
   }
   this.position = options.position;
-//  this.zoom = 16;
 
-  if (typeof data === 'object') {
-    this.onLoad(data);
+  if (typeof dataOrURL === 'object') {
+    this.onLoad(dataOrURL);
+  } else {
+    this.load(dataOrURL);
   }
 
   Data.add(this);
@@ -23,17 +24,10 @@ var Mesh = function(data, options) {
   Mesh.prototype.onLoad = function(json) {
     this.request = null;
 
-    //var
-    //  worldSize = TILE_SIZE * Math.pow(2, this.zoom),
-    //  p = project(json.offset.latitude, json.offset.longitude, worldSize);
-    //this.x = p.x;
-    //this.y = p.y;
-
     if (!this.position) {
       this.position = json.position || {};
     }
 
-//  var geom = JS3D.read(this.x, this.y, this.zoom, json);
     var geom = JS3D.read(json, this.color);
     this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
@@ -42,42 +36,23 @@ var Mesh = function(data, options) {
     this.isReady = true;
   };
 
-  Mesh.prototype.render = function(program, projection) {
+  Mesh.prototype.getMatrix = function() {
     if (!this.isReady || !this.isVisible()) {
       return;
     }
 
     var
+      zoom = 16, // TODO: this shouldn't be a fixed value?
+      ratio = 1 / Math.pow(2, zoom - Map.zoom),
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      pos = project(this.position.latitude, this.position.longitude, worldSize);
-
-var zoom = 16; // TODO: this can't stay fixed
-    var ratio = 1/Math.pow(2, zoom-Map.zoom);
-    var size = Map.size;
-    var origin = Map.origin;
-
-    var matrix = Matrix.create();
+      position = project(this.position.latitude, this.position.longitude, worldSize),
+      origin = Map.origin,
+      matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-//  matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
-    matrix = Matrix.translate(matrix, pos.x-origin.x, pos.y-origin.y, 0);
-    matrix = Matrix.rotateZ(matrix, Map.rotation);
-    matrix = Matrix.rotateX(matrix, Map.tilt);
-    matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
-    matrix = Matrix.multiply(matrix, projection);
+    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
 
-    gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-    gl.vertexAttribPointer(program.attributes.aNormal, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    return matrix;
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
@@ -92,7 +67,10 @@ return true;
 
     if (this.request) {
       this.request.abort();
+      this.request = null;
     }
+
+    Data.remove(this);
   };
 
 }());

@@ -36,11 +36,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  addMesh: function(url, position) {
-    var mesh = new Mesh(url, position);
-    if (typeof url === 'string') {
-      mesh.load(url);
-    }
+  addMesh: function(dataOrURL, options) {
+    new Mesh(dataOrURL, options);
     return this;
   },
 

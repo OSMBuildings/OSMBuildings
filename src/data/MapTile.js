@@ -3,9 +3,6 @@ var MapTile = function(tileX, tileY, zoom) {
   this.tileX = tileX;
   this.tileY = tileY;
   this.zoom = zoom;
-
-  this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-  this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
 };
 
 MapTile.prototype = {
@@ -18,6 +15,8 @@ MapTile.prototype = {
   },
 
   onLoad: function() {
+    this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+    this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
     this.texture = GL.createTexture(this.image);
     this.isReady = true;
   },
@@ -29,13 +28,11 @@ MapTile.prototype = {
 
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
-      tileSize = TILE_SIZE * ratio,
       origin = Map.origin,
       matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
-    matrix = Matrix.translate(matrix, this.tileX * tileSize - origin.x, this.tileY * tileSize - origin.y, 0);
-
+    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - origin.x, this.tileY * TILE_SIZE * ratio - origin.y, 0);
     return matrix;
   },
 

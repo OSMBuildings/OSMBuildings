@@ -900,11 +900,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  addMesh: function(url, position) {
-    var mesh = new Mesh(url, position);
-    if (typeof url === 'string') {
-      mesh.load(url);
-    }
+  addMesh: function(url, options) {
+    new Mesh(url, options);
     return this;
   },
 
@@ -1950,8 +1947,6 @@ var DataGrid = {};
 var DataTile = function(tileX, tileY, zoom) {
   this.tileX = tileX;
   this.tileY = tileY;
-  this.x = tileX*TILE_SIZE;
-  this.y = tileY*TILE_SIZE;
   this.zoom = zoom;
 
   Data.add(this);
@@ -1965,7 +1960,7 @@ var DataTile = function(tileX, tileY, zoom) {
 
   DataTile.prototype.onLoad = function(json) {
     this.request = null;
-    var geom = GeoJSON.read(this.x, this.y, this.zoom, json);
+    var geom = GeoJSON.read(this.tileX * TILE_SIZE, this.tileY * TILE_SIZE, this.zoom, json);
     this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer  = GL.createBuffer(3, new Uint8Array(geom.colors));
@@ -1985,36 +1980,19 @@ var DataTile = function(tileX, tileY, zoom) {
       (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   };
 
-  DataTile.prototype.render = function(program, projection) {
+  DataTile.prototype.getMatrix = function() {
     if (!this.isReady || !this.isVisible()) {
       return;
     }
 
-    var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
-    var viewport = Map.size;
-    var origin = Map.origin;
-
-    var matrix = Matrix.create();
+    var
+      ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
+      origin = Map.origin,
+      matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
-    matrix = Matrix.rotateZ(matrix, Map.rotation);
-    matrix = Matrix.rotateX(matrix, Map.tilt);
-    matrix = Matrix.translate(matrix, viewport.width/2, viewport.height/2, 0);
-    matrix = Matrix.multiply(matrix, projection);
-
-    gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-    gl.vertexAttribPointer(program.attributes.aNormal, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - origin.x, this.tileY * TILE_SIZE * ratio - origin.y, 0);
+    return matrix;
   };
 
   DataTile.prototype.destroy = function() {
@@ -2024,7 +2002,10 @@ var DataTile = function(tileX, tileY, zoom) {
 
     if (this.request) {
       this.request.abort();
+      this.request = null;
     }
+
+    Data.remove(this);
   };
 
 }());
@@ -2161,14 +2142,11 @@ var TileGrid = {};
 }());
 
 
-function MapTile(tileX, tileY, zoom) {
+var MapTile = function(tileX, tileY, zoom) {
   this.tileX = tileX;
   this.tileY = tileY;
   this.zoom = zoom;
-
-  this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-  this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
-}
+};
 
 MapTile.prototype = {
 
@@ -2180,52 +2158,26 @@ MapTile.prototype = {
   },
 
   onLoad: function() {
+    this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+    this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
     this.texture = GL.createTexture(this.image);
     this.isReady = true;
   },
 
-  render: function(program, projection) {
+  getMatrix: function() {
     if (!this.isReady || !this.isVisible()) {
       return;
     }
 
-    var ratio = 1 / Math.pow(2, this.zoom - Map.zoom);
-    var adaptedTileSize = TILE_SIZE * ratio;
-    var size = Map.size;
-    var origin = Map.origin;
-
-    var matrix = Matrix.create();
+    var
+      ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
+      origin = Map.origin,
+      matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
-    matrix = Matrix.translate(matrix, this.tileX * adaptedTileSize - origin.x, this.tileY * adaptedTileSize - origin.y, 0);
-    matrix = Matrix.rotateZ(matrix, Map.rotation);
-    matrix = Matrix.rotateX(matrix, Map.tilt);
-    matrix = Matrix.translate(matrix, size.width / 2, size.height / 2, 0);
-    matrix = Matrix.multiply(matrix, projection);
-
-    gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.texCoordBuffer);
-    gl.vertexAttribPointer(program.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.uniform1i(program.uniforms.uTileImage, 0);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.vertexBuffer.numItems);
+    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - origin.x, this.tileY * TILE_SIZE * ratio - origin.y, 0);
+    return matrix;
   },
-
-    //var
-    //  xyz = key.split(','),
-    //  x = parseInt(xyz[0], 10), y = parseInt(xyz[1], 10), z = parseInt(xyz[2], 10);
-    //
-    //// TODO: do not invalidate all zoom levels immediately
-    //if (z !== this.zoom) {
-    //  return false;
-    //}
 
   isVisible: function(buffer) {
     buffer = buffer || 0;
@@ -2238,15 +2190,6 @@ MapTile.prototype = {
     return (this.zoom === gridBounds.zoom &&
       // TODO: factor in tile origin
       (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
-  },
-
-  getMatrix: function() {
-  //  var ratio = 1/Math.pow(2, this.zoom-Map.zoom);
-  //  var origin = Map.origin;
-  //  var matrix = Matrix.create();
-  //  matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-  //  matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
-  //  return matrix;
   },
 
   destroy: function() {
@@ -2274,7 +2217,6 @@ var Data = {
     var items = this.items;
     for (var i = 0, il = items.length; i < il; i++) {
       if (items[i] === item) {
-        items[i].destroy();
         items.splice(i, 1);
         return;
       }
@@ -2287,16 +2229,17 @@ var Data = {
 };
 
 
-var Mesh = function(data, options) {
+var Mesh = function(dataOrURL, options) {
   options = options || {};
   if (options.color) {
     this.color = Color.parse(options.color);
   }
   this.position = options.position;
-//  this.zoom = 16;
 
-  if (typeof data === 'object') {
-    this.onLoad(data);
+  if (typeof dataOrURL === 'object') {
+    this.onLoad(dataOrURL);
+  } else {
+    this.load(dataOrURL);
   }
 
   Data.add(this);
@@ -2311,17 +2254,10 @@ var Mesh = function(data, options) {
   Mesh.prototype.onLoad = function(json) {
     this.request = null;
 
-    //var
-    //  worldSize = TILE_SIZE * Math.pow(2, this.zoom),
-    //  p = project(json.offset.latitude, json.offset.longitude, worldSize);
-    //this.x = p.x;
-    //this.y = p.y;
-
     if (!this.position) {
       this.position = json.position || {};
     }
 
-//  var geom = JS3D.read(this.x, this.y, this.zoom, json);
     var geom = JS3D.read(json, this.color);
     this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
@@ -2330,42 +2266,23 @@ var Mesh = function(data, options) {
     this.isReady = true;
   };
 
-  Mesh.prototype.render = function(program, projection) {
+  Mesh.prototype.getMatrix = function() {
     if (!this.isReady || !this.isVisible()) {
       return;
     }
 
     var
+      zoom = 16, // TODO: this shouldn't be a fixed value?
+      ratio = 1 / Math.pow(2, zoom - Map.zoom),
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      pos = project(this.position.latitude, this.position.longitude, worldSize);
-
-var zoom = 16; // TODO: this can't stay fixed
-    var ratio = 1/Math.pow(2, zoom-Map.zoom);
-    var size = Map.size;
-    var origin = Map.origin;
-
-    var matrix = Matrix.create();
+      position = project(this.position.latitude, this.position.longitude, worldSize),
+      origin = Map.origin,
+      matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-//  matrix = Matrix.translate(matrix, this.x*ratio - origin.x, this.y*ratio - origin.y, 0);
-    matrix = Matrix.translate(matrix, pos.x-origin.x, pos.y-origin.y, 0);
-    matrix = Matrix.rotateZ(matrix, Map.rotation);
-    matrix = Matrix.rotateX(matrix, Map.tilt);
-    matrix = Matrix.translate(matrix, size.width/2, size.height/2, 0);
-    matrix = Matrix.multiply(matrix, projection);
+    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
 
-    gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.vertexAttribPointer(program.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-    gl.vertexAttribPointer(program.attributes.aNormal, this.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.vertexAttribPointer(program.attributes.aColor, this.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    return matrix;
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
@@ -2380,7 +2297,10 @@ return true;
 
     if (this.request) {
       this.request.abort();
+      this.request = null;
     }
+
+    Data.remove(this);
   };
 
 }());
@@ -2879,13 +2799,12 @@ var GL = {
     }
 
     gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
 
     Map.setSize({ width: container.offsetWidth, height: container.offsetHeight });
 
     addListener(canvas, 'webglcontextlost', function(e) {
-    //  cancelEvent(e);
-    //  Renderer.stop();
       clearInterval(loop);
     });
 
@@ -3183,8 +3102,7 @@ var Basemap = {};
 
 (function() {
 
-  var shader;
-  var projection;
+  var shader, projection;
 
   function onResize() {
     var size = Map.size;
@@ -3202,10 +3120,37 @@ var Basemap = {};
   Basemap.render = function() {
     var
       program = shader.use(),
-      tiles = TileGrid.getTiles();
+      tiles = TileGrid.getTiles(), tile,
+      matrix;
+
     for (var key in tiles) {
-      tiles[key].render(program, projection);
+      tile = tiles[key];
+
+      if (!(matrix = tile.getMatrix())) {
+        continue;
+      }
+
+      // TODO: do this once outside the loop
+      matrix = Matrix.rotateZ(matrix, Map.rotation);
+      matrix = Matrix.rotateX(matrix, Map.tilt);
+      matrix = Matrix.translate(matrix, Map.size.width / 2, Map.size.height / 2, 0);
+      matrix = Matrix.multiply(matrix, projection);
+
+      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
+      gl.vertexAttribPointer(program.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, tile.texCoordBuffer);
+      gl.vertexAttribPointer(program.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, tile.texture);
+      gl.uniform1i(program.uniforms.uTileImage, 0);
+
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     }
+
     program.end();
   };
 
@@ -3216,8 +3161,7 @@ var Buildings = {};
 
 (function() {
 
-  var shader;
-  var projection;
+  var shader, projection;
 
   function onResize() {
     var size = Map.size;
@@ -3237,10 +3181,6 @@ var Buildings = {};
       return;
     }
 
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    gl.cullFace(gl.BACK);
-
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -3257,9 +3197,36 @@ var Buildings = {};
     var normalMatrix = Matrix.invert3(Matrix.create());
     gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
-    var dataItems = Data.items;
+    var
+      dataItems = Data.items,
+      item,
+      matrix;
+
     for (var i = 0, il = dataItems.length; i < il; i++) {
-      dataItems[i].render(program, projection);
+      item = dataItems[i];
+
+      if (!(matrix = item.getMatrix())) {
+        continue;
+      }
+
+      // TODO: do this once outside the loop
+      matrix = Matrix.rotateZ(matrix, Map.rotation);
+      matrix = Matrix.rotateX(matrix, Map.tilt);
+      matrix = Matrix.translate(matrix, Map.size.width/2, Map.size.height/2, 0);
+      matrix = Matrix.multiply(matrix, projection);
+
+      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      gl.vertexAttribPointer(program.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.normalBuffer);
+      gl.vertexAttribPointer(program.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.colorBuffer);
+      gl.vertexAttribPointer(program.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     program.end();

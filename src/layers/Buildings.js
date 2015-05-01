@@ -23,10 +23,6 @@ var Buildings = {};
       return;
     }
 
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    gl.cullFace(gl.BACK);
-
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -43,9 +39,36 @@ var Buildings = {};
     var normalMatrix = Matrix.invert3(Matrix.create());
     gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
-    var dataItems = Data.items;
+    var
+      dataItems = Data.items,
+      item,
+      matrix;
+
     for (var i = 0, il = dataItems.length; i < il; i++) {
-      dataItems[i].render(program, projection);
+      item = dataItems[i];
+
+      if (!(matrix = item.getMatrix())) {
+        continue;
+      }
+
+      // TODO: do this once outside the loop
+      matrix = Matrix.rotateZ(matrix, Map.rotation);
+      matrix = Matrix.rotateX(matrix, Map.tilt);
+      matrix = Matrix.translate(matrix, Map.size.width/2, Map.size.height/2, 0);
+      matrix = Matrix.multiply(matrix, projection);
+
+      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      gl.vertexAttribPointer(program.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.normalBuffer);
+      gl.vertexAttribPointer(program.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.colorBuffer);
+      gl.vertexAttribPointer(program.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     program.end();
