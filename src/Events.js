@@ -11,17 +11,17 @@ var Events = {};
     dragMoveEvent = hasTouch ? 'touchmove' : 'mousemove',
     dragEndEvent = hasTouch ? 'touchend' : 'mouseup',
 
-    startX = 0,
-    startY = 0,
+    prevX = 0, prevY = 0,
+    startX = 0, startY  = 0,
     startZoom = 0,
-    startRotation = 0,
-    startTilt = 0,
+    prevRotation = 0,
+    prevTilt = 0,
 
     button,
     stepX, stepY,
 
     isDisabled = false,
-    isDragging = false,
+    pointerIsDown = false,
     resizeTimer;
 
   function onDragStart(e) {
@@ -32,8 +32,8 @@ var Events = {};
     cancelEvent(e);
 
     startZoom = Map.zoom;
-    startRotation = Map.rotation;
-    startTilt = Map.tilt;
+    prevRotation = Map.rotation;
+    prevTilt = Map.tilt;
 
     stepX = 360/innerWidth;
     stepY = 360/innerHeight;
@@ -47,14 +47,14 @@ var Events = {};
       e = e.touches[0];
     }
 
-    startX = e.clientX;
-    startY = e.clientY;
+    startX = prevX = e.clientX;
+    startY = prevY = e.clientY;
 
-    isDragging = true;
+    pointerIsDown = true;
   }
 
   function onDragMove(e) {
-    if (isDisabled || !isDragging) {
+    if (isDisabled || !pointerIsDown) {
       return;
     }
 
@@ -68,18 +68,18 @@ var Events = {};
     if (e.touches !== undefined || button === 0) {
       moveMap(e);
     } else {
-      startRotation += (e.clientX - startX)*stepX;
-      startTilt     -= (e.clientY - startY)*stepY;
-      Map.setRotation(startRotation);
-      Map.setTilt(startTilt);
+      prevRotation += (e.clientX - prevX)*stepX;
+      prevTilt     -= (e.clientY - prevY)*stepY;
+      Map.setRotation(prevRotation);
+      Map.setTilt(prevTilt);
     }
 
-    startX = e.clientX;
-    startY = e.clientY;
+    prevX = e.clientX;
+    prevY = e.clientY;
   }
 
   function onDragEnd(e) {
-    if (isDisabled || !isDragging) {
+    if (isDisabled || !pointerIsDown) {
       return;
     }
 
@@ -91,15 +91,19 @@ var Events = {};
     }
 
     if (e.touches !== undefined || button === 0) {
-      moveMap(e);
+      if (Math.abs(e.clientX-startX) < 5 && Math.abs(e.clientY-startY) < 5) {
+        onClick(e);
+      } else {
+        moveMap(e);
+      }
     } else {
-      startRotation += (e.clientX - startX)*stepX;
-      startTilt     -= (e.clientY - startY)*stepY;
-      Map.setRotation(startRotation);
-      Map.setTilt(startTilt);
+      prevRotation += (e.clientX - prevX)*stepX;
+      prevTilt     -= (e.clientY - prevY)*stepY;
+      Map.setRotation(prevRotation);
+      Map.setTilt(prevTilt);
     }
 
-    isDragging = false;
+    pointerIsDown = false;
   }
 
   function onGestureChange(e) {
@@ -108,8 +112,8 @@ var Events = {};
     }
     cancelEvent(e);
     Map.setZoom(startZoom + (e.scale - 1));
-    Map.setRotation(startRotation - e.rotation);
-//  Map.setTilt(startTilt ...);
+    Map.setRotation(prevRotation - e.rotation);
+//  Map.setTilt(prevTilt ...);
   }
 
   function onDoubleClick(e) {
@@ -118,6 +122,17 @@ var Events = {};
     }
     cancelEvent(e);
     Map.setZoom(Map.zoom + 1, e);
+  }
+
+  function onClick(e) {
+    if (isDisabled) {
+      return;
+    }
+    cancelEvent(e);
+    Interaction.getFeatureID({ x:e.clientX, y:e.clientY }, function(featureID) {
+      e.featureID = featureID;
+      Events.emit('click', e);
+    });
   }
 
   function onMouseWheel(e) {
@@ -141,8 +156,8 @@ var Events = {};
   //***************************************************************************
 
   function moveMap(e) {
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
+    var dx = e.clientX - prevX;
+    var dy = e.clientY - prevY;
     var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
     Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
   }
@@ -181,12 +196,12 @@ var Events = {};
 
   Events.off = function(type, fn) {};
 
-  Events.emit = function(type) {
+  Events.emit = function(type, payload) {
     if (!listeners[type]) {
       return;
     }
     for (var i = 0, il = listeners[type].length; i<il; i++) {
-      listeners[type][i]();
+      listeners[type][i](payload);
     }
   };
 

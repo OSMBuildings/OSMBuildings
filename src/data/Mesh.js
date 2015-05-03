@@ -1,10 +1,6 @@
 
-var Mesh = function(dataOrURL, options) {
-  options = options || {};
-  if (options.color) {
-    this.color = Color.parse(options.color);
-  }
-  this.position = options.position;
+var Mesh = function(dataOrURL, properties) {
+  this.properties = properties || {};
 
   if (typeof dataOrURL === 'object') {
     this.onLoad(dataOrURL);
@@ -24,11 +20,9 @@ var Mesh = function(dataOrURL, options) {
   Mesh.prototype.onLoad = function(json) {
     this.request = null;
 
-    if (!this.position) {
-      this.position = json.position || {};
-    }
+    this.position = json.position || this.properties.position || {};
 
-    var geom = JS3D.read(json, this.color);
+    var geom = JS3D.read(json, this.properties);
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer  = GL.createBuffer(3, new Float32Array(geom.normals));
     this.colorBuffer   = GL.createBuffer(3, new Uint8Array(geom.colors));

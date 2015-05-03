@@ -214,11 +214,7 @@ var GeoJSON = {};
           radius = (bbox.maxX-bbox.minX)/2;
         }
 
-        idColor = Interaction.idToColor(feature.id || feature.properties.id);
-
-//      if (feature.properties.relationId) {
-//        item.relationId = feature.properties.relationId;
-//      }
+        idColor = Interaction.idToColor(feature.properties.relationId || feature.id || feature.properties.id);
 
         switch (item.shape) {
           case 'cylinder':

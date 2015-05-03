@@ -1,5 +1,5 @@
 
-var Shader = function(name) {
+var Shader = function(name, useFrameBuffer) {
   var config = SHADERS[name];
 
   this.id = gl.createProgram();
@@ -9,8 +9,8 @@ var Shader = function(name) {
     throw new Error('missing source for shader "'+ name +'"');
   }
 
-  this._attach(gl.VERTEX_SHADER,   config.src.vertex);
-  this._attach(gl.FRAGMENT_SHADER, config.src.fragment);
+  this.attach(gl.VERTEX_SHADER,   config.src.vertex);
+  this.attach(gl.FRAGMENT_SHADER, config.src.fragment);
 
   gl.linkProgram(this.id);
 
@@ -19,12 +19,16 @@ var Shader = function(name) {
   }
 
   this.attributeNames = config.attributes;
-  this.uniformNames = config.uniforms;
+  this.uniformNames   = config.uniforms;
+
+  if (config.frameBuffer) {
+    this.createFrameBuffer();
+  }
 };
 
 Shader.prototype = {
 
-  _locateAttribute: function(name) {
+  locateAttribute: function(name) {
     var loc = gl.getAttribLocation(this.id, name);
     if (loc < 0) {
       console.error('unable to locate attribute "'+ name +'" in shader "'+ this.name +'"');
@@ -34,7 +38,7 @@ Shader.prototype = {
     this.attributes[name] = loc;
   },
 
-  _locateUniform: function(name) {
+  locateUniform: function(name) {
     var loc = gl.getUniformLocation(this.id, name);
     if (loc < 0) {
       console.error('unable to locate uniform "'+ name +'" in shader "'+ this.name +'"');
@@ -43,7 +47,26 @@ Shader.prototype = {
     this.uniforms[name] = loc;
   },
 
-  _attach: function(type, src) {
+  createFrameBuffer: function() {
+    this.frameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
+
+    var renderTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, Map.size.width, Map.size.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+    var renderBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, Map.size.width, Map.size.height);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  },
+
+  attach: function(type, src) {
     var shader = gl.createShader(type);
     gl.shaderSource(shader, src);
     gl.compileShader(shader);
@@ -63,15 +86,19 @@ Shader.prototype = {
     if (this.attributeNames) {
       this.attributes = {};
       for (i = 0; i < this.attributeNames.length; i++) {
-        this._locateAttribute(this.attributeNames[i]);
+        this.locateAttribute(this.attributeNames[i]);
       }
     }
 
     if (this.uniformNames) {
       this.uniforms = {};
       for (i = 0; i < this.uniformNames.length; i++) {
-        this._locateUniform(this.uniformNames[i]);
+        this.locateUniform(this.uniformNames[i]);
       }
+    }
+
+    if (this.frameBuffer) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
     }
 
     return this;
@@ -86,5 +113,9 @@ Shader.prototype = {
 
     this.attributes = null;
     this.uniforms = null;
+
+    if (this.frameBuffer) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
   }
 };

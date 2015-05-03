@@ -3,19 +3,19 @@ var JS3D = {};
 
 (function() {
 
-  function transform(offsetX, offsetY, zoom, ring) {
-    var
-      worldSize = TILE_SIZE * Math.pow(2, zoom),
-      res = [],
-      p;
-
-    for (var j = 0, jl = ring.length-2; j < jl; j+=3) {
-      p = project(ring[j+1], ring[j], worldSize);
-      res[j/3] = [p.x-offsetX, p.y-offsetY, ring[j+2]];
-    }
-
-    return res;
-  }
+  //function transform(offsetX, offsetY, zoom, ring) {
+  //  var
+  //    worldSize = TILE_SIZE * Math.pow(2, zoom),
+  //    res = [],
+  //    p;
+  //
+  //  for (var j = 0, jl = ring.length-2; j < jl; j+=3) {
+  //    p = project(ring[j+1], ring[j], worldSize);
+  //    res[j/3] = [p.x-offsetX, p.y-offsetY, ring[j+2]];
+  //  }
+  //
+  //  return res;
+  //}
 
   function createNormals(vertices) {
     var normals = [], n;
@@ -35,7 +35,7 @@ var JS3D = {};
   }
 
   function createColors(vertexNum, color) {
-    var colors = [], c = color ? color.toRGBA() : { r:255*0.75, g:255*0.75, b:255*0.75 };
+    var colors = [], c = color ? color : { r:255*0.75, g:255*0.75, b:255*0.75 };
     for (var i = 0; i < vertexNum; i++) {
       colors.push(c.r, c.g, c.b);
     }
@@ -74,10 +74,13 @@ var JS3D = {};
   //  return data;
   //};
 
-  JS3D.read = function(json, color) {
+  JS3D.read = function(json, properties) {
     var
       collection = json.collection,
       mesh,
+      color,
+      idColor,
+      numVertices,
       data = {
         vertices: [],
         normals: [],
@@ -85,12 +88,19 @@ var JS3D = {};
         idColors: []
       };
 
+    if (properties.color) {
+      color = Color.parse(properties.color).toRGBA();
+    }
+
     for (var i = 0, il = collection.length; i < il; i++) {
       mesh = collection[i];
+      numVertices = mesh.vertices.length/3;
+      idColor = Interaction.idToColor(mesh.id || properties.id);
+
       data.vertices.push.apply(data.vertices, mesh.vertices);
       data.normals.push.apply(data.normals, mesh.normals || createNormals(mesh.vertices));
-      data.colors.push.apply(data.colors, mesh.colors || createColors(mesh.vertices.length/3, color));
-      data.idColors.push.apply(data.idColors, Interaction.idToColor(mesh.id));
+      data.colors.push.apply(data.colors, mesh.colors || createColors(numVertices, color));
+      data.idColors.push.apply(data.idColors, createColors(numVertices, idColor));
     }
 
     return data;

@@ -10,7 +10,8 @@
     },
     "interaction": {
       "attributes": ["aPosition", "aColor"],
-      "uniforms": ["uMatrix"]
+      "uniforms": ["uMatrix"],
+      "framebuffer": true
     }
   },
 

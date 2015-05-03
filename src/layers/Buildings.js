@@ -26,16 +26,16 @@ var Buildings = {};
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    var program = shader.use();
+    shader.use();
 
     // TODO: suncalc
-    gl.uniform3fv(program.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(program.uniforms.uLightDirection, unit(1, 1, 1));
+    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
+    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
-    gl.uniform1f(program.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
+    gl.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
 
     var normalMatrix = Matrix.invert3(Matrix.create());
-    gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
+    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
     var
       dataItems = Data.items,
@@ -51,21 +51,21 @@ var Buildings = {};
 
       matrix = Matrix.multiply(matrix, mapMatrix);
 
-      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
-      gl.vertexAttribPointer(program.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.normalBuffer);
-      gl.vertexAttribPointer(program.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.colorBuffer);
-      gl.vertexAttribPointer(program.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    program.end();
+    shader.end();
   };
 
 }());

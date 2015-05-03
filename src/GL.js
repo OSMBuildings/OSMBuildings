@@ -39,9 +39,6 @@ var GL = {
 
     loop = setInterval(function() {
       requestAnimationFrame(function() {
-        gl.clearColor(0.75, 0.75, 0.75, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
         // TODO: update this only when Map changed
         var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
 //      projectionOrtho = Matrix.ortho(Map.size.width, Map.size.height, 40000);
@@ -53,9 +50,9 @@ var GL = {
         matrix = Matrix.translate(matrix, Map.size.width/2, Map.size.height/2, 0);
         matrix = Matrix.multiply(matrix, projection);
 
+        Interaction.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
-//      Interaction.render(matrix);
       });
     }, 17);
   },

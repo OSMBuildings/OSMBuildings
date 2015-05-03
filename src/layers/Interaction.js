@@ -6,7 +6,7 @@ var Interaction = {};
 (function() {
 
   var shader;
-  var idMapping = [null];
+  var idMapping = [null], callback;
 
   // TODO: move this
   function onResize() {
@@ -20,13 +20,19 @@ var Interaction = {};
   };
 
   Interaction.render = function(mapMatrix) {
-    if (Map.zoom < MIN_ZOOM) {
+    if (!callback) {
       return;
     }
 
-    var program = shader.use();
+    if (Map.zoom < MIN_ZOOM) {
+      callback();
+      return;
+    }
 
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    shader.use();
+
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var
       dataItems = Data.items,
@@ -42,27 +48,19 @@ var Interaction = {};
 
       matrix = Matrix.multiply(matrix, mapMatrix);
 
-      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
-      gl.vertexAttribPointer(program.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.idColorBuffer);
-      gl.vertexAttribPointer(program.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    program.end();
-  };
-
-  Interaction.getIdFromXY = function(x, y) {
-    if (!imageData) {
-      return;
-    }
-    var pos = 4*((y|0) * WIDTH + (x|0));
-    var index = imageData[pos] | (imageData[pos+1]<<8) | (imageData[pos+2]<<16);
-    return idMapping[index];
+    shader.end();
+    callback()
   };
 
   Interaction.idToColor = function(id) {
@@ -76,6 +74,23 @@ var Interaction = {};
       r:  index        & 0xff,
       g: (index >>  8) & 0xff,
       b: (index >> 16) & 0xff
+    };
+  };
+
+  Interaction.getFeatureID = function(pos, fn) {
+    callback = function() {
+      var
+        width = Map.size.width,
+        height  = Map.size.height;
+
+      var imageData = new Uint8Array(width*height*4);
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+
+      var index = ((height-pos.y)*width + pos.x) * 4;
+      var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+
+      fn(idMapping[color]);
+      callback = null;
     };
   };
 
