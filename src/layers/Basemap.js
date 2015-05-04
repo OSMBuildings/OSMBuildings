@@ -7,15 +7,8 @@ var Basemap = {};
 
   var shader;
 
-  // TODO: move this
-  function onResize() {
-    gl.viewport(0, 0, Map.size.width, Map.size.height);
-  }
-
   Basemap.initShader = function() {
     shader = new Shader('basemap');
-    Events.on('resize', onResize);
-    onResize();
   };
 
   Basemap.render = function(mapMatrix) {

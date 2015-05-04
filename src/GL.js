@@ -1,9 +1,10 @@
 
-var gl;
-
-var loop;
+var gl, loop;
 
 var GL = {
+
+  width: 0,
+  height: 0,
 
   createContext: function(container) {
     var canvas = document.createElement('CANVAS');
@@ -25,7 +26,7 @@ var GL = {
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
 
-    Map.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+    GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });
 
     addListener(canvas, 'webglcontextlost', function(e) {
       clearInterval(loop);
@@ -40,14 +41,14 @@ var GL = {
     loop = setInterval(function() {
       requestAnimationFrame(function() {
         // TODO: update this only when Map changed
-        var projection = Matrix.perspective(20, Map.size.width, Map.size.height, 40000);
-//      projectionOrtho = Matrix.ortho(Map.size.width, Map.size.height, 40000);
+        var projection = Matrix.perspective(20, GL.width, GL.height, 40000);
+//      projectionOrtho = Matrix.ortho(GL.width, GL.height, 40000);
 
         // TODO: update this only when Map changed
         var matrix = Matrix.create();
         matrix = Matrix.rotateZ(matrix, Map.rotation);
         matrix = Matrix.rotateX(matrix, Map.tilt);
-        matrix = Matrix.translate(matrix, Map.size.width/2, Map.size.height/2, 0);
+        matrix = Matrix.translate(matrix, GL.width/2, GL.height/2, 0);
         matrix = Matrix.multiply(matrix, projection);
 
         Interaction.render(matrix);
@@ -55,6 +56,16 @@ var GL = {
         Buildings.render(matrix);
       });
     }, 17);
+  },
+
+  setSize: function(size) {
+    var canvas = gl.canvas;
+    if (size.width !== GL.width || size.height !== GL.height) {
+      canvas.width  = GL.width  = size.width;
+      canvas.height = GL.height = size.height;
+      gl.viewport(0, 0, size.width, size.height);
+      Events.emit('resize', size);
+    }
   },
 
   createBuffer: function(itemSize, data) {

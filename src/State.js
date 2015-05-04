@@ -52,4 +52,8 @@ var State = {};
     }, 1000);
   };
 
+  Events.on('change', function() {
+    State.save(Map);
+  });
+
 }());

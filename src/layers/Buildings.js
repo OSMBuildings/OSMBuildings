@@ -5,15 +5,8 @@ var Buildings = {};
 
   var shader;
 
-  // TODO: move this
-  function onResize() {
-    gl.viewport(0, 0, Map.size.width, Map.size.height);
-  }
-
   Buildings.initShader = function() {
     shader = new Shader('buildings');
-    Events.on('resize', onResize);
-    onResize();
   };
 
   Buildings.render = function(mapMatrix) {

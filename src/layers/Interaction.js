@@ -8,15 +8,8 @@ var Interaction = {};
   var shader;
   var idMapping = [null], callback;
 
-  // TODO: move this
-  function onResize() {
-    gl.viewport(0, 0, Map.size.width, Map.size.height);
-  }
-
   Interaction.initShader = function() {
     shader = new Shader('interaction');
-    Events.on('resize', onResize);
-    onResize();
   };
 
   Interaction.render = function(mapMatrix) {
@@ -80,8 +73,8 @@ var Interaction = {};
   Interaction.getFeatureID = function(pos, fn) {
     callback = function() {
       var
-        width = Map.size.width,
-        height  = Map.size.height;
+        width  = GL.width,
+        height = GL.height;
 
       var imageData = new Uint8Array(width*height*4);
       gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);

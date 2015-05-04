@@ -180,9 +180,7 @@ var Events = {};
     addListener(window, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-  //      if (Map.size.width !== container.offsetWidth || Map.size.height !== container.offsetHeight) {
-  //        Map.setSize({ width: container.offsetWidth, height: container.offsetHeight });
-  //      }
+        GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });
       }, 250);
     });
   };

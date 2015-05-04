@@ -80,12 +80,12 @@ OSMBuildings.prototype = {
   },
 
   setSize: function(size) {
-    Map.setSize(size);
+    GL.setSize(size);
     return this;
   },
 
   getSize: function() {
-    return Map.size;
+    return { width:GL.width, height:GL.height };
   },
 
   getOrigin: function() {

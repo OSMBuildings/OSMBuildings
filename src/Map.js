@@ -11,8 +11,8 @@ var Map = {};
     var
       centerXY = project(Map.center.latitude, Map.center.longitude, Map.worldSize),
 
-      halfWidth = Map.size.width/2,
-      halfHeight = Map.size.height/2,
+      halfWidth  = GL.width/2,
+      halfHeight = GL.height/2,
 
       nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, Map.worldSize),
       se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, Map.worldSize);
@@ -28,7 +28,6 @@ var Map = {};
   //***************************************************************************
 
   Map.center = {};
-  Map.size = { width: 0, height: 0 };
 
   Map.setState = function(options) {
     Map.minZoom = parseFloat(options.minZoom) || 10;
@@ -44,8 +43,8 @@ var Map = {};
     Map.setRotation(options.rotation || 0);
     Map.setTilt(options.tilt || 0);
 
-    Events.on('change', function() {
-      State.save(Map);
+    Events.on('resize', function() {
+      updateBounds();
     });
 
     State.save(Map);
@@ -60,8 +59,8 @@ var Map = {};
         Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
         updateOrigin(project(Map.center.latitude, Map.center.longitude, Map.worldSize));
       } else {
-        var dx = Map.size.width/2 - e.clientX;
-        var dy = Map.size.height/2 - e.clientY;
+        var dx = GL.width/2 - e.clientX;
+        var dy = GL.height/2 - e.clientY;
         var geoPos = unproject(Map.origin.x - dx, Map.origin.y - dy, Map.worldSize);
 
         Map.zoom = zoom;
@@ -86,17 +85,6 @@ var Map = {};
       updateOrigin(project(center.latitude, center.longitude, Map.worldSize));
       updateBounds();
       Events.emit('change');
-    }
-  };
-
-  Map.setSize = function(size) {
-    var canvas = gl.canvas;
-    if (size.width !== Map.size.width || size.height !== Map.size.height) {
-      canvas.width = Map.size.width = size.width;
-      canvas.height = Map.size.height = size.height;
-      gl.viewport(0, 0, size.width, size.height);
-      updateBounds();
-      Events.emit('resize');
     }
   };
 
