@@ -59,6 +59,7 @@ return true;
     GL.deleteBuffer(this.vertexBuffer);
     GL.deleteBuffer(this.normalBuffer);
     GL.deleteBuffer(this.colorBuffer);
+    GL.deleteBuffer(this.idColorBuffer);
 
     if (this.request) {
       this.request.abort();
