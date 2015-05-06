@@ -6,7 +6,7 @@ var GL = {
   width: 0,
   height: 0,
 
-  createContext: function(container) {
+  createContext: function(container, options) {
     var canvas = document.createElement('CANVAS');
     canvas.style.position = 'absolute';
     canvas.style.pointerEvents = 'none';
@@ -22,7 +22,11 @@ var GL = {
       throw ex;
     }
 
-    gl.enable(gl.CULL_FACE);
+    if (options.showBackfaces) {
+      gl.disable(gl.CULL_FACE);
+    } else {
+      gl.enable(gl.CULL_FACE);
+    }
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
 
@@ -50,6 +54,8 @@ var GL = {
         matrix = Matrix.rotateX(matrix, Map.tilt);
         matrix = Matrix.translate(matrix, GL.width/2, GL.height/2, 0);
         matrix = Matrix.multiply(matrix, projection);
+
+// console.log('CONTEXT LOST?', gl.isContextLost());
 
         Interaction.render(matrix);
         Basemap.render(matrix);

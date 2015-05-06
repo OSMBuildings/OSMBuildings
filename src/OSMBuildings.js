@@ -6,7 +6,7 @@ var OSMBuildings = function(containerId, options) {
 
   Map.setState(options);
   Events.init(container);
-  GL.createContext(container);
+  GL.createContext(container, { showBackfaces:options.showBackfaces });
 
   this.setDisabled(options.disabled);
   if (options.style) {

@@ -78,15 +78,16 @@ var JS3D = {};
     var
       collection = json.collection,
       mesh,
+      meshNormals, meshColors, meshIDColors,
       color,
-      idColor,
       numVertices,
       data = {
         vertices: [],
         normals: [],
         colors: [],
         idColors: []
-      };
+      },
+      j, k;
 
     if (properties.color) {
       color = Color.parse(properties.color).toRGBA();
@@ -95,12 +96,17 @@ var JS3D = {};
     for (var i = 0, il = collection.length; i < il; i++) {
       mesh = collection[i];
       numVertices = mesh.vertices.length/3;
-      idColor = Interaction.idToColor(mesh.id || properties.id);
+      meshNormals  = mesh.normals || createNormals(mesh.vertices);
+      meshColors   = mesh.colors || createColors(numVertices, color);
+      meshIDColors = createColors(numVertices, Interaction.idToColor(mesh.id || properties.id));
 
-      data.vertices.push.apply(data.vertices, mesh.vertices);
-      data.normals.push.apply(data.normals, mesh.normals || createNormals(mesh.vertices));
-      data.colors.push.apply(data.colors, mesh.colors || createColors(numVertices, color));
-      data.idColors.push.apply(data.idColors, createColors(numVertices, idColor));
+      for (j = 0; j < numVertices; j++) {
+        k = j*3;
+        data.vertices.push(mesh.vertices[k], mesh.vertices[k+1], mesh.vertices[k+2]);
+        data.normals.push(meshNormals[k], meshNormals[k+1], meshNormals[k+2]);
+        data.colors.push(meshColors[k], meshColors[k+1], meshColors[k+2]);
+        data.idColors.push(meshIDColors[k], meshIDColors[k+1], meshIDColors[k+2]);
+      }
     }
 
     return data;

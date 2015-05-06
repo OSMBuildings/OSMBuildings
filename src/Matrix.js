@@ -75,7 +75,7 @@ var Matrix = {
     return [
       2/width, 0,         0,        0,
       0,      -2/height,  0,        0,
-      0,       40/depth,  -2/depth,  f * (-2/depth),
+      0,       40/depth,  -2/depth, f * (-2/depth),
       -1,      1,         0,        1
     ];
   },
