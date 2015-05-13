@@ -2257,6 +2257,7 @@ var Data = {
 var Mesh = function(url, properties) {
   this.properties = properties || {};
   this.position = this.properties.position || {};
+  this.scale = this.properties.scale || 1;
 
   // TODO: implement this
   this.request = { abort: function() {} };
@@ -2306,6 +2307,7 @@ var Mesh = function(url, properties) {
     var idColor = Interaction.idToColor(this.properties.id ? this.properties.id : item.id);
 
     var numVertices = item.vertices.length/3;
+
     for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
       data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
       data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
@@ -2321,13 +2323,13 @@ var Mesh = function(url, properties) {
 
     var
       zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom),
+      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale,
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
       origin = Map.origin,
       matrix = Matrix.create();
 
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
+    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
     matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
 
     return matrix;
@@ -2770,9 +2772,9 @@ var OBJ = {};
         break;
   
   	    case 'Kd':
-  	      data.color.r = parseFloat(cols[1]);
-  	      data.color.g = parseFloat(cols[2]);
-  	      data.color.b = parseFloat(cols[3]);
+  	      data.color.r = parseFloat(cols[1])*255;
+  	      data.color.g = parseFloat(cols[2])*255;
+  	      data.color.b = parseFloat(cols[3])*255;
   	    break;
   
   	    case 'd':
@@ -2791,65 +2793,53 @@ var OBJ = {};
     } 
   }
 
-  function parseModel(str, bounds, allVertices, materials) {
+  function parseModel(str, allVertices, materials) {
     var lines = str.split(/[\r\n]/g), cols;
     var i, il;
 
     var meshes = [];
-    var data = null;
+    var id;
+    var color;
+    var faces = [];
 
-    var x, y, z;
-  
     for (i = 0, il = lines.length; i < il; i++) {
   	  cols = lines[i].trim().split(/\s+/);
   
       switch (cols[0]) {
-        case 'g':
-          storeMesh(meshes, allVertices, data);
-          data = {
-            id: cols[1],
-            color: null,
-            faces: []
-          };
+        case 'o':
+          storeMesh(meshes, allVertices, id, color, faces);
+          id = cols[1];
+          faces = [];
         break;
 
         case 'usemtl':
+          storeMesh(meshes, allVertices, id, color, faces);
           if (materials[ cols[1] ]) {
-            data.color = materials[ cols[1] ];
+            color = materials[ cols[1] ];
           }
+          faces = [];
         break;
 
         case 'v':
-          x = parseFloat(cols[1])*100;
-          y = parseFloat(cols[2])*100;
-          z = parseFloat(cols[3])*100;
-
-      		if (bounds.minX > x) bounds.minX = x;
-      		if (bounds.minY > y) bounds.minY = y;
-      		if (bounds.minZ > z) bounds.minZ = z;
-      		if (bounds.maxX < x) bounds.maxX = x;
-      		if (bounds.maxY < y) bounds.maxY = y;
-      		if (bounds.maxZ < z) bounds.maxZ = z;
-
-  	      allVertices.push([x, y, z]);
+          allVertices.push([parseFloat(cols[1])*100, parseFloat(cols[2])*100, parseFloat(cols[3])*100]);
         break;
 
   	    case 'f':
-  	      data.faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
+  	      faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
   	    break;
 	    }
     }
 
-    storeMesh(meshes, allVertices, data);
-    return normalize(meshes, bounds);
+    storeMesh(meshes, allVertices, id, color, faces);
+    return normalize(meshes, allVertices);
   }
 
-  function storeMesh(meshes, allVertices, data) {
-    if (data !== null) {
-      var geometry = createGeometry(allVertices, data.faces);
+  function storeMesh(meshes, allVertices, id, color, faces) {
+    if (faces.length) {
+      var geometry = createGeometry(allVertices, faces);
       meshes.push({
-        id: data.id,
-        color: data.color,
+        id: id,
+        color: color,
         vertices: geometry.vertices,
         normals: geometry.normals
       });
@@ -2894,19 +2884,31 @@ var OBJ = {};
     return geometry;
   }
 
-  function normalize(meshes, bounds) {
-   	var max = Math.max(bounds.maxX-bounds.minX, bounds.maxY-bounds.minY, bounds.maxZ-bounds.minZ) / 200;
+  function normalize(meshes, allVertices) {
+  	var mx =  1e10, my =  1e10, mz =  1e10;
+  	var Mx = -1e10, My = -1e10, Mz = -1e10;
+
+    for (var i = 0, il = allVertices.length; i < il; i++) {
+  		if (mx > allVertices[i][0]) mx = allVertices[i][0];
+  		if (my > allVertices[i][2]) my = allVertices[i][2];
+  		if (mz > allVertices[i][1]) mz = allVertices[i][1];
+  		if (Mx < allVertices[i][0]) Mx = allVertices[i][0];
+  		if (My < allVertices[i][2]) My = allVertices[i][2];
+  		if (Mz < allVertices[i][1]) Mz = allVertices[i][1];
+    }
+
+ 	  var max = Math.max(Mx-mx, My-my, Mz-mz) / 200;
+    var cx = mx + (Mx-mx)/2;
+    var cy = my + (My-my)/2;
+
     var j, jl;
-
     var mesh;
-    for (var i = 0, il = meshes.length; i < il; i++) {
+    for (i = 0, il = meshes.length; i < il; i++) {
       mesh = meshes[i];
-      vertices = mesh.vertices; 
-
       for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	vertices[j+0] = (vertices[j+0]-bounds.minX)/max;
-        vertices[j+2] = (vertices[j+2]-bounds.minZ)/max;
-        vertices[j+1] = (vertices[j+1]-bounds.minY)/max;
+  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx)/max;
+        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz)/max;
+        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy)/max;
       }
     }
 
@@ -2917,28 +2919,19 @@ var OBJ = {};
 
   OBJ.load = function(url, callback) {
     var allVertices = [];
-    
-    var bounds = {
-    	minX:  1e10,
-      minY:  1e10,
-      minZ:  1e10,
-    	maxX: -1e10,
-      maxY: -1e10,
-      maxZ: -1e10
-    };
 
     XHR.load(url, function(modelStr) {
       var mtlFile = modelStr.match(/^mtllib\s+(.*)$/m);
       if (mtlFile) {
         var baseURL = url.replace(/[^\/]+$/, '');
-        XHR.load(baseURL +'/'+ mtlFile[1], function(materialStr) {
-          callback(parseModel(modelStr, bounds, allVertices, parseMaterials(materialStr)));        
+        XHR.load(baseURL + mtlFile[1], function(materialStr) {
+          callback(parseModel(modelStr, allVertices, parseMaterials(materialStr)));        
         });
         return; 
       }
   
       setTimeout(function() {
-        callback(parseModel(modelStr, bounds, allVertices, {}));
+        callback(parseModel(modelStr, allVertices, {}));
       }, 1);
     });
   };
