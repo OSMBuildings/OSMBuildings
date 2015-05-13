@@ -1,4 +1,4 @@
-(function(window) {
+(function(global) {
 var earcut = (function() {
 
 'use strict'
@@ -870,7 +870,7 @@ var OSMBuildings = function(containerId, options) {
 
   Map.setState(options);
   Events.init(container);
-  GL.createContext(container);
+  GL.createContext(container, options);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -879,9 +879,6 @@ var OSMBuildings = function(containerId, options) {
 
   TileGrid.setSource(options.tileSource);
   DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
-
-  Basemap.initShader();
-  Buildings.initShader();
 
 //this.addAttribution(OSMBuildings.ATTRIBUTION);
 };
@@ -900,8 +897,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  addMesh: function(url, options) {
-    new Mesh(url, options);
+  addMesh: function(dataOrURL, options) {
+    new Mesh(dataOrURL, options);
     return this;
   },
 
@@ -947,12 +944,12 @@ OSMBuildings.prototype = {
   },
 
   setSize: function(size) {
-    Map.setSize(size);
+    GL.setSize(size);
     return this;
   },
 
   getSize: function() {
-    return Map.size;
+    return { width:GL.width, height:GL.height };
   },
 
   getOrigin: function() {
@@ -990,7 +987,7 @@ if (typeof define === 'function') {
 } else if (typeof exports === 'object') {
   module.exports = OSMBuildings;
 } else {
-  window.OSMBuildings = OSMBuildings;
+  global.OSMBuildings = OSMBuildings;
 }
 
 
@@ -1006,8 +1003,8 @@ var Map = {};
     var
       centerXY = project(Map.center.latitude, Map.center.longitude, Map.worldSize),
 
-      halfWidth = Map.size.width/2,
-      halfHeight = Map.size.height/2,
+      halfWidth  = GL.width/2,
+      halfHeight = GL.height/2,
 
       nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, Map.worldSize),
       se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, Map.worldSize);
@@ -1023,7 +1020,6 @@ var Map = {};
   //***************************************************************************
 
   Map.center = {};
-  Map.size = { width: 0, height: 0 };
 
   Map.setState = function(options) {
     Map.minZoom = parseFloat(options.minZoom) || 10;
@@ -1039,8 +1035,8 @@ var Map = {};
     Map.setRotation(options.rotation || 0);
     Map.setTilt(options.tilt || 0);
 
-    Events.on('change', function() {
-      State.save(Map);
+    Events.on('resize', function() {
+      updateBounds();
     });
 
     State.save(Map);
@@ -1055,8 +1051,8 @@ var Map = {};
         Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
         updateOrigin(project(Map.center.latitude, Map.center.longitude, Map.worldSize));
       } else {
-        var dx = Map.size.width/2 - e.clientX;
-        var dy = Map.size.height/2 - e.clientY;
+        var dx = GL.width/2 - e.clientX;
+        var dy = GL.height/2 - e.clientY;
         var geoPos = unproject(Map.origin.x - dx, Map.origin.y - dy, Map.worldSize);
 
         Map.zoom = zoom;
@@ -1081,17 +1077,6 @@ var Map = {};
       updateOrigin(project(center.latitude, center.longitude, Map.worldSize));
       updateBounds();
       Events.emit('change');
-    }
-  };
-
-  Map.setSize = function(size) {
-    var canvas = gl.canvas;
-    if (size.width !== Map.size.width || size.height !== Map.size.height) {
-      canvas.width = Map.size.width = size.width;
-      canvas.height = Map.size.height = size.height;
-      gl.viewport(0, 0, size.width, size.height);
-      updateBounds();
-      Events.emit('resize');
     }
   };
 
@@ -1126,22 +1111,22 @@ var Events = {};
   var
     listeners = {},
 
-    hasTouch = ('ontouchstart' in window),
+    hasTouch = ('ontouchstart' in global),
     dragStartEvent = hasTouch ? 'touchstart' : 'mousedown',
     dragMoveEvent = hasTouch ? 'touchmove' : 'mousemove',
     dragEndEvent = hasTouch ? 'touchend' : 'mouseup',
 
-    startX = 0,
-    startY = 0,
+    prevX = 0, prevY = 0,
+    startX = 0, startY  = 0,
     startZoom = 0,
-    startRotation = 0,
-    startTilt = 0,
+    prevRotation = 0,
+    prevTilt = 0,
 
     button,
     stepX, stepY,
 
     isDisabled = false,
-    isDragging = false,
+    pointerIsDown = false,
     resizeTimer;
 
   function onDragStart(e) {
@@ -1152,8 +1137,8 @@ var Events = {};
     cancelEvent(e);
 
     startZoom = Map.zoom;
-    startRotation = Map.rotation;
-    startTilt = Map.tilt;
+    prevRotation = Map.rotation;
+    prevTilt = Map.tilt;
 
     stepX = 360/innerWidth;
     stepY = 360/innerHeight;
@@ -1167,14 +1152,14 @@ var Events = {};
       e = e.touches[0];
     }
 
-    startX = e.clientX;
-    startY = e.clientY;
+    startX = prevX = e.clientX;
+    startY = prevY = e.clientY;
 
-    isDragging = true;
+    pointerIsDown = true;
   }
 
   function onDragMove(e) {
-    if (isDisabled || !isDragging) {
+    if (isDisabled || !pointerIsDown) {
       return;
     }
 
@@ -1188,18 +1173,18 @@ var Events = {};
     if (e.touches !== undefined || button === 0) {
       moveMap(e);
     } else {
-      startRotation += (e.clientX - startX)*stepX;
-      startTilt     -= (e.clientY - startY)*stepY;
-      Map.setRotation(startRotation);
-      Map.setTilt(startTilt);
+      prevRotation += (e.clientX - prevX)*stepX;
+      prevTilt     -= (e.clientY - prevY)*stepY;
+      Map.setRotation(prevRotation);
+      Map.setTilt(prevTilt);
     }
 
-    startX = e.clientX;
-    startY = e.clientY;
+    prevX = e.clientX;
+    prevY = e.clientY;
   }
 
   function onDragEnd(e) {
-    if (isDisabled || !isDragging) {
+    if (isDisabled || !pointerIsDown) {
       return;
     }
 
@@ -1211,15 +1196,19 @@ var Events = {};
     }
 
     if (e.touches !== undefined || button === 0) {
-      moveMap(e);
+      if (Math.abs(e.clientX-startX) < 5 && Math.abs(e.clientY-startY) < 5) {
+        onClick(e);
+      } else {
+        moveMap(e);
+      }
     } else {
-      startRotation += (e.clientX - startX)*stepX;
-      startTilt     -= (e.clientY - startY)*stepY;
-      Map.setRotation(startRotation);
-      Map.setTilt(startTilt);
+      prevRotation += (e.clientX - prevX)*stepX;
+      prevTilt     -= (e.clientY - prevY)*stepY;
+      Map.setRotation(prevRotation);
+      Map.setTilt(prevTilt);
     }
 
-    isDragging = false;
+    pointerIsDown = false;
   }
 
   function onGestureChange(e) {
@@ -1228,8 +1217,8 @@ var Events = {};
     }
     cancelEvent(e);
     Map.setZoom(startZoom + (e.scale - 1));
-    Map.setRotation(startRotation - e.rotation);
-//  Map.setTilt(startTilt ...);
+    Map.setRotation(prevRotation - e.rotation);
+//  Map.setTilt(prevTilt ...);
   }
 
   function onDoubleClick(e) {
@@ -1238,6 +1227,17 @@ var Events = {};
     }
     cancelEvent(e);
     Map.setZoom(Map.zoom + 1, e);
+  }
+
+  function onClick(e) {
+    if (isDisabled) {
+      return;
+    }
+    cancelEvent(e);
+    Interaction.getFeatureID({ x:e.clientX, y:e.clientY }, function(featureID) {
+      e.featureID = featureID;
+      Events.emit('click', e);
+    });
   }
 
   function onMouseWheel(e) {
@@ -1261,8 +1261,8 @@ var Events = {};
   //***************************************************************************
 
   function moveMap(e) {
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
+    var dx = e.clientX - prevX;
+    var dy = e.clientY - prevY;
     var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
     Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
   }
@@ -1282,12 +1282,10 @@ var Events = {};
       addListener(container, 'DOMMouseScroll', onMouseWheel);
     }
 
-    addListener(window, 'resize', function() {
+    addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-  //      if (Map.size.width !== container.offsetWidth || Map.size.height !== container.offsetHeight) {
-  //        Map.setSize({ width: container.offsetWidth, height: container.offsetHeight });
-  //      }
+        GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });
       }, 250);
     });
   };
@@ -1301,12 +1299,12 @@ var Events = {};
 
   Events.off = function(type, fn) {};
 
-  Events.emit = function(type) {
+  Events.emit = function(type, payload) {
     if (!listeners[type]) {
       return;
     }
     for (var i = 0, il = listeners[type].length; i<il; i++) {
-      listeners[type][i]();
+      listeners[type][i](payload);
     }
   };
 
@@ -1397,6 +1395,10 @@ var State = {};
     }, 1000);
   };
 
+  Events.on('change', function() {
+    State.save(Map);
+  });
+
 }());
 
 
@@ -1419,6 +1421,8 @@ var STYLE = {
   }
 };
 
+var document = global.document;
+
 
 var XHR = {};
 
@@ -1426,7 +1430,7 @@ var XHR = {};
 
   var loading = {};
 
-  XHR.loadJSON = function(url, callback) {
+  function load(url, callback) {
     if (loading[url]) {
       return loading[url];
     }
@@ -1444,15 +1448,7 @@ var XHR = {};
         return;
       }
 
-      if (req.responseText) {
-        var json;
-        try {
-          json = JSON.parse(req.responseText);
-        } catch(ex) {
-          console.error('Could not parse JSON from '+ url +'\n'+ ex.message);
-        }
-        callback(json);
-      }
+      callback(req);
     };
 
     loading[url] = req;
@@ -1465,6 +1461,28 @@ var XHR = {};
         delete loading[url];
       }
     };
+  }
+
+  XHR.load = function(url, callback) {
+    return load(url, function(req) {
+      if (req.responseText !== undefined) {
+        callback(req.responseText);
+      }
+    });
+  };
+
+  XHR.loadJSON = function(url, callback) {
+    return load(url, function(req) {
+      if (req.responseText) {
+        var json;
+        try {
+          json = JSON.parse(req.responseText);
+        } catch(ex) {
+          console.error('Could not parse JSON from '+ url +'\n'+ ex.message);
+        }
+        callback(json);
+      }
+    });
   };
 
   XHR.abortAll = function() {
@@ -1519,7 +1537,7 @@ function pattern(str, param) {
   });
 }
 
-var SHADERS = {"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]},"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"]}};
 
 
 
@@ -1549,12 +1567,12 @@ var Triangulate = {};
 
 
 
-  Triangulate.quad = function(data, a, b, c, d, color) {
-    Triangulate.addTriangle(data, a, b, c, color);
-    Triangulate.addTriangle(data, b, d, c, color);
+  Triangulate.quad = function(data, a, b, c, d, color, idColor) {
+    Triangulate.addTriangle(data, a, b, c, color, idColor);
+    Triangulate.addTriangle(data, b, d, c, color, idColor);
   };
 
-  Triangulate.circle = function(data, center, radius, z, color) {
+  Triangulate.circle = function(data, center, radius, z, color, idColor) {
     var u, v;
     for (var i = 0; i < LON_SEGMENTS; i++) {
       u = i/LON_SEGMENTS;
@@ -1564,12 +1582,12 @@ var Triangulate = {};
         [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), z ],
         [ center[0],                                  center[1],                                  z ],
         [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), z ],
-        color
+        color, idColor
       );
     }
   };
 
-  Triangulate.polygon = function(data, polygon, z, color) {
+  Triangulate.polygon = function(data, polygon, z, color, idColor) {
     var triangles = earcut(polygon);
     for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
       Triangulate.addTriangle(
@@ -1577,12 +1595,12 @@ var Triangulate = {};
         [ triangles[t  ][0], triangles[t  ][1], z ],
         [ triangles[t+1][0], triangles[t+1][1], z ],
         [ triangles[t+2][0], triangles[t+2][1], z ],
-        color
+        color, idColor
       );
     }
   };
 
-  Triangulate.polygon3d = function(data, polygon, color) {
+  Triangulate.polygon3d = function(data, polygon, color, idColor) {
     var ring = polygon[0];
     var ringLength = ring.length;
     var triangles, t, tl;
@@ -1595,7 +1613,7 @@ var Triangulate = {};
         ring[0],
         ring[2],
         ring[1],
-        color
+        color, idColor
       );
 
       if (ringLength === 4) { // 4: a quad (2 triangles)
@@ -1604,7 +1622,7 @@ var Triangulate = {};
           ring[0],
           ring[3],
           ring[2],
-          color
+          color, idColor
         );
       }
       return;
@@ -1626,7 +1644,7 @@ var Triangulate = {};
           [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
           [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
           [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
-          color
+          color, idColor
         );
       }
 
@@ -1640,12 +1658,12 @@ var Triangulate = {};
         [ triangles[t  ][0], triangles[t  ][1], triangles[t  ][2] ],
         [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
         [ triangles[t+2][0], triangles[t+2][1], triangles[t+2][2] ],
-        color
+        color, idColor
       );
     }
   };
 
-  Triangulate.cylinder = function(data, center, radiusBottom, radiusTop, minHeight, height, color) {
+  Triangulate.cylinder = function(data, center, radiusBottom, radiusTop, minHeight, height, color, idColor) {
     var u, v;
     var sinPhi1, cosPhi1;
     var sinPhi2, cosPhi2;
@@ -1665,7 +1683,7 @@ var Triangulate = {};
         [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ],
         [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
         [ center[0] + radiusBottom*sinPhi2, center[1] + radiusBottom*cosPhi2, minHeight ],
-        color
+        color, idColor
       );
 
       if (radiusTop !== 0) {
@@ -1674,13 +1692,13 @@ var Triangulate = {};
           [ center[0] + radiusTop   *sinPhi1, center[1] + radiusTop   *cosPhi1, height    ],
           [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
           [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ],
-          color
+          color, idColor
         );
       }
     }
   };
 
-  Triangulate.pyramid = function(data, polygon, center, minHeight, height, color) {
+  Triangulate.pyramid = function(data, polygon, center, minHeight, height, color, idColor) {
     polygon = polygon[0];
     for (var i = 0, il = polygon.length-1; i < il; i++) {
       Triangulate.addTriangle(
@@ -1688,22 +1706,21 @@ var Triangulate = {};
         [ polygon[i  ][0], polygon[i  ][1], minHeight ],
         [ polygon[i+1][0], polygon[i+1][1], minHeight ],
         [ center[0], center[1], height ],
-        color
+        color, idColor
       );
     }
   };
 
-  Triangulate.dome = function(data, center, radius, minHeight, height, color) {
-  };
+  Triangulate.dome = function(data, center, radius, minHeight, height, color, idColor) {};
 
-  Triangulate.sphere = function(data, center, radius, minHeight, height, color) {
+  Triangulate.sphere = function(data, center, radius, minHeight, height, color, idColor) {
     var theta, sinTheta, cosTheta;
 
     for (var i = 0; i < latSegments; i++) {
       theta = i * Math.PI / LAT_SEGMENTS;
       sinTheta = Math.sin(theta);
       cosTheta = Math.cos(theta);
-      Triangulate.cylinder(data, center, radiusBottom, radiusTop, minHeight, height, color);
+      Triangulate.cylinder(data, center, radiusBottom, radiusTop, minHeight, height, color, idColor);
   //  x = cosPhi * sinTheta;
   //  y = cosTheta;
   //  z = sinPhi * sinTheta;
@@ -1752,7 +1769,7 @@ var Triangulate = {};
 //  }
 //};
 
-  Triangulate.extrusion = function(data, polygon, minHeight, height, color) {
+  Triangulate.extrusion = function(data, polygon, minHeight, height, color, idColor) {
     var
       ring, last,
       a, b, z0, z1;
@@ -1777,13 +1794,13 @@ var Triangulate = {};
           [ b[0], b[1], z0 ],
           [ a[0], a[1], z1 ],
           [ b[0], b[1], z1 ],
-          color
+          color, idColor
         );
       }
     }
   };
 
-  Triangulate.addTriangle = function(data, a, b, c, color) {
+  Triangulate.addTriangle = function(data, a, b, c, color, idColor) {
     data.vertices.push(
       a[0], a[1], a[2],
       c[0], c[1], c[2],
@@ -1806,6 +1823,12 @@ var Triangulate = {};
       color.r, color.g, color.b,
       color.r, color.g, color.b,
       color.r, color.g, color.b
+    );
+
+    data.idColors.push(
+      idColor.r, idColor.g, idColor.b,
+      idColor.r, idColor.g, idColor.b,
+      idColor.r, idColor.g, idColor.b
     );
   };
 
@@ -1961,9 +1984,10 @@ var DataTile = function(tileX, tileY, zoom) {
   DataTile.prototype.onLoad = function(json) {
     this.request = null;
     var geom = GeoJSON.read(this.tileX * TILE_SIZE, this.tileY * TILE_SIZE, this.zoom, json);
-    this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
-    this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
-    this.colorBuffer  = GL.createBuffer(3, new Uint8Array(geom.colors));
+    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(geom.vertices));
+    this.normalBuffer  = GL.createBuffer(3, new Float32Array(geom.normals));
+    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(geom.colors));
+    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(geom.idColors));
     geom = null; json = null;
     this.isReady = true;
   };
@@ -1999,6 +2023,7 @@ var DataTile = function(tileX, tileY, zoom) {
     GL.deleteBuffer(this.vertexBuffer);
     GL.deleteBuffer(this.normalBuffer);
     GL.deleteBuffer(this.colorBuffer);
+    GL.deleteBuffer(this.idColorBuffer);
 
     if (this.request) {
       this.request.abort();
@@ -2229,43 +2254,66 @@ var Data = {
 };
 
 
-var Mesh = function(dataOrURL, options) {
-  options = options || {};
-  if (options.color) {
-    this.color = Color.parse(options.color);
-  }
-  this.position = options.position;
+var Mesh = function(url, properties) {
+  this.properties = properties || {};
+  this.position = this.properties.position || {};
 
-  if (typeof dataOrURL === 'object') {
-    this.onLoad(dataOrURL);
-  } else {
-    this.load(dataOrURL);
-  }
+  // TODO: implement this
+  this.request = { abort: function() {} };
+
+  OBJ.load(url, this.onLoad.bind(this));
 
   Data.add(this);
 };
 
 (function() {
 
-  Mesh.prototype.load = function(url) {
-    this.request = XHR.loadJSON(url, this.onLoad.bind(this));
-  };
+  function createColors(num, color) {
+    var colors = [], c = color ? color : { r:255*0.75, g:255*0.75, b:255*0.75 };
+    for (var i = 0; i < num; i++) {
+      colors.push(c.r, c.g, c.b);
+    }
+    return colors;
+  }
 
-  Mesh.prototype.onLoad = function(json) {
+  Mesh.prototype.onLoad = function(items) {
     this.request = null;
 
-    if (!this.position) {
-      this.position = json.position || {};
+    var data = {
+      vertices: [],
+      normals: [],
+      colors: [],
+      idColors: []
+    };
+
+    for (var i = 0, il = items.length; i < il; i++) {
+      this.storeItem(data, items[i]);  
     }
 
-    var geom = JS3D.read(json, this.color);
-    this.vertexBuffer = GL.createBuffer(3, new Float32Array(geom.vertices));
-    this.normalBuffer = GL.createBuffer(3, new Float32Array(geom.normals));
-    this.colorBuffer  = GL.createBuffer(3, new Uint8Array(geom.colors));
-    geom = null; json = null;
+    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
+    this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
+    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
+    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
+
+    items = null; data = null;
     this.isReady = true;
   };
 
+  Mesh.prototype.storeItem = function(data, item) {
+    // given color has precedence
+    var color = this.properties.color ? Color.parse(this.properties.color).toRGBA() : item.color;
+    // given id has precedence
+    var idColor = Interaction.idToColor(this.properties.id ? this.properties.id : item.id);
+
+    var numVertices = item.vertices.length/3;
+    for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
+      data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
+      data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
+      data.colors.push(color.r, color.g, color.b);
+      data.idColors.push(idColor.r, idColor.g, idColor.b);
+    }
+  };
+ 
   Mesh.prototype.getMatrix = function() {
     if (!this.isReady || !this.isVisible()) {
       return;
@@ -2287,13 +2335,28 @@ var Mesh = function(dataOrURL, options) {
 
   Mesh.prototype.isVisible = function(key, buffer) {
     buffer = buffer || 0;
-return true;
+// TODO: check against bbox
+// return true;
+    var
+      zoom = 16, // TODO: this shouldn't be a fixed value?
+      ratio = 1 / Math.pow(2, zoom - Map.zoom),
+      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+      position = project(this.position.latitude, this.position.longitude, worldSize),
+      origin = Map.origin,
+      matrix = Matrix.create();
+
+    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
+    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+
+//  console.log(this.bbox)
+    return true;
   };
 
   Mesh.prototype.destroy = function() {
     GL.deleteBuffer(this.vertexBuffer);
     GL.deleteBuffer(this.normalBuffer);
     GL.deleteBuffer(this.colorBuffer);
+    GL.deleteBuffer(this.idColorBuffer);
 
     if (this.request) {
       this.request.abort();
@@ -2491,10 +2554,11 @@ var GeoJSON = {};
       data = {
         vertices: [],
         normals: [],
-        colors: []
+        colors: [],
+        idColors: []
       },
       j, jl,
-      item, polygon, bbox, radius, center;
+      item, polygon, bbox, radius, center, id;
 
     for (var i = 0, il = collection.length; i < il; i++) {
       feature = collection[i];
@@ -2520,49 +2584,44 @@ var GeoJSON = {};
           radius = (bbox.maxX-bbox.minX)/2;
         }
 
-//      if (feature.id || feature.properties.id) {
-//        item.id = feature.id || feature.properties.id;
-//      }
-//      if (feature.properties.relationId) {
-//        item.relationId = feature.properties.relationId;
-//      }
+        idColor = Interaction.idToColor(feature.properties.relationId || feature.id || feature.properties.id);
 
         switch (item.shape) {
           case 'cylinder':
-            Triangulate.cylinder(data, center, radius, radius, item.minHeight, item.height, item.wallColor);
-            Triangulate.circle(data, center, radius, item.height, item.roofColor);
+            Triangulate.cylinder(data, center, radius, radius, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.circle(data, center, radius, item.height, item.roofColor, idColor);
           break;
 
           case 'cone':
-            Triangulate.cylinder(data, center, radius, 0, item.minHeight, item.height, item.wallColor);
+            Triangulate.cylinder(data, center, radius, 0, item.minHeight, item.height, item.wallColor, idColor);
           break;
 
           case 'sphere':
-            Triangulate.cylinder(data, center, radius, radius/2, item.minHeight, item.height, item.wallColor);
-            Triangulate.circle(data, center, radius/2, item.height, item.roofColor);
+            Triangulate.cylinder(data, center, radius, radius/2, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.circle(data, center, radius/2, item.height, item.roofColor, idColor);
           break;
 
           case 'pyramid':
-            Triangulate.pyramid(data, polygon, center, item.minHeight, item.height, item.wallColor);
+            Triangulate.pyramid(data, polygon, center, item.minHeight, item.height, item.wallColor, idColor);
           break;
 
           default:
-            Triangulate.extrusion(data, polygon, item.minHeight, item.height, item.wallColor);
-            Triangulate.polygon(data, polygon, item.height, item.roofColor);
+            Triangulate.extrusion(data, polygon, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.polygon(data, polygon, item.height, item.roofColor, idColor);
         }
 
         switch (item.roofShape) {
           case 'cone':
-            Triangulate.cylinder(data, center, radius, 0, item.height, item.height+item.roofHeight, item.roofColor);
+            Triangulate.cylinder(data, center, radius, 0, item.height, item.height+item.roofHeight, item.roofColor, idColor);
           break;
 
           case 'dome':
-            Triangulate.cylinder(data, center, radius, radius/2, item.height, item.height+item.roofHeight, item.roofColor);
-            Triangulate.circle(data, center, radius/2, item.height+item.roofHeight, item.roofColor);
+            Triangulate.cylinder(data, center, radius, radius/2, item.height, item.height+item.roofHeight, item.roofColor, idColor);
+            Triangulate.circle(data, center, radius/2, item.height+item.roofHeight, item.roofColor, idColor);
           break;
 
           case 'pyramid':
-            Triangulate.pyramid(data, polygon, center, item.height, item.height+item.roofHeight, item.roofColor);
+            Triangulate.pyramid(data, polygon, center, item.height, item.height+item.roofHeight, item.roofColor, idColor);
           break;
         }
       }
@@ -2578,19 +2637,19 @@ var JS3D = {};
 
 (function() {
 
-  function transform(offsetX, offsetY, zoom, ring) {
-    var
-      worldSize = TILE_SIZE * Math.pow(2, zoom),
-      res = [],
-      p;
-
-    for (var j = 0, jl = ring.length-2; j < jl; j+=3) {
-      p = project(ring[j+1], ring[j], worldSize);
-      res[j/3] = [p.x-offsetX, p.y-offsetY, ring[j+2]];
-    }
-
-    return res;
-  }
+  //function transform(offsetX, offsetY, zoom, ring) {
+  //  var
+  //    worldSize = TILE_SIZE * Math.pow(2, zoom),
+  //    res = [],
+  //    p;
+  //
+  //  for (var j = 0, jl = ring.length-2; j < jl; j+=3) {
+  //    p = project(ring[j+1], ring[j], worldSize);
+  //    res[j/3] = [p.x-offsetX, p.y-offsetY, ring[j+2]];
+  //  }
+  //
+  //  return res;
+  //}
 
   function createNormals(vertices) {
     var normals = [], n;
@@ -2610,7 +2669,7 @@ var JS3D = {};
   }
 
   function createColors(vertexNum, color) {
-    var colors = [], c = color ? color.toRGBA() : { r:255*0.75, g:255*0.75, b:255*0.75 };
+    var colors = [], c = color ? color : { r:255*0.75, g:255*0.75, b:255*0.75 };
     for (var i = 0; i < vertexNum; i++) {
       colors.push(c.r, c.g, c.b);
     }
@@ -2649,24 +2708,239 @@ var JS3D = {};
   //  return data;
   //};
 
-  JS3D.read = function(json, color) {
+  JS3D.read = function(json, properties) {
     var
       collection = json.collection,
       mesh,
+      meshNormals, meshColors, meshIDColors,
+      color,
+      numVertices,
       data = {
         vertices: [],
         normals: [],
-        colors: []
-      };
+        colors: [],
+        idColors: []
+      },
+      j, k;
+
+    if (properties.color) {
+      color = Color.parse(properties.color).toRGBA();
+    }
 
     for (var i = 0, il = collection.length; i < il; i++) {
       mesh = collection[i];
-      data.vertices.push.apply(data.vertices, mesh.vertices);
-      data.normals.push.apply(data.normals, mesh.normals || createNormals(mesh.vertices));
-      data.colors.push.apply(data.colors, mesh.colors || createColors(mesh.vertices.length/3, color));
+      numVertices = mesh.vertices.length/3;
+      meshNormals  = mesh.normals || createNormals(mesh.vertices);
+      meshColors   = mesh.colors || createColors(numVertices, color);
+      meshIDColors = createColors(numVertices, Interaction.idToColor(mesh.id || properties.id));
+
+      for (j = 0; j < numVertices; j++) {
+        k = j*3;
+        data.vertices.push(mesh.vertices[k], mesh.vertices[k+1], mesh.vertices[k+2]);
+        data.normals.push(meshNormals[k], meshNormals[k+1], meshNormals[k+2]);
+        data.colors.push(meshColors[k], meshColors[k+1], meshColors[k+2]);
+        data.idColors.push(meshIDColors[k], meshIDColors[k+1], meshIDColors[k+2]);
+      }
     }
 
     return data;
+  };
+
+}());
+
+
+var OBJ = {};
+
+(function() {
+
+  function parseMaterials(str) {
+    var lines = str.split(/[\r\n]/g), cols;
+    var i, il;
+  
+    var materials = {};
+    var data = null;
+  
+    for (i = 0, il = lines.length; i < il; i++) {
+  	  cols = lines[i].trim().split(/\s+/);
+      
+      switch (cols[0]) {
+  	    case 'newmtl':
+          storeMaterial(materials, data); 
+          data = { id:cols[1], color:{} };
+        break;
+  
+  	    case 'Kd':
+  	      data.color.r = parseFloat(cols[1]);
+  	      data.color.g = parseFloat(cols[2]);
+  	      data.color.b = parseFloat(cols[3]);
+  	    break;
+  
+  	    case 'd':
+          data.color.a = parseFloat(cols[1]);
+        break;
+  	  }
+    }
+  
+    storeMaterial(materials, data); 
+    return materials;
+  }
+  
+  function storeMaterial(materials, data) {
+    if (data !== null) {
+      materials[ data.id ] = data.color;
+    } 
+  }
+
+  function parseModel(str, bounds, allVertices, materials) {
+    var lines = str.split(/[\r\n]/g), cols;
+    var i, il;
+
+    var meshes = [];
+    var data = null;
+
+    var x, y, z;
+  
+    for (i = 0, il = lines.length; i < il; i++) {
+  	  cols = lines[i].trim().split(/\s+/);
+  
+      switch (cols[0]) {
+        case 'g':
+          storeMesh(meshes, allVertices, data);
+          data = {
+            id: cols[1],
+            color: null,
+            faces: []
+          };
+        break;
+
+        case 'usemtl':
+          if (materials[ cols[1] ]) {
+            data.color = materials[ cols[1] ];
+          }
+        break;
+
+        case 'v':
+          x = parseFloat(cols[1])*100;
+          y = parseFloat(cols[2])*100;
+          z = parseFloat(cols[3])*100;
+
+      		if (bounds.minX > x) bounds.minX = x;
+      		if (bounds.minY > y) bounds.minY = y;
+      		if (bounds.minZ > z) bounds.minZ = z;
+      		if (bounds.maxX < x) bounds.maxX = x;
+      		if (bounds.maxY < y) bounds.maxY = y;
+      		if (bounds.maxZ < z) bounds.maxZ = z;
+
+  	      allVertices.push([x, y, z]);
+        break;
+
+  	    case 'f':
+  	      data.faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
+  	    break;
+	    }
+    }
+
+    storeMesh(meshes, allVertices, data);
+    return normalize(meshes, bounds);
+  }
+
+  function storeMesh(meshes, allVertices, data) {
+    if (data !== null) {
+      var geometry = createGeometry(allVertices, data.faces);
+      meshes.push({
+        id: data.id,
+        color: data.color,
+        vertices: geometry.vertices,
+        normals: geometry.normals
+      });
+    } 
+  }
+
+  function createGeometry(allVertices, faces) {
+  	var v0, v1, v2;
+  	var e1, e2;
+  	var nor, len;
+
+    var geometry = { vertices:[], normals:[] };
+
+    for (var i = 0, il = faces.length; i < il; i++) {
+  		v0 = allVertices[ faces[i][0] ];
+  		v1 = allVertices[ faces[i][1] ];
+  		v2 = allVertices[ faces[i][2] ];
+  
+  		e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
+  		e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
+  
+  		nor = [ e1[1]*e2[2] - e1[2]*e2[1], e1[2]*e2[0] - e1[0]*e2[2], e1[0]*e2[1] - e1[1]*e2[0] ];
+  		len = Math.sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
+  
+  		nor[0] /= len;
+      nor[1] /= len;
+      nor[2] /= len;
+      
+  		geometry.vertices.push(
+        v0[0], v0[2], v0[1],
+        v1[0], v1[2], v1[1],
+        v2[0], v2[2], v2[1]
+      );
+  
+  		geometry.normals.push(
+        nor[0], nor[1], nor[2],
+        nor[0], nor[1], nor[2],
+        nor[0], nor[1], nor[2]
+      );
+    }
+
+    return geometry;
+  }
+
+  function normalize(meshes, bounds) {
+   	var max = Math.max(bounds.maxX-bounds.minX, bounds.maxY-bounds.minY, bounds.maxZ-bounds.minZ) / 200;
+    var j, jl;
+
+    var mesh;
+    for (var i = 0, il = meshes.length; i < il; i++) {
+      mesh = meshes[i];
+      vertices = mesh.vertices; 
+
+      for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
+  	   	vertices[j+0] = (vertices[j+0]-bounds.minX)/max;
+        vertices[j+2] = (vertices[j+2]-bounds.minZ)/max;
+        vertices[j+1] = (vertices[j+1]-bounds.minY)/max;
+      }
+    }
+
+    return meshes;
+  }
+
+  //***************************************************************************
+
+  OBJ.load = function(url, callback) {
+    var allVertices = [];
+    
+    var bounds = {
+    	minX:  1e10,
+      minY:  1e10,
+      minZ:  1e10,
+    	maxX: -1e10,
+      maxY: -1e10,
+      maxZ: -1e10
+    };
+
+    XHR.load(url, function(modelStr) {
+      var mtlFile = modelStr.match(/^mtllib\s+(.*)$/m);
+      if (mtlFile) {
+        var baseURL = url.replace(/[^\/]+$/, '');
+        XHR.load(baseURL +'/'+ mtlFile[1], function(materialStr) {
+          callback(parseModel(modelStr, bounds, allVertices, parseMaterials(materialStr)));        
+        });
+        return; 
+      }
+  
+      setTimeout(function() {
+        callback(parseModel(modelStr, bounds, allVertices, {}));
+      }, 1);
+    });
   };
 
 }());
@@ -2776,13 +3050,14 @@ function rotatePoint(x, y, angle) {
 }
 
 
-var gl;
-
-var loop;
+var gl, loop;
 
 var GL = {
 
-  createContext: function(container) {
+  width: 0,
+  height: 0,
+
+  createContext: function(container, options) {
     var canvas = document.createElement('CANVAS');
     canvas.style.position = 'absolute';
     canvas.style.pointerEvents = 'none';
@@ -2798,11 +3073,17 @@ var GL = {
       throw ex;
     }
 
-    gl.enable(gl.CULL_FACE);
+    GL.backgroundColor = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
+
+    if (options.showBackfaces) {
+      gl.disable(gl.CULL_FACE);
+    } else {
+      gl.enable(gl.CULL_FACE);
+    }
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
 
-    Map.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+    GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });
 
     addListener(canvas, 'webglcontextlost', function(e) {
       clearInterval(loop);
@@ -2810,14 +3091,40 @@ var GL = {
 
     //addListener(canvas, 'webglcontextrestored', ...);
 
+    Basemap.initShader();
+    Buildings.initShader();
+    Interaction.initShader();
+
     loop = setInterval(function() {
       requestAnimationFrame(function() {
-        gl.clearColor(0.75, 0.75, 0.75, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        Basemap.render();
-        Buildings.render();
+        // TODO: update this only when Map changed
+        var projection = Matrix.perspective(20, GL.width, GL.height, 40000);
+//      projectionOrtho = Matrix.ortho(GL.width, GL.height, 40000);
+
+        // TODO: update this only when Map changed
+        var matrix = Matrix.create();
+        matrix = Matrix.rotateZ(matrix, Map.rotation);
+        matrix = Matrix.rotateX(matrix, Map.tilt);
+        matrix = Matrix.translate(matrix, GL.width/2, GL.height/2, 0);
+        matrix = Matrix.multiply(matrix, projection);
+
+// console.log('CONTEXT LOST?', gl.isContextLost());
+
+        Interaction.render(matrix);
+        Basemap.render(matrix);
+        Buildings.render(matrix);
       });
     }, 17);
+  },
+
+  setSize: function(size) {
+    var canvas = gl.canvas;
+    if (size.width !== GL.width || size.height !== GL.height) {
+      canvas.width  = GL.width  = size.width;
+      canvas.height = GL.height = size.height;
+      gl.viewport(0, 0, size.width, size.height);
+      Events.emit('resize', size);
+    }
   },
 
   createBuffer: function(itemSize, data) {
@@ -2938,7 +3245,7 @@ var Matrix = {
     return [
       2/width, 0,         0,        0,
       0,      -2/height,  0,        0,
-      0,       40/depth,  -2/depth,  f * (-2/depth),
+      0,       40/depth,  -2/depth, f * (-2/depth),
       -1,      1,         0,        1
     ];
   },
@@ -3102,56 +3409,48 @@ var Basemap = {};
 
 (function() {
 
-  var shader, projection;
-
-  function onResize() {
-    var size = Map.size;
-    gl.viewport(0, 0, size.width, size.height);
-    projection = Matrix.perspective(20, size.width, size.height, 40000);
-//  projectionOrtho = Matrix.ortho(size.width, size.height, 40000);
-  }
+  var shader;
 
   Basemap.initShader = function() {
     shader = new Shader('basemap');
-    Events.on('resize', onResize);
-    onResize();
   };
 
-  Basemap.render = function() {
+  Basemap.render = function(mapMatrix) {
     var
-      program = shader.use(),
-      tiles = TileGrid.getTiles(), tile,
+      tiles = TileGrid.getTiles(), item,
+      backgroundColor = GL.backgroundColor,
       matrix;
 
-    for (var key in tiles) {
-      tile = tiles[key];
+    shader.use();
 
-      if (!(matrix = tile.getMatrix())) {
+    gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    for (var key in tiles) {
+      item = tiles[key];
+
+      if (!(matrix = item.getMatrix())) {
         continue;
       }
 
-      // TODO: do this once outside the loop
-      matrix = Matrix.rotateZ(matrix, Map.rotation);
-      matrix = Matrix.rotateX(matrix, Map.tilt);
-      matrix = Matrix.translate(matrix, Map.size.width / 2, Map.size.height / 2, 0);
-      matrix = Matrix.multiply(matrix, projection);
+      matrix = Matrix.multiply(matrix, mapMatrix);
 
-      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
-      gl.vertexAttribPointer(program.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, tile.texCoordBuffer);
-      gl.vertexAttribPointer(program.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.texCoordBuffer);
+      gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, tile.texture);
-      gl.uniform1i(program.uniforms.uTileImage, 0);
+      gl.bindTexture(gl.TEXTURE_2D, item.texture);
+      gl.uniform1i(shader.uniforms.uTileImage, 0);
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     }
 
-    program.end();
+    shader.end();
   };
 
 }());
@@ -3161,22 +3460,13 @@ var Buildings = {};
 
 (function() {
 
-  var shader, projection;
-
-  function onResize() {
-    var size = Map.size;
-    gl.viewport(0, 0, size.width, size.height);
-    projection = Matrix.perspective(20, size.width, size.height, 40000);
-//  projectionOrtho = Matrix.ortho(size.width, size.height, 40000);
-  }
+  var shader;
 
   Buildings.initShader = function() {
     shader = new Shader('buildings');
-    Events.on('resize', onResize);
-    onResize();
   };
 
-  Buildings.render = function() {
+  Buildings.render = function(mapMatrix) {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -3186,16 +3476,16 @@ var Buildings = {};
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    var program = shader.use();
+    shader.use();
 
     // TODO: suncalc
-    gl.uniform3fv(program.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(program.uniforms.uLightDirection, unit(1, 1, 1));
+    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
+    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
-    gl.uniform1f(program.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
+    gl.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
 
     var normalMatrix = Matrix.invert3(Matrix.create());
-    gl.uniformMatrix3fv(program.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
+    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
     var
       dataItems = Data.items,
@@ -3209,33 +3499,120 @@ var Buildings = {};
         continue;
       }
 
-      // TODO: do this once outside the loop
-      matrix = Matrix.rotateZ(matrix, Map.rotation);
-      matrix = Matrix.rotateX(matrix, Map.tilt);
-      matrix = Matrix.translate(matrix, Map.size.width/2, Map.size.height/2, 0);
-      matrix = Matrix.multiply(matrix, projection);
+      matrix = Matrix.multiply(matrix, mapMatrix);
 
-      gl.uniformMatrix4fv(program.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
-      gl.vertexAttribPointer(program.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.normalBuffer);
-      gl.vertexAttribPointer(program.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, item.colorBuffer);
-      gl.vertexAttribPointer(program.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    program.end();
+    shader.end();
   };
 
 }());
 
 
-var Shader = function(name) {
+// TODO: render only clicked area
+
+var Interaction = {};
+
+(function() {
+
+  var shader;
+  var idMapping = [null], callback;
+
+  Interaction.initShader = function() {
+    shader = new Shader('interaction');
+  };
+
+  Interaction.render = function(mapMatrix) {
+    if (!callback) {
+      return;
+    }
+
+    if (Map.zoom < MIN_ZOOM) {
+      callback();
+      return;
+    }
+
+    shader.use();
+
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    var
+      dataItems = Data.items,
+      item,
+      matrix;
+
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      item = dataItems[i];
+
+      if (!(matrix = item.getMatrix())) {
+        continue;
+      }
+
+      matrix = Matrix.multiply(matrix, mapMatrix);
+
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.idColorBuffer);
+      gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    }
+
+    shader.end();
+    callback();
+  };
+
+  Interaction.idToColor = function(id) {
+    var index = idMapping.indexOf(id);
+    if (index === -1) {
+      idMapping.push(id);
+      index = idMapping.length-1;
+    }
+//  return { r:255, g:128,b:0 }
+    return {
+      r:  index        & 0xff,
+      g: (index >>  8) & 0xff,
+      b: (index >> 16) & 0xff
+    };
+  };
+
+  Interaction.getFeatureID = function(pos, fn) {
+    callback = function() {
+      var
+        width  = GL.width,
+        height = GL.height;
+
+      var imageData = new Uint8Array(width*height*4);
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+
+      var index = ((height-pos.y)*width + pos.x) * 4;
+      var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+
+      fn(idMapping[color]);
+      callback = null;
+    };
+  };
+
+}());
+
+
+var Shader = function(name, useFrameBuffer) {
   var config = SHADERS[name];
 
   this.id = gl.createProgram();
@@ -3245,8 +3622,8 @@ var Shader = function(name) {
     throw new Error('missing source for shader "'+ name +'"');
   }
 
-  this._attach(gl.VERTEX_SHADER,   config.src.vertex);
-  this._attach(gl.FRAGMENT_SHADER, config.src.fragment);
+  this.attach(gl.VERTEX_SHADER,   config.src.vertex);
+  this.attach(gl.FRAGMENT_SHADER, config.src.fragment);
 
   gl.linkProgram(this.id);
 
@@ -3255,12 +3632,16 @@ var Shader = function(name) {
   }
 
   this.attributeNames = config.attributes;
-  this.uniformNames = config.uniforms;
+  this.uniformNames   = config.uniforms;
+
+  if (config.frameBuffer) {
+    this.createFrameBuffer();
+  }
 };
 
 Shader.prototype = {
 
-  _locateAttribute: function(name) {
+  locateAttribute: function(name) {
     var loc = gl.getAttribLocation(this.id, name);
     if (loc < 0) {
       console.error('unable to locate attribute "'+ name +'" in shader "'+ this.name +'"');
@@ -3270,7 +3651,7 @@ Shader.prototype = {
     this.attributes[name] = loc;
   },
 
-  _locateUniform: function(name) {
+  locateUniform: function(name) {
     var loc = gl.getUniformLocation(this.id, name);
     if (loc < 0) {
       console.error('unable to locate uniform "'+ name +'" in shader "'+ this.name +'"');
@@ -3279,7 +3660,26 @@ Shader.prototype = {
     this.uniforms[name] = loc;
   },
 
-  _attach: function(type, src) {
+  createFrameBuffer: function() {
+    this.frameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
+
+    var renderTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GL.width, GL.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+    var renderBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, GL.width, GL.height);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  },
+
+  attach: function(type, src) {
     var shader = gl.createShader(type);
     gl.shaderSource(shader, src);
     gl.compileShader(shader);
@@ -3299,15 +3699,19 @@ Shader.prototype = {
     if (this.attributeNames) {
       this.attributes = {};
       for (i = 0; i < this.attributeNames.length; i++) {
-        this._locateAttribute(this.attributeNames[i]);
+        this.locateAttribute(this.attributeNames[i]);
       }
     }
 
     if (this.uniformNames) {
       this.uniforms = {};
       for (i = 0; i < this.uniformNames.length; i++) {
-        this._locateUniform(this.uniformNames[i]);
+        this.locateUniform(this.uniformNames[i]);
       }
+    }
+
+    if (this.frameBuffer) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
     }
 
     return this;
@@ -3322,6 +3726,10 @@ Shader.prototype = {
 
     this.attributes = null;
     this.uniforms = null;
+
+    if (this.frameBuffer) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
   }
 };
 

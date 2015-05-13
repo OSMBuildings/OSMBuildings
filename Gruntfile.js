@@ -9,7 +9,7 @@ module.exports = function(grunt) {
     concat: {
       options: {
         separator: '\n',
-        banner: "(function(window) {",
+        banner: "(function(global) {",
         footer: '}(this));'
       },
       dist: {
@@ -33,6 +33,10 @@ module.exports = function(grunt) {
       }
     },
 
+    clean: {
+      dist: ['./dist/<%=product%>.pack.js']
+    },
+
     jshint: {
       options: {
          globals: {
@@ -40,16 +44,37 @@ module.exports = function(grunt) {
          }
        },
       all: grunt.file.readJSON('config.json').src
+    },
+
+    // just testing, whether wepack *would* work
+    webpack: {
+      test: {
+        entry: './dist/<%=product%>.debug.js',
+        output: {
+            path: './dist',
+            filename: '<%=product%>.pack.js',
+        },
+    
+        stats: false, // the stats output
+    
+        progress: false, // show progress
+    
+        failOnError: true, // don't report error to grunt if webpack find errors
+    
+        watch: false,
+
+        keepalive: true // don't finish the grunt task
+      }
     }
+        
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-webpack');
 
   grunt.registerMultiTask('shaders', 'Build shaders', function() {
-    grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
-
     var fs = require('fs');
     var dest = this.files[0].dest;
 
@@ -79,6 +104,11 @@ module.exports = function(grunt) {
     fs.writeFileSync(dest, 'var SHADERS = '+ JSON.stringify(SHADERS) +';\n');
   });
 
+  grunt.registerMultiTask('clean', 'Clean up', function() {
+    var fs = require('fs');
+    fs.unlinkSync('./dist/'+ grunt.config.data.product +'.pack.js');
+  });
+
   grunt.registerTask('default', 'Development build', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
     grunt.task.run('shaders');
@@ -90,5 +120,7 @@ module.exports = function(grunt) {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
     grunt.task.run('jshint');
     grunt.task.run('default');
+    grunt.task.run('webpack');
+//    grunt.task.run('clean');
   });
 };

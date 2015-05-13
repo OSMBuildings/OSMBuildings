@@ -53,7 +53,7 @@ var Interaction = {};
     }
 
     shader.end();
-    callback()
+    callback();
   };
 
   Interaction.idToColor = function(id) {

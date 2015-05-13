@@ -6,7 +6,7 @@ var OSMBuildings = function(containerId, options) {
 
   Map.setState(options);
   Events.init(container);
-  GL.createContext(container, { showBackfaces:options.showBackfaces });
+  GL.createContext(container, options);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -123,5 +123,5 @@ if (typeof define === 'function') {
 } else if (typeof exports === 'object') {
   module.exports = OSMBuildings;
 } else {
-  window.OSMBuildings = OSMBuildings;
+  global.OSMBuildings = OSMBuildings;
 }

@@ -14,11 +14,12 @@ var Basemap = {};
   Basemap.render = function(mapMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
+      backgroundColor = GL.backgroundColor,
       matrix;
 
     shader.use();
 
-    gl.clearColor(0.75, 0.75, 0.75, 1);
+    gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     for (var key in tiles) {

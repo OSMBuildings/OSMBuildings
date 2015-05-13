@@ -6,7 +6,7 @@ var Events = {};
   var
     listeners = {},
 
-    hasTouch = ('ontouchstart' in window),
+    hasTouch = ('ontouchstart' in global),
     dragStartEvent = hasTouch ? 'touchstart' : 'mousedown',
     dragMoveEvent = hasTouch ? 'touchmove' : 'mousemove',
     dragEndEvent = hasTouch ? 'touchend' : 'mouseup',
@@ -177,7 +177,7 @@ var Events = {};
       addListener(container, 'DOMMouseScroll', onMouseWheel);
     }
 
-    addListener(window, 'resize', function() {
+    addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
         GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });

@@ -45,6 +45,7 @@ function loadShaders(config) {
 var config = JSON.parse(loadFile(baseURL +'config.json'));
 
 var file, str, js = '';
+var global = this;
 
 for (var i = 0; i < config.lib.length; i++) {
   js += loadFile(baseURL + config.lib[i]) +'\n\n';

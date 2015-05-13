@@ -5,7 +5,7 @@ var XHR = {};
 
   var loading = {};
 
-  XHR.loadJSON = function(url, callback) {
+  function load(url, callback) {
     if (loading[url]) {
       return loading[url];
     }
@@ -23,15 +23,7 @@ var XHR = {};
         return;
       }
 
-      if (req.responseText) {
-        var json;
-        try {
-          json = JSON.parse(req.responseText);
-        } catch(ex) {
-          console.error('Could not parse JSON from '+ url +'\n'+ ex.message);
-        }
-        callback(json);
-      }
+      callback(req);
     };
 
     loading[url] = req;
@@ -44,6 +36,28 @@ var XHR = {};
         delete loading[url];
       }
     };
+  }
+
+  XHR.load = function(url, callback) {
+    return load(url, function(req) {
+      if (req.responseText !== undefined) {
+        callback(req.responseText);
+      }
+    });
+  };
+
+  XHR.loadJSON = function(url, callback) {
+    return load(url, function(req) {
+      if (req.responseText) {
+        var json;
+        try {
+          json = JSON.parse(req.responseText);
+        } catch(ex) {
+          console.error('Could not parse JSON from '+ url +'\n'+ ex.message);
+        }
+        callback(json);
+      }
+    });
   };
 
   XHR.abortAll = function() {

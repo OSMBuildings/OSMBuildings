@@ -44,6 +44,8 @@
 
     "src/formats/GeoJSON.js",
     "src/formats/JS3D.js",
+    "src/formats/OBJ.js",
+
     "src/geometry.js",
     "src/GL.js",
     "src/Matrix.js",

@@ -18,6 +18,7 @@
     "GLMap": "git+https://github.com/OSMBuildings/GLMap",
     "earcut": "~1.4.0",
     "grunt": "~0.4.4",
+    "grunt-webpack": "~1.0.8",
     "grunt-contrib-concat": "~0.4.0",
     "grunt-contrib-uglify": "~0.4.0",
     "grunt-contrib-jshint": "~0.11.0"
