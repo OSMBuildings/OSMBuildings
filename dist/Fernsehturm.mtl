@@ -1,0 +1,44 @@
+# Alias Wavefront MTL File Exported from SketchUp
+# with OBJexporter (c) 2010/2011 TIG
+# Made for 'Fernsehturm.obj'
+
+newmtl Default_Material
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+
+newmtl auto
+Ka 0.000000 0.000000 0.000000
+Kd 0.839216 0.839216 0.839216
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+
+newmtl auto2
+Ka 0.000000 0.000000 0.000000
+Kd 0.678431 0.678431 0.678431
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+
+newmtl Lichtdurchlssig_Glas_getnt
+Ka 0.000000 0.000000 0.000000
+Kd 0.027451 0.788235 0.941176
+Ks 0.000000 0.000000 0.000000
+d 0.480000
+map_Kd TVTower_Textures/Lichtdurchlssig_Glas_getnt.jpg
+
+newmtl Metall_Stahl_texturiert
+Ka 0.000000 0.000000 0.000000
+Kd 0.411765 0.431373 0.474510
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+map_Kd TVTower_Textures/Metall_Stahl_texturiert.jpg
+
+newmtl Beton_Krnung_Rauch
+Ka 0.000000 0.000000 0.000000
+Kd 0.603922 0.584314 0.580392
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+map_Kd TVTower_Textures/Beton_Krnung_Rauch.jpg
+
+#EOF
