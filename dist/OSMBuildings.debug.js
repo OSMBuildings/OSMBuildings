@@ -2274,8 +2274,8 @@ var Mesh = function(url, properties) {
 
   // TODO: implement OBJ.request.abort()
   this.request = { abort: function() {} };
-//  OBJ.load(url, this.onLoad.bind(this));
-CityGML.load(url, this.onLoad.bind(this));
+  OBJ.load(url, this.onLoad.bind(this));
+//CityGML.load(url, this.onLoad.bind(this));
 
   Data.add(this);
 };
@@ -2962,8 +2962,11 @@ var GL = {
     } catch(ex) {
       throw ex;
     }
-
+ 
     GL.backgroundColor = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
+    GL.backgroundColor.r /= 255;
+    GL.backgroundColor.g /= 255;
+    GL.backgroundColor.b /= 255;
 
     if (options.showBackfaces) {
       gl.disable(gl.CULL_FACE);

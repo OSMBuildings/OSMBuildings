@@ -21,8 +21,11 @@ var GL = {
     } catch(ex) {
       throw ex;
     }
-
+ 
     GL.backgroundColor = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
+    GL.backgroundColor.r /= 255;
+    GL.backgroundColor.g /= 255;
+    GL.backgroundColor.b /= 255;
 
     if (options.showBackfaces) {
       gl.disable(gl.CULL_FACE);
