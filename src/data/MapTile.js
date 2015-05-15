@@ -28,11 +28,11 @@ MapTile.prototype = {
 
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
-      origin = Map.origin,
+      mapCenter = Map.center,
       matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
-    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - origin.x, this.tileY * TILE_SIZE * ratio - origin.y, 0);
+    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
     return matrix;
   },
 

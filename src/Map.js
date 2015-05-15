@@ -3,13 +3,9 @@ var Map = {};
 
 (function() {
 
-  function updateOrigin(origin) {
-    Map.origin = origin;
-  }
-
   function updateBounds() {
     var
-      center = Map.origin,
+      center = Map.center,
       halfWidth  = GL.width/2,
       halfHeight = GL.height/2;
     Map.bounds = {
@@ -22,7 +18,8 @@ var Map = {};
 
   //***************************************************************************
 
-  Map.center = {};
+  Map.center = { x:0, y:0 };
+  Map.zoom = 0;
 
   Map.setState = function(options) {
     Map.minZoom = parseFloat(options.minZoom) || 10;
@@ -33,7 +30,7 @@ var Map = {};
     }
 
     options = State.load(options);
-    Map.setCenter(options.center || { latitude: 52.52000, longitude: 13.41000 });
+    Map.setPosition(options.position || { latitude: 52.52000, longitude: 13.41000 });
     Map.setZoom(options.zoom || Map.minZoom);
     Map.setRotation(options.rotation || 0);
     Map.setTilt(options.tilt || 0);
@@ -49,35 +46,40 @@ var Map = {};
     zoom = clamp(parseFloat(zoom), Map.minZoom, Map.maxZoom);
 
     if (Map.zoom !== zoom) {
+      var ratio = Math.pow(2, zoom-Map.zoom);
+      Map.zoom = zoom;
       if (!e) {
-        Map.zoom = zoom;
-        Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
-        updateOrigin(project(Map.center.latitude, Map.center.longitude, Map.worldSize));
+        Map.center.x *= ratio;
+        Map.center.y *= ratio;
       } else {
-        var dx = GL.width/2 - e.clientX;
+        var dx = GL.width/2  - e.clientX;
         var dy = GL.height/2 - e.clientY;
-        var geoPos = unproject(Map.origin.x - dx, Map.origin.y - dy, Map.worldSize);
-
-        Map.zoom = zoom;
-        Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
-
-        var pxPos = project(geoPos.latitude, geoPos.longitude, Map.worldSize);
-        updateOrigin({ x: pxPos.x + dx, y: pxPos.y + dy });
-        Map.center = unproject(Map.origin.x, Map.origin.y, Map.worldSize);
+        Map.center.x -= dx;
+        Map.center.y -= dy;
+        Map.center.x *= ratio;
+        Map.center.y *= ratio;
+        Map.center.x += dx;
+        Map.center.y += dy;
       }
-
       updateBounds();
       Events.emit('change');
     }
   };
 
-  Map.setCenter = function(center) {
-    center.latitude  = clamp(parseFloat(center.latitude), -90, 90);
-    center.longitude = clamp(parseFloat(center.longitude), -180, 180);
+  Map.getPosition = function() {
+    return unproject(Map.center.x, Map.center.y, TILE_SIZE*Math.pow(2, Map.zoom));
+  };
 
-    if (Map.center.latitude !== center.latitude || Map.center.longitude !== center.longitude) {
+  Map.setPosition = function(position) {
+    var latitude  = clamp(parseFloat(position.latitude), -90, 90);
+    var longitude = clamp(parseFloat(position.longitude), -180, 180);
+    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
+    Map.setCenter(center);
+  };
+
+  Map.setCenter = function(center) {
+    if (Map.center.x !== center.x || Map.center.y !== center.y) {
       Map.center = center;
-      updateOrigin(project(center.latitude, center.longitude, Map.worldSize));
       updateBounds();
       Events.emit('change');
     }

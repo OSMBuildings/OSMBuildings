@@ -903,8 +903,7 @@ OSMBuildings.prototype = {
   },
 
   addMesh: function(url, options) {
-    new Mesh(url, options);
-    return this;
+    return new Mesh(url, options);
   },
 
   on: function(type, fn) {
@@ -935,17 +934,26 @@ OSMBuildings.prototype = {
     return Map.zoom;
   },
 
-  setCenter: function(center) {
-    Map.setCenter(center);
+  setPosition: function(position) {
+    Map.setPosition(position);
     return this;
   },
 
-  getCenter: function() {
-    return Map.center;
+  getPosition: function() {
+    return Map.getPosition();
   },
 
   getBounds: function() {
-    return Map.bounds;
+    var mapBounds = Map.bounds;
+    var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
+    var nw = unproject(mapBounds.minX, mapBounds.maxY, worldSize);
+    var se = unproject(mapBounds.maxX, mapBounds.minY, worldSize);
+    return {
+      n: nw.latitude,
+      w: nw.longitude,
+      s: se.latitude,
+      e: se.longitude
+    };
   },
 
   setSize: function(size) {
@@ -955,10 +963,6 @@ OSMBuildings.prototype = {
 
   getSize: function() {
     return { width:GL.width, height:GL.height };
-  },
-
-  getOrigin: function() {
-    return Map.origin;
   },
 
   setRotation: function(rotation) {
@@ -1000,31 +1004,23 @@ var Map = {};
 
 (function() {
 
-  function updateOrigin(origin) {
-    Map.origin = origin;
-  }
-
   function updateBounds() {
     var
-      centerXY = project(Map.center.latitude, Map.center.longitude, Map.worldSize),
-
+      center = Map.center,
       halfWidth  = GL.width/2,
-      halfHeight = GL.height/2,
-
-      nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, Map.worldSize),
-      se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, Map.worldSize);
-
+      halfHeight = GL.height/2;
     Map.bounds = {
-      n: nw.latitude,
-      w: nw.longitude,
-      s: se.latitude,
-      e: se.longitude
+      maxY: center.y + halfHeight,
+      minX: center.x - halfWidth,
+      minY: center.y - halfHeight,
+      maxX: center.x + halfWidth
     };
   }
 
   //***************************************************************************
 
-  Map.center = {};
+  Map.center = { x:0, y:0 };
+  Map.zoom = 0;
 
   Map.setState = function(options) {
     Map.minZoom = parseFloat(options.minZoom) || 10;
@@ -1035,7 +1031,7 @@ var Map = {};
     }
 
     options = State.load(options);
-    Map.setCenter(options.center || { latitude: 52.52000, longitude: 13.41000 });
+    Map.setPosition(options.position || { latitude: 52.52000, longitude: 13.41000 });
     Map.setZoom(options.zoom || Map.minZoom);
     Map.setRotation(options.rotation || 0);
     Map.setTilt(options.tilt || 0);
@@ -1051,35 +1047,40 @@ var Map = {};
     zoom = clamp(parseFloat(zoom), Map.minZoom, Map.maxZoom);
 
     if (Map.zoom !== zoom) {
+      var ratio = Math.pow(2, zoom-Map.zoom);
+      Map.zoom = zoom;
       if (!e) {
-        Map.zoom = zoom;
-        Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
-        updateOrigin(project(Map.center.latitude, Map.center.longitude, Map.worldSize));
+        Map.center.x *= ratio;
+        Map.center.y *= ratio;
       } else {
-        var dx = GL.width/2 - e.clientX;
+        var dx = GL.width/2  - e.clientX;
         var dy = GL.height/2 - e.clientY;
-        var geoPos = unproject(Map.origin.x - dx, Map.origin.y - dy, Map.worldSize);
-
-        Map.zoom = zoom;
-        Map.worldSize = TILE_SIZE*Math.pow(2, zoom);
-
-        var pxPos = project(geoPos.latitude, geoPos.longitude, Map.worldSize);
-        updateOrigin({ x: pxPos.x + dx, y: pxPos.y + dy });
-        Map.center = unproject(Map.origin.x, Map.origin.y, Map.worldSize);
+        Map.center.x -= dx;
+        Map.center.y -= dy;
+        Map.center.x *= ratio;
+        Map.center.y *= ratio;
+        Map.center.x += dx;
+        Map.center.y += dy;
       }
-
       updateBounds();
       Events.emit('change');
     }
   };
 
-  Map.setCenter = function(center) {
-    center.latitude = clamp(parseFloat(center.latitude), -90, 90);
-    center.longitude = clamp(parseFloat(center.longitude), -180, 180);
+  Map.getPosition = function() {
+    return unproject(Map.center.x, Map.center.y, TILE_SIZE*Math.pow(2, Map.zoom));
+  };
 
-    if (Map.center.latitude !== center.latitude || Map.center.longitude !== center.longitude) {
+  Map.setPosition = function(position) {
+    var latitude  = clamp(parseFloat(position.latitude), -90, 90);
+    var longitude = clamp(parseFloat(position.longitude), -180, 180);
+    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
+    Map.setCenter(center);
+  };
+
+  Map.setCenter = function(center) {
+    if (Map.center.x !== center.x || Map.center.y !== center.y) {
       Map.center = center;
-      updateOrigin(project(center.latitude, center.longitude, Map.worldSize));
       updateBounds();
       Events.emit('change');
     }
@@ -1269,7 +1270,7 @@ var Events = {};
     var dx = e.clientX - prevX;
     var dy = e.clientY - prevY;
     var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
-    Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
+    Map.setCenter({ x:Map.center.x-r.x, y:Map.center.y-r.y });
   }
 
   //***************************************************************************
@@ -1357,9 +1358,9 @@ var State = {};
     }
 
     var params = [];
-    var center = map.center;
-    params.push('latitude=' + center.latitude.toFixed(5));
-    params.push('longitude=' + center.longitude.toFixed(5));
+    var position = map.getPosition();
+    params.push('latitude=' + position.latitude.toFixed(5));
+    params.push('longitude=' + position.longitude.toFixed(5));
     params.push('zoom=' + map.zoom.toFixed(1));
     params.push('tilt=' + map.tilt.toFixed(1));
     params.push('rotation=' + map.rotation.toFixed(1));
@@ -1377,7 +1378,7 @@ var State = {};
       });
 
       if (state.latitude !== undefined && state.longitude !== undefined) {
-        options.center = { latitude:parseFloat(state.latitude), longitude:parseFloat(state.longitude) };
+        options.position = { latitude:parseFloat(state.latitude), longitude:parseFloat(state.longitude) };
       }
       if (state.zoom !== undefined) {
         options.zoom = parseFloat(state.zoom);
@@ -1877,18 +1878,16 @@ var DataGrid = {};
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
     var
-      zoom = fixedZoom || Math.round(Map.zoom),
-      bounds = Map.bounds,
-      worldSize = TILE_SIZE <<zoom,
-      min = project(bounds.n, bounds.w, worldSize),
-      max = project(bounds.s, bounds.e, worldSize);
+      zoom = Math.round(fixedZoom || Map.zoom),
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapBounds = Map.bounds;
 
     DataGrid.bounds = {
       zoom: zoom,
-      minX: min.x/TILE_SIZE <<0,
-      minY: min.y/TILE_SIZE <<0,
-      maxX: Math.ceil(max.x/TILE_SIZE),
-      maxY: Math.ceil(max.y/TILE_SIZE)
+      minX: mapBounds.minX*ratio <<0,
+      minY: mapBounds.minY*ratio <<0,
+      maxX: Math.ceil(mapBounds.maxX*ratio),
+      maxY: Math.ceil(mapBounds.maxY*ratio)
     };
   }
 
@@ -2024,11 +2023,11 @@ var DataTile = function(tileX, tileY, zoom) {
 
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
-      origin = Map.origin,
+      mapCenter = Map.center,
       matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - origin.x, this.tileY * TILE_SIZE * ratio - origin.y, 0);
+    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
     return matrix;
   };
 
@@ -2078,17 +2077,15 @@ var TileGrid = {};
   function updateTileBounds() {
     var
       zoom = Math.round(Map.zoom),
-      bounds = Map.bounds,
-      worldSize = TILE_SIZE <<zoom,
-      min = project(bounds.n, bounds.w, worldSize),
-      max = project(bounds.s, bounds.e, worldSize);
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapBounds = Map.bounds;
 
     TileGrid.bounds = {
       zoom: zoom,
-      minX: min.x/TILE_SIZE <<0,
-      minY: min.y/TILE_SIZE <<0,
-      maxX: Math.ceil(max.x/TILE_SIZE),
-      maxY: Math.ceil(max.y/TILE_SIZE)
+      minX: mapBounds.minX*ratio <<0,
+      minY: mapBounds.minY*ratio <<0,
+      maxX: Math.ceil(mapBounds.maxX*ratio),
+      maxY: Math.ceil(mapBounds.maxY*ratio)
     };
   }
 
@@ -2102,7 +2099,6 @@ var TileGrid = {};
         bounds.minX + (bounds.maxX-bounds.minX-1)/2,
         bounds.maxY
       ];
-
     for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
       for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
@@ -2209,11 +2205,11 @@ MapTile.prototype = {
 
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
-      origin = Map.origin,
+      mapCenter = Map.center,
       matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
-    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - origin.x, this.tileY * TILE_SIZE * ratio - origin.y, 0);
+    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
     return matrix;
   },
 
@@ -2290,7 +2286,7 @@ var Mesh = function(url, properties) {
     return colors;
   }
 
-  Mesh.prototype.onLoad = function(items) {
+  Mesh.prototype.onLoad = function(model) {
     this.request = null;
 
     var data = {
@@ -2300,8 +2296,10 @@ var Mesh = function(url, properties) {
       idColors: []
     };
 
-    for (var i = 0, il = items.length; i < il; i++) {
-      this.storeItem(data, items[i]);  
+    this.bounds = model.bounds;
+
+    for (var i = 0, il = model.meshes.length; i < il; i++) {
+      this.storeItem(data, model.meshes[i]);  
     }
 
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
@@ -2339,11 +2337,11 @@ var Mesh = function(url, properties) {
       ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale,
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
-      origin = Map.origin,
+      mapCenter = Map.center,
       matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
-    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return matrix;
   };
@@ -2353,16 +2351,36 @@ var Mesh = function(url, properties) {
 
 
 
+
+     var mapBounds = Map.bounds;
+   	 //console.log(this.bounds, mapBounds);
+
+
 //    var
 //      zoom = 16, // TODO: this shouldn't be a fixed value?
 //      ratio = 1 / Math.pow(2, zoom - Map.zoom),
 //      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
 //      position = project(this.position.latitude, this.position.longitude, worldSize),
-//      origin = Map.origin,
+//      mapCenter = Map.center,
 //      matrix = Matrix.create();
 //
 //    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-//    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+//    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+
+
+
+//  DataTile.prototype.isVisible = function(buffer) {
+//    buffer = buffer || 0;
+//    var
+//      gridBounds = DataGrid.bounds,
+//      tileX = this.tileX,
+//      tileY = this.tileY;
+//
+//    return (this.zoom === gridBounds.zoom &&
+//      // TODO: factor in tile origin
+//      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
+//  };
+
 
     return true;
   };
@@ -2809,7 +2827,7 @@ var OBJ = {};
       }
     }
 
-    return meshes;
+    return { meshes:meshes, bounds:{ minX:mx, maxX:Mx, minY:my, maxY:My, minZ:mz, maxZ:Mz } };
   }
 
   //***************************************************************************

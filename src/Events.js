@@ -159,7 +159,7 @@ var Events = {};
     var dx = e.clientX - prevX;
     var dy = e.clientY - prevY;
     var r = rotatePoint(dx, dy, Map.rotation*Math.PI/180);
-    Map.setCenter(unproject(Map.origin.x - r.x, Map.origin.y - r.y, Map.worldSize));
+    Map.setCenter({ x:Map.center.x-r.x, y:Map.center.y-r.y });
   }
 
   //***************************************************************************

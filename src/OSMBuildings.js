@@ -70,19 +70,20 @@ OSMBuildings.prototype = {
     return Map.zoom;
   },
 
-  setCenter: function(center) {
-    Map.setCenter(center);
+  setPosition: function(position) {
+    Map.setPosition(position);
     return this;
   },
 
-  getCenter: function() {
-    return unproject(Map.origin.x, Map.origin.y, Map.worldSize);
+  getPosition: function() {
+    return Map.getPosition();
   },
 
   getBounds: function() {
     var mapBounds = Map.bounds;
-    var nw = unproject(mapBounds.minX, mapBounds.maxY, Map.worldSize);
-    var se = unproject(mapBounds.maxX, mapBounds.minY, Map.worldSize);
+    var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
+    var nw = unproject(mapBounds.minX, mapBounds.maxY, worldSize);
+    var se = unproject(mapBounds.maxX, mapBounds.minY, worldSize);
     return {
       n: nw.latitude,
       w: nw.longitude,
@@ -98,10 +99,6 @@ OSMBuildings.prototype = {
 
   getSize: function() {
     return { width:GL.width, height:GL.height };
-  },
-
-  getOrigin: function() {
-    return Map.origin;
   },
 
   setRotation: function(rotation) {
