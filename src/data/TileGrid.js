@@ -28,17 +28,15 @@ var TileGrid = {};
   function updateTileBounds() {
     var
       zoom = Math.round(Map.zoom),
-      bounds = Map.bounds,
-      worldSize = TILE_SIZE <<zoom,
-      min = project(bounds.n, bounds.w, worldSize),
-      max = project(bounds.s, bounds.e, worldSize);
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapBounds = Map.bounds;
 
     TileGrid.bounds = {
       zoom: zoom,
-      minX: min.x/TILE_SIZE <<0,
-      minY: min.y/TILE_SIZE <<0,
-      maxX: Math.ceil(max.x/TILE_SIZE),
-      maxY: Math.ceil(max.y/TILE_SIZE)
+      minX: mapBounds.minX*ratio <<0,
+      minY: mapBounds.minY*ratio <<0,
+      maxX: Math.ceil(mapBounds.maxX*ratio),
+      maxY: Math.ceil(mapBounds.maxY*ratio)
     };
   }
 
@@ -52,7 +50,6 @@ var TileGrid = {};
         bounds.minX + (bounds.maxX-bounds.minX-1)/2,
         bounds.maxY
       ];
-
     for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
       for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');

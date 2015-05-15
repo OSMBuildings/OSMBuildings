@@ -28,18 +28,16 @@ var DataGrid = {};
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
     var
-      zoom = fixedZoom || Math.round(Map.zoom),
-      bounds = Map.bounds,
-      worldSize = TILE_SIZE <<zoom,
-      min = project(bounds.n, bounds.w, worldSize),
-      max = project(bounds.s, bounds.e, worldSize);
+      zoom = Math.round(fixedZoom || Map.zoom),
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapBounds = Map.bounds;
 
     DataGrid.bounds = {
       zoom: zoom,
-      minX: min.x/TILE_SIZE <<0,
-      minY: min.y/TILE_SIZE <<0,
-      maxX: Math.ceil(max.x/TILE_SIZE),
-      maxY: Math.ceil(max.y/TILE_SIZE)
+      minX: mapBounds.minX*ratio <<0,
+      minY: mapBounds.minY*ratio <<0,
+      maxX: Math.ceil(mapBounds.maxX*ratio),
+      maxY: Math.ceil(mapBounds.maxY*ratio)
     };
   }
 

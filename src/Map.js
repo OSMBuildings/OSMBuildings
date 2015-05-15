@@ -9,19 +9,14 @@ var Map = {};
 
   function updateBounds() {
     var
-      centerXY = project(Map.center.latitude, Map.center.longitude, Map.worldSize),
-
+      center = Map.origin,
       halfWidth  = GL.width/2,
-      halfHeight = GL.height/2,
-
-      nw = unproject(centerXY.x - halfWidth, centerXY.y - halfHeight, Map.worldSize),
-      se = unproject(centerXY.x + halfWidth, centerXY.y + halfHeight, Map.worldSize);
-
+      halfHeight = GL.height/2;
     Map.bounds = {
-      n: nw.latitude,
-      w: nw.longitude,
-      s: se.latitude,
-      e: se.longitude
+      maxY: center.y + halfHeight,
+      minX: center.x - halfWidth,
+      minY: center.y - halfHeight,
+      maxX: center.x + halfWidth
     };
   }
 
@@ -77,7 +72,7 @@ var Map = {};
   };
 
   Map.setCenter = function(center) {
-    center.latitude = clamp(parseFloat(center.latitude), -90, 90);
+    center.latitude  = clamp(parseFloat(center.latitude), -90, 90);
     center.longitude = clamp(parseFloat(center.longitude), -180, 180);
 
     if (Map.center.latitude !== center.latitude || Map.center.longitude !== center.longitude) {

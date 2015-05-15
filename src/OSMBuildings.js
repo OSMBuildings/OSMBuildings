@@ -76,11 +76,19 @@ OSMBuildings.prototype = {
   },
 
   getCenter: function() {
-    return Map.center;
+    return unproject(Map.origin.x, Map.origin.y, Map.worldSize);
   },
 
   getBounds: function() {
-    return Map.bounds;
+    var mapBounds = Map.bounds;
+    var nw = unproject(mapBounds.minX, mapBounds.maxY, Map.worldSize);
+    var se = unproject(mapBounds.maxX, mapBounds.minY, Map.worldSize);
+    return {
+      n: nw.latitude,
+      w: nw.longitude,
+      s: se.latitude,
+      e: se.longitude
+    };
   },
 
   setSize: function(size) {
