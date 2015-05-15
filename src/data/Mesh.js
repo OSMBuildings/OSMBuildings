@@ -4,10 +4,10 @@ var Mesh = function(url, properties) {
   this.position = this.properties.position || {};
   this.scale = this.properties.scale || 1;
 
-  // TODO: implement this
+  // TODO: implement OBJ.request.abort()
   this.request = { abort: function() {} };
-
   OBJ.load(url, this.onLoad.bind(this));
+//CityGML.load(url, this.onLoad.bind(this));
 
   Data.add(this);
 };
@@ -82,20 +82,20 @@ var Mesh = function(url, properties) {
 
   Mesh.prototype.isVisible = function(key, buffer) {
     buffer = buffer || 0;
-// TODO: check against bbox
-// return true;
-    var
-      zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom),
-      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      position = project(this.position.latitude, this.position.longitude, worldSize),
-      origin = Map.origin,
-      matrix = Matrix.create();
 
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
 
-//  console.log(this.bbox)
+
+//    var
+//      zoom = 16, // TODO: this shouldn't be a fixed value?
+//      ratio = 1 / Math.pow(2, zoom - Map.zoom),
+//      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+//      position = project(this.position.latitude, this.position.longitude, worldSize),
+//      origin = Map.origin,
+//      matrix = Matrix.create();
+//
+//    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
+//    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+
     return true;
   };
 

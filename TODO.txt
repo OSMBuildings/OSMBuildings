@@ -1,0 +1,5 @@
+
+# Attribution #
+
+Dependent on: map tiles, data tiles and data objects. Also consider a mixture of them.
+Add git hash and/or date.

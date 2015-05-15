@@ -91,12 +91,19 @@
       // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
       tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
       // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
-      // dataSource: null // null disables default OSM data
+      // dataSource: null, // null disables default OSM data,
+      // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+      showBackfaces: true, // render front and backsiedes of polygons. false increases performance, true might be needed for bad geometries
+      backgroundColor: '#ccccee',
+      attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
     });
 
     // map.addMesh('mp/Mitte.3d.json');
     // map.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
-    map.addMesh('mp/fernsehturm.3d.json', { position:{ latitude:52.52101, longitude:13.40889 }, color:'#ffcc00', id:'TEST' } );
+    map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54306, longitude:13.42796 }, scale:0.3, id:'Planetarium' } );
+    map.addMesh('mp/TVTower.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:1.45, id:'Fernsehturm' } );
+    //map.addMesh('data/o2-gesamt.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:33 } ); // no id,color: if present, properties of individual objects will be used 
+    //map.addMesh('data/Lichtenberg1.gml');
 
     map.on('click', function(e) {
        console.log(e.featureID);

@@ -28,7 +28,7 @@
     "src/State.js",
 
     "src/variables.js",
-    "src/XHR.js",
+    "src/Request.js",
     "src/util.js",
     "src/shaders.js",
     "src/Triangulate.js",
@@ -43,7 +43,6 @@
     "src/data/Mesh.js",
 
     "src/formats/GeoJSON.js",
-    "src/formats/JS3D.js",
     "src/formats/OBJ.js",
 
     "src/geometry.js",

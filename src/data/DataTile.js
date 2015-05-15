@@ -10,7 +10,7 @@ var DataTile = function(tileX, tileY, zoom) {
 (function() {
 
   DataTile.prototype.load = function(url) {
-    this.request = XHR.loadJSON(url, this.onLoad.bind(this));
+    this.request = Request.getJSON(url, this.onLoad.bind(this));
   };
 
   DataTile.prototype.onLoad = function(json) {

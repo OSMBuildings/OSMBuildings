@@ -880,10 +880,15 @@ var OSMBuildings = function(containerId, options) {
   TileGrid.setSource(options.tileSource);
   DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
-//this.addAttribution(OSMBuildings.ATTRIBUTION);
+  if (options.attribution !== null && options.attribution !== false && options.attribution !== '') {
+    var attribution = document.createElement('DIV');
+    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:3px;background:rgba(255,255,255,0.5);font:12px sans-serif');
+    attribution.innerHTML = options.attribution || OSMBuildings.ATTRIBUTION;
+    container.appendChild(attribution);
+  }
 };
 
-OSMBuildings.VERSION = '0.1.5';
+OSMBuildings.VERSION = '0.1.6';
 OSMBuildings.ATTRIBUTION = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
 OSMBuildings.prototype = {
@@ -897,8 +902,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  addMesh: function(dataOrURL, options) {
-    new Mesh(dataOrURL, options);
+  addMesh: function(url, options) {
+    new Mesh(url, options);
     return this;
   },
 
@@ -1424,7 +1429,7 @@ var STYLE = {
 var document = global.document;
 
 
-var XHR = {};
+var Request = {};
 
 (function() {
 
@@ -1463,7 +1468,7 @@ var XHR = {};
     };
   }
 
-  XHR.load = function(url, callback) {
+  Request.getText = function(url, callback) {
     return load(url, function(req) {
       if (req.responseText !== undefined) {
         callback(req.responseText);
@@ -1471,7 +1476,15 @@ var XHR = {};
     });
   };
 
-  XHR.loadJSON = function(url, callback) {
+  Request.getXML = function(url, callback) {
+    return load(url, function(req) {
+      if (req.responseXML !== undefined) {
+        callback(req.responseXML);
+      }
+    });
+  };
+
+  Request.getJSON = function(url, callback) {
     return load(url, function(req) {
       if (req.responseText) {
         var json;
@@ -1485,15 +1498,15 @@ var XHR = {};
     });
   };
 
-  XHR.abortAll = function() {
+  Request.abortAll = function() {
     for (var url in loading) {
       loading[url].abort();
     }
     loading = {};
   };
 
-  XHR.destroy = function() {
-    XHR.abortAll();
+  Request.destroy = function() {
+    Request.abortAll();
     loading = null;
   };
 
@@ -1935,7 +1948,7 @@ var DataGrid = {};
   //***************************************************************************
 
   DataGrid.setSource = function(src, dataKey) {
-    if (src === undefined || src === false) {
+    if (src === undefined || src === false || src === '') {
       src = DATA_SRC.replace('{k}', dataKey);
     }
 
@@ -1978,7 +1991,7 @@ var DataTile = function(tileX, tileY, zoom) {
 (function() {
 
   DataTile.prototype.load = function(url) {
-    this.request = XHR.loadJSON(url, this.onLoad.bind(this));
+    this.request = Request.getJSON(url, this.onLoad.bind(this));
   };
 
   DataTile.prototype.onLoad = function(json) {
@@ -2259,10 +2272,10 @@ var Mesh = function(url, properties) {
   this.position = this.properties.position || {};
   this.scale = this.properties.scale || 1;
 
-  // TODO: implement this
+  // TODO: implement OBJ.request.abort()
   this.request = { abort: function() {} };
-
-  OBJ.load(url, this.onLoad.bind(this));
+//  OBJ.load(url, this.onLoad.bind(this));
+CityGML.load(url, this.onLoad.bind(this));
 
   Data.add(this);
 };
@@ -2337,20 +2350,20 @@ var Mesh = function(url, properties) {
 
   Mesh.prototype.isVisible = function(key, buffer) {
     buffer = buffer || 0;
-// TODO: check against bbox
-// return true;
-    var
-      zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom),
-      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      position = project(this.position.latitude, this.position.longitude, worldSize),
-      origin = Map.origin,
-      matrix = Matrix.create();
 
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
 
-//  console.log(this.bbox)
+
+//    var
+//      zoom = 16, // TODO: this shouldn't be a fixed value?
+//      ratio = 1 / Math.pow(2, zoom - Map.zoom),
+//      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+//      position = project(this.position.latitude, this.position.longitude, worldSize),
+//      origin = Map.origin,
+//      matrix = Matrix.create();
+//
+//    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
+//    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+
     return true;
   };
 
@@ -2635,122 +2648,6 @@ var GeoJSON = {};
 }());
 
 
-var JS3D = {};
-
-(function() {
-
-  //function transform(offsetX, offsetY, zoom, ring) {
-  //  var
-  //    worldSize = TILE_SIZE * Math.pow(2, zoom),
-  //    res = [],
-  //    p;
-  //
-  //  for (var j = 0, jl = ring.length-2; j < jl; j+=3) {
-  //    p = project(ring[j+1], ring[j], worldSize);
-  //    res[j/3] = [p.x-offsetX, p.y-offsetY, ring[j+2]];
-  //  }
-  //
-  //  return res;
-  //}
-
-  function createNormals(vertices) {
-    var normals = [], n;
-    for (var i = 0, il = vertices.length-8; i < il; i+=9) {
-      n = normal(
-        vertices[i+0], vertices[i+1], vertices[i+2],
-        vertices[i+3], vertices[i+4], vertices[i+5],
-        vertices[i+6], vertices[i+7], vertices[i+8]
-      );
-      normals.push(
-        n[0], n[1], n[2],
-        n[0], n[1], n[2],
-        n[0], n[1], n[2]
-      );
-    }
-    return normals;
-  }
-
-  function createColors(vertexNum, color) {
-    var colors = [], c = color ? color : { r:255*0.75, g:255*0.75, b:255*0.75 };
-    for (var i = 0; i < vertexNum; i++) {
-      colors.push(c.r, c.g, c.b);
-    }
-    return colors;
-  }
-
-  //JS3D.read = function(offsetX, offsetY, zoom, json) {
-  //  var
-  //    buildings = json.meshes,
-  //    bld,
-  //    color,
-  //    data = {
-  //      vertices: [],
-  //      normals: [],
-  //      colors: []
-  //    },
-  //    j, jl,
-  //    polygon;
-  //
-  //  for (var i = 0, il = buildings.length; i < il; i++) {
-  //    bld = buildings[i];
-  //
-  //    color = { r:bld.wallColor[0], g:bld.wallColor[1], b:bld.wallColor[2] };
-  //    for (j = 0, jl = bld.walls.length; j < jl; j++) {
-  //      polygon = transform(offsetX, offsetY, zoom, bld.walls[j]);
-  //      Triangulate.polygon3d(data, [polygon], color);
-  //    }
-  //
-  //    color = { r:bld.roofColor[0], g:bld.roofColor[1], b:bld.roofColor[2] };
-  //    for (j = 0, jl = bld.roofs.length; j < jl; j++) {
-  //      polygon = transform(offsetX, offsetY, zoom, bld.roofs[j]);
-  //      Triangulate.polygon3d(data, [polygon], color);
-  //    }
-  //  }
-  //
-  //  return data;
-  //};
-
-  JS3D.read = function(json, properties) {
-    var
-      collection = json.collection,
-      mesh,
-      meshNormals, meshColors, meshIDColors,
-      color,
-      numVertices,
-      data = {
-        vertices: [],
-        normals: [],
-        colors: [],
-        idColors: []
-      },
-      j, k;
-
-    if (properties.color) {
-      color = Color.parse(properties.color).toRGBA();
-    }
-
-    for (var i = 0, il = collection.length; i < il; i++) {
-      mesh = collection[i];
-      numVertices = mesh.vertices.length/3;
-      meshNormals  = mesh.normals || createNormals(mesh.vertices);
-      meshColors   = mesh.colors || createColors(numVertices, color);
-      meshIDColors = createColors(numVertices, Interaction.idToColor(mesh.id || properties.id));
-
-      for (j = 0; j < numVertices; j++) {
-        k = j*3;
-        data.vertices.push(mesh.vertices[k], mesh.vertices[k+1], mesh.vertices[k+2]);
-        data.normals.push(meshNormals[k], meshNormals[k+1], meshNormals[k+2]);
-        data.colors.push(meshColors[k], meshColors[k+1], meshColors[k+2]);
-        data.idColors.push(meshIDColors[k], meshIDColors[k+1], meshIDColors[k+2]);
-      }
-    }
-
-    return data;
-  };
-
-}());
-
-
 var OBJ = {};
 
 (function() {
@@ -2920,11 +2817,11 @@ var OBJ = {};
   OBJ.load = function(url, callback) {
     var allVertices = [];
 
-    XHR.load(url, function(modelStr) {
+    Request.getText(url, function(modelStr) {
       var mtlFile = modelStr.match(/^mtllib\s+(.*)$/m);
       if (mtlFile) {
         var baseURL = url.replace(/[^\/]+$/, '');
-        XHR.load(baseURL + mtlFile[1], function(materialStr) {
+        Request.getText(baseURL + mtlFile[1], function(materialStr) {
           callback(parseModel(modelStr, allVertices, parseMaterials(materialStr)));        
         });
         return; 

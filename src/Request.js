@@ -1,5 +1,5 @@
 
-var XHR = {};
+var Request = {};
 
 (function() {
 
@@ -38,7 +38,7 @@ var XHR = {};
     };
   }
 
-  XHR.load = function(url, callback) {
+  Request.getText = function(url, callback) {
     return load(url, function(req) {
       if (req.responseText !== undefined) {
         callback(req.responseText);
@@ -46,7 +46,15 @@ var XHR = {};
     });
   };
 
-  XHR.loadJSON = function(url, callback) {
+  Request.getXML = function(url, callback) {
+    return load(url, function(req) {
+      if (req.responseXML !== undefined) {
+        callback(req.responseXML);
+      }
+    });
+  };
+
+  Request.getJSON = function(url, callback) {
     return load(url, function(req) {
       if (req.responseText) {
         var json;
@@ -60,15 +68,15 @@ var XHR = {};
     });
   };
 
-  XHR.abortAll = function() {
+  Request.abortAll = function() {
     for (var url in loading) {
       loading[url].abort();
     }
     loading = {};
   };
 
-  XHR.destroy = function() {
-    XHR.abortAll();
+  Request.destroy = function() {
+    Request.abortAll();
     loading = null;
   };
 

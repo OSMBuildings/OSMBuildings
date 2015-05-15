@@ -168,11 +168,11 @@ var OBJ = {};
   OBJ.load = function(url, callback) {
     var allVertices = [];
 
-    XHR.load(url, function(modelStr) {
+    Request.getText(url, function(modelStr) {
       var mtlFile = modelStr.match(/^mtllib\s+(.*)$/m);
       if (mtlFile) {
         var baseURL = url.replace(/[^\/]+$/, '');
-        XHR.load(baseURL + mtlFile[1], function(materialStr) {
+        Request.getText(baseURL + mtlFile[1], function(materialStr) {
           callback(parseModel(modelStr, allVertices, parseMaterials(materialStr)));        
         });
         return; 

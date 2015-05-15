@@ -16,10 +16,15 @@ var OSMBuildings = function(containerId, options) {
   TileGrid.setSource(options.tileSource);
   DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
-//this.addAttribution(OSMBuildings.ATTRIBUTION);
+  if (options.attribution !== null && options.attribution !== false && options.attribution !== '') {
+    var attribution = document.createElement('DIV');
+    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:3px;background:rgba(255,255,255,0.5);font:12px sans-serif');
+    attribution.innerHTML = options.attribution || OSMBuildings.ATTRIBUTION;
+    container.appendChild(attribution);
+  }
 };
 
-OSMBuildings.VERSION = '0.1.5';
+OSMBuildings.VERSION = '0.1.6';
 OSMBuildings.ATTRIBUTION = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
 OSMBuildings.prototype = {
@@ -33,8 +38,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  addMesh: function(dataOrURL, options) {
-    new Mesh(dataOrURL, options);
+  addMesh: function(url, options) {
+    new Mesh(url, options);
     return this;
   },
 

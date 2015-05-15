@@ -99,7 +99,7 @@ var DataGrid = {};
   //***************************************************************************
 
   DataGrid.setSource = function(src, dataKey) {
-    if (src === undefined || src === false) {
+    if (src === undefined || src === false || src === '') {
       src = DATA_SRC.replace('{k}', dataKey);
     }
 
