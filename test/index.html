@@ -89,9 +89,9 @@
     minZoom: 14.5,
     maxZoom: 22,
     // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-    tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-    // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
-    // dataSource: null, // null disables default OSM data,
+    // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
+    dataSource: null, // null disables default OSM data,
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
     backgroundColor: '#bbbbcc',
@@ -102,11 +102,32 @@
   // map.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
   map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54306, longitude:13.42796 }, scale:0.3, id:'Planetarium' } );
   map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:1.45, id:'Fernsehturm' } );
-  //map.addMesh('data/o2-gesamt.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:33 } ); // no id,color: if present, properties of individual objects will be used 
-  //map.addMesh('data/Lichtenberg1.gml');
+  var obj = map.addMesh('data/o2-nach90.obj', { position:{ latitude:52.51424, longitude:13.40148 }, color:'#ff0000', scale:18.85 } ); // no id,color: if present, properties of individual objects will be used 
+  // map.addMesh('data/Lichtenberg1.gml');
 
   map.on('click', function(e) {
      console.log(e.featureID);
+  });
+
+  //*************************************************************************
+
+  document.addEventListener('keyup', function(e) {
+    console.log(e.which)
+    switch (e.which) {
+      case 37: obj.position.longitude -= 0.00002; break;
+      case 39: obj.position.longitude += 0.00002; break;
+      case 38: obj.position.latitude += 0.00002; break;
+      case 40: obj.position.latitude -= 0.00002; break;
+      case 187: obj.scale += 0.01; break;
+      case 189: obj.scale -= 0.01; break;
+    }
+    console.log(JSON.stringify({
+      position:{
+        latitude:parseFloat(obj.position.latitude.toFixed(5)),
+        longitude:parseFloat(obj.position.longitude.toFixed(5))
+      },
+      scale:parseFloat(obj.scale.toFixed(2))
+    }));
   });
 
   //*************************************************************************

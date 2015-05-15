@@ -39,8 +39,7 @@ OSMBuildings.prototype = {
   },
 
   addMesh: function(url, options) {
-    new Mesh(url, options);
-    return this;
+    return new Mesh(url, options);
   },
 
   on: function(type, fn) {
