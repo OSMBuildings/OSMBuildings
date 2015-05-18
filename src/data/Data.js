@@ -2,9 +2,10 @@
 var Data = {
 
   items: [],
+  modifier: function() {},
 
-  add: function(mesh) {
-    this.items.push(mesh);
+  add: function(item) {
+    this.items.push(item);
   },
 
   remove: function(item) {
@@ -19,5 +20,14 @@ var Data = {
 
   destroy: function() {
     this.items = null;
+  },
+  
+  modify: function(fn) {
+    this.modifier = fn;
+    var dataItems = this.items;
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      dataItems[i].modify(fn);
+    }
   }
+
 };

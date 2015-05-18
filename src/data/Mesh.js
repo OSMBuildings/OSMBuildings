@@ -24,6 +24,7 @@ var Mesh = function(url, properties) {
 
   Mesh.prototype.onLoad = function(items) {
     this.request = null;
+    this.items = [];
 
     var data = {
       vertices: [],
@@ -38,7 +39,7 @@ var Mesh = function(url, properties) {
 
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
     this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
-    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
+//    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
     this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
 
     items = null; data = null;
@@ -56,9 +57,16 @@ var Mesh = function(url, properties) {
     for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
       data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
       data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
-      data.colors.push(color.r, color.g, color.b);
+//      data.colors.push(color.r, color.g, color.b);
       data.idColors.push(idColor.r, idColor.g, idColor.b);
     }
+    
+delete item.vertices;
+delete item.normals;
+item.color = color;
+item.numVertices = numVertices;
+
+    this.items.push(item);
   };
  
   Mesh.prototype.getMatrix = function() {
@@ -74,10 +82,25 @@ var Mesh = function(url, properties) {
       mapCenter = Map.center,
       matrix = Matrix.create();
 
+    // see http://wiki.openstreetmap.org/wiki/Zoom_levels
+    // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
+
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
     matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return matrix;
+  };
+
+  Mesh.prototype.modify = function(fn) {
+    var colors = [], item;
+    for (var i = 0, il = this.items.length; i < il; i++) {
+      item = this.items[i]; 
+      fn(item);
+      for (var j = 0, jl = item.numVertices; j < jl; j++) {
+        colors.push(item.color.r, item.color.g, item.color.b);
+      }
+    }
+    this.colorBuffer = GL.createBuffer(3, new Uint8Array(colors));
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {

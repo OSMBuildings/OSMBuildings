@@ -24,6 +24,9 @@ var DataTile = function(tileX, tileY, zoom) {
     this.isReady = true;
   };
 
+  DataTile.prototype.modify = function(fn) {
+  };
+
   DataTile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
     var

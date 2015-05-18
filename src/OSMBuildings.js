@@ -38,16 +38,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-// store properties?
-// store backup of properties?
-// call per anim frame?
-// just accept triggering?
-  setStyleX: function(fn) {
-    var dataItems = Data.items;
-    for (var i = 0, il = dataItems.length; i < il; i++) {
-      fn(dataItems[i]);
-      // trigger update of Data.items
-    }
+  modify: function(fn) {
+    Data.modify(fn);
     return this;
   },
 
