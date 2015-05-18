@@ -69,7 +69,7 @@ var OBJ = {};
         break;
 
         case 'v':
-          allVertices.push([parseFloat(cols[1])*100, parseFloat(cols[2])*100, parseFloat(cols[3])*100]);
+          allVertices.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
         break;
 
   	    case 'f':
@@ -135,7 +135,6 @@ var OBJ = {};
   function normalize(meshes, allVertices) {
   	var mx =  1e10, my =  1e10, mz =  1e10;
   	var Mx = -1e10, My = -1e10, Mz = -1e10;
-
     for (var i = 0, il = allVertices.length; i < il; i++) {
   		if (mx > allVertices[i][0]) mx = allVertices[i][0];
   		if (my > allVertices[i][2]) my = allVertices[i][2];
@@ -145,18 +144,16 @@ var OBJ = {};
   		if (Mz < allVertices[i][1]) Mz = allVertices[i][1];
     }
 
- 	  var max = Math.max(Mx-mx, My-my, Mz-mz) / 200;
     var cx = mx + (Mx-mx)/2;
     var cy = my + (My-my)/2;
-
     var j, jl;
     var mesh;
     for (i = 0, il = meshes.length; i < il; i++) {
       mesh = meshes[i];
       for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx)/max;
-        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz)/max;
-        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy)/max;
+  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx);
+        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz);
+        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy);
       }
     }
 

@@ -68,7 +68,7 @@ var Mesh = function(url, properties) {
 
     var
       zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale,
+      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale * 0.785,
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
       mapCenter = Map.center,
