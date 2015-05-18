@@ -5,8 +5,8 @@ var TileGrid = {};
 
   var
     source,
-    tiles = {},
-    isDelayed;
+    isDelayed,
+    tiles = {};
 
   function update(delay) {
     updateTileBounds();
@@ -50,6 +50,7 @@ var TileGrid = {};
         bounds.minX + (bounds.maxX-bounds.minX-1)/2,
         bounds.maxY
       ];
+
     for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
       for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
@@ -78,11 +79,6 @@ var TileGrid = {};
     purge();
   }
 
-  function getURL(x, y, z) {
-    var s = 'abcd'[(x+y) % 4];
-    return pattern(source, { s:s, x:x, y:y, z:z });
-  }
-
   function purge() {
     for (var key in tiles) {
       if (!tiles[key].isVisible(1)) {
@@ -90,6 +86,11 @@ var TileGrid = {};
         delete tiles[key];
       }
     }
+  }
+
+  function getURL(x, y, z) {
+    var s = 'abcd'[(x+y) % 4];
+    return pattern(source, { s:s, x:x, y:y, z:z });
   }
 
   //***************************************************************************

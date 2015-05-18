@@ -902,6 +902,19 @@ OSMBuildings.prototype = {
     return this;
   },
 
+// store properties?
+// store backup of properties?
+// call per anim frame?
+// just accept triggering?
+  setStyleX: function(fn) {
+    var dataItems = Data.items;
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      fn(dataItems[i]);
+      // trigger update of Data.items
+    }
+    return this;
+  },
+
   addMesh: function(url, options) {
     return new Mesh(url, options);
   },
@@ -2054,8 +2067,8 @@ var TileGrid = {};
 
   var
     source,
-    tiles = {},
-    isDelayed;
+    isDelayed,
+    tiles = {};
 
   function update(delay) {
     updateTileBounds();
@@ -2099,6 +2112,7 @@ var TileGrid = {};
         bounds.minX + (bounds.maxX-bounds.minX-1)/2,
         bounds.maxY
       ];
+
     for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
       for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
@@ -2127,11 +2141,6 @@ var TileGrid = {};
     purge();
   }
 
-  function getURL(x, y, z) {
-    var s = 'abcd'[(x+y) % 4];
-    return pattern(source, { s:s, x:x, y:y, z:z });
-  }
-
   function purge() {
     for (var key in tiles) {
       if (!tiles[key].isVisible(1)) {
@@ -2139,6 +2148,11 @@ var TileGrid = {};
         delete tiles[key];
       }
     }
+  }
+
+  function getURL(x, y, z) {
+    var s = 'abcd'[(x+y) % 4];
+    return pattern(source, { s:s, x:x, y:y, z:z });
   }
 
   //***************************************************************************
@@ -2286,7 +2300,7 @@ var Mesh = function(url, properties) {
     return colors;
   }
 
-  Mesh.prototype.onLoad = function(model) {
+  Mesh.prototype.onLoad = function(items) {
     this.request = null;
 
     var data = {
@@ -2296,10 +2310,8 @@ var Mesh = function(url, properties) {
       idColors: []
     };
 
-    this.bounds = model.bounds;
-
-    for (var i = 0, il = model.meshes.length; i < il; i++) {
-      this.storeItem(data, model.meshes[i]);  
+    for (var i = 0, il = items.length; i < il; i++) {
+      this.storeItem(data, items[i]);  
     }
 
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
@@ -2348,40 +2360,6 @@ var Mesh = function(url, properties) {
 
   Mesh.prototype.isVisible = function(key, buffer) {
     buffer = buffer || 0;
-
-
-
-
-     var mapBounds = Map.bounds;
-   	 //console.log(this.bounds, mapBounds);
-
-
-//    var
-//      zoom = 16, // TODO: this shouldn't be a fixed value?
-//      ratio = 1 / Math.pow(2, zoom - Map.zoom),
-//      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-//      position = project(this.position.latitude, this.position.longitude, worldSize),
-//      mapCenter = Map.center,
-//      matrix = Matrix.create();
-//
-//    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-//    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
-
-
-//  DataTile.prototype.isVisible = function(buffer) {
-//    buffer = buffer || 0;
-//    var
-//      gridBounds = DataGrid.bounds,
-//      tileX = this.tileX,
-//      tileY = this.tileY;
-//
-//    return (this.zoom === gridBounds.zoom &&
-//      // TODO: factor in tile origin
-//      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
-//  };
-
-
     return true;
   };
 
@@ -2827,7 +2805,7 @@ var OBJ = {};
       }
     }
 
-    return { meshes:meshes, bounds:{ minX:mx, maxX:Mx, minY:my, maxY:My, minZ:mz, maxZ:Mz } };
+    return meshes;
   }
 
   //***************************************************************************

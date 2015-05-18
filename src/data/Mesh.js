@@ -71,31 +71,17 @@ var Mesh = function(url, properties) {
       ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale,
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
-      origin = Map.origin,
+      mapCenter = Map.center,
       matrix = Matrix.create();
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
-    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
+    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return matrix;
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
     buffer = buffer || 0;
-
-
-
-//    var
-//      zoom = 16, // TODO: this shouldn't be a fixed value?
-//      ratio = 1 / Math.pow(2, zoom - Map.zoom),
-//      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-//      position = project(this.position.latitude, this.position.longitude, worldSize),
-//      origin = Map.origin,
-//      matrix = Matrix.create();
-//
-//    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-//    matrix = Matrix.translate(matrix, position.x-origin.x, position.y-origin.y, 0);
-
     return true;
   };
 

@@ -94,10 +94,9 @@
     attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
-  map.addMesh('Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54306, longitude:13.42796 }, scale:0.3, id:'Planetarium' } );
-  map.addMesh('Fernsehturm.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:1.45, id:'Fernsehturm' } );
-  //map.addMesh('o2-gesamt.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:33 } ); // no id,color: if present, properties of individual objects will be used
-   
+  map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54306, longitude:13.42796 }, scale:0.3, id:'Planetarium' } );
+  map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:1.45, id:'Fernsehturm' } );
+
   map.on('click', function(e) {
      console.log(e.featureID);
   });
