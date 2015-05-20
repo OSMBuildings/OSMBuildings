@@ -180,7 +180,7 @@ var Events = {};
     addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+        Scene.setSize({ width: container.offsetWidth, height: container.offsetHeight });
       }, 250);
     });
   };

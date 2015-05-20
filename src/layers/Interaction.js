@@ -73,8 +73,8 @@ var Interaction = {};
   Interaction.getFeatureID = function(pos, fn) {
     callback = function() {
       var
-        width  = GL.width,
-        height = GL.height;
+        width  = Scene.width,
+        height = Scene.height;
 
       var imageData = new Uint8Array(width*height*4);
       gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);

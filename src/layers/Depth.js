@@ -1,25 +1,22 @@
 
-var Basemap = {};
-
-// TODO: try to use tiles from other zoom levels when some are missing
+var Depth = {};
 
 (function() {
 
   var shader;
 
-  Basemap.initShader = function() {
-    shader = new Shader('basemap');
+  Depth.initShader = function() {
+    shader = new Shader('depth');
   };
 
-  Basemap.render = function(mapMatrix) {
+  Depth.render = function(mapMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      backgroundColor = Scene.backgroundColor,
       matrix;
 
     shader.use();
 
-    gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
+    gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     for (var key in tiles) {
@@ -50,3 +47,7 @@ var Basemap = {};
   };
 
 }());
+
+
+
+
