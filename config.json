@@ -1,5 +1,10 @@
 {
   "shaders": {
+    "interaction": {
+      "attributes": ["aPosition", "aColor"],
+      "uniforms": ["uMatrix"],
+      "frameBuffer": false
+    },
     "basemap": {
       "attributes": ["aPosition", "aTexCoord"],
       "uniforms": ["uMatrix", "uTileImage"]
@@ -7,11 +12,6 @@
     "buildings": {
       "attributes": ["aPosition", "aColor", "aNormal"],
       "uniforms": ["uNormalTransform", "uMatrix", "uAlpha", "uLightColor", "uLightDirection"]
-    },
-    "interaction": {
-      "attributes": ["aPosition", "aColor"],
-      "uniforms": ["uMatrix"],
-      "framebuffer": true
     }
   },
 
@@ -49,9 +49,9 @@
     "src/GL.js",
     "src/Matrix.js",
 
+    "src/layers/Interaction.js",
     "src/layers/Basemap.js",
     "src/layers/Buildings.js",
-    "src/layers/Interaction.js",
 
     "src/gl/Shader.js",
     "src/gl/FrameBuffer.js",

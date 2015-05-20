@@ -91,7 +91,8 @@ module.exports = function(grunt) {
       SHADERS[name] = {
         src: {},
         attributes: shader.attributes,
-        uniforms: shader.uniforms
+        uniforms: shader.uniforms,
+        frameBuffer: shader.frameBuffer
       };
 
       for (i = 0; i < types.length; i++) {

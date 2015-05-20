@@ -105,6 +105,27 @@ var GL = {
     return texture;
   },
 
+  createFrameBuffer: function() {
+    var frameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+
+    var renderTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GL.width, GL.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+    var renderBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, GL.width, GL.height);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    return frameBuffer;
+  },
+
   deleteBuffer: function(buffer) {
     gl.deleteBuffer(buffer);
   },
