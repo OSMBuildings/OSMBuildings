@@ -22,7 +22,7 @@ var Shader = function(name) {
   this.uniformNames   = config.uniforms;
 
   if (config.frameBuffer) {
-    this.frameBuffer = GL.createFrameBuffer();
+    this.frameBuffer = GL.createFrameBuffer(Scene.width, Scene.height);
   }
 };
 
@@ -79,7 +79,8 @@ Shader.prototype = {
     }
 
     if (this.frameBuffer) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer[0]);
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.frameBuffer[1]);
     }
 
     return this;
@@ -97,6 +98,7 @@ Shader.prototype = {
 
     if (this.frameBuffer) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindRenderbuffer(gl.RENDERBUFFER, null);
     }
   }
 };

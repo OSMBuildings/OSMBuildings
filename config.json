@@ -52,16 +52,13 @@
 
     "src/geometry.js",
     "src/GL.js",
+    "src/gl/Shader.js",
     "src/Scene.js",
     "src/Matrix.js",
 
     "src/layers/Depth.js",
     "src/layers/Interaction.js",
     "src/layers/Basemap.js",
-    "src/layers/Buildings.js",
-
-    "src/gl/Shader.js",
-    "src/gl/FrameBuffer.js",
-    "src/gl/Texture.js"
+    "src/layers/Buildings.js"
   ]
 }
