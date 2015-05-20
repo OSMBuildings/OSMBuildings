@@ -51,10 +51,10 @@
     "src/formats/OBJ.js",
 
     "src/geometry.js",
-    "src/GL.js",
+    "src/gl/GL.js",
     "src/gl/Shader.js",
-    "src/Scene.js",
-    "src/Matrix.js",
+    "src/gl/Scene.js",
+    "src/gl/Matrix.js",
 
     "src/layers/Depth.js",
     "src/layers/Interaction.js",
