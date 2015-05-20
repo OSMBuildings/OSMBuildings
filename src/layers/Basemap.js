@@ -14,7 +14,7 @@ var Basemap = {};
   Basemap.render = function(mapMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      backgroundColor = GL.backgroundColor,
+      backgroundColor = Scene.backgroundColor,
       matrix;
 
     shader.use();

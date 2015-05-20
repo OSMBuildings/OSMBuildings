@@ -6,8 +6,8 @@ var Map = {};
   function updateBounds() {
     var
       center = Map.center,
-      halfWidth  = GL.width/2,
-      halfHeight = GL.height/2;
+      halfWidth  = Scene.width/2,
+      halfHeight = Scene.height/2;
     Map.bounds = {
       maxY: center.y + halfHeight,
       minX: center.x - halfWidth,
@@ -52,8 +52,8 @@ var Map = {};
         Map.center.x *= ratio;
         Map.center.y *= ratio;
       } else {
-        var dx = GL.width/2  - e.clientX;
-        var dy = GL.height/2 - e.clientY;
+        var dx = Scene.width/2  - e.clientX;
+        var dy = Scene.height/2 - e.clientY;
         Map.center.x -= dx;
         Map.center.y -= dy;
         Map.center.x *= ratio;

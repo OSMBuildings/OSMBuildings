@@ -882,7 +882,7 @@ var OSMBuildings = function(containerId, options) {
 
   if (options.attribution !== null && options.attribution !== false && options.attribution !== '') {
     var attribution = document.createElement('DIV');
-    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:3px;background:rgba(255,255,255,0.5);font:12px sans-serif');
+    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:1px 3px;background:rgba(255,255,255,0.5);font:11px sans-serif');
     attribution.innerHTML = options.attribution || OSMBuildings.ATTRIBUTION;
     container.appendChild(attribution);
   }
@@ -1564,7 +1564,7 @@ function pattern(str, param) {
   });
 }
 
-var SHADERS = {"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]},"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"]}};
+var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"frameBuffer":false},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -2346,7 +2346,7 @@ var Mesh = function(url, properties) {
 
     var
       zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale,
+      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale * 0.785,
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
       mapCenter = Map.center,
@@ -2714,7 +2714,7 @@ var OBJ = {};
         break;
 
         case 'v':
-          allVertices.push([parseFloat(cols[1])*100, parseFloat(cols[2])*100, parseFloat(cols[3])*100]);
+          allVertices.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
         break;
 
   	    case 'f':
@@ -2780,7 +2780,6 @@ var OBJ = {};
   function normalize(meshes, allVertices) {
   	var mx =  1e10, my =  1e10, mz =  1e10;
   	var Mx = -1e10, My = -1e10, Mz = -1e10;
-
     for (var i = 0, il = allVertices.length; i < il; i++) {
   		if (mx > allVertices[i][0]) mx = allVertices[i][0];
   		if (my > allVertices[i][2]) my = allVertices[i][2];
@@ -2790,18 +2789,16 @@ var OBJ = {};
   		if (Mz < allVertices[i][1]) Mz = allVertices[i][1];
     }
 
- 	  var max = Math.max(Mx-mx, My-my, Mz-mz) / 200;
     var cx = mx + (Mx-mx)/2;
     var cy = my + (My-my)/2;
-
     var j, jl;
     var mesh;
     for (i = 0, il = meshes.length; i < il; i++) {
       mesh = meshes[i];
       for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx)/max;
-        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz)/max;
-        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy)/max;
+  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx);
+        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz);
+        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy);
       }
     }
 
@@ -3040,6 +3037,27 @@ var GL = {
     gl.generateMipmap(gl.TEXTURE_2D);
     img = null;
     return texture;
+  },
+
+  createFrameBuffer: function() {
+    var frameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+
+    var renderTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GL.width, GL.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+    var renderBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, GL.width, GL.height);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    return frameBuffer;
   },
 
   deleteBuffer: function(buffer) {
@@ -3292,6 +3310,97 @@ var Matrix = {
 };
 
 
+// TODO: render only clicked area
+
+var Interaction = {};
+
+(function() {
+
+  var shader;
+  var idMapping = [null], callback;
+
+  Interaction.initShader = function() {
+    shader = new Shader('interaction');
+  };
+
+  Interaction.render = function(mapMatrix) {
+    if (!callback) {
+      return;
+    }
+
+    if (Map.zoom < MIN_ZOOM) {
+      callback();
+      return;
+    }
+
+    shader.use();
+
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    var
+      dataItems = Data.items,
+      item,
+      matrix;
+
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      item = dataItems[i];
+
+      if (!(matrix = item.getMatrix())) {
+        continue;
+      }
+
+      matrix = Matrix.multiply(matrix, mapMatrix);
+
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.idColorBuffer);
+      gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    }
+
+    shader.end();
+    callback();
+  };
+
+  Interaction.idToColor = function(id) {
+    var index = idMapping.indexOf(id);
+    if (index === -1) {
+      idMapping.push(id);
+      index = idMapping.length-1;
+    }
+//  return { r:255, g:128,b:0 }
+    return {
+      r:  index        & 0xff,
+      g: (index >>  8) & 0xff,
+      b: (index >> 16) & 0xff
+    };
+  };
+
+  Interaction.getFeatureID = function(pos, fn) {
+    callback = function() {
+      var
+        width  = GL.width,
+        height = GL.height;
+
+      var imageData = new Uint8Array(width*height*4);
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+
+      var index = ((height-pos.y)*width + pos.x) * 4;
+      var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+
+      fn(idMapping[color]);
+      callback = null;
+    };
+  };
+
+}());
+
+
 var Basemap = {};
 
 // TODO: try to use tiles from other zoom levels when some are missing
@@ -3410,98 +3519,7 @@ var Buildings = {};
 }());
 
 
-// TODO: render only clicked area
-
-var Interaction = {};
-
-(function() {
-
-  var shader;
-  var idMapping = [null], callback;
-
-  Interaction.initShader = function() {
-    shader = new Shader('interaction');
-  };
-
-  Interaction.render = function(mapMatrix) {
-    if (!callback) {
-      return;
-    }
-
-    if (Map.zoom < MIN_ZOOM) {
-      callback();
-      return;
-    }
-
-    shader.use();
-
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    var
-      dataItems = Data.items,
-      item,
-      matrix;
-
-    for (var i = 0, il = dataItems.length; i < il; i++) {
-      item = dataItems[i];
-
-      if (!(matrix = item.getMatrix())) {
-        continue;
-      }
-
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
-      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.idColorBuffer);
-      gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
-
-      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
-    }
-
-    shader.end();
-    callback();
-  };
-
-  Interaction.idToColor = function(id) {
-    var index = idMapping.indexOf(id);
-    if (index === -1) {
-      idMapping.push(id);
-      index = idMapping.length-1;
-    }
-//  return { r:255, g:128,b:0 }
-    return {
-      r:  index        & 0xff,
-      g: (index >>  8) & 0xff,
-      b: (index >> 16) & 0xff
-    };
-  };
-
-  Interaction.getFeatureID = function(pos, fn) {
-    callback = function() {
-      var
-        width  = GL.width,
-        height = GL.height;
-
-      var imageData = new Uint8Array(width*height*4);
-      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-
-      var index = ((height-pos.y)*width + pos.x) * 4;
-      var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
-
-      fn(idMapping[color]);
-      callback = null;
-    };
-  };
-
-}());
-
-
-var Shader = function(name, useFrameBuffer) {
+var Shader = function(name) {
   var config = SHADERS[name];
 
   this.id = gl.createProgram();
@@ -3524,7 +3542,7 @@ var Shader = function(name, useFrameBuffer) {
   this.uniformNames   = config.uniforms;
 
   if (config.frameBuffer) {
-    this.createFrameBuffer();
+    this.frameBuffer = GL.createFrameBuffer();
   }
 };
 
@@ -3547,25 +3565,6 @@ Shader.prototype = {
       return;
     }
     this.uniforms[name] = loc;
-  },
-
-  createFrameBuffer: function() {
-    this.frameBuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
-
-    var renderTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GL.width, GL.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-    var renderBuffer = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, GL.width, GL.height);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   },
 
   attach: function(type, src) {

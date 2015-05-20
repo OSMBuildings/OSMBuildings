@@ -47,6 +47,7 @@
 
     "src/geometry.js",
     "src/GL.js",
+    "src/Scene.js",
     "src/Matrix.js",
 
     "src/layers/Interaction.js",
