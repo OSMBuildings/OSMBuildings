@@ -870,7 +870,7 @@ var OSMBuildings = function(containerId, options) {
 
   Map.setState(options);
   Events.init(container);
-  GL.createContext(container, options);
+  Scene.create(container, options);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -970,12 +970,12 @@ OSMBuildings.prototype = {
   },
 
   setSize: function(size) {
-    GL.setSize(size);
+    Scene.setSize(size);
     return this;
   },
 
   getSize: function() {
-    return { width:GL.width, height:GL.height };
+    return { width:Scene.width, height:Scene.height };
   },
 
   setRotation: function(rotation) {
@@ -1020,8 +1020,8 @@ var Map = {};
   function updateBounds() {
     var
       center = Map.center,
-      halfWidth  = GL.width/2,
-      halfHeight = GL.height/2;
+      halfWidth  = Scene.width/2,
+      halfHeight = Scene.height/2;
     Map.bounds = {
       maxY: center.y + halfHeight,
       minX: center.x - halfWidth,
@@ -1066,8 +1066,8 @@ var Map = {};
         Map.center.x *= ratio;
         Map.center.y *= ratio;
       } else {
-        var dx = GL.width/2  - e.clientX;
-        var dy = GL.height/2 - e.clientY;
+        var dx = Scene.width/2  - e.clientX;
+        var dy = Scene.height/2 - e.clientY;
         Map.center.x -= dx;
         Map.center.y -= dy;
         Map.center.x *= ratio;
@@ -1304,7 +1304,7 @@ var Events = {};
     addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+        Scene.setSize({ width: container.offsetWidth, height: container.offsetHeight });
       }, 250);
     });
   };
@@ -1564,7 +1564,7 @@ function pattern(str, param) {
   });
 }
 
-var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"]},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nfloat total_depth = 64.0;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition) / total_depth);\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"]},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"frameBuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nfloat total_depth = 64.0;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition) / total_depth);\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"frameBuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -2933,87 +2933,7 @@ function rotatePoint(x, y, angle) {
 }
 
 
-var gl, loop;
-
 var GL = {
-
-  width: 0,
-  height: 0,
-
-  createContext: function(container, options) {
-    var canvas = document.createElement('CANVAS');
-    canvas.style.position = 'absolute';
-    canvas.style.pointerEvents = 'none';
-    container.appendChild(canvas);
-
-    try {
-      gl = canvas.getContext('experimental-webgl', {
-        antialias: true,
-        depth: true,
-        premultipliedAlpha: false
-      });
-    } catch(ex) {
-      throw ex;
-    }
- 
-    GL.backgroundColor = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
-    GL.backgroundColor.r /= 255;
-    GL.backgroundColor.g /= 255;
-    GL.backgroundColor.b /= 255;
-
-    if (options.showBackfaces) {
-      gl.disable(gl.CULL_FACE);
-    } else {
-      gl.enable(gl.CULL_FACE);
-    }
-    gl.cullFace(gl.BACK);
-    gl.enable(gl.DEPTH_TEST);
-
-    GL.setSize({ width: container.offsetWidth, height: container.offsetHeight });
-
-    addListener(canvas, 'webglcontextlost', function(e) {
-      clearInterval(loop);
-    });
-
-    //addListener(canvas, 'webglcontextrestored', ...);
-
-    Depth.initShader();
-    Interaction.initShader();
-    Basemap.initShader();
-    Buildings.initShader();
-
-    loop = setInterval(function() {
-      requestAnimationFrame(function() {
-        // TODO: update this only when Map changed
-        var projection = Matrix.perspective(20, GL.width, GL.height, 40000);
-//      projectionOrtho = Matrix.ortho(GL.width, GL.height, 40000);
-
-        // TODO: update this only when Map changed
-        var matrix = Matrix.create();
-        matrix = Matrix.rotateZ(matrix, Map.rotation);
-        matrix = Matrix.rotateX(matrix, Map.tilt);
-        matrix = Matrix.translate(matrix, GL.width/2, GL.height/2, 0);
-        matrix = Matrix.multiply(matrix, projection);
-
-// console.log('CONTEXT LOST?', gl.isContextLost());
-
-//        Depth.render(matrix);
-        Interaction.render(matrix);
-//        Basemap.render(matrix);
-//        Buildings.render(matrix);
-      });
-    }, 17);
-  },
-
-  setSize: function(size) {
-    var canvas = gl.canvas;
-    if (size.width !== GL.width || size.height !== GL.height) {
-      canvas.width  = GL.width  = size.width;
-      canvas.height = GL.height = size.height;
-      gl.viewport(0, 0, size.width, size.height);
-      Events.emit('resize', size);
-    }
-  },
 
   createBuffer: function(itemSize, data) {
     var buffer = gl.createBuffer();
@@ -3041,12 +2961,120 @@ var GL = {
     return texture;
   },
 
+  createFrameBuffer: function() {
+    var frameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+
+    var renderTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, Scene.width, Scene.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+    var renderBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, Scene.width, Scene.height);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    return frameBuffer;
+  },
+
   deleteBuffer: function(buffer) {
     gl.deleteBuffer(buffer);
   },
 
   deleteTexture: function(texture) {
     gl.deleteTexture(texture);
+  }
+};
+
+
+var gl, loop;
+
+var Scene = {
+
+  width: 0,
+  height: 0,
+  backgroundColor: {},  
+
+  create: function(container, options) {
+    var canvas = document.createElement('CANVAS');
+    canvas.style.position = 'absolute';
+    canvas.style.pointerEvents = 'none';
+    container.appendChild(canvas);
+
+    try {
+      gl = canvas.getContext('experimental-webgl', {
+        antialias: true,
+        depth: true,
+        premultipliedAlpha: false
+      });
+    } catch(ex) {
+      throw ex;
+    }
+ 
+    var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
+    Scene.backgroundColor = {
+      r: color.r/255,
+      g: color.g/255,
+      b: color.b/255
+    };
+
+    if (options.showBackfaces) {
+      gl.disable(gl.CULL_FACE);
+    } else {
+      gl.enable(gl.CULL_FACE);
+    }
+    gl.cullFace(gl.BACK);
+    gl.enable(gl.DEPTH_TEST);
+
+    Scene.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+
+    addListener(canvas, 'webglcontextlost', function(e) {
+      clearInterval(loop);
+    });
+
+    //addListener(canvas, 'webglcontextrestored', ...);
+
+    Depth.initShader();
+    Interaction.initShader();
+    Basemap.initShader();
+    Buildings.initShader();
+
+    loop = setInterval(function() {
+      requestAnimationFrame(function() {
+        // TODO: update this only when Map changed
+        var projection = Matrix.perspective(20, Scene.width, Scene.height, 40000);
+//      projectionOrtho = Matrix.ortho(Scene.width, Scene.height, 40000);
+
+        // TODO: update this only when Map changed
+        var matrix = Matrix.create();
+        matrix = Matrix.rotateZ(matrix, Map.rotation);
+        matrix = Matrix.rotateX(matrix, Map.tilt);
+        matrix = Matrix.translate(matrix, Scene.width/2, Scene.height/2, 0);
+        matrix = Matrix.multiply(matrix, projection);
+
+// console.log('CONTEXT LOST?', gl.isContextLost());
+
+//      Depth.render(matrix);
+        Interaction.render(matrix);
+        Basemap.render(matrix);
+        Buildings.render(matrix);
+      });
+    }, 17);
+  },
+
+  setSize: function(size) {
+    var canvas = gl.canvas;
+    if (size.width !== Scene.width || size.height !== Scene.height) {
+      canvas.width  = Scene.width  = size.width;
+      canvas.height = Scene.height = size.height;
+      gl.viewport(0, 0, size.width, size.height);
+      Events.emit('resize', size);
+    }
   },
 
   destroy: function() {
@@ -3304,7 +3332,6 @@ var Depth = {};
   Depth.render = function(mapMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      backgroundColor = GL.backgroundColor,
       matrix;
 
     shader.use();
@@ -3312,39 +3339,22 @@ var Depth = {};
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    for (var key in tiles) {
-      item = tiles[key];
-
-      if (!(matrix = item.getMatrix())) {
-        continue;
-      }
-
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
-      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.texCoordBuffer);
-      gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, item.texture);
-      gl.uniform1i(shader.uniforms.uTileImage, 0);
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-    }
+    //for (var key in tiles) {
+    //  item = tiles[key];
+    //
+    //  if (!(matrix = item.getMatrix())) {
+    //    continue;
+    //  }
+    //
+    //  matrix = Matrix.multiply(matrix, mapMatrix);
+    //
+    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+    //
+    //  gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+    //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    //
+    //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
+    //}
 
     shader.end();
   };
@@ -3430,8 +3440,8 @@ var Interaction = {};
   Interaction.getFeatureID = function(pos, fn) {
     callback = function() {
       var
-        width  = GL.width,
-        height = GL.height;
+        width  = Scene.width,
+        height = Scene.height;
 
       var imageData = new Uint8Array(width*height*4);
       gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
@@ -3462,7 +3472,7 @@ var Basemap = {};
   Basemap.render = function(mapMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      backgroundColor = GL.backgroundColor,
+      backgroundColor = Scene.backgroundColor,
       matrix;
 
     shader.use();
@@ -3586,9 +3596,9 @@ var Shader = function(name) {
 
   this.attributeNames = config.attributes;
   this.uniformNames   = config.uniforms;
-console.log(config)
+
   if (config.frameBuffer) {
-    this.createFrameBuffer();
+    this.frameBuffer = GL.createFrameBuffer();
   }
 };
 
@@ -3611,25 +3621,6 @@ Shader.prototype = {
       return;
     }
     this.uniforms[name] = loc;
-  },
-
-  createFrameBuffer: function() {
-    this.frameBuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
-
-    var renderTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GL.width, GL.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-    var renderBuffer = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, GL.width, GL.height);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   },
 
   attach: function(type, src) {
@@ -3664,7 +3655,6 @@ Shader.prototype = {
     }
 
     if (this.frameBuffer) {
-      console.log('FRAMEBUFFER START', this.frameBuffer)
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
     }
 
@@ -3682,9 +3672,6 @@ Shader.prototype = {
     this.uniforms = null;
 
     if (this.frameBuffer) {
-      
-      console.log('FRAMEBUFFER END')
-      
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
   }

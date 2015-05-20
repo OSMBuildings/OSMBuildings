@@ -3,7 +3,7 @@
     "interaction": {
       "attributes": ["aPosition", "aColor"],
       "uniforms": ["uMatrix"],
-      "frameBuffer": true
+      "frameBuffer": false
     },
     "depth": {
       "attributes": ["aPosition"],

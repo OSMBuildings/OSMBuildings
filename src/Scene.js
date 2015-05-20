@@ -24,7 +24,7 @@ var Scene = {
     }
  
     var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
-    this.backgroundColor = {
+    Scene.backgroundColor = {
       r: color.r/255,
       g: color.g/255,
       b: color.b/255
@@ -38,7 +38,7 @@ var Scene = {
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
 
-    this.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+    Scene.setSize({ width: container.offsetWidth, height: container.offsetHeight });
 
     addListener(canvas, 'webglcontextlost', function(e) {
       clearInterval(loop);
@@ -54,19 +54,19 @@ var Scene = {
     loop = setInterval(function() {
       requestAnimationFrame(function() {
         // TODO: update this only when Map changed
-        var projection = Matrix.perspective(20, this.width, this.height, 40000);
-//      projectionOrtho = Matrix.ortho(this.width, this.height, 40000);
+        var projection = Matrix.perspective(20, Scene.width, Scene.height, 40000);
+//      projectionOrtho = Matrix.ortho(Scene.width, Scene.height, 40000);
 
         // TODO: update this only when Map changed
         var matrix = Matrix.create();
         matrix = Matrix.rotateZ(matrix, Map.rotation);
         matrix = Matrix.rotateX(matrix, Map.tilt);
-        matrix = Matrix.translate(matrix, this.width/2, this.height/2, 0);
+        matrix = Matrix.translate(matrix, Scene.width/2, Scene.height/2, 0);
         matrix = Matrix.multiply(matrix, projection);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
-//        Depth.render(matrix);
+//      Depth.render(matrix);
         Interaction.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
@@ -76,9 +76,9 @@ var Scene = {
 
   setSize: function(size) {
     var canvas = gl.canvas;
-    if (size.width !== this.width || size.height !== this.height) {
-      canvas.width  = this.width  = size.width;
-      canvas.height = this.height = size.height;
+    if (size.width !== Scene.width || size.height !== Scene.height) {
+      canvas.width  = Scene.width  = size.width;
+      canvas.height = Scene.height = size.height;
       gl.viewport(0, 0, size.width, size.height);
       Events.emit('resize', size);
     }
