@@ -76,6 +76,7 @@ var Interaction = {};
 
   Interaction.getFeatureID = function(pos, fn) {
     callback = function(imageData) {
+      var width = Scene.width, height = Scene.height;
       var index = ((height-pos.y)*width + pos.x) * 4;
       var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
       fn(idMapping[color]);

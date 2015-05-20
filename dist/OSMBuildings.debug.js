@@ -1564,11 +1564,7 @@ function pattern(str, param) {
   });
 }
 
-<<<<<<< HEAD
-var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"frameBuffer":false},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
-=======
-var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"frameBuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nfloat total_depth = 64.0;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition) / total_depth);\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"frameBuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
->>>>>>> ssao
+var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"frameBuffer":false},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nfloat total_depth = 64.0;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition) / total_depth);\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"frameBuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -2965,7 +2961,7 @@ var GL = {
     return texture;
   },
 
-  createFrameBuffer: function() {
+  createFrameBuffer: function(width, height) {
     var frameBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
 
@@ -2973,17 +2969,23 @@ var GL = {
     gl.bindTexture(gl.TEXTURE_2D, renderTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, Scene.width, Scene.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
     var renderBuffer = gl.createRenderbuffer();
     gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, Scene.width, Scene.height);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+      throw new Error('This combination of framebuffer attachments does not work');
+    }
 
-    return frameBuffer;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+
+    return [frameBuffer, renderBuffer];
   },
 
   deleteBuffer: function(buffer) {
@@ -2992,6 +2994,111 @@ var GL = {
 
   deleteTexture: function(texture) {
     gl.deleteTexture(texture);
+  }
+};
+
+
+var Shader = function(name) {
+  var config = SHADERS[name];
+
+  this.id = gl.createProgram();
+  this.name = name;
+
+  if (!config.src) {
+    throw new Error('missing source for shader "'+ name +'"');
+  }
+
+  this.attach(gl.VERTEX_SHADER,   config.src.vertex);
+  this.attach(gl.FRAGMENT_SHADER, config.src.fragment);
+
+  gl.linkProgram(this.id);
+
+  if (!gl.getProgramParameter(this.id, gl.LINK_STATUS)) {
+    throw new Error(gl.getProgramParameter(this.id, gl.VALIDATE_STATUS) +'\n'+ gl.getError());
+  }
+
+  this.attributeNames = config.attributes;
+  this.uniformNames   = config.uniforms;
+
+  if (config.frameBuffer) {
+    this.frameBuffer = GL.createFrameBuffer(Scene.width, Scene.height);
+  }
+};
+
+Shader.prototype = {
+
+  locateAttribute: function(name) {
+    var loc = gl.getAttribLocation(this.id, name);
+    if (loc < 0) {
+      console.error('unable to locate attribute "'+ name +'" in shader "'+ this.name +'"');
+      return;
+    }
+    gl.enableVertexAttribArray(loc);
+    this.attributes[name] = loc;
+  },
+
+  locateUniform: function(name) {
+    var loc = gl.getUniformLocation(this.id, name);
+    if (loc < 0) {
+      console.error('unable to locate uniform "'+ name +'" in shader "'+ this.name +'"');
+      return;
+    }
+    this.uniforms[name] = loc;
+  },
+
+  attach: function(type, src) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, src);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error('('+ this.name +') '+ gl.getShaderInfoLog(shader));
+    }
+
+    gl.attachShader(this.id, shader);
+  },
+
+  use: function() {
+    gl.useProgram(this.id);
+
+    var i;
+
+    if (this.attributeNames) {
+      this.attributes = {};
+      for (i = 0; i < this.attributeNames.length; i++) {
+        this.locateAttribute(this.attributeNames[i]);
+      }
+    }
+
+    if (this.uniformNames) {
+      this.uniforms = {};
+      for (i = 0; i < this.uniformNames.length; i++) {
+        this.locateUniform(this.uniformNames[i]);
+      }
+    }
+
+    if (this.frameBuffer) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer[0]);
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.frameBuffer[1]);
+    }
+
+    return this;
+  },
+
+  end: function() {
+    if (this.attributes) {
+      for (var name in this.attributes) {
+        gl.disableVertexAttribArray(this.attributes[name]);
+      }
+    }
+
+    this.attributes = null;
+    this.uniforms = null;
+
+    if (this.frameBuffer) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    }
   }
 };
 
@@ -3043,7 +3150,7 @@ var Scene = {
 
     //addListener(canvas, 'webglcontextrestored', ...);
 
-    Depth.initShader();
+//    Depth.initShader();
     Interaction.initShader();
     Basemap.initShader();
     Buildings.initShader();
@@ -3081,64 +3188,6 @@ var Scene = {
     }
   },
 
-<<<<<<< HEAD
-  createBuffer: function(itemSize, data) {
-    var buffer = gl.createBuffer();
-    buffer.itemSize = itemSize;
-    buffer.numItems = data.length / itemSize;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    data = null;
-    return buffer;
-  },
-
-  createTexture: function(img) {
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    img = null;
-    return texture;
-  },
-
-  createFrameBuffer: function() {
-    var frameBuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-
-    var renderTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GL.width, GL.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-    var renderBuffer = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, GL.width, GL.height);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    return frameBuffer;
-  },
-
-  deleteBuffer: function(buffer) {
-    gl.deleteBuffer(buffer);
-  },
-
-  deleteTexture: function(texture) {
-    gl.deleteTexture(texture);
-  },
-
-=======
->>>>>>> ssao
   destroy: function() {
     clearInterval(loop);
     gl.canvas.parentNode.removeChild(gl.canvas);
@@ -3381,8 +3430,6 @@ var Matrix = {
 };
 
 
-<<<<<<< HEAD
-=======
 var Depth = {};
 
 (function() {
@@ -3430,7 +3477,6 @@ var Depth = {};
 
 
 
->>>>>>> ssao
 // TODO: render only clicked area
 
 var Interaction = {};
@@ -3484,8 +3530,12 @@ var Interaction = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
+    var width = Scene.width, height = Scene.height;
+  	var imageData = new Uint8Array(width*height*4);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+
     shader.end();
-    callback();
+    callback(imageData);
   };
 
   Interaction.idToColor = function(id) {
@@ -3503,22 +3553,10 @@ var Interaction = {};
   };
 
   Interaction.getFeatureID = function(pos, fn) {
-    callback = function() {
-      var
-<<<<<<< HEAD
-        width  = GL.width,
-        height = GL.height;
-=======
-        width  = Scene.width,
-        height = Scene.height;
->>>>>>> ssao
-
-      var imageData = new Uint8Array(width*height*4);
-      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-
+    callback = function(imageData) {
+      var width = Scene.width, height = Scene.height;
       var index = ((height-pos.y)*width + pos.x) * 4;
       var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
-
       fn(idMapping[color]);
       callback = null;
     };
@@ -3643,212 +3681,4 @@ var Buildings = {};
   };
 
 }());
-
-
-var Shader = function(name) {
-  var config = SHADERS[name];
-
-  this.id = gl.createProgram();
-  this.name = name;
-
-  if (!config.src) {
-    throw new Error('missing source for shader "'+ name +'"');
-  }
-
-  this.attach(gl.VERTEX_SHADER,   config.src.vertex);
-  this.attach(gl.FRAGMENT_SHADER, config.src.fragment);
-
-  gl.linkProgram(this.id);
-
-  if (!gl.getProgramParameter(this.id, gl.LINK_STATUS)) {
-    throw new Error(gl.getProgramParameter(this.id, gl.VALIDATE_STATUS) +'\n'+ gl.getError());
-  }
-
-  this.attributeNames = config.attributes;
-  this.uniformNames   = config.uniforms;
-
-  if (config.frameBuffer) {
-    this.frameBuffer = GL.createFrameBuffer();
-  }
-};
-
-Shader.prototype = {
-
-  locateAttribute: function(name) {
-    var loc = gl.getAttribLocation(this.id, name);
-    if (loc < 0) {
-      console.error('unable to locate attribute "'+ name +'" in shader "'+ this.name +'"');
-      return;
-    }
-    gl.enableVertexAttribArray(loc);
-    this.attributes[name] = loc;
-  },
-
-  locateUniform: function(name) {
-    var loc = gl.getUniformLocation(this.id, name);
-    if (loc < 0) {
-      console.error('unable to locate uniform "'+ name +'" in shader "'+ this.name +'"');
-      return;
-    }
-    this.uniforms[name] = loc;
-  },
-
-  attach: function(type, src) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, src);
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      throw new Error('('+ this.name +') '+ gl.getShaderInfoLog(shader));
-    }
-
-    gl.attachShader(this.id, shader);
-  },
-
-  use: function() {
-    gl.useProgram(this.id);
-
-    var i;
-
-    if (this.attributeNames) {
-      this.attributes = {};
-      for (i = 0; i < this.attributeNames.length; i++) {
-        this.locateAttribute(this.attributeNames[i]);
-      }
-    }
-
-    if (this.uniformNames) {
-      this.uniforms = {};
-      for (i = 0; i < this.uniformNames.length; i++) {
-        this.locateUniform(this.uniformNames[i]);
-      }
-    }
-
-    if (this.frameBuffer) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
-    }
-
-    return this;
-  },
-
-  end: function() {
-    if (this.attributes) {
-      for (var name in this.attributes) {
-        gl.disableVertexAttribArray(this.attributes[name]);
-      }
-    }
-
-    this.attributes = null;
-    this.uniforms = null;
-
-    if (this.frameBuffer) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    }
-  }
-};
-
-
-var FrameBuffer = function(width, height, options) {
-  options = options || {};
-
-  this.width   = width;
-  this.height  = height;
-  this.texture = new Texture(width, height, options.texture);
-
-  this.id = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, this.id);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture.id, 0);
-
-  this.renderbuffer = gl.createRenderbuffer();
-  gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderbuffer);
-  this.renderbuffer.width = this.width;
-  this.renderbuffer.height = this.height;
-  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.width, this.height);
-  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderbuffer);
-
-  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-   throw new Error('This combination of framebuffer attachments does not work');
-  }
-
-  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  this.texture.end();
-};
-
-FrameBuffer.prototype = {
-  use: function() {
-    this.viewport = gl.getParameter(gl.VIEWPORT);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.id);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderbuffer);
-    gl.viewport(0, 0, this.width, this.height);
-    return this;
-  },
-
-  end: function() {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-    gl.viewport(this.viewport[0], this.viewport[1], this.viewport[2], this.viewport[3]);
-  }
-};
-
-
-var Texture = function(width, height, options) {
-  options = options || {};
-
-  this.id = gl.createTexture();
-
-  this.width  = width;
-  this.height = height;
-  this.format = options.format || gl.RGBA;
-  this.type   = options.type || gl.UNSIGNED_BYTE;
-
-  var magFilter = options.filter || options.magFilter || gl.LINEAR;
-  var minFilter = options.filter || options.minFilter || gl.LINEAR;
-
-  gl.bindTexture(gl.TEXTURE_2D, this.id);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magFilter);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minFilter);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, options.wrap || options.wrapS || gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, options.wrap || options.wrapT || gl.CLAMP_TO_EDGE);
-  gl.texImage2D(gl.TEXTURE_2D, 0, this.format, width, height, 0, this.format, this.type, null);
-};
-
-// Bind this texture to the given texture unit (0-7, defaults to 0).
-Texture.prototype = {
-  use: function(index) {
-    gl.activeTexture(gl.TEXTURE0 + (index || 0));
-    gl.bindTexture(gl.TEXTURE_2D, this.id);
-    return this;
-  },
-
-  // Clear the given texture unit (0-7, defaults to 0).
-  end: function(unit) {
-    gl.activeTexture(gl.TEXTURE0 + (unit || 0));
-    gl.bindTexture(gl.TEXTURE_2D, null);
-  }
-};
-
-/*
-  var createTexture = function(img, useFilter) {
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-
-    if (useFilter) {
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-      gl.generateMipmap(gl.TEXTURE_2D);
-    } else {
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    }
-
-//      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-//      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    return texture;
-  };
-
-*/}(this));
+}(this));
