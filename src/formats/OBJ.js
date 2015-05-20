@@ -54,6 +54,7 @@ var OBJ = {};
   	  cols = lines[i].trim().split(/\s+/);
   
       switch (cols[0]) {
+        case 'g':
         case 'o':
           storeMesh(meshes, allVertices, id, color, faces);
           id = cols[1];

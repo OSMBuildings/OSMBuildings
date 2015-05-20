@@ -882,7 +882,7 @@ var OSMBuildings = function(containerId, options) {
 
   if (options.attribution !== null && options.attribution !== false && options.attribution !== '') {
     var attribution = document.createElement('DIV');
-    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:3px;background:rgba(255,255,255,0.5);font:12px sans-serif');
+    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:1px 3px;background:rgba(255,255,255,0.5);font:11px sans-serif');
     attribution.innerHTML = options.attribution || OSMBuildings.ATTRIBUTION;
     container.appendChild(attribution);
   }
@@ -902,16 +902,8 @@ OSMBuildings.prototype = {
     return this;
   },
 
-// store properties?
-// store backup of properties?
-// call per anim frame?
-// just accept triggering?
-  setStyleX: function(fn) {
-    var dataItems = Data.items;
-    for (var i = 0, il = dataItems.length; i < il; i++) {
-      fn(dataItems[i]);
-      // trigger update of Data.items
-    }
+  modify: function(fn) {
+    Data.modify(fn);
     return this;
   },
 
@@ -2017,6 +2009,9 @@ var DataTile = function(tileX, tileY, zoom) {
     this.isReady = true;
   };
 
+  DataTile.prototype.modify = function(fn) {
+  };
+
   DataTile.prototype.isVisible = function(buffer) {
     buffer = buffer || 0;
     var
@@ -2256,9 +2251,10 @@ MapTile.prototype = {
 var Data = {
 
   items: [],
+  modifier: function() {},
 
-  add: function(mesh) {
-    this.items.push(mesh);
+  add: function(item) {
+    this.items.push(item);
   },
 
   remove: function(item) {
@@ -2273,7 +2269,16 @@ var Data = {
 
   destroy: function() {
     this.items = null;
+  },
+  
+  modify: function(fn) {
+    this.modifier = fn;
+    var dataItems = this.items;
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      dataItems[i].modify(fn);
+    }
   }
+
 };
 
 
@@ -2302,6 +2307,7 @@ var Mesh = function(url, properties) {
 
   Mesh.prototype.onLoad = function(items) {
     this.request = null;
+    this.items = [];
 
     var data = {
       vertices: [],
@@ -2316,8 +2322,10 @@ var Mesh = function(url, properties) {
 
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
     this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
-    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
     this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
+//    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
+
+    this.modify(Data.modifier);
 
     items = null; data = null;
     this.isReady = true;
@@ -2334,9 +2342,17 @@ var Mesh = function(url, properties) {
     for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
       data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
       data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
-      data.colors.push(color.r, color.g, color.b);
+//      data.colors.push(color.r, color.g, color.b);
       data.idColors.push(idColor.r, idColor.g, idColor.b);
     }
+    
+delete item.vertices;
+delete item.normals;
+item.color = color;
+item.id = this.properties.id ? this.properties.id : item.id;
+item.numVertices = numVertices;
+
+    this.items.push(item);
   };
  
   Mesh.prototype.getMatrix = function() {
@@ -2346,16 +2362,35 @@ var Mesh = function(url, properties) {
 
     var
       zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale,
+      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale * 0.785,
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
       mapCenter = Map.center,
       matrix = Matrix.create();
 
+    // see http://wiki.openstreetmap.org/wiki/Zoom_levels
+    // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
+
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
     matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return matrix;
+  };
+
+  Mesh.prototype.modify = function(fn) {
+    if (!this.items) {
+      return;
+    }
+    
+    var colors = [], item;
+    for (var i = 0, il = this.items.length; i < il; i++) {
+      item = this.items[i]; 
+      fn(item);
+      for (var j = 0, jl = item.numVertices; j < jl; j++) {
+        colors.push(item.color.r, item.color.g, item.color.b);
+      }
+    }
+    this.colorBuffer = GL.createBuffer(3, new Uint8Array(colors));
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
@@ -2714,7 +2749,7 @@ var OBJ = {};
         break;
 
         case 'v':
-          allVertices.push([parseFloat(cols[1])*100, parseFloat(cols[2])*100, parseFloat(cols[3])*100]);
+          allVertices.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
         break;
 
   	    case 'f':
@@ -2780,7 +2815,6 @@ var OBJ = {};
   function normalize(meshes, allVertices) {
   	var mx =  1e10, my =  1e10, mz =  1e10;
   	var Mx = -1e10, My = -1e10, Mz = -1e10;
-
     for (var i = 0, il = allVertices.length; i < il; i++) {
   		if (mx > allVertices[i][0]) mx = allVertices[i][0];
   		if (my > allVertices[i][2]) my = allVertices[i][2];
@@ -2790,18 +2824,16 @@ var OBJ = {};
   		if (Mz < allVertices[i][1]) Mz = allVertices[i][1];
     }
 
- 	  var max = Math.max(Mx-mx, My-my, Mz-mz) / 200;
     var cx = mx + (Mx-mx)/2;
     var cy = my + (My-my)/2;
-
     var j, jl;
     var mesh;
     for (i = 0, il = meshes.length; i < il; i++) {
       mesh = meshes[i];
       for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx)/max;
-        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz)/max;
-        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy)/max;
+  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx);
+        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz);
+        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy);
       }
     }
 

@@ -131,8 +131,48 @@
   positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
 
+  function blend(b, a) {
+//  console.log(a, b, (a*0.9 + b*0.1) <<0);
+    return (a*0.9 + b*0.1) <<0;
+//  return Math.round(255 - ((255-a) * (255-b) / 255));
+  };
+
+  var selectedItem;
+
+  function unselectItem(item) {
+    if (selectedItem && item.id === selectedItem.id) {
+      item.color = selectedItem.color;
+      selectedItem = null;
+    }
+  }
+
+  function selectItem(item, id) {
+    if (item.id === id) {
+      selectedItem = {
+        id: id,
+        color: item.color
+      };
+
+      item.color = {
+        r:blend(240, item.color.r),
+        g:blend(128, item.color.g),
+        b:blend(  0, item.color.b)
+      };
+    }
+  }
+ 
+  
   map.on('click', function(e) {
-     console.log(e.featureID);
+    if (selectedItem && e.featureID === selectedItem.id) {
+      return;
+    }
+
+    map.modify(function(item) {
+      unselectItem(item);
+      unselectItem(item, e.featureID);
+      if (item.id === e.featureID) {
+      }
+    });
   });
 
   //*************************************************************************

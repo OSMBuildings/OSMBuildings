@@ -39,8 +39,10 @@ var Mesh = function(url, properties) {
 
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
     this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
-//    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
     this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
+//    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
+
+    this.modify(Data.modifier);
 
     items = null; data = null;
     this.isReady = true;
@@ -64,6 +66,7 @@ var Mesh = function(url, properties) {
 delete item.vertices;
 delete item.normals;
 item.color = color;
+item.id = this.properties.id ? this.properties.id : item.id;
 item.numVertices = numVertices;
 
     this.items.push(item);
@@ -92,6 +95,10 @@ item.numVertices = numVertices;
   };
 
   Mesh.prototype.modify = function(fn) {
+    if (!this.items) {
+      return;
+    }
+    
     var colors = [], item;
     for (var i = 0, il = this.items.length; i < il; i++) {
       item = this.items[i]; 
