@@ -22,7 +22,7 @@ var Shader = function(name) {
   this.uniformNames   = config.uniforms;
 
   if (config.frameBuffer) {
-    //this.frameBuffer = GL.createFrameBuffer();
+    this.frameBuffer = GL.createFrameBuffer();
   }
 };
 
@@ -79,7 +79,6 @@ Shader.prototype = {
     }
 
     if (this.frameBuffer) {
-console.log('FB START', this.frameBuffer)
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
     }
 
@@ -97,7 +96,6 @@ console.log('FB START', this.frameBuffer)
     this.uniforms = null;
 
     if (this.frameBuffer) {
-console.log('FB END', this.frameBuffer)
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
   }

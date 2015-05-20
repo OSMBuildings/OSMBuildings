@@ -25,9 +25,9 @@ var Scene = {
  
     var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
     this.backgroundColor = {
-      r: color/255,
-      g: color/255,
-      b: color/255
+      r: color.r/255,
+      g: color.g/255,
+      b: color.b/255
     };
 
     if (options.showBackfaces) {
@@ -67,7 +67,7 @@ var Scene = {
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
 //        Depth.render(matrix);
-//        Interaction.render(matrix);
+        Interaction.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
       });
