@@ -5,6 +5,10 @@ var Scene = {
 
   width: 0,
   height: 0,
+<<<<<<< HEAD
+=======
+  backgroundColor: {},  
+>>>>>>> ssao
 
   create: function(container, options) {
     var canvas = document.createElement('CANVAS');
@@ -21,11 +25,21 @@ var Scene = {
     } catch(ex) {
       throw ex;
     }
+<<<<<<< HEAD
 
     Scene.backgroundColor = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
     Scene.backgroundColor.r /= 255;
     Scene.backgroundColor.g /= 255;
     Scene.backgroundColor.b /= 255;
+=======
+ 
+    var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
+    Scene.backgroundColor = {
+      r: color.r/255,
+      g: color.g/255,
+      b: color.b/255
+    };
+>>>>>>> ssao
 
     if (options.showBackfaces) {
       gl.disable(gl.CULL_FACE);
@@ -43,9 +57,16 @@ var Scene = {
 
     //addListener(canvas, 'webglcontextrestored', ...);
 
+<<<<<<< HEAD
     Basemap.initShader();
     Buildings.initShader();
     Interaction.initShader();
+=======
+    Depth.initShader();
+    Interaction.initShader();
+    Basemap.initShader();
+    Buildings.initShader();
+>>>>>>> ssao
 
     loop = setInterval(function() {
       requestAnimationFrame(function() {
@@ -62,6 +83,10 @@ var Scene = {
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
+<<<<<<< HEAD
+=======
+//      Depth.render(matrix);
+>>>>>>> ssao
         Interaction.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
@@ -79,6 +104,7 @@ var Scene = {
     }
   },
 
+<<<<<<< HEAD
   createBuffer: function(itemSize, data) {
     var buffer = gl.createBuffer();
     buffer.itemSize = itemSize;
@@ -134,6 +160,8 @@ var Scene = {
     gl.deleteTexture(texture);
   },
 
+=======
+>>>>>>> ssao
   destroy: function() {
     clearInterval(loop);
     gl.canvas.parentNode.removeChild(gl.canvas);

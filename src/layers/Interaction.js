@@ -52,8 +52,12 @@ var Interaction = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
+    var width = Scene.width, height = Scene.height;
+  	var imageData = new Uint8Array(width*height*4);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+
     shader.end();
-    callback();
+    callback(imageData);
   };
 
   Interaction.idToColor = function(id) {
@@ -71,17 +75,9 @@ var Interaction = {};
   };
 
   Interaction.getFeatureID = function(pos, fn) {
-    callback = function() {
-      var
-        width  = Scene.width,
-        height = Scene.height;
-
-      var imageData = new Uint8Array(width*height*4);
-      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-
+    callback = function(imageData) {
       var index = ((height-pos.y)*width + pos.x) * 4;
       var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
-
       fn(idMapping[color]);
       callback = null;
     };
