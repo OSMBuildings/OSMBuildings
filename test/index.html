@@ -91,6 +91,7 @@
         case 40: obj.position.latitude -= transInc; break;
         case 187: obj.scale += rotaInc; break;
         case 189: obj.scale -= rotaInc; break;
+        default: return;
       }
       console.log(JSON.stringify({
         position:{
