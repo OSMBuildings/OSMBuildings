@@ -52,10 +52,7 @@ var Interaction = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    var width = Scene.width, height = Scene.height;
-  	var imageData = new Uint8Array(width*height*4);
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-
+    var imageData = shader.framebuffer.getData();
     shader.end();
     callback(imageData);
   };

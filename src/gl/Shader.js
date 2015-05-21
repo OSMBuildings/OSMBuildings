@@ -21,8 +21,8 @@ var Shader = function(name) {
   this.attributeNames = config.attributes;
   this.uniformNames   = config.uniforms;
 
-  if (config.frameBuffer) {
-    this.frameBuffer = GL.createFrameBuffer(Scene.width, Scene.height);
+  if (config.framebuffer) {
+    this.framebuffer = new GL.Framebuffer(Scene.width, Scene.height);
   }
 };
 
@@ -78,9 +78,8 @@ Shader.prototype = {
       }
     }
 
-    if (this.frameBuffer) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer[0]);
-      gl.bindRenderbuffer(gl.RENDERBUFFER, this.frameBuffer[1]);
+    if (this.framebuffer) {
+      this.framebuffer.enable();
     }
 
     return this;
@@ -96,9 +95,8 @@ Shader.prototype = {
     this.attributes = null;
     this.uniforms = null;
 
-    if (this.frameBuffer) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    if (this.framebuffer) {
+      this.framebuffer.disable();
     }
   }
 };

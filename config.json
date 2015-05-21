@@ -3,12 +3,12 @@
     "interaction": {
       "attributes": ["aPosition", "aColor"],
       "uniforms": ["uMatrix"],
-      "frameBuffer": false
+      "framebuffer": true
     },
     "depth": {
       "attributes": ["aPosition"],
       "uniforms": ["uMatrix"],
-      "frameBuffer": true
+      "framebuffer": true
     },
     "basemap": {
       "attributes": ["aPosition", "aTexCoord"],
@@ -52,6 +52,7 @@
 
     "src/geometry.js",
     "src/gl/GL.js",
+    "src/gl/Framebuffer.js",
     "src/gl/Shader.js",
     "src/gl/Scene.js",
     "src/gl/Matrix.js",

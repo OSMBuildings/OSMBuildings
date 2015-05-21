@@ -1564,7 +1564,19 @@ function pattern(str, param) {
   });
 }
 
-var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"frameBuffer":false},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nfloat total_depth = 64.0;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition) / total_depth);\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"frameBuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+function nextPowerOf2(n) {
+  n--;
+  n |= n >> 1;  // handle  2 bit numbers
+  n |= n >> 2;  // handle  4 bit numbers
+  n |= n >> 4;  // handle  8 bit numbers
+  n |= n >> 8;  // handle 16 bit numbers
+  n |= n >> 16; // handle 32 bit numbers
+  n++;
+  return n;
+}
+
+
+var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nfloat total_depth = 64.0;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition) / total_depth);\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -2961,33 +2973,6 @@ var GL = {
     return texture;
   },
 
-  createFrameBuffer: function(width, height) {
-    var frameBuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
-
-    var renderTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-    var renderBuffer = gl.createRenderbuffer();
-    gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
-    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
-
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
-    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
-
-    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-      throw new Error('This combination of framebuffer attachments does not work');
-    }
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-    return [frameBuffer, renderBuffer];
-  },
-
   deleteBuffer: function(buffer) {
     gl.deleteBuffer(buffer);
   },
@@ -3020,8 +3005,8 @@ var Shader = function(name) {
   this.attributeNames = config.attributes;
   this.uniformNames   = config.uniforms;
 
-  if (config.frameBuffer) {
-    this.frameBuffer = GL.createFrameBuffer(Scene.width, Scene.height);
+  if (config.framebuffer) {
+    this.framebuffer = new GL.Framebuffer(Scene.width, Scene.height);
   }
 };
 
@@ -3077,9 +3062,8 @@ Shader.prototype = {
       }
     }
 
-    if (this.frameBuffer) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer[0]);
-      gl.bindRenderbuffer(gl.RENDERBUFFER, this.frameBuffer[1]);
+    if (this.framebuffer) {
+      this.framebuffer.enable();
     }
 
     return this;
@@ -3095,9 +3079,8 @@ Shader.prototype = {
     this.attributes = null;
     this.uniforms = null;
 
-    if (this.frameBuffer) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    if (this.framebuffer) {
+      this.framebuffer.disable();
     }
   }
 };
@@ -3171,7 +3154,7 @@ var Scene = {
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
 //      Depth.render(matrix);
-        Interaction.render(matrix);
+//        Interaction.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
       });
@@ -3183,7 +3166,8 @@ var Scene = {
     if (size.width !== Scene.width || size.height !== Scene.height) {
       canvas.width  = Scene.width  = size.width;
       canvas.height = Scene.height = size.height;
-      gl.viewport(0, 0, size.width, size.height);
+//      gl.viewport(0, 0, size.width, size.height);
+gl.viewport(0, 0, 256, 1024);
       Events.emit('resize', size);
     }
   },
@@ -3530,10 +3514,7 @@ var Interaction = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    var width = Scene.width, height = Scene.height;
-  	var imageData = new Uint8Array(width*height*4);
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
-
+    var imageData = shader.framebuffer.getData();
     shader.end();
     callback(imageData);
   };
