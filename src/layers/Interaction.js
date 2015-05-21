@@ -52,7 +52,12 @@ var Interaction = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
+    //if (shader.framebuffer) {
     var imageData = shader.framebuffer.getData();
+    //} else {
+    //  var imageData = new Uint8Array(Scene.width*Scene.height*4);
+    //  gl.readPixels(0, 0, Scene.width, Scene.height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+    //}
     shader.end();
     callback(imageData);
   };

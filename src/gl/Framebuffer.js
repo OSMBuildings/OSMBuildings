@@ -26,13 +26,13 @@ GL.Framebuffer = function(width, height) {
 GL.Framebuffer.prototype = {
 
   enable: function() {
-    gl.viewport(0, 0, this.size, this.size);
+//    gl.viewport(0, 0, this.size, this.size);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
     gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
   },
 
   disable: function() {
-    gl.viewport(0, 0, this.originalWidth, this.originalHeight);
+//    gl.viewport(0, 0, this.originalWidth, this.originalHeight);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
   },
