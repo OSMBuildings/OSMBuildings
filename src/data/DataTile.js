@@ -24,6 +24,9 @@ DataTile.prototype = {
     this.isReady = true;
   },
 
+  modify: function(fn) {
+  },
+
   getMatrix: function() {
     if (!this.isReady || !this.isVisible()) {
       return;
