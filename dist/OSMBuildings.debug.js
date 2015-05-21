@@ -2988,13 +2988,13 @@ GL.Framebuffer = function(width, height) {
 GL.Framebuffer.prototype = {
 
   enable: function() {
-    gl.viewport(0, 0, this.size, this.size);
+//    gl.viewport(0, 0, this.size, this.size);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
     gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
   },
 
   disable: function() {
-    gl.viewport(0, 0, this.originalWidth, this.originalHeight);
+//    gl.viewport(0, 0, this.originalWidth, this.originalHeight);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
   },
@@ -3604,7 +3604,12 @@ var Interaction = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
+    //if (shader.framebuffer) {
     var imageData = shader.framebuffer.getData();
+    //} else {
+    //  var imageData = new Uint8Array(Scene.width*Scene.height*4);
+    //  gl.readPixels(0, 0, Scene.width, Scene.height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+    //}
     shader.end();
     callback(imageData);
   };
