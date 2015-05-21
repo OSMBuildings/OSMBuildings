@@ -2,7 +2,7 @@
 GL.Framebuffer = function(width, height) {
   this.originalWidth  = width;
   this.originalHeight = height;
-  this.size = Math.max(width, height)
+  this.size = Math.max(width, height);
 
   this.frameBuffer = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);

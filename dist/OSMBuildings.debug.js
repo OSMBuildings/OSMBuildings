@@ -1576,7 +1576,7 @@ function nextPowerOf2(n) {
 }
 
 
-var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nfloat total_depth = 64.0;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition) / total_depth);\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -1927,8 +1927,8 @@ var DataGrid = {};
         bounds.maxY
       ];
 
-    for (tileY = bounds.minY; tileY <= bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX <= bounds.maxX; tileX++) {
+    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
+      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;
@@ -2012,13 +2012,13 @@ var DataTile = function(tileX, tileY, zoom) {
   Data.add(this);
 };
 
-(function() {
+DataTile.prototype = {
 
-  DataTile.prototype.load = function(url) {
+  load: function(url) {
     this.request = Request.getJSON(url, this.onLoad.bind(this));
-  };
+  },
 
-  DataTile.prototype.onLoad = function(json) {
+  onLoad: function(json) {
     this.request = null;
     var geom = GeoJSON.read(this.tileX * TILE_SIZE, this.tileY * TILE_SIZE, this.zoom, json);
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(geom.vertices));
@@ -2027,21 +2027,9 @@ var DataTile = function(tileX, tileY, zoom) {
     this.idColorBuffer = GL.createBuffer(3, new Uint8Array(geom.idColors));
     geom = null; json = null;
     this.isReady = true;
-  };
+  },
 
-  DataTile.prototype.isVisible = function(buffer) {
-    buffer = buffer || 0;
-    var
-      gridBounds = DataGrid.bounds,
-      tileX = this.tileX,
-      tileY = this.tileY;
-
-    return (this.zoom === gridBounds.zoom &&
-      // TODO: factor in tile origin
-      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
-  };
-
-  DataTile.prototype.getMatrix = function() {
+  getMatrix: function() {
     if (!this.isReady || !this.isVisible()) {
       return;
     }
@@ -2054,9 +2042,21 @@ var DataTile = function(tileX, tileY, zoom) {
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
     matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
     return matrix;
-  };
+  },
 
-  DataTile.prototype.destroy = function() {
+  isVisible: function(buffer) {
+    buffer = buffer || 0;
+    var
+      gridBounds = DataGrid.bounds,
+      tileX = this.tileX,
+      tileY = this.tileY;
+
+    return (this.zoom === gridBounds.zoom &&
+      // TODO: factor in tile origin
+      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
+  },
+
+  destroy: function() {
     GL.deleteBuffer(this.vertexBuffer);
     GL.deleteBuffer(this.normalBuffer);
     GL.deleteBuffer(this.colorBuffer);
@@ -2068,9 +2068,8 @@ var DataTile = function(tileX, tileY, zoom) {
     }
 
     Data.remove(this);
-  };
-
-}());
+  }
+};
 
 
 var TileGrid = {};
@@ -2241,7 +2240,6 @@ MapTile.prototype = {
 
   isVisible: function(buffer) {
     buffer = buffer || 0;
-
     var
       gridBounds = TileGrid.bounds,
       tileX = this.tileX,
@@ -2983,6 +2981,59 @@ var GL = {
 };
 
 
+GL.Framebuffer = function(width, height) {
+  this.originalWidth  = width;
+  this.originalHeight = height;
+  this.size = Math.max(width, height);
+
+  this.frameBuffer = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
+
+  var renderTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+  this.renderBuffer = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderBuffer);
+
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+    throw new Error('This combination of framebuffer attachments does not work');
+  }
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+};
+
+GL.Framebuffer.prototype = {
+
+  enable: function() {
+    gl.viewport(0, 0, this.size, this.size);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
+  },
+
+  disable: function() {
+    gl.viewport(0, 0, this.originalWidth, this.originalHeight);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+  },
+
+  getData: function() {
+    var imageData = new Uint8Array(this.originalWidth*this.originalHeight*4);
+    gl.readPixels(0, 0, this.originalWidth, this.originalHeight, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+    return imageData;
+  },
+
+  destroy: function() {}
+};
+
+
 var Shader = function(name) {
   var config = SHADERS[name];
 
@@ -3154,7 +3205,7 @@ var Scene = {
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
 //      Depth.render(matrix);
-//        Interaction.render(matrix);
+        Interaction.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
       });
@@ -3166,8 +3217,7 @@ var Scene = {
     if (size.width !== Scene.width || size.height !== Scene.height) {
       canvas.width  = Scene.width  = size.width;
       canvas.height = Scene.height = size.height;
-//      gl.viewport(0, 0, size.width, size.height);
-gl.viewport(0, 0, 256, 1024);
+      gl.viewport(0, 0, size.width, size.height);
       Events.emit('resize', size);
     }
   },
@@ -3425,15 +3475,18 @@ var Depth = {};
   };
 
   Depth.render = function(mapMatrix) {
-    var
-      tiles = TileGrid.getTiles(), item,
-      matrix;
-
     shader.use();
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+
+    var item, matrix;
+
+    //*** Basemap ***
+
+    //var tiles = TileGrid.getTiles();
+    //
     //for (var key in tiles) {
     //  item = tiles[key];
     //
@@ -3451,14 +3504,35 @@ var Depth = {};
     //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     //}
 
+    //*** Buildings ***
+
+    //if (Map.zoom < MIN_ZOOM) {
+    //  return;
+    //}
+
+    var dataItems = Data.items;
+
+    for (var i = 0, il = dataItems.length; i < il; i++) {
+      item = dataItems[i];
+
+      if (!(matrix = item.getMatrix())) {
+        continue;
+      }
+
+      matrix = Matrix.multiply(matrix, mapMatrix);
+
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    }
+
     shader.end();
   };
 
 }());
-
-
-
-
 
 
 // TODO: render only clicked area
