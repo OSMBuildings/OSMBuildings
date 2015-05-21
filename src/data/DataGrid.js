@@ -52,8 +52,8 @@ var DataGrid = {};
         bounds.maxY
       ];
 
-    for (tileY = bounds.minY; tileY <= bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX <= bounds.maxX; tileX++) {
+    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
+      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;

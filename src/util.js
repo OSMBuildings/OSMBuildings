@@ -35,3 +35,15 @@ function pattern(str, param) {
     return param[key] || tag;
   });
 }
+
+function nextPowerOf2(n) {
+  n--;
+  n |= n >> 1;  // handle  2 bit numbers
+  n |= n >> 2;  // handle  4 bit numbers
+  n |= n >> 4;  // handle  8 bit numbers
+  n |= n >> 8;  // handle 16 bit numbers
+  n |= n >> 16; // handle 32 bit numbers
+  n++;
+  return n;
+}
+

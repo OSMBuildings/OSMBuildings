@@ -38,7 +38,6 @@ MapTile.prototype = {
 
   isVisible: function(buffer) {
     buffer = buffer || 0;
-
     var
       gridBounds = TileGrid.bounds,
       tileX = this.tileX,

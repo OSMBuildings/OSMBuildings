@@ -6,7 +6,7 @@ var OSMBuildings = function(containerId, options) {
 
   Map.setState(options);
   Events.init(container);
-  GL.createContext(container, options);
+  Scene.create(container, options);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -98,12 +98,12 @@ OSMBuildings.prototype = {
   },
 
   setSize: function(size) {
-    GL.setSize(size);
+    Scene.setSize(size);
     return this;
   },
 
   getSize: function() {
-    return { width:GL.width, height:GL.height };
+    return { width:Scene.width, height:Scene.height };
   },
 
   setRotation: function(rotation) {

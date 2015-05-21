@@ -28,7 +28,8 @@ function loadShaders(config) {
     SHADERS[name] = {
       src: {},
       attributes: shader.attributes,
-      uniforms: shader.uniforms
+      uniforms: shader.uniforms,
+      framebuffer: shader.framebuffer
     };
 
     for (i = 0; i < types.length; i++) {
