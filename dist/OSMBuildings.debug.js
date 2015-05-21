@@ -2219,7 +2219,7 @@ MapTile.prototype = {
   onLoad: function() {
     this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
     this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
-    this.texture = GL.createTexture(this.image);
+    this.texture = new GL.Texture({ image:this.image });
     this.isReady = true;
   },
 
@@ -2257,7 +2257,7 @@ MapTile.prototype = {
     this.image.src = '';
 
     if (this.texture) {
-      GL.deleteTexture(this.texture);
+      this.texture.destroy();
     }
   }
 };
@@ -2955,28 +2955,8 @@ var GL = {
     return buffer;
   },
 
-  createTexture: function(img) {
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    img = null;
-    return texture;
-  },
-
   deleteBuffer: function(buffer) {
     gl.deleteBuffer(buffer);
-  },
-
-  deleteTexture: function(texture) {
-    gl.deleteTexture(texture);
   }
 };
 
@@ -2984,22 +2964,17 @@ var GL = {
 GL.Framebuffer = function(width, height) {
   this.originalWidth  = width;
   this.originalHeight = height;
-  this.size = Math.max(width, height);
+  this.size = nextPowerOf2(Math.max(width, height));
 
   this.frameBuffer = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
 
-  var renderTexture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
   this.renderBuffer = gl.createRenderbuffer();
   gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
-  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.size, this.size);
 
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+  var renderTexture = new GL.Texture({ size:this.size });
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture.id, 0);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderBuffer);
 
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
@@ -3031,6 +3006,47 @@ GL.Framebuffer.prototype = {
   },
 
   destroy: function() {}
+};
+
+
+GL.Texture = function(options) {
+  options = options || {};
+
+  this.id = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, this.id);
+
+  if (!options.image) {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, options.size, options.size, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  } else {
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, options.filter || gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, options.image);
+    gl.generateMipmap(gl.TEXTURE_2D);
+
+    options.image = null;
+  }
+};
+
+GL.Texture.prototype = {
+  enable: function(index) {
+    gl.activeTexture(gl.TEXTURE0 + (index || 0));
+    gl.bindTexture(gl.TEXTURE_2D, this.id);
+  },
+
+  disable: function() {
+    gl.activeTexture(gl.TEXTURE0 + (index || 0));
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  },
+
+  destroy: function() {
+    gl.deleteTexture(this.id);
+  }
 };
 
 
@@ -3660,8 +3676,7 @@ var Basemap = {};
       gl.bindBuffer(gl.ARRAY_BUFFER, item.texCoordBuffer);
       gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, item.texture);
+      item.texture.enable(0);
       gl.uniform1i(shader.uniforms.uTileImage, 0);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);

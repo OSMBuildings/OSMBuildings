@@ -39,8 +39,7 @@ var Basemap = {};
       gl.bindBuffer(gl.ARRAY_BUFFER, item.texCoordBuffer);
       gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, item.texture);
+      item.texture.enable(0);
       gl.uniform1i(shader.uniforms.uTileImage, 0);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
