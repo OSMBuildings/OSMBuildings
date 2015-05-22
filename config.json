@@ -53,6 +53,7 @@
     "src/geometry.js",
     "src/gl/GL.js",
     "src/gl/Framebuffer.js",
+    "src/gl/Texture.js",
     "src/gl/Shader.js",
     "src/gl/Scene.js",
     "src/gl/Matrix.js",

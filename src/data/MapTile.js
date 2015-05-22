@@ -17,7 +17,7 @@ MapTile.prototype = {
   onLoad: function() {
     this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
     this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
-    this.texture = GL.createTexture(this.image);
+    this.texture = new GL.Texture({ image:this.image });
     this.isReady = true;
   },
 
@@ -55,7 +55,7 @@ MapTile.prototype = {
     this.image.src = '';
 
     if (this.texture) {
-      GL.deleteTexture(this.texture);
+      this.texture.destroy();
     }
   }
 };
