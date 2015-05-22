@@ -95,7 +95,7 @@ var Map = {};
   };
 
   Map.setTilt = function(tilt) {
-    tilt = clamp(parseFloat(tilt), 0, 70);
+    tilt = clamp(parseFloat(tilt), 0, 60);
     if (Map.tilt !== tilt) {
       Map.tilt = tilt;
       updateBounds();

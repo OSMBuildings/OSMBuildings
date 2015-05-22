@@ -134,15 +134,13 @@ var OBJ = {};
   }
 
   function normalize(meshes, allVertices) {
-  	var mx =  1e10, my =  1e10, mz =  1e10;
-  	var Mx = -1e10, My = -1e10, Mz = -1e10;
+  	var mx =  1e10, my =  1e10;
+  	var Mx = -1e10, My = -1e10;
     for (var i = 0, il = allVertices.length; i < il; i++) {
   		if (mx > allVertices[i][0]) mx = allVertices[i][0];
   		if (my > allVertices[i][2]) my = allVertices[i][2];
-  		if (mz > allVertices[i][1]) mz = allVertices[i][1];
   		if (Mx < allVertices[i][0]) Mx = allVertices[i][0];
   		if (My < allVertices[i][2]) My = allVertices[i][2];
-  		if (Mz < allVertices[i][1]) Mz = allVertices[i][1];
     }
 
     var cx = mx + (Mx-mx)/2;
@@ -152,9 +150,9 @@ var OBJ = {};
     for (i = 0, il = meshes.length; i < il; i++) {
       mesh = meshes[i];
       for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx);
-        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz);
-        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy);
+  	   	mesh.vertices[j  ] = mesh.vertices[j  ]-cx;
+        mesh.vertices[j+2] = mesh.vertices[j+2];
+        mesh.vertices[j+1] = mesh.vertices[j+1]-cy;
       }
     }
 
