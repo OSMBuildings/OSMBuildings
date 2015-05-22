@@ -130,8 +130,7 @@ var Events = {};
     }
     cancelEvent(e);
     Interaction.getFeatureID({ x:e.clientX, y:e.clientY }, function(featureID) {
-      e.featureID = featureID;
-      Events.emit('click', e);
+      Events.emit('click', { target: { id:featureID } });
     });
   }
 

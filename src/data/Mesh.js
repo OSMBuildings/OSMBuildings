@@ -7,7 +7,6 @@ var Mesh = function(url, properties) {
   // TODO: implement OBJ.request.abort()
   this.request = { abort: function() {} };
   OBJ.load(url, this.onLoad.bind(this));
-//CityGML.load(url, this.onLoad.bind(this));
 
   Data.add(this);
 };
@@ -40,7 +39,6 @@ var Mesh = function(url, properties) {
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
     this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
     this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
-//    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(data.colors));
 
     this.modify(Data.modifier);
 
@@ -59,7 +57,6 @@ var Mesh = function(url, properties) {
     for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
       data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
       data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
-//      data.colors.push(color.r, color.g, color.b);
       data.idColors.push(idColor.r, idColor.g, idColor.b);
     }
     

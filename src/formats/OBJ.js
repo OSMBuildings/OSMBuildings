@@ -20,9 +20,9 @@ var OBJ = {};
         break;
   
   	    case 'Kd':
-  	      data.color.r = parseFloat(cols[1])*255;
-  	      data.color.g = parseFloat(cols[2])*255;
-  	      data.color.b = parseFloat(cols[3])*255;
+  	      data.color.r = parseFloat(cols[1])*255 <<0;
+  	      data.color.g = parseFloat(cols[2])*255 <<0;
+  	      data.color.b = parseFloat(cols[3])*255 <<0;
   	    break;
   
   	    case 'd':

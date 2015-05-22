@@ -15,16 +15,49 @@ DataTile.prototype = {
 
   onLoad: function(json) {
     this.request = null;
+    this.items = [];
+
     var geom = GeoJSON.read(this.tileX * TILE_SIZE, this.tileY * TILE_SIZE, this.zoom, json);
+
     this.vertexBuffer  = GL.createBuffer(3, new Float32Array(geom.vertices));
     this.normalBuffer  = GL.createBuffer(3, new Float32Array(geom.normals));
-    this.colorBuffer   = GL.createBuffer(3, new Uint8Array(geom.colors));
     this.idColorBuffer = GL.createBuffer(3, new Uint8Array(geom.idColors));
+this.colorBuffer = GL.createBuffer(3, new Uint8Array(geom.colors));
+
+    this.modify(Data.modifier);
+
     geom = null; json = null;
     this.isReady = true;
   },
 
+//  storeItem = function(data, item) {
+//  // given color has precedence
+//  var color = this.properties.color ? Color.parse(this.properties.color).toRGBA() : item.color;
+//
+//  var numVertices = item.vertices.length/3;
+//
+//  item.color = color;
+//  item.id = this.properties.id ? this.properties.id : item.id;
+//  item.numVertices = numVertices;
+//
+//  this.items.push(item);
+//};
+
   modify: function(fn) {
+return;
+    if (!this.items) {
+      return;
+    }
+
+    var colors = [], item;
+    for (var i = 0, il = this.items.length; i < il; i++) {
+      item = this.items[i];
+      fn(item);
+      for (var j = 0, jl = item.numVertices; j < jl; j++) {
+        colors.push(item.color.r, item.color.g, item.color.b);
+      }
+    }
+    this.colorBuffer = GL.createBuffer(3, new Uint8Array(colors));
   },
 
   getMatrix: function() {
