@@ -1,4 +1,4 @@
-<img src="http://osmbuildings.org/logo.svg"/>
+<img src="http://osmbuildings.org/logo.svg" width="100" height="88">
 
 OSM Buildings is a JavaScript library for visualizing OpenStreetMap building geometry on 2D and 3D maps.
 This version is using a custom WebGL base map for any event and tile logic.
