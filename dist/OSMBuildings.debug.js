@@ -1101,7 +1101,7 @@ var Map = {};
   };
 
   Map.setTilt = function(tilt) {
-    tilt = clamp(parseFloat(tilt), 0, 70);
+    tilt = clamp(parseFloat(tilt), 0, 60);
     if (Map.tilt !== tilt) {
       Map.tilt = tilt;
       updateBounds();
@@ -1594,43 +1594,38 @@ var Triangulate = {};
     return Math.round(n[2]*5000) === 0;
   }
 
-
-
-
-  Triangulate.quad = function(data, a, b, c, d, color, idColor) {
-    Triangulate.addTriangle(data, a, b, c, color, idColor);
-    Triangulate.addTriangle(data, b, d, c, color, idColor);
+  Triangulate.rectangle = function(tris, a, b, c, d) {
+    Triangulate.addTriangle(tris, a, b, c);
+    Triangulate.addTriangle(tris, b, d, c);
   };
 
-  Triangulate.circle = function(data, center, radius, z, color, idColor) {
+  Triangulate.circle = function(tris, center, radius, z) {
     var u, v;
     for (var i = 0; i < LON_SEGMENTS; i++) {
       u = i/LON_SEGMENTS;
       v = (i+1)/LON_SEGMENTS;
       Triangulate.addTriangle(
-        data,
+        tris,
         [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), z ],
         [ center[0],                                  center[1],                                  z ],
-        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), z ],
-        color, idColor
+        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), z ]
       );
     }
   };
 
-  Triangulate.polygon = function(data, polygon, z, color, idColor) {
+  Triangulate.polygon = function(tris, polygon, z) {
     var triangles = earcut(polygon);
     for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
       Triangulate.addTriangle(
-        data,
+        tris,
         [ triangles[t  ][0], triangles[t  ][1], z ],
         [ triangles[t+1][0], triangles[t+1][1], z ],
-        [ triangles[t+2][0], triangles[t+2][1], z ],
-        color, idColor
+        [ triangles[t+2][0], triangles[t+2][1], z ]
       );
     }
   };
 
-  Triangulate.polygon3d = function(data, polygon, color, idColor) {
+  Triangulate.polygon3d = function(tris, polygon) {
     var ring = polygon[0];
     var ringLength = ring.length;
     var triangles, t, tl;
@@ -1639,20 +1634,18 @@ var Triangulate = {};
 
     if (ringLength <= 4) { // 3: a triangle
       Triangulate.addTriangle(
-        data,
+        tris,
         ring[0],
         ring[2],
-        ring[1],
-        color, idColor
+        ring[1]
       );
 
-      if (ringLength === 4) { // 4: a quad (2 triangles)
+      if (ringLength === 4) { // 4: a rectangle (2 triangles)
         this.addTriangle(
-          data,
+          tris,
           ring[0],
           ring[3],
-          ring[2],
-          color, idColor
+          ring[2]
         );
       }
       return;
@@ -1670,11 +1663,10 @@ var Triangulate = {};
       triangles = earcut(polygon);
       for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
         Triangulate.addTriangle(
-          data,
+          tris,
           [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
           [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
-          [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ],
-          color, idColor
+          [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ]
         );
       }
 
@@ -1684,16 +1676,15 @@ var Triangulate = {};
     triangles = earcut(polygon);
     for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
       Triangulate.addTriangle(
-        data,
+        tris,
         [ triangles[t  ][0], triangles[t  ][1], triangles[t  ][2] ],
         [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
-        [ triangles[t+2][0], triangles[t+2][1], triangles[t+2][2] ],
-        color, idColor
+        [ triangles[t+2][0], triangles[t+2][1], triangles[t+2][2] ]
       );
     }
   };
 
-  Triangulate.cylinder = function(data, center, radiusBottom, radiusTop, minHeight, height, color, idColor) {
+  Triangulate.cylinder = function(tris, center, radiusBottom, radiusTop, minHeight, height) {
     var u, v;
     var sinPhi1, cosPhi1;
     var sinPhi2, cosPhi2;
@@ -1709,48 +1700,45 @@ var Triangulate = {};
       cosPhi2 = Math.cos(v*Math.PI*2);
 
       Triangulate.addTriangle(
-        data,
+        tris,
         [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ],
         [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
-        [ center[0] + radiusBottom*sinPhi2, center[1] + radiusBottom*cosPhi2, minHeight ],
-        color, idColor
+        [ center[0] + radiusBottom*sinPhi2, center[1] + radiusBottom*cosPhi2, minHeight ]
       );
 
       if (radiusTop !== 0) {
         Triangulate.addTriangle(
-          data,
+          tris,
           [ center[0] + radiusTop   *sinPhi1, center[1] + radiusTop   *cosPhi1, height    ],
           [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
-          [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ],
-          color, idColor
+          [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ]
         );
       }
     }
   };
 
-  Triangulate.pyramid = function(data, polygon, center, minHeight, height, color, idColor) {
+  Triangulate.pyramid = function(tris, polygon, center, minHeight, height) {
     polygon = polygon[0];
     for (var i = 0, il = polygon.length-1; i < il; i++) {
       Triangulate.addTriangle(
-        data,
+        tris,
         [ polygon[i  ][0], polygon[i  ][1], minHeight ],
         [ polygon[i+1][0], polygon[i+1][1], minHeight ],
-        [ center[0], center[1], height ],
-        color, idColor
+        [ center[0], center[1], height ]
       );
     }
   };
 
-  Triangulate.dome = function(data, center, radius, minHeight, height, color, idColor) {};
+  Triangulate.dome = function(tris, center, radius, minHeight, height) {};
 
-  Triangulate.sphere = function(data, center, radius, minHeight, height, color, idColor) {
+  Triangulate.sphere = function(tris, center, radius, minHeight, height) {
     var theta, sinTheta, cosTheta;
 
     for (var i = 0; i < latSegments; i++) {
       theta = i * Math.PI / LAT_SEGMENTS;
       sinTheta = Math.sin(theta);
       cosTheta = Math.cos(theta);
-      Triangulate.cylinder(data, center, radiusBottom, radiusTop, minHeight, height, color, idColor);
+      Triangulate.cylinder(tris, center, radiusBottom, radiusTop, minHeight, height);
   //  x = cosPhi * sinTheta;
   //  y = cosTheta;
   //  z = sinPhi * sinTheta;
@@ -1799,7 +1787,7 @@ var Triangulate = {};
 //  }
 //};
 
-  Triangulate.extrusion = function(data, polygon, minHeight, height, color, idColor) {
+  Triangulate.extrusion = function(tris, polygon, minHeight, height) {
     var
       ring, last,
       a, b, z0, z1;
@@ -1818,20 +1806,19 @@ var Triangulate = {};
         b = ring[r+1];
         z0 = minHeight;
         z1 = height;
-        Triangulate.quad(
-          data,
+        Triangulate.rectangle(
+          tris,
           [ a[0], a[1], z0 ],
           [ b[0], b[1], z0 ],
           [ a[0], a[1], z1 ],
-          [ b[0], b[1], z1 ],
-          color, idColor
+          [ b[0], b[1], z1 ]
         );
       }
     }
   };
 
-  Triangulate.addTriangle = function(data, a, b, c, color, idColor) {
-    data.vertices.push(
+  Triangulate.addTriangle = function(tris, a, b, c) {
+    tris.vertices.push(
       a[0], a[1], a[2],
       c[0], c[1], c[2],
       b[0], b[1], b[2]
@@ -1843,22 +1830,10 @@ var Triangulate = {};
       c[0], c[1], c[2]
     );
 
-    data.normals.push(
+    tris.normals.push(
       n[0], n[1], n[2],
       n[0], n[1], n[2],
       n[0], n[1], n[2]
-    );
-
-    data.colors.push(
-      color.r, color.g, color.b,
-      color.r, color.g, color.b,
-      color.r, color.g, color.b
-    );
-
-    data.idColors.push(
-      idColor.r, idColor.g, idColor.b,
-      idColor.r, idColor.g, idColor.b,
-      idColor.r, idColor.g, idColor.b
     );
   };
 
@@ -2009,38 +1984,54 @@ DataTile.prototype = {
     this.request = Request.getJSON(url, this.onLoad.bind(this));
   },
 
-  onLoad: function(json) {
+  onLoad: function(geojson) {
     this.request = null;
     this.items = [];
 
-    var geom = GeoJSON.read(this.tileX * TILE_SIZE, this.tileY * TILE_SIZE, this.zoom, json);
+    var
+      items = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, geojson),
+      data = {
+        vertices: [],
+        normals: [],
+        colors: [],
+        idColors: []
+      };
 
-    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(geom.vertices));
-    this.normalBuffer  = GL.createBuffer(3, new Float32Array(geom.normals));
-    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(geom.idColors));
-this.colorBuffer = GL.createBuffer(3, new Uint8Array(geom.colors));
+    for (var i = 0, il = items.length; i < il; i++) {
+      this.storeItem(data, items[i]);
+    }
+
+    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
+    this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
+    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
 
     this.modify(Data.modifier);
 
-    geom = null; json = null;
+    items = null; geojson = null;
     this.isReady = true;
   },
 
-//  storeItem = function(data, item) {
-//  // given color has precedence
-//  var color = this.properties.color ? Color.parse(this.properties.color).toRGBA() : item.color;
-//
-//  var numVertices = item.vertices.length/3;
-//
-//  item.color = color;
-//  item.id = this.properties.id ? this.properties.id : item.id;
-//  item.numVertices = numVertices;
-//
-//  this.items.push(item);
-//};
+  storeItem: function(data, item) {
+    var color = item.color;
+    var idColor = Interaction.idToColor(item.id);
+
+    var numVertices = item.vertices.length/3;
+
+    for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
+      data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
+      data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
+      data.idColors.push(idColor.r, idColor.g, idColor.b);
+    }
+
+    delete item.vertices;
+    delete item.normals;
+    item.color = color;
+    item.numVertices = numVertices;
+
+    this.items.push(item);
+  },
 
   modify: function(fn) {
-return;
     if (!this.items) {
       return;
     }
@@ -2577,8 +2568,6 @@ var GeoJSON = {};
       item.relationId = prop.relationId;
     }
 
-//  item.hitColor = HitAreas.idToColor(item.relationId || item.id);
-
     return item;
   }
 
@@ -2636,14 +2625,11 @@ var GeoJSON = {};
       collection = geojson.features,
       feature,
       geometries,
-      data = {
-        vertices: [],
-        normals: [],
-        colors: [],
-        idColors: []
-      },
+      tris,
       j, jl,
       item, polygon, bbox, radius, center, id;
+
+    var res = [];
 
     for (var i = 0, il = collection.length; i < il; i++) {
       feature = collection[i];
@@ -2657,6 +2643,8 @@ var GeoJSON = {};
       for (j = 0, jl = geometries.length; j < jl; j++) {
         polygon = transform(offsetX, offsetY, zoom, geometries[j]);
 
+        id = feature.properties.relationId || feature.id || feature.properties.id;
+
         if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
           item.shape = 'cylinder';
           item.isRotational = true;
@@ -2669,50 +2657,71 @@ var GeoJSON = {};
           radius = (bbox.maxX-bbox.minX)/2;
         }
 
-        idColor = Interaction.idToColor(feature.properties.relationId || feature.id || feature.properties.id);
+        tris = { vertices:[], normals:[] };
 
         switch (item.shape) {
           case 'cylinder':
-            Triangulate.cylinder(data, center, radius, radius, item.minHeight, item.height, item.wallColor, idColor);
-            Triangulate.circle(data, center, radius, item.height, item.roofColor, idColor);
+            Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
           break;
 
           case 'cone':
-            Triangulate.cylinder(data, center, radius, 0, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
           break;
 
           case 'sphere':
-            Triangulate.cylinder(data, center, radius, radius/2, item.minHeight, item.height, item.wallColor, idColor);
-            Triangulate.circle(data, center, radius/2, item.height, item.roofColor, idColor);
+            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
+            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
           break;
 
           case 'pyramid':
-            Triangulate.pyramid(data, polygon, center, item.minHeight, item.height, item.wallColor, idColor);
+            Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
           break;
 
           default:
-            Triangulate.extrusion(data, polygon, item.minHeight, item.height, item.wallColor, idColor);
-            Triangulate.polygon(data, polygon, item.height, item.roofColor, idColor);
+            Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
         }
+
+        res.push({
+          id: id,
+          color: item.wallColor,
+          vertices: tris.vertices,
+          normals: tris.normals
+        });
+
+        tris = { vertices:[], normals:[] };
 
         switch (item.roofShape) {
           case 'cone':
-            Triangulate.cylinder(data, center, radius, 0, item.height, item.height+item.roofHeight, item.roofColor, idColor);
+            Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
           break;
 
           case 'dome':
-            Triangulate.cylinder(data, center, radius, radius/2, item.height, item.height+item.roofHeight, item.roofColor, idColor);
-            Triangulate.circle(data, center, radius/2, item.height+item.roofHeight, item.roofColor, idColor);
+            Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height+item.roofHeight);
+            Triangulate.circle(tris, center, radius/2, item.height+item.roofHeight);
           break;
 
           case 'pyramid':
-            Triangulate.pyramid(data, polygon, center, item.height, item.height+item.roofHeight, item.roofColor, idColor);
+            Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
           break;
+
+          default:
+            if (item.shape === 'cylinder') {
+              Triangulate.circle(tris, center, radius, item.height);
+            } else if (item.shape === undefined) {
+              Triangulate.polygon(tris, polygon, item.height);
+            }
         }
+
+        res.push({
+          id: id,
+          color: item.roofColor,
+          vertices: tris.vertices,
+          normals: tris.normals
+        });
       }
     }
 
-    return data;
+    return res;
   };
 
 }());
@@ -2853,15 +2862,13 @@ var OBJ = {};
   }
 
   function normalize(meshes, allVertices) {
-  	var mx =  1e10, my =  1e10, mz =  1e10;
-  	var Mx = -1e10, My = -1e10, Mz = -1e10;
+  	var mx =  1e10, my =  1e10;
+  	var Mx = -1e10, My = -1e10;
     for (var i = 0, il = allVertices.length; i < il; i++) {
   		if (mx > allVertices[i][0]) mx = allVertices[i][0];
   		if (my > allVertices[i][2]) my = allVertices[i][2];
-  		if (mz > allVertices[i][1]) mz = allVertices[i][1];
   		if (Mx < allVertices[i][0]) Mx = allVertices[i][0];
   		if (My < allVertices[i][2]) My = allVertices[i][2];
-  		if (Mz < allVertices[i][1]) Mz = allVertices[i][1];
     }
 
     var cx = mx + (Mx-mx)/2;
@@ -2871,9 +2878,9 @@ var OBJ = {};
     for (i = 0, il = meshes.length; i < il; i++) {
       mesh = meshes[i];
       for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	mesh.vertices[j  ] = (mesh.vertices[j  ]-cx);
-        mesh.vertices[j+2] = (mesh.vertices[j+2]-mz);
-        mesh.vertices[j+1] = (mesh.vertices[j+1]-cy);
+  	   	mesh.vertices[j  ] = mesh.vertices[j  ]-cx;
+        mesh.vertices[j+2] = mesh.vertices[j+2];
+        mesh.vertices[j+1] = mesh.vertices[j+1]-cy;
       }
     }
 
