@@ -1,8 +1,12 @@
 
 var Mesh = function(url, properties) {
   this.properties = properties || {};
+  this.id = this.properties.id;
+
   this.position = this.properties.position || {};
   this.scale = this.properties.scale || 1;
+  this.rotation = this.properties.rotation || 0;
+;
   this.color = Color.parse(this.properties.color);
 
   // TODO: implement OBJ.request.abort()
@@ -37,7 +41,7 @@ var Mesh = function(url, properties) {
       item.color = this.color ? this.color.toRGBA() : item.color;
 
       // given id has precedence
-      item.id = this.properties.id ? this.properties.id : item.id;
+      item.id = this.id ? this.id : item.id;
 
       idColor = Interaction.idToColor(item.id);
       item.numVertices = item.vertices.length/3;
@@ -85,6 +89,7 @@ var Mesh = function(url, properties) {
     // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
+    matrix = Matrix.rotateZ(matrix, -this.rotation);
     matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return matrix;
@@ -106,18 +111,6 @@ var Mesh = function(url, properties) {
 
     this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
     allColors = null;
-    return this;
-  };
-
-  Mesh.prototype.setScale = function(scale) {
-    return this;
-  };
-
-  Mesh.prototype.setPosition = function(position) {
-    return this;
-  };
-
-  Mesh.prototype.setRotation = function(rotation) {
     return this;
   };
 
