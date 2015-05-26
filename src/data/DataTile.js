@@ -18,62 +18,58 @@ DataTile.prototype = {
     this.items = [];
 
     var
-      items = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, geojson),
-      data = {
-        vertices: [],
-        normals: [],
-        colors: [],
-        idColors: []
-      };
+      itemList = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, geojson),
+      item, idColor,
+      allVertices = [], allNormals = [], allColors = [], allIDColors = [];
 
-    for (var i = 0, il = items.length; i < il; i++) {
-      this.storeItem(data, items[i]);
+    for (var i = 0, il = itemList.length; i < il; i++) {
+      item = itemList[i];
+      idColor = Interaction.idToColor(item.id);
+      item.numVertices = item.vertices.length/3;
+
+      for (var j = 0, jl = item.vertices.length-2; j < jl; j+=3) {
+        allVertices.push(item.vertices[j], item.vertices[j+1], item.vertices[j+2]);
+        allNormals.push(item.normals[j], item.normals[j+1], item.normals[j+2]);
+        allIDColors.push(idColor.r, idColor.g, idColor.b);
+      }
+
+      delete item.vertices;
+      delete item.normals;
+
+      this.items.push(item);
     }
 
-    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
-    this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
-    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
+    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(allVertices));
+    this.normalBuffer  = GL.createBuffer(3, new Float32Array(allNormals));
+    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(allIDColors));
 
     this.modify(Data.modifier);
 
-    items = null; geojson = null;
+    geojson = null;
+    itemList = null;
+    allVertices = null;
+    allNormals = null;
+    allIDColors = null;
+
     this.isReady = true;
   },
 
-  storeItem: function(data, item) {
-    var color = item.color;
-    var idColor = Interaction.idToColor(item.id);
-
-    var numVertices = item.vertices.length/3;
-
-    for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
-      data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
-      data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
-      data.idColors.push(idColor.r, idColor.g, idColor.b);
-    }
-
-    delete item.vertices;
-    delete item.normals;
-    item.color = color;
-    item.numVertices = numVertices;
-
-    this.items.push(item);
-  },
-
-  modify: function(fn) {
+  modify: function(callback) {
     if (!this.items) {
       return;
     }
 
-    var colors = [], item;
+    var allColors = [], item;
     for (var i = 0, il = this.items.length; i < il; i++) {
       item = this.items[i];
-      fn(item);
+      callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        colors.push(item.color.r, item.color.g, item.color.b);
+        allColors.push(item.color.r, item.color.g, item.color.b);
       }
     }
-    this.colorBuffer = GL.createBuffer(3, new Uint8Array(colors));
+
+    this.colorBuffer = GL.createBuffer(3, new Uint8Array(allColors));
+    allColors = null;
   },
 
   getMatrix: function() {

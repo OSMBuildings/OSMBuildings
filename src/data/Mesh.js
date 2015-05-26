@@ -3,6 +3,7 @@ var Mesh = function(url, properties) {
   this.properties = properties || {};
   this.position = this.properties.position || {};
   this.scale = this.properties.scale || 1;
+  this.color = Color.parse(this.properties.color);
 
   // TODO: implement OBJ.request.abort()
   this.request = { abort: function() {} };
@@ -21,54 +22,52 @@ var Mesh = function(url, properties) {
     return colors;
   }
 
-  Mesh.prototype.onLoad = function(items) {
+  Mesh.prototype.onLoad = function(itemList) {
     this.request = null;
     this.items = [];
 
-    var data = {
-      vertices: [],
-      normals: [],
-      colors: [],
-      idColors: []
-    };
+    var
+      item, idColor,
+      allVertices = [], allNormals = [], allColors = [], allIDColors = [];
 
-    for (var i = 0, il = items.length; i < il; i++) {
-      this.storeItem(data, items[i]);  
+    for (var i = 0, il = itemList.length; i < il; i++) {
+      item = itemList[i];
+
+      // given color has precedence
+      item.color = this.color ? this.color.toRGBA() : item.color;
+
+      // given id has precedence
+      item.id = this.properties.id ? this.properties.id : item.id;
+
+      idColor = Interaction.idToColor(item.id);
+      item.numVertices = item.vertices.length/3;
+
+      for (var j = 0, jl = item.vertices.length-2; j < jl; j+=3) {
+        allVertices.push(item.vertices[j], item.vertices[j+1], item.vertices[j+2]);
+        allNormals.push(item.normals[j], item.normals[j+1], item.normals[j+2]);
+        allIDColors.push(idColor.r, idColor.g, idColor.b);
+      }
+
+      delete item.vertices;
+      delete item.normals;
+
+      this.items.push(item);
     }
 
-    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
-    this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
-    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
+    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(allVertices));
+    this.normalBuffer  = GL.createBuffer(3, new Float32Array(allNormals));
+    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(allIDColors));
 
     this.modify(Data.modifier);
 
-    items = null; data = null;
+    itemList = null;
+    allVertices = null;
+    allNormals = null;
+    allIDColors = null;
+
     this.isReady = true;
   };
 
-  Mesh.prototype.storeItem = function(data, item) {
-    // given color has precedence
-    var color = this.properties.color ? Color.parse(this.properties.color).toRGBA() : item.color;
-    // given id has precedence
-    var idColor = Interaction.idToColor(this.properties.id ? this.properties.id : item.id);
-
-    var numVertices = item.vertices.length/3;
-
-    for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
-      data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
-      data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
-      data.idColors.push(idColor.r, idColor.g, idColor.b);
-    }
-    
-delete item.vertices;
-delete item.normals;
-item.color = color;
-item.id = this.properties.id ? this.properties.id : item.id;
-item.numVertices = numVertices;
-
-    this.items.push(item);
-  };
- 
   Mesh.prototype.getMatrix = function() {
     if (!this.isReady || !this.isVisible()) {
       return;
@@ -91,20 +90,22 @@ item.numVertices = numVertices;
     return matrix;
   };
 
-  Mesh.prototype.modify = function(fn) {
+  Mesh.prototype.modify = function(callback) {
     if (!this.items) {
       return;
     }
-    
-    var colors = [], item;
+
+    var allColors = [], item;
     for (var i = 0, il = this.items.length; i < il; i++) {
-      item = this.items[i]; 
-      fn(item);
+      item = this.items[i];
+      callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        colors.push(item.color.r, item.color.g, item.color.b);
+        allColors.push(item.color.r, item.color.g, item.color.b);
       }
     }
-    this.colorBuffer = GL.createBuffer(3, new Uint8Array(colors));
+
+    this.colorBuffer = GL.createBuffer(3, new Uint8Array(allColors));
+    allColors = null;
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
