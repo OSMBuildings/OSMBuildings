@@ -33,10 +33,10 @@ var Basemap = {};
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.texCoordBuffer);
+      item.texCoordBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.texture.enable(0);

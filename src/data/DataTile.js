@@ -39,9 +39,9 @@ DataTile.prototype = {
       this.items.push(item);
     }
 
-    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(allVertices));
-    this.normalBuffer  = GL.createBuffer(3, new Float32Array(allNormals));
-    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(allIDColors));
+    this.vertexBuffer  = new GL.Buffer(3, new Float32Array(allVertices));
+    this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
+    this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
     this.modify(Data.modifier);
 
@@ -68,8 +68,9 @@ DataTile.prototype = {
       }
     }
 
-    this.colorBuffer = GL.createBuffer(3, new Uint8Array(allColors));
+    this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
     allColors = null;
+    return this;
   },
 
   getMatrix: function() {
@@ -100,10 +101,12 @@ DataTile.prototype = {
   },
 
   destroy: function() {
-    GL.deleteBuffer(this.vertexBuffer);
-    GL.deleteBuffer(this.normalBuffer);
-    GL.deleteBuffer(this.colorBuffer);
-    GL.deleteBuffer(this.idColorBuffer);
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idColorBuffer.destroy();
+    }
 
     if (this.request) {
       this.request.abort();

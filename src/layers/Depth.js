@@ -33,7 +33,7 @@ var Depth = {};
     //
     //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
     //
-    //  gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+    //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
     //
     //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
@@ -58,7 +58,7 @@ var Depth = {};
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);

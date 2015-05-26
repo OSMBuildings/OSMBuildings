@@ -1,17 +1,19 @@
 
-var GL = {
+var GL = {};
 
-  createBuffer: function(itemSize, data) {
-    var buffer = gl.createBuffer();
-    buffer.itemSize = itemSize;
-    buffer.numItems = data.length / itemSize;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    data = null;
-    return buffer;
-  },
+GL.Buffer = function(itemSize, data) {
+  this.id = gl.createBuffer();
+  this.itemSize = itemSize;
+  this.numItems = data.length/itemSize;
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.id);
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+  data = null;
+};
 
-  deleteBuffer: function(buffer) {
-    gl.deleteBuffer(buffer);
-  }
+GL.Buffer.prototype.enable = function() {
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.id);
+};
+
+GL.Buffer.prototype.destroy = function() {
+  gl.deleteBuffer(this.id);
 };

@@ -46,13 +46,13 @@ var Buildings = {};
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.normalBuffer);
+      item.normalBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.colorBuffer);
+      item.colorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);

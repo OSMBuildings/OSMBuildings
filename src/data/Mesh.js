@@ -54,9 +54,9 @@ var Mesh = function(url, properties) {
       this.items.push(item);
     }
 
-    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(allVertices));
-    this.normalBuffer  = GL.createBuffer(3, new Float32Array(allNormals));
-    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(allIDColors));
+    this.vertexBuffer  = new GL.Buffer(3, new Float32Array(allVertices));
+    this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
+    this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
     this.modify(Data.modifier);
 
@@ -104,8 +104,21 @@ var Mesh = function(url, properties) {
       }
     }
 
-    this.colorBuffer = GL.createBuffer(3, new Uint8Array(allColors));
+    this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
     allColors = null;
+    return this;
+  };
+
+  Mesh.prototype.setScale = function(scale) {
+    return this;
+  };
+
+  Mesh.prototype.setPosition = function(position) {
+    return this;
+  };
+
+  Mesh.prototype.setRotation = function(rotation) {
+    return this;
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
@@ -114,10 +127,12 @@ var Mesh = function(url, properties) {
   };
 
   Mesh.prototype.destroy = function() {
-    GL.deleteBuffer(this.vertexBuffer);
-    GL.deleteBuffer(this.normalBuffer);
-    GL.deleteBuffer(this.colorBuffer);
-    GL.deleteBuffer(this.idColorBuffer);
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idColorBuffer.destroy();
+    }
 
     if (this.request) {
       this.request.abort();

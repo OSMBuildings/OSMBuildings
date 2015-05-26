@@ -15,8 +15,8 @@ MapTile.prototype = {
   },
 
   onLoad: function() {
-    this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-    this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+    this.vertexBuffer   = new GL.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+    this.texCoordBuffer = new GL.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
     this.texture = new GL.Texture({ image:this.image });
     this.isReady = true;
   },
@@ -49,8 +49,11 @@ MapTile.prototype = {
   },
 
   destroy: function() {
-    GL.deleteBuffer(this.vertexBuffer);
-    GL.deleteBuffer(this.texCoordBuffer);
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.texCoordBuffer.destroy();
+      this.texture.destroy();
+    }
 
     this.image.src = '';
 
