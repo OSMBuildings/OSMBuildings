@@ -1,63 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>OSM Buildings</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-        }
+  <title>OSM Buildings</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-        #map {
-            width: 100%;
-            height: 100%;
-        }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
 
-        .control {
-            position: absolute;
-            left: 0;
-            z-index: 1000;
-        }
+    .control {
+      position: absolute;
+      left: 0;
+      z-index: 1000;
+    }
 
-        .control.tilt {
-            top: 0;
-        }
+    .control.tilt {
+      top: 0;
+    }
 
-        .control.rotation {
-            top: 45px;
-        }
+    .control.rotation {
+      top: 45px;
+    }
 
-        .control.zoom {
-            top: 90px;
-        }
+    .control.zoom {
+      top: 90px;
+    }
 
-        .control.zoom button{
-            font-weight: normal;
-        }
+    .control.zoom button{
+      font-weight: normal;
+    }
 
-        .control button {
-            width: 30px;
-            height: 30px;
-            margin: 15px 0 0 15px;
-            border: 1px solid #999999;
-            background: #ffffff;
-            opacity: 0.6;
-            border-radius: 5px;
-            box-shadow: 0 0 5px #666666;
-            font-weight: bold;
-            text-align: center;
-        }
+    .control button {
+      width: 30px;
+      height: 30px;
+      margin: 15px 0 0 15px;
+      border: 1px solid #999999;
+      background: #ffffff;
+      opacity: 0.6;
+      border-radius: 5px;
+      box-shadow: 0 0 5px #666666;
+      font-weight: bold;
+      text-align: center;
+    }
 
-        .control button:hover {
-            opacity: 1;
-            cursor: pointer;
-        }
-    </style>
-    <script src="OSMBuildings.js"></script>
+    .control button:hover {
+      opacity: 1;
+      cursor: pointer;
+    }
+  </style>
+  <script src="OSMBuildings.js"></script>
 </head>
 
 <body>
@@ -79,6 +79,31 @@
 </div>
 
 <script>
+  function positionOnMap(obj) {
+    document.addEventListener('keydown', function(e) {
+      var transInc = e.altKey ? 0.0002 : 0.00002;
+      var rotaInc = e.altKey ? 0.1 : 0.01;
+      switch (e.which) {
+        case 37: obj.position.longitude -= transInc; break;
+        case 39: obj.position.longitude += transInc; break;
+        case 38: obj.position.latitude += transInc; break;
+        case 40: obj.position.latitude -= transInc; break;
+        case 187: obj.scale += rotaInc; break;
+        case 189: obj.scale -= rotaInc; break;
+        default: return;
+      }
+      console.log(JSON.stringify({
+        position:{
+          latitude:parseFloat(obj.position.latitude.toFixed(5)),
+          longitude:parseFloat(obj.position.longitude.toFixed(5))
+        },
+        scale:parseFloat(obj.scale.toFixed(2))
+      }));
+    });
+  }
+
+  //*************************************************************************
+
   var map = new OSMBuildings('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
@@ -94,11 +119,47 @@
     attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
-  map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54306, longitude:13.42796 }, scale:0.3, id:'Planetarium' } );
-  map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52101, longitude:13.40889 }, scale:1.45, id:'Fernsehturm' } );
+  var obj = map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54306, longitude:13.42796 }, scale:0.08, id:'Planetarium' } );
+  map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52101, longitude:13.40889 }, id:'Fernsehturm' } );
+  positionOnMap(obj);
+
+  function blend(a, b) {
+    return (a*0.5 + b*0.5) <<0;
+  };
+
+  // for building parts, selection is in fact a list of items
+  var selectedItemId;
+  var selectedItemParts = [];
+
+  function unselectAllItemParts() {
+    for (var i = 0, il = selectedItemParts.length; i < il; i++) {
+      selectedItemParts[i].color = selectedItemParts[i].originalColor;
+    }
+    selectedItemParts = [];
+  }
+
+  function selectItemPart(item) {
+    selectedItemParts.push(item);
+    item.originalColor = item.color;
+    item.color = {
+      r:blend(240, item.color.r),
+      g:blend(128, item.color.g),
+      b:blend(  0, item.color.b)
+    };
+  }
 
   map.on('click', function(e) {
-     console.log(e.featureID);
+    if (e.target.id === selectedItemId) {
+      return;
+    }
+
+    unselectAllItemParts();
+
+    map.modify(function(item) {
+      if (item.id === e.target.id) {
+        selectItemPart(item);
+      }
+    });
   });
 
   //***************************************************************************
