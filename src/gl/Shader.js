@@ -23,7 +23,9 @@ var Shader = function(name) {
 
   if (config.framebuffer) {
     this.framebuffer = new GL.Framebuffer();
-    Events.on('resize', this.framebuffer.setSize);
+    Events.on('resize', function() {
+      this.framebuffer.setSize();
+    }.bind(this));
   }
 
 };

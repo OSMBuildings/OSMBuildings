@@ -147,7 +147,7 @@
   // var obj = map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50787, longitude:-0.12002 }, "elevation":-11, "rotation":97, id:'London Eye' } );
   // map.setPosition({ latitude:51.50787, longitude:-0.12002 });
 
-  positionOnMap(obj);
+  if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
 
   function blend(a, b) {
