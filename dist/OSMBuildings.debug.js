@@ -1041,9 +1041,7 @@ var Map = {};
     Map.setRotation(options.rotation || 0);
     Map.setTilt(options.tilt || 0);
 
-    Events.on('resize', function() {
-      updateBounds();
-    });
+    Events.on('resize', updateBounds);
 
     State.save(Map);
   };
@@ -1952,9 +1950,7 @@ var DataGrid = {};
       update(100);
     });
 
-    Events.on('resize', function() {
-      update();
-    });
+    Events.on('resize', update);
 
     update();
   };
@@ -1989,62 +1985,59 @@ DataTile.prototype = {
     this.items = [];
 
     var
-      items = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, geojson),
-      data = {
-        vertices: [],
-        normals: [],
-        colors: [],
-        idColors: []
-      };
+      itemList = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, geojson),
+      item, idColor,
+      allVertices = [], allNormals = [], allColors = [], allIDColors = [];
 
-    for (var i = 0, il = items.length; i < il; i++) {
-      this.storeItem(data, items[i]);
+    for (var i = 0, il = itemList.length; i < il; i++) {
+      item = itemList[i];
+      idColor = Interaction.idToColor(item.id);
+      item.numVertices = item.vertices.length/3;
+
+      for (var j = 0, jl = item.vertices.length-2; j < jl; j+=3) {
+        allVertices.push(item.vertices[j], item.vertices[j+1], item.vertices[j+2]);
+        allNormals.push(item.normals[j], item.normals[j+1], item.normals[j+2]);
+        allIDColors.push(idColor.r, idColor.g, idColor.b);
+      }
+
+      delete item.vertices;
+      delete item.normals;
+
+      this.items.push(item);
     }
 
-    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
-    this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
-    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
+    this.vertexBuffer  = new GL.Buffer(3, new Float32Array(allVertices));
+    this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
+    this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
     this.modify(Data.modifier);
 
-    items = null; geojson = null;
+    geojson = null;
+    itemList = null;
+    allVertices = null;
+    allNormals = null;
+    allIDColors = null;
+
     this.isReady = true;
   },
 
-  storeItem: function(data, item) {
-    var color = item.color;
-    var idColor = Interaction.idToColor(item.id);
-
-    var numVertices = item.vertices.length/3;
-
-    for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
-      data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
-      data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
-      data.idColors.push(idColor.r, idColor.g, idColor.b);
-    }
-
-    delete item.vertices;
-    delete item.normals;
-    item.color = color;
-    item.numVertices = numVertices;
-
-    this.items.push(item);
-  },
-
-  modify: function(fn) {
+  modify: function(callback) {
     if (!this.items) {
       return;
     }
 
-    var colors = [], item;
+    var allColors = [], item;
     for (var i = 0, il = this.items.length; i < il; i++) {
       item = this.items[i];
-      fn(item);
+      callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        colors.push(item.color.r, item.color.g, item.color.b);
+        allColors.push(item.color.r, item.color.g, item.color.b);
       }
     }
-    this.colorBuffer = GL.createBuffer(3, new Uint8Array(colors));
+
+    this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
+    allColors = null;
+    return this;
   },
 
   getMatrix: function() {
@@ -2075,10 +2068,12 @@ DataTile.prototype = {
   },
 
   destroy: function() {
-    GL.deleteBuffer(this.vertexBuffer);
-    GL.deleteBuffer(this.normalBuffer);
-    GL.deleteBuffer(this.colorBuffer);
-    GL.deleteBuffer(this.idColorBuffer);
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idColorBuffer.destroy();
+    }
 
     if (this.request) {
       this.request.abort();
@@ -2197,9 +2192,7 @@ var TileGrid = {};
       update(100);
     });
 
-    Events.on('resize', function() {
-      update();
-    });
+    Events.on('resize', update);
 
     update();
   };
@@ -2235,8 +2228,8 @@ MapTile.prototype = {
   },
 
   onLoad: function() {
-    this.vertexBuffer   = GL.createBuffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-    this.texCoordBuffer = GL.createBuffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+    this.vertexBuffer   = new GL.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+    this.texCoordBuffer = new GL.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
     this.texture = new GL.Texture({ image:this.image });
     this.isReady = true;
   },
@@ -2269,8 +2262,11 @@ MapTile.prototype = {
   },
 
   destroy: function() {
-    GL.deleteBuffer(this.vertexBuffer);
-    GL.deleteBuffer(this.texCoordBuffer);
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.texCoordBuffer.destroy();
+      this.texture.destroy();
+    }
 
     this.image.src = '';
 
@@ -2317,8 +2313,16 @@ var Data = {
 
 var Mesh = function(url, properties) {
   this.properties = properties || {};
-  this.position = this.properties.position || {};
-  this.scale = this.properties.scale || 1;
+  this.id = this.properties.id;
+
+  this.position  = this.properties.position  || {};
+  this.scale     = this.properties.scale     || 1;
+  this.rotation  = this.properties.rotation  || 0;
+  this.elevation = this.properties.elevation || 0;
+
+  this.replaces =  this.properties.replaces  || [];
+
+  this.color = Color.parse(this.properties.color);
 
   // TODO: implement OBJ.request.abort()
   this.request = { abort: function() {} };
@@ -2337,54 +2341,52 @@ var Mesh = function(url, properties) {
     return colors;
   }
 
-  Mesh.prototype.onLoad = function(items) {
+  Mesh.prototype.onLoad = function(itemList) {
     this.request = null;
     this.items = [];
 
-    var data = {
-      vertices: [],
-      normals: [],
-      colors: [],
-      idColors: []
-    };
+    var
+      item, idColor,
+      allVertices = [], allNormals = [], allColors = [], allIDColors = [];
 
-    for (var i = 0, il = items.length; i < il; i++) {
-      this.storeItem(data, items[i]);  
+    for (var i = 0, il = itemList.length; i < il; i++) {
+      item = itemList[i];
+
+      // given color has precedence
+      item.color = this.color ? this.color.toRGBA() : item.color;
+
+      // given id has precedence
+      item.id = this.id ? this.id : item.id;
+
+      idColor = Interaction.idToColor(item.id);
+      item.numVertices = item.vertices.length/3;
+
+      for (var j = 0, jl = item.vertices.length-2; j < jl; j+=3) {
+        allVertices.push(item.vertices[j], item.vertices[j+1], item.vertices[j+2]);
+        allNormals.push(item.normals[j], item.normals[j+1], item.normals[j+2]);
+        allIDColors.push(idColor.r, idColor.g, idColor.b);
+      }
+
+      delete item.vertices;
+      delete item.normals;
+
+      this.items.push(item);
     }
 
-    this.vertexBuffer  = GL.createBuffer(3, new Float32Array(data.vertices));
-    this.normalBuffer  = GL.createBuffer(3, new Float32Array(data.normals));
-    this.idColorBuffer = GL.createBuffer(3, new Uint8Array(data.idColors));
+    this.vertexBuffer  = new GL.Buffer(3, new Float32Array(allVertices));
+    this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
+    this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
     this.modify(Data.modifier);
 
-    items = null; data = null;
+    itemList = null;
+    allVertices = null;
+    allNormals = null;
+    allIDColors = null;
+
     this.isReady = true;
   };
 
-  Mesh.prototype.storeItem = function(data, item) {
-    // given color has precedence
-    var color = this.properties.color ? Color.parse(this.properties.color).toRGBA() : item.color;
-    // given id has precedence
-    var idColor = Interaction.idToColor(this.properties.id ? this.properties.id : item.id);
-
-    var numVertices = item.vertices.length/3;
-
-    for (var i = 0, il = item.vertices.length-2; i < il; i+=3) {
-      data.vertices.push(item.vertices[i], item.vertices[i+1], item.vertices[i+2]);
-      data.normals.push(item.normals[i], item.normals[i+1], item.normals[i+2]);
-      data.idColors.push(idColor.r, idColor.g, idColor.b);
-    }
-    
-delete item.vertices;
-delete item.normals;
-item.color = color;
-item.id = this.properties.id ? this.properties.id : item.id;
-item.numVertices = numVertices;
-
-    this.items.push(item);
-  };
- 
   Mesh.prototype.getMatrix = function() {
     if (!this.isReady || !this.isVisible()) {
       return;
@@ -2402,25 +2404,29 @@ item.numVertices = numVertices;
     // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
-    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    matrix = Matrix.rotateZ(matrix, -this.rotation);
+    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, this.elevation);
 
     return matrix;
   };
 
-  Mesh.prototype.modify = function(fn) {
+  Mesh.prototype.modify = function(callback) {
     if (!this.items) {
       return;
     }
-    
-    var colors = [], item;
+
+    var allColors = [], item;
     for (var i = 0, il = this.items.length; i < il; i++) {
-      item = this.items[i]; 
-      fn(item);
+      item = this.items[i];
+      callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        colors.push(item.color.r, item.color.g, item.color.b);
+        allColors.push(item.color.r, item.color.g, item.color.b);
       }
     }
-    this.colorBuffer = GL.createBuffer(3, new Uint8Array(colors));
+
+    this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
+    allColors = null;
+    return this;
   };
 
   Mesh.prototype.isVisible = function(key, buffer) {
@@ -2429,10 +2435,12 @@ item.numVertices = numVertices;
   };
 
   Mesh.prototype.destroy = function() {
-    GL.deleteBuffer(this.vertexBuffer);
-    GL.deleteBuffer(this.normalBuffer);
-    GL.deleteBuffer(this.colorBuffer);
-    GL.deleteBuffer(this.idColorBuffer);
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idColorBuffer.destroy();
+    }
 
     if (this.request) {
       this.request.abort();
@@ -2808,7 +2816,7 @@ var OBJ = {};
     }
 
     storeMesh(meshes, allVertices, id, color, faces);
-    return normalize(meshes, allVertices);
+    return meshes;
   }
 
   function storeMesh(meshes, allVertices, id, color, faces) {
@@ -2859,32 +2867,6 @@ var OBJ = {};
     }
 
     return geometry;
-  }
-
-  function normalize(meshes, allVertices) {
-  	var mx =  1e10, my =  1e10;
-  	var Mx = -1e10, My = -1e10;
-    for (var i = 0, il = allVertices.length; i < il; i++) {
-  		if (mx > allVertices[i][0]) mx = allVertices[i][0];
-  		if (my > allVertices[i][2]) my = allVertices[i][2];
-  		if (Mx < allVertices[i][0]) Mx = allVertices[i][0];
-  		if (My < allVertices[i][2]) My = allVertices[i][2];
-    }
-
-    var cx = mx + (Mx-mx)/2;
-    var cy = my + (My-my)/2;
-    var j, jl;
-    var mesh;
-    for (i = 0, il = meshes.length; i < il; i++) {
-      mesh = meshes[i];
-      for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	mesh.vertices[j  ] = mesh.vertices[j  ]-cx;
-        mesh.vertices[j+2] = mesh.vertices[j+2];
-        mesh.vertices[j+1] = mesh.vertices[j+1]-cy;
-      }
-    }
-
-    return meshes;
   }
 
   //***************************************************************************
@@ -3015,39 +2997,36 @@ function rotatePoint(x, y, angle) {
 }
 
 
-var GL = {
+var GL = {};
 
-  createBuffer: function(itemSize, data) {
-    var buffer = gl.createBuffer();
-    buffer.itemSize = itemSize;
-    buffer.numItems = data.length / itemSize;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    data = null;
-    return buffer;
-  },
+GL.Buffer = function(itemSize, data) {
+  this.id = gl.createBuffer();
+  this.itemSize = itemSize;
+  this.numItems = data.length/itemSize;
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.id);
+  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+  data = null;
+};
 
-  deleteBuffer: function(buffer) {
-    gl.deleteBuffer(buffer);
-  }
+GL.Buffer.prototype.enable = function() {
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.id);
+};
+
+GL.Buffer.prototype.destroy = function() {
+  gl.deleteBuffer(this.id);
 };
 
 
 GL.Framebuffer = function(width, height) {
-  this.originalWidth  = width;
-  this.originalHeight = height;
-  this.size = nextPowerOf2(Math.max(width, height));
 
   this.frameBuffer = gl.createFramebuffer();
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
 
   this.renderBuffer = gl.createRenderbuffer();
-  gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
-  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.size, this.size);
+  this.setSize(width, height);
 
-  var renderTexture = new GL.Texture({ size:this.size });
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture.id, 0);
   gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderBuffer);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.renderTexture.id, 0); ////////
 
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
     throw new Error('This combination of framebuffer attachments does not work');
@@ -3059,21 +3038,34 @@ GL.Framebuffer = function(width, height) {
 
 GL.Framebuffer.prototype = {
 
+  setSize: function(width, height) {
+    this.width  = width  || Scene.width;
+    this.height = height || Scene.height;
+    var size = nextPowerOf2(Math.max(this.width, this.height));
+
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, size, size);
+
+    if (this.renderTexture) {
+      this.renderTexture.destroy();
+    }
+
+    this.renderTexture = new GL.Texture({ size:size });
+  },
+
   enable: function() {
-//    gl.viewport(0, 0, this.size, this.size);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
     gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderBuffer);
   },
 
   disable: function() {
-//    gl.viewport(0, 0, this.originalWidth, this.originalHeight);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
   },
 
   getData: function() {
-    var imageData = new Uint8Array(this.originalWidth*this.originalHeight*4);
-    gl.readPixels(0, 0, this.originalWidth, this.originalHeight, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+    var imageData = new Uint8Array(this.width*this.height*4);
+    gl.readPixels(0, 0, this.width, this.height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
     return imageData;
   },
 
@@ -3145,8 +3137,10 @@ var Shader = function(name) {
   this.uniformNames   = config.uniforms;
 
   if (config.framebuffer) {
-    this.framebuffer = new GL.Framebuffer(Scene.width, Scene.height);
+    this.framebuffer = new GL.Framebuffer();
+    Events.on('resize', this.framebuffer.setSize);
   }
+
 };
 
 Shader.prototype = {
@@ -3586,7 +3580,7 @@ var Depth = {};
     //
     //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
     //
-    //  gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+    //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
     //
     //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
@@ -3611,7 +3605,7 @@ var Depth = {};
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
@@ -3667,10 +3661,10 @@ var Interaction = {};
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.idColorBuffer);
+      item.idColorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
@@ -3747,10 +3741,10 @@ var Basemap = {};
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.texCoordBuffer);
+      item.texCoordBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.texture.enable(0);
@@ -3812,13 +3806,13 @@ var Buildings = {};
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.vertexBuffer);
+      item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.normalBuffer);
+      item.normalBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, item.colorBuffer);
+      item.colorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
