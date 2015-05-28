@@ -106,9 +106,7 @@ var TileGrid = {};
       update(100);
     });
 
-    Events.on('resize', function() {
-      update();
-    });
+    Events.on('resize', update);
 
     update();
   };

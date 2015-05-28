@@ -3,10 +3,13 @@ var Mesh = function(url, properties) {
   this.properties = properties || {};
   this.id = this.properties.id;
 
-  this.position = this.properties.position || {};
-  this.scale = this.properties.scale || 1;
-  this.rotation = this.properties.rotation || 0;
-;
+  this.position  = this.properties.position  || {};
+  this.scale     = this.properties.scale     || 1;
+  this.rotation  = this.properties.rotation  || 0;
+  this.elevation = this.properties.elevation || 0;
+
+  this.replaces =  this.properties.replaces  || [];
+
   this.color = Color.parse(this.properties.color);
 
   // TODO: implement OBJ.request.abort()
@@ -90,7 +93,7 @@ var Mesh = function(url, properties) {
 
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
     matrix = Matrix.rotateZ(matrix, -this.rotation);
-    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, this.elevation);
 
     return matrix;
   };

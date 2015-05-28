@@ -80,12 +80,22 @@
 </div>
 
 <script>
+  /*
+   * ## Key codes for object positioning ##
+   * Cursor keys: move
+   * +/- : scale
+   * w/s : elevate
+   * a/d : rotate
+   *
+   * Pressing Alt the same time accelerates
+   */
   function positionOnMap(obj) {
     document.addEventListener('keydown', function(e) {
       var transInc = e.altKey ? 0.0002 : 0.00002;
       var scaleInc = e.altKey ? 0.1 : 0.01;
       var rotaInc = e.altKey ? 10 : 1;
-        console.log(e.which)
+      var eleInc = e.altKey ? 10 : 1;
+// console.log(e.which)
       switch (e.which) {
         case 37: obj.position.longitude -= transInc; break;
         case 39: obj.position.longitude += transInc; break;
@@ -93,8 +103,10 @@
         case 40: obj.position.latitude -= transInc; break;
         case 187: obj.scale += scaleInc; break;
         case 189: obj.scale -= scaleInc; break;
-        case 88: obj.rotation += rotaInc; break;
-        case 89: obj.rotation -= rotaInc; break;
+        case 65: obj.rotation += rotaInc; break;
+        case 68: obj.rotation -= rotaInc; break;
+        case 87: obj.elevation += eleInc; break;
+        case 83: obj.elevation -= eleInc; break;
         default: return;
       }
       console.log(JSON.stringify({
@@ -102,6 +114,7 @@
           latitude:parseFloat(obj.position.latitude.toFixed(5)),
           longitude:parseFloat(obj.position.longitude.toFixed(5))
         },
+        elevation:parseFloat(obj.elevation.toFixed(2)),
         scale:parseFloat(obj.scale.toFixed(2)),
         rotation:parseInt(obj.rotation, 10)
       }));
@@ -130,11 +143,16 @@
 
   // map.addMesh('mp/Mitte.3d.json');
   // map.addMesh('mp/Friedrichshain-Kreuzberg.3d.json');
-  var obj = map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54304, longitude:13.42812 }, scale:0.08, rotation:100, id:'Planetarium' } );
+  // var obj = map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54304, longitude:13.42812 }, scale:0.08, rotation:100, id:'Planetarium' } );
 
-  //var obj = map.addMesh('data/30m cylinder.obj', { position:{ latitude:52.54306, longitude:13.42796 }, id:'Planetarium' } );
   map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52101, longitude:13.40889 }, id:'Fernsehturm' } );
+
+//  var obj = map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50325, longitude:-0.11892 }, "elevation":-19, "scale":0.97,"rotation":97, id:'London Eye' } );
+//  map.setPosition({ latitude:51.50331, longitude:-0.11982 });
+
   //var obj = map.addMesh('data/o2-nach90.obj', { position:{ latitude:52.51424, longitude:13.40148 }, color:'#ff0000', scale:18.85 } ); // no id,color: if present, properties of individual objects will be used
+  var obj = map.addMesh('data/o2.obj', { position:{ latitude:52.51348, longitude:13.4015 }, color:'#ff0000', elevation:-12, scale:0.875 } ); // no id,color: if present, properties of individual objects will be used
+
   positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
 

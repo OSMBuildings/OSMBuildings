@@ -80,7 +80,7 @@ var OBJ = {};
     }
 
     storeMesh(meshes, allVertices, id, color, faces);
-    return normalize(meshes, allVertices);
+    return meshes;
   }
 
   function storeMesh(meshes, allVertices, id, color, faces) {
@@ -131,32 +131,6 @@ var OBJ = {};
     }
 
     return geometry;
-  }
-
-  function normalize(meshes, allVertices) {
-  	var mx =  1e10, my =  1e10;
-  	var Mx = -1e10, My = -1e10;
-    for (var i = 0, il = allVertices.length; i < il; i++) {
-  		if (mx > allVertices[i][0]) mx = allVertices[i][0];
-  		if (my > allVertices[i][2]) my = allVertices[i][2];
-  		if (Mx < allVertices[i][0]) Mx = allVertices[i][0];
-  		if (My < allVertices[i][2]) My = allVertices[i][2];
-    }
-
-    var cx = mx + (Mx-mx)/2;
-    var cy = my + (My-my)/2;
-    var j, jl;
-    var mesh;
-    for (i = 0, il = meshes.length; i < il; i++) {
-      mesh = meshes[i];
-      for (j = 0, jl = mesh.vertices.length-2; j < jl; j+=3) {
-  	   	mesh.vertices[j  ] = mesh.vertices[j  ]-cx;
-        mesh.vertices[j+2] = mesh.vertices[j+2];
-        mesh.vertices[j+1] = mesh.vertices[j+1]-cy;
-      }
-    }
-
-    return meshes;
   }
 
   //***************************************************************************

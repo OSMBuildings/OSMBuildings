@@ -22,8 +22,10 @@ var Shader = function(name) {
   this.uniformNames   = config.uniforms;
 
   if (config.framebuffer) {
-    this.framebuffer = new GL.Framebuffer(Scene.width, Scene.height);
+    this.framebuffer = new GL.Framebuffer();
+    Events.on('resize', this.framebuffer.setSize);
   }
+
 };
 
 Shader.prototype = {

@@ -35,9 +35,7 @@ var Map = {};
     Map.setRotation(options.rotation || 0);
     Map.setTilt(options.tilt || 0);
 
-    Events.on('resize', function() {
-      updateBounds();
-    });
+    Events.on('resize', updateBounds);
 
     State.save(Map);
   };
