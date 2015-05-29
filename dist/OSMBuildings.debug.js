@@ -1155,7 +1155,7 @@ var Events = {};
     if (e.touches === undefined) {
       button = e.button;
     } else {
-      if (e.touches.length>1) {
+      if (e.touches.length > 1) {
         return;
       }
       e = e.touches[0];
@@ -1173,13 +1173,13 @@ var Events = {};
     }
 
     if (e.touches !== undefined) {
-      if (e.touches.length>1) {
+      if (e.touches.length > 1) {
         return;
       }
       e = e.touches[0];
     }
 
-    if (e.touches !== undefined || button === 0) {
+    if ((e.touches !== undefined || button === 0) && !e.altKey) {
       moveMap(e);
     } else {
       prevRotation += (e.clientX - prevX)*stepX;
@@ -1204,7 +1204,7 @@ var Events = {};
       e = e.touches[0];
     }
 
-    if (e.touches !== undefined || button === 0) {
+    if ((e.touches !== undefined || button === 0) && !e.altKey) {
       if (Math.abs(e.clientX-startX) < 5 && Math.abs(e.clientY-startY) < 5) {
         onClick(e);
       } else {
