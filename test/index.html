@@ -156,23 +156,28 @@
 
   // for building parts, selection is in fact a list of items
   var selectedItemId;
-  var selectedItemParts = [];
+  var selectedItems = [];
 
-  function unselectAllItemParts() {
-    for (var i = 0, il = selectedItemParts.length; i < il; i++) {
-      selectedItemParts[i].color = selectedItemParts[i].originalColor;
+  function unselectAllItems() {
+    var item;
+    for (var i = 0, il = selectedItems.length; i < il; i++) {
+      item = selectedItems[i];
+      item.color = item.originalColor;
+      item.scaleZ = item.originalScaleZ;
     }
-    selectedItemParts = [];
+    selectedItems = [];
   }
 
-  function selectItemPart(item) {
-    selectedItemParts.push(item);
+  function selectItem(item) {
+    selectedItems.push(item);
     item.originalColor = item.color;
+    item.originalScaleZ = 1;
     item.color = {
       r:blend(240, item.color.r),
       g:blend(128, item.color.g),
       b:blend(  0, item.color.b)
     };
+    item.scaleZ = 0;
   }
 
   map.on('click', function(e) {
@@ -180,11 +185,11 @@
       return;
     }
 
-    unselectAllItemParts();
+    unselectAllItems();
 
     map.modify(function(item) {
       if (item.id === e.target.id) {
-        selectItemPart(item);
+        selectItem(item);
       }
     });
   });

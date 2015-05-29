@@ -55,6 +55,9 @@ var Buildings = {};
       item.colorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
+      item.scalesZBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aScaleZ, item.scalesZBuffer.itemSize, gl.FLOAT, true, 0, 0);
+
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 

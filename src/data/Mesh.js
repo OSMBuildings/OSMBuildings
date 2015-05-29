@@ -103,17 +103,22 @@ var Mesh = function(url, properties) {
       return;
     }
 
-    var allColors = [], item;
+    var allColors = [];
+    var allScalesZ = [];
+    var item;
     for (var i = 0, il = this.items.length; i < il; i++) {
       item = this.items[i];
       callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
         allColors.push(item.color.r, item.color.g, item.color.b);
+        allScalesZ.push(item.scaleZ !== undefined ? item.scaleZ : 1);
       }
     }
 
     this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
+    this.scalesZBuffer = new GL.Buffer(1, new Float32Array(allScalesZ));
     allColors = null;
+    allScalesZ = null;
     return this;
   };
 
@@ -128,6 +133,7 @@ var Mesh = function(url, properties) {
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
       this.idColorBuffer.destroy();
+      this.scalesZBuffer.destroy();
     }
 
     if (this.request) {
