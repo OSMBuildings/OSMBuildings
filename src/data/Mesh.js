@@ -8,7 +8,12 @@ var Mesh = function(url, properties) {
   this.rotation  = this.properties.rotation  || 0;
   this.elevation = this.properties.elevation || 0;
 
-  this.replaces =  this.properties.replaces  || [];
+  var replaces =  this.properties.replaces  || [];
+  Data.modify(function(item) {
+    if (replaces.indexOf(item.id) >= 0) {
+      item.hidden = true;
+    }
+  });
 
   this.color = Color.parse(this.properties.color);
 
@@ -123,7 +128,7 @@ var Mesh = function(url, properties) {
     allColors = null;
     hiddenStates = null;
     return this;
-  },
+  };
 
   Mesh.prototype.isVisible = function(key, buffer) {
     buffer = buffer || 0;

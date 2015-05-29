@@ -1565,7 +1565,7 @@ function nextPowerOf2(n) {
 }
 
 
-var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n\tvPosition = uMatrix * aPosition;\n\tgl_Position = vPosition;\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    vPosition = vec4(0.0);\n    gl_Position = vPosition;\n  } else {\n    vPosition = uMatrix * aPosition;\n    gl_Position = vPosition;\n  }\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    vPosition = vec4(0.0, 0.0, 0.0, 0.0);\n    gl_Position = vPosition;\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vPosition = uMatrix * aPosition;\n    gl_Position = vPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -2026,17 +2026,22 @@ DataTile.prototype = {
       return;
     }
 
-    var allColors = [], item;
+    var allColors = [];
+    var hiddenStates = [];
+    var item;
     for (var i = 0, il = this.items.length; i < il; i++) {
       item = this.items[i];
       callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
         allColors.push(item.color.r, item.color.g, item.color.b);
+        hiddenStates.push(item.hidden ? 1 : 0);
       }
     }
 
     this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
+    this.hiddenStatesBuffer = new GL.Buffer(1, new Float32Array(hiddenStates));
     allColors = null;
+    hiddenStates = null;
     return this;
   },
 
@@ -2073,6 +2078,7 @@ DataTile.prototype = {
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
       this.idColorBuffer.destroy();
+      this.hiddenStatesBuffer.destroy();
     }
 
     if (this.request) {
@@ -2320,7 +2326,12 @@ var Mesh = function(url, properties) {
   this.rotation  = this.properties.rotation  || 0;
   this.elevation = this.properties.elevation || 0;
 
-  this.replaces =  this.properties.replaces  || [];
+  var replaces =  this.properties.replaces  || [];
+  Data.modify(function(item) {
+    if (replaces.indexOf(item.id) >= 0) {
+      item.hidden = true;
+    }
+  });
 
   this.color = Color.parse(this.properties.color);
 
@@ -2403,9 +2414,12 @@ var Mesh = function(url, properties) {
     // see http://wiki.openstreetmap.org/wiki/Zoom_levels
     // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
 
+    if (this.elevation) {
+      matrix = Matrix.translate(matrix, 0, 0, this.elevation);
+    }
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
     matrix = Matrix.rotateZ(matrix, -this.rotation);
-    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, this.elevation);
+    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return matrix;
   };
@@ -2415,17 +2429,22 @@ var Mesh = function(url, properties) {
       return;
     }
 
-    var allColors = [], item;
+    var allColors = [];
+    var hiddenStates = [];
+    var item;
     for (var i = 0, il = this.items.length; i < il; i++) {
       item = this.items[i];
       callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
         allColors.push(item.color.r, item.color.g, item.color.b);
+        hiddenStates.push(item.hidden ? 1 : 0);
       }
     }
 
     this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
+    this.hiddenStatesBuffer = new GL.Buffer(1, new Float32Array(hiddenStates));
     allColors = null;
+    hiddenStates = null;
     return this;
   };
 
@@ -2440,6 +2459,7 @@ var Mesh = function(url, properties) {
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
       this.idColorBuffer.destroy();
+      this.hiddenStatesBuffer.destroy();
     }
 
     if (this.request) {
@@ -3583,7 +3603,8 @@ var Depth = {};
     //
     //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    //
+    // item.hiddenStatesBuffer.enable();
+    // gl.vertexAttribPointer(shader.attributes.aHidden, item.hiddenStatesBuffer.itemSize, gl.FLOAT, false, 0, 0);
     //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     //}
 
@@ -3667,6 +3688,9 @@ var Interaction = {};
 
       item.idColorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+
+      item.hiddenStatesBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aHidden, item.hiddenStatesBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
@@ -3815,6 +3839,9 @@ var Buildings = {};
 
       item.colorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+
+      item.hiddenStatesBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aHidden, item.hiddenStatesBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
