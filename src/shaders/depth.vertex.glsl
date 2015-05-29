@@ -2,15 +2,18 @@
 precision mediump float;
 
 attribute vec4 aPosition;
-attribute float aScaleZ;
+attribute float aHidden;
 
 uniform mat4 uMatrix;
 
 varying vec4 vPosition;
 
 void main() {
-  vec4 pos = aPosition;
-  pos.z = pos.z * aScaleZ;
-  vPosition = uMatrix * pos;
-	gl_Position = vPosition;
+  if (aHidden == 1.0) {
+    vPosition = vec4(0.0);
+    gl_Position = vPosition;
+  } else {
+    vPosition = uMatrix * aPosition;
+    gl_Position = vPosition;
+  }
 }

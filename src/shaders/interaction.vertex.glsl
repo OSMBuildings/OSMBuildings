@@ -3,15 +3,18 @@ precision mediump float;
 
 attribute vec4 aPosition;
 attribute vec3 aColor;
-attribute float aScaleZ;
+attribute float aHidden;
 
 uniform mat4 uMatrix;
 
 varying vec3 vColor;
 
 void main() {
-  vec4 pos = aPosition;
-  pos.z = pos.z * aScaleZ;
-  gl_Position = uMatrix * pos;
-  vColor = aColor;
+  if (aHidden == 1.0) {
+    gl_Position = vec4(0.0);
+    vColor = vec3(0.0);
+  } else {
+    gl_Position = uMatrix * aPosition;
+    vColor = aColor;
+  }
 }

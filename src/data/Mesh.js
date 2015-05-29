@@ -104,23 +104,23 @@ var Mesh = function(url, properties) {
     }
 
     var allColors = [];
-    var allScalesZ = [];
+    var hiddenStates = [];
     var item;
     for (var i = 0, il = this.items.length; i < il; i++) {
       item = this.items[i];
       callback(item);
       for (var j = 0, jl = item.numVertices; j < jl; j++) {
         allColors.push(item.color.r, item.color.g, item.color.b);
-        allScalesZ.push(item.scaleZ !== undefined ? item.scaleZ : 1);
+        hiddenStates.push(item.hidden ? 1 : 0);
       }
     }
 
     this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
-    this.scalesZBuffer = new GL.Buffer(1, new Float32Array(allScalesZ));
+    this.hiddenStatesBuffer = new GL.Buffer(1, new Float32Array(hiddenStates));
     allColors = null;
-    allScalesZ = null;
+    hiddenStates = null;
     return this;
-  };
+  },
 
   Mesh.prototype.isVisible = function(key, buffer) {
     buffer = buffer || 0;
@@ -133,7 +133,7 @@ var Mesh = function(url, properties) {
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
       this.idColorBuffer.destroy();
-      this.scalesZBuffer.destroy();
+      this.hiddenStatesBuffer.destroy();
     }
 
     if (this.request) {
