@@ -50,13 +50,16 @@
     "src/formats/GeoJSON.js",
     "src/formats/OBJ.js",
 
-    "src/geometry.js",
+    "src/geometry/geometry.js",
+    "src/geometry/Matrix.js",
+    "src/geometry/Vector.js",
+    "src/geometry/Plane.js",
+
     "src/gl/GL.js",
     "src/gl/Framebuffer.js",
     "src/gl/Texture.js",
     "src/gl/Shader.js",
     "src/gl/Scene.js",
-    "src/gl/Matrix.js",
 
     "src/layers/Depth.js",
     "src/layers/Interaction.js",
