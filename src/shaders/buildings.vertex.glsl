@@ -16,12 +16,12 @@ varying vec4 vPosition;
 
 void main() {
   if (aHidden == 1.0) {
-    vPosition = vec4(0.0, 0.0, 0.0, 0.0);
-    gl_Position = vPosition;
+    gl_Position = vec4(0.0);
+    vPosition = vec4(0.0);
     vColor = vec3(0.0, 0.0, 0.0);
   } else {
-    vPosition = uMatrix * aPosition;
-    gl_Position = vPosition;
+    gl_Position = uMatrix * aPosition;
+    vPosition = aPosition;
 
     vec3 transformedNormal = aNormal * uNormalTransform;
     float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
