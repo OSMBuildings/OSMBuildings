@@ -131,8 +131,8 @@
     // disabled: true, // disables user input - optional
     minZoom: 14.5,
     maxZoom: 22,
-    tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-    // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
+     tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
     // dataSource: null, // null disables default OSM data,
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
@@ -144,8 +144,8 @@
   map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54366, longitude:13.42626 }, scale:0.08, rotation:100, id:'Planetarium' } );
   map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52083, longitude:13.40923 }, id:'Fernsehturm' } );
 
-  // var obj = map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50787, longitude:-0.12002 }, "elevation":-11, "rotation":97, id:'London Eye' } );
-  // map.setPosition({ latitude:51.50787, longitude:-0.12002 });
+  var obj = map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50787, longitude:-0.12002 }, "elevation":-11, "rotation":97, id:'London Eye' } );
+  map.setPosition({ latitude:51.50787, longitude:-0.12002 });
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
@@ -163,7 +163,6 @@
     for (var i = 0, il = selectedItems.length; i < il; i++) {
       item = selectedItems[i];
       item.color = item.originalColor;
-      item.hidden = null;
     }
     selectedItems = [];
   }
@@ -176,7 +175,6 @@
       g:blend(128, item.color.g),
       b:blend(  0, item.color.b)
     };
-    item.hidden = true;
   }
 
   map.on('click', function(e) {
@@ -186,11 +184,29 @@
 
     unselectAllItems();
 
+ console.log(e.target.id);
+
     map.modify(function(item) {
       if (item.id === e.target.id) {
         selectItem(item);
       }
     });
+  });
+
+  var replaceItems = {
+    153273222:1,
+    204068874:1,
+    335716200:1,
+    335716199:1,
+    335716202:1,
+    153273223:1,
+    153273224:1
+   };
+
+  map.modify(function(item) {
+    if (replaceItems[item.id]) {
+      item.hidden = true;
+    }
   });
 
   //*************************************************************************
