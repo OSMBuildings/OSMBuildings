@@ -91,9 +91,12 @@ var Mesh = function(url, properties) {
     // see http://wiki.openstreetmap.org/wiki/Zoom_levels
     // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
 
+    if (this.elevation) {
+      matrix = Matrix.translate(matrix, 0, 0, this.elevation);
+    }
     matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
     matrix = Matrix.rotateZ(matrix, -this.rotation);
-    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, this.elevation);
+    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return matrix;
   };
