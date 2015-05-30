@@ -15,7 +15,6 @@
   "dependencies": {},
   "devDependencies": {
     "Color": "git+https://github.com/kekscom/Color.js",
-    "GLMap": "git+https://github.com/OSMBuildings/GLMap",
     "earcut": "~1.4.0",
     "grunt": "~0.4.4",
     "grunt-webpack": "~1.0.8",

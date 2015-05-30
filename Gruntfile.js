@@ -54,15 +54,10 @@ module.exports = function(grunt) {
             path: './dist',
             filename: '<%=product%>.pack.js',
         },
-    
         stats: false, // the stats output
-    
         progress: false, // show progress
-    
         failOnError: true, // don't report error to grunt if webpack find errors
-    
         watch: false,
-
         keepalive: true // don't finish the grunt task
       }
     }
@@ -122,6 +117,6 @@ module.exports = function(grunt) {
     grunt.task.run('jshint');
     grunt.task.run('default');
     grunt.task.run('webpack');
-//    grunt.task.run('clean');
+//  grunt.task.run('clean');
   });
 };
