@@ -10,8 +10,8 @@ var State = {};
 
     var params = [];
     var position = map.getPosition();
-    params.push('latitude=' + position.latitude.toFixed(5));
-    params.push('longitude=' + position.longitude.toFixed(5));
+    params.push('lat=' + position.latitude.toFixed(5));
+    params.push('lon=' + position.longitude.toFixed(5));
     params.push('zoom=' + map.zoom.toFixed(1));
     params.push('tilt=' + map.tilt.toFixed(1));
     params.push('rotation=' + map.rotation.toFixed(1));
@@ -28,8 +28,8 @@ var State = {};
         }
       });
 
-      if (state.latitude !== undefined && state.longitude !== undefined) {
-        options.position = { latitude:parseFloat(state.latitude), longitude:parseFloat(state.longitude) };
+      if (state.lat !== undefined && state.lon !== undefined) {
+        options.position = { latitude:parseFloat(state.lat), longitude:parseFloat(state.lon) };
       }
       if (state.zoom !== undefined) {
         options.zoom = parseFloat(state.zoom);

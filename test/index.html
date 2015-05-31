@@ -137,7 +137,7 @@
     // dataSource: null, // null disables default OSM data,
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    backgroundColor: '#bbbbcc',
+    backgroundColor: 'rgb(240,230,225)',
     attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
@@ -145,7 +145,7 @@
 //map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52083, longitude:13.40923 }, id:'Fernsehturm' } );
   map.addMesh('data/Fernsehturm_FULL.obj', { position:{ latitude:52.51921, longitude:13.40369 }, id:'Fernsehturm', scale:0.095,"elevation":8,"rotation":51 } );
 
-  var obj = map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50787, longitude:-0.12002 }, "elevation":-11, "rotation":97, id:'London Eye',
+  var obj = map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50787, longitude:-0.12002 }, "elevation":-3, "rotation":97, id:'London Eye',
   replaces: [
     153273222,
     204068874,
@@ -155,6 +155,7 @@
     153273223,
     153273224
   ] } );
+
   map.setPosition({ latitude:51.50787, longitude:-0.12002 });
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
