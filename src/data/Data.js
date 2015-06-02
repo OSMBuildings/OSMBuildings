@@ -24,8 +24,7 @@ var Data = {
 
   addModifier: function(fn) {
     this.modifiers.push(fn);
-    this.triggerModification();
-//  Events.emit('modify');
+    Events.emit('modify');
   },
 
   removeModifier: function(fn) {
@@ -35,16 +34,7 @@ var Data = {
         break;
       }
     }
-    this.triggerModification();
-//  Events.emit('modify');
-  },
-
-  triggerModification: function(fn) {
-    var items = this.items;
-    for (var i = 0, il = items.length; i < il; i++) {
-      items[i].modify();
-//    Events.on('modify', modify...);
-    }
+    Events.emit('modify');
   },
 
   applyModifiers: function(item) {

@@ -5,6 +5,8 @@ var DataTile = function(tileX, tileY, zoom) {
   this.zoom = zoom;
 
   Data.add(this);
+
+  Events.on('modify', this.modify.bind(this));
 };
 
 DataTile.prototype = {

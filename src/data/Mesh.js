@@ -22,6 +22,8 @@ var Mesh = function(url, properties) {
   OBJ.load(url, this.onLoad.bind(this));
 
   Data.add(this);
+
+  Events.on('modify', this.modify.bind(this));
 };
 
 (function() {

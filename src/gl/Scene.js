@@ -20,7 +20,7 @@ var Scene = {
     };
 
     try { gl = canvas.getContext('webgl', glOptions); } catch(ex) {}
-    if (!gl) try { gl gl = canvas.getContext('experimental-webgl', glOptions); } catch(ex) {}
+    if (!gl) try { gl = canvas.getContext('experimental-webgl', glOptions); } catch(ex) {}
     if (!gl) { throw new Error('WebGL not supported'); }
 
     var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
