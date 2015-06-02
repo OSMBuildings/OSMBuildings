@@ -141,9 +141,36 @@
     attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
-  map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54366, longitude:13.42626 }, scale:0.08, rotation:100, id:'Planetarium' } );
-//map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52083, longitude:13.40923 }, id:'Fernsehturm' } );
-  map.addMesh('data/Fernsehturm_FULL.obj', { position:{ latitude:52.51921, longitude:13.40369 }, id:'Fernsehturm', scale:0.095,"elevation":8,"rotation":51 } );
+  map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54366, longitude:13.42626 }, scale:0.08, rotation:100, id:'Planetarium',
+  replaces: [
+    163701873,
+    163701869,
+    163701870,
+    163701871,
+    163701872,
+    163701873,
+    163701874,
+    163701875,
+    163701876,
+    163701877,
+    329262981
+  ]});
+
+  map.addMesh
+  ('data/Fernsehturm_FULL.obj', { position:{ latitude:52.51921, longitude:13.40369 }, id:'Fernsehturm', scale:0.095,"elevation":8,"rotation":51,
+  replaces: [
+    4564300,
+    4065110,
+    304987177,
+    96880470,
+    326772329,
+    230818931,
+    96880477,
+    304987174,
+    304987173,
+    304987172,
+    304987176
+  ]});
 
   var obj = map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50787, longitude:-0.12002 }, "elevation":-3, "rotation":97, id:'London Eye',
   replaces: [
@@ -154,9 +181,8 @@
     335716202,
     153273223,
     153273224
-  ] } );
-
-  map.setPosition({ latitude:51.50787, longitude:-0.12002 });
+  ]});
+//  map.setPosition({ latitude:51.50787, longitude:-0.12002 });
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
@@ -167,41 +193,29 @@
 
   // for building parts, selection is in fact a list of items
   var selectedItemId;
-  var selectedItems = [];
 
-  function unselectAllItems() {
-    var item;
-    for (var i = 0, il = selectedItems.length; i < il; i++) {
-      item = selectedItems[i];
-      item.color = item.originalColor;
-    }
-    selectedItems = [];
-  }
-
-  function selectItem(item) {
-    selectedItems.push(item);
-    item.originalColor = item.color;
-    item.color = {
-      r:blend(240, item.color.r),
-      g:blend(128, item.color.g),
-      b:blend(  0, item.color.b)
-    };
-  }
+  var highlightItem;
 
   map.on('click', function(e) {
     if (e.target.id === selectedItemId) {
       return;
     }
 
-    unselectAllItems();
+    map.removeModifier(highlightItem);
 
- console.log(e.target.id);
+console.log('selected item id', e.target.id);
 
-    map.modify(function(item) {
+    highlightItem = function(item) {
       if (item.id === e.target.id) {
-        selectItem(item);
+        item.color = {
+          r: blend(240, item.color.r),
+          g: blend(128, item.color.g),
+          b: blend(0, item.color.b)
+        };
       }
-    });
+    };
+
+    map.addModifier(highlightItem);
   });
 
   //*************************************************************************

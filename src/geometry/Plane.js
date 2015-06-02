@@ -25,6 +25,6 @@ var Plane = {
       return origin;
     }
 
-    return null
+    return null;
   }
 };

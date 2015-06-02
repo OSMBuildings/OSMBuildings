@@ -8,8 +8,8 @@ var Mesh = function(url, properties) {
   this.rotation  = this.properties.rotation  || 0;
   this.elevation = this.properties.elevation || 0;
 
-  var replaces =  this.properties.replaces  || [];
-  Data.modify(function(item) {
+  var replaces = this.properties.replaces  || [];
+  Data.addModifier(function(item) {
     if (replaces.indexOf(item.id) >= 0) {
       item.hidden = true;
     }
@@ -70,7 +70,7 @@ var Mesh = function(url, properties) {
     this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
     this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
-    this.modify(Data.modifier);
+    this.modify();
 
     itemList = null;
     allVertices = null;
@@ -106,20 +106,19 @@ var Mesh = function(url, properties) {
     return matrix;
   };
 
-  Mesh.prototype.modify = function(callback) {
+  Mesh.prototype.modify = function() {
     if (!this.items) {
       return;
     }
 
     var allColors = [];
     var hiddenStates = [];
-    var item;
+    var clonedItem;
     for (var i = 0, il = this.items.length; i < il; i++) {
-      item = this.items[i];
-      callback(item);
-      for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        allColors.push(item.color.r, item.color.g, item.color.b);
-        hiddenStates.push(item.hidden ? 1 : 0);
+      clonedItem = Data.applyModifiers(this.items[i]);
+      for (var j = 0, jl = clonedItem.numVertices; j < jl; j++) {
+        allColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
+        hiddenStates.push(clonedItem.hidden ? 1 : 0);
       }
     }
 

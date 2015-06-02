@@ -38,6 +38,5 @@ var Vector = {
   direction: function(a, b) {
     var v = Vector.sub(a, b);
     return v;
-    return Vector.unit(v);
   }
 };

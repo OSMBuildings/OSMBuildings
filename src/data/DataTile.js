@@ -43,7 +43,7 @@ DataTile.prototype = {
     this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
     this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
-    this.modify(Data.modifier);
+    this.modify();
 
     geojson = null;
     itemList = null;
@@ -54,20 +54,19 @@ DataTile.prototype = {
     this.isReady = true;
   },
 
-  modify: function(callback) {
+  modify: function() {
     if (!this.items) {
       return;
     }
 
     var allColors = [];
     var hiddenStates = [];
-    var item;
+    var clonedItem;
     for (var i = 0, il = this.items.length; i < il; i++) {
-      item = this.items[i];
-      callback(item);
-      for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        allColors.push(item.color.r, item.color.g, item.color.b);
-        hiddenStates.push(item.hidden ? 1 : 0);
+      clonedItem = Data.applyModifiers(this.items[i]);
+      for (var j = 0, jl = clonedItem.numVertices; j < jl; j++) {
+        allColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
+        hiddenStates.push(clonedItem.hidden ? 1 : 0);
       }
     }
 

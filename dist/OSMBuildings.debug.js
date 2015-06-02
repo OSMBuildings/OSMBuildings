@@ -902,8 +902,13 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  modify: function(fn) {
-    Data.modify(fn);
+  addModifier: function(fn) {
+    Data.addModifier(fn);
+    return this;
+  },
+
+  removeModifier: function(fn) {
+    Data.removeModifier(fn);
     return this;
   },
 
@@ -1020,7 +1025,43 @@ var Map = {};
       minY: center.y - halfHeight,
       maxX: center.x + halfWidth
     };
+
+    //updateBounds3D();
   }
+
+  //function updateBounds3D() {
+  //  // https://github.com/mattdesl/ray-plane-intersection/
+  //  // https://www.cs.uaf.edu/2012/spring/cs481/section/0/lecture/01_26_ray_intersections.html
+  //
+  //  var CAM_X = Scene.width/2;
+  //  var CAM_Y = Scene.height/2;
+  //  var CAM_Z = 500;
+  //
+  //  var origin = [CAM_X, CAM_Y, CAM_Z];
+  //
+  //  // TODO
+  //  //var at = transform(a);
+  //  //var bt = transform(b);
+  //  //var ct = transform(c);
+  //  var at = [0, 0, -10];
+  //  var bt = [Scene.width, 0, -10];
+  //  var ct = [Scene.width, Scene.height, -10];
+  //  var dt = [0, Scene.height, -10];
+  //
+  //  var normal = Plane.normal(at, bt, ct);
+  //  var distance = Plane.distance(normal, dt);
+  //
+  //  console.log(get3DCorner(0, 0, origin, normal, distance));
+  //  console.log(get3DCorner(Scene.width, 0, origin, normal, distance));
+  //  console.log(get3DCorner(Scene.width, Scene.height, origin, normal, distance));
+  //  console.log(get3DCorner(0, Scene.height, origin, normal, distance));
+  //}
+  //
+  //function get3DCorner(x, y, origin, normal, distance) {
+  //  var point = [x, y, 0];
+  //  var direction = Vector.direction(origin, point);
+  //  return Plane.intersection(origin, direction, normal, distance);
+  //}
 
   //***************************************************************************
 
@@ -1361,8 +1402,8 @@ var State = {};
 
     var params = [];
     var position = map.getPosition();
-    params.push('latitude=' + position.latitude.toFixed(5));
-    params.push('longitude=' + position.longitude.toFixed(5));
+    params.push('lat=' + position.latitude.toFixed(5));
+    params.push('lon=' + position.longitude.toFixed(5));
     params.push('zoom=' + map.zoom.toFixed(1));
     params.push('tilt=' + map.tilt.toFixed(1));
     params.push('rotation=' + map.rotation.toFixed(1));
@@ -1379,8 +1420,8 @@ var State = {};
         }
       });
 
-      if (state.latitude !== undefined && state.longitude !== undefined) {
-        options.position = { latitude:parseFloat(state.latitude), longitude:parseFloat(state.longitude) };
+      if (state.lat !== undefined && state.lon !== undefined) {
+        options.position = { latitude:parseFloat(state.lat), longitude:parseFloat(state.lon) };
       }
       if (state.zoom !== undefined) {
         options.zoom = parseFloat(state.zoom);
@@ -2010,7 +2051,7 @@ DataTile.prototype = {
     this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
     this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
-    this.modify(Data.modifier);
+    this.modify();
 
     geojson = null;
     itemList = null;
@@ -2021,20 +2062,19 @@ DataTile.prototype = {
     this.isReady = true;
   },
 
-  modify: function(callback) {
+  modify: function() {
     if (!this.items) {
       return;
     }
 
     var allColors = [];
     var hiddenStates = [];
-    var item;
+    var clonedItem;
     for (var i = 0, il = this.items.length; i < il; i++) {
-      item = this.items[i];
-      callback(item);
-      for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        allColors.push(item.color.r, item.color.g, item.color.b);
-        hiddenStates.push(item.hidden ? 1 : 0);
+      clonedItem = Data.applyModifiers(this.items[i]);
+      for (var j = 0, jl = clonedItem.numVertices; j < jl; j++) {
+        allColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
+        hiddenStates.push(clonedItem.hidden ? 1 : 0);
       }
     }
 
@@ -2286,7 +2326,7 @@ MapTile.prototype = {
 var Data = {
 
   items: [],
-  modifier: function() {},
+  modifiers: [],
 
   add: function(item) {
     this.items.push(item);
@@ -2305,15 +2345,40 @@ var Data = {
   destroy: function() {
     this.items = null;
   },
-  
-  modify: function(fn) {
-    this.modifier = fn;
-    var dataItems = this.items;
-    for (var i = 0, il = dataItems.length; i < il; i++) {
-      dataItems[i].modify(fn);
-    }
-  }
 
+  addModifier: function(fn) {
+    this.modifiers.push(fn);
+    this.triggerModification();
+//  Events.emit('modify');
+  },
+
+  removeModifier: function(fn) {
+    for (var i = 0; i < this.modifiers.length; i++) {
+      if (this.modifiers[i] === fn) {
+        this.modifiers.splice(i, 1);
+        break;
+      }
+    }
+    this.triggerModification();
+//  Events.emit('modify');
+  },
+
+  triggerModification: function(fn) {
+    var items = this.items;
+    for (var i = 0, il = items.length; i < il; i++) {
+      items[i].modify();
+//    Events.on('modify', modify...);
+    }
+  },
+
+  applyModifiers: function(item) {
+    var clonedItem = Object.create(item);
+    var modifiers = this.modifiers;
+    for (var i = 0, il = modifiers.length, j, jl; i < il; i++) {
+      modifiers[i](clonedItem);
+    }
+    return clonedItem;
+  }
 };
 
 
@@ -2326,8 +2391,8 @@ var Mesh = function(url, properties) {
   this.rotation  = this.properties.rotation  || 0;
   this.elevation = this.properties.elevation || 0;
 
-  var replaces =  this.properties.replaces  || [];
-  Data.modify(function(item) {
+  var replaces = this.properties.replaces  || [];
+  Data.addModifier(function(item) {
     if (replaces.indexOf(item.id) >= 0) {
       item.hidden = true;
     }
@@ -2388,7 +2453,7 @@ var Mesh = function(url, properties) {
     this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
     this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
 
-    this.modify(Data.modifier);
+    this.modify();
 
     itemList = null;
     allVertices = null;
@@ -2424,20 +2489,19 @@ var Mesh = function(url, properties) {
     return matrix;
   };
 
-  Mesh.prototype.modify = function(callback) {
+  Mesh.prototype.modify = function() {
     if (!this.items) {
       return;
     }
 
     var allColors = [];
     var hiddenStates = [];
-    var item;
+    var clonedItem;
     for (var i = 0, il = this.items.length; i < il; i++) {
-      item = this.items[i];
-      callback(item);
-      for (var j = 0, jl = item.numVertices; j < jl; j++) {
-        allColors.push(item.color.r, item.color.g, item.color.b);
-        hiddenStates.push(item.hidden ? 1 : 0);
+      clonedItem = Data.applyModifiers(this.items[i]);
+      for (var j = 0, jl = clonedItem.numVertices; j < jl; j++) {
+        allColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
+        hiddenStates.push(clonedItem.hidden ? 1 : 0);
       }
     }
 
@@ -3017,6 +3081,314 @@ function rotatePoint(x, y, angle) {
 }
 
 
+var Matrix = {
+
+  create: function() {
+    return [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    ];
+  },
+
+  multiply: function(a, b) {
+    var
+      a00 = a[0],
+      a01 = a[1],
+      a02 = a[2],
+      a03 = a[3],
+      a10 = a[4],
+      a11 = a[5],
+      a12 = a[6],
+      a13 = a[7],
+      a20 = a[8],
+      a21 = a[9],
+      a22 = a[10],
+      a23 = a[11],
+      a30 = a[12],
+      a31 = a[13],
+      a32 = a[14],
+      a33 = a[15],
+
+      b00 = b[0],
+      b01 = b[1],
+      b02 = b[2],
+      b03 = b[3],
+      b10 = b[4],
+      b11 = b[5],
+      b12 = b[6],
+      b13 = b[7],
+      b20 = b[8],
+      b21 = b[9],
+      b22 = b[10],
+      b23 = b[11],
+      b30 = b[12],
+      b31 = b[13],
+      b32 = b[14],
+      b33 = b[15]
+    ;
+
+    return [
+      a00*b00 + a01*b10 + a02*b20 + a03*b30,
+      a00*b01 + a01*b11 + a02*b21 + a03*b31,
+      a00*b02 + a01*b12 + a02*b22 + a03*b32,
+      a00*b03 + a01*b13 + a02*b23 + a03*b33,
+
+      a10*b00 + a11*b10 + a12*b20 + a13*b30,
+      a10*b01 + a11*b11 + a12*b21 + a13*b31,
+      a10*b02 + a11*b12 + a12*b22 + a13*b32,
+      a10*b03 + a11*b13 + a12*b23 + a13*b33,
+
+      a20*b00 + a21*b10 + a22*b20 + a23*b30,
+      a20*b01 + a21*b11 + a22*b21 + a23*b31,
+      a20*b02 + a21*b12 + a22*b22 + a23*b32,
+      a20*b03 + a21*b13 + a22*b23 + a23*b33,
+
+      a30*b00 + a31*b10 + a32*b20 + a33*b30,
+      a30*b01 + a31*b11 + a32*b21 + a33*b31,
+      a30*b02 + a31*b12 + a32*b22 + a33*b32,
+      a30*b03 + a31*b13 + a32*b23 + a33*b33
+    ];
+  },
+
+  perspective: function(f, width, height, depth) {
+//  var f = Math.tan((Math.PI-rad(fov))/2);
+    return [
+      2/width, 0,         0,        0,
+      0,      -2/height,  0,        0,
+      0,       40/depth,  -2/depth, f * (-2/depth),
+      -1,      1,         0,        1
+    ];
+  },
+
+  ortho: function(width, height, depth) {
+    return this.perspective(1, width, height, depth);
+  },
+
+  translate: function(matrix, x, y, z) {
+    return this.multiply(matrix, [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      x, y, z, 1
+    ]);
+  },
+
+  rotateX: function(matrix, angle) {
+    var a = rad(angle);
+    var c = Math.cos(a);
+    var s = Math.sin(a);
+    return this.multiply(matrix, [
+      1,  0, 0, 0,
+      0,  c, s, 0,
+      0, -s, c, 0,
+      0,  0, 0, 1
+    ]);
+  },
+
+  rotateY: function(matrix, angle) {
+    var a = rad(angle);
+    var c = Math.cos(a);
+    var s = Math.sin(a);
+    return this.multiply(matrix, [
+      c, 0, -s, 0,
+      0, 1,  0, 0,
+      s, 0,  c, 0,
+      0, 0,  0, 1
+    ]);
+  },
+
+  rotateZ: function(matrix, angle) {
+    var a = rad(angle);
+    var c = Math.cos(a);
+    var s = Math.sin(a);
+    return this.multiply(matrix, [
+      c, -s, 0, 0,
+      s, c, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    ]);
+  },
+
+  scale: function(matrix, x, y, z) {
+    return this.multiply(matrix, [
+      x, 0, 0, 0,
+      0, y, 0, 0,
+      0, 0, z, 0,
+      0, 0, 0, 1
+    ]);
+  },
+
+  invert: function(a) {
+    var
+      a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
+      a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
+      a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11],
+      a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15],
+
+      b00 = a00 * a11 - a01 * a10,
+      b01 = a00 * a12 - a02 * a10,
+      b02 = a00 * a13 - a03 * a10,
+      b03 = a01 * a12 - a02 * a11,
+      b04 = a01 * a13 - a03 * a11,
+      b05 = a02 * a13 - a03 * a12,
+      b06 = a20 * a31 - a21 * a30,
+      b07 = a20 * a32 - a22 * a30,
+      b08 = a20 * a33 - a23 * a30,
+      b09 = a21 * a32 - a22 * a31,
+      b10 = a21 * a33 - a23 * a31,
+      b11 = a22 * a33 - a23 * a32,
+
+      det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+    if (!det) {
+      return null;
+    }
+
+    det = 1.0/det;
+
+    return [
+      (a11 * b11 - a12 * b10 + a13 * b09) * det,
+      (a02 * b10 - a01 * b11 - a03 * b09) * det,
+      (a31 * b05 - a32 * b04 + a33 * b03) * det,
+      (a22 * b04 - a21 * b05 - a23 * b03) * det,
+      (a12 * b08 - a10 * b11 - a13 * b07) * det,
+      (a00 * b11 - a02 * b08 + a03 * b07) * det,
+      (a32 * b02 - a30 * b05 - a33 * b01) * det,
+      (a20 * b05 - a22 * b02 + a23 * b01) * det,
+      (a10 * b10 - a11 * b08 + a13 * b06) * det,
+      (a01 * b08 - a00 * b10 - a03 * b06) * det,
+      (a30 * b04 - a31 * b02 + a33 * b00) * det,
+      (a21 * b02 - a20 * b04 - a23 * b00) * det,
+      (a11 * b07 - a10 * b09 - a12 * b06) * det,
+      (a00 * b09 - a01 * b07 + a02 * b06) * det,
+      (a31 * b01 - a30 * b03 - a32 * b00) * det,
+      (a20 * b03 - a21 * b01 + a22 * b00) * det
+    ];
+  },
+
+  invert3: function(a) {
+    var
+      a00 = a[0], a01 = a[1], a02 = a[2],
+      a04 = a[4], a05 = a[5], a06 = a[6],
+      a08 = a[8], a09 = a[9], a10 = a[10],
+
+      l =  a10 * a05 - a06 * a09,
+      o = -a10 * a04 + a06 * a08,
+      m =  a09 * a04 - a05 * a08,
+
+      det = a00*l + a01*o + a02*m;
+
+    if (!det) {
+      return null;
+    }
+
+    det = 1.0/det;
+
+    return [
+      l                    * det,
+      (-a10*a01 + a02*a09) * det,
+      ( a06*a01 - a02*a05) * det,
+      o                    * det,
+      ( a10*a00 - a02*a08) * det,
+      (-a06*a00 + a02*a04) * det,
+      m                    * det,
+      (-a09*a00 + a01*a08) * det,
+      ( a05*a00 - a01*a04) * det
+    ];
+  },
+
+  transpose: function(a) {
+    return [
+      a[0],
+      a[3],
+      a[6],
+      a[1],
+      a[4],
+      a[7],
+      a[2],
+      a[5],
+      a[8]
+    ];
+  }
+};
+
+
+var Vector = {
+  dot: function(a, b) {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  },
+
+  cross: function(a, b) {
+    return Vector.direction(
+      [ a[1]*b[2], a[2]*b[0], a[0]*b[1] ],
+      [ a[2]*b[1], a[0]*b[2], a[1]*b[0] ]
+    );
+  },
+
+  add: function(a, b) {
+    return [ a[0]+b[0], a[1]+b[1], a[2]+b[2] ];
+  },
+
+  sub: function(a, b) {
+    return [ a[0]-b[0], a[1]-b[1], a[2]-b[2] ];
+  },
+
+  scale: function(a, b) {
+    return [ a[0]*b, a[1]*b, a[2]*b ];
+  },
+
+  length: function(v) {
+    return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+  },
+
+  unit: function(v) {
+    var l = Vector.length(v);
+    if (l === 0) {
+      m = 0.00001;
+    }
+    return [v[0]/l, v[1]/l, v[2]/l];
+  },
+
+  direction: function(a, b) {
+    var v = Vector.sub(a, b);
+    return v;
+  }
+};
+
+
+var Plane = {
+  normal: function(a, b, c) {
+    var m = Vector.sub(a, b);
+    var n = Vector.sub(b, c);
+    return Vector.cross(m, n);
+  },
+
+  distance: function(normal, v) {
+    return -Vector.dot(normal, v);
+  },
+
+  intersection: function(origin, direction, normal, distance) {
+    var denom = Vector.dot(direction, normal);
+    if (denom !== 0) {
+      var t = (Vector.dot(origin, normal) + distance) / denom;
+      if (t < 0) {
+        return null;
+      }
+      var v0 = Vector.scale(direction, t);
+      return Vector.sub(origin, v0);
+    }
+
+    if (Vector.dot(origin, normal) + distance === 0) {
+      return origin;
+    }
+
+    return null;
+  }
+};
+
+
 var GL = {};
 
 GL.Buffer = function(itemSize, data) {
@@ -3254,16 +3626,28 @@ var Scene = {
     canvas.style.pointerEvents = 'none';
     container.appendChild(canvas);
 
+    var glOptions = {
+      antialias: true,
+      depth: true,
+      premultipliedAlpha: false
+    };
+
     try {
-      gl = canvas.getContext('experimental-webgl', {
-        antialias: true,
-        depth: true,
-        premultipliedAlpha: false
-      });
+      gl = canvas.getContext('webgl', glOptions);
     } catch(ex) {
       throw ex;
     }
- 
+
+    if (!gl) try {
+      gl = canvas.getContext('experimental-webgl', glOptions);
+    } catch(ex) {
+      throw ex;
+    }
+
+    if (!gl) {
+      throw new Error('WebGL not supported');
+    }
+
     var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
     Scene.backgroundColor = {
       r: color.r/255,
@@ -3329,240 +3713,6 @@ var Scene = {
     clearInterval(loop);
     gl.canvas.parentNode.removeChild(gl.canvas);
     gl = null;
-  }
-};
-
-
-var Matrix = {
-
-  create: function() {
-    return [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ];
-  },
-
-  multiply: function(a, b) {
-    var
-      a00 = a[0],
-      a01 = a[1],
-      a02 = a[2],
-      a03 = a[3],
-      a10 = a[4],
-      a11 = a[5],
-      a12 = a[6],
-      a13 = a[7],
-      a20 = a[8],
-      a21 = a[9],
-      a22 = a[10],
-      a23 = a[11],
-      a30 = a[12],
-      a31 = a[13],
-      a32 = a[14],
-      a33 = a[15],
-
-      b00 = b[0],
-      b01 = b[1],
-      b02 = b[2],
-      b03 = b[3],
-      b10 = b[4],
-      b11 = b[5],
-      b12 = b[6],
-      b13 = b[7],
-      b20 = b[8],
-      b21 = b[9],
-      b22 = b[10],
-      b23 = b[11],
-      b30 = b[12],
-      b31 = b[13],
-      b32 = b[14],
-      b33 = b[15]
-    ;
-
-    return [
-      a00*b00 + a01*b10 + a02*b20 + a03*b30,
-      a00*b01 + a01*b11 + a02*b21 + a03*b31,
-      a00*b02 + a01*b12 + a02*b22 + a03*b32,
-      a00*b03 + a01*b13 + a02*b23 + a03*b33,
-
-      a10*b00 + a11*b10 + a12*b20 + a13*b30,
-      a10*b01 + a11*b11 + a12*b21 + a13*b31,
-      a10*b02 + a11*b12 + a12*b22 + a13*b32,
-      a10*b03 + a11*b13 + a12*b23 + a13*b33,
-
-      a20*b00 + a21*b10 + a22*b20 + a23*b30,
-      a20*b01 + a21*b11 + a22*b21 + a23*b31,
-      a20*b02 + a21*b12 + a22*b22 + a23*b32,
-      a20*b03 + a21*b13 + a22*b23 + a23*b33,
-
-      a30*b00 + a31*b10 + a32*b20 + a33*b30,
-      a30*b01 + a31*b11 + a32*b21 + a33*b31,
-      a30*b02 + a31*b12 + a32*b22 + a33*b32,
-      a30*b03 + a31*b13 + a32*b23 + a33*b33
-    ];
-  },
-
-  perspective: function(f, width, height, depth) {
-//  var f = Math.tan((Math.PI-rad(fov))/2);
-    return [
-      2/width, 0,         0,        0,
-      0,      -2/height,  0,        0,
-      0,       40/depth,  -2/depth, f * (-2/depth),
-      -1,      1,         0,        1
-    ];
-  },
-
-  ortho: function(width, height, depth) {
-    return this.perspective(1, width, height, depth);
-  },
-
-  translate: function(matrix, x, y, z) {
-    return this.multiply(matrix, [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      x, y, z, 1
-    ]);
-  },
-
-  rotateX: function(matrix, angle) {
-    var a = rad(angle);
-    var c = Math.cos(a);
-    var s = Math.sin(a);
-    return this.multiply(matrix, [
-      1,  0, 0, 0,
-      0,  c, s, 0,
-      0, -s, c, 0,
-      0,  0, 0, 1
-    ]);
-  },
-
-  rotateY: function(matrix, angle) {
-    var a = rad(angle);
-    var c = Math.cos(a);
-    var s = Math.sin(a);
-    return this.multiply(matrix, [
-      c, 0, -s, 0,
-      0, 1,  0, 0,
-      s, 0,  c, 0,
-      0, 0,  0, 1
-    ]);
-  },
-
-  rotateZ: function(matrix, angle) {
-    var a = rad(angle);
-    var c = Math.cos(a);
-    var s = Math.sin(a);
-    return this.multiply(matrix, [
-      c, -s, 0, 0,
-      s, c, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ]);
-  },
-
-  scale: function(matrix, x, y, z) {
-    return this.multiply(matrix, [
-      x, 0, 0, 0,
-      0, y, 0, 0,
-      0, 0, z, 0,
-      0, 0, 0, 1
-    ]);
-  },
-
-  invert: function(a) {
-    var
-      a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
-      a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
-      a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11],
-      a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15],
-
-      b00 = a00 * a11 - a01 * a10,
-      b01 = a00 * a12 - a02 * a10,
-      b02 = a00 * a13 - a03 * a10,
-      b03 = a01 * a12 - a02 * a11,
-      b04 = a01 * a13 - a03 * a11,
-      b05 = a02 * a13 - a03 * a12,
-      b06 = a20 * a31 - a21 * a30,
-      b07 = a20 * a32 - a22 * a30,
-      b08 = a20 * a33 - a23 * a30,
-      b09 = a21 * a32 - a22 * a31,
-      b10 = a21 * a33 - a23 * a31,
-      b11 = a22 * a33 - a23 * a32,
-
-      det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-
-    if (!det) {
-      return null;
-    }
-
-    det = 1.0/det;
-
-    return [
-      (a11 * b11 - a12 * b10 + a13 * b09) * det,
-      (a02 * b10 - a01 * b11 - a03 * b09) * det,
-      (a31 * b05 - a32 * b04 + a33 * b03) * det,
-      (a22 * b04 - a21 * b05 - a23 * b03) * det,
-      (a12 * b08 - a10 * b11 - a13 * b07) * det,
-      (a00 * b11 - a02 * b08 + a03 * b07) * det,
-      (a32 * b02 - a30 * b05 - a33 * b01) * det,
-      (a20 * b05 - a22 * b02 + a23 * b01) * det,
-      (a10 * b10 - a11 * b08 + a13 * b06) * det,
-      (a01 * b08 - a00 * b10 - a03 * b06) * det,
-      (a30 * b04 - a31 * b02 + a33 * b00) * det,
-      (a21 * b02 - a20 * b04 - a23 * b00) * det,
-      (a11 * b07 - a10 * b09 - a12 * b06) * det,
-      (a00 * b09 - a01 * b07 + a02 * b06) * det,
-      (a31 * b01 - a30 * b03 - a32 * b00) * det,
-      (a20 * b03 - a21 * b01 + a22 * b00) * det
-    ];
-  },
-
-  invert3: function(a) {
-    var
-      a00 = a[0], a01 = a[1], a02 = a[2],
-      a04 = a[4], a05 = a[5], a06 = a[6],
-      a08 = a[8], a09 = a[9], a10 = a[10],
-
-      l =  a10 * a05 - a06 * a09,
-      o = -a10 * a04 + a06 * a08,
-      m =  a09 * a04 - a05 * a08,
-
-      det = a00*l + a01*o + a02*m;
-
-    if (!det) {
-      return null;
-    }
-
-    det = 1.0/det;
-
-    return [
-      l                    * det,
-      (-a10*a01 + a02*a09) * det,
-      ( a06*a01 - a02*a05) * det,
-      o                    * det,
-      ( a10*a00 - a02*a08) * det,
-      (-a06*a00 + a02*a04) * det,
-      m                    * det,
-      (-a09*a00 + a01*a08) * det,
-      ( a05*a00 - a01*a04) * det
-    ];
-  },
-
-  transpose: function(a) {
-    return [
-      a[0],
-      a[3],
-      a[6],
-      a[1],
-      a[4],
-      a[7],
-      a[2],
-      a[5],
-      a[8]
-    ];
   }
 };
 

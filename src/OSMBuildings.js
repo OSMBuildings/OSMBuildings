@@ -38,8 +38,13 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  modify: function(fn) {
-    Data.modify(fn);
+  addModifier: function(fn) {
+    Data.addModifier(fn);
+    return this;
+  },
+
+  removeModifier: function(fn) {
+    Data.removeModifier(fn);
     return this;
   },
 

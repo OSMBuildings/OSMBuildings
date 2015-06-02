@@ -2,7 +2,7 @@
 var Data = {
 
   items: [],
-  modifier: function() {},
+  modifiers: [],
 
   add: function(item) {
     this.items.push(item);
@@ -21,13 +21,38 @@ var Data = {
   destroy: function() {
     this.items = null;
   },
-  
-  modify: function(fn) {
-    this.modifier = fn;
-    var dataItems = this.items;
-    for (var i = 0, il = dataItems.length; i < il; i++) {
-      dataItems[i].modify(fn);
-    }
-  }
 
+  addModifier: function(fn) {
+    this.modifiers.push(fn);
+    this.triggerModification();
+//  Events.emit('modify');
+  },
+
+  removeModifier: function(fn) {
+    for (var i = 0; i < this.modifiers.length; i++) {
+      if (this.modifiers[i] === fn) {
+        this.modifiers.splice(i, 1);
+        break;
+      }
+    }
+    this.triggerModification();
+//  Events.emit('modify');
+  },
+
+  triggerModification: function(fn) {
+    var items = this.items;
+    for (var i = 0, il = items.length; i < il; i++) {
+      items[i].modify();
+//    Events.on('modify', modify...);
+    }
+  },
+
+  applyModifiers: function(item) {
+    var clonedItem = Object.create(item);
+    var modifiers = this.modifiers;
+    for (var i = 0, il = modifiers.length, j, jl; i < il; i++) {
+      modifiers[i](clonedItem);
+    }
+    return clonedItem;
+  }
 };

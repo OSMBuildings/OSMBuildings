@@ -15,42 +15,42 @@ var Map = {};
       maxX: center.x + halfWidth
     };
 
-    updateBounds3D();
+    //updateBounds3D();
   }
 
-  function updateBounds3D() {
-    // https://github.com/mattdesl/ray-plane-intersection/
-    // https://www.cs.uaf.edu/2012/spring/cs481/section/0/lecture/01_26_ray_intersections.html
-
-    var CAM_X = Scene.width/2;
-    var CAM_Y = Scene.height/2;
-    var CAM_Z = 500;
-
-    var origin = [CAM_X, CAM_Y, CAM_Z];
-
-    // TODO
-    //var at = transform(a);
-    //var bt = transform(b);
-    //var ct = transform(c);
-    var at = [0, 0, -10];
-    var bt = [Scene.width, 0, -10];
-    var ct = [Scene.width, Scene.height, -10];
-    var dt = [0, Scene.height, -10];
-
-    var normal = Plane.normal(at, bt, ct);
-    var distance = Plane.distance(normal, dt);
-
-    console.log(get3DCorner(0, 0, origin, normal, distance));
-    console.log(get3DCorner(Scene.width, 0, origin, normal, distance));
-    console.log(get3DCorner(Scene.width, Scene.height, origin, normal, distance));
-    console.log(get3DCorner(0, Scene.height, origin, normal, distance));
-  }
-
-  function get3DCorner(x, y, origin, normal, distance) {
-    var point = [x, y, 0];
-    var direction = Vector.direction(origin, point);
-    return Plane.intersection(origin, direction, normal, distance);
-  }
+  //function updateBounds3D() {
+  //  // https://github.com/mattdesl/ray-plane-intersection/
+  //  // https://www.cs.uaf.edu/2012/spring/cs481/section/0/lecture/01_26_ray_intersections.html
+  //
+  //  var CAM_X = Scene.width/2;
+  //  var CAM_Y = Scene.height/2;
+  //  var CAM_Z = 500;
+  //
+  //  var origin = [CAM_X, CAM_Y, CAM_Z];
+  //
+  //  // TODO
+  //  //var at = transform(a);
+  //  //var bt = transform(b);
+  //  //var ct = transform(c);
+  //  var at = [0, 0, -10];
+  //  var bt = [Scene.width, 0, -10];
+  //  var ct = [Scene.width, Scene.height, -10];
+  //  var dt = [0, Scene.height, -10];
+  //
+  //  var normal = Plane.normal(at, bt, ct);
+  //  var distance = Plane.distance(normal, dt);
+  //
+  //  console.log(get3DCorner(0, 0, origin, normal, distance));
+  //  console.log(get3DCorner(Scene.width, 0, origin, normal, distance));
+  //  console.log(get3DCorner(Scene.width, Scene.height, origin, normal, distance));
+  //  console.log(get3DCorner(0, Scene.height, origin, normal, distance));
+  //}
+  //
+  //function get3DCorner(x, y, origin, normal, distance) {
+  //  var point = [x, y, 0];
+  //  var direction = Vector.direction(origin, point);
+  //  return Plane.intersection(origin, direction, normal, distance);
+  //}
 
   //***************************************************************************
 

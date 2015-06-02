@@ -13,16 +13,16 @@ var Scene = {
     canvas.style.pointerEvents = 'none';
     container.appendChild(canvas);
 
-    try {
-      gl = canvas.getContext('experimental-webgl', {
-        antialias: true,
-        depth: true,
-        premultipliedAlpha: false
-      });
-    } catch(ex) {
-      throw ex;
-    }
- 
+    var glOptions = {
+      antialias: true,
+      depth: true,
+      premultipliedAlpha: false
+    };
+
+    try { gl = canvas.getContext('webgl', glOptions); } catch(ex) {}
+    if (!gl) try { gl gl = canvas.getContext('experimental-webgl', glOptions); } catch(ex) {}
+    if (!gl) { throw new Error('WebGL not supported'); }
+
     var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
     Scene.backgroundColor = {
       r: color.r/255,
