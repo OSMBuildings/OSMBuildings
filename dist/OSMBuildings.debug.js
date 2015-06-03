@@ -1914,10 +1914,10 @@ var DataGrid = {};
 
     DataGrid.bounds = {
       zoom: zoom,
-      minX: mapBounds.minX*ratio <<0,
-      minY: mapBounds.minY*ratio <<0,
-      maxX: Math.ceil(mapBounds.maxX*ratio),
-      maxY: Math.ceil(mapBounds.maxY*ratio)
+      minX: (mapBounds.minX*ratio <<0) -2,
+      minY: (mapBounds.minY*ratio <<0) -2,
+      maxX: Math.ceil(mapBounds.maxX*ratio) +2,
+      maxY: Math.ceil(mapBounds.maxY*ratio) +2
     };
   }
 
@@ -2013,6 +2013,8 @@ var DataTile = function(tileX, tileY, zoom) {
   this.zoom = zoom;
 
   Data.add(this);
+
+  Events.on('modify', this.modify.bind(this));
 };
 
 DataTile.prototype = {
@@ -2165,12 +2167,18 @@ var TileGrid = {};
 
     TileGrid.bounds = {
       zoom: zoom,
-      minX: mapBounds.minX*ratio <<0,
-      minY: mapBounds.minY*ratio <<0,
-      maxX: Math.ceil(mapBounds.maxX*ratio),
-      maxY: Math.ceil(mapBounds.maxY*ratio)
+      minX: (mapBounds.minX*ratio <<0) -2,
+      minY: (mapBounds.minY*ratio <<0) -2,
+      maxX: Math.ceil(mapBounds.maxX*ratio) +2,
+      maxY: Math.ceil(mapBounds.maxY*ratio) +2
     };
+
+    // size: ceil(max/2) -> radius
+    // create bbox
+    // scan circle
+    // console.log(TileGrid.bounds.maxX-TileGrid.bounds.minX, TileGrid.bounds.maxY-TileGrid.bounds.minY);
   }
+
 
   function loadTiles() {
     var
@@ -2348,8 +2356,7 @@ var Data = {
 
   addModifier: function(fn) {
     this.modifiers.push(fn);
-    this.triggerModification();
-//  Events.emit('modify');
+    Events.emit('modify');
   },
 
   removeModifier: function(fn) {
@@ -2359,16 +2366,7 @@ var Data = {
         break;
       }
     }
-    this.triggerModification();
-//  Events.emit('modify');
-  },
-
-  triggerModification: function(fn) {
-    var items = this.items;
-    for (var i = 0, il = items.length; i < il; i++) {
-      items[i].modify();
-//    Events.on('modify', modify...);
-    }
+    Events.emit('modify');
   },
 
   applyModifiers: function(item) {
@@ -2405,6 +2403,8 @@ var Mesh = function(url, properties) {
   OBJ.load(url, this.onLoad.bind(this));
 
   Data.add(this);
+
+  Events.on('modify', this.modify.bind(this));
 };
 
 (function() {
@@ -3632,21 +3632,9 @@ var Scene = {
       premultipliedAlpha: false
     };
 
-    try {
-      gl = canvas.getContext('webgl', glOptions);
-    } catch(ex) {
-      throw ex;
-    }
-
-    if (!gl) try {
-      gl = canvas.getContext('experimental-webgl', glOptions);
-    } catch(ex) {
-      throw ex;
-    }
-
-    if (!gl) {
-      throw new Error('WebGL not supported');
-    }
+    try { gl = canvas.getContext('webgl', glOptions); } catch(ex) {}
+    if (!gl) try { gl = canvas.getContext('experimental-webgl', glOptions); } catch(ex) {}
+    if (!gl) { throw new Error('WebGL not supported'); }
 
     var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
     Scene.backgroundColor = {

@@ -34,10 +34,10 @@ var DataGrid = {};
 
     DataGrid.bounds = {
       zoom: zoom,
-      minX: mapBounds.minX*ratio <<0,
-      minY: mapBounds.minY*ratio <<0,
-      maxX: Math.ceil(mapBounds.maxX*ratio),
-      maxY: Math.ceil(mapBounds.maxY*ratio)
+      minX: (mapBounds.minX*ratio <<0) -2,
+      minY: (mapBounds.minY*ratio <<0) -2,
+      maxX: Math.ceil(mapBounds.maxX*ratio) +2,
+      maxY: Math.ceil(mapBounds.maxY*ratio) +2
     };
   }
 
