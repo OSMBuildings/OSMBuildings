@@ -1,21 +1,15 @@
 
 var Mesh = function(url, properties) {
-  this.properties = properties || {};
-  this.id = this.properties.id;
+  properties = properties || {};
+  this.id = properties.id;
 
-  this.position  = this.properties.position  || {};
-  this.scale     = this.properties.scale     || 1;
-  this.rotation  = this.properties.rotation  || 0;
-  this.elevation = this.properties.elevation || 0;
+  this.position  = properties.position  || {};
+  this.scale     = properties.scale     || 1;
+  this.rotation  = properties.rotation  || 0;
+  this.elevation = properties.elevation || 0;
 
-  var replaces = this.properties.replaces  || [];
-  Data.addModifier(function(item) {
-    if (replaces.indexOf(item.id) >= 0) {
-      item.hidden = true;
-    }
-  });
-
-  this.color = Color.parse(this.properties.color);
+  this.color = Color.parse(properties.color);
+  this.replaces = properties.replaces  || [];
 
   // TODO: implement OBJ.request.abort()
   this.request = { abort: function() {} };
@@ -67,6 +61,14 @@ var Mesh = function(url, properties) {
 
       this.items.push(item);
     }
+
+    // replace original models
+    var replaces = this.replaces || [];
+    Data.addModifier(function(item) {
+      if (replaces.indexOf(item.id) >= 0) {
+        item.hidden = true;
+      }
+    });
 
     this.vertexBuffer  = new GL.Buffer(3, new Float32Array(allVertices));
     this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
