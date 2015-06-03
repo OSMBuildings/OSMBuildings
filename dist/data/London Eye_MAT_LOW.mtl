@@ -1,0 +1,23 @@
+# Alias Wavefront MTL File Exported from SketchUp
+# with OBJexporter (c) 2010/2011 TIG
+# Made for 'London Eye_MAT_LOW.obj'
+
+newmtl Default_Material
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+
+newmtl auto
+Ka 0.000000 0.000000 0.000000
+Kd 0.639216 0.639216 0.639216
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+
+newmtl auto1
+Ka 0.000000 0.000000 0.000000
+Kd 0.215686 0.215686 0.215686
+Ks 0.000000 0.000000 0.000000
+d 1.000000
+
+#EOF

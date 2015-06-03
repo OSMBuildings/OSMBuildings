@@ -115,51 +115,80 @@
     tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     // dataSource: null, // null disables default OSM data,
     showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    backgroundColor: '#bbbbcc',
+    backgroundColor: '#bfb8b0',
     attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
-  var obj = map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54306, longitude:13.42796 }, scale:0.08, id:'Planetarium' } );
-  map.addMesh('data/Fernsehturm.obj', { position:{ latitude:52.52101, longitude:13.40889 }, id:'Fernsehturm' } );
-  positionOnMap(obj);
+  map.addMesh('data/Zeiss Planetarium_MAT_LOW.obj', { position:{ latitude:52.54366, longitude:13.42626 }, scale:0.08, rotation:100, id:'Planetarium',
+    replaces: [
+      163701873,
+      163701869,
+      163701870,
+      163701871,
+      163701872,
+      163701873,
+      163701874,
+      163701875,
+      163701876,
+      163701877,
+      329262981
+    ]});
+
+  map.addMesh('data/Fernsehturm_FULL.obj', { position:{ latitude:52.51921, longitude:13.40369 }, id:'Fernsehturm', scale:0.095,"elevation":8,"rotation":51,
+    replaces: [
+      4564300,
+      4065110,
+      304987177,
+      96880470,
+      326772329,
+      230818931,
+      96880477,
+      304987174,
+      304987173,
+      304987172,
+      304987176
+    ]});
+
+  map.addMesh('data/London Eye_MAT_LOW.obj', { position:{ latitude:51.50787, longitude:-0.12002 }, "elevation":-3, "rotation":97, id:'London Eye',
+    replaces: [
+      153273222,
+      204068874,
+      335716200,
+      335716199,
+      335716202,
+      153273223,
+      153273224
+    ]});
+
+  if (typeof obj !== 'undefined') positionOnMap(obj);
 
   function blend(a, b) {
     return (a*0.5 + b*0.5) <<0;
   };
 
-  // for building parts, selection is in fact a list of items
   var selectedItemId;
-  var selectedItemParts = [];
-
-  function unselectAllItemParts() {
-    for (var i = 0, il = selectedItemParts.length; i < il; i++) {
-      selectedItemParts[i].color = selectedItemParts[i].originalColor;
-    }
-    selectedItemParts = [];
-  }
-
-  function selectItemPart(item) {
-    selectedItemParts.push(item);
-    item.originalColor = item.color;
-    item.color = {
-      r:blend(240, item.color.r),
-      g:blend(128, item.color.g),
-      b:blend(  0, item.color.b)
-    };
-  }
+  var highlightItem;
 
   map.on('click', function(e) {
     if (e.target.id === selectedItemId) {
       return;
     }
 
-    unselectAllItemParts();
+    map.removeModifier(highlightItem);
 
-    map.modify(function(item) {
+    console.log('selected item id', e.target.id);
+
+    highlightItem = function(item) {
       if (item.id === e.target.id) {
-        selectItemPart(item);
+        item.color = {
+          r: blend(240, item.color.r),
+          g: blend(128, item.color.g),
+          b: blend(0, item.color.b)
+        };
       }
-    });
+    };
+
+    map.addModifier(highlightItem);
   });
 
   //***************************************************************************
