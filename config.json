@@ -10,7 +10,7 @@
       "uniforms": ["uMatrix"],
       "framebuffer": true
     },
-    "basemap": {
+    "textured": {
       "attributes": ["aPosition", "aTexCoord"],
       "uniforms": ["uMatrix", "uTileImage"]
     },
@@ -63,6 +63,7 @@
 
     "src/layers/Depth.js",
     "src/layers/Interaction.js",
+    "src/layers/SkyDome.js",
     "src/layers/Basemap.js",
     "src/layers/Buildings.js"
   ]

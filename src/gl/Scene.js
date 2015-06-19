@@ -24,7 +24,7 @@ var Scene = {
     if (!gl) { throw new Error('WebGL not supported'); }
 
     var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
-    Scene.backgroundColor = {
+    var backgroundColor = {
       r: color.r/255,
       g: color.g/255,
       b: color.b/255
@@ -48,6 +48,7 @@ var Scene = {
 
 //    Depth.initShader();
     Interaction.initShader();
+    SkyDome.initShader();
     Basemap.initShader();
     Buildings.initShader();
 
@@ -68,6 +69,11 @@ var Scene = {
 
 //      Depth.render(matrix);
         Interaction.render(matrix);
+
+        gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        SkyDome.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
       });

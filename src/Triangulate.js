@@ -158,7 +158,61 @@ var Triangulate = {};
     }
   };
 
-  Triangulate.dome = function(tris, center, radius, minHeight, height) {};
+  Triangulate.dome = function(tris, center, radius, minHeight, height) {
+    var
+      sin = Math.sin,
+      cos = Math.cos
+      PI = Math.PI,
+res = { vertices: [], texCoords: [] },
+      azimuth1, x1, y1,
+      azimuth2, x2, y2,
+      polar1,
+      polar2,
+      A, B, C, D,
+      tcLeft,
+      tcRight,
+      tcTop,
+      tcBottom,
+      tcs;
+
+    for (var i = 0, j; i < LON_SEGMENTS; i++) {
+      tcLeft = i/LON_SEGMENTS;
+      azimuth1 = tcLeft*2*PI; // convert to radiants [0...2*PI]
+      x1 = cos(azimuth1)*radius;
+      y1 = sin(azimuth1)*radius;
+
+      tcRight = (i+1)/LON_SEGMENTS;
+      azimuth2 = tcRight*2*PI;
+      x2 = cos(azimuth2)*radius;
+      y2 = sin(azimuth2)*radius;
+
+      for (j = 0; j < LAT_SEGMENTS; j++) {
+        polar1 = j*PI/(LAT_SEGMENTS*2); //convert to radiants in [0..1/2*PI]
+        polar2 = (j+1)*PI/(LAT_SEGMENTS*2);
+
+        A = [x1*cos(polar1), y1*cos(polar1), radius*sin(polar1)];
+        B = [x2*cos(polar1), y2*cos(polar1), radius*sin(polar1)];
+        C = [x2*cos(polar2), y2*cos(polar2), radius*sin(polar2)];
+        D = [x1*cos(polar2), y1*cos(polar2), radius*sin(polar2)];
+
+        res.vertices.push(A, B, C, A, C, D);
+
+        tcTop    = 1 - (j+1)/LAT_SEGMENTS;
+        tcBottom = 1 - j/LAT_SEGMENTS;
+
+        res.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
+
+        //Triangulate.addTriangle(
+        //  tris,
+        //  [polygon[i][0], polygon[i][1], minHeight],
+        //  [polygon[i + 1][0], polygon[i + 1][1], minHeight],
+        //  [center[0], center[1], height]
+        //);
+      }
+    }
+
+    return res;
+  };
 
   Triangulate.sphere = function(tris, center, radius, minHeight, height) {
     var theta, sinTheta, cosTheta;

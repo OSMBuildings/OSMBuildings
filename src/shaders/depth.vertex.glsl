@@ -1,5 +1,6 @@
-
+#ifdef GL_ES
 precision mediump float;
+#endif
 
 attribute vec4 aPosition;
 attribute float aHidden;

@@ -1606,7 +1606,7 @@ function nextPowerOf2(n) {
 }
 
 
-var SHADERS = {"interaction":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"\nprecision mediump float;\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragment":"\nprecision mediump float;\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"\nprecision mediump float;\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"\nprecision mediump float;\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragment":"\nprecision mediump float;\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"interaction":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -3637,13 +3637,6 @@ var Scene = {
     if (!gl) try { gl = canvas.getContext('experimental-webgl', glOptions); } catch(ex) {}
     if (!gl) { throw new Error('WebGL not supported'); }
 
-    var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
-    Scene.backgroundColor = {
-      r: color.r/255,
-      g: color.g/255,
-      b: color.b/255
-    };
-
     if (options.showBackfaces) {
       gl.disable(gl.CULL_FACE);
     } else {
@@ -3662,6 +3655,7 @@ var Scene = {
 
 //    Depth.initShader();
     Interaction.initShader();
+    SkyDome.initShader();
     Basemap.initShader();
     Buildings.initShader();
 
@@ -3682,6 +3676,7 @@ var Scene = {
 
 //      Depth.render(matrix);
         Interaction.render(matrix);
+        SkyDome.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
       });
@@ -3871,6 +3866,114 @@ var Interaction = {};
 }());
 
 
+var SkyDome = {};
+
+(function() {
+
+  var RADIUS = 5000;
+  var NUM_LON_UNITS = 20;
+  var NUM_LAT_UNITS = 10;
+
+  var shader;
+  var isReady = false;
+
+// indices = [];
+// lengths = [];
+  var vertices = [];
+  var texCoords = [];
+
+  var image = new Image();
+  var texture;
+
+  image.onload = function() {
+    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    if (maxTexSize<image.width) {
+      var maxTexPot = Math.round(Math.log(maxTexSize)/Math.log(2));
+      var canvas = document.createElement('canvas');
+      canvas.width = 1<<maxTexPot;
+      canvas.height = 1<<(maxTexPot - 2);
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      image = canvas;
+    }
+
+    texture = new GL.Texture({ image: image });
+    isReady = true;
+  };
+
+  image.src = 'skydome.jpg';
+
+
+  for (var i = 0; i<NUM_LON_UNITS; i++) {
+    var azimuth1 = i/NUM_LON_UNITS*2*Math.PI; // convert to radiants [0...2*PI]
+    var x1 = Math.cos(azimuth1)*SkyDome.RADIUS;
+    var y1 = Math.sin(azimuth1)*SkyDome.RADIUS;
+
+    var azimuth2 = (i + 1)/NUM_LON_UNITS*2*Math.PI;
+    var x2 = Math.cos(azimuth2)*SkyDome.RADIUS;
+    var y2 = Math.sin(azimuth2)*SkyDome.RADIUS;
+
+    for (var j = 0; j + 1<=NUM_LAT_UNITS; j++) {
+      //console.log(j, j+1, NUM_LAT_UNITS);
+      var polar1 = j*Math.PI/(2.0*NUM_LAT_UNITS); //convert to radiants in [0..1/2*PI]
+      var polar2 = (j + 1)*Math.PI/(2.0*NUM_LAT_UNITS);
+
+      //console.log(x1, y1, azimuth);
+      var A = [x1*Math.cos(polar1), y1*Math.cos(polar1), SkyDome.RADIUS*Math.sin(polar1)];
+      var B = [x2*Math.cos(polar1), y2*Math.cos(polar1), SkyDome.RADIUS*Math.sin(polar1)];
+      var C = [x2*Math.cos(polar2), y2*Math.cos(polar2), SkyDome.RADIUS*Math.sin(polar2)];
+      var D = [x1*Math.cos(polar2), y1*Math.cos(polar2), SkyDome.RADIUS*Math.sin(polar2)];
+
+      /*var D = [0,0, SkyDome.RADIUS];
+       var C = [0,0, SkyDome.RADIUS];*/
+
+      var verts = [].concat(A, B, C, A, C, D);
+      vertices.push.apply(vertices, verts);
+
+      var tc_left = i/NUM_LON_UNITS;
+      var tc_right = (i + 1)/NUM_LON_UNITS;
+      var tc_top = 1 - (j + 1)/NUM_LAT_UNITS;
+      var tc_bottom = 1 - j/NUM_LAT_UNITS;
+      //console.log("i: %s, left: %s, right: %s", i, tc_left, tc_right);
+      var tcs = [tc_left, tc_bottom, tc_right, tc_bottom, tc_right, tc_top, tc_left, tc_bottom, tc_right, tc_top, tc_left, tc_top];
+      texCoords.push.apply(texCoords, tcs);
+    }
+  }
+
+  var vertexBuffer = new GL.Buffer(3, new Float32Array(vertices));
+  var texCoordBuffer = new GL.Buffer(2, new Float32Array(texCoords));
+
+  SkyDome.initShader = function() {
+    shader = new Shader('basemap');
+  };
+
+  SkyDome.render = function(modelViewMatrix, projectionMatrix) {
+    if (!isReady) {
+      return;
+    }
+
+    shader.use();
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(mapMatrix));
+
+    item.vertexBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    item.texCoordBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    item.texture.enable(0);
+    gl.uniform1i(shader.uniforms.uTileImage, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+
+    shader.end();
+  };
+}());
+
+
 var Basemap = {};
 
 // TODO: try to use tiles from other zoom levels when some are missing
@@ -3886,13 +3989,9 @@ var Basemap = {};
   Basemap.render = function(mapMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      backgroundColor = Scene.backgroundColor,
       matrix;
 
     shader.use();
-
-    gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     for (var key in tiles) {
       item = tiles[key];

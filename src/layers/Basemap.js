@@ -8,19 +8,15 @@ var Basemap = {};
   var shader;
 
   Basemap.initShader = function() {
-    shader = new Shader('basemap');
+    shader = new Shader('textured');
   };
 
   Basemap.render = function(mapMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      backgroundColor = Scene.backgroundColor,
       matrix;
 
     shader.use();
-
-    gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     for (var key in tiles) {
       item = tiles[key];

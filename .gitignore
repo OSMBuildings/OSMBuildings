@@ -1,6 +1,6 @@
-node_modules/
-test/mp/
-test/data/
+node_modules
+test/mp
+test/data
 .DS_Store
-.idea/
+.idea
 dist/OSMBuildings.pack.js
