@@ -1606,7 +1606,7 @@ function nextPowerOf2(n) {
 }
 
 
-var SHADERS = {"interaction":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"basemap":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"interaction":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"textured":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -1633,7 +1633,7 @@ var Triangulate = {};
     return Math.round(n[2]*5000) === 0;
   }
 
-  Triangulate.rectangle = function(tris, a, b, c, d) {
+  Triangulate.quad = function(tris, a, b, c, d) {
     Triangulate.addTriangle(tris, a, b, c);
     Triangulate.addTriangle(tris, b, d, c);
   };
@@ -1679,7 +1679,7 @@ var Triangulate = {};
         ring[1]
       );
 
-      if (ringLength === 4) { // 4: a rectangle (2 triangles)
+      if (ringLength === 4) { // 4: a quad (2 triangles)
         this.addTriangle(
           tris,
           ring[0],
@@ -1768,7 +1768,59 @@ var Triangulate = {};
     }
   };
 
-  Triangulate.dome = function(tris, center, radius, minHeight, height) {};
+  Triangulate.dome = function(tris, center, radius, minHeight, height) {
+    var
+      sin = Math.sin,
+      cos = Math.cos,
+      PI = Math.PI,
+res = { vertices: [], texCoords: [] },
+      azimuth1, x1, y1,
+      azimuth2, x2, y2,
+      polar1,
+      polar2,
+      A, B, C, D,
+      tcLeft,
+      tcRight,
+      tcTop,
+      tcBottom,
+      tcs;
+
+    for (var i = 0, j; i < LON_SEGMENTS; i++) {
+      tcLeft = i/LON_SEGMENTS;
+      azimuth1 = tcLeft*2*PI; // convert to radiants [0...2*PI]
+      x1 = cos(azimuth1)*radius;
+      y1 = sin(azimuth1)*radius;
+
+      tcRight = (i+1)/LON_SEGMENTS;
+      azimuth2 = tcRight*2*PI;
+      x2 = cos(azimuth2)*radius;
+      y2 = sin(azimuth2)*radius;
+
+      for (j = 0; j < LAT_SEGMENTS; j++) {
+        polar1 = j*PI/(LAT_SEGMENTS*2); //convert to radiants in [0..1/2*PI]
+        polar2 = (j+1)*PI/(LAT_SEGMENTS*2);
+
+        A = [x1*cos(polar1), y1*cos(polar1), radius*sin(polar1)];
+        B = [x2*cos(polar1), y2*cos(polar1), radius*sin(polar1)];
+        C = [x2*cos(polar2), y2*cos(polar2), radius*sin(polar2)];
+        D = [x1*cos(polar2), y1*cos(polar2), radius*sin(polar2)];
+
+        res.vertices.push.apply(res.vertices, A);
+        res.vertices.push.apply(res.vertices, B);
+        res.vertices.push.apply(res.vertices, C);
+        res.vertices.push.apply(res.vertices, A);
+        res.vertices.push.apply(res.vertices, C);
+        res.vertices.push.apply(res.vertices, D);
+
+        tcTop    = 1 - (j+1)/LAT_SEGMENTS;
+        tcBottom = 1 - j/LAT_SEGMENTS;
+
+        res.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
+      }
+    }
+
+    return res;
+  };
 
   Triangulate.sphere = function(tris, center, radius, minHeight, height) {
     var theta, sinTheta, cosTheta;
@@ -1845,7 +1897,7 @@ var Triangulate = {};
         b = ring[r+1];
         z0 = minHeight;
         z1 = height;
-        Triangulate.rectangle(
+        Triangulate.quad(
           tris,
           [ a[0], a[1], z0 ],
           [ b[0], b[1], z0 ],
@@ -3637,6 +3689,13 @@ var Scene = {
     if (!gl) try { gl = canvas.getContext('experimental-webgl', glOptions); } catch(ex) {}
     if (!gl) { throw new Error('WebGL not supported'); }
 
+    var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
+    var backgroundColor = {
+      r: color.r/255,
+      g: color.g/255,
+      b: color.b/255
+    };
+
     if (options.showBackfaces) {
       gl.disable(gl.CULL_FACE);
     } else {
@@ -3676,6 +3735,10 @@ var Scene = {
 
 //      Depth.render(matrix);
         Interaction.render(matrix);
+
+        gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
         SkyDome.render(matrix);
         Basemap.render(matrix);
         Buildings.render(matrix);
@@ -3870,15 +3933,13 @@ var SkyDome = {};
 
 (function() {
 
-  var RADIUS = 5000;
+  var RADIUS = 100;
   var NUM_LON_UNITS = 20;
   var NUM_LAT_UNITS = 10;
 
   var shader;
   var isReady = false;
 
-// indices = [];
-// lengths = [];
   var vertices = [];
   var texCoords = [];
 
@@ -3903,51 +3964,17 @@ var SkyDome = {};
 
   image.src = 'skydome.jpg';
 
-
-  for (var i = 0; i<NUM_LON_UNITS; i++) {
-    var azimuth1 = i/NUM_LON_UNITS*2*Math.PI; // convert to radiants [0...2*PI]
-    var x1 = Math.cos(azimuth1)*SkyDome.RADIUS;
-    var y1 = Math.sin(azimuth1)*SkyDome.RADIUS;
-
-    var azimuth2 = (i + 1)/NUM_LON_UNITS*2*Math.PI;
-    var x2 = Math.cos(azimuth2)*SkyDome.RADIUS;
-    var y2 = Math.sin(azimuth2)*SkyDome.RADIUS;
-
-    for (var j = 0; j + 1<=NUM_LAT_UNITS; j++) {
-      //console.log(j, j+1, NUM_LAT_UNITS);
-      var polar1 = j*Math.PI/(2.0*NUM_LAT_UNITS); //convert to radiants in [0..1/2*PI]
-      var polar2 = (j + 1)*Math.PI/(2.0*NUM_LAT_UNITS);
-
-      //console.log(x1, y1, azimuth);
-      var A = [x1*Math.cos(polar1), y1*Math.cos(polar1), SkyDome.RADIUS*Math.sin(polar1)];
-      var B = [x2*Math.cos(polar1), y2*Math.cos(polar1), SkyDome.RADIUS*Math.sin(polar1)];
-      var C = [x2*Math.cos(polar2), y2*Math.cos(polar2), SkyDome.RADIUS*Math.sin(polar2)];
-      var D = [x1*Math.cos(polar2), y1*Math.cos(polar2), SkyDome.RADIUS*Math.sin(polar2)];
-
-      /*var D = [0,0, SkyDome.RADIUS];
-       var C = [0,0, SkyDome.RADIUS];*/
-
-      var verts = [].concat(A, B, C, A, C, D);
-      vertices.push.apply(vertices, verts);
-
-      var tc_left = i/NUM_LON_UNITS;
-      var tc_right = (i + 1)/NUM_LON_UNITS;
-      var tc_top = 1 - (j + 1)/NUM_LAT_UNITS;
-      var tc_bottom = 1 - j/NUM_LAT_UNITS;
-      //console.log("i: %s, left: %s, right: %s", i, tc_left, tc_right);
-      var tcs = [tc_left, tc_bottom, tc_right, tc_bottom, tc_right, tc_top, tc_left, tc_bottom, tc_right, tc_top, tc_left, tc_top];
-      texCoords.push.apply(texCoords, tcs);
-    }
-  }
-
-  var vertexBuffer = new GL.Buffer(3, new Float32Array(vertices));
-  var texCoordBuffer = new GL.Buffer(2, new Float32Array(texCoords));
+  var tris = Triangulate.dome({}, {}, RADIUS, 0, 0);
+  var vertexBuffer;
+  var texCoordBuffer;
 
   SkyDome.initShader = function() {
-    shader = new Shader('basemap');
+    shader = new Shader('textured');
+    vertexBuffer = new GL.Buffer(3, new Float32Array(tris.vertices));
+    texCoordBuffer = new GL.Buffer(2, new Float32Array(tris.texCoords));
   };
 
-  SkyDome.render = function(modelViewMatrix, projectionMatrix) {
+  SkyDome.render = function(mapMatrix) {
     if (!isReady) {
       return;
     }
@@ -3956,21 +3983,25 @@ var SkyDome = {};
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(mapMatrix));
+    var matrix = Matrix.multiply(Matrix.create(), mapMatrix);
 
-    item.vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    item.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
 
-    item.texture.enable(0);
+    vertexBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    texCoordBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aTexCoord, texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    texture.enable(0);
     gl.uniform1i(shader.uniforms.uTileImage, 0);
 
-    gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numItems);
 
     shader.end();
   };
+
 }());
 
 
@@ -3983,7 +4014,7 @@ var Basemap = {};
   var shader;
 
   Basemap.initShader = function() {
-    shader = new Shader('basemap');
+    shader = new Shader('textured');
   };
 
   Basemap.render = function(mapMatrix) {

@@ -23,7 +23,7 @@ var Triangulate = {};
     return Math.round(n[2]*5000) === 0;
   }
 
-  Triangulate.rectangle = function(tris, a, b, c, d) {
+  Triangulate.quad = function(tris, a, b, c, d) {
     Triangulate.addTriangle(tris, a, b, c);
     Triangulate.addTriangle(tris, b, d, c);
   };
@@ -69,7 +69,7 @@ var Triangulate = {};
         ring[1]
       );
 
-      if (ringLength === 4) { // 4: a rectangle (2 triangles)
+      if (ringLength === 4) { // 4: a quad (2 triangles)
         this.addTriangle(
           tris,
           ring[0],
@@ -161,7 +161,7 @@ var Triangulate = {};
   Triangulate.dome = function(tris, center, radius, minHeight, height) {
     var
       sin = Math.sin,
-      cos = Math.cos
+      cos = Math.cos,
       PI = Math.PI,
 res = { vertices: [], texCoords: [] },
       azimuth1, x1, y1,
@@ -195,19 +195,17 @@ res = { vertices: [], texCoords: [] },
         C = [x2*cos(polar2), y2*cos(polar2), radius*sin(polar2)];
         D = [x1*cos(polar2), y1*cos(polar2), radius*sin(polar2)];
 
-        res.vertices.push(A, B, C, A, C, D);
+        res.vertices.push.apply(res.vertices, A);
+        res.vertices.push.apply(res.vertices, B);
+        res.vertices.push.apply(res.vertices, C);
+        res.vertices.push.apply(res.vertices, A);
+        res.vertices.push.apply(res.vertices, C);
+        res.vertices.push.apply(res.vertices, D);
 
         tcTop    = 1 - (j+1)/LAT_SEGMENTS;
         tcBottom = 1 - j/LAT_SEGMENTS;
 
         res.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
-
-        //Triangulate.addTriangle(
-        //  tris,
-        //  [polygon[i][0], polygon[i][1], minHeight],
-        //  [polygon[i + 1][0], polygon[i + 1][1], minHeight],
-        //  [center[0], center[1], height]
-        //);
       }
     }
 
@@ -289,7 +287,7 @@ res = { vertices: [], texCoords: [] },
         b = ring[r+1];
         z0 = minHeight;
         z1 = height;
-        Triangulate.rectangle(
+        Triangulate.quad(
           tris,
           [ a[0], a[1], z0 ],
           [ b[0], b[1], z0 ],

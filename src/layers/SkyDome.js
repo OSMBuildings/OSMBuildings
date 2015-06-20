@@ -34,10 +34,7 @@ var SkyDome = {};
 
   image.src = 'skydome.jpg';
 
-  var tris = Tirangulate.dome({}, {}, RADIUS, 0, 0);
-  vertices.push.apply(vertices, verts);
-  texCoords.push.apply(texCoords, tcs);
-
+  var tris = Triangulate.dome({}, {}, RADIUS, 0, 0);
   var vertexBuffer;
   var texCoordBuffer;
 
