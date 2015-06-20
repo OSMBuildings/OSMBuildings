@@ -80,10 +80,6 @@ var Matrix = {
     ];
   },
 
-  ortho: function(width, height, depth) {
-    return this.perspective(1, width, height, depth);
-  },
-
   translate: function(matrix, x, y, z) {
     return this.multiply(matrix, [
       1, 0, 0, 0,

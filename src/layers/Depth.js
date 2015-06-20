@@ -9,14 +9,13 @@ var Depth = {};
     shader = new Shader('depth');
   };
 
-  Depth.render = function(mapMatrix) {
+  Depth.render = function(pMatrix) {
     shader.use();
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
-    var item, matrix;
+    var item, mMatrix;
 
     //*** Basemap ***
 
@@ -25,13 +24,11 @@ var Depth = {};
     //for (var key in tiles) {
     //  item = tiles[key];
     //
-    //  if (!(matrix = item.getMatrix())) {
+    //  if (!(mMatrix = item.getMatrix())) {
     //    continue;
     //  }
     //
-    //  matrix = Matrix.multiply(matrix, mapMatrix);
-    //
-    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
     //
     //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -51,13 +48,11 @@ var Depth = {};
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(matrix = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

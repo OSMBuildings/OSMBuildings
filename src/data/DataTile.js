@@ -87,11 +87,11 @@ DataTile.prototype = {
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
       mapCenter = Map.center,
-      matrix = Matrix.create();
+      mMatrix = Matrix.create();
 
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
-    return matrix;
+    mMatrix = Matrix.scale(mMatrix, ratio, ratio, ratio*0.65);
+    mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
+    return mMatrix;
   },
 
   isVisible: function(buffer) {

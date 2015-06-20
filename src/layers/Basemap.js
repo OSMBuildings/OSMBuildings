@@ -11,23 +11,21 @@ var Basemap = {};
     shader = new Shader('textured');
   };
 
-  Basemap.render = function(mapMatrix) {
+  Basemap.render = function(pMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      matrix;
+      mMatrix;
 
     shader.use();
 
     for (var key in tiles) {
       item = tiles[key];
 
-      if (!(matrix = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

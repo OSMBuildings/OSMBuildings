@@ -53,29 +53,31 @@ var Scene = {
     Buildings.initShader();
 
     loop = setInterval(function() {
+
+      var cMatrix = Matrix.create();
+      cMatrix = Matrix.translate(cMatrix, 0, 0, 1000);
+
       requestAnimationFrame(function() {
         // TODO: update this only when Map changed
-        var projection = Matrix.perspective(20, Scene.width, Scene.height, 40000);
-//      projectionOrtho = Matrix.ortho(Scene.width, Scene.height, 40000);
+        var perspective = Matrix.perspective(20, Scene.width, Scene.height, 40000);
 
-        // TODO: update this only when Map changed
-        var matrix = Matrix.create();
-        matrix = Matrix.rotateZ(matrix, Map.rotation);
-        matrix = Matrix.rotateX(matrix, Map.tilt);
-        matrix = Matrix.translate(matrix, Scene.width/2, Scene.height/2, 0);
-        matrix = Matrix.multiply(matrix, projection);
+        var pMatrix = Matrix.create();
+        pMatrix = Matrix.rotateZ(pMatrix, Map.rotation);
+        pMatrix = Matrix.rotateX(pMatrix, Map.tilt);
+        pMatrix = Matrix.translate(pMatrix, Scene.width/2, Scene.height/2, 0);
+        pMatrix = Matrix.multiply(pMatrix, perspective);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
-//      Depth.render(matrix);
-        Interaction.render(matrix);
+//      Depth.render(pMatrix);
+        Interaction.render(pMatrix);
 
         gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        SkyDome.render(matrix);
-        Basemap.render(matrix);
-        Buildings.render(matrix);
+        SkyDome.render(pMatrix);
+        Basemap.render(pMatrix);
+        Buildings.render(pMatrix);
       });
     }, 17);
   },

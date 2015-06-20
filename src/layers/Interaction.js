@@ -12,7 +12,7 @@ var Interaction = {};
     shader = new Shader('interaction');
   };
 
-  Interaction.render = function(mapMatrix) {
+  Interaction.render = function(pMatrix) {
     if (!callback) {
       return;
     }
@@ -30,18 +30,16 @@ var Interaction = {};
     var
       dataItems = Data.items,
       item,
-      matrix;
+      mMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(matrix = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

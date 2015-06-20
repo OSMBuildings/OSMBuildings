@@ -95,19 +95,19 @@ var Mesh = function(url, properties) {
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
       mapCenter = Map.center,
-      matrix = Matrix.create();
+      mMatrix = Matrix.create();
 
     // see http://wiki.openstreetmap.org/wiki/Zoom_levels
     // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
 
     if (this.elevation) {
-      matrix = Matrix.translate(matrix, 0, 0, this.elevation);
+      mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
     }
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
-    matrix = Matrix.rotateZ(matrix, -this.rotation);
-    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    mMatrix = Matrix.scale(mMatrix, ratio, ratio, ratio*0.85);
+    mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
+    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
-    return matrix;
+    return mMatrix;
   };
 
   Mesh.prototype.modify = function() {
