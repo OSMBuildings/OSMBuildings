@@ -27,7 +27,6 @@ var Shader = function(name) {
       this.framebuffer.setSize();
     }.bind(this));
   }
-
 };
 
 Shader.prototype = {
@@ -63,7 +62,7 @@ Shader.prototype = {
     gl.attachShader(this.id, shader);
   },
 
-  use: function() {
+  enable: function() {
     gl.useProgram(this.id);
 
     var i;
@@ -89,7 +88,7 @@ Shader.prototype = {
     return this;
   },
 
-  end: function() {
+  disable: function() {
     if (this.attributes) {
       for (var name in this.attributes) {
         gl.disableVertexAttribArray(this.attributes[name]);

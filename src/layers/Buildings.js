@@ -19,7 +19,7 @@ var Buildings = {};
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    shader.use();
+    shader.enable();
 
     // TODO: suncalc
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
@@ -59,7 +59,7 @@ var Buildings = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    shader.end();
+    shader.disable();
   };
 
 }());

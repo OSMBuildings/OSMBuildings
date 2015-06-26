@@ -10,7 +10,7 @@ var Depth = {};
   };
 
   Depth.render = function(pMatrix) {
-    shader.use();
+    shader.enable();
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -60,7 +60,7 @@ var Depth = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    shader.end();
+    shader.disable();
   };
 
 }());

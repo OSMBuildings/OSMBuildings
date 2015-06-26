@@ -868,6 +868,10 @@ var OSMBuildings = function(containerId, options) {
 
   var container = document.getElementById(containerId);
 
+  if (options.baseDir !== undefined) {
+    BASE_DIR = options.baseDir;
+  }
+
   Map.setState(options);
   Events.init(container);
   Scene.create(container, options);
@@ -1472,6 +1476,7 @@ var STYLE = {
 
 var document = global.document;
 
+var BASE_DIR = '';
 
 var Request = {};
 
@@ -2147,11 +2152,11 @@ DataTile.prototype = {
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
       mapCenter = Map.center,
-      matrix = Matrix.create();
+      mMatrix = Matrix.create();
 
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.65);
-    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
-    return matrix;
+    mMatrix = Matrix.scale(mMatrix, ratio, ratio, ratio*0.65);
+    mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
+    return mMatrix;
   },
 
   isVisible: function(buffer) {
@@ -2321,37 +2326,31 @@ var MapTile = function(tileX, tileY, zoom) {
   this.tileX = tileX;
   this.tileY = tileY;
   this.zoom = zoom;
+
+  this.vertexBuffer   = new GL.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+  this.texCoordBuffer = new GL.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+  this.texture = new GL.Texture();
 };
 
 MapTile.prototype = {
 
   load: function(url) {
-    var img = this.image = new Image();
-    img.crossOrigin = '*';
-    img.onload = this.onLoad.bind(this);
-    img.src = url;
-  },
-
-  onLoad: function() {
-    this.vertexBuffer   = new GL.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-    this.texCoordBuffer = new GL.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
-    this.texture = new GL.Texture({ image:this.image });
-    this.isReady = true;
+    this.texture.load(url);
   },
 
   getMatrix: function() {
-    if (!this.isReady || !this.isVisible()) {
+    if (!this.texture.isLoaded || !this.isVisible()) {
       return;
     }
 
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
       mapCenter = Map.center,
-      matrix = Matrix.create();
+      mMatrix = Matrix.create();
 
-    matrix = Matrix.scale(matrix, ratio * 1.005, ratio * 1.005, 1);
-    matrix = Matrix.translate(matrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
-    return matrix;
+    mMatrix = Matrix.scale(mMatrix, ratio * 1.005, ratio * 1.005, 1);
+    mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
+    return mMatrix;
   },
 
   isVisible: function(buffer) {
@@ -2367,17 +2366,9 @@ MapTile.prototype = {
   },
 
   destroy: function() {
-    if (this.isReady) {
-      this.vertexBuffer.destroy();
-      this.texCoordBuffer.destroy();
-      this.texture.destroy();
-    }
-
-    this.image.src = '';
-
-    if (this.texture) {
-      this.texture.destroy();
-    }
+    this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+    this.texture.destroy();
   }
 };
 
@@ -2527,19 +2518,19 @@ var Mesh = function(url, properties) {
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
       mapCenter = Map.center,
-      matrix = Matrix.create();
+      mMatrix = Matrix.create();
 
     // see http://wiki.openstreetmap.org/wiki/Zoom_levels
     // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
 
     if (this.elevation) {
-      matrix = Matrix.translate(matrix, 0, 0, this.elevation);
+      mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
     }
-    matrix = Matrix.scale(matrix, ratio, ratio, ratio*0.85);
-    matrix = Matrix.rotateZ(matrix, -this.rotation);
-    matrix = Matrix.translate(matrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    mMatrix = Matrix.scale(mMatrix, ratio, ratio, ratio*0.85);
+    mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
+    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
-    return matrix;
+    return mMatrix;
   };
 
   Mesh.prototype.modify = function() {
@@ -2965,7 +2956,7 @@ var OBJ = {};
         vertices: geometry.vertices,
         normals: geometry.normals
       });
-    } 
+    }
   }
 
   function createGeometry(allVertices, faces) {
@@ -2989,13 +2980,13 @@ var OBJ = {};
   		nor[0] /= len;
       nor[1] /= len;
       nor[2] /= len;
-      
+
   		geometry.vertices.push(
         v0[0], v0[2], v0[1],
         v1[0], v1[2], v1[1],
         v2[0], v2[2], v2[1]
       );
-  
+
   		geometry.normals.push(
         nor[0], nor[1], nor[2],
         nor[0], nor[1], nor[2],
@@ -3008,26 +2999,34 @@ var OBJ = {};
 
   //***************************************************************************
 
-  OBJ.load = function(url, callback) {
+  OBJ.parse = function(objData, mtlData) {
     var allVertices = [];
+    var materials = mtlData ? parseMaterials(mtlData) : {};
+    return parseModel(objData, allVertices, materials);
+  };
 
-    Request.getText(url, function(modelStr) {
-      var mtlFile = modelStr.match(/^mtllib\s+(.*)$/m);
+  OBJ.load = function(url, callback) {
+    Request.getText(url, function(objData) {
+      var mtlFile = objData.match(/^mtllib\s+(.*)$/m);
       if (mtlFile) {
         var baseURL = url.replace(/[^\/]+$/, '');
-        Request.getText(baseURL + mtlFile[1], function(materialStr) {
-          callback(parseModel(modelStr, allVertices, parseMaterials(materialStr)));        
+        Request.getText(baseURL + mtlFile[1], function(mtlData) {
+          callback(OBJ.parse(objData, mtlData));
         });
-        return; 
+        return;
       }
-  
+
       setTimeout(function() {
-        callback(parseModel(modelStr, allVertices, {}));
+        callback(OBJ.parse(objData));
       }, 1);
     });
   };
 
 }());
+
+if (typeof module !== 'undefined') {
+  module.exports = OBJ;
+}
 
 
 function distance2(a, b) {
@@ -3213,10 +3212,6 @@ var Matrix = {
       0,       40/depth,  -2/depth, f * (-2/depth),
       -1,      1,         0,        1
     ];
-  },
-
-  ortho: function(width, height, depth) {
-    return this.perspective(1, width, height, depth);
   },
 
   translate: function(matrix, x, y, z) {
@@ -3523,7 +3518,7 @@ GL.Texture = function(options) {
   this.id = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, this.id);
 
-  if (!options.image) {
+  if (options.size) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, options.size, options.size, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -3534,26 +3529,69 @@ GL.Texture = function(options) {
 //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 //  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, options.image);
-    gl.generateMipmap(gl.TEXTURE_2D);
-
-    options.image = null;
+    if (options.image) {
+      this.setImage(options.image);
+    }
   }
 };
 
 GL.Texture.prototype = {
   enable: function(index) {
-    gl.activeTexture(gl.TEXTURE0 + (index || 0));
     gl.bindTexture(gl.TEXTURE_2D, this.id);
+    gl.activeTexture(gl.TEXTURE0 + (index || 0));
   },
 
   disable: function() {
-    gl.activeTexture(gl.TEXTURE0 + (index || 0));
     gl.bindTexture(gl.TEXTURE_2D, null);
   },
 
+  load: function(url, callback) {
+    var image = this.image = new Image();
+    image.crossOrigin = '*';
+    image.onload = function() {
+      // TODO: do this only once
+      var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      if (image.width > maxTexSize || image.height > maxTexSize) {
+        var w = maxTexSize, h = maxTexSize;
+        var ratio = image.width/image.height;
+        // TODO: if other dimension doesn't fit to POT after resize, there is still trouble
+        if (ratio < 1) {
+          w = Math.round(h*ratio);
+        } else {
+          h = Math.round(w/ratio);
+        }
+
+        var canvas = document.createElement('CANVAS');
+        canvas.width  = w;
+        canvas.height = h;
+
+        var context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        image = canvas;
+      }
+
+      this.setImage(image);
+      this.isLoaded = true;
+    }.bind(this);
+
+    image.src = url;
+  },
+
+  setImage: function(image) {
+    gl.bindTexture(gl.TEXTURE_2D, this.id);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    image = null;
+  },
+
   destroy: function() {
+    gl.bindTexture(gl.TEXTURE_2D, null);
     gl.deleteTexture(this.id);
+    if (this.image) {
+      this.isLoaded = null;
+      this.image.src = '';
+      this.image = null;
+    }
   }
 };
 
@@ -3586,7 +3624,6 @@ var Shader = function(name) {
       this.framebuffer.setSize();
     }.bind(this));
   }
-
 };
 
 Shader.prototype = {
@@ -3622,7 +3659,7 @@ Shader.prototype = {
     gl.attachShader(this.id, shader);
   },
 
-  use: function() {
+  enable: function() {
     gl.useProgram(this.id);
 
     var i;
@@ -3648,7 +3685,7 @@ Shader.prototype = {
     return this;
   },
 
-  end: function() {
+  disable: function() {
     if (this.attributes) {
       for (var name in this.attributes) {
         gl.disableVertexAttribArray(this.attributes[name]);
@@ -3719,29 +3756,31 @@ var Scene = {
     Buildings.initShader();
 
     loop = setInterval(function() {
+
+      var cMatrix = Matrix.create();
+      cMatrix = Matrix.translate(cMatrix, 0, 0, 1000);
+
       requestAnimationFrame(function() {
         // TODO: update this only when Map changed
-        var projection = Matrix.perspective(20, Scene.width, Scene.height, 40000);
-//      projectionOrtho = Matrix.ortho(Scene.width, Scene.height, 40000);
+        var perspective = Matrix.perspective(20, Scene.width, Scene.height, 40000);
 
-        // TODO: update this only when Map changed
-        var matrix = Matrix.create();
-        matrix = Matrix.rotateZ(matrix, Map.rotation);
-        matrix = Matrix.rotateX(matrix, Map.tilt);
-        matrix = Matrix.translate(matrix, Scene.width/2, Scene.height/2, 0);
-        matrix = Matrix.multiply(matrix, projection);
+        var pMatrix = Matrix.create();
+        pMatrix = Matrix.rotateZ(pMatrix, Map.rotation);
+        pMatrix = Matrix.rotateX(pMatrix, Map.tilt);
+        pMatrix = Matrix.translate(pMatrix, Scene.width/2, Scene.height/2, 0);
+        pMatrix = Matrix.multiply(pMatrix, perspective);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
-//      Depth.render(matrix);
-        Interaction.render(matrix);
+//      Depth.render(pMatrix);
+        Interaction.render(pMatrix);
 
         gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        SkyDome.render(matrix);
-        Basemap.render(matrix);
-        Buildings.render(matrix);
+        SkyDome.render(pMatrix);
+        Basemap.render(pMatrix);
+        Buildings.render(pMatrix);
       });
     }, 17);
   },
@@ -3774,14 +3813,13 @@ var Depth = {};
     shader = new Shader('depth');
   };
 
-  Depth.render = function(mapMatrix) {
-    shader.use();
+  Depth.render = function(pMatrix) {
+    shader.enable();
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
-    var item, matrix;
+    var item, mMatrix;
 
     //*** Basemap ***
 
@@ -3790,13 +3828,11 @@ var Depth = {};
     //for (var key in tiles) {
     //  item = tiles[key];
     //
-    //  if (!(matrix = item.getMatrix())) {
+    //  if (!(mMatrix = item.getMatrix())) {
     //    continue;
     //  }
     //
-    //  matrix = Matrix.multiply(matrix, mapMatrix);
-    //
-    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
     //
     //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -3816,13 +3852,11 @@ var Depth = {};
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(matrix = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -3830,7 +3864,7 @@ var Depth = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    shader.end();
+    shader.disable();
   };
 
 }());
@@ -3849,7 +3883,7 @@ var Interaction = {};
     shader = new Shader('interaction');
   };
 
-  Interaction.render = function(mapMatrix) {
+  Interaction.render = function(pMatrix) {
     if (!callback) {
       return;
     }
@@ -3859,7 +3893,7 @@ var Interaction = {};
       return;
     }
 
-    shader.use();
+    shader.enable();
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -3867,18 +3901,16 @@ var Interaction = {};
     var
       dataItems = Data.items,
       item,
-      matrix;
+      mMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(matrix = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -3898,7 +3930,7 @@ var Interaction = {};
     //  var imageData = new Uint8Array(Scene.width*Scene.height*4);
     //  gl.readPixels(0, 0, Scene.width, Scene.height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
     //}
-    shader.end();
+    shader.disable();
     callback(imageData);
   };
 
@@ -3933,60 +3965,39 @@ var SkyDome = {};
 
 (function() {
 
-  var RADIUS = 100;
+  var RADIUS = 1300;
   var NUM_LON_UNITS = 20;
   var NUM_LAT_UNITS = 10;
 
   var shader;
-  var isReady = false;
 
   var vertices = [];
   var texCoords = [];
 
-  var image = new Image();
-  var texture;
-
-  image.onload = function() {
-    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-    if (maxTexSize<image.width) {
-      var maxTexPot = Math.round(Math.log(maxTexSize)/Math.log(2));
-      var canvas = document.createElement('canvas');
-      canvas.width = 1<<maxTexPot;
-      canvas.height = 1<<(maxTexPot - 2);
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      image = canvas;
-    }
-
-    texture = new GL.Texture({ image: image });
-    isReady = true;
-  };
-
-  image.src = 'skydome.jpg';
-
   var tris = Triangulate.dome({}, {}, RADIUS, 0, 0);
+
   var vertexBuffer;
   var texCoordBuffer;
+  var texture;
 
   SkyDome.initShader = function() {
     shader = new Shader('textured');
     vertexBuffer = new GL.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new GL.Buffer(2, new Float32Array(tris.texCoords));
+    texture = new GL.Texture();
+    texture.load(BASE_DIR +'/assets/skydome.jpg');
   };
 
   SkyDome.render = function(mapMatrix) {
-    if (!isReady) {
+    if (!texture.isLoaded) {
       return;
     }
 
-    shader.use();
+    shader.enable();
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    var matrix = Matrix.multiply(Matrix.create(), mapMatrix);
-
-
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(mapMatrix));
 
     vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -3999,7 +4010,7 @@ var SkyDome = {};
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numItems);
 
-    shader.end();
+    shader.disable();
   };
 
 }());
@@ -4017,23 +4028,21 @@ var Basemap = {};
     shader = new Shader('textured');
   };
 
-  Basemap.render = function(mapMatrix) {
+  Basemap.render = function(pMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      matrix;
+      mMatrix;
 
-    shader.use();
+    shader.enable();
 
     for (var key in tiles) {
       item = tiles[key];
 
-      if (!(matrix = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -4047,7 +4056,7 @@ var Basemap = {};
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     }
 
-    shader.end();
+    shader.disable();
   };
 
 }());
@@ -4063,7 +4072,7 @@ var Buildings = {};
     shader = new Shader('buildings');
   };
 
-  Buildings.render = function(mapMatrix) {
+  Buildings.render = function(pMatrix) {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -4073,7 +4082,7 @@ var Buildings = {};
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
-    shader.use();
+    shader.enable();
 
     // TODO: suncalc
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
@@ -4087,18 +4096,16 @@ var Buildings = {};
     var
       dataItems = Data.items,
       item,
-      matrix;
+      mMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(matrix = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      matrix = Matrix.multiply(matrix, mapMatrix);
-
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(matrix));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -4115,7 +4122,7 @@ var Buildings = {};
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    shader.end();
+    shader.disable();
   };
 
 }());

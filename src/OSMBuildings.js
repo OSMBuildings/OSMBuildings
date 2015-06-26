@@ -4,6 +4,10 @@ var OSMBuildings = function(containerId, options) {
 
   var container = document.getElementById(containerId);
 
+  if (options.baseDir !== undefined) {
+    BASE_DIR = options.baseDir;
+  }
+
   Map.setState(options);
   Events.init(container);
   Scene.create(container, options);

@@ -16,7 +16,7 @@ var Basemap = {};
       tiles = TileGrid.getTiles(), item,
       mMatrix;
 
-    shader.use();
+    shader.enable();
 
     for (var key in tiles) {
       item = tiles[key];
@@ -39,7 +39,7 @@ var Basemap = {};
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     }
 
-    shader.end();
+    shader.disable();
   };
 
 }());

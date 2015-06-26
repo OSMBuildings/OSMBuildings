@@ -19,3 +19,5 @@ var STYLE = {
 };
 
 var document = global.document;
+
+var BASE_DIR = '';

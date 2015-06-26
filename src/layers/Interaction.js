@@ -22,7 +22,7 @@ var Interaction = {};
       return;
     }
 
-    shader.use();
+    shader.enable();
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -59,7 +59,7 @@ var Interaction = {};
     //  var imageData = new Uint8Array(Scene.width*Scene.height*4);
     //  gl.readPixels(0, 0, Scene.width, Scene.height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
     //}
-    shader.end();
+    shader.disable();
     callback(imageData);
   };
 

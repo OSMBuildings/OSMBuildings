@@ -92,7 +92,7 @@ var OBJ = {};
         vertices: geometry.vertices,
         normals: geometry.normals
       });
-    } 
+    }
   }
 
   function createGeometry(allVertices, faces) {
@@ -116,13 +116,13 @@ var OBJ = {};
   		nor[0] /= len;
       nor[1] /= len;
       nor[2] /= len;
-      
+
   		geometry.vertices.push(
         v0[0], v0[2], v0[1],
         v1[0], v1[2], v1[1],
         v2[0], v2[2], v2[1]
       );
-  
+
   		geometry.normals.push(
         nor[0], nor[1], nor[2],
         nor[0], nor[1], nor[2],
@@ -135,23 +135,31 @@ var OBJ = {};
 
   //***************************************************************************
 
-  OBJ.load = function(url, callback) {
+  OBJ.parse = function(objData, mtlData) {
     var allVertices = [];
+    var materials = mtlData ? parseMaterials(mtlData) : {};
+    return parseModel(objData, allVertices, materials);
+  };
 
-    Request.getText(url, function(modelStr) {
-      var mtlFile = modelStr.match(/^mtllib\s+(.*)$/m);
+  OBJ.load = function(url, callback) {
+    Request.getText(url, function(objData) {
+      var mtlFile = objData.match(/^mtllib\s+(.*)$/m);
       if (mtlFile) {
         var baseURL = url.replace(/[^\/]+$/, '');
-        Request.getText(baseURL + mtlFile[1], function(materialStr) {
-          callback(parseModel(modelStr, allVertices, parseMaterials(materialStr)));        
+        Request.getText(baseURL + mtlFile[1], function(mtlData) {
+          callback(OBJ.parse(objData, mtlData));
         });
-        return; 
+        return;
       }
-  
+
       setTimeout(function() {
-        callback(parseModel(modelStr, allVertices, {}));
+        callback(OBJ.parse(objData));
       }, 1);
     });
   };
 
 }());
+
+if (typeof module !== 'undefined') {
+  module.exports = OBJ;
+}
