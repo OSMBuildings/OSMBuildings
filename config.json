@@ -46,6 +46,7 @@
 
     "src/data/Data.js",
     "src/data/Mesh.js",
+    "src/data/GeoJSONMesh.js",
 
     "src/formats/GeoJSON.js",
     "src/formats/OBJ.js",

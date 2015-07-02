@@ -4,11 +4,11 @@ var Mesh = function(url, properties) {
   this.id = properties.id;
 
   this.position  = properties.position  || {};
-  this.scale     = properties.scale     || 1;
+  //this.scale     = properties.scale     || 1;
   this.rotation  = properties.rotation  || 0;
   this.elevation = properties.elevation || 0;
 
-  this.color = Color.parse(properties.color);
+  this.color = properties.color ? Color.parse(properties.color).toRGBA() : DEFAULT_COLOR;
   this.replaces = properties.replaces  || [];
 
   // TODO: implement OBJ.request.abort()
@@ -42,7 +42,7 @@ var Mesh = function(url, properties) {
       item = itemList[i];
 
       // given color has precedence
-      item.color = this.color ? this.color.toRGBA() : item.color;
+      item.color = this.color ? this.color : item.color;
 
       // given id has precedence
       item.id = this.id ? this.id : item.id;
@@ -89,16 +89,16 @@ var Mesh = function(url, properties) {
       return;
     }
 
+    var R = 6378137;
+    var C = R * Math.PI * 2;
+    var scale = (Math.cos(this.position.latitude * Math.PI/180) * C) / (TILE_SIZE*Math.pow(2, Map.zoom));
+
     var
-      zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale * 0.785,
+      ratio = 1 / scale,
       worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
       position = project(this.position.latitude, this.position.longitude, worldSize),
       mapCenter = Map.center,
       mMatrix = Matrix.create();
-
-    // see http://wiki.openstreetmap.org/wiki/Zoom_levels
-    // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
 
     if (this.elevation) {
       mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
