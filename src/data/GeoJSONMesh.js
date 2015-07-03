@@ -9,7 +9,7 @@ var GeoJSONMesh = function(url, options) {
 
   GeoJSONMesh.prototype.load = function(url) {
     this.request = Request.getJSON(url, function(geojson) {
-      this._onLoad(GeoJSON.read(geojson));
+      this._onLoad(GeoJSON.parse(geojson));
     }.bind(this));
   };
 

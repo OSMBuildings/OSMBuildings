@@ -37,10 +37,10 @@ var TileGrid = {};
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds;
 
-    minX = (mapBounds.minX*ratio <<0) -2;
-    minY = (mapBounds.minY*ratio <<0) -2;
-    maxX = Math.ceil(mapBounds.maxX*ratio) +2;
-    maxY = Math.ceil(mapBounds.maxY*ratio) +2;
+    minX = (mapBounds.minX*ratio <<0) -1;
+    minY = (mapBounds.minY*ratio <<0) -1;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
 
     // size: ceil(max/2) -> radius
     // create bbox
