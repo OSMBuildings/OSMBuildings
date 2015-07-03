@@ -151,9 +151,8 @@ var GeoJSON = {};
     }
   }
 
-  function transform(offsetX, offsetY, zoom, coordinates) {
+  function transform(coordinates) {
     var
-      worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
@@ -162,15 +161,15 @@ var GeoJSON = {};
       ring = coordinates[c];
       res[c] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
-        p = project(ring[r][1], ring[r][0], worldSize);
-        res[c][r] = [p.x-offsetX, p.y-offsetY];
+        p = project(ring[r][1], ring[r][0], TILE_SIZE);
+        res[c][r] = [p.x, p.y];
       }
     }
 
     return res;
   }
 
-  GeoJSON.read = function(offsetX, offsetY, zoom, geojson) {
+  GeoJSON.read = function(geojson) {
     if (!geojson || geojson.type !== 'FeatureCollection') {
       return [];
     }
@@ -195,7 +194,7 @@ var GeoJSON = {};
       geometries = getGeometries(feature.geometry);
 
       for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
+        polygon = transform(geometries[j]);
 
         id = feature.properties.relationId || feature.id || feature.properties.id;
 

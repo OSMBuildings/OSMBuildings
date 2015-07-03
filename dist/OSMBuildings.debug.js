@@ -916,8 +916,17 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  // DEPRECATED
   addMesh: function(url, options) {
-    return new Mesh(url, options);
+    console.warn('Method addMesh() is deprecated and will be removed soon. Use addGeoJSON() or addOBJ() instead.');
+  },
+
+  addOBJ: function(url, options) {
+    return new OBJMesh(url, options);
+  },
+
+  addGeoJSON: function(url, options) {
+    return new GeoJSONMesh(url, options);
   },
 
   on: function(type, fn) {
@@ -1943,6 +1952,13 @@ var DataGrid = {};
   var
     source,
     isDelayed,
+
+    zoom,
+    minX,
+    minY,
+    maxX,
+    maxY,
+
     tiles = {},
     fixedZoom = 16;
 
@@ -1964,33 +1980,30 @@ var DataGrid = {};
 
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
+    zoom = Math.round(fixedZoom || Map.zoom);
+
     var
-      zoom = Math.round(fixedZoom || Map.zoom),
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds;
 
-    DataGrid.bounds = {
-      zoom: zoom,
-      minX: (mapBounds.minX*ratio <<0) -2,
-      minY: (mapBounds.minY*ratio <<0) -2,
-      maxX: Math.ceil(mapBounds.maxX*ratio) +2,
-      maxY: Math.ceil(mapBounds.maxY*ratio) +2
-    };
+    minX = (mapBounds.minX*ratio <<0) -2;
+    minY = (mapBounds.minY*ratio <<0) -2;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +2;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +2;
   }
 
   function loadTiles() {
     var
-      bounds = DataGrid.bounds,
-      tileX, tileY, zoom = bounds.zoom,
+      tileX, tileY,
       key,
       queue = [], queueLength,
       tileAnchor = [
-        bounds.minX + (bounds.maxX-bounds.minX-1)/2,
-        bounds.maxY
+        minX + (maxX-minX-1)/2,
+        maxY
       ];
 
-    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
+    for (tileY = minY; tileY < maxY; tileY++) {
+      for (tileX = minX; tileX < maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;
@@ -2019,11 +2032,23 @@ var DataGrid = {};
 
   function purge() {
     for (var key in tiles) {
-      if (!tiles[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
-        Data.remove(tiles[key]);
+      if (!isVisible(tiles[key], 1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+        tiles[key].destroy();
         delete tiles[key];
       }
     }
+  }
+
+  function isVisible(tile, buffer) {
+    buffer = buffer || 0;
+
+    var
+      tileX = tile.tileX,
+      tileY = tile.tileY;
+
+    return (tile.zoom === zoom &&
+      // TODO: factor in tile origin
+    (tileX >= minX-buffer && tileX <= maxX+buffer && tileY >= minY-buffer && tileY <= maxY+buffer));
   }
 
   function getURL(x, y, z) {
@@ -2068,124 +2093,19 @@ var DataTile = function(tileX, tileY, zoom) {
   this.tileX = tileX;
   this.tileY = tileY;
   this.zoom = zoom;
-
-  Data.add(this);
-
-  Events.on('modify', this.modify.bind(this));
 };
 
 DataTile.prototype = {
 
   load: function(url) {
-    this.request = Request.getJSON(url, this.onLoad.bind(this));
-  },
-
-  onLoad: function(geojson) {
-    this.request = null;
-    this.items = [];
-
-    var
-      itemList = GeoJSON.read(this.tileX*TILE_SIZE, this.tileY*TILE_SIZE, this.zoom, geojson),
-      item, idColor,
-      allVertices = [], allNormals = [], allColors = [], allIDColors = [];
-
-    for (var i = 0, il = itemList.length; i < il; i++) {
-      item = itemList[i];
-      idColor = Interaction.idToColor(item.id);
-      item.numVertices = item.vertices.length/3;
-
-      for (var j = 0, jl = item.vertices.length-2; j < jl; j+=3) {
-        allVertices.push(item.vertices[j], item.vertices[j+1], item.vertices[j+2]);
-        allNormals.push(item.normals[j], item.normals[j+1], item.normals[j+2]);
-        allIDColors.push(idColor.r, idColor.g, idColor.b);
-      }
-
-      delete item.vertices;
-      delete item.normals;
-
-      this.items.push(item);
-    }
-
-    this.vertexBuffer  = new GL.Buffer(3, new Float32Array(allVertices));
-    this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
-    this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
-
-    this.modify();
-
-    geojson = null;
-    itemList = null;
-    allVertices = null;
-    allNormals = null;
-    allIDColors = null;
-
-    this.isReady = true;
-  },
-
-  modify: function() {
-    if (!this.items) {
-      return;
-    }
-
-    var allColors = [];
-    var hiddenStates = [];
-    var clonedItem;
-    for (var i = 0, il = this.items.length; i < il; i++) {
-      clonedItem = Data.applyModifiers(this.items[i]);
-      for (var j = 0, jl = clonedItem.numVertices; j < jl; j++) {
-        allColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
-        hiddenStates.push(clonedItem.hidden ? 1 : 0);
-      }
-    }
-
-    this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
-    this.hiddenStatesBuffer = new GL.Buffer(1, new Float32Array(hiddenStates));
-    allColors = null;
-    hiddenStates = null;
-    return this;
-  },
-
-  getMatrix: function() {
-    if (!this.isReady || !this.isVisible()) {
-      return;
-    }
-
-    var
-      ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
-      mapCenter = Map.center,
-      mMatrix = Matrix.create();
-
-    mMatrix = Matrix.scale(mMatrix, ratio, ratio, ratio*0.65);
-    mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
-    return mMatrix;
-  },
-
-  isVisible: function(buffer) {
-    buffer = buffer || 0;
-    var
-      gridBounds = DataGrid.bounds,
-      tileX = this.tileX,
-      tileY = this.tileY;
-
-    return (this.zoom === gridBounds.zoom &&
-      // TODO: factor in tile origin
-      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
+    this.mesh = new GeoJSONMesh(url);
   },
 
   destroy: function() {
-    if (this.isReady) {
-      this.vertexBuffer.destroy();
-      this.normalBuffer.destroy();
-      this.colorBuffer.destroy();
-      this.idColorBuffer.destroy();
-      this.hiddenStatesBuffer.destroy();
+    if (this.mesh) {
+      this.mesh.destroy();
+      this.mesh = null;
     }
-
-    if (this.request) {
-      this.request.abort();
-      this.request = null;
-    }
-
-    Data.remove(this);
   }
 };
 
@@ -2197,6 +2117,11 @@ var TileGrid = {};
   var
     source,
     isDelayed,
+    zoom,
+    minX,
+    minY,
+    maxX,
+    maxY,
     tiles = {};
 
   function update(delay) {
@@ -2217,38 +2142,34 @@ var TileGrid = {};
 
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
+    zoom = Math.round(Map.zoom);
+
     var
-      zoom = Math.round(Map.zoom),
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds;
 
-    TileGrid.bounds = {
-      zoom: zoom,
-      minX: (mapBounds.minX*ratio <<0) -2,
-      minY: (mapBounds.minY*ratio <<0) -2,
-      maxX: Math.ceil(mapBounds.maxX*ratio) +2,
-      maxY: Math.ceil(mapBounds.maxY*ratio) +2
-    };
+    minX = (mapBounds.minX*ratio <<0) -2;
+    minY = (mapBounds.minY*ratio <<0) -2;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +2;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +2;
 
     // size: ceil(max/2) -> radius
     // create bbox
     // scan circle
   }
 
-
   function loadTiles() {
     var
-      bounds = TileGrid.bounds,
-      tileX, tileY, zoom = bounds.zoom,
+      tileX, tileY,
       key,
       queue = [], queueLength,
       tileAnchor = [
-        bounds.minX + (bounds.maxX-bounds.minX-1)/2,
-        bounds.maxY
+        minX + (maxX-minX-1)/2,
+        maxY
       ];
 
-    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
+    for (tileY = minY; tileY < maxY; tileY++) {
+      for (tileX = minX; tileX < maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;
@@ -2277,11 +2198,23 @@ var TileGrid = {};
 
   function purge() {
     for (var key in tiles) {
-      if (!tiles[key].isVisible(1)) {
+      if (!isVisible(tiles[key], 1)) {
         tiles[key].destroy();
         delete tiles[key];
       }
     }
+  }
+
+  function isVisible(tile, buffer) {
+    buffer = buffer || 0;
+
+    var
+      tileX = tile.tileX,
+      tileY = tile.tileY;
+
+    return (tile.zoom === zoom &&
+      // TODO: factor in tile origin
+    (tileX >= minX-buffer && tileX <= maxX+buffer && tileY >= minY-buffer && tileY <= maxY+buffer));
   }
 
   function getURL(x, y, z) {
@@ -2339,7 +2272,7 @@ MapTile.prototype = {
   },
 
   getMatrix: function() {
-    if (!this.texture.isLoaded || !this.isVisible()) {
+    if (!this.texture.isLoaded) {
       return;
     }
 
@@ -2351,18 +2284,6 @@ MapTile.prototype = {
     mMatrix = Matrix.scale(mMatrix, ratio * 1.005, ratio * 1.005, 1);
     mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
     return mMatrix;
-  },
-
-  isVisible: function(buffer) {
-    buffer = buffer || 0;
-    var
-      gridBounds = TileGrid.bounds,
-      tileX = this.tileX,
-      tileY = this.tileY;
-
-    return (this.zoom === gridBounds.zoom &&
-      // TODO: factor in tile origin
-      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   },
 
   destroy: function() {
@@ -2422,160 +2343,229 @@ var Data = {
 };
 
 
-var Mesh = function(url, properties) {
-  properties = properties || {};
-  this.id = properties.id;
+var Mesh = function(url, options) {
+  options = options || {};
 
-  this.position  = properties.position  || {};
-  this.scale     = properties.scale     || 1;
-  this.rotation  = properties.rotation  || 0;
-  this.elevation = properties.elevation || 0;
+  this.isReady = false;
 
-  this.color = Color.parse(properties.color);
-  this.replaces = properties.replaces  || [];
+  this.id        = options.id;
+  this.position  = options.position  || {};
+  this.scale     = options.scale     || 1;
+  this.rotation  = options.rotation  || 0;
+  this.elevation = options.elevation || 0;
+  if (options.color) {
+    this.color = Color.parse(options.color).toRGBA();
+  }
+  this.replaces  = options.replaces  || [];
 
-  // TODO: implement OBJ.request.abort()
-  this.request = { abort: function() {} };
-  OBJ.load(url, this.onLoad.bind(this));
+  var R = 6378137;
+  var C = R*Math.PI*2;
+  this.inMeters = TILE_SIZE / (Math.cos(1) * C);
 
   Data.add(this);
-
   Events.on('modify', this.modify.bind(this));
+
+  if (typeof url === 'string') {
+    this.load(url);
+  } else {
+    this._onLoad(url);
+  }
 };
 
 (function() {
 
-  function createColors(num, color) {
-    var colors = [], c = color ? color : { r:255*0.75, g:255*0.75, b:255*0.75 };
-    for (var i = 0; i < num; i++) {
-      colors.push(c.r, c.g, c.b);
-    }
-    return colors;
-  }
+  Mesh.prototype = {
 
-  Mesh.prototype.onLoad = function(itemList) {
-    this.request = null;
-    this.items = [];
+    _setItems: function(itemList) {
+      this.items = [];
 
-    var
-      item, idColor,
-      allVertices = [], allNormals = [], allColors = [], allIDColors = [];
+      var vertices = [], normals = [], colors = [], idColors = [];
+      var item, idColor, j, jl;
 
-    for (var i = 0, il = itemList.length; i < il; i++) {
-      item = itemList[i];
+      for (var i = 0, il = itemList.length; i<il; i++) {
+        item = itemList[i];
+        item.color = this.color || item.color || DEFAULT_COLOR;
+        item.id = this.id || item.id;
+        item.numVertices = item.vertices.length/3;
 
-      // given color has precedence
-      item.color = this.color ? this.color.toRGBA() : item.color;
+        idColor = Interaction.idToColor(item.id);
+        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
+          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
+          idColors.push(idColor.r, idColor.g, idColor.b);
+        }
 
-      // given id has precedence
-      item.id = this.id ? this.id : item.id;
+        delete item.vertices;
+        delete item.normals;
 
-      idColor = Interaction.idToColor(item.id);
-      item.numVertices = item.vertices.length/3;
-
-      for (var j = 0, jl = item.vertices.length-2; j < jl; j+=3) {
-        allVertices.push(item.vertices[j], item.vertices[j+1], item.vertices[j+2]);
-        allNormals.push(item.normals[j], item.normals[j+1], item.normals[j+2]);
-        allIDColors.push(idColor.r, idColor.g, idColor.b);
+        this.items.push(item);
       }
 
-      delete item.vertices;
-      delete item.normals;
+      this.vertexBuffer = new GL.Buffer(3, new Float32Array(vertices));
+      this.normalBuffer = new GL.Buffer(3, new Float32Array(normals));
+      this.idColorBuffer = new GL.Buffer(3, new Uint8Array(idColors));
 
-      this.items.push(item);
-    }
+      this.modify();
 
-    // replace original models
-    var replaces = this.replaces || [];
-    Data.addModifier(function(item) {
-      if (replaces.indexOf(item.id) >= 0) {
-        item.hidden = true;
+      vertices = null;
+      normals = null;
+      idColors = null;
+    },
+
+    _onLoad: function(itemList) {
+      this.request = null;
+
+      this._setItems(itemList);
+      itemList = null;
+
+      if (this.replaces) {
+        var replaces = this.replaces;
+        Data.addModifier(function(item) {
+          if (replaces.indexOf(item.id)>=0) {
+            item.hidden = true;
+          }
+        });
       }
-    });
 
-    this.vertexBuffer  = new GL.Buffer(3, new Float32Array(allVertices));
-    this.normalBuffer  = new GL.Buffer(3, new Float32Array(allNormals));
-    this.idColorBuffer = new GL.Buffer(3, new Uint8Array(allIDColors));
+      this.isReady = true;
+    },
 
-    this.modify();
+    modify: function() {
+      if (!this.items) {
+        return;
+      }
 
-    itemList = null;
-    allVertices = null;
-    allNormals = null;
-    allIDColors = null;
+      var
+        newColors = [],
+        newVisibilities = [],
+        clonedItem;
 
-    this.isReady = true;
+      for (var i = 0, il = this.items.length; i<il; i++) {
+        clonedItem = Data.applyModifiers(this.items[i]);
+        for (var j = 0, jl = clonedItem.numVertices; j<jl; j++) {
+          newColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
+          newVisibilities.push(clonedItem.hidden ? 1 : 0);
+        }
+      }
+
+      this.colorBuffer = new GL.Buffer(3, new Uint8Array(newColors));
+      this.visibilityBuffer = new GL.Buffer(1, new Float32Array(newVisibilities));
+
+      newColors = null;
+      newVisibilities = null;
+
+      return this;
+    },
+
+    destroy: function() {
+      Data.remove(this);
+
+      if (this.isReady) {
+        this.vertexBuffer.destroy();
+        this.normalBuffer.destroy();
+        this.colorBuffer.destroy();
+        this.idColorBuffer.destroy();
+        this.visibilityBuffer.destroy();
+      }
+
+      if (this.request) {
+        this.request.abort();
+        this.request = null;
+      }
+    }
   };
 
-  Mesh.prototype.getMatrix = function() {
-    if (!this.isReady || !this.isVisible()) {
+}());
+
+
+var GeoJSONMesh = function(url, options) {
+  Mesh.call(this, url, options);
+};
+
+(function() {
+
+  GeoJSONMesh.prototype = Object.create(Mesh.prototype);
+
+  GeoJSONMesh.prototype.load = function(url) {
+    this.request = Request.getJSON(url, function(geojson) {
+      this._onLoad(GeoJSON.read(geojson));
+    }.bind(this));
+  };
+
+  GeoJSONMesh.prototype.getMatrix = function() {
+    if (!this.isReady) {
       return;
     }
 
-    var
-      zoom = 16, // TODO: this shouldn't be a fixed value?
-      ratio = 1 / Math.pow(2, zoom - Map.zoom) * this.scale * 0.785,
-      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      position = project(this.position.latitude, this.position.longitude, worldSize),
-      mapCenter = Map.center,
-      mMatrix = Matrix.create();
+    var mMatrix = Matrix.create();
 
-    // see http://wiki.openstreetmap.org/wiki/Zoom_levels
-    // var METERS_PER_PIXEL = Math.abs(40075040 * Math.cos(this.position.latitude) / Math.pow(2, Map.zoom));
+    var scale = Math.pow(2, Map.zoom);
+    mMatrix = Matrix.scale(mMatrix, scale, scale, scale * this.inMeters);
 
-    if (this.elevation) {
-      mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
-    }
-    mMatrix = Matrix.scale(mMatrix, ratio, ratio, ratio*0.85);
-    mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
-    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    var mapCenter = Map.center;
+    mMatrix = Matrix.translate(mMatrix, -mapCenter.x, -mapCenter.y, 0);
 
     return mMatrix;
   };
 
-  Mesh.prototype.modify = function() {
-    if (!this.items) {
+}());
+
+
+var OBJMesh = function(url, options) {
+  Mesh.call(this, url, options);
+
+  var R = 6378137;
+  var C = R*Math.PI*2;
+  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * C);
+};
+
+(function() {
+
+  OBJMesh.prototype = Object.create(Mesh.prototype);
+
+  OBJMesh.prototype.load = function(url) {
+    var onLoad = this._onLoad.bind(this);
+
+    this.request = Request.getText(url, function(objData) {
+      var mtlFile = objData.match(/^mtllib\s+(.*)$/m);
+
+      if (!mtlFile) {
+        setTimeout(function() {
+          onLoad(OBJ.parse(objData));
+        }, 1);
+        return;
+      }
+
+      var baseURL = url.replace(/[^\/]+$/, '');
+      Request.getText(baseURL + mtlFile[1], function(mtlData) {
+        onLoad(OBJ.parse(objData, mtlData));
+      });
+    });
+  };
+
+  OBJMesh.prototype.getMatrix = function() {
+    if (!this.isReady) {
       return;
     }
 
-    var allColors = [];
-    var hiddenStates = [];
-    var clonedItem;
-    for (var i = 0, il = this.items.length; i < il; i++) {
-      clonedItem = Data.applyModifiers(this.items[i]);
-      for (var j = 0, jl = clonedItem.numVertices; j < jl; j++) {
-        allColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
-        hiddenStates.push(clonedItem.hidden ? 1 : 0);
-      }
+    var mMatrix = Matrix.create();
+
+    if (this.elevation) {
+      mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
     }
 
-    this.colorBuffer = new GL.Buffer(3, new Uint8Array(allColors));
-    this.hiddenStatesBuffer = new GL.Buffer(1, new Float32Array(hiddenStates));
-    allColors = null;
-    hiddenStates = null;
-    return this;
-  };
+    var scale = Math.pow(2, Map.zoom) * this.inMeters;
+    mMatrix = Matrix.scale(mMatrix, scale, scale, scale);
 
-  Mesh.prototype.isVisible = function(key, buffer) {
-    buffer = buffer || 0;
-    return true;
-  };
+    mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
 
-  Mesh.prototype.destroy = function() {
-    if (this.isReady) {
-      this.vertexBuffer.destroy();
-      this.normalBuffer.destroy();
-      this.colorBuffer.destroy();
-      this.idColorBuffer.destroy();
-      this.hiddenStatesBuffer.destroy();
-    }
+    var
+      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+      position = project(this.position.latitude, this.position.longitude, worldSize),
+      mapCenter = Map.center;
+    mMatrix = Matrix.translate(mMatrix, position.x - mapCenter.x, position.y - mapCenter.y, 0);
 
-    if (this.request) {
-      this.request.abort();
-      this.request = null;
-    }
-
-    Data.remove(this);
+    return mMatrix;
   };
 
 }());
@@ -2733,9 +2723,8 @@ var GeoJSON = {};
     }
   }
 
-  function transform(offsetX, offsetY, zoom, coordinates) {
+  function transform(coordinates) {
     var
-      worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
@@ -2744,15 +2733,15 @@ var GeoJSON = {};
       ring = coordinates[c];
       res[c] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
-        p = project(ring[r][1], ring[r][0], worldSize);
-        res[c][r] = [p.x-offsetX, p.y-offsetY];
+        p = project(ring[r][1], ring[r][0], TILE_SIZE);
+        res[c][r] = [p.x, p.y];
       }
     }
 
     return res;
   }
 
-  GeoJSON.read = function(offsetX, offsetY, zoom, geojson) {
+  GeoJSON.read = function(geojson) {
     if (!geojson || geojson.type !== 'FeatureCollection') {
       return [];
     }
@@ -2777,7 +2766,7 @@ var GeoJSON = {};
       geometries = getGeometries(feature.geometry);
 
       for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
+        polygon = transform(geometries[j]);
 
         id = feature.properties.relationId || feature.id || feature.properties.id;
 
@@ -2863,49 +2852,55 @@ var GeoJSON = {};
 }());
 
 
-var OBJ = {};
+var OBJ = function() {
+  this.vertices = [];
+};
 
-(function() {
+if (typeof module !== 'undefined') {
+  module.exports = OBJ;
+}
 
-  function parseMaterials(str) {
+OBJ.prototype = {
+
+  parseMaterials: function(str) {
     var lines = str.split(/[\r\n]/g), cols;
     var i, il;
-  
+
     var materials = {};
     var data = null;
-  
+
     for (i = 0, il = lines.length; i < il; i++) {
   	  cols = lines[i].trim().split(/\s+/);
-      
+
       switch (cols[0]) {
   	    case 'newmtl':
-          storeMaterial(materials, data); 
+          this.storeMaterial(materials, data);
           data = { id:cols[1], color:{} };
         break;
-  
+
   	    case 'Kd':
   	      data.color.r = parseFloat(cols[1])*255 <<0;
   	      data.color.g = parseFloat(cols[2])*255 <<0;
   	      data.color.b = parseFloat(cols[3])*255 <<0;
   	    break;
-  
+
   	    case 'd':
           data.color.a = parseFloat(cols[1]);
         break;
   	  }
     }
-  
-    storeMaterial(materials, data); 
+
+    this.storeMaterial(materials, data);
     return materials;
-  }
-  
-  function storeMaterial(materials, data) {
+  },
+
+  storeMaterial: function(materials, data) {
     if (data !== null) {
       materials[ data.id ] = data.color;
-    } 
-  }
+    }
+  },
 
-  function parseModel(str, allVertices, materials) {
+  parseModel: function(str, materials) {
     var lines = str.split(/[\r\n]/g), cols;
     var i, il;
 
@@ -2916,17 +2911,17 @@ var OBJ = {};
 
     for (i = 0, il = lines.length; i < il; i++) {
   	  cols = lines[i].trim().split(/\s+/);
-  
+
       switch (cols[0]) {
         case 'g':
         case 'o':
-          storeMesh(meshes, allVertices, id, color, faces);
+          this.storeMesh(meshes, id, color, faces);
           id = cols[1];
           faces = [];
         break;
 
         case 'usemtl':
-          storeMesh(meshes, allVertices, id, color, faces);
+          this.storeMesh(meshes, id, color, faces);
           if (materials[ cols[1] ]) {
             color = materials[ cols[1] ];
           }
@@ -2934,7 +2929,7 @@ var OBJ = {};
         break;
 
         case 'v':
-          allVertices.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
+          this.vertices.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
         break;
 
   	    case 'f':
@@ -2943,13 +2938,13 @@ var OBJ = {};
 	    }
     }
 
-    storeMesh(meshes, allVertices, id, color, faces);
+    this.storeMesh(meshes, id, color, faces);
     return meshes;
-  }
+  },
 
-  function storeMesh(meshes, allVertices, id, color, faces) {
+  storeMesh: function(meshes, id, color, faces) {
     if (faces.length) {
-      var geometry = createGeometry(allVertices, faces);
+      var geometry = this.createGeometry(faces);
       meshes.push({
         id: id,
         color: color,
@@ -2957,9 +2952,9 @@ var OBJ = {};
         normals: geometry.normals
       });
     }
-  }
+  },
 
-  function createGeometry(allVertices, faces) {
+  createGeometry: function(faces) {
   	var v0, v1, v2;
   	var e1, e2;
   	var nor, len;
@@ -2967,16 +2962,16 @@ var OBJ = {};
     var geometry = { vertices:[], normals:[] };
 
     for (var i = 0, il = faces.length; i < il; i++) {
-  		v0 = allVertices[ faces[i][0] ];
-  		v1 = allVertices[ faces[i][1] ];
-  		v2 = allVertices[ faces[i][2] ];
-  
-  		e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
+  		v0 = this.vertices[ faces[i][0] ];
+  		v1 = this.vertices[ faces[i][1] ];
+  		v2 = this.vertices[ faces[i][2] ];
+
+      e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
   		e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
-  
+
   		nor = [ e1[1]*e2[2] - e1[2]*e2[1], e1[2]*e2[0] - e1[0]*e2[2], e1[0]*e2[1] - e1[1]*e2[0] ];
   		len = Math.sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
-  
+
   		nor[0] /= len;
       nor[1] /= len;
       nor[2] /= len;
@@ -2996,37 +2991,13 @@ var OBJ = {};
 
     return geometry;
   }
+};
 
-  //***************************************************************************
-
-  OBJ.parse = function(objData, mtlData) {
-    var allVertices = [];
-    var materials = mtlData ? parseMaterials(mtlData) : {};
-    return parseModel(objData, allVertices, materials);
-  };
-
-  OBJ.load = function(url, callback) {
-    Request.getText(url, function(objData) {
-      var mtlFile = objData.match(/^mtllib\s+(.*)$/m);
-      if (mtlFile) {
-        var baseURL = url.replace(/[^\/]+$/, '');
-        Request.getText(baseURL + mtlFile[1], function(mtlData) {
-          callback(OBJ.parse(objData, mtlData));
-        });
-        return;
-      }
-
-      setTimeout(function() {
-        callback(OBJ.parse(objData));
-      }, 1);
-    });
-  };
-
-}());
-
-if (typeof module !== 'undefined') {
-  module.exports = OBJ;
-}
+OBJ.parse = function(objData, mtlData) {
+  var objParser = new OBJ();
+  var materials = mtlData ? objParser.parseMaterials(mtlData) : {};
+  return objParser.parseModel(objData, materials);
+};
 
 
 function distance2(a, b) {
@@ -3836,8 +3807,8 @@ var Depth = {};
     //
     //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    // item.hiddenStatesBuffer.enable();
-    // gl.vertexAttribPointer(shader.attributes.aHidden, item.hiddenStatesBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    // item.visibilityBuffer.enable();
+    // gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
     //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     //}
 
@@ -3918,8 +3889,8 @@ var Interaction = {};
       item.idColorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
-      item.hiddenStatesBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aHidden, item.hiddenStatesBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      item.visibilityBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
@@ -4116,8 +4087,8 @@ var Buildings = {};
       item.colorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
 
-      item.hiddenStatesBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aHidden, item.hiddenStatesBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      item.visibilityBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

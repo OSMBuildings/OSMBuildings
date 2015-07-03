@@ -9,12 +9,12 @@ var GeoJSONMesh = function(url, options) {
 
   GeoJSONMesh.prototype.load = function(url) {
     this.request = Request.getJSON(url, function(geojson) {
-      this._onLoad(GeoJSON.read(0, 0, 0, geojson));
+      this._onLoad(GeoJSON.read(geojson));
     }.bind(this));
   };
 
   GeoJSONMesh.prototype.getMatrix = function() {
-    if (!this.isReady || !this.isVisible()) {
+    if (!this.isReady) {
       return;
     }
 

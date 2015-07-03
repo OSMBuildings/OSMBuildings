@@ -32,7 +32,7 @@ var OBJMesh = function(url, options) {
   };
 
   OBJMesh.prototype.getMatrix = function() {
-    if (!this.isReady || !this.isVisible()) {
+    if (!this.isReady) {
       return;
     }
 
@@ -54,6 +54,6 @@ var OBJMesh = function(url, options) {
     mMatrix = Matrix.translate(mMatrix, position.x - mapCenter.x, position.y - mapCenter.y, 0);
 
     return mMatrix;
-  }
+  };
 
 }());

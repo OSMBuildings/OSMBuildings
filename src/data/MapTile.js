@@ -16,7 +16,7 @@ MapTile.prototype = {
   },
 
   getMatrix: function() {
-    if (!this.texture.isLoaded || !this.isVisible()) {
+    if (!this.texture.isLoaded) {
       return;
     }
 
@@ -28,18 +28,6 @@ MapTile.prototype = {
     mMatrix = Matrix.scale(mMatrix, ratio * 1.005, ratio * 1.005, 1);
     mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
     return mMatrix;
-  },
-
-  isVisible: function(buffer) {
-    buffer = buffer || 0;
-    var
-      gridBounds = TileGrid.bounds,
-      tileX = this.tileX,
-      tileY = this.tileY;
-
-    return (this.zoom === gridBounds.zoom &&
-      // TODO: factor in tile origin
-      (tileX >= gridBounds.minX-buffer && tileX <= gridBounds.maxX+buffer && tileY >= gridBounds.minY-buffer && tileY <= gridBounds.maxY+buffer));
   },
 
   destroy: function() {

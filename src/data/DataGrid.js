@@ -6,6 +6,13 @@ var DataGrid = {};
   var
     source,
     isDelayed,
+
+    zoom,
+    minX,
+    minY,
+    maxX,
+    maxY,
+
     tiles = {},
     fixedZoom = 16;
 
@@ -27,33 +34,30 @@ var DataGrid = {};
 
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
+    zoom = Math.round(fixedZoom || Map.zoom);
+
     var
-      zoom = Math.round(fixedZoom || Map.zoom),
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds;
 
-    DataGrid.bounds = {
-      zoom: zoom,
-      minX: (mapBounds.minX*ratio <<0) -2,
-      minY: (mapBounds.minY*ratio <<0) -2,
-      maxX: Math.ceil(mapBounds.maxX*ratio) +2,
-      maxY: Math.ceil(mapBounds.maxY*ratio) +2
-    };
+    minX = (mapBounds.minX*ratio <<0) -2;
+    minY = (mapBounds.minY*ratio <<0) -2;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +2;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +2;
   }
 
   function loadTiles() {
     var
-      bounds = DataGrid.bounds,
-      tileX, tileY, zoom = bounds.zoom,
+      tileX, tileY,
       key,
       queue = [], queueLength,
       tileAnchor = [
-        bounds.minX + (bounds.maxX-bounds.minX-1)/2,
-        bounds.maxY
+        minX + (maxX-minX-1)/2,
+        maxY
       ];
 
-    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
+    for (tileY = minY; tileY < maxY; tileY++) {
+      for (tileX = minX; tileX < maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;
@@ -82,11 +86,23 @@ var DataGrid = {};
 
   function purge() {
     for (var key in tiles) {
-      if (!tiles[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
-        Data.remove(tiles[key]);
+      if (!isVisible(tiles[key], 1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+        tiles[key].destroy();
         delete tiles[key];
       }
     }
+  }
+
+  function isVisible(tile, buffer) {
+    buffer = buffer || 0;
+
+    var
+      tileX = tile.tileX,
+      tileY = tile.tileY;
+
+    return (tile.zoom === zoom &&
+      // TODO: factor in tile origin
+    (tileX >= minX-buffer && tileX <= maxX+buffer && tileY >= minY-buffer && tileY <= maxY+buffer));
   }
 
   function getURL(x, y, z) {

@@ -6,6 +6,11 @@ var TileGrid = {};
   var
     source,
     isDelayed,
+    zoom,
+    minX,
+    minY,
+    maxX,
+    maxY,
     tiles = {};
 
   function update(delay) {
@@ -26,38 +31,34 @@ var TileGrid = {};
 
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
+    zoom = Math.round(Map.zoom);
+
     var
-      zoom = Math.round(Map.zoom),
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds;
 
-    TileGrid.bounds = {
-      zoom: zoom,
-      minX: (mapBounds.minX*ratio <<0) -2,
-      minY: (mapBounds.minY*ratio <<0) -2,
-      maxX: Math.ceil(mapBounds.maxX*ratio) +2,
-      maxY: Math.ceil(mapBounds.maxY*ratio) +2
-    };
+    minX = (mapBounds.minX*ratio <<0) -2;
+    minY = (mapBounds.minY*ratio <<0) -2;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +2;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +2;
 
     // size: ceil(max/2) -> radius
     // create bbox
     // scan circle
   }
 
-
   function loadTiles() {
     var
-      bounds = TileGrid.bounds,
-      tileX, tileY, zoom = bounds.zoom,
+      tileX, tileY,
       key,
       queue = [], queueLength,
       tileAnchor = [
-        bounds.minX + (bounds.maxX-bounds.minX-1)/2,
-        bounds.maxY
+        minX + (maxX-minX-1)/2,
+        maxY
       ];
 
-    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
+    for (tileY = minY; tileY < maxY; tileY++) {
+      for (tileX = minX; tileX < maxX; tileX++) {
         key = [tileX, tileY, zoom].join(',');
         if (tiles[key]) {
           continue;
@@ -86,11 +87,23 @@ var TileGrid = {};
 
   function purge() {
     for (var key in tiles) {
-      if (!tiles[key].isVisible(1)) {
+      if (!isVisible(tiles[key], 1)) {
         tiles[key].destroy();
         delete tiles[key];
       }
     }
+  }
+
+  function isVisible(tile, buffer) {
+    buffer = buffer || 0;
+
+    var
+      tileX = tile.tileX,
+      tileY = tile.tileY;
+
+    return (tile.zoom === zoom &&
+      // TODO: factor in tile origin
+    (tileX >= minX-buffer && tileX <= maxX+buffer && tileY >= minY-buffer && tileY <= maxY+buffer));
   }
 
   function getURL(x, y, z) {

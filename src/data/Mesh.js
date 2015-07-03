@@ -9,7 +9,9 @@ var Mesh = function(url, options) {
   this.scale     = options.scale     || 1;
   this.rotation  = options.rotation  || 0;
   this.elevation = options.elevation || 0;
-  this.color     = options.color ? Color.parse(options.color).toRGBA() : DEFAULT_COLOR;
+  if (options.color) {
+    this.color = Color.parse(options.color).toRGBA();
+  }
   this.replaces  = options.replaces  || [];
 
   var R = 6378137;
@@ -38,7 +40,7 @@ var Mesh = function(url, options) {
 
       for (var i = 0, il = itemList.length; i<il; i++) {
         item = itemList[i];
-        item.color = this.color || item.color;
+        item.color = this.color || item.color || DEFAULT_COLOR;
         item.id = this.id || item.id;
         item.numVertices = item.vertices.length/3;
 
@@ -111,11 +113,9 @@ var Mesh = function(url, options) {
       return this;
     },
 
-    isVisible: function() {
-      return true;
-    },
-
     destroy: function() {
+      Data.remove(this);
+
       if (this.isReady) {
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
@@ -128,8 +128,6 @@ var Mesh = function(url, options) {
         this.request.abort();
         this.request = null;
       }
-
-      Data.remove(this);
     }
   };
 
