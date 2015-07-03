@@ -145,21 +145,3 @@ OBJ.parse = function(objData, mtlData) {
   var materials = mtlData ? objParser.parseMaterials(mtlData) : {};
   return objParser.parseModel(objData, materials);
 };
-
-OBJ.load = function(url, callback) {
-  Request.getText(url, function(objData) {
-    var mtlFile = objData.match(/^mtllib\s+(.*)$/m);
-
-    if (!mtlFile) {
-      setTimeout(function() {
-        callback(OBJ.parse(objData));
-      }, 1);
-      return;
-    }
-
-    var baseURL = url.replace(/[^\/]+$/, '');
-    Request.getText(baseURL + mtlFile[1], function(mtlData) {
-      callback(OBJ.parse(objData, mtlData));
-    });
-  });
-};

@@ -32,8 +32,8 @@ var Depth = {};
     //
     //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    // item.hiddenStatesBuffer.enable();
-    // gl.vertexAttribPointer(shader.attributes.aHidden, item.hiddenStatesBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    // item.visibilityBuffer.enable();
+    // gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
     //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     //}
 

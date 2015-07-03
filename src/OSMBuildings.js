@@ -52,8 +52,17 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  // DEPRECATED
   addMesh: function(url, options) {
-    return new Mesh(url, options);
+    console.warn('Method addMesh() is deprecated and will be removed soon. Use addGeoJSON() or addOBJ() instead.');
+  },
+
+  addOBJ: function(url, options) {
+    return new OBJMesh(url, options);
+  },
+
+  addGeoJSON: function(url, options) {
+    return new GeoJSONMesh(url, options);
   },
 
   on: function(type, fn) {
