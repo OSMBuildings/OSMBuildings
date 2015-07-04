@@ -169,7 +169,7 @@ var GeoJSON = {};
     return res;
   }
 
-  GeoJSON.read = function(geojson) {
+  GeoJSON.parse = function(geojson) {
     if (!geojson || geojson.type !== 'FeatureCollection') {
       return [];
     }
