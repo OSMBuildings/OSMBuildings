@@ -58,23 +58,23 @@ var Scene = {
         // TODO: update this only when Map changed
         var perspective = Matrix.perspective(20, Scene.width, Scene.height, 40000);
 
-        var pMatrix = new Matrix();
-        pMatrix = Matrix.rotateZ(pMatrix, Map.rotation);
-        pMatrix = Matrix.rotateX(pMatrix, Map.tilt);
-        pMatrix = Matrix.translate(pMatrix, Scene.width/2, Scene.height/2, 0);
-        pMatrix = Matrix.multiply(pMatrix, perspective);
+        Map.transform = new Matrix();
+        Map.transform = Matrix.rotateZ(Map.transform, Map.rotation);
+        Map.transform = Matrix.rotateX(Map.transform, Map.tilt);
+        Map.transform = Matrix.translate(Map.transform, Scene.width/2, Scene.height/2, 0);
+        Map.transform = Matrix.multiply(Map.transform, perspective);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
-//      Depth.render(pMatrix);
-        Interaction.render(pMatrix);
+//      Depth.render();
+        Interaction.render();
 
         gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        SkyDome.render(pMatrix);
-        Basemap.render(pMatrix);
-        Buildings.render(pMatrix);
+        SkyDome.render();
+        Basemap.render();
+        Buildings.render();
       });
     }, 17);
   },

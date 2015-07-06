@@ -26,7 +26,7 @@ var SkyDome = {};
     texture.load(BASE_DIR +'/assets/skydome.jpg');
   };
 
-  SkyDome.render = function(mapMatrix) {
+  SkyDome.render = function() {
     if (!texture.isLoaded) {
       return;
     }
@@ -35,7 +35,7 @@ var SkyDome = {};
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(mapMatrix));
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Map.transform);
 
     vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

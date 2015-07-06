@@ -11,7 +11,7 @@ var Basemap = {};
     shader = new Shader('textured');
   };
 
-  Basemap.render = function(pMatrix) {
+  Basemap.render = function() {
     var
       tiles = TileGrid.getTiles(), item,
       mMatrix;
@@ -25,7 +25,7 @@ var Basemap = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Matrix.multiply(mMatrix, Map.transform));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

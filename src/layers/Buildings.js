@@ -9,7 +9,7 @@ var Buildings = {};
     shader = new Shader('buildings');
   };
 
-  Buildings.render = function(pMatrix) {
+  Buildings.render = function() {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -28,7 +28,7 @@ var Buildings = {};
     gl.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
 
     var normalMatrix = Matrix.invert3(new Matrix());
-    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
+    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, Matrix.transpose(normalMatrix));
 
     var
       dataItems = Data.items,
@@ -42,7 +42,7 @@ var Buildings = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Matrix.multiply(mMatrix, Map.transform));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
