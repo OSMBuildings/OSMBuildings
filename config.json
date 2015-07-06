@@ -16,7 +16,7 @@
     },
     "buildings": {
       "attributes": ["aPosition", "aColor", "aNormal", "aHidden"],
-      "uniforms": ["uNormalTransform", "uMatrix", "uAlpha", "uLightColor", "uLightDirection"]
+      "uniforms": ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection"]
     }
   },
 

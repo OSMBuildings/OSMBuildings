@@ -46,7 +46,7 @@ var Scene = {
 
     //addListener(canvas, 'webglcontextrestored', ...);
 
-//    Depth.initShader();
+//  Depth.initShader();
     Interaction.initShader();
     SkyDome.initShader();
     Basemap.initShader();
