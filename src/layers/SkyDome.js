@@ -35,7 +35,7 @@ var SkyDome = {};
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Map.transform);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Map.transform.data);
 
     vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

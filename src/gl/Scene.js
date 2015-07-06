@@ -59,10 +59,10 @@ var Scene = {
         var perspective = Matrix.perspective(20, Scene.width, Scene.height, 40000);
 
         Map.transform = new Matrix();
-        Map.transform = Matrix.rotateZ(Map.transform, Map.rotation);
-        Map.transform = Matrix.rotateX(Map.transform, Map.tilt);
-        Map.transform = Matrix.translate(Map.transform, Scene.width/2, Scene.height/2, 0);
-        Map.transform = Matrix.multiply(Map.transform, perspective);
+        Map.transform.rotateZ(Map.rotation);
+        Map.transform.rotateX(Map.tilt);
+        Map.transform.translate(Scene.width/2, Scene.height/2, 0);
+        Map.transform.data = Matrix.multiply(Map.transform.data, perspective);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 

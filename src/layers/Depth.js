@@ -28,7 +28,7 @@ var Depth = {};
     //    continue;
     //  }
     //
-    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Matrix.multiply(mMatrix, Map.transform));
+    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Matrix.multiply(mMatrix.data, Map.transform.data));
     //
     //  item.vertexBuffer.enable();
     //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -52,7 +52,7 @@ var Depth = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Matrix.multiply(mMatrix, Map.transform));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Matrix.multiply(mMatrix.data, Map.transform.data));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

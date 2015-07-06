@@ -36,19 +36,19 @@ var OBJMesh = function(url, options) {
     var mMatrix = new Matrix();
 
     if (this.elevation) {
-      mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
+      mMatrix.translate(0, 0, this.elevation);
     }
 
     var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-    mMatrix = Matrix.scale(mMatrix, scale, scale, scale);
+    mMatrix.scale(scale, scale, scale);
 
-    mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
+    mMatrix.rotateZ(-this.rotation);
 
     var
       position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
       mapCenter = Map.center;
 
-    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return mMatrix;
   };

@@ -34,13 +34,13 @@ var GeoJSONMesh = function(url, options) {
 
     var scale = 1/Math.pow(2, this.zoom - Map.zoom);
 
-    mMatrix = Matrix.scale(mMatrix, scale, scale, scale*0.65);
+    mMatrix.scale(scale, scale, scale*0.65);
 
     var
       position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
       mapCenter = Map.center;
 
-    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return mMatrix;
   };

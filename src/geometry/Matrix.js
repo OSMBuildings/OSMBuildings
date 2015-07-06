@@ -1,12 +1,66 @@
 
 var Matrix = function() {
-  return new Float32Array([
+  this.data = new Float32Array([
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
     0, 0, 0, 1
   ]);
 };
+
+Matrix.prototype = {
+  translate: function(x, y, z) {
+    this.data = Matrix.multiply(this.data, [
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      x, y, z, 1
+    ]);
+  },
+
+  rotateX: function(angle) {
+    var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
+    this.data = Matrix.multiply(this.data, [
+      1, 0, 0, 0,
+      0, c, s, 0,
+      0, -s, c, 0,
+      0, 0, 0, 1
+    ]);
+  },
+
+  rotateY: function(angle) {
+    var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
+    this.data = Matrix.multiply(this.data, [
+      c, 0, -s, 0,
+      0, 1, 0, 0,
+      s, 0, c, 0,
+      0, 0, 0, 1
+    ]);
+  },
+
+  rotateZ: function(angle) {
+    var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
+    this.data = Matrix.multiply(this.data, [
+      c, -s, 0, 0,
+      s, c, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    ]);
+  },
+
+  scale: function(x, y, z) {
+    this.data = Matrix.multiply(this.data, [
+      x, 0, 0, 0,
+      0, y, 0, 0,
+      0, 0, z, 0,
+      0, 0, 0, 1
+    ]);
+  }
+};
+
+
+
+
 
 Matrix.multiply = function(a, b) {
   var
@@ -76,53 +130,6 @@ Matrix.perspective = function(f, width, height, depth) {
   ]);
 };
 
-Matrix.translate = function(matrix, x, y, z) {
-  return this.multiply(matrix, [
-    1, 0, 0, 0,
-    0, 1, 0, 0,
-    0, 0, 1, 0,
-    x, y, z, 1
-  ]);
-};
-
-Matrix.rotateX = function(matrix, angle) {
-  var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-  return this.multiply(matrix, [
-    1,  0, 0, 0,
-    0,  c, s, 0,
-    0, -s, c, 0,
-    0,  0, 0, 1
-  ]);
-};
-
-Matrix.rotateY = function(matrix, angle) {
-  var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-  return this.multiply(matrix, [
-    c, 0, -s, 0,
-    0, 1,  0, 0,
-    s, 0,  c, 0,
-    0, 0,  0, 1
-  ]);
-};
-
-Matrix.rotateZ = function(matrix, angle) {
-  var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-  return this.multiply(matrix, [
-    c, -s, 0, 0,
-    s, c, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-  ]);
-};
-
-Matrix.scale = function(matrix, x, y, z) {
-  return this.multiply(matrix, [
-    x, 0, 0, 0,
-    0, y, 0, 0,
-    0, 0, z, 0,
-    0, 0, 0, 1
-  ]);
-};
 
 Matrix.invert3 = function(a) {
   var
