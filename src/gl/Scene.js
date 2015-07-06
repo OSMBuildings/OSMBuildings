@@ -55,14 +55,11 @@ var Scene = {
     loop = setInterval(function() {
 
       requestAnimationFrame(function() {
-        // TODO: update this only when Map changed
-        var perspective = Matrix.perspective(20, Scene.width, Scene.height, 40000);
-
-        Map.transform = new Matrix();
-        Map.transform.rotateZ(Map.rotation);
-        Map.transform.rotateX(Map.tilt);
-        Map.transform.translate(Scene.width/2, Scene.height/2, 0);
-        Map.transform.multiply(perspective);
+        Map.transform = new Matrix()
+          .rotateZ(Map.rotation)
+          .rotateX(Map.tilt)
+          .translate(Scene.width/2, Scene.height/2, 0)
+          .multiply(Scene.perspective);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
@@ -80,11 +77,17 @@ var Scene = {
   },
 
   setSize: function(size) {
-    var canvas = gl.canvas;
-    if (size.width !== Scene.width || size.height !== Scene.height) {
-      canvas.width  = Scene.width  = size.width;
-      canvas.height = Scene.height = size.height;
-      gl.viewport(0, 0, size.width, size.height);
+    var
+      canvas = gl.canvas,
+      width = size.width,
+      height = size.height;
+    if (width !== Scene.width || height !== Scene.height) {
+      canvas.width  = Scene.width  = width;
+      canvas.height = Scene.height = height;
+
+      Scene.perspective = Matrix.perspective(20, width, height, 40000);
+
+      gl.viewport(0, 0, width, height);
       Events.emit('resize', size);
     }
   },

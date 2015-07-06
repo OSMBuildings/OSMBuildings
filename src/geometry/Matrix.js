@@ -11,55 +11,61 @@ var Matrix = function(data) {
 Matrix.prototype = {
 
   multiply: function(m) {
-    return (this.data = Matrix.multiply(this.data, m.data));
+    this.data = Matrix.multiply(this.data, m.data);
+    return this;
   },
 
   translate: function(x, y, z) {
-    return (this.data = Matrix.multiply(this.data, [
+    this.data = Matrix.multiply(this.data, [
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
       x, y, z, 1
-    ]));
+    ]);
+    return this;
   },
 
   rotateX: function(angle) {
     var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-    return (this.data = Matrix.multiply(this.data, [
+    this.data = Matrix.multiply(this.data, [
       1, 0, 0, 0,
       0, c, s, 0,
       0, -s, c, 0,
       0, 0, 0, 1
-    ]));
+    ]);
+    return this;
   },
 
   rotateY: function(angle) {
     var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-    return (this.data = Matrix.multiply(this.data, [
+    this.data = Matrix.multiply(this.data, [
       c, 0, -s, 0,
       0, 1, 0, 0,
       s, 0, c, 0,
       0, 0, 0, 1
-    ]));
+    ]);
+    return this;
   },
 
   rotateZ: function(angle) {
     var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-    return (this.data = Matrix.multiply(this.data, [
+    this.data = Matrix.multiply(this.data, [
       c, -s, 0, 0,
       s, c, 0, 0,
       0, 0, 1, 0,
       0, 0, 0, 1
-    ]));
+    ]);
+    return this;
   },
 
   scale: function(x, y, z) {
-    return (this.data = Matrix.multiply(this.data, [
+    this.data = Matrix.multiply(this.data, [
       x, 0, 0, 0,
       0, y, 0, 0,
       0, 0, z, 0,
       0, 0, 0, 1
-    ]));
+    ]);
+    return this;
   }
 };
 
@@ -130,7 +136,6 @@ Matrix.perspective = function(f, width, height, depth) {
     -1,      1,         0,        1
   ]);
 };
-
 
 Matrix.invert3 = function(a) {
   var
