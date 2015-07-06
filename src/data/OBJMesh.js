@@ -45,10 +45,10 @@ var OBJMesh = function(url, options) {
     mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
 
     var
-      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      position = project(this.position.latitude, this.position.longitude, worldSize),
+      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
       mapCenter = Map.center;
-    mMatrix = Matrix.translate(mMatrix, position.x - mapCenter.x, position.y - mapCenter.y, 0);
+
+    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return mMatrix;
   };

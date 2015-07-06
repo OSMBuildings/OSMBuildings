@@ -1485,6 +1485,9 @@ var STYLE = {
 
 var document = global.document;
 
+var EARTH_RADIUS = 6378137;
+var EARTH_CIRCUMFERENCE = EARTH_RADIUS*Math.PI*2;
+
 var BASE_DIR = '';
 
 var Request = {};
@@ -1986,10 +1989,10 @@ var DataGrid = {};
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds;
 
-    minX = (mapBounds.minX*ratio <<0) -2;
-    minY = (mapBounds.minY*ratio <<0) -2;
-    maxX = Math.ceil(mapBounds.maxX*ratio) +2;
-    maxY = Math.ceil(mapBounds.maxY*ratio) +2;
+    minX = (mapBounds.minX*ratio <<0) -1;
+    minY = (mapBounds.minY*ratio <<0) -1;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
   }
 
   function loadTiles() {
@@ -2148,10 +2151,10 @@ var TileGrid = {};
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds;
 
-    minX = (mapBounds.minX*ratio <<0) -2;
-    minY = (mapBounds.minY*ratio <<0) -2;
-    maxX = Math.ceil(mapBounds.maxX*ratio) +2;
-    maxY = Math.ceil(mapBounds.maxY*ratio) +2;
+    minX = (mapBounds.minX*ratio <<0) -1;
+    minY = (mapBounds.minY*ratio <<0) -1;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
 
     // size: ceil(max/2) -> radius
     // create bbox
@@ -2356,11 +2359,7 @@ var Mesh = function(url, options) {
   if (options.color) {
     this.color = Color.parse(options.color).toRGBA();
   }
-  this.replaces  = options.replaces  || [];
-
-  var R = 6378137;
-  var C = R*Math.PI*2;
-  this.inMeters = TILE_SIZE / (Math.cos(1) * C);
+  this.replaces  = options.replaces || [];
 
   Data.add(this);
   Events.on('modify', this.modify.bind(this));
@@ -2418,7 +2417,7 @@ var Mesh = function(url, options) {
       this._setItems(itemList);
       itemList = null;
 
-      if (this.replaces) {
+      if (this.replaces.length) {
         var replaces = this.replaces;
         Data.addModifier(function(item) {
           if (replaces.indexOf(item.id)>=0) {
@@ -2480,6 +2479,8 @@ var Mesh = function(url, options) {
 
 var GeoJSONMesh = function(url, options) {
   Mesh.call(this, url, options);
+  this.zoom = 16;
+//this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
 };
 
 (function() {
@@ -2488,7 +2489,19 @@ var GeoJSONMesh = function(url, options) {
 
   GeoJSONMesh.prototype.load = function(url) {
     this.request = Request.getJSON(url, function(geojson) {
-      this._onLoad(GeoJSON.read(geojson));
+      if (!geojson.features.length) {
+        return;
+      }
+
+      var geoPos = geojson.features[0].geometry.coordinates[0][0];
+      this.position = { latitude:geoPos[1], longitude:geoPos[0] };
+      var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
+
+      var itemList = GeoJSON.parse(position.x, position.y, this.zoom, geojson);
+      geojson = null;
+
+      this._onLoad(itemList);
+      itemList = null;
     }.bind(this));
   };
 
@@ -2499,24 +2512,24 @@ var GeoJSONMesh = function(url, options) {
 
     var mMatrix = Matrix.create();
 
-    var scale = Math.pow(2, Map.zoom);
-    mMatrix = Matrix.scale(mMatrix, scale, scale, scale * this.inMeters);
+    var scale = 1/Math.pow(2, this.zoom - Map.zoom);
 
-    var mapCenter = Map.center;
-    mMatrix = Matrix.translate(mMatrix, -mapCenter.x, -mapCenter.y, 0);
+    mMatrix = Matrix.scale(mMatrix, scale, scale, scale*0.65);
+
+    var
+      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+      mapCenter = Map.center;
+
+    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return mMatrix;
   };
 
 }());
 
-
 var OBJMesh = function(url, options) {
   Mesh.call(this, url, options);
-
-  var R = 6378137;
-  var C = R*Math.PI*2;
-  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * C);
+  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 };
 
 (function() {
@@ -2554,16 +2567,16 @@ var OBJMesh = function(url, options) {
       mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
     }
 
-    var scale = Math.pow(2, Map.zoom) * this.inMeters;
+    var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
     mMatrix = Matrix.scale(mMatrix, scale, scale, scale);
 
     mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
 
     var
-      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      position = project(this.position.latitude, this.position.longitude, worldSize),
+      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
       mapCenter = Map.center;
-    mMatrix = Matrix.translate(mMatrix, position.x - mapCenter.x, position.y - mapCenter.y, 0);
+
+    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return mMatrix;
   };
@@ -2733,120 +2746,150 @@ var GeoJSON = {};
       ring = coordinates[c];
       res[c] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
-        p = project(ring[r][1], ring[r][0], TILE_SIZE);
+        p = project(ring[r][1], ring[r][0], 2<<16);
         res[c][r] = [p.x, p.y];
       }
     }
-
     return res;
   }
 
-  GeoJSON.read = function(geojson) {
+  function translate(item, originX, originY) {
+    var polygon = item.polygon;
+    for (var i = 0, il = item.polygon.length, j, jl; i < il; i++) {
+      for (j = 0, jl = polygon[i].length; j < jl; j++) {
+        polygon[i][j][0] -= originX;
+        polygon[i][j][1] -= originY;
+      }
+    }
+
+    var bbox = item.bbox;
+    bbox.minX -= originX;
+    bbox.minY -= originY;
+    bbox.maxX -= originX;
+    bbox.maxY -= originY;
+  }
+
+  GeoJSON.parse = function(geojson) {
+    var res = [];
+
     if (!geojson || geojson.type !== 'FeatureCollection') {
-      return [];
+      return res;
     }
 
     var
       collection = geojson.features,
       feature,
+      baseItem, clonedItem,
+      originX = Infinity, originY = Infinity,
       geometries,
-      tris,
-      j, jl,
-      item, polygon, bbox, radius, center, id;
+      j, jl;
 
-    var res = [];
-
-    for (var i = 0, il = collection.length; i < il; i++) {
+    var parsedItems = [];
+    for (var i = 0, il = collection.length; i<il; i++) {
       feature = collection[i];
 
-      if (!(item = alignProperties(feature.properties))) {
+      if (!(baseItem = alignProperties(feature.properties))) {
         continue;
       }
 
+      baseItem.id = feature.properties.relationId || feature.id || feature.properties.id;
+
       geometries = getGeometries(feature.geometry);
 
-      for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(geometries[j]);
+      for (j = 0, jl = geometries.length; j<jl; j++) {
+        clonedItem = Object.create(baseItem);
+        clonedItem.polygon = transform(geometries[j]);
 
-        id = feature.properties.relationId || feature.id || feature.properties.id;
+        clonedItem.bbox = getBBox(clonedItem.polygon);
+        originX = Math.min(originX, clonedItem.bbox.minX);
+        originY = Math.min(originY, clonedItem.bbox.minY);
 
-        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-          item.shape = 'cylinder';
-          item.isRotational = true;
-        }
-
-        bbox = getBBox(polygon);
-        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
-
-        if (item.isRotational) {
-          radius = (bbox.maxX-bbox.minX)/2;
-        }
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.shape) {
-          case 'cylinder':
-            Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-          break;
-
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-          break;
-
-          case 'sphere':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
-          break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-          break;
-
-          default:
-            Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-        }
-
-        res.push({
-          id: id,
-          color: item.wallColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.roofShape) {
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-          break;
-
-          case 'dome':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height+item.roofHeight);
-            Triangulate.circle(tris, center, radius/2, item.height+item.roofHeight);
-          break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-          break;
-
-          default:
-            if (item.shape === 'cylinder') {
-              Triangulate.circle(tris, center, radius, item.height);
-            } else if (item.shape === undefined) {
-              Triangulate.polygon(tris, polygon, item.height);
-            }
-        }
-
-        res.push({
-          id: id,
-          color: item.roofColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
+        parsedItems.push(clonedItem);
       }
     }
 
-    return res;
+    var item, polygon, radius, center, tris;
+    for (i = 0, il = parsedItems.length; i<il; i++) {
+      item = parsedItems[i];
+
+      translate(item, originX, originY);
+
+      if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.polygon)) {
+        item.shape = 'cylinder';
+        item.isRotational = true;
+      }
+
+      if (item.isRotational) {
+        radius = (item.bbox.maxX-item.bbox.minX)/2;
+      }
+
+      center = [item.bbox.minX + (item.bbox.maxX - item.bbox.minX)/2, item.bbox.minY + (item.bbox.maxY - item.bbox.minY)/2];
+
+      tris = { vertices:[], normals:[] };
+
+      switch (item.shape) {
+        case 'cylinder':
+          Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
+        break;
+
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
+        break;
+
+        case 'sphere':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
+          //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
+        break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, item.polygon, center, item.minHeight, item.height);
+        break;
+
+        default:
+          Triangulate.extrusion(tris, item.polygon, item.minHeight, item.height);
+      }
+
+      res.push({
+        id: item.id,
+        color: item.wallColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
+
+      tris = { vertices:[], normals:[] };
+
+      switch (item.roofShape) {
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
+        break;
+
+        case 'dome':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height+item.roofHeight);
+          Triangulate.circle(tris, center, radius/2, item.height+item.roofHeight);
+        break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, item.polygon, center, item.height, item.height+item.roofHeight);
+        break;
+
+        default:
+          if (item.shape === 'cylinder') {
+            Triangulate.circle(tris, center, radius, item.height);
+          } else if (item.shape === undefined) {
+            Triangulate.polygon(tris, item.polygon, item.height);
+          }
+      }
+
+      res.push({
+        id: item.id,
+        color: item.roofColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
+    }
+
+    var position = unproject(originX, originY, 2 <<16);
+    return { items:res, position:position };
   };
 
 }());

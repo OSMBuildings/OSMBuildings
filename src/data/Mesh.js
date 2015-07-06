@@ -12,7 +12,7 @@ var Mesh = function(url, options) {
   if (options.color) {
     this.color = Color.parse(options.color).toRGBA();
   }
-  this.replaces  = options.replaces  || [];
+  this.replaces  = options.replaces || [];
 
   Data.add(this);
   Events.on('modify', this.modify.bind(this));
@@ -70,7 +70,7 @@ var Mesh = function(url, options) {
       this._setItems(itemList);
       itemList = null;
 
-      if (this.replaces) {
+      if (this.replaces.length) {
         var replaces = this.replaces;
         Data.addModifier(function(item) {
           if (replaces.indexOf(item.id)>=0) {

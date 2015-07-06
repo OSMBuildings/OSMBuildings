@@ -8,7 +8,7 @@ var DataTile = function(tileX, tileY, zoom) {
 DataTile.prototype = {
 
   load: function(url) {
-    this.mesh = new GeoJSONMesh(url, { tileX:this.tileX, tileY:this.tileY });
+    this.mesh = new GeoJSONMesh(url);
   },
 
   destroy: function() {

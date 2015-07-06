@@ -169,7 +169,6 @@ var GeoJSON = {};
   }
 
   function translate(item, originX, originY) {
-    return
     var polygon = item.polygon;
     for (var i = 0, il = item.polygon.length, j, jl; i < il; i++) {
       for (j = 0, jl = polygon[i].length; j < jl; j++) {
@@ -225,7 +224,7 @@ var GeoJSON = {};
     }
 
     var item, polygon, radius, center, tris;
-    for (var i = 0, il = parsedItems.length; i<il; i++) {
+    for (i = 0, il = parsedItems.length; i<il; i++) {
       item = parsedItems[i];
 
       translate(item, originX, originY);
