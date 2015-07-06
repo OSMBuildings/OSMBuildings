@@ -1,6 +1,6 @@
 
-var Matrix = function() {
-  this.data = new Float32Array([
+var Matrix = function(data) {
+  this.data = new Float32Array(data || [
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
@@ -9,58 +9,59 @@ var Matrix = function() {
 };
 
 Matrix.prototype = {
+
+  multiply: function(m) {
+    return (this.data = Matrix.multiply(this.data, m.data));
+  },
+
   translate: function(x, y, z) {
-    this.data = Matrix.multiply(this.data, [
+    return (this.data = Matrix.multiply(this.data, [
       1, 0, 0, 0,
       0, 1, 0, 0,
       0, 0, 1, 0,
       x, y, z, 1
-    ]);
+    ]));
   },
 
   rotateX: function(angle) {
     var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-    this.data = Matrix.multiply(this.data, [
+    return (this.data = Matrix.multiply(this.data, [
       1, 0, 0, 0,
       0, c, s, 0,
       0, -s, c, 0,
       0, 0, 0, 1
-    ]);
+    ]));
   },
 
   rotateY: function(angle) {
     var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-    this.data = Matrix.multiply(this.data, [
+    return (this.data = Matrix.multiply(this.data, [
       c, 0, -s, 0,
       0, 1, 0, 0,
       s, 0, c, 0,
       0, 0, 0, 1
-    ]);
+    ]));
   },
 
   rotateZ: function(angle) {
     var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-    this.data = Matrix.multiply(this.data, [
+    return (this.data = Matrix.multiply(this.data, [
       c, -s, 0, 0,
       s, c, 0, 0,
       0, 0, 1, 0,
       0, 0, 0, 1
-    ]);
+    ]));
   },
 
   scale: function(x, y, z) {
-    this.data = Matrix.multiply(this.data, [
+    return (this.data = Matrix.multiply(this.data, [
       x, 0, 0, 0,
       0, y, 0, 0,
       0, 0, z, 0,
       0, 0, 0, 1
-    ]);
+    ]));
   }
 };
-
-
-
-
 
 Matrix.multiply = function(a, b) {
   var
@@ -122,7 +123,7 @@ Matrix.multiply = function(a, b) {
 };
 
 Matrix.perspective = function(f, width, height, depth) {
-  return new Float32Array([
+  return new Matrix([
     2/width, 0,         0,        0,
     0,      -2/height,  0,        0,
     0,       40/depth,  -2/depth, f * (-2/depth),

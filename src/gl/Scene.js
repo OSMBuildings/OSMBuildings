@@ -62,7 +62,7 @@ var Scene = {
         Map.transform.rotateZ(Map.rotation);
         Map.transform.rotateX(Map.tilt);
         Map.transform.translate(Scene.width/2, Scene.height/2, 0);
-        Map.transform.data = Matrix.multiply(Map.transform.data, perspective);
+        Map.transform.multiply(perspective);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
