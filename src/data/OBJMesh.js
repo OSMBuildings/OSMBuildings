@@ -16,14 +16,14 @@ var OBJMesh = function(url, options) {
 
       if (!mtlFile) {
         setTimeout(function() {
-          onLoad(OBJ.parse(objData));
+          OBJ.parse(objData, null, onLoad);
         }, 1);
         return;
       }
 
       var baseURL = url.replace(/[^\/]+$/, '');
       Request.getText(baseURL + mtlFile[1], function(mtlData) {
-        onLoad(OBJ.parse(objData, mtlData));
+        OBJ.parse(objData, mtlData, onLoad);
       });
     });
   };

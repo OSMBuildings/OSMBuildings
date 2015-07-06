@@ -19,11 +19,9 @@ var GeoJSONMesh = function(url, options) {
       this.position = { latitude:geoPos[1], longitude:geoPos[0] };
       var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
 
-      var itemList = GeoJSON.parse(position.x, position.y, this.zoom, geojson);
+      GeoJSON.parse(position.x, position.y, this.zoom, geojson, this._onLoad.bind(this));
       geojson = null;
 
-      this._onLoad(itemList);
-      itemList = null;
     }.bind(this));
   };
 
