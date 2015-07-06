@@ -2497,11 +2497,9 @@ var GeoJSONMesh = function(url, options) {
       this.position = { latitude:geoPos[1], longitude:geoPos[0] };
       var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
 
-      var itemList = GeoJSON.parse(position.x, position.y, this.zoom, geojson);
+      GeoJSON.parse(position.x, position.y, this.zoom, geojson, this._onLoad.bind(this));
       geojson = null;
 
-      this._onLoad(itemList);
-      itemList = null;
     }.bind(this));
   };
 
@@ -2544,14 +2542,14 @@ var OBJMesh = function(url, options) {
 
       if (!mtlFile) {
         setTimeout(function() {
-          onLoad(OBJ.parse(objData));
+          OBJ.parse(objData, null, onLoad);
         }, 1);
         return;
       }
 
       var baseURL = url.replace(/[^\/]+$/, '');
       Request.getText(baseURL + mtlFile[1], function(mtlData) {
-        onLoad(OBJ.parse(objData, mtlData));
+        OBJ.parse(objData, mtlData, onLoad);
       });
     });
   };
@@ -2755,9 +2753,14 @@ var GeoJSON = {};
     return res;
   }
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson) {
+  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
+    var res = [];
+
     if (!geojson || geojson.type !== 'FeatureCollection') {
-      return [];
+      setTimeout(function() {
+        callback(res);
+      }, 5);
+      return;
     }
 
     var
@@ -2768,7 +2771,6 @@ var GeoJSON = {};
       j, jl,
       item, polygon, bbox, radius, center, id;
 
-    var res = [];
 
     for (var i = 0, il = collection.length; i < il; i++) {
       feature = collection[i];
@@ -2860,7 +2862,9 @@ var GeoJSON = {};
       }
     }
 
-    return res;
+    setTimeout(function() {
+      callback(res);
+    }, 5);
   };
 
 }());
@@ -3007,10 +3011,14 @@ OBJ.prototype = {
   }
 };
 
-OBJ.parse = function(objData, mtlData) {
-  var objParser = new OBJ();
-  var materials = mtlData ? objParser.parseMaterials(mtlData) : {};
-  return objParser.parseModel(objData, materials);
+OBJ.parse = function(objData, mtlData, callback) {
+  var
+    parser = new OBJ(),
+    materials = mtlData ? parser.parseMaterials(mtlData) : {};
+
+  setTimeout(function() {
+    callback( parser.parseModel(objData, materials) );
+  }, 5);
 };
 
 
