@@ -54,14 +54,11 @@ var Scene = {
 
     loop = setInterval(function() {
 
-      var cMatrix = Matrix.create();
-      cMatrix = Matrix.translate(cMatrix, 0, 0, 1000);
-
       requestAnimationFrame(function() {
         // TODO: update this only when Map changed
         var perspective = Matrix.perspective(20, Scene.width, Scene.height, 40000);
 
-        var pMatrix = Matrix.create();
+        var pMatrix = new Matrix();
         pMatrix = Matrix.rotateZ(pMatrix, Map.rotation);
         pMatrix = Matrix.rotateX(pMatrix, Map.tilt);
         pMatrix = Matrix.translate(pMatrix, Scene.width/2, Scene.height/2, 0);

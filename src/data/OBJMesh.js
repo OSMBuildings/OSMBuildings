@@ -33,7 +33,7 @@ var OBJMesh = function(url, options) {
       return;
     }
 
-    var mMatrix = Matrix.create();
+    var mMatrix = new Matrix();
 
     if (this.elevation) {
       mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);

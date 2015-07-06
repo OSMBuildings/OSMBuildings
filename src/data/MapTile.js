@@ -20,10 +20,11 @@ MapTile.prototype = {
       return;
     }
 
+    var mMatrix = new Matrix();
+
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
-      mapCenter = Map.center,
-      mMatrix = Matrix.create();
+      mapCenter = Map.center;
 
     mMatrix = Matrix.scale(mMatrix, ratio * 1.005, ratio * 1.005, 1);
     mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);

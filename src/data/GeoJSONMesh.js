@@ -30,7 +30,7 @@ var GeoJSONMesh = function(url, options) {
       return;
     }
 
-    var mMatrix = Matrix.create();
+    var mMatrix = new Matrix();
 
     var scale = 1/Math.pow(2, this.zoom - Map.zoom);
 

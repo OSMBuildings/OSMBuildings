@@ -27,7 +27,7 @@ var Buildings = {};
 
     gl.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
 
-    var normalMatrix = Matrix.invert3(Matrix.create());
+    var normalMatrix = Matrix.invert3(new Matrix());
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
 
     var
