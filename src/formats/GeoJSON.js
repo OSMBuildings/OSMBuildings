@@ -161,7 +161,7 @@ var GeoJSON = {};
       ring = coordinates[c];
       res[c] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
-        p = project(ring[r][1], ring[r][0], EARTH_CIRCUMFERENCE);
+        p = project(ring[r][1], ring[r][0], 2<<16);
         res[c][r] = [p.x, p.y];
       }
     }
@@ -169,6 +169,7 @@ var GeoJSON = {};
   }
 
   function translate(item, originX, originY) {
+    return
     var polygon = item.polygon;
     for (var i = 0, il = item.polygon.length, j, jl; i < il; i++) {
       for (j = 0, jl = polygon[i].length; j < jl; j++) {
@@ -303,8 +304,7 @@ var GeoJSON = {};
       });
     }
 
-    var worldSize = 2 <<16;
-    var position = unproject(originX, originY, EARTH_CIRCUMFERENCE);
+    var position = unproject(originX, originY, 2 <<16);
     return { items:res, position:position };
   };
 
