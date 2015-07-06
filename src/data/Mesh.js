@@ -6,6 +6,7 @@ var Mesh = function(url, options) {
 
   this.id        = options.id;
   this.position  = options.position  || {};
+  this.scale     = options.scale     || 1;
   this.rotation  = options.rotation  || 0;
   this.elevation = options.elevation || 0;
   if (options.color) {

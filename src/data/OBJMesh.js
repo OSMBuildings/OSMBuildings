@@ -39,7 +39,7 @@ var OBJMesh = function(url, options) {
       mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
     }
 
-    var scale = Math.pow(2, Map.zoom) * this.inMeters;
+    var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
     mMatrix = Matrix.scale(mMatrix, scale, scale, scale);
 
     mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
