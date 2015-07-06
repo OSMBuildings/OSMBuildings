@@ -6,17 +6,12 @@ var Mesh = function(url, options) {
 
   this.id        = options.id;
   this.position  = options.position  || {};
-  this.scale     = options.scale     || 1;
   this.rotation  = options.rotation  || 0;
   this.elevation = options.elevation || 0;
   if (options.color) {
     this.color = Color.parse(options.color).toRGBA();
   }
   this.replaces  = options.replaces  || [];
-
-  var R = 6378137;
-  var C = R*Math.PI*2;
-  this.inMeters = TILE_SIZE / (Math.cos(1) * C);
 
   Data.add(this);
   Events.on('modify', this.modify.bind(this));

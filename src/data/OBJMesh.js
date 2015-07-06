@@ -1,10 +1,7 @@
 
 var OBJMesh = function(url, options) {
   Mesh.call(this, url, options);
-
-  var R = 6378137;
-  var C = R*Math.PI*2;
-  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * C);
+  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 };
 
 (function() {
