@@ -161,120 +161,151 @@ var GeoJSON = {};
       ring = coordinates[c];
       res[c] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
-        p = project(ring[r][1], ring[r][0], TILE_SIZE);
+        p = project(ring[r][1], ring[r][0], EARTH_CIRCUMFERENCE);
         res[c][r] = [p.x, p.y];
       }
     }
-
     return res;
   }
 
+  function translate(item, originX, originY) {
+    var polygon = item.polygon;
+    for (var i = 0, il = item.polygon.length, j, jl; i < il; i++) {
+      for (j = 0, jl = polygon[i].length; j < jl; j++) {
+        polygon[i][j][0] -= originX;
+        polygon[i][j][1] -= originY;
+      }
+    }
+
+    var bbox = item.bbox;
+    bbox.minX -= originX;
+    bbox.minY -= originY;
+    bbox.maxX -= originX;
+    bbox.maxY -= originY;
+  }
+
   GeoJSON.parse = function(geojson) {
+    var res = [];
+
     if (!geojson || geojson.type !== 'FeatureCollection') {
-      return [];
+      return res;
     }
 
     var
       collection = geojson.features,
       feature,
+      baseItem, clonedItem,
+      originX = Infinity, originY = Infinity,
       geometries,
-      tris,
-      j, jl,
-      item, polygon, bbox, radius, center, id;
+      j, jl;
 
-    var res = [];
-
-    for (var i = 0, il = collection.length; i < il; i++) {
+    var parsedItems = [];
+    for (var i = 0, il = collection.length; i<il; i++) {
       feature = collection[i];
 
-      if (!(item = alignProperties(feature.properties))) {
+      if (!(baseItem = alignProperties(feature.properties))) {
         continue;
       }
 
+      baseItem.id = feature.properties.relationId || feature.id || feature.properties.id;
+
       geometries = getGeometries(feature.geometry);
 
-      for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(geometries[j]);
+      for (j = 0, jl = geometries.length; j<jl; j++) {
+        clonedItem = Object.create(baseItem);
+        clonedItem.polygon = transform(geometries[j]);
 
-        id = feature.properties.relationId || feature.id || feature.properties.id;
+        clonedItem.bbox = getBBox(clonedItem.polygon);
+        originX = Math.min(originX, clonedItem.bbox.minX);
+        originY = Math.min(originY, clonedItem.bbox.minY);
 
-        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-          item.shape = 'cylinder';
-          item.isRotational = true;
-        }
-
-        bbox = getBBox(polygon);
-        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
-
-        if (item.isRotational) {
-          radius = (bbox.maxX-bbox.minX)/2;
-        }
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.shape) {
-          case 'cylinder':
-            Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-          break;
-
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-          break;
-
-          case 'sphere':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
-          break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-          break;
-
-          default:
-            Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-        }
-
-        res.push({
-          id: id,
-          color: item.wallColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.roofShape) {
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-          break;
-
-          case 'dome':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height+item.roofHeight);
-            Triangulate.circle(tris, center, radius/2, item.height+item.roofHeight);
-          break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-          break;
-
-          default:
-            if (item.shape === 'cylinder') {
-              Triangulate.circle(tris, center, radius, item.height);
-            } else if (item.shape === undefined) {
-              Triangulate.polygon(tris, polygon, item.height);
-            }
-        }
-
-        res.push({
-          id: id,
-          color: item.roofColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
+        parsedItems.push(clonedItem);
       }
     }
 
-    return res;
+    var item, polygon, radius, center, tris;
+    for (var i = 0, il = parsedItems.length; i<il; i++) {
+      item = parsedItems[i];
+
+      translate(item, originX, originY);
+
+      if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.polygon)) {
+        item.shape = 'cylinder';
+        item.isRotational = true;
+      }
+
+      if (item.isRotational) {
+        radius = (item.bbox.maxX-item.bbox.minX)/2;
+      }
+
+      center = [item.bbox.minX + (item.bbox.maxX - item.bbox.minX)/2, item.bbox.minY + (item.bbox.maxY - item.bbox.minY)/2];
+
+      tris = { vertices:[], normals:[] };
+
+      switch (item.shape) {
+        case 'cylinder':
+          Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
+        break;
+
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
+        break;
+
+        case 'sphere':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
+          //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
+        break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, item.polygon, center, item.minHeight, item.height);
+        break;
+
+        default:
+          Triangulate.extrusion(tris, item.polygon, item.minHeight, item.height);
+      }
+
+      res.push({
+        id: item.id,
+        color: item.wallColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
+
+      tris = { vertices:[], normals:[] };
+
+      switch (item.roofShape) {
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
+        break;
+
+        case 'dome':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height+item.roofHeight);
+          Triangulate.circle(tris, center, radius/2, item.height+item.roofHeight);
+        break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, item.polygon, center, item.height, item.height+item.roofHeight);
+        break;
+
+        default:
+          if (item.shape === 'cylinder') {
+            Triangulate.circle(tris, center, radius, item.height);
+          } else if (item.shape === undefined) {
+            Triangulate.polygon(tris, item.polygon, item.height);
+          }
+      }
+
+      res.push({
+        id: item.id,
+        color: item.roofColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
+    }
+
+    var worldSize = 2 <<16;
+    var position = unproject(originX, originY, EARTH_CIRCUMFERENCE);
+    return { items:res, position:position };
   };
 
 }());

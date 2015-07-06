@@ -20,4 +20,7 @@ var STYLE = {
 
 var document = global.document;
 
+var EARTH_RADIUS = 6378137;
+var EARTH_CIRCUMFERENCE = EARTH_RADIUS*Math.PI*2;
+
 var BASE_DIR = '';
