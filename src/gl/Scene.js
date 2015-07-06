@@ -79,13 +79,14 @@ var Scene = {
   setSize: function(size) {
     var
       canvas = gl.canvas,
-      width = size.width,
-      height = size.height;
+      width = size.width, height = size.height;
+
     if (width !== Scene.width || height !== Scene.height) {
       canvas.width  = Scene.width  = width;
       canvas.height = Scene.height = height;
 
       Scene.perspective = Matrix.perspective(20, width, height, 40000);
+//    Scene.perspective = Matrix.perspectiveX(45, width/height, 0.1, 1000);
 
       gl.viewport(0, 0, width, height);
       Events.emit('resize', size);

@@ -137,6 +137,16 @@ Matrix.perspective = function(f, width, height, depth) {
   ]);
 };
 
+Matrix.perspectiveX = function(fov, aspect, near, far) {
+  var f = 1/Math.tan(fov*(Math.PI/180)/2), nf = 1/(near - far);
+  return new Matrix([
+    f/aspect, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (far + near)*nf, -1,
+    0, 0, (2*far*near)*nf, 0
+  ]);
+};
+
 Matrix.invert3 = function(a) {
   var
     a00 = a[0], a01 = a[1], a02 = a[2],
