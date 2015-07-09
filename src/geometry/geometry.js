@@ -61,14 +61,6 @@ function getBBox(coordinates) {
   return { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
 }
 
-function rad(deg) {
-  return deg * PI / 180;
-}
-
-function deg(rad) {
-  return rad / PI * 180;
-}
-
 function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
   var d1x = ax-bx;
   var d1y = ay-by;

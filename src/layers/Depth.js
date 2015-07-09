@@ -17,32 +17,6 @@ var Depth = {};
 
     var item, mMatrix;
 
-    //*** Basemap ***
-
-    //var tiles = TileGrid.getTiles();
-    //
-    //for (var key in tiles) {
-    //  item = tiles[key];
-    //
-    //  if (!(mMatrix = item.getMatrix())) {
-    //    continue;
-    //  }
-    //
-    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
-    //
-    //  item.vertexBuffer.enable();
-    //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    // item.visibilityBuffer.enable();
-    // gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
-    //}
-
-    //*** Buildings ***
-
-    //if (Map.zoom < MIN_ZOOM) {
-    //  return;
-    //}
-
     var dataItems = Data.items;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {

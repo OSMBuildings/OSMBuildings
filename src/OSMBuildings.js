@@ -8,9 +8,9 @@ var OSMBuildings = function(containerId, options) {
     BASE_DIR = options.baseDir;
   }
 
-  Map.setState(options);
+  Scene.init(container, options);
+  Map.init(options);
   Events.init(container);
-  Scene.create(container, options);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -28,8 +28,9 @@ var OSMBuildings = function(containerId, options) {
   }
 };
 
-OSMBuildings.VERSION = '0.1.6';
-OSMBuildings.ATTRIBUTION = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
+OSMBuildings.VERSION = '0.1.8';
+OSMBuildings.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
+OSMBuildings.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
 OSMBuildings.prototype = {
 

@@ -59,6 +59,11 @@ GL.Texture.prototype = {
 
       this.setImage(image);
       this.isLoaded = true;
+
+      if (callback) {
+        callback();
+      }
+
     }.bind(this);
 
     image.src = url;

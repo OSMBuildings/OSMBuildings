@@ -872,9 +872,9 @@ var OSMBuildings = function(containerId, options) {
     BASE_DIR = options.baseDir;
   }
 
-  Map.setState(options);
+  Scene.init(container, options);
+  Map.init(options);
   Events.init(container);
-  Scene.create(container, options);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -892,8 +892,9 @@ var OSMBuildings = function(containerId, options) {
   }
 };
 
-OSMBuildings.VERSION = '0.1.6';
-OSMBuildings.ATTRIBUTION = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
+OSMBuildings.VERSION = '0.1.8';
+OSMBuildings.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
+OSMBuildings.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
 OSMBuildings.prototype = {
 
@@ -1032,56 +1033,21 @@ var Map = {};
       center = Map.center,
       halfWidth  = Scene.width/2,
       halfHeight = Scene.height/2;
+
     Map.bounds = {
       maxY: center.y + halfHeight,
       minX: center.x - halfWidth,
       minY: center.y - halfHeight,
       maxX: center.x + halfWidth
     };
-
-    //updateBounds3D();
   }
-
-  //function updateBounds3D() {
-  //  // https://github.com/mattdesl/ray-plane-intersection/
-  //  // https://www.cs.uaf.edu/2012/spring/cs481/section/0/lecture/01_26_ray_intersections.html
-  //
-  //  var CAM_X = Scene.width/2;
-  //  var CAM_Y = Scene.height/2;
-  //  var CAM_Z = 500;
-  //
-  //  var origin = [CAM_X, CAM_Y, CAM_Z];
-  //
-  //  // TODO
-  //  //var at = transform(a);
-  //  //var bt = transform(b);
-  //  //var ct = transform(c);
-  //  var at = [0, 0, -10];
-  //  var bt = [Scene.width, 0, -10];
-  //  var ct = [Scene.width, Scene.height, -10];
-  //  var dt = [0, Scene.height, -10];
-  //
-  //  var normal = Plane.normal(at, bt, ct);
-  //  var distance = Plane.distance(normal, dt);
-  //
-  //  console.log(get3DCorner(0, 0, origin, normal, distance));
-  //  console.log(get3DCorner(Scene.width, 0, origin, normal, distance));
-  //  console.log(get3DCorner(Scene.width, Scene.height, origin, normal, distance));
-  //  console.log(get3DCorner(0, Scene.height, origin, normal, distance));
-  //}
-  //
-  //function get3DCorner(x, y, origin, normal, distance) {
-  //  var point = [x, y, 0];
-  //  var direction = Vector.direction(origin, point);
-  //  return Plane.intersection(origin, direction, normal, distance);
-  //}
 
   //***************************************************************************
 
   Map.center = { x:0, y:0 };
   Map.zoom = 0;
 
-  Map.setState = function(options) {
+  Map.init = function(options) {
     Map.minZoom = parseFloat(options.minZoom) || 10;
     Map.maxZoom = parseFloat(options.maxZoom) || 20;
 
@@ -1161,8 +1127,7 @@ var Map = {};
     }
   };
 
-  Map.destroy = function() {
-  };
+  Map.destroy = function() {};
 
 }());
 
@@ -1623,7 +1588,7 @@ function nextPowerOf2(n) {
 }
 
 
-var SHADERS = {"interaction":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"textured":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uNormalTransform","uMatrix","uAlpha","uLightColor","uLightDirection"]}};
+var SHADERS = {"interaction":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"depth":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true},"textured":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"]},"buildings":{"src":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"]}};
 
 
 
@@ -2269,7 +2234,6 @@ var MapTile = function(tileX, tileY, zoom) {
 };
 
 MapTile.prototype = {
-
   load: function(url) {
     this.texture.load(url);
   },
@@ -2279,13 +2243,15 @@ MapTile.prototype = {
       return;
     }
 
+    var mMatrix = new Matrix();
+
     var
       ratio = 1 / Math.pow(2, this.zoom - Map.zoom),
-      mapCenter = Map.center,
-      mMatrix = Matrix.create();
+      mapCenter = Map.center;
 
-    mMatrix = Matrix.scale(mMatrix, ratio * 1.005, ratio * 1.005, 1);
-    mMatrix = Matrix.translate(mMatrix, this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
+    mMatrix.scale(ratio * 1.005, ratio * 1.005, 1);
+    mMatrix.translate(this.tileX * TILE_SIZE * ratio - mapCenter.x, this.tileY * TILE_SIZE * ratio - mapCenter.y, 0);
+
     return mMatrix;
   },
 
@@ -2508,17 +2474,17 @@ var GeoJSONMesh = function(url, options) {
       return;
     }
 
-    var mMatrix = Matrix.create();
+    var mMatrix = new Matrix();
 
     var scale = 1/Math.pow(2, this.zoom - Map.zoom);
 
-    mMatrix = Matrix.scale(mMatrix, scale, scale, scale*0.65);
+    mMatrix.scale(scale, scale, scale*0.65);
 
     var
       position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
       mapCenter = Map.center;
 
-    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return mMatrix;
   };
@@ -2559,22 +2525,22 @@ var OBJMesh = function(url, options) {
       return;
     }
 
-    var mMatrix = Matrix.create();
+    var mMatrix = new Matrix();
 
     if (this.elevation) {
-      mMatrix = Matrix.translate(mMatrix, 0, 0, this.elevation);
+      mMatrix.translate(0, 0, this.elevation);
     }
 
     var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-    mMatrix = Matrix.scale(mMatrix, scale, scale, scale);
+    mMatrix.scale(scale, scale, scale);
 
-    mMatrix = Matrix.rotateZ(mMatrix, -this.rotation);
+    mMatrix.rotateZ(-this.rotation);
 
     var
       position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
       mapCenter = Map.center;
 
-    mMatrix = Matrix.translate(mMatrix, position.x-mapCenter.x, position.y-mapCenter.y, 0);
+    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
     return mMatrix;
   };
@@ -3084,14 +3050,6 @@ function getBBox(coordinates) {
   return { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
 }
 
-function rad(deg) {
-  return deg * PI / 180;
-}
-
-function deg(rad) {
-  return rad / PI * 180;
-}
-
 function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
   var d1x = ax-bx;
   var d1y = ay-by;
@@ -3126,18 +3084,21 @@ function rotatePoint(x, y, angle) {
 }
 
 
-var Matrix = {
+var Matrix = function(data) {
+  if (data) {
+    this.data = new Float32Array(data);
+  } else {
+    this.identity();
+  }
+};
 
-  create: function() {
-    return [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ];
-  },
+(function() {
 
-  multiply: function(a, b) {
+  function rad(a) {
+    return a * Math.PI/180;
+  }
+
+  function multiply(a, b) {
     var
       a00 = a[0],
       a01 = a[1],
@@ -3171,10 +3132,9 @@ var Matrix = {
       b30 = b[12],
       b31 = b[13],
       b32 = b[14],
-      b33 = b[15]
-    ;
+      b33 = b[15];
 
-    return [
+    return new Float32Array([
       a00*b00 + a01*b10 + a02*b20 + a03*b30,
       a00*b01 + a01*b11 + a02*b21 + a03*b31,
       a00*b02 + a01*b12 + a02*b22 + a03*b32,
@@ -3194,122 +3154,103 @@ var Matrix = {
       a30*b01 + a31*b11 + a32*b21 + a33*b31,
       a30*b02 + a31*b12 + a32*b22 + a33*b32,
       a30*b03 + a31*b13 + a32*b23 + a33*b33
-    ];
-  },
-
-  perspective: function(f, width, height, depth) {
-//  var f = Math.tan((Math.PI-rad(fov))/2);
-    return [
-      2/width, 0,         0,        0,
-      0,      -2/height,  0,        0,
-      0,       40/depth,  -2/depth, f * (-2/depth),
-      -1,      1,         0,        1
-    ];
-  },
-
-  translate: function(matrix, x, y, z) {
-    return this.multiply(matrix, [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      x, y, z, 1
     ]);
-  },
+  }
 
-  rotateX: function(matrix, angle) {
-    var a = rad(angle);
-    var c = Math.cos(a);
-    var s = Math.sin(a);
-    return this.multiply(matrix, [
-      1,  0, 0, 0,
-      0,  c, s, 0,
-      0, -s, c, 0,
-      0,  0, 0, 1
-    ]);
-  },
+  Matrix.prototype = {
 
-  rotateY: function(matrix, angle) {
-    var a = rad(angle);
-    var c = Math.cos(a);
-    var s = Math.sin(a);
-    return this.multiply(matrix, [
-      c, 0, -s, 0,
-      0, 1,  0, 0,
-      s, 0,  c, 0,
-      0, 0,  0, 1
-    ]);
-  },
+    identity: function() {
+      this.data = new Float32Array([
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]);
+    },
 
-  rotateZ: function(matrix, angle) {
-    var a = rad(angle);
-    var c = Math.cos(a);
-    var s = Math.sin(a);
-    return this.multiply(matrix, [
-      c, -s, 0, 0,
-      s, c, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ]);
-  },
+    multiply: function(m) {
+      this.data = multiply(this.data, m.data);
+      return this;
+    },
 
-  scale: function(matrix, x, y, z) {
-    return this.multiply(matrix, [
-      x, 0, 0, 0,
-      0, y, 0, 0,
-      0, 0, z, 0,
-      0, 0, 0, 1
-    ]);
-  },
+    translate: function(x, y, z) {
+      this.data = multiply(this.data, [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        x, y, z, 1
+      ]);
+      return this;
+    },
 
-  invert: function(a) {
-    var
-      a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
-      a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
-      a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11],
-      a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15],
+    rotateX: function(angle) {
+      var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
+      this.data = multiply(this.data, [
+        1, 0, 0, 0,
+        0, c, s, 0,
+        0, -s, c, 0,
+        0, 0, 0, 1
+      ]);
+      return this;
+    },
 
-      b00 = a00 * a11 - a01 * a10,
-      b01 = a00 * a12 - a02 * a10,
-      b02 = a00 * a13 - a03 * a10,
-      b03 = a01 * a12 - a02 * a11,
-      b04 = a01 * a13 - a03 * a11,
-      b05 = a02 * a13 - a03 * a12,
-      b06 = a20 * a31 - a21 * a30,
-      b07 = a20 * a32 - a22 * a30,
-      b08 = a20 * a33 - a23 * a30,
-      b09 = a21 * a32 - a22 * a31,
-      b10 = a21 * a33 - a23 * a31,
-      b11 = a22 * a33 - a23 * a32,
+    rotateY: function(angle) {
+      var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
+      this.data = multiply(this.data, [
+        c, 0, -s, 0,
+        0, 1, 0, 0,
+        s, 0, c, 0,
+        0, 0, 0, 1
+      ]);
+      return this;
+    },
 
-      det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+    rotateZ: function(angle) {
+      var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
+      this.data = multiply(this.data, [
+        c, -s, 0, 0,
+        s, c, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]);
+      return this;
+    },
 
-    if (!det) {
-      return null;
+    scale: function(x, y, z) {
+      this.data = multiply(this.data, [
+        x, 0, 0, 0,
+        0, y, 0, 0,
+        0, 0, z, 0,
+        0, 0, 0, 1
+      ]);
+      return this;
     }
+  };
 
-    det = 1.0/det;
+  Matrix.multiply = function(a, b) {
+    return multiply(a.data, b.data);
+  };
 
-    return [
-      (a11 * b11 - a12 * b10 + a13 * b09) * det,
-      (a02 * b10 - a01 * b11 - a03 * b09) * det,
-      (a31 * b05 - a32 * b04 + a33 * b03) * det,
-      (a22 * b04 - a21 * b05 - a23 * b03) * det,
-      (a12 * b08 - a10 * b11 - a13 * b07) * det,
-      (a00 * b11 - a02 * b08 + a03 * b07) * det,
-      (a32 * b02 - a30 * b05 - a33 * b01) * det,
-      (a20 * b05 - a22 * b02 + a23 * b01) * det,
-      (a10 * b10 - a11 * b08 + a13 * b06) * det,
-      (a01 * b08 - a00 * b10 - a03 * b06) * det,
-      (a30 * b04 - a31 * b02 + a33 * b00) * det,
-      (a21 * b02 - a20 * b04 - a23 * b00) * det,
-      (a11 * b07 - a10 * b09 - a12 * b06) * det,
-      (a00 * b09 - a01 * b07 + a02 * b06) * det,
-      (a31 * b01 - a30 * b03 - a32 * b00) * det,
-      (a20 * b03 - a21 * b01 + a22 * b00) * det
-    ];
-  },
+  Matrix.perspective = function(f, width, height, depth) {
+    return new Matrix([
+      2/width, 0, 0, 0,
+      0, -2/height, 0, 0,
+      0, 40/depth, -2/depth, f*(-2/depth),
+      -1, 1, 0, 1
+    ]);
+  };
 
-  invert3: function(a) {
+  Matrix.perspectiveX = function(fov, aspect, near, far) {
+    var f = 1/Math.tan(fov*(Math.PI/180)/2), nf = 1/(near - far);
+    return new Matrix([
+      f/aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (far + near)*nf, -1,
+      0, 0, (2*far*near)*nf, 0
+    ]);
+  };
+
+  Matrix.invert3 = function(a) {
     var
       a00 = a[0], a01 = a[1], a02 = a[2],
       a04 = a[4], a05 = a[5], a06 = a[6],
@@ -3338,10 +3279,10 @@ var Matrix = {
       (-a09*a00 + a01*a08) * det,
       ( a05*a00 - a01*a04) * det
     ];
-  },
+  };
 
-  transpose: function(a) {
-    return [
+  Matrix.transpose = function(a) {
+    return new Float32Array([
       a[0],
       a[3],
       a[6],
@@ -3351,9 +3292,10 @@ var Matrix = {
       a[2],
       a[5],
       a[8]
-    ];
-  }
-};
+    ]);
+  };
+
+}());
 
 
 var Vector = {
@@ -3565,6 +3507,11 @@ GL.Texture.prototype = {
 
       this.setImage(image);
       this.isLoaded = true;
+
+      if (callback) {
+        callback();
+      }
+
     }.bind(this);
 
     image.src = url;
@@ -3703,7 +3650,7 @@ var Scene = {
   height: 0,
   backgroundColor: {},  
 
-  create: function(container, options) {
+  init: function(container, options) {
     var canvas = document.createElement('CANVAS');
     canvas.style.position = 'absolute';
     canvas.style.pointerEvents = 'none';
@@ -3742,7 +3689,7 @@ var Scene = {
 
     //addListener(canvas, 'webglcontextrestored', ...);
 
-//    Depth.initShader();
+//  Depth.initShader();
     Interaction.initShader();
     SkyDome.initShader();
     Basemap.initShader();
@@ -3750,40 +3697,41 @@ var Scene = {
 
     loop = setInterval(function() {
 
-      var cMatrix = Matrix.create();
-      cMatrix = Matrix.translate(cMatrix, 0, 0, 1000);
-
       requestAnimationFrame(function() {
-        // TODO: update this only when Map changed
-        var perspective = Matrix.perspective(20, Scene.width, Scene.height, 40000);
-
-        var pMatrix = Matrix.create();
-        pMatrix = Matrix.rotateZ(pMatrix, Map.rotation);
-        pMatrix = Matrix.rotateX(pMatrix, Map.tilt);
-        pMatrix = Matrix.translate(pMatrix, Scene.width/2, Scene.height/2, 0);
-        pMatrix = Matrix.multiply(pMatrix, perspective);
+        Map.transform = new Matrix()
+          .rotateZ(Map.rotation)
+          .rotateX(Map.tilt)
+          .translate(Scene.width/2, Scene.height/2, 0)
+          .multiply(Scene.perspective);
 
 // console.log('CONTEXT LOST?', gl.isContextLost());
 
-//      Depth.render(pMatrix);
-        Interaction.render(pMatrix);
+//      Depth.render();
+        Interaction.render();
 
         gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        SkyDome.render(pMatrix);
-        Basemap.render(pMatrix);
-        Buildings.render(pMatrix);
+        SkyDome.render();
+        Basemap.render();
+        Buildings.render();
       });
     }, 17);
   },
 
   setSize: function(size) {
-    var canvas = gl.canvas;
-    if (size.width !== Scene.width || size.height !== Scene.height) {
-      canvas.width  = Scene.width  = size.width;
-      canvas.height = Scene.height = size.height;
-      gl.viewport(0, 0, size.width, size.height);
+    var
+      canvas = gl.canvas,
+      width = size.width, height = size.height;
+
+    if (width !== Scene.width || height !== Scene.height) {
+      canvas.width  = Scene.width  = width;
+      canvas.height = Scene.height = height;
+
+      Scene.perspective = Matrix.perspective(20, width, height, 40000);
+//    Scene.perspective = Matrix.perspectiveX(45, width/height, 0.1, 1000);
+
+      gl.viewport(0, 0, width, height);
       Events.emit('resize', size);
     }
   },
@@ -3806,39 +3754,13 @@ var Depth = {};
     shader = new Shader('depth');
   };
 
-  Depth.render = function(pMatrix) {
+  Depth.render = function() {
     shader.enable();
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var item, mMatrix;
-
-    //*** Basemap ***
-
-    //var tiles = TileGrid.getTiles();
-    //
-    //for (var key in tiles) {
-    //  item = tiles[key];
-    //
-    //  if (!(mMatrix = item.getMatrix())) {
-    //    continue;
-    //  }
-    //
-    //  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
-    //
-    //  item.vertexBuffer.enable();
-    //  gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    // item.visibilityBuffer.enable();
-    // gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    //  gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
-    //}
-
-    //*** Buildings ***
-
-    //if (Map.zoom < MIN_ZOOM) {
-    //  return;
-    //}
 
     var dataItems = Data.items;
 
@@ -3849,7 +3771,7 @@ var Depth = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -3876,7 +3798,7 @@ var Interaction = {};
     shader = new Shader('interaction');
   };
 
-  Interaction.render = function(pMatrix) {
+  Interaction.render = function() {
     if (!callback) {
       return;
     }
@@ -3903,7 +3825,7 @@ var Interaction = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -3981,7 +3903,7 @@ var SkyDome = {};
     texture.load(BASE_DIR +'/assets/skydome.jpg');
   };
 
-  SkyDome.render = function(mapMatrix) {
+  SkyDome.render = function() {
     if (!texture.isLoaded) {
       return;
     }
@@ -3990,7 +3912,7 @@ var SkyDome = {};
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(mapMatrix));
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Map.transform.data);
 
     vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -4021,7 +3943,7 @@ var Basemap = {};
     shader = new Shader('textured');
   };
 
-  Basemap.render = function(pMatrix) {
+  Basemap.render = function() {
     var
       tiles = TileGrid.getTiles(), item,
       mMatrix;
@@ -4035,7 +3957,7 @@ var Basemap = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -4065,7 +3987,7 @@ var Buildings = {};
     shader = new Shader('buildings');
   };
 
-  Buildings.render = function(pMatrix) {
+  Buildings.render = function() {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -4083,8 +4005,8 @@ var Buildings = {};
 
     gl.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
 
-    var normalMatrix = Matrix.invert3(Matrix.create());
-    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, new Float32Array(Matrix.transpose(normalMatrix)));
+    var normalMatrix = Matrix.invert3(new Matrix().data);
+    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, Matrix.transpose(normalMatrix));
 
     var
       dataItems = Data.items,
@@ -4098,7 +4020,7 @@ var Buildings = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, new Float32Array(Matrix.multiply(mMatrix, pMatrix)));
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

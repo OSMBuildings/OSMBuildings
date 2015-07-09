@@ -7,7 +7,7 @@ var Scene = {
   height: 0,
   backgroundColor: {},  
 
-  create: function(container, options) {
+  init: function(container, options) {
     var canvas = document.createElement('CANVAS');
     canvas.style.position = 'absolute';
     canvas.style.pointerEvents = 'none';
