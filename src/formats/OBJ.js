@@ -38,6 +38,9 @@ OBJ.prototype = {
     }
 
     this.storeMaterial(materials, data);
+
+    str = null;
+
     return materials;
   },
 
@@ -86,6 +89,9 @@ OBJ.prototype = {
     }
 
     this.storeMesh(meshes, id, color, faces);
+
+    str = null;
+
     return meshes;
   },
 
@@ -140,12 +146,12 @@ OBJ.prototype = {
   }
 };
 
-OBJ.parse = function(objData, mtlData, callback) {
+OBJ.parse = function(objStr, mtlStr, callback) {
   var
     parser = new OBJ(),
-    materials = mtlData ? parser.parseMaterials(mtlData) : {};
+    materials = mtlStr ? parser.parseMaterials(mtlStr) : {};
 
   setTimeout(function() {
-    callback( parser.parseModel(objData, materials) );
+    callback( parser.parseModel(objStr, materials) );
   }, 5);
 };

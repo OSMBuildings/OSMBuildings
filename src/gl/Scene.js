@@ -85,8 +85,8 @@ var Scene = {
       canvas.width  = Scene.width  = width;
       canvas.height = Scene.height = height;
 
-      Scene.perspective = Matrix.perspective(20, width, height, 40000);
-//    Scene.perspective = Matrix.perspectiveX(45, width/height, 0.1, 1000);
+      Scene.perspective = Matrix._perspective(20, width, height, 40000);
+//    Scene.perspective = Matrix.perspective(45, width/height, 0.1, 1000);
 
       gl.viewport(0, 0, width, height);
       Events.emit('resize', size);

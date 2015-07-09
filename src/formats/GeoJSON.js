@@ -279,6 +279,8 @@ var GeoJSON = {};
       }
     }
 
+    geojson = null;
+
     setTimeout(function() {
       callback(res);
     }, 5);

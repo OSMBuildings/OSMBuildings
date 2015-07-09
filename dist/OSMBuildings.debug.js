@@ -2234,6 +2234,7 @@ var MapTile = function(tileX, tileY, zoom) {
 };
 
 MapTile.prototype = {
+
   load: function(url) {
     this.texture.load(url);
   },
@@ -2329,12 +2330,6 @@ var Mesh = function(url, options) {
 
   Data.add(this);
   Events.on('modify', this.modify.bind(this));
-
-  if (typeof url === 'string') {
-    this.load(url);
-  } else {
-    this._onLoad(url);
-  }
 };
 
 (function() {
@@ -2375,14 +2370,11 @@ var Mesh = function(url, options) {
       vertices = null;
       normals = null;
       idColors = null;
+
+      itemList = null;
     },
 
-    _onLoad: function(itemList) {
-      this.request = null;
-
-      this._setItems(itemList);
-      itemList = null;
-
+    _replaceItems: function() {
       if (this.replaces.length) {
         var replaces = this.replaces;
         Data.addModifier(function(item) {
@@ -2391,8 +2383,6 @@ var Mesh = function(url, options) {
           }
         });
       }
-
-      this.isReady = true;
     },
 
     modify: function() {
@@ -2447,25 +2437,33 @@ var GeoJSONMesh = function(url, options) {
   Mesh.call(this, url, options);
   this.zoom = 16;
 //this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
+
+  if (typeof url === 'string') {
+    this.request = Request.getJSON(url, this._convert.bind(this));
+  } else {
+    this._convert(url);
+  }
 };
 
 (function() {
 
   GeoJSONMesh.prototype = Object.create(Mesh.prototype);
 
-  GeoJSONMesh.prototype.load = function(url) {
-    this.request = Request.getJSON(url, function(geojson) {
-      if (!geojson.features.length) {
-        return;
-      }
+  GeoJSONMesh.prototype._convert = function(geojson) {
+    this.request = null;
 
-      var geoPos = geojson.features[0].geometry.coordinates[0][0];
-      this.position = { latitude:geoPos[1], longitude:geoPos[0] };
-      var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
+    if (!geojson.features.length) {
+      return;
+    }
 
-      GeoJSON.parse(position.x, position.y, this.zoom, geojson, this._onLoad.bind(this));
-      geojson = null;
+    var geoPos = geojson.features[0].geometry.coordinates[0][0];
+    this.position = { latitude:geoPos[1], longitude:geoPos[0] };
+    var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
 
+    GeoJSON.parse(position.x, position.y, this.zoom, geojson, function(itemList) {
+      this._setItems(itemList);
+      this._replaceItems();
+      this.isReady = true;
     }.bind(this));
   };
 
@@ -2494,30 +2492,36 @@ var GeoJSONMesh = function(url, options) {
 var OBJMesh = function(url, options) {
   Mesh.call(this, url, options);
   this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+
+  this._baseURL = url.replace(/[^\/]+$/, '');
+  this.request = Request.getText(url, this._convert.bind(this));
 };
 
 (function() {
 
   OBJMesh.prototype = Object.create(Mesh.prototype);
 
-  OBJMesh.prototype.load = function(url) {
-    var onLoad = this._onLoad.bind(this);
+  OBJMesh.prototype._convert = function(objStr) {
+    var mtlFile = objStr.match(/^mtllib\s+(.*)$/m);
 
-    this.request = Request.getText(url, function(objData) {
-      var mtlFile = objData.match(/^mtllib\s+(.*)$/m);
+    if (!mtlFile) {
+      setTimeout(function() {
+        OBJ.parse(objStr, null, function(itemList) {
+          this._setItems(itemList);
+          this._replaceItems();
+          this.isReady = true;
+        }.bind(this));
+      }.bind(this), 1);
+      return;
+    }
 
-      if (!mtlFile) {
-        setTimeout(function() {
-          OBJ.parse(objData, null, onLoad);
-        }, 1);
-        return;
-      }
-
-      var baseURL = url.replace(/[^\/]+$/, '');
-      Request.getText(baseURL + mtlFile[1], function(mtlData) {
-        OBJ.parse(objData, mtlData, onLoad);
-      });
-    });
+    Request.getText(this._baseURL + mtlFile[1], function(mtlStr) {
+      OBJ.parse(objStr, mtlStr, function(itemList) {
+        this._setItems(itemList);
+        this._replaceItems();
+        this.isReady = true;
+      }.bind(this));
+    }.bind(this));
   };
 
   OBJMesh.prototype.getMatrix = function() {
@@ -2828,6 +2832,8 @@ var GeoJSON = {};
       }
     }
 
+    geojson = null;
+
     setTimeout(function() {
       callback(res);
     }, 5);
@@ -2875,6 +2881,9 @@ OBJ.prototype = {
     }
 
     this.storeMaterial(materials, data);
+
+    str = null;
+
     return materials;
   },
 
@@ -2923,6 +2932,9 @@ OBJ.prototype = {
     }
 
     this.storeMesh(meshes, id, color, faces);
+
+    str = null;
+
     return meshes;
   },
 
@@ -2977,13 +2989,13 @@ OBJ.prototype = {
   }
 };
 
-OBJ.parse = function(objData, mtlData, callback) {
+OBJ.parse = function(objStr, mtlStr, callback) {
   var
     parser = new OBJ(),
-    materials = mtlData ? parser.parseMaterials(mtlData) : {};
+    materials = mtlStr ? parser.parseMaterials(mtlStr) : {};
 
   setTimeout(function() {
-    callback( parser.parseModel(objData, materials) );
+    callback( parser.parseModel(objStr, materials) );
   }, 5);
 };
 
@@ -3231,7 +3243,7 @@ var Matrix = function(data) {
     return multiply(a.data, b.data);
   };
 
-  Matrix.perspective = function(f, width, height, depth) {
+  Matrix._perspective = function(f, width, height, depth) {
     return new Matrix([
       2/width, 0, 0, 0,
       0, -2/height, 0, 0,
@@ -3240,7 +3252,7 @@ var Matrix = function(data) {
     ]);
   };
 
-  Matrix.perspectiveX = function(fov, aspect, near, far) {
+  Matrix.perspective = function(fov, aspect, near, far) {
     var f = 1/Math.tan(fov*(Math.PI/180)/2), nf = 1/(near - far);
     return new Matrix([
       f/aspect, 0, 0, 0,
@@ -3728,8 +3740,8 @@ var Scene = {
       canvas.width  = Scene.width  = width;
       canvas.height = Scene.height = height;
 
-      Scene.perspective = Matrix.perspective(20, width, height, 40000);
-//    Scene.perspective = Matrix.perspectiveX(45, width/height, 0.1, 1000);
+      Scene.perspective = Matrix._perspective(20, width, height, 40000);
+//    Scene.perspective = Matrix.perspective(45, width/height, 0.1, 1000);
 
       gl.viewport(0, 0, width, height);
       Events.emit('resize', size);

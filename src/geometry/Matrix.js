@@ -146,7 +146,7 @@ var Matrix = function(data) {
     return multiply(a.data, b.data);
   };
 
-  Matrix.perspective = function(f, width, height, depth) {
+  Matrix._perspective = function(f, width, height, depth) {
     return new Matrix([
       2/width, 0, 0, 0,
       0, -2/height, 0, 0,
@@ -155,7 +155,7 @@ var Matrix = function(data) {
     ]);
   };
 
-  Matrix.perspectiveX = function(fov, aspect, near, far) {
+  Matrix.perspective = function(fov, aspect, near, far) {
     var f = 1/Math.tan(fov*(Math.PI/180)/2), nf = 1/(near - far);
     return new Matrix([
       f/aspect, 0, 0, 0,

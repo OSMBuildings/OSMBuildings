@@ -135,7 +135,7 @@
     // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
     tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
-    // dataSource: null, // null disables default OSM data,
+    dataSource: null, // null disables default OSM data,
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
     backgroundColor: '#bfb8b0',
@@ -156,6 +156,85 @@
     304987172,
     304987176
   ]});
+
+  var gj = {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "height":200,
+          "minHeight":0,
+          "color": "rgb(255,200,0)"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.409929275512695,
+                52.51850591655913
+              ],
+              [
+                13.41331958770752,
+                52.517422163556766
+              ],
+              [
+                13.412439823150635,
+                52.51627309503224
+              ],
+              [
+                13.409671783447266,
+                52.51543738995772
+              ],
+              [
+                13.407247066497803,
+                52.515646317716474
+              ],
+              [
+                13.409929275512695,
+                52.51850591655913
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "height": 100
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                13.404393196105957,
+                52.52036651448786
+              ],
+              [
+                13.404393196105957,
+                52.52178965550562
+              ],
+              [
+                13.405863046646118,
+                52.52178965550562
+              ],
+              [
+                13.405863046646118,
+                52.52036651448786
+              ],
+              [
+                13.404393196105957,
+                52.52036651448786
+              ]
+            ]
+          ]
+        }
+      }
+    ]
+  };
+  map.addGeoJSON(gj);
 
   //var obj = map.addOBJ('o2_nach_90.obj', { position:{ latitude:52.48821, longitude:13.38965 }, elevation:-9, color:'#f08000' });
   var obj = map.addGeoJSON('o2_nach_90.geo.json');

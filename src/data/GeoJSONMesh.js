@@ -3,25 +3,33 @@ var GeoJSONMesh = function(url, options) {
   Mesh.call(this, url, options);
   this.zoom = 16;
 //this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
+
+  if (typeof url === 'string') {
+    this.request = Request.getJSON(url, this._convert.bind(this));
+  } else {
+    this._convert(url);
+  }
 };
 
 (function() {
 
   GeoJSONMesh.prototype = Object.create(Mesh.prototype);
 
-  GeoJSONMesh.prototype.load = function(url) {
-    this.request = Request.getJSON(url, function(geojson) {
-      if (!geojson.features.length) {
-        return;
-      }
+  GeoJSONMesh.prototype._convert = function(geojson) {
+    this.request = null;
 
-      var geoPos = geojson.features[0].geometry.coordinates[0][0];
-      this.position = { latitude:geoPos[1], longitude:geoPos[0] };
-      var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
+    if (!geojson.features.length) {
+      return;
+    }
 
-      GeoJSON.parse(position.x, position.y, this.zoom, geojson, this._onLoad.bind(this));
-      geojson = null;
+    var geoPos = geojson.features[0].geometry.coordinates[0][0];
+    this.position = { latitude:geoPos[1], longitude:geoPos[0] };
+    var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
 
+    GeoJSON.parse(position.x, position.y, this.zoom, geojson, function(itemList) {
+      this._setItems(itemList);
+      this._replaceItems();
+      this.isReady = true;
     }.bind(this));
   };
 

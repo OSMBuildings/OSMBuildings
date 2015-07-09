@@ -16,12 +16,6 @@ var Mesh = function(url, options) {
 
   Data.add(this);
   Events.on('modify', this.modify.bind(this));
-
-  if (typeof url === 'string') {
-    this.load(url);
-  } else {
-    this._onLoad(url);
-  }
 };
 
 (function() {
@@ -62,14 +56,11 @@ var Mesh = function(url, options) {
       vertices = null;
       normals = null;
       idColors = null;
+
+      itemList = null;
     },
 
-    _onLoad: function(itemList) {
-      this.request = null;
-
-      this._setItems(itemList);
-      itemList = null;
-
+    _replaceItems: function() {
       if (this.replaces.length) {
         var replaces = this.replaces;
         Data.addModifier(function(item) {
@@ -78,8 +69,6 @@ var Mesh = function(url, options) {
           }
         });
       }
-
-      this.isReady = true;
     },
 
     modify: function() {

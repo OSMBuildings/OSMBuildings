@@ -2,30 +2,36 @@
 var OBJMesh = function(url, options) {
   Mesh.call(this, url, options);
   this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+
+  this._baseURL = url.replace(/[^\/]+$/, '');
+  this.request = Request.getText(url, this._convert.bind(this));
 };
 
 (function() {
 
   OBJMesh.prototype = Object.create(Mesh.prototype);
 
-  OBJMesh.prototype.load = function(url) {
-    var onLoad = this._onLoad.bind(this);
+  OBJMesh.prototype._convert = function(objStr) {
+    var mtlFile = objStr.match(/^mtllib\s+(.*)$/m);
 
-    this.request = Request.getText(url, function(objData) {
-      var mtlFile = objData.match(/^mtllib\s+(.*)$/m);
+    if (!mtlFile) {
+      setTimeout(function() {
+        OBJ.parse(objStr, null, function(itemList) {
+          this._setItems(itemList);
+          this._replaceItems();
+          this.isReady = true;
+        }.bind(this));
+      }.bind(this), 1);
+      return;
+    }
 
-      if (!mtlFile) {
-        setTimeout(function() {
-          OBJ.parse(objData, null, onLoad);
-        }, 1);
-        return;
-      }
-
-      var baseURL = url.replace(/[^\/]+$/, '');
-      Request.getText(baseURL + mtlFile[1], function(mtlData) {
-        OBJ.parse(objData, mtlData, onLoad);
-      });
-    });
+    Request.getText(this._baseURL + mtlFile[1], function(mtlStr) {
+      OBJ.parse(objStr, mtlStr, function(itemList) {
+        this._setItems(itemList);
+        this._replaceItems();
+        this.isReady = true;
+      }.bind(this));
+    }.bind(this));
   };
 
   OBJMesh.prototype.getMatrix = function() {
