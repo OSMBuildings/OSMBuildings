@@ -19,6 +19,8 @@ GL.Texture = function(options) {
     if (options.image) {
       this.setImage(options.image);
     }
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 };
 

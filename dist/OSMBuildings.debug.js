@@ -3479,6 +3479,8 @@ GL.Texture = function(options) {
     if (options.image) {
       this.setImage(options.image);
     }
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 };
 
@@ -3690,6 +3692,7 @@ var Scene = {
     } else {
       gl.enable(gl.CULL_FACE);
     }
+
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
 
