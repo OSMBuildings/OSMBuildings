@@ -7,6 +7,10 @@ var Matrix = function(data) {
   }
 };
 
+if (typeof module !== 'undefined') {
+  module.exports = Matrix;
+}
+
 (function() {
 
   function rad(a) {

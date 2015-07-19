@@ -30,13 +30,8 @@ var Scene = {
       b: color.b/255
     };
 
-    if (options.showBackfaces) {
-      gl.disable(gl.CULL_FACE);
-    } else {
-      gl.enable(gl.CULL_FACE);
-    }
-
     gl.cullFace(gl.BACK);
+    gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
     Scene.setSize({ width: container.offsetWidth, height: container.offsetHeight });
@@ -48,10 +43,10 @@ var Scene = {
     //addListener(canvas, 'webglcontextrestored', ...);
 
 //  Depth.initShader();
-    Interaction.initShader();
-    SkyDome.initShader();
-    Basemap.initShader();
-    Buildings.initShader();
+    Interaction.initShader(options);
+    SkyDome.initShader(options);
+    Basemap.initShader(options);
+    Buildings.initShader(options);
 
     loop = setInterval(function() {
 
@@ -87,7 +82,6 @@ var Scene = {
       canvas.height = Scene.height = height;
 
       Scene.perspective = Matrix._perspective(20, width, height, 40000);
-//    Scene.perspective = Matrix.perspective(45, width/height, 0.1, 1000);
 
       gl.viewport(0, 0, width, height);
       Events.emit('resize', size);
