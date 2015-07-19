@@ -5,8 +5,9 @@ var Buildings = {};
 
   var shader;
 
-  Buildings.initShader = function() {
+  Buildings.initShader = function(options) {
     shader = new Shader('buildings');
+    this.showBackfaces = options.showBackfaces;
   };
 
   Buildings.render = function() {
@@ -20,6 +21,10 @@ var Buildings = {};
 //  gl.disable(gl.DEPTH_TEST);
 
     shader.enable();
+
+    if (this.showBackfaces) {
+      gl.disable(gl.CULL_FACE);
+    }
 
     // TODO: suncalc
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
@@ -57,6 +62,10 @@ var Buildings = {};
       gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    }
+
+    if (this.showBackfaces) {
+      gl.enable(gl.CULL_FACE);
     }
 
     shader.disable();

@@ -3,7 +3,8 @@ var SkyDome = {};
 
 (function() {
 
-  var RADIUS = 1300;
+  var RADIUS = 100; // px
+
   var NUM_LON_UNITS = 20;
   var NUM_LAT_UNITS = 10;
 
@@ -17,6 +18,12 @@ var SkyDome = {};
   var vertexBuffer;
   var texCoordBuffer;
   var texture;
+
+  function getScale() {
+    var scaleToScreen = Math.sqrt(Scene.width*Scene.width + Scene.height*Scene.height) / RADIUS;
+    var scaleForZoom = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
+    return scaleToScreen*scaleForZoom;
+  }
 
   SkyDome.initShader = function() {
     shader = new Shader('textured');
@@ -35,7 +42,19 @@ var SkyDome = {};
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, Map.transform.data);
+    var mMatrix = new Matrix();
+
+    var scale = getScale();
+    mMatrix.scale(scale, scale, scale);
+
+    mMatrix
+      .rotateZ(Map.rotation)
+      .translate(Scene.width/2, Scene.height/2, 0)
+      .rotateX(Map.tilt)
+      .translate(0, Scene.height/2, 0)
+      .multiply(Scene.perspective)
+
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
 
     vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -49,6 +68,10 @@ var SkyDome = {};
     gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numItems);
 
     shader.disable();
+  };
+
+  SkyDome.getRadius = function() {
+    return RADIUS * getScale();
   };
 
 }());
