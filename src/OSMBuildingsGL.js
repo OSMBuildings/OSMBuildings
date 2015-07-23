@@ -1,5 +1,5 @@
 
-var OSMBuildings = function(containerId, options) {
+var OSMBuildingsGL = function(containerId, options) {
   options = options || {};
 
   var container = document.getElementById(containerId);
@@ -23,16 +23,16 @@ var OSMBuildings = function(containerId, options) {
   if (options.attribution !== null && options.attribution !== false && options.attribution !== '') {
     var attribution = document.createElement('DIV');
     attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:1px 3px;background:rgba(255,255,255,0.5);font:11px sans-serif');
-    attribution.innerHTML = options.attribution || OSMBuildings.ATTRIBUTION;
+    attribution.innerHTML = options.attribution || OSMBuildingsGL.ATTRIBUTION;
     container.appendChild(attribution);
   }
 };
 
-OSMBuildings.VERSION = '0.1.8';
-OSMBuildings.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
-OSMBuildings.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
+OSMBuildingsGL.VERSION = '0.1.8';
+OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
+OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-OSMBuildings.prototype = {
+OSMBuildingsGL.prototype = {
 
   setStyle: function(style) {
     var color = style.color || style.wallColor;
@@ -152,9 +152,9 @@ OSMBuildings.prototype = {
 //*****************************************************************************
 
 if (typeof define === 'function') {
-  define([], OSMBuildings);
+  define([], OSMBuildingsGL);
 } else if (typeof exports === 'object') {
-  module.exports = OSMBuildings;
+  module.exports = OSMBuildingsGL;
 } else {
-  global.OSMBuildings = OSMBuildings;
+  global.OSMBuildingsGL = OSMBuildingsGL;
 }

@@ -3,7 +3,7 @@ var SkyDome = {};
 
 (function() {
 
-  var RADIUS = 100; // px
+  var radius = 100;
 
   var NUM_LON_UNITS = 20;
   var NUM_LAT_UNITS = 10;
@@ -13,16 +13,16 @@ var SkyDome = {};
   var vertices = [];
   var texCoords = [];
 
-  var tris = Triangulate.dome({}, {}, RADIUS, 0, 0);
+  var tris = Triangulate.dome({}, {}, radius, 0, 0);
 
   var vertexBuffer;
   var texCoordBuffer;
   var texture;
 
   function getScale() {
-    var scaleToScreen = Math.sqrt(Scene.width*Scene.width + Scene.height*Scene.height) / RADIUS;
-    var scaleForZoom = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
-    return scaleToScreen*scaleForZoom;
+    var screenRadius = Math.sqrt(Scene.width*Scene.width + Scene.height*Scene.height);
+    var scale = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
+    return screenRadius * scale / radius;
   }
 
   SkyDome.initShader = function() {
@@ -71,7 +71,7 @@ var SkyDome = {};
   };
 
   SkyDome.getRadius = function() {
-    return RADIUS * getScale();
+    return radius * getScale();
   };
 
 }());

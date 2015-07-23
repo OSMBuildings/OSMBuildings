@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Created and used under same license as above, identical author:
 
 Color.js (https://github.com/kekscom/Color.js)
-GLMap (https://github.com/OSMBuildings/GLMap)
 
 ===============================================================================
 
