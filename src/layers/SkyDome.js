@@ -52,7 +52,7 @@ var SkyDome = {};
       .translate(Scene.width/2, Scene.height/2, 0)
       .rotateX(Map.tilt)
       .translate(0, Scene.height/2, 0)
-      .multiply(Scene.perspective)
+      .multiply(Scene.perspective);
 
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
 
