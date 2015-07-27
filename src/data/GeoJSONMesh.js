@@ -40,9 +40,14 @@ var GeoJSONMesh = function(url, options) {
 
     var mMatrix = new Matrix();
 
-    var scale = 1/Math.pow(2, this.zoom - Map.zoom);
+    if (this.elevation) {
+      mMatrix.translate(0, 0, this.elevation);
+    }
 
+    var scale = 1/Math.pow(2, this.zoom - Map.zoom);
     mMatrix.scale(scale, scale, scale*0.65);
+
+    mMatrix.rotateZ(-this.rotation);
 
     var
       position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
