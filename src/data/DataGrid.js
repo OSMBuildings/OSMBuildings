@@ -47,16 +47,13 @@ var DataGrid = {};
     //maxY = Math.ceil(mapCenter.y*ratio + radius) +1;
 
     var
-      ratio = Math.pow(2, zoom-Map.zoom) / TILE_SIZE,
-      centerX = Map.center.x * ratio,
-      centerY = Map.center.y * ratio,
-      halfWidth = Scene.width / 2 * ratio,
-      halfHeight = Scene.height / 2 * ratio;
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapBounds = Map.bounds;
 
-    minX = (centerX - halfWidth <<0) -1;
-    minY = (centerY - halfHeight <<0) -1;
-    maxX = Math.ceil(centerX + halfWidth) +1;
-    maxY = Math.ceil(centerY + halfHeight) +1;
+    minX = (mapBounds.minX*ratio <<0) -1;
+    minY = (mapBounds.minY*ratio <<0) -1;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
   }
 
   function loadTiles() {

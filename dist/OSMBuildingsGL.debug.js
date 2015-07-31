@@ -1950,15 +1950,24 @@ var DataGrid = {};
   function updateTileBounds() {
     zoom = Math.round(fixedZoom || Map.zoom);
 
-    var
-      ratio = Math.pow(2, zoom-Map.zoom) / TILE_SIZE,
-      mapCenter = Map.center,
-      radius = SkyDome.getRadius() / TILE_SIZE;
+    //var
+    //  ratio = Math.pow(2, zoom-Map.zoom) / TILE_SIZE,
+    //  mapCenter = Map.center,
+    //  radius = SkyDome.getRadius() / TILE_SIZE;
+    //
+    //minX = (mapCenter.x*ratio - radius <<0) -1;
+    //minY = (mapCenter.y*ratio - radius <<0) -1;
+    //maxX = Math.ceil(mapCenter.x*ratio + radius) +1;
+    //maxY = Math.ceil(mapCenter.y*ratio + radius) +1;
 
-    minX = (mapCenter.x*ratio - radius <<0) -1;
-    minY = (mapCenter.y*ratio - radius <<0) -1;
-    maxX = Math.ceil(mapCenter.x*ratio + radius) +1;
-    maxY = Math.ceil(mapCenter.y*ratio + radius) +1;
+    var
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapBounds = Map.bounds;
+
+    minX = (mapBounds.minX*ratio <<0) -1;
+    minY = (mapBounds.minY*ratio <<0) -1;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
   }
 
   function loadTiles() {
@@ -2115,14 +2124,13 @@ var TileGrid = {};
     zoom = Math.round(Map.zoom);
 
     var
-      ratio = Math.pow(2, zoom-Map.zoom) / TILE_SIZE,
-      mapCenter = Map.center,
-      radius = SkyDome.getRadius() / TILE_SIZE;
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapBounds = Map.bounds;
 
-    minX = ((mapCenter.x*ratio - Scene.width*ratio) <<0) -1;
-    minY = ((mapCenter.y*ratio - Scene.height*ratio) <<0) -1;
-    maxX = Math.ceil(mapCenter.x*ratio + Scene.width*ratio) +1;
-    maxY = Math.ceil(mapCenter.y*ratio + Scene.height*ratio) +1;
+    minX = (mapBounds.minX*ratio <<0) -1;
+    minY = (mapBounds.minY*ratio <<0) -1;
+    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
+    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
   }
 
   function loadTiles() {
@@ -2134,11 +2142,6 @@ var TileGrid = {};
         minX + (maxX-minX-1)/2,
         maxY
       ];
-
-    var mapCenter = Map.center;
-    var maxDistance = SkyDome.getRadius() + TILE_SIZE;
-    var cx = mapCenter.x / TILE_SIZE;
-    var cy = mapCenter.y / TILE_SIZE;
 
     for (tileY = minY; tileY < maxY; tileY++) {
       for (tileX = minX; tileX < maxX; tileX++) {
@@ -2479,9 +2482,14 @@ var GeoJSONMesh = function(url, options) {
 
     var mMatrix = new Matrix();
 
-    var scale = 1/Math.pow(2, this.zoom - Map.zoom);
+    if (this.elevation) {
+      mMatrix.translate(0, 0, this.elevation);
+    }
 
+    var scale = 1/Math.pow(2, this.zoom - Map.zoom);
     mMatrix.scale(scale, scale, scale*0.65);
+
+    mMatrix.rotateZ(-this.rotation);
 
     var
       position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
@@ -3183,6 +3191,7 @@ var Matrix = function(data) {
         0, 0, 1, 0,
         0, 0, 0, 1
       ]);
+      return this;
     },
 
     multiply: function(m) {

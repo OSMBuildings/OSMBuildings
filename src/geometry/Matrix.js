@@ -81,6 +81,7 @@ var Matrix = function(data) {
         0, 0, 1, 0,
         0, 0, 0, 1
       ]);
+      return this;
     },
 
     multiply: function(m) {
