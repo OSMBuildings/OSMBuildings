@@ -36,13 +36,15 @@ var TileGrid = {};
 
     var
       ratio = Math.pow(2, zoom-Map.zoom) / TILE_SIZE,
-      mapCenter = Map.center,
-      radius = SkyDome.getRadius() / TILE_SIZE;
+      centerX = Map.center.x * ratio,
+      centerY = Map.center.y * ratio,
+      halfWidth = Scene.width / 2 * ratio,
+      halfHeight = Scene.height / 2 * ratio;
 
-    minX = ((mapCenter.x*ratio - Scene.width*ratio) <<0) -1;
-    minY = ((mapCenter.y*ratio - Scene.height*ratio) <<0) -1;
-    maxX = Math.ceil(mapCenter.x*ratio + Scene.width*ratio) +1;
-    maxY = Math.ceil(mapCenter.y*ratio + Scene.height*ratio) +1;
+    minX = (centerX - halfWidth <<0) -1;
+    minY = (centerY - halfHeight <<0) -1;
+    maxX = Math.ceil(centerX + halfWidth) +1;
+    maxY = Math.ceil(centerY + halfHeight) +1;
   }
 
   function loadTiles() {
