@@ -4,7 +4,10 @@ var OSMBuildingsGL = function(containerId, options) {
 
   var container = document.getElementById(containerId);
 
-  Scene.init(container, options);
+  Scene.init(container, {
+    backgroundColor: options.backgroundColor
+  });
+
   Map.init(options);
   Events.init(container);
 

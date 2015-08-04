@@ -58,10 +58,10 @@
     "src/geometry/Plane.js",
 
     "src/gl/GL.js",
+    "src/gl/Buffer.js",
     "src/gl/Framebuffer.js",
     "src/gl/Texture.js",
     "src/gl/Shader.js",
-    "src/gl/Scene.js",
 
     "src/layers/Depth.js",
     "src/layers/Interaction.js",
