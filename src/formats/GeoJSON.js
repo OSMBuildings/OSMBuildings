@@ -4,6 +4,7 @@ var GeoJSON = {};
 (function() {
 
   var METERS_PER_LEVEL = 3;
+  var CHUNK_SIZE = 1000;
 
   var materialColors = {
     brick:'#cc7755',
@@ -170,27 +171,18 @@ var GeoJSON = {};
     return res;
   }
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
-    var res = [];
-
-    if (!geojson || geojson.type !== 'FeatureCollection') {
-      setTimeout(function() {
-        callback(res);
-      }, 5);
-      return;
-    }
-
+  function parse(res, pos, offsetX, offsetY, zoom, geojson, callback) {
     var
       collection = geojson.features,
+      max = pos + Math.min(collection.length-pos, CHUNK_SIZE),
       feature,
       geometries,
       tris,
       j, jl,
       item, polygon, bbox, radius, center, id;
 
-
-    for (var i = 0, il = collection.length; i < il; i++) {
-      feature = collection[i];
+    for (; pos < max; pos++) {
+      feature = collection[pos];
 
       if (!(item = alignProperties(feature.properties))) {
         continue;
@@ -279,11 +271,25 @@ var GeoJSON = {};
       }
     }
 
-    geojson = null;
-
-    setTimeout(function() {
+    if (pos === collection.length) {
+      geojson = null;
       callback(res);
-    }, 5);
+    } else {
+      setTimeout(function() {
+        parse(res, pos, offsetX, offsetY, zoom, geojson, callback);
+      }, 10);
+    }
+  };
+
+  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
+    var res = [];
+
+    if (!geojson || geojson.type !== 'FeatureCollection') {
+      callback(res);
+      return;
+    }
+
+    parse(res, 0, offsetX, offsetY, zoom, geojson, callback);
   };
 
 }());

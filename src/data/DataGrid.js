@@ -134,7 +134,7 @@ var DataGrid = {};
     source = src;
 
     Events.on('change', function() {
-      update(100);
+      update(1000);
     });
 
     Events.on('resize', update);

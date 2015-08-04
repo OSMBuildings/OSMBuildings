@@ -153,5 +153,5 @@ OBJ.parse = function(objStr, mtlStr, callback) {
 
   setTimeout(function() {
     callback( parser.parseModel(objStr, materials) );
-  }, 5);
+  }, 10);
 };
