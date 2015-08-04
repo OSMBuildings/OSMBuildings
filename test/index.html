@@ -241,6 +241,16 @@ console.log('selected item id', e.target.id);
 
   //*************************************************************************
 
+  map.on('idle', function() {
+    console.log('IDLE');
+  });
+
+  map.on('busy', function() {
+    console.log('BUSY');
+  });
+
+  //*************************************************************************
+
   var controlButtons = document.querySelectorAll('.control button');
 
   for (var i = 0, il = controlButtons.length; i < il; i++) {

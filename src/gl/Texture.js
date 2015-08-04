@@ -38,6 +38,8 @@ GL.Texture.prototype = {
     var image = this.image = new Image();
     image.crossOrigin = '*';
     image.onload = function() {
+      setIdle(url);
+
       // TODO: do this only once
       var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
       if (image.width > maxTexSize || image.height > maxTexSize) {
@@ -68,6 +70,11 @@ GL.Texture.prototype = {
 
     }.bind(this);
 
+    image.onerror = function() {
+      setIdle(url);
+    };
+
+    setBusy(url);
     image.src = url;
   },
 
@@ -83,6 +90,7 @@ GL.Texture.prototype = {
     gl.deleteTexture(this.id);
     if (this.image) {
       this.isLoaded = null;
+      setIdle(this.image.src);
       this.image.src = '';
       this.image = null;
     }

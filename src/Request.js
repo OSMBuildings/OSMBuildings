@@ -18,6 +18,7 @@ var Request = {};
       }
 
       delete loading[url];
+      setIdle(url);
 
       if (!req.status || req.status < 200 || req.status > 299) {
         return;
@@ -28,12 +29,16 @@ var Request = {};
 
     loading[url] = req;
     req.open('GET', url);
+    setBusy(url);
     req.send(null);
 
     return {
       abort: function() {
-        req.abort();
-        delete loading[url];
+        if (loading[url]) {
+          setIdle(url);
+          req.abort();
+          delete loading[url];
+        }
       }
     };
   }

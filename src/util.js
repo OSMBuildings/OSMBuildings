@@ -1,4 +1,29 @@
 
+
+var activities = [];
+
+function setBusy(key) {
+  if (!activities.length) {
+    Events.emit('busy');
+  }
+  if (activities.indexOf(key) === -1) {
+    activities.push(key);
+  }
+}
+
+function setIdle(key) {
+  if (!activities.length) {
+    return;
+  }
+  var i = activities.indexOf(key);
+  if (i > -1) {
+    activities.splice(i, 1);
+  }
+  if (!activities.length) {
+    Events.emit('idle');
+  }
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(value, min));
 }
