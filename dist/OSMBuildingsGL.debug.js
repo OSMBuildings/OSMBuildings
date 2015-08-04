@@ -868,10 +868,6 @@ var OSMBuildingsGL = function(containerId, options) {
 
   var container = document.getElementById(containerId);
 
-  if (options.baseDir !== undefined) {
-    BASE_DIR = options.baseDir;
-  }
-
   Scene.init(container, options);
   Map.init(options);
   Events.init(container);
@@ -1453,7 +1449,6 @@ var document = global.document;
 var EARTH_RADIUS = 6378137;
 var EARTH_CIRCUMFERENCE = EARTH_RADIUS*Math.PI*2;
 
-var BASE_DIR = '';
 
 var Request = {};
 
@@ -1474,6 +1469,7 @@ var Request = {};
       }
 
       delete loading[url];
+      setIdle(url);
 
       if (!req.status || req.status < 200 || req.status > 299) {
         return;
@@ -1484,12 +1480,16 @@ var Request = {};
 
     loading[url] = req;
     req.open('GET', url);
+    setBusy(url);
     req.send(null);
 
     return {
       abort: function() {
-        req.abort();
-        delete loading[url];
+        if (loading[url]) {
+          setIdle(url);
+          req.abort();
+          delete loading[url];
+        }
       }
     };
   }
@@ -1538,6 +1538,31 @@ var Request = {};
 
 }());
 
+
+
+var activities = [];
+
+function setBusy(key) {
+  if (!activities.length) {
+    Events.emit('busy');
+  }
+  if (activities.indexOf(key) === -1) {
+    activities.push(key);
+  }
+}
+
+function setIdle(key) {
+  if (!activities.length) {
+    return;
+  }
+  var i = activities.indexOf(key);
+  if (i > -1) {
+    activities.splice(i, 1);
+  }
+  if (!activities.length) {
+    Events.emit('idle');
+  }
+}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(value, min));
@@ -2048,7 +2073,7 @@ var DataGrid = {};
     source = src;
 
     Events.on('change', function() {
-      update(100);
+      update(1000);
     });
 
     Events.on('resize', update);
@@ -2101,7 +2126,6 @@ var TileGrid = {};
     maxX,
     maxY,
     tiles = {};
-
 
   function update(delay) {
     updateTileBounds();
@@ -2208,7 +2232,7 @@ var TileGrid = {};
     source = src;
 
     Events.on('change', function() {
-      update(100);
+      update(1000);
     });
 
     Events.on('resize', update);
@@ -2486,7 +2510,7 @@ var GeoJSONMesh = function(url, options) {
       mMatrix.translate(0, 0, this.elevation);
     }
 
-    var scale = 1/Math.pow(2, this.zoom - Map.zoom);
+    var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
     mMatrix.scale(scale, scale, scale*0.65);
 
     mMatrix.rotateZ(-this.rotation);
@@ -2570,6 +2594,7 @@ var GeoJSON = {};
 (function() {
 
   var METERS_PER_LEVEL = 3;
+  var CHUNK_SIZE = 1000;
 
   var materialColors = {
     brick:'#cc7755',
@@ -2736,27 +2761,18 @@ var GeoJSON = {};
     return res;
   }
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
-    var res = [];
-
-    if (!geojson || geojson.type !== 'FeatureCollection') {
-      setTimeout(function() {
-        callback(res);
-      }, 5);
-      return;
-    }
-
+  function parse(res, pos, offsetX, offsetY, zoom, geojson, callback) {
     var
       collection = geojson.features,
+      max = pos + Math.min(collection.length-pos, CHUNK_SIZE),
       feature,
       geometries,
       tris,
       j, jl,
       item, polygon, bbox, radius, center, id;
 
-
-    for (var i = 0, il = collection.length; i < il; i++) {
-      feature = collection[i];
+    for (; pos < max; pos++) {
+      feature = collection[pos];
 
       if (!(item = alignProperties(feature.properties))) {
         continue;
@@ -2845,11 +2861,27 @@ var GeoJSON = {};
       }
     }
 
-    geojson = null;
-
-    setTimeout(function() {
+    if (pos === collection.length) {
+      geojson = null;
       callback(res);
-    }, 5);
+    } else {
+      setTimeout(function() {
+        parse(res, pos, offsetX, offsetY, zoom, geojson, callback);
+      }, 10);
+    }
+  }
+
+  //***************************************************************************
+
+  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
+    var res = [];
+
+    if (!geojson || geojson.type !== 'FeatureCollection') {
+      callback(res);
+      return;
+    }
+
+    parse(res, 0, offsetX, offsetY, zoom, geojson, callback);
   };
 
 }());
@@ -3009,7 +3041,7 @@ OBJ.parse = function(objStr, mtlStr, callback) {
 
   setTimeout(function() {
     callback( parser.parseModel(objStr, materials) );
-  }, 5);
+  }, 10);
 };
 
 
@@ -3512,6 +3544,8 @@ GL.Texture.prototype = {
     var image = this.image = new Image();
     image.crossOrigin = '*';
     image.onload = function() {
+      setIdle(url);
+
       // TODO: do this only once
       var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
       if (image.width > maxTexSize || image.height > maxTexSize) {
@@ -3542,6 +3576,11 @@ GL.Texture.prototype = {
 
     }.bind(this);
 
+    image.onerror = function() {
+      setIdle(url);
+    };
+
+    setBusy(url);
     image.src = url;
   },
 
@@ -3557,6 +3596,7 @@ GL.Texture.prototype = {
     gl.deleteTexture(this.id);
     if (this.image) {
       this.isLoaded = null;
+      setIdle(this.image.src);
       this.image.src = '';
       this.image = null;
     }
@@ -3930,7 +3970,7 @@ var SkyDome = {};
     vertexBuffer = new GL.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new GL.Buffer(2, new Float32Array(tris.texCoords));
     texture = new GL.Texture();
-    texture.load(BASE_DIR +'/assets/skydome.jpg');
+    texture.load('skydome.jpg');
   };
 
   SkyDome.render = function() {

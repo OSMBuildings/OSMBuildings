@@ -125,7 +125,6 @@
   
   var map = new OSMBuildingsGL('map', {
     position: { latitude:52.52000, longitude:13.41000 },
-    baseDir: '../dist',
     zoom: 16,
     // rotation: 0, // optional
     // tilt: 0, // optional
@@ -203,9 +202,9 @@
   };
   map.addGeoJSON(gj);
 
-  //var obj = map.addOBJ('o2_nach_90.obj', { position:{ latitude:52.48821, longitude:13.38965 }, elevation:-9, color:'#f08000' });
-  var obj = map.addGeoJSON('o2_nach_90.geo.json');
-  //var obj = map.addGeoJSON('w1-o4.geo.json');
+  //var obj = map.addOBJ('data/o2_nach_90.obj', { position:{ latitude:52.48821, longitude:13.38965 }, elevation:-9, color:'#f08000' });
+  var obj = map.addGeoJSON('data/o2_nach_90.geo.json');
+  //var obj = map.addGeoJSON('data/w1-o4.geo.json');
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');

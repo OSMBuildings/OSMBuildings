@@ -30,7 +30,7 @@ var SkyDome = {};
     vertexBuffer = new GL.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new GL.Buffer(2, new Float32Array(tris.texCoords));
     texture = new GL.Texture();
-    texture.load(BASE_DIR +'/assets/skydome.jpg');
+    texture.load('skydome.jpg');
   };
 
   SkyDome.render = function() {

@@ -4,10 +4,6 @@ var OSMBuildingsGL = function(containerId, options) {
 
   var container = document.getElementById(containerId);
 
-  if (options.baseDir !== undefined) {
-    BASE_DIR = options.baseDir;
-  }
-
   Scene.init(container, options);
   Map.init(options);
   Events.init(container);

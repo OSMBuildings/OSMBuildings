@@ -279,7 +279,9 @@ var GeoJSON = {};
         parse(res, pos, offsetX, offsetY, zoom, geojson, callback);
       }, 10);
     }
-  };
+  }
+
+  //***************************************************************************
 
   GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
     var res = [];
