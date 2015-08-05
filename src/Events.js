@@ -179,7 +179,7 @@ var Events = {};
     addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        Scene.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+        GLVIEW.setSize(container.offsetWidth, container.offsetHeight);
       }, 250);
     });
   };

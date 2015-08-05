@@ -1,5 +1,7 @@
 
-var Shader = function(name) {
+// TODO: improve SHADERS injection
+
+GL.Shader = function(name) {
   var config = SHADERS[name];
 
   this.id = gl.createProgram();
@@ -24,12 +26,12 @@ var Shader = function(name) {
   if (config.framebuffer) {
     this.framebuffer = new GL.Framebuffer();
     Events.on('resize', function() {
-      this.framebuffer.setSize();
+      this.framebuffer.setSize(WIDTH, HEIGHT);
     }.bind(this));
   }
 };
 
-Shader.prototype = {
+GL.Shader.prototype = {
 
   locateAttribute: function(name) {
     var loc = gl.getAttribLocation(this.id, name);

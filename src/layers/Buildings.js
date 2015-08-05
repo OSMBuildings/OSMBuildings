@@ -6,11 +6,12 @@ var Buildings = {};
   var shader;
 
   Buildings.initShader = function(options) {
-    shader = new Shader('buildings');
+    shader = new GL.Shader('buildings');
     this.showBackfaces = options.showBackfaces;
+    return this;
   };
 
-  Buildings.render = function() {
+  Buildings.render = function(renderer) {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }

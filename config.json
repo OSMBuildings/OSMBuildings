@@ -63,6 +63,8 @@
     "src/gl/Texture.js",
     "src/gl/Shader.js",
 
+    "src/Renderer.js",
+
     "src/layers/Depth.js",
     "src/layers/Interaction.js",
     "src/layers/SkyDome.js",

@@ -20,20 +20,21 @@ var SkyDome = {};
   var texture;
 
   function getScale() {
-    var screenRadius = Math.sqrt(Scene.width*Scene.width + Scene.height*Scene.height);
+    var screenRadius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT);
     var scale = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
     return screenRadius * scale / radius;
   }
 
   SkyDome.initShader = function() {
-    shader = new Shader('textured');
+    shader = new GL.Shader('textured');
     vertexBuffer = new GL.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new GL.Buffer(2, new Float32Array(tris.texCoords));
     texture = new GL.Texture();
     texture.load('skydome.jpg');
+    return this;
   };
 
-  SkyDome.render = function() {
+  SkyDome.render = function(renderer) {
     if (!texture.isLoaded) {
       return;
     }
@@ -49,10 +50,10 @@ var SkyDome = {};
 
     mMatrix
       .rotateZ(Map.rotation)
-      .translate(Scene.width/2, Scene.height/2, 0)
+      .translate(WIDTH/2, HEIGHT/2, 0)
       .rotateX(Map.tilt)
-      .translate(0, Scene.height/2, 0)
-      .multiply(Scene.perspective);
+      .translate(0, HEIGHT/2, 0)
+      .multiply(renderer.perspective);
 
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
 

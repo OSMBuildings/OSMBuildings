@@ -8,10 +8,11 @@ var Basemap = {};
   var shader;
 
   Basemap.initShader = function() {
-    shader = new Shader('textured');
+    shader = new GL.Shader('textured');
+    return this;
   };
 
-  Basemap.render = function() {
+  Basemap.render = function(renderer) {
     var
       tiles = TileGrid.getTiles(), item,
       mMatrix;

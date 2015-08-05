@@ -57,6 +57,10 @@ var DataGrid = {};
   }
 
   function loadTiles() {
+    if (Map.zoom < MIN_ZOOM) {
+      return;
+    }
+
     var
       tileX, tileY,
       key,

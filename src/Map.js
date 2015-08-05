@@ -6,8 +6,8 @@ var Map = {};
   function updateBounds() {
     var
       center = Map.center,
-      halfWidth  = Scene.width/2,
-      halfHeight = Scene.height/2;
+      halfWidth  = WIDTH/2,
+      halfHeight = HEIGHT/2;
 
     Map.bounds = {
       maxY: center.y + halfHeight,
@@ -51,8 +51,8 @@ var Map = {};
         Map.center.x *= ratio;
         Map.center.y *= ratio;
       } else {
-        var dx = Scene.width/2  - e.clientX;
-        var dy = Scene.height/2 - e.clientY;
+        var dx = WIDTH/2  - e.clientX;
+        var dy = HEIGHT/2 - e.clientY;
         Map.center.x -= dx;
         Map.center.y -= dy;
         Map.center.x *= ratio;

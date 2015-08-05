@@ -1,96 +1,53 @@
+var gl;
 
-var gl, loop;
+var GL = {};
+var WIDTH = 0, HEIGHT = 0;
 
-var Scene = {
+GL.View = function(container) {
+  var canvas = this.canvas = document.createElement('CANVAS');
+  canvas.style.position = 'absolute';
+  canvas.style.pointerEvents = 'none';
 
-  width: 0,
-  height: 0,
-  backgroundColor: {},  
+  container.appendChild(canvas);
+  this.setSize(container.offsetWidth, container.offsetHeight);
 
-  init: function(container, options) {
-    var canvas = document.createElement('CANVAS');
-    canvas.style.position = 'absolute';
-    canvas.style.pointerEvents = 'none';
-    container.appendChild(canvas);
+  var options = {
+    antialias: true,
+    depth: true,
+    premultipliedAlpha: false
+  };
 
-    var glOptions = {
-      antialias: true,
-      depth: true,
-      premultipliedAlpha: false
-    };
+  try {
+    gl = canvas.getContext('webgl', options);
+  } catch (ex) {}
+  if (!gl) try {
+    gl = canvas.getContext('experimental-webgl', options);
+  } catch (ex) {}
+  if (!gl) {
+    throw new Error('WebGL not supported');
+  }
 
-    try { gl = canvas.getContext('webgl', glOptions); } catch(ex) {}
-    if (!gl) try { gl = canvas.getContext('experimental-webgl', glOptions); } catch(ex) {}
-    if (!gl) { throw new Error('WebGL not supported'); }
+  //addListener(this.canvas, 'webglcontextlost', function(e) {
+  //  Events.emit('contextlost');
+  //});
 
-    var color = Color.parse(options.backgroundColor ? options.backgroundColor : '#cccccc').toRGBA();
-    var backgroundColor = {
-      r: color.r/255,
-      g: color.g/255,
-      b: color.b/255
-    };
+  //addListener(this.canvas, 'webglcontextrestored', function(e) {
+  //  Events.emit('contextrestored');
+  //});
+};
 
-    gl.cullFace(gl.BACK);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
+GL.View.prototype = {
 
-    Scene.setSize({ width: container.offsetWidth, height: container.offsetHeight });
-
-    addListener(canvas, 'webglcontextlost', function(e) {
-      clearInterval(loop);
-    });
-
-    //addListener(canvas, 'webglcontextrestored', ...);
-
-//  Depth.initShader();
-    Interaction.initShader(options);
-    SkyDome.initShader(options);
-    Basemap.initShader(options);
-    Buildings.initShader(options);
-
-    loop = setInterval(function() {
-
-      requestAnimationFrame(function() {
-        Map.transform = new Matrix()
-          .rotateZ(Map.rotation)
-          .rotateX(Map.tilt)
-          .translate(Scene.width/2, Scene.height/2, 0)
-          .multiply(Scene.perspective);
-
-// console.log('CONTEXT LOST?', gl.isContextLost());
-
-//      Depth.render();
-        Interaction.render();
-
-        gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        SkyDome.render();
-        Basemap.render();
-        Buildings.render();
-      });
-    }, 17);
-  },
-
-  setSize: function(size) {
-    var
-      canvas = gl.canvas,
-      width = size.width, height = size.height;
-
-    if (width !== Scene.width || height !== Scene.height) {
-      canvas.width  = Scene.width  = width;
-      canvas.height = Scene.height = height;
-
-      Scene.perspective = Matrix._perspective(20, width, height, 40000);
-
-      gl.viewport(0, 0, width, height);
-      Events.emit('resize', size);
+  setSize: function(width, height) {
+    if (width !== WIDTH || height !== HEIGHT) {
+      this.canvas.width  = WIDTH  = width;
+      this.canvas.height = HEIGHT = height;
+      Events.emit('resize');
     }
   },
 
   destroy: function() {
-    clearInterval(loop);
-    gl.canvas.parentNode.removeChild(gl.canvas);
-    gl = null;
+    this.canvas.parentNode.removeChild(this.canvas);
+    this.canvas = null;
   }
 };

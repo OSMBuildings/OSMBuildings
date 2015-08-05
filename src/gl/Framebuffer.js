@@ -9,8 +9,8 @@ GL.Framebuffer.prototype = {
     this.frameBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
 
-    this.width  = width  || Scene.width;
-    this.height = height || Scene.height;
+    this.width  = width  || WIDTH;
+    this.height = height || HEIGHT;
     var size = nextPowerOf2(Math.max(this.width, this.height));
 
     this.renderBuffer = gl.createRenderbuffer();
@@ -50,5 +50,9 @@ GL.Framebuffer.prototype = {
     return imageData;
   },
 
-  destroy: function() {}
+  destroy: function() {
+    if (this.renderTexture) {
+      this.renderTexture.destroy();
+    }
+  }
 };

@@ -9,10 +9,11 @@ var Interaction = {};
   var idMapping = [null], callback;
 
   Interaction.initShader = function() {
-    shader = new Shader('interaction');
+    shader = new GL.Shader('interaction');
+    return this;
   };
 
-  Interaction.render = function() {
+  Interaction.render = function(renderer) {
     if (!callback) {
       return;
     }
@@ -56,8 +57,8 @@ var Interaction = {};
     //if (shader.framebuffer) {
     var imageData = shader.framebuffer.getData();
     //} else {
-    //  var imageData = new Uint8Array(Scene.width*Scene.height*4);
-    //  gl.readPixels(0, 0, Scene.width, Scene.height, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+    //  var imageData = new Uint8Array(WIDTH*HEIGHT*4);
+    //  gl.readPixels(0, 0, WIDTH, HEIGHT, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
     //}
     shader.disable();
     callback(imageData);
@@ -79,8 +80,7 @@ var Interaction = {};
 
   Interaction.getFeatureID = function(pos, fn) {
     callback = function(imageData) {
-      var width = Scene.width, height = Scene.height;
-      var index = ((height-pos.y)*width + pos.x) * 4;
+      var index = ((HEIGHT-pos.y)*WIDTH + pos.x) * 4;
       var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
       fn(idMapping[color]);
       callback = null;

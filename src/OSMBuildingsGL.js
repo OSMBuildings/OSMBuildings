@@ -1,12 +1,16 @@
 
+var GLVIEW;
+
 var OSMBuildingsGL = function(containerId, options) {
   options = options || {};
 
   var container = document.getElementById(containerId);
 
-  Scene.init(container, {
+  GLVIEW = new GL.View(container);
+
+  this.renderer = new Renderer({
     backgroundColor: options.backgroundColor
-  });
+  }).start();
 
   Map.init(options);
   Events.init(container);
@@ -116,12 +120,12 @@ OSMBuildingsGL.prototype = {
   },
 
   setSize: function(size) {
-    Scene.setSize(size);
+    GLVIEW.setSize(size.width, size.height);
     return this;
   },
 
   getSize: function() {
-    return { width:Scene.width, height:Scene.height };
+    return { width:WIDTH, height:HEIGHT };
   },
 
   setRotation: function(rotation) {
@@ -143,6 +147,7 @@ OSMBuildingsGL.prototype = {
   },
 
   destroy: function() {
+    this.renderer.destroy();
     TileGrid.destroy();
     DataGrid.destroy();
   }

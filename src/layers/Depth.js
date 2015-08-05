@@ -6,10 +6,15 @@ var Depth = {};
   var shader;
 
   Depth.initShader = function() {
-    shader = new Shader('depth');
+    shader = new GL.Shader('depth');
+    return this;
   };
 
-  Depth.render = function() {
+  Depth.render = function(renderer) {
+    if (Map.zoom < MIN_ZOOM) {
+      return;
+    }
+
     shader.enable();
 
     gl.clearColor(0, 0, 0, 1);
