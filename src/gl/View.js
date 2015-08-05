@@ -10,6 +10,10 @@ gl.View = function(container) {
   container.appendChild(canvas);
   this.setSize(container.offsetWidth, container.offsetHeight);
 
+  Events.on('resize', function() {
+    this.setSize(container.offsetWidth, container.offsetHeight);
+  }.bind(this));
+
   var options = {
     antialias: true,
     depth: true,

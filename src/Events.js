@@ -179,7 +179,7 @@ var Events = {};
     addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        GLVIEW.setSize(container.offsetWidth, container.offsetHeight);
+        Events.emit('resize');
       }, 250);
     });
   };

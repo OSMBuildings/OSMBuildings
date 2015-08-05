@@ -1,12 +1,10 @@
 
-var GLVIEW;
-
 var OSMBuildingsGL = function(containerId, options) {
   options = options || {};
 
   var container = document.getElementById(containerId);
 
-  GLVIEW = new gl.View(container);
+  this.view = new gl.View(container);
 
   this.renderer = new Renderer({
     backgroundColor: options.backgroundColor
@@ -120,7 +118,7 @@ OSMBuildingsGL.prototype = {
   },
 
   setSize: function(size) {
-    GLVIEW.setSize(size.width, size.height);
+    this.view.setSize(size.width, size.height);
     return this;
   },
 
@@ -147,6 +145,7 @@ OSMBuildingsGL.prototype = {
   },
 
   destroy: function() {
+    this.view.destroy();
     this.renderer.destroy();
     TileGrid.destroy();
     DataGrid.destroy();
