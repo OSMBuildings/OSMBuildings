@@ -1,37 +1,37 @@
 
-GL.Texture = function(options) {
+gl.Texture = function(options) {
   options = options || {};
 
-  this.id = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, this.id);
+  this.id = GL.createTexture();
+  GL.bindTexture(GL.TEXTURE_2D, this.id);
 
   if (options.size) {
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, options.size, options.size, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, options.size, options.size, 0, GL.RGBA, GL.UNSIGNED_BYTE, null);
   } else {
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, options.filter || gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-//  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, options.filter || GL.LINEAR);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
+//  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+//  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 
     if (options.image) {
       this.setImage(options.image);
     }
 
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    GL.bindTexture(GL.TEXTURE_2D, null);
   }
 };
 
-GL.Texture.prototype = {
+gl.Texture.prototype = {
   enable: function(index) {
-    gl.bindTexture(gl.TEXTURE_2D, this.id);
-    gl.activeTexture(gl.TEXTURE0 + (index || 0));
+    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    GL.activeTexture(GL.TEXTURE0 + (index || 0));
   },
 
   disable: function() {
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    GL.bindTexture(GL.TEXTURE_2D, null);
   },
 
   load: function(url, callback) {
@@ -41,7 +41,7 @@ GL.Texture.prototype = {
       setIdle(url);
 
       // TODO: do this only once
-      var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      var maxTexSize = GL.getParameter(GL.MAX_TEXTURE_SIZE);
       if (image.width > maxTexSize || image.height > maxTexSize) {
         var w = maxTexSize, h = maxTexSize;
         var ratio = image.width/image.height;
@@ -79,15 +79,15 @@ GL.Texture.prototype = {
   },
 
   setImage: function(image) {
-    gl.bindTexture(gl.TEXTURE_2D, this.id);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
+    GL.generateMipmap(GL.TEXTURE_2D);
     image = null;
   },
 
   destroy: function() {
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.deleteTexture(this.id);
+    GL.bindTexture(GL.TEXTURE_2D, null);
+    GL.deleteTexture(this.id);
     if (this.image) {
       this.isLoaded = null;
       setIdle(this.image.src);

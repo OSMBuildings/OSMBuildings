@@ -1,50 +1,50 @@
 
 // TODO: improve SHADERS injection
 
-GL.Shader = function(name) {
+gl.Shader = function(name) {
   var config = SHADERS[name];
 
-  this.id = gl.createProgram();
+  this.id = GL.createProgram();
   this.name = name;
 
   if (!config.src) {
     throw new Error('missing source for shader "'+ name +'"');
   }
 
-  this.attach(gl.VERTEX_SHADER,   config.src.vertex);
-  this.attach(gl.FRAGMENT_SHADER, config.src.fragment);
+  this.attach(GL.VERTEX_SHADER,   config.src.vertex);
+  this.attach(GL.FRAGMENT_SHADER, config.src.fragment);
 
-  gl.linkProgram(this.id);
+  GL.linkProgram(this.id);
 
-  if (!gl.getProgramParameter(this.id, gl.LINK_STATUS)) {
-    throw new Error(gl.getProgramParameter(this.id, gl.VALIDATE_STATUS) +'\n'+ gl.getError());
+  if (!GL.getProgramParameter(this.id, GL.LINK_STATUS)) {
+    throw new Error(GL.getProgramParameter(this.id, GL.VALIDATE_STATUS) +'\n'+ GL.getError());
   }
 
   this.attributeNames = config.attributes;
   this.uniformNames   = config.uniforms;
 
   if (config.framebuffer) {
-    this.framebuffer = new GL.Framebuffer();
+    this.framebuffer = new gl.Framebuffer();
     Events.on('resize', function() {
       this.framebuffer.setSize(WIDTH, HEIGHT);
     }.bind(this));
   }
 };
 
-GL.Shader.prototype = {
+gl.Shader.prototype = {
 
   locateAttribute: function(name) {
-    var loc = gl.getAttribLocation(this.id, name);
+    var loc = GL.getAttribLocation(this.id, name);
     if (loc < 0) {
       console.error('unable to locate attribute "'+ name +'" in shader "'+ this.name +'"');
       return;
     }
-    gl.enableVertexAttribArray(loc);
+    GL.enableVertexAttribArray(loc);
     this.attributes[name] = loc;
   },
 
   locateUniform: function(name) {
-    var loc = gl.getUniformLocation(this.id, name);
+    var loc = GL.getUniformLocation(this.id, name);
     if (loc < 0) {
       console.error('unable to locate uniform "'+ name +'" in shader "'+ this.name +'"');
       return;
@@ -53,19 +53,19 @@ GL.Shader.prototype = {
   },
 
   attach: function(type, src) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, src);
-    gl.compileShader(shader);
+    var shader = GL.createShader(type);
+    GL.shaderSource(shader, src);
+    GL.compileShader(shader);
 
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      throw new Error('('+ this.name +') '+ gl.getShaderInfoLog(shader));
+    if (!GL.getShaderParameter(shader, GL.COMPILE_STATUS)) {
+      throw new Error('('+ this.name +') '+ GL.getShaderInfoLog(shader));
     }
 
-    gl.attachShader(this.id, shader);
+    GL.attachShader(this.id, shader);
   },
 
   enable: function() {
-    gl.useProgram(this.id);
+    GL.useProgram(this.id);
 
     var i;
 
@@ -93,7 +93,7 @@ GL.Shader.prototype = {
   disable: function() {
     if (this.attributes) {
       for (var name in this.attributes) {
-        gl.disableVertexAttribArray(this.attributes[name]);
+        GL.disableVertexAttribArray(this.attributes[name]);
       }
     }
 

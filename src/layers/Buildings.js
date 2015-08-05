@@ -6,7 +6,7 @@ var Buildings = {};
   var shader;
 
   Buildings.initShader = function(options) {
-    shader = new GL.Shader('buildings');
+    shader = new gl.Shader('buildings');
     this.showBackfaces = options.showBackfaces;
     return this;
   };
@@ -16,25 +16,25 @@ var Buildings = {};
       return;
     }
 
-//  gl.enable(gl.BLEND);
-//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-//  gl.disable(gl.DEPTH_TEST);
+//  GL.enable(GL.BLEND);
+//  GL.blendFunc(GL.SRC_ALPHA, GL.ONE);
+//  GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
+//  GL.disable(GL.DEPTH_TEST);
 
     shader.enable();
 
     if (this.showBackfaces) {
-      gl.disable(gl.CULL_FACE);
+      GL.disable(GL.CULL_FACE);
     }
 
     // TODO: suncalc
-    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
+    GL.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
+    GL.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
-    gl.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
+    GL.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
 
     var normalMatrix = Matrix.invert3(new Matrix().data);
-    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, Matrix.transpose(normalMatrix));
+    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, Matrix.transpose(normalMatrix));
 
     var
       dataItems = Data.items,
@@ -48,25 +48,25 @@ var Buildings = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
+      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.normalBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.colorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
 
       item.visibilityBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
-      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     if (this.showBackfaces) {
-      gl.enable(gl.CULL_FACE);
+      GL.enable(GL.CULL_FACE);
     }
 
     shader.disable();

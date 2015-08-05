@@ -8,7 +8,7 @@ var Basemap = {};
   var shader;
 
   Basemap.initShader = function() {
-    shader = new GL.Shader('textured');
+    shader = new gl.Shader('textured');
     return this;
   };
 
@@ -26,18 +26,18 @@ var Basemap = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
+      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.texCoordBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aTexCoord, item.texCoordBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.texture.enable(0);
-      gl.uniform1i(shader.uniforms.uTileImage, 0);
+      GL.uniform1i(shader.uniforms.uTileImage, 0);
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLE_STRIP, 0, item.vertexBuffer.numItems);
     }
 
     shader.disable();

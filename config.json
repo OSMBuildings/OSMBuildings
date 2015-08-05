@@ -57,7 +57,8 @@
     "src/geometry/Vector.js",
     "src/geometry/Plane.js",
 
-    "src/gl/GL.js",
+    "src/gl/index.js",
+    "src/gl/View.js",
     "src/gl/Buffer.js",
     "src/gl/Framebuffer.js",
     "src/gl/Texture.js",

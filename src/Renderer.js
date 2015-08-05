@@ -24,9 +24,9 @@ var Renderer = function(options) {
     b: color.b/255
   };
 
-  gl.cullFace(gl.BACK);
-  gl.enable(gl.CULL_FACE);
-  gl.enable(gl.DEPTH_TEST);
+  GL.cullFace(GL.BACK);
+  GL.enable(GL.CULL_FACE);
+  GL.enable(GL.DEPTH_TEST);
 
   //Events.on('contextlost', function() {
   //  this.stop();
@@ -48,13 +48,13 @@ Renderer.prototype = {
           .translate(WIDTH/2, HEIGHT/2, 0)
           .multiply(this.perspective);
 
-// console.log('CONTEXT LOST?', gl.isContextLost());
+// console.log('CONTEXT LOST?', GL.isContextLost());
 
 //      this.layers.depth.render(this);
         this.layers.interaction.render(this);
 
-        gl.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
+        GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
         this.layers.skydome.render(this);
         this.layers.basemap.render(this);
@@ -69,7 +69,7 @@ Renderer.prototype = {
 
   resize: function() {
     this.perspective = Matrix._perspective(20, WIDTH, HEIGHT, 40000);
-    gl.viewport(0, 0, WIDTH, HEIGHT);
+    GL.viewport(0, 0, WIDTH, HEIGHT);
   },
 
   destroy: function() {

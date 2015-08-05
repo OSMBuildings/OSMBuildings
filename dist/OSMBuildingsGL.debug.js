@@ -2260,9 +2260,9 @@ var MapTile = function(tileX, tileY, zoom) {
   this.tileY = tileY;
   this.zoom = zoom;
 
-  this.vertexBuffer   = new GL.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-  this.texCoordBuffer = new GL.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
-  this.texture = new GL.Texture();
+  this.vertexBuffer   = new gl.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
+  this.texCoordBuffer = new gl.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+  this.texture = new gl.Texture();
 };
 
 MapTile.prototype = {
@@ -2393,9 +2393,9 @@ var Mesh = function(url, options) {
         this.items.push(item);
       }
 
-      this.vertexBuffer = new GL.Buffer(3, new Float32Array(vertices));
-      this.normalBuffer = new GL.Buffer(3, new Float32Array(normals));
-      this.idColorBuffer = new GL.Buffer(3, new Uint8Array(idColors));
+      this.vertexBuffer = new gl.Buffer(3, new Float32Array(vertices));
+      this.normalBuffer = new gl.Buffer(3, new Float32Array(normals));
+      this.idColorBuffer = new gl.Buffer(3, new Uint8Array(idColors));
 
       this.modify();
 
@@ -2435,8 +2435,8 @@ var Mesh = function(url, options) {
         }
       }
 
-      this.colorBuffer = new GL.Buffer(3, new Uint8Array(newColors));
-      this.visibilityBuffer = new GL.Buffer(1, new Float32Array(newVisibilities));
+      this.colorBuffer = new gl.Buffer(3, new Uint8Array(newColors));
+      this.visibilityBuffer = new gl.Buffer(1, new Float32Array(newVisibilities));
 
       newColors = null;
       newVisibilities = null;
@@ -3430,9 +3430,9 @@ var Plane = {
 };
 
 
-var GL = {};
+var gl = {};
 
-GL.Buffer = function(itemSize, data) {
+gl.Buffer = function(itemSize, data) {
   this.id = gl.createBuffer();
   this.itemSize = itemSize;
   this.numItems = data.length/itemSize;
@@ -3441,20 +3441,20 @@ GL.Buffer = function(itemSize, data) {
   data = null;
 };
 
-GL.Buffer.prototype.enable = function() {
+gl.Buffer.prototype.enable = function() {
   gl.bindBuffer(gl.ARRAY_BUFFER, this.id);
 };
 
-GL.Buffer.prototype.destroy = function() {
+gl.Buffer.prototype.destroy = function() {
   gl.deleteBuffer(this.id);
 };
 
 
-GL.Framebuffer = function(width, height) {
+gl.Framebuffer = function(width, height) {
   this.setSize(width, height);
 };
 
-GL.Framebuffer.prototype = {
+gl.Framebuffer.prototype = {
 
   setSize: function(width, height) {
     this.frameBuffer = gl.createFramebuffer();
@@ -3472,7 +3472,7 @@ GL.Framebuffer.prototype = {
       this.renderTexture.destroy();
     }
 
-    this.renderTexture = new GL.Texture({ size:size });
+    this.renderTexture = new gl.Texture({ size:size });
 
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderBuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.renderTexture.id, 0); ////////
@@ -3505,7 +3505,7 @@ GL.Framebuffer.prototype = {
 };
 
 
-GL.Texture = function(options) {
+gl.Texture = function(options) {
   options = options || {};
 
   this.id = gl.createTexture();
@@ -3530,7 +3530,7 @@ GL.Texture = function(options) {
   }
 };
 
-GL.Texture.prototype = {
+gl.Texture.prototype = {
   enable: function(index) {
     gl.bindTexture(gl.TEXTURE_2D, this.id);
     gl.activeTexture(gl.TEXTURE0 + (index || 0));
@@ -3627,7 +3627,7 @@ var Shader = function(name) {
   this.uniformNames   = config.uniforms;
 
   if (config.framebuffer) {
-    this.framebuffer = new GL.Framebuffer();
+    this.framebuffer = new gl.Framebuffer();
     Events.on('resize', function() {
       this.framebuffer.setSize();
     }.bind(this));
@@ -3967,9 +3967,9 @@ var SkyDome = {};
 
   SkyDome.initShader = function() {
     shader = new Shader('textured');
-    vertexBuffer = new GL.Buffer(3, new Float32Array(tris.vertices));
-    texCoordBuffer = new GL.Buffer(2, new Float32Array(tris.texCoords));
-    texture = new GL.Texture();
+    vertexBuffer = new gl.Buffer(3, new Float32Array(tris.vertices));
+    texCoordBuffer = new gl.Buffer(2, new Float32Array(tris.texCoords));
+    texture = new gl.Texture();
     texture.load('skydome.jpg');
   };
 

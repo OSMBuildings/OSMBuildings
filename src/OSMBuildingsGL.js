@@ -6,7 +6,7 @@ var OSMBuildingsGL = function(containerId, options) {
 
   var container = document.getElementById(containerId);
 
-  GLVIEW = new GL.View(container);
+  GLVIEW = new gl.View(container);
 
   this.renderer = new Renderer({
     backgroundColor: options.backgroundColor

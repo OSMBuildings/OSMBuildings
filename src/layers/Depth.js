@@ -6,7 +6,7 @@ var Depth = {};
   var shader;
 
   Depth.initShader = function() {
-    shader = new GL.Shader('depth');
+    shader = new gl.Shader('depth');
     return this;
   };
 
@@ -17,8 +17,8 @@ var Depth = {};
 
     shader.enable();
 
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(0, 0, 0, 1);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     var item, mMatrix;
 
@@ -31,12 +31,12 @@ var Depth = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
+      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
-      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     shader.disable();

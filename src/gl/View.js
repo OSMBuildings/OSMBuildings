@@ -1,9 +1,8 @@
-var gl;
 
-var GL = {};
+var GL;
 var WIDTH = 0, HEIGHT = 0;
 
-GL.View = function(container) {
+gl.View = function(container) {
   var canvas = this.canvas = document.createElement('CANVAS');
   canvas.style.position = 'absolute';
   canvas.style.pointerEvents = 'none';
@@ -18,12 +17,12 @@ GL.View = function(container) {
   };
 
   try {
-    gl = canvas.getContext('webgl', options);
+    GL = canvas.getContext('webgl', options);
   } catch (ex) {}
-  if (!gl) try {
-    gl = canvas.getContext('experimental-webgl', options);
+  if (!GL) try {
+    GL = canvas.getContext('experimental-webgl', options);
   } catch (ex) {}
-  if (!gl) {
+  if (!GL) {
     throw new Error('WebGL not supported');
   }
 
@@ -36,7 +35,7 @@ GL.View = function(container) {
   //});
 };
 
-GL.View.prototype = {
+gl.View.prototype = {
 
   setSize: function(width, height) {
     if (width !== WIDTH || height !== HEIGHT) {

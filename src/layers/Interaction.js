@@ -9,7 +9,7 @@ var Interaction = {};
   var idMapping = [null], callback;
 
   Interaction.initShader = function() {
-    shader = new GL.Shader('interaction');
+    shader = new gl.Shader('interaction');
     return this;
   };
 
@@ -25,8 +25,8 @@ var Interaction = {};
 
     shader.enable();
 
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(0, 0, 0, 1);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     var
       dataItems = Data.items,
@@ -40,25 +40,25 @@ var Interaction = {};
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
+      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
 
       item.vertexBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.idColorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.UNSIGNED_BYTE, true, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
 
       item.visibilityBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
-      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     //if (shader.framebuffer) {
     var imageData = shader.framebuffer.getData();
     //} else {
     //  var imageData = new Uint8Array(WIDTH*HEIGHT*4);
-    //  gl.readPixels(0, 0, WIDTH, HEIGHT, gl.RGBA, gl.UNSIGNED_BYTE, imageData);
+    //  GL.readPixels(0, 0, WIDTH, HEIGHT, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
     //}
     shader.disable();
     callback(imageData);

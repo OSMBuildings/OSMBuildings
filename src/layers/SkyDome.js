@@ -26,10 +26,10 @@ var SkyDome = {};
   }
 
   SkyDome.initShader = function() {
-    shader = new GL.Shader('textured');
-    vertexBuffer = new GL.Buffer(3, new Float32Array(tris.vertices));
-    texCoordBuffer = new GL.Buffer(2, new Float32Array(tris.texCoords));
-    texture = new GL.Texture();
+    shader = new gl.Shader('textured');
+    vertexBuffer = new gl.Buffer(3, new Float32Array(tris.vertices));
+    texCoordBuffer = new gl.Buffer(2, new Float32Array(tris.texCoords));
+    texture = new gl.Texture();
     texture.load('skydome.jpg');
     return this;
   };
@@ -41,7 +41,7 @@ var SkyDome = {};
 
     shader.enable();
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     var mMatrix = new Matrix();
 
@@ -55,18 +55,18 @@ var SkyDome = {};
       .translate(0, HEIGHT/2, 0)
       .multiply(renderer.perspective);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
 
     vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
     texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    GL.vertexAttribPointer(shader.attributes.aTexCoord, texCoordBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
     texture.enable(0);
-    gl.uniform1i(shader.uniforms.uTileImage, 0);
+    GL.uniform1i(shader.uniforms.uTileImage, 0);
 
-    gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, vertexBuffer.numItems);
 
     shader.disable();
   };
