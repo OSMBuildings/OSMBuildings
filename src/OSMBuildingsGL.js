@@ -7,7 +7,8 @@ var OSMBuildingsGL = function(containerId, options) {
   this.view = new gl.View(container);
 
   this.renderer = new Renderer({
-    backgroundColor: options.backgroundColor
+    backgroundColor: options.backgroundColor,
+    showBackfaces: options.showBackfaces
   }).start();
 
   Map.init(options);

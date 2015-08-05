@@ -18,30 +18,31 @@ var State = {};
     history.replaceState({}, '', '?'+ params.join('&'));
   }
 
-  State.load = function(options) {
+  State.load = function(state) {
     var query = location.search;
     if (query) {
-      var state = {};
+      var params = {};
       query = query.substring(1).replace( /(?:^|&)([^&=]*)=?([^&]*)/g, function ($0, $1, $2) {
         if ($1) {
-          state[$1] = $2;
+          params[$1] = $2;
         }
       });
 
-      if (state.lat !== undefined && state.lon !== undefined) {
-        options.position = { latitude:parseFloat(state.lat), longitude:parseFloat(state.lon) };
+      var res = {};
+      if (params.lat !== undefined && params.lon !== undefined) {
+        state.position = { latitude:parseFloat(params.lat), longitude:parseFloat(params.lon) };
       }
-      if (state.zoom !== undefined) {
-        options.zoom = parseFloat(state.zoom);
+      if (params.zoom !== undefined) {
+        state.zoom = parseFloat(params.zoom);
       }
-      if (state.rotation !== undefined) {
-        options.rotation = parseFloat(state.rotation);
+      if (params.rotation !== undefined) {
+        state.rotation = parseFloat(params.rotation);
       }
-      if (state.tilt !== undefined) {
-        options.tilt = parseFloat(state.tilt);
+      if (params.tilt !== undefined) {
+        state.tilt = parseFloat(params.tilt);
       }
     }
-    return options;
+    return state;
   };
 
   var timer;

@@ -2,17 +2,13 @@
 var Renderer = function(options) {
   this.layers = {};
 
-  ////this.layers.depth       = new layers.Depth(options);
-  //this.layers.interaction = new layers.Interaction(options);
-  //this.layers.skydome     = new layers.SkyDome(options);
-  //this.layers.basemap     = new layers.Basemap(options);
-  //this.layers.buildings   = new layers.Buildings(options);
-
-//this.layers.depth       = Depth.initShader(options);
-  this.layers.interaction = Interaction.initShader(options);
-  this.layers.skydome     = SkyDome.initShader(options);
-  this.layers.basemap     = Basemap.initShader(options);
-  this.layers.buildings   = Buildings.initShader(options);
+//this.layers.depth       = Depth.initShader();
+  this.layers.interaction = Interaction.initShader();
+  this.layers.skydome     = SkyDome.initShader();
+  this.layers.basemap     = Basemap.initShader();
+  this.layers.buildings   = Buildings.initShader({
+    showBackfaces: options.showBackfaces
+  });
 
   this.resize();
   Events.on('resize', this.resize.bind(this));
@@ -39,7 +35,7 @@ var Renderer = function(options) {
 
 Renderer.prototype = {
 
-  start: function(container, options) {
+  start: function() {
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
         Map.transform = new Matrix()

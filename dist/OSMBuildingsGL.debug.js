@@ -871,7 +871,8 @@ var OSMBuildingsGL = function(containerId, options) {
   this.view = new gl.View(container);
 
   this.renderer = new Renderer({
-    backgroundColor: options.backgroundColor
+    backgroundColor: options.backgroundColor,
+    showBackfaces: options.showBackfaces
   }).start();
 
   Map.init(options);
@@ -1391,30 +1392,31 @@ var State = {};
     history.replaceState({}, '', '?'+ params.join('&'));
   }
 
-  State.load = function(options) {
+  State.load = function(state) {
     var query = location.search;
     if (query) {
-      var state = {};
+      var params = {};
       query = query.substring(1).replace( /(?:^|&)([^&=]*)=?([^&]*)/g, function ($0, $1, $2) {
         if ($1) {
-          state[$1] = $2;
+          params[$1] = $2;
         }
       });
 
-      if (state.lat !== undefined && state.lon !== undefined) {
-        options.position = { latitude:parseFloat(state.lat), longitude:parseFloat(state.lon) };
+      var res = {};
+      if (params.lat !== undefined && params.lon !== undefined) {
+        state.position = { latitude:parseFloat(params.lat), longitude:parseFloat(params.lon) };
       }
-      if (state.zoom !== undefined) {
-        options.zoom = parseFloat(state.zoom);
+      if (params.zoom !== undefined) {
+        state.zoom = parseFloat(params.zoom);
       }
-      if (state.rotation !== undefined) {
-        options.rotation = parseFloat(state.rotation);
+      if (params.rotation !== undefined) {
+        state.rotation = parseFloat(params.rotation);
       }
-      if (state.tilt !== undefined) {
-        options.tilt = parseFloat(state.tilt);
+      if (params.tilt !== undefined) {
+        state.tilt = parseFloat(params.tilt);
       }
     }
-    return options;
+    return state;
   };
 
   var timer;
@@ -3788,17 +3790,21 @@ gl.Shader.prototype = {
 var Renderer = function(options) {
   this.layers = {};
 
-  ////this.layers.depth       = new layers.Depth(options);
-  //this.layers.interaction = new layers.Interaction(options);
-  //this.layers.skydome     = new layers.SkyDome(options);
-  //this.layers.basemap     = new layers.Basemap(options);
-  //this.layers.buildings   = new layers.Buildings(options);
+  ////this.layers.depth       = new layers.Depth();
+  //this.layers.interaction = new layers.Interaction();
+  //this.layers.skydome     = new layers.SkyDome();
+  //this.layers.basemap     = new layers.Basemap();
+  //this.layers.buildings   = new layers.Buildings({
+  //  showBackfaces: options.showBackfaces
+  //});
 
-//this.layers.depth       = Depth.initShader(options);
-  this.layers.interaction = Interaction.initShader(options);
-  this.layers.skydome     = SkyDome.initShader(options);
-  this.layers.basemap     = Basemap.initShader(options);
-  this.layers.buildings   = Buildings.initShader(options);
+//this.layers.depth       = Depth.initShader();
+  this.layers.interaction = Interaction.initShader();
+  this.layers.skydome     = SkyDome.initShader();
+  this.layers.basemap     = Basemap.initShader();
+  this.layers.buildings   = Buildings.initShader({
+    showBackfaces: options.showBackfaces
+  });
 
   this.resize();
   Events.on('resize', this.resize.bind(this));
@@ -3825,7 +3831,7 @@ var Renderer = function(options) {
 
 Renderer.prototype = {
 
-  start: function(container, options) {
+  start: function() {
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
         Map.transform = new Matrix()
