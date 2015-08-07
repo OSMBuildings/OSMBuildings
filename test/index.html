@@ -216,6 +216,11 @@
   var selectedItemId;
   var highlightItem;
 
+  map.on('change', function() {
+    var pos = map.transform(52.52, 13.37, 50);
+    console.log(pos)
+  });
+
   map.on('click', function(e) {
     if (e.target.id === selectedItemId) {
       return;

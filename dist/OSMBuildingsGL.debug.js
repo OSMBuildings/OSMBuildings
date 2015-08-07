@@ -873,7 +873,8 @@ var OSMBuildingsGL = function(containerId, options) {
   this.renderer = new Renderer({
     backgroundColor: options.backgroundColor,
     showBackfaces: options.showBackfaces
-  }).start();
+  });
+  this.renderer.start();
 
   Map.init(options);
   Events.init(container);
@@ -1007,6 +1008,28 @@ OSMBuildingsGL.prototype = {
 
   getTilt: function() {
     return Map.tilt;
+  },
+
+  transform: function(latitude, longitude, elevation) {
+
+    var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
+    var mapCenter = Map.center;
+
+    var x = pos.x-mapCenter.x;
+    var y = pos.y-mapCenter.y;
+    var z = elevation;
+
+    var m = Map.transform.data;
+
+    var X = x*m[0] + y*m[4] + z*m[8]  + m[12];
+    var Y = x*m[1] + y*m[5] + z*m[9]  + m[13];
+    var Z = x*m[2] + y*m[6] + z*m[10] + m[14];
+    var W = x*m[3] + y*m[7] + z*m[11] + m[15];
+
+    return {
+      x: X * WIDTH,
+      y: Y * HEIGHT
+    };
   },
 
   destroy: function() {
@@ -3789,14 +3812,6 @@ gl.Shader.prototype = {
 
 var Renderer = function(options) {
   this.layers = {};
-
-  ////this.layers.depth       = new layers.Depth();
-  //this.layers.interaction = new layers.Interaction();
-  //this.layers.skydome     = new layers.SkyDome();
-  //this.layers.basemap     = new layers.Basemap();
-  //this.layers.buildings   = new layers.Buildings({
-  //  showBackfaces: options.showBackfaces
-  //});
 
 //this.layers.depth       = Depth.initShader();
   this.layers.interaction = Interaction.initShader();
