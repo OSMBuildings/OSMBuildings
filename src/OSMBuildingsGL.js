@@ -7,7 +7,11 @@ var OSMBuildingsGL = function(containerId, options) {
 
   var container = document.getElementById(containerId);
 
-  GL = new glx.View(container, container.offsetWidth, container.offsetHeight);
+  WIDTH = container.offsetWidth;
+  HEIGHT = container.offsetHeight;
+  GL = new glx.View(container, WIDTH, HEIGHT);
+  //this.setSize(WIDTH, HEIGHT);
+
   Events.on('resize', function() {
     this.setSize(container.offsetWidth, container.offsetHeight);
   }.bind(this));
@@ -157,25 +161,17 @@ OSMBuildingsGL.prototype = {
   },
 
   transform: function(latitude, longitude, elevation) {
-
     var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
     var mapCenter = Map.center;
 
-    var x = pos.x-mapCenter.x;
-    var y = pos.y-mapCenter.y;
-    var z = elevation;
+    var m = new glx.Matrix();
+    m.translate(pos.x-mapCenter.x, pos.y-mapCenter.y, elevation);
 
-    var m = Map.transform.data;
+    var mv = glx.Matrix.multiply(m, Map.transform);
+    var mvp = glx.Matrix.multiply({ data:mv }, this.renderer.perspective);
+    var t = glx.Matrix.transform(mvp);
 
-    var X = x*m[0] + y*m[4] + z*m[8]  + m[12];
-    var Y = x*m[1] + y*m[5] + z*m[9]  + m[13];
-    var Z = x*m[2] + y*m[6] + z*m[10] + m[14];
-    var W = x*m[3] + y*m[7] + z*m[11] + m[15];
-
-    return {
-      x: X * WIDTH,
-      y: Y * HEIGHT
-    };
+    return { x:t.x*WIDTH, y:HEIGHT-t.y*HEIGHT };
   },
 
   destroy: function() {

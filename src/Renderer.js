@@ -38,16 +38,12 @@ Renderer.prototype = {
   start: function() {
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
-        //Map.transform = new glx.Matrix()
-        //  .translate(WIDTH/2, HEIGHT/2, 0)
-
-        //var vMatrix = new glx.Matrix();
-        //vMatrix.translate(0, 0, -300);
 
         Map.transform = new glx.Matrix();
         Map.transform.rotateZ(Map.rotation);
         Map.transform.rotateX(Map.tilt);
         Map.transform.translate(0, 0, -300);
+// .translate(WIDTH/2, HEIGHT/2, 0)
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
 
