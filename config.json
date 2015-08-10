@@ -27,7 +27,7 @@
   ],
 
   "src": [
-    "src/OSMBuildingsGL.js",
+    "src/index.js",
     "src/Map.js",
     "src/Events.js",
 
@@ -53,9 +53,7 @@
     "src/formats/GeoJSON.js",
     "src/formats/OBJ.js",
 
-    "src/geometry/geometry.js",
-    "src/geometry/Vector.js",
-    "src/geometry/Plane.js",
+    "src/geometry.js",
 
     "src/Renderer.js",
 

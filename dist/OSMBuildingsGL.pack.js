@@ -2861,7 +2861,7 @@
 	    source = src;
 
 	    Events.on('change', function() {
-	      update(1000);
+	      update(500);
 	    });
 
 	    Events.on('resize', update);
@@ -3020,7 +3020,7 @@
 	    source = src;
 
 	    Events.on('change', function() {
-	      update(1000);
+	      update(500);
 	    });
 
 	    Events.on('resize', update);
@@ -3048,8 +3048,19 @@
 	  this.tileY = tileY;
 	  this.zoom = zoom;
 
-	  this.vertexBuffer   = new glx.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-	  this.texCoordBuffer = new glx.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+	  this.vertexBuffer = new glx.Buffer(3, new Float32Array([
+	    255,   0, 0,
+	    255, 255, 0,
+	    0,     0, 0,
+	    0,   255, 0
+	  ]));
+	  this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+	    1, 1,
+	    1, 0,
+	    0, 1,
+	    0, 0
+	  ]));
+
 	  this.texture = new glx.Texture();
 	};
 
@@ -4059,15 +4070,17 @@
 
 	// console.log('CONTEXT LOST?', GL.isContextLost());
 
-	//      this.layers.depth.render(this);
-	        this.layers.interaction.render(this);
+	        var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, this.perspective));
+
+	//      this.layers.depth.render(vpMatrix);
+	        this.layers.interaction.render(vpMatrix);
 
 	        GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
 	        GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-	        this.layers.skydome.render(this);
-	        this.layers.basemap.render(this);
-	        this.layers.buildings.render(this);
+	        this.layers.skydome.render(vpMatrix);
+	        this.layers.basemap.render(vpMatrix);
+	        this.layers.buildings.render(vpMatrix);
 	      }.bind(this));
 	    }.bind(this), 17);
 	  },
@@ -4101,7 +4114,7 @@
 	    return this;
 	  };
 
-	  Depth.render = function(renderer) {
+	  Depth.render = function(vpMatrix) {
 	    if (Map.zoom < MIN_ZOOM) {
 	      return;
 	    }
@@ -4112,19 +4125,18 @@
 	    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
 	    var item,
-	      m, mv, mvp;
+	      mMatrix;
 
 	    var dataItems = Data.items;
 
 	    for (var i = 0, il = dataItems.length; i < il; i++) {
 	      item = dataItems[i];
 
-	      if (!(m = item.getMatrix())) {
+	      if (!(mMatrix = item.getMatrix())) {
 	        continue;
 	      }
 
-	      mv = glx.Matrix.multiply(m, Map.transform);
-	      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 	      item.vertexBuffer.enable();
@@ -4158,7 +4170,7 @@
 	    return this;
 	  };
 
-	  Interaction.render = function(renderer) {
+	  Interaction.render = function(vpMatrix) {
 	    if (!callback) {
 	      return;
 	    }
@@ -4176,17 +4188,16 @@
 	    var
 	      dataItems = Data.items,
 	      item,
-	      m, mv, mvp;
+	      mMatrix;
 
 	    for (var i = 0, il = dataItems.length; i < il; i++) {
 	      item = dataItems[i];
 
-	      if (!(m = item.getMatrix())) {
+	      if (!(mMatrix = item.getMatrix())) {
 	        continue;
 	      }
 
-	      mv = glx.Matrix.multiply(m, Map.transform);
-	      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 	      item.vertexBuffer.enable();
@@ -4281,7 +4292,7 @@
 	    return this;
 	  };
 
-	  SkyDome.render = function(renderer) {
+	  SkyDome.render = function(vpMatrix) {
 	    if (!textureIsLoaded) {
 	      return;
 	    }
@@ -4290,22 +4301,20 @@
 
 	    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-	    var m = new glx.Matrix();
+	    var mMatrix = new glx.Matrix();
 
 	    var scale = getScale();
-	    m.scale(scale, scale, scale);
+	    mMatrix.scale(scale, scale, scale);
 
-	    m
+	    mMatrix
 	      .rotateZ(Map.rotation)
 	      .translate(WIDTH/2, HEIGHT/2, 0)
 	      .rotateX(Map.tilt)
-	      .translate(0, HEIGHT/2, 0)
-	      .multiply(renderer.perspective);
+	      .translate(0, HEIGHT/2, 0);
+	//      .multiply(renderer.perspective);
 
-	    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, m.data);
-
-	    //mv = glx.Matrix.multiply(m, Map.transform);
-	    //mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+	    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+	    //mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	    //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 
@@ -4343,23 +4352,21 @@
 	    return this;
 	  };
 
-	  Basemap.render = function(renderer) {
+	  Basemap.render = function(vpMatrix) {
 	    var
 	      tiles = TileGrid.getTiles(), item,
-	      m, mv, mvp;
+	      mMatrix;
 
 	    shader.enable();
 
 	    for (var key in tiles) {
 	      item = tiles[key];
 
-	      if (!(m = item.getMatrix())) {
+	      if (!(mMatrix = item.getMatrix())) {
 	        continue;
 	      }
 
-
-	      mv = glx.Matrix.multiply(m, Map.transform);
-	      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 	      item.vertexBuffer.enable();
@@ -4392,7 +4399,7 @@
 	    return this;
 	  };
 
-	  Buildings.render = function(renderer) {
+	  Buildings.render = function(vpMatrix) {
 	    if (Map.zoom < MIN_ZOOM) {
 	      return;
 	    }
@@ -4420,17 +4427,16 @@
 	    var
 	      dataItems = Data.items,
 	      item,
-	      m, mv, mvp;
+	      mMatrix;
 
 	    for (var i = 0, il = dataItems.length; i < il; i++) {
 	      item = dataItems[i];
 
-	      if (!(m = item.getMatrix())) {
+	      if (!(mMatrix = item.getMatrix())) {
 	        continue;
 	      }
 
-	      mv = glx.Matrix.multiply(m, Map.transform);
-	      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 	      item.vertexBuffer.enable();

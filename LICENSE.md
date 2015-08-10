@@ -1,4 +1,3 @@
-# OSM Buildings #
 
 Copyright (c) 2015, OSM Buildings, Jan Marsch <mail@osmbuildings.org>
 All rights reserved.

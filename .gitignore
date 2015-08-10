@@ -1,6 +1,9 @@
 node_modules
-test/mp
 test/data
 .DS_Store
 .idea
 dist/OSMBuildings.pack.js
+
+test/mp
+test/7wonders
+src/_scratch
