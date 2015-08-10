@@ -18,7 +18,7 @@ var Interaction = {};
     return this;
   };
 
-  Interaction.render = function(renderer) {
+  Interaction.render = function(vpMatrix) {
     if (!callback) {
       return;
     }
@@ -36,17 +36,16 @@ var Interaction = {};
     var
       dataItems = Data.items,
       item,
-      m, mv, mvp;
+      mMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(m = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      mv = glx.Matrix.multiply(m, Map.transform);
-      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();

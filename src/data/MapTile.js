@@ -4,8 +4,19 @@ var MapTile = function(tileX, tileY, zoom) {
   this.tileY = tileY;
   this.zoom = zoom;
 
-  this.vertexBuffer   = new glx.Buffer(3, new Float32Array([255, 255, 0, 255, 0, 0, 0, 255, 0, 0, 0, 0]));
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array([1, 1, 1, 0, 0, 1, 0, 0]));
+  this.vertexBuffer = new glx.Buffer(3, new Float32Array([
+    255,   0, 0,
+    255, 255, 0,
+    0,     0, 0,
+    0,   255, 0
+  ]));
+  this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+    1, 1,
+    1, 0,
+    0, 1,
+    0, 0
+  ]));
+
   this.texture = new glx.Texture();
 };
 

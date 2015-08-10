@@ -43,7 +43,7 @@ var SkyDome = {};
     return this;
   };
 
-  SkyDome.render = function(renderer) {
+  SkyDome.render = function(vpMatrix) {
     if (!textureIsLoaded) {
       return;
     }
@@ -52,22 +52,20 @@ var SkyDome = {};
 
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    var m = new glx.Matrix();
+    var mMatrix = new glx.Matrix();
 
     var scale = getScale();
-    m.scale(scale, scale, scale);
+    mMatrix.scale(scale, scale, scale);
 
-    m
+    mMatrix
       .rotateZ(Map.rotation)
       .translate(WIDTH/2, HEIGHT/2, 0)
       .rotateX(Map.tilt)
-      .translate(0, HEIGHT/2, 0)
-      .multiply(renderer.perspective);
+      .translate(0, HEIGHT/2, 0);
+//      .multiply(renderer.perspective);
 
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, m.data);
-
-    //mv = glx.Matrix.multiply(m, Map.transform);
-    //mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+    //mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
     //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 

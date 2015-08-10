@@ -10,7 +10,7 @@ var Depth = {};
     return this;
   };
 
-  Depth.render = function(renderer) {
+  Depth.render = function(vpMatrix) {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -21,19 +21,18 @@ var Depth = {};
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     var item,
-      m, mv, mvp;
+      mMatrix;
 
     var dataItems = Data.items;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(m = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-      mv = glx.Matrix.multiply(m, Map.transform);
-      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();

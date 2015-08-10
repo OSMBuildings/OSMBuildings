@@ -12,23 +12,21 @@ var Basemap = {};
     return this;
   };
 
-  Basemap.render = function(renderer) {
+  Basemap.render = function(vpMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      m, mv, mvp;
+      mMatrix;
 
     shader.enable();
 
     for (var key in tiles) {
       item = tiles[key];
 
-      if (!(m = item.getMatrix())) {
+      if (!(mMatrix = item.getMatrix())) {
         continue;
       }
 
-
-      mv = glx.Matrix.multiply(m, Map.transform);
-      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();

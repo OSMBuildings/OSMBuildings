@@ -47,15 +47,17 @@ Renderer.prototype = {
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
 
-//      this.layers.depth.render(this);
-        this.layers.interaction.render(this);
+        var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, this.perspective));
+
+//      this.layers.depth.render(vpMatrix);
+        this.layers.interaction.render(vpMatrix);
 
         GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-        this.layers.skydome.render(this);
-        this.layers.basemap.render(this);
-        this.layers.buildings.render(this);
+        this.layers.skydome.render(vpMatrix);
+        this.layers.basemap.render(vpMatrix);
+        this.layers.buildings.render(vpMatrix);
       }.bind(this));
     }.bind(this), 17);
   },
