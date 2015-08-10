@@ -8,7 +8,7 @@ var Basemap = {};
   var shader;
 
   Basemap.initShader = function() {
-    shader = new glx.Shader(SHADERS['textured']);
+    shader = new glx.Shader(SHADERS.textured);
     return this;
   };
 
@@ -26,7 +26,10 @@ var Basemap = {};
         continue;
       }
 
-      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
+
+      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
+      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);

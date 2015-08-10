@@ -29,7 +29,7 @@ var SkyDome = {};
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
 
-    shader = new glx.Shader(SHADERS['textured']);
+    shader = new glx.Shader(SHADERS.textured);
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
     texture = new glx.Texture();
@@ -65,6 +65,11 @@ var SkyDome = {};
       .multiply(renderer.perspective);
 
     GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+
+    //var mv = glx.Matrix.multiply(mMatrix, Map.transform);
+    //var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+    //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+
 
     vertexBuffer.enable();
     GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);

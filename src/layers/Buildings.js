@@ -6,7 +6,7 @@ var Buildings = {};
   var shader;
 
   Buildings.initShader = function(options) {
-    shader = new glx.Shader(SHADERS['buildings']);
+    shader = new glx.Shader(SHADERS.buildings);
     this.showBackfaces = options.showBackfaces;
     return this;
   };
@@ -48,7 +48,9 @@ var Buildings = {};
         continue;
       }
 
-      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.multiply(Map.transform).data);
+      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
+      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
