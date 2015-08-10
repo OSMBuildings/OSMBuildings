@@ -4,12 +4,12 @@
   "description": "OSM Buildings GL",
   "version": "0.1.0",
   "homepage": "http://osmbuildings.org",
-  "author": "@osmbuildings",
+  "author": "@kekscom",
   "contributors": [],
   "maintainers": [],
   "repository": {
     "type": "git",
-    "url": "git@github.com:OSMBuildings/GL.git"
+    "url": "git@github.com:OSMBuildings/OSMBuildings.git"
   },
   "scripts": {},
   "dependencies": {},
