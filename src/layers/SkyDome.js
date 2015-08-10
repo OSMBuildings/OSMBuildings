@@ -52,22 +52,22 @@ var SkyDome = {};
 
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    var mMatrix = new glx.Matrix();
+    var m = new glx.Matrix();
 
     var scale = getScale();
-    mMatrix.scale(scale, scale, scale);
+    m.scale(scale, scale, scale);
 
-    mMatrix
+    m
       .rotateZ(Map.rotation)
       .translate(WIDTH/2, HEIGHT/2, 0)
       .rotateX(Map.tilt)
       .translate(0, HEIGHT/2, 0)
       .multiply(renderer.perspective);
 
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, m.data);
 
-    //var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-    //var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+    //mv = glx.Matrix.multiply(m, Map.transform);
+    //mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
     //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 

@@ -2656,8 +2656,8 @@ res = { vertices: [], texCoords: [] },
   Triangulate.addTriangle = function(tris, a, b, c) {
     tris.vertices.push(
       a[0], a[1], a[2],
-      c[0], c[1], c[2],
-      b[0], b[1], b[2]
+      b[0], b[1], b[2],
+      c[0], c[1], c[2]
     );
 
     var n = normal(
@@ -4065,19 +4065,20 @@ var Depth = {};
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    var item, mMatrix;
+    var item,
+      m, mv, mvp;
 
     var dataItems = Data.items;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(m = item.getMatrix())) {
         continue;
       }
 
-      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mv = glx.Matrix.multiply(m, Map.transform);
+      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
@@ -4129,17 +4130,17 @@ var Interaction = {};
     var
       dataItems = Data.items,
       item,
-      mMatrix;
+      m, mv, mvp;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(m = item.getMatrix())) {
         continue;
       }
 
-      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mv = glx.Matrix.multiply(m, Map.transform);
+      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
@@ -4243,22 +4244,22 @@ var SkyDome = {};
 
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    var mMatrix = new glx.Matrix();
+    var m = new glx.Matrix();
 
     var scale = getScale();
-    mMatrix.scale(scale, scale, scale);
+    m.scale(scale, scale, scale);
 
-    mMatrix
+    m
       .rotateZ(Map.rotation)
       .translate(WIDTH/2, HEIGHT/2, 0)
       .rotateX(Map.tilt)
       .translate(0, HEIGHT/2, 0)
       .multiply(renderer.perspective);
 
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, m.data);
 
-    //var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-    //var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+    //mv = glx.Matrix.multiply(m, Map.transform);
+    //mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
     //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 
@@ -4299,20 +4300,20 @@ var Basemap = {};
   Basemap.render = function(renderer) {
     var
       tiles = TileGrid.getTiles(), item,
-      mMatrix;
+      m, mv, mvp;
 
     shader.enable();
 
     for (var key in tiles) {
       item = tiles[key];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(m = item.getMatrix())) {
         continue;
       }
 
 
-      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mv = glx.Matrix.multiply(m, Map.transform);
+      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
@@ -4373,17 +4374,17 @@ var Buildings = {};
     var
       dataItems = Data.items,
       item,
-      mMatrix;
+      m, mv, mvp;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(m = item.getMatrix())) {
         continue;
       }
 
-      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mv = glx.Matrix.multiply(m, Map.transform);
+      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();

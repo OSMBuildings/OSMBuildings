@@ -15,20 +15,20 @@ var Basemap = {};
   Basemap.render = function(renderer) {
     var
       tiles = TileGrid.getTiles(), item,
-      mMatrix;
+      m, mv, mvp;
 
     shader.enable();
 
     for (var key in tiles) {
       item = tiles[key];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(m = item.getMatrix())) {
         continue;
       }
 
 
-      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mv = glx.Matrix.multiply(m, Map.transform);
+      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();

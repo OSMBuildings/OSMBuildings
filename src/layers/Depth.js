@@ -20,19 +20,20 @@ var Depth = {};
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    var item, mMatrix;
+    var item,
+      m, mv, mvp;
 
     var dataItems = Data.items;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(m = item.getMatrix())) {
         continue;
       }
 
-      var mv = glx.Matrix.multiply(mMatrix, Map.transform);
-      var mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
+      mv = glx.Matrix.multiply(m, Map.transform);
+      mvp = glx.Matrix.multiply({ data:mv }, renderer.perspective);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
