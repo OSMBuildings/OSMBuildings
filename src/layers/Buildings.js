@@ -6,7 +6,7 @@ var Buildings = {};
   var shader;
 
   Buildings.initShader = function(options) {
-    shader = new gl.Shader('buildings');
+    shader = new glx.Shader(SHADERS['buildings']);
     this.showBackfaces = options.showBackfaces;
     return this;
   };
@@ -33,8 +33,8 @@ var Buildings = {};
 
     GL.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
 
-    var normalMatrix = Matrix.invert3(new Matrix().data);
-    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, Matrix.transpose(normalMatrix));
+    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
+    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
     var
       dataItems = Data.items,

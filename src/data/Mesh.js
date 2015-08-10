@@ -47,9 +47,9 @@ var Mesh = function(url, options) {
         this.items.push(item);
       }
 
-      this.vertexBuffer = new gl.Buffer(3, new Float32Array(vertices));
-      this.normalBuffer = new gl.Buffer(3, new Float32Array(normals));
-      this.idColorBuffer = new gl.Buffer(3, new Uint8Array(idColors));
+      this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
+      this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
+      this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
 
       this.modify();
 
@@ -89,8 +89,8 @@ var Mesh = function(url, options) {
         }
       }
 
-      this.colorBuffer = new gl.Buffer(3, new Uint8Array(newColors));
-      this.visibilityBuffer = new gl.Buffer(1, new Float32Array(newVisibilities));
+      this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
+      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
 
       newColors = null;
       newVisibilities = null;

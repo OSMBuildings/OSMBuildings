@@ -8,7 +8,7 @@ var Basemap = {};
   var shader;
 
   Basemap.initShader = function() {
-    shader = new gl.Shader('textured');
+    shader = new glx.Shader(SHADERS['textured']);
     return this;
   };
 

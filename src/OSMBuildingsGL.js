@@ -1,10 +1,16 @@
 
+var GL;
+var WIDTH = 0, HEIGHT = 0;
+
 var OSMBuildingsGL = function(containerId, options) {
   options = options || {};
 
   var container = document.getElementById(containerId);
 
-  this.view = new gl.View(container);
+  GL = new glx.View(container, container.offsetWidth, container.offsetHeight);
+  Events.on('resize', function() {
+    this.setSize(container.offsetWidth, container.offsetHeight);
+  }.bind(this));
 
   this.renderer = new Renderer({
     backgroundColor: options.backgroundColor,
@@ -120,7 +126,11 @@ OSMBuildingsGL.prototype = {
   },
 
   setSize: function(size) {
-    this.view.setSize(size.width, size.height);
+    if (size.width !== WIDTH || size.height !== HEIGHT) {
+      GL.canvas.width  = WIDTH  = size.width;
+      GL.canvas.height = HEIGHT = size.height;
+      Events.emit('resize');
+    }
     return this;
   },
 
@@ -169,7 +179,7 @@ OSMBuildingsGL.prototype = {
   },
 
   destroy: function() {
-    this.view.destroy();
+    glx.destroy(GL);
     this.renderer.destroy();
     TileGrid.destroy();
     DataGrid.destroy();

@@ -6,7 +6,7 @@ var Depth = {};
   var shader;
 
   Depth.initShader = function() {
-    shader = new gl.Shader('depth');
+    shader = new glx.Shader(SHADERS['depth']);
     return this;
   };
 

@@ -18,6 +18,7 @@ var SkyDome = {};
   var vertexBuffer;
   var texCoordBuffer;
   var texture;
+  var textureIsLoaded;
 
   function getScale() {
     var screenRadius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT);
@@ -26,16 +27,24 @@ var SkyDome = {};
   }
 
   SkyDome.initShader = function() {
-    shader = new gl.Shader('textured');
-    vertexBuffer = new gl.Buffer(3, new Float32Array(tris.vertices));
-    texCoordBuffer = new gl.Buffer(2, new Float32Array(tris.texCoords));
-    texture = new gl.Texture();
-    texture.load('skydome.jpg');
+    var url = 'skydome.jpg';
+
+    shader = new glx.Shader(SHADERS['textured']);
+    vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
+    texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
+    texture = new glx.Texture();
+    setBusy(url);
+    texture.load(url, function(image) {
+      setIdle(url);
+      if (image) {
+        textureIsLoaded = true;
+      }
+    });
     return this;
   };
 
   SkyDome.render = function(renderer) {
-    if (!texture.isLoaded) {
+    if (!textureIsLoaded) {
       return;
     }
 
@@ -43,7 +52,7 @@ var SkyDome = {};
 
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    var mMatrix = new Matrix();
+    var mMatrix = new glx.Matrix();
 
     var scale = getScale();
     mMatrix.scale(scale, scale, scale);

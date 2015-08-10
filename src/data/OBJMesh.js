@@ -39,7 +39,7 @@ var OBJMesh = function(url, options) {
       return;
     }
 
-    var mMatrix = new Matrix();
+    var mMatrix = new glx.Matrix();
 
     if (this.elevation) {
       mMatrix.translate(0, 0, this.elevation);

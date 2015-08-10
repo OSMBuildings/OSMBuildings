@@ -9,7 +9,12 @@ var Interaction = {};
   var idMapping = [null], callback;
 
   Interaction.initShader = function() {
-    shader = new gl.Shader('interaction');
+    shader = new glx.Shader(SHADERS['interaction']);
+
+    Events.on('resize', function() {
+      shader.framebuffer.setSize(WIDTH, HEIGHT);
+    }.bind(this));
+
     return this;
   };
 

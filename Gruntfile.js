@@ -77,7 +77,6 @@ module.exports = function(grunt) {
 
     var config = grunt.file.readJSON('config.json').shaders;
     var shader, type;
-    var i, types = ['vertex', 'fragment'];
     var src, SHADERS = {};
 
     for (var name in config) {
@@ -90,11 +89,11 @@ module.exports = function(grunt) {
         framebuffer: shader.framebuffer
       };
 
-      for (i = 0; i < types.length; i++) {
-        type = types[i];
-        var src = fs.readFileSync(baseURL +'/'+ name +'.'+ type +'.glsl', 'ascii');
-        SHADERS[name].src[type] = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
-      }
+      var src = fs.readFileSync(baseURL + '/' + name + '.vertex.glsl', 'ascii');
+      SHADERS[name].vertexShader = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
+
+      var src = fs.readFileSync(baseURL + '/' + name + '.fragment.glsl', 'ascii');
+      SHADERS[name].fragmentShader = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
     }
 
     fs.writeFileSync(dest, 'var SHADERS = '+ JSON.stringify(SHADERS) +';\n');

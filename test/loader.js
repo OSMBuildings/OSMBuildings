@@ -19,7 +19,6 @@ function loadFile(url) {
 
 function loadShaders(config) {
   var shader, type;
-  var i, types = ['vertex', 'fragment'];
   var src, SHADERS = {};
 
   for (var name in config) {
@@ -32,11 +31,11 @@ function loadShaders(config) {
       framebuffer: shader.framebuffer
     };
 
-    for (i = 0; i < types.length; i++) {
-      type = types[i];
-      src = loadFile(baseURL +'src/shaders/'+ name +'.'+ type +'.glsl');
-      SHADERS[name].src[type] = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
-    }
+    src = loadFile(baseURL +'src/shaders/'+ name +'.vertex.glsl');
+    SHADERS[name].vertexShader = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
+
+    src = loadFile(baseURL +'src/shaders/'+ name +'.fragment.glsl');
+    SHADERS[name].fragmentShader = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
   }
 
   console.log('SHADERS', SHADERS);

@@ -38,7 +38,7 @@ Renderer.prototype = {
   start: function() {
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
-        Map.transform = new Matrix()
+        Map.transform = new glx.Matrix()
           .rotateZ(Map.rotation)
           .rotateX(Map.tilt)
           .translate(WIDTH/2, HEIGHT/2, 0)
@@ -64,7 +64,7 @@ Renderer.prototype = {
   },
 
   resize: function() {
-    this.perspective = Matrix._perspective(20, WIDTH, HEIGHT, 40000);
+    this.perspective = new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 1000);
     GL.viewport(0, 0, WIDTH, HEIGHT);
   },
 
