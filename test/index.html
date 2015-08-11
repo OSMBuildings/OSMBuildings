@@ -195,13 +195,16 @@
   });
 
   map.on('click', function(e) {
+console.log('clicked item id', e.target.id);
+
     if (e.target.id === selectedItemId) {
       return;
     }
 
     map.removeModifier(highlightItem);
 
-console.log('selected item id', e.target.id);
+console.log('modified item id', e.target.id);
+
 
     highlightItem = function(item) {
       if (item.id === e.target.id) {
