@@ -2702,8 +2702,8 @@
 	  Triangulate.addTriangle = function(tris, a, b, c) {
 	    tris.vertices.push(
 	      a[0], a[1], a[2],
-	      b[0], b[1], b[2],
-	      c[0], c[1], c[2]
+	      c[0], c[1], c[2],
+	      b[0], b[1], b[2]
 	    );
 
 	    var n = normal(
@@ -2759,24 +2759,15 @@
 	  function updateTileBounds() {
 	    zoom = Math.round(fixedZoom || Map.zoom);
 
-	    //var
-	    //  ratio = Math.pow(2, zoom-Map.zoom) / TILE_SIZE,
-	    //  mapCenter = Map.center,
-	    //  radius = SkyDome.getRadius() / TILE_SIZE;
-	    //
-	    //minX = (mapCenter.x*ratio - radius <<0) -1;
-	    //minY = (mapCenter.y*ratio - radius <<0) -1;
-	    //maxX = Math.ceil(mapCenter.x*ratio + radius) +1;
-	    //maxY = Math.ceil(mapCenter.y*ratio + radius) +1;
-
 	    var
 	      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
-	      mapBounds = Map.bounds;
+	      mapBounds = Map.bounds,
+	      perspectiveBuffer = 1;
 
-	    minX = (mapBounds.minX*ratio <<0) -1;
-	    minY = (mapBounds.minY*ratio <<0) -1;
-	    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
-	    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
+	    minX = (mapBounds.minX*ratio <<0) - perspectiveBuffer;
+	    minY = (mapBounds.minY*ratio <<0) + 1 - perspectiveBuffer;
+	    maxX = Math.ceil(mapBounds.maxX*ratio) + perspectiveBuffer;
+	    maxY = Math.ceil(mapBounds.maxY*ratio) + 1 + perspectiveBuffer;
 	  }
 
 	  function loadTiles() {
@@ -2937,12 +2928,13 @@
 
 	    var
 	      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
-	      mapBounds = Map.bounds;
+	      mapBounds = Map.bounds,
+	      perspectiveBuffer = 1;
 
-	    minX = (mapBounds.minX*ratio <<0) -1;
-	    minY = (mapBounds.minY*ratio <<0) -1;
-	    maxX = Math.ceil(mapBounds.maxX*ratio) +1;
-	    maxY = Math.ceil(mapBounds.maxY*ratio) +1;
+	    minX = (mapBounds.minX*ratio <<0) - perspectiveBuffer;
+	    minY = (mapBounds.minY*ratio <<0) - perspectiveBuffer;
+	    maxX = Math.ceil(mapBounds.maxX*ratio) + perspectiveBuffer;
+	    maxY = Math.ceil(mapBounds.maxY*ratio) + perspectiveBuffer;
 	  }
 
 	  function loadTiles() {
@@ -3049,10 +3041,10 @@
 	  this.zoom = zoom;
 
 	  this.vertexBuffer = new glx.Buffer(3, new Float32Array([
-	    255,   0, 0,
 	    255, 255, 0,
-	    0,     0, 0,
-	    0,   255, 0
+	    255,   0, 0,
+	    0,   255, 0,
+	    0,     0, 0
 	  ]));
 	  this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
 	    1, 1,
@@ -3464,6 +3456,33 @@
 	    return materialColors[baseMaterials[str] || str] || null;
 	  }
 
+	  var WINDING_CLOCKWISE = 'CW';
+	  var WINDING_COUNTER_CLOCKWISE = 'CCW';
+
+	  // detect winding direction: clockwise or counter clockwise
+	  function getWinding(polygon) {
+	    var
+	      x1, y1, x2, y2,
+	      a = 0;
+
+	    for (var i = 0, il = polygon.length-1; i < il; i++) {
+	      x1 = polygon[i][0];
+	      y1 = polygon[i][1];
+
+	      x2 = polygon[i+1][0];
+	      y2 = polygon[i+1][1];
+
+	      a += x1*y2 - x2*y1;
+	    }
+	    return (a/2) > 0 ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE;
+	  }
+
+	  // enforce a polygon winding direcetion. Needed for proper backface culling.
+	  function makeWinding(polygon, direction) {
+	    var winding = getWinding(polygon);
+	    return (winding === direction) ? polygon : polygon.reverse();
+	  }
+
 	  function alignProperties(prop) {
 	    var item = {};
 	    var color;
@@ -3524,9 +3543,10 @@
 	  }
 
 	  function getGeometries(geometry) {
-	    var geometries = [], sub, i, il;
+	    var i, il, polygonRings, sub;
 	    switch (geometry.type) {
 	      case 'GeometryCollection':
+	        var geometries = [];
 	        for (i = 0, il = geometry.geometries.length; i < il; i++) {
 	          if ((sub = getGeometries(geometry.geometries[i]))) {
 	            geometries.push.apply(geometries, sub);
@@ -3535,33 +3555,41 @@
 	        return geometries;
 
 	      case 'MultiPolygon':
+	        var polygons = [];
 	        for (i = 0, il = geometry.coordinates.length; i < il; i++) {
 	          if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
-	            geometries.push.apply(geometries, sub);
+	            polygons.push.apply(geometries, sub);
 	          }
 	        }
-	        return geometries;
+	        return polygons;
 
 	      case 'Polygon':
-	        return [geometry.coordinates];
+	        polygonRings = geometry.coordinates;
+	        break;
 
 	      default: return [];
 	    }
+
+	    var res = [];
+	    for (i = 0, il = polygonRings.length; i < il; i++) {
+	      res[i] = makeWinding(polygonRings[i], i ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE);
+	    }
+	    return [res];
 	  }
 
-	  function transform(offsetX, offsetY, zoom, coordinates) {
+	  function transform(offsetX, offsetY, zoom, polygon) {
 	    var
 	      worldSize = TILE_SIZE * Math.pow(2, zoom),
 	      res = [],
 	      r, rl, p,
 	      ring;
 
-	    for (var c = 0, cl = coordinates.length; c < cl; c++) {
-	      ring = coordinates[c];
-	      res[c] = [];
+	    for (var i = 0, il = polygon.length; i < il; i++) {
+	      ring = polygon[i];
+	      res[i] = [];
 	      for (r = 0, rl = ring.length-1; r < rl; r++) {
 	        p = project(ring[r][1], ring[r][0], worldSize);
-	        res[c][r] = [p.x-offsetX, p.y-offsetY];
+	        res[i][r] = [p.x-offsetX, p.y-offsetY];
 	      }
 	    }
 
@@ -3948,80 +3976,6 @@
 	}
 
 
-	var Vector = {
-	  dot: function(a, b) {
-	    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-	  },
-
-	  cross: function(a, b) {
-	    return Vector.direction(
-	      [ a[1]*b[2], a[2]*b[0], a[0]*b[1] ],
-	      [ a[2]*b[1], a[0]*b[2], a[1]*b[0] ]
-	    );
-	  },
-
-	  add: function(a, b) {
-	    return [ a[0]+b[0], a[1]+b[1], a[2]+b[2] ];
-	  },
-
-	  sub: function(a, b) {
-	    return [ a[0]-b[0], a[1]-b[1], a[2]-b[2] ];
-	  },
-
-	  scale: function(a, b) {
-	    return [ a[0]*b, a[1]*b, a[2]*b ];
-	  },
-
-	  length: function(v) {
-	    return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-	  },
-
-	  unit: function(v) {
-	    var l = Vector.length(v);
-	    if (l === 0) {
-	      m = 0.00001;
-	    }
-	    return [v[0]/l, v[1]/l, v[2]/l];
-	  },
-
-	  direction: function(a, b) {
-	    var v = Vector.sub(a, b);
-	    return v;
-	  }
-	};
-
-
-	var Plane = {
-	  normal: function(a, b, c) {
-	    var m = Vector.sub(a, b);
-	    var n = Vector.sub(b, c);
-	    return Vector.cross(m, n);
-	  },
-
-	  distance: function(normal, v) {
-	    return -Vector.dot(normal, v);
-	  },
-
-	  intersection: function(origin, direction, normal, distance) {
-	    var denom = Vector.dot(direction, normal);
-	    if (denom !== 0) {
-	      var t = (Vector.dot(origin, normal) + distance) / denom;
-	      if (t < 0) {
-	        return null;
-	      }
-	      var v0 = Vector.scale(direction, t);
-	      return Vector.sub(origin, v0);
-	    }
-
-	    if (Vector.dot(origin, normal) + distance === 0) {
-	      return origin;
-	    }
-
-	    return null;
-	  }
-	};
-
-
 	var Renderer = function(options) {
 	  this.layers = {};
 
@@ -4061,12 +4015,10 @@
 	  start: function() {
 	    this.loop = setInterval(function() {
 	      requestAnimationFrame(function() {
-
-	        Map.transform = new glx.Matrix();
-	        Map.transform.rotateZ(Map.rotation);
-	        Map.transform.rotateX(Map.tilt);
-	        Map.transform.translate(0, 0, -300);
-	// .translate(WIDTH/2, HEIGHT/2, 0)
+	        Map.transform = new glx.Matrix()
+	          .rotateZ(Map.rotation)
+	          .rotateX(Map.tilt)
+	          .translate(0, -HEIGHT/2, -1220); // map y offset to neutralize camera y offset, map z
 
 	// console.log('CONTEXT LOST?', GL.isContextLost());
 
@@ -4090,7 +4042,10 @@
 	  },
 
 	  resize: function() {
-	    this.perspective = new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 1000);
+	    this.perspective = new glx.Matrix()
+	      .scale(1, -1, 1) // flip Y
+	      .multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000))
+	      .translate(0, -1, 0); // camera y offset
 	    GL.viewport(0, 0, WIDTH, HEIGHT);
 	  },
 
