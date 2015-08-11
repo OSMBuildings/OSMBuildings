@@ -50,8 +50,6 @@ var SkyDome = {};
 
     shader.enable();
 
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
-
     var mMatrix = new glx.Matrix();
 
     var scale = getScale();
