@@ -39,7 +39,7 @@ var Buildings = {};
     var
       dataItems = Data.items,
       item,
-      mMatrix;
+      mMatrix, mvp;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];

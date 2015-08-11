@@ -15,7 +15,7 @@ var Basemap = {};
   Basemap.render = function(vpMatrix) {
     var
       tiles = TileGrid.getTiles(), item,
-      mMatrix;
+      mMatrix, mvp;
 
     shader.enable();
 

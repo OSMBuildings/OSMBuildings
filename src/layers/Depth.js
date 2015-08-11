@@ -21,7 +21,7 @@ var Depth = {};
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     var item,
-      mMatrix;
+      mMatrix, mvp;
 
     var dataItems = Data.items;
 

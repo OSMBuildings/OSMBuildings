@@ -164,13 +164,17 @@ OSMBuildingsGL.prototype = {
     var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
     var mapCenter = Map.center;
 
-    var m = new glx.Matrix();
-    m.translate(pos.x-mapCenter.x, pos.y-mapCenter.y, elevation);
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, this.renderer.perspective));
 
-    var mv = glx.Matrix.multiply(m, Map.transform);
-    var mvp = glx.Matrix.multiply({ data:mv }, this.renderer.perspective);
+    var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
+    var mMatrix = new glx.Matrix()
+      .translate(0, 0, elevation)
+      .scale(scale, scale, scale*0.65)
+      .translate(pos.x-mapCenter.x, pos.y-mapCenter.y, 0);
+
+    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+
     var t = glx.Matrix.transform(mvp);
-
     return { x:t.x*WIDTH, y:HEIGHT-t.y*HEIGHT };
   },
 
