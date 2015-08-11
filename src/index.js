@@ -10,11 +10,6 @@ var OSMBuildingsGL = function(containerId, options) {
   WIDTH = container.offsetWidth;
   HEIGHT = container.offsetHeight;
   GL = new glx.View(container, WIDTH, HEIGHT);
-  //this.setSize(WIDTH, HEIGHT);
-
-  Events.on('resize', function() {
-    this.setSize(container.offsetWidth, container.offsetHeight);
-  }.bind(this));
 
   this.renderer = new Renderer({
     backgroundColor: options.backgroundColor,

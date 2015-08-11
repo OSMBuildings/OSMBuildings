@@ -69,6 +69,7 @@ Renderer.prototype = {
       .scale(1, -1, 1) // flip Y
       .multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000))
       .translate(0, -1, 0); // camera y offset
+
     GL.viewport(0, 0, WIDTH, HEIGHT);
   },
 

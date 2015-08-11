@@ -179,7 +179,12 @@ var Events = {};
     addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        Events.emit('resize');
+        // some duplication with index.js
+        if (container.offsetWidth !== WIDTH || container.offsetHeight !== HEIGHT) {
+          GL.canvas.width  = WIDTH  = container.offsetWidth;
+          GL.canvas.height = HEIGHT = container.offsetHeight;
+          Events.emit('resize');
+        }
       }, 250);
     });
   };

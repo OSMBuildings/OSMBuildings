@@ -1586,11 +1586,6 @@ var OSMBuildingsGL = function(containerId, options) {
   WIDTH = container.offsetWidth;
   HEIGHT = container.offsetHeight;
   GL = new glx.View(container, WIDTH, HEIGHT);
-  //this.setSize(WIDTH, HEIGHT);
-
-  Events.on('resize', function() {
-    this.setSize(container.offsetWidth, container.offsetHeight);
-  }.bind(this));
 
   this.renderer = new Renderer({
     backgroundColor: options.backgroundColor,
@@ -2061,7 +2056,12 @@ var Events = {};
     addListener(global, 'resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        Events.emit('resize');
+        // some duplication with index.js
+        if (container.offsetWidth !== WIDTH || container.offsetHeight !== HEIGHT) {
+          GL.canvas.width  = WIDTH  = container.offsetWidth;
+          GL.canvas.height = HEIGHT = container.offsetHeight;
+          Events.emit('resize');
+        }
       }, 250);
     });
   };
@@ -2208,11 +2208,11 @@ var Request = {};
 
 (function() {
 
-  var loading = {};
+  var queue = {};
 
   function load(url, callback) {
-    if (loading[url]) {
-      return loading[url];
+    if (queue[url]) {
+      return queue[url];
     }
 
     var req = new XMLHttpRequest();
@@ -2222,56 +2222,58 @@ var Request = {};
         return;
       }
 
-      delete loading[url];
+      delete queue[url];
       setIdle(url);
 
-      if (!req.status || req.status < 200 || req.status > 299) {
+      if (!req.status || req.status<200 || req.status>299) {
         return;
       }
 
       callback(req);
     };
 
-    loading[url] = req;
+    queue[url] = req;
     req.open('GET', url);
     setBusy(url);
     req.send(null);
 
     return {
       abort: function() {
-        if (loading[url]) {
+        if (queue[url]) {
           setIdle(url);
           req.abort();
-          delete loading[url];
+          delete queue[url];
         }
       }
     };
   }
 
+  //***************************************************************************
+
   Request.getText = function(url, callback) {
-    return load(url, function(req) {
-      if (req.responseText !== undefined) {
-        callback(req.responseText);
+    return load(url, function(res) {
+      if (res.responseText !== undefined) {
+        callback(res.responseText);
       }
     });
   };
 
   Request.getXML = function(url, callback) {
-    return load(url, function(req) {
-      if (req.responseXML !== undefined) {
-        callback(req.responseXML);
+    return load(url, function(res) {
+      if (res.responseXML !== undefined) {
+        callback(res.responseXML);
       }
     });
   };
 
   Request.getJSON = function(url, callback) {
-    return load(url, function(req) {
-      if (req.responseText) {
+    return load(url, function(res) {
+      if (res.responseText) {
         var json;
         try {
-          json = JSON.parse(req.responseText);
+          json = JSON.parse(res.responseText);
         } catch(ex) {
-          console.error('Could not parse JSON from '+ url +'\n'+ ex.message);
+          console.warn('Could not parse JSON from '+ url +'\n'+ ex.message);
         }
         callback(json);
       }
@@ -2279,15 +2281,15 @@ var Request = {};
   };
 
   Request.abortAll = function() {
-    for (var url in loading) {
-      loading[url].abort();
+    for (var url in queue) {
+      queue[url].abort();
     }
-    loading = {};
+    queue = {};
   };
 
   Request.destroy = function() {
-    Request.abortAll();
-    loading = null;
+    this.abortAll();
+    queue = null;
   };
 
 }());
@@ -4004,6 +4006,7 @@ Renderer.prototype = {
       .scale(1, -1, 1) // flip Y
       .multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000))
       .translate(0, -1, 0); // camera y offset
+
     GL.viewport(0, 0, WIDTH, HEIGHT);
   },
 
