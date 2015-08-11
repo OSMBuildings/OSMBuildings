@@ -1587,11 +1587,12 @@ var OSMBuildingsGL = function(containerId, options) {
   HEIGHT = container.offsetHeight;
   GL = new glx.View(container, WIDTH, HEIGHT);
 
-  this.renderer = new Renderer({
+  Renderer.start({
     backgroundColor: options.backgroundColor,
     showBackfaces: options.showBackfaces
   });
-  this.renderer.start();
+
+  Interaction.initShader();
 
   Map.init(options);
   Events.init(container);
@@ -1735,7 +1736,7 @@ OSMBuildingsGL.prototype = {
     var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
     var mapCenter = Map.center;
 
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, this.renderer.perspective));
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 
     var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
     var mMatrix = new glx.Matrix()
@@ -1751,7 +1752,7 @@ OSMBuildingsGL.prototype = {
 
   destroy: function() {
     glx.destroy(GL);
-    this.renderer.destroy();
+    Renderer.destroy();
     TileGrid.destroy();
     DataGrid.destroy();
   }
@@ -1790,6 +1791,7 @@ var Map = {};
 
   Map.center = { x:0, y:0 };
   Map.zoom = 0;
+  Map.transform = new glx.Matrix(); // there are very early actions that rely on an existing Map transform
 
   Map.init = function(options) {
     Map.minZoom = parseFloat(options.minZoom) || 10;
@@ -1883,25 +1885,28 @@ var Events = {};
   var
     listeners = {},
 
-    hasTouch = ('ontouchstart' in global),
-    dragStartEvent = hasTouch ? 'touchstart' : 'mousedown',
-    dragMoveEvent = hasTouch ? 'touchmove' : 'mousemove',
-    dragEndEvent = hasTouch ? 'touchend' : 'mouseup',
-
     prevX = 0, prevY = 0,
     startX = 0, startY  = 0,
     startZoom = 0,
     prevRotation = 0,
     prevTilt = 0,
 
-    button,
-    stepX, stepY,
-
     isDisabled = false,
     pointerIsDown = false,
     resizeTimer;
 
-  function onDragStart(e) {
+  //***************************************************************************
+  //***************************************************************************
+
+  function onDoubleClick(e) {
+    if (isDisabled) {
+      return;
+    }
+    cancelEvent(e);
+    Map.setZoom(Map.zoom + 1, e);
+  }
+
+  function onMouseDown(e) {
     if (isDisabled || e.button > 1) {
       return;
     }
@@ -1912,102 +1917,57 @@ var Events = {};
     prevRotation = Map.rotation;
     prevTilt = Map.tilt;
 
-    stepX = 360/innerWidth;
-    stepY = 360/innerHeight;
-
-    if (e.touches === undefined) {
-      button = e.button;
-    } else {
-      if (e.touches.length > 1) {
-        return;
-      }
-      e = e.touches[0];
-    }
-
     startX = prevX = e.clientX;
     startY = prevY = e.clientY;
 
     pointerIsDown = true;
+
+    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
+      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+      Events.emit('pointerdown', payload);
+    });
   }
 
-  function onDragMove(e) {
-    if (isDisabled || !pointerIsDown) {
+  function onMouseMove(e) {
+    if (isDisabled) {
       return;
     }
 
-    if (e.touches !== undefined) {
-      if (e.touches.length > 1) {
-        return;
-      }
-      e = e.touches[0];
-    }
-
-    if ((e.touches !== undefined || button === 0) && !e.altKey) {
-      moveMap(e);
-    } else {
-      prevRotation += (e.clientX - prevX)*stepX;
-      prevTilt     -= (e.clientY - prevY)*stepY;
-      Map.setRotation(prevRotation);
-      Map.setTilt(prevTilt);
-    }
-
-    prevX = e.clientX;
-    prevY = e.clientY;
-  }
-
-  function onDragEnd(e) {
-    if (isDisabled || !pointerIsDown) {
-      return;
-    }
-
-    if (e.touches !== undefined) {
-      if (e.touches.length>1) {
-        return;
-      }
-      e = e.touches[0];
-    }
-
-    if ((e.touches !== undefined || button === 0) && !e.altKey) {
-      if (Math.abs(e.clientX-startX) < 5 && Math.abs(e.clientY-startY) < 5) {
-        onClick(e);
+    if (pointerIsDown) {
+      if (e.button === 0 && !e.altKey) {
+        moveMap(e);
       } else {
+        rotateMap(e);
+      }
+
+      prevX = e.clientX;
+      prevY = e.clientY;
+    }
+
+    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
+      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+      Events.emit('pointermove', payload);
+    });
+  }
+
+  function onMouseUp(e) {
+    if (isDisabled) {
+      return;
+    }
+
+    if (e.button === 0 && !e.altKey) {
+      if (Math.abs(e.clientX-startX) > 5 || Math.abs(e.clientY-startY) > 5) {
         moveMap(e);
       }
     } else {
-      prevRotation += (e.clientX - prevX)*stepX;
-      prevTilt     -= (e.clientY - prevY)*stepY;
-      Map.setRotation(prevRotation);
-      Map.setTilt(prevTilt);
+      rotateMap(e);
     }
 
     pointerIsDown = false;
-  }
 
-  function onGestureChange(e) {
-    if (isDisabled) {
-      return;
-    }
-    cancelEvent(e);
-    Map.setZoom(startZoom + (e.scale - 1));
-    Map.setRotation(prevRotation - e.rotation);
-//  Map.setTilt(prevTilt ...);
-  }
-
-  function onDoubleClick(e) {
-    if (isDisabled) {
-      return;
-    }
-    cancelEvent(e);
-    Map.setZoom(Map.zoom + 1, e);
-  }
-
-  function onClick(e) {
-    if (isDisabled) {
-      return;
-    }
-    cancelEvent(e);
-    Interaction.getFeatureID({ x:e.clientX, y:e.clientY }, function(featureID) {
-      Events.emit('click', { target: { id:featureID } });
+    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
+      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+      Events.emit('pointerup', payload);
     });
   }
 
@@ -2030,6 +1990,76 @@ var Events = {};
   }
 
   //***************************************************************************
+  //***************************************************************************
+
+  function onTouchStart(e) {
+    if (isDisabled) {
+      return;
+    }
+
+    cancelEvent(e);
+
+    startZoom = Map.zoom;
+    prevRotation = Map.rotation;
+    prevTilt = Map.tilt;
+
+    if (e.touches.length > 1) {
+      e = e.touches[0];
+    }
+
+    startX = prevX = e.clientX;
+    startY = prevY = e.clientY;
+
+    var payload = { x:e.clientX, y: e.clientY };
+    Events.emit('pointerdown', payload);
+  }
+
+  function onTouchMove(e) {
+    if (isDisabled) {
+      return;
+    }
+
+    if (e.touches.length > 1) {
+      e = e.touches[0];
+    }
+
+    moveMap(e);
+
+    prevX = e.clientX;
+    prevY = e.clientY;
+
+    var payload = { x:e.clientX, y: e.clientY };
+    Events.emit('pointermove', payload);
+  }
+
+  function onTouchEnd(e) {
+    if (isDisabled) {
+      return;
+    }
+
+    if (e.touches.length > 1) {
+      e = e.touches[0];
+    }
+
+    if (Math.abs(e.clientX-startX) > 5 || Math.abs(e.clientY-startY) > 5) {
+      moveMap(e);
+    }
+
+    var payload = { x:e.clientX, y: e.clientY };
+    Events.emit('pointerup', payload);
+  }
+
+  function onGestureChange(e) {
+    if (isDisabled) {
+      return;
+    }
+    cancelEvent(e);
+    Map.setZoom(startZoom + (e.scale - 1));
+    Map.setRotation(prevRotation - e.rotation);
+//  Map.setTilt(prevTilt ...);
+  }
+
+  //***************************************************************************
 
   function moveMap(e) {
     var dx = e.clientX - prevX;
@@ -2038,17 +2068,26 @@ var Events = {};
     Map.setCenter({ x:Map.center.x-r.x, y:Map.center.y-r.y });
   }
 
+  function rotateMap(e) {
+    prevRotation += (e.clientX - prevX)*(360/innerWidth);
+    prevTilt -= (e.clientY - prevY)*(360/innerHeight);
+    Map.setRotation(prevRotation);
+    Map.setTilt(prevTilt);
+  }
+
   //***************************************************************************
 
   Events.init = function(container) {
-    addListener(container, dragStartEvent, onDragStart);
-    addListener(container, 'dblclick', onDoubleClick);
-    addListener(document, dragMoveEvent, onDragMove);
-    addListener(document, dragEndEvent, onDragEnd);
-
-    if (hasTouch) {
+    if ('ontouchstart' in global) {
+      addListener(container, 'touchstart', onTouchStart);
+      addListener(document, 'touchmove', onTouchMove);
+      addListener(document, 'touchend', onTouchEnd);
       addListener(container, 'gesturechange', onGestureChange);
     } else {
+      addListener(container, 'mousedown', onMouseDown);
+      addListener(document, 'mousemove', onMouseMove);
+      addListener(document, 'mouseup', onMouseUp);
+      addListener(container, 'dblclick', onDoubleClick);
       addListener(container, 'mousewheel', onMouseWheel);
       addListener(container, 'DOMMouseScroll', onMouseWheel);
     }
@@ -2357,7 +2396,7 @@ function pattern(str, param) {
   });
 }
 
-var SHADERS = {"interaction":{"src":{},"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"framebuffer":true,"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"src":{},"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"framebuffer":true,"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"src":{},"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"src":{},"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"}};
+var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"}};
 
 
 
@@ -3936,43 +3975,40 @@ function rotatePoint(x, y, angle) {
 }
 
 
-var Renderer = function(options) {
-  this.layers = {};
+var Renderer = {
+
+  start: function(options) {
+    this.layers = {};
 
 //this.layers.depth       = Depth.initShader();
-  this.layers.interaction = Interaction.initShader();
-  this.layers.skydome     = SkyDome.initShader();
-  this.layers.basemap     = Basemap.initShader();
-  this.layers.buildings   = Buildings.initShader({
-    showBackfaces: options.showBackfaces
-  });
+    this.layers.skydome   = SkyDome.initShader();
+    this.layers.basemap   = Basemap.initShader();
+    this.layers.buildings = Buildings.initShader({
+      showBackfaces: options.showBackfaces
+    });
 
-  this.resize();
-  Events.on('resize', this.resize.bind(this));
+    this.resize();
+    Events.on('resize', this.resize.bind(this));
 
-  var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
-  this.backgroundColor = {
-    r: color.r/255,
-    g: color.g/255,
-    b: color.b/255
-  };
+    var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
+    this.backgroundColor = {
+      r: color.r/255,
+      g: color.g/255,
+      b: color.b/255
+    };
 
-  GL.cullFace(GL.BACK);
-  GL.enable(GL.CULL_FACE);
-  GL.enable(GL.DEPTH_TEST);
+    GL.cullFace(GL.BACK);
+    GL.enable(GL.CULL_FACE);
+    GL.enable(GL.DEPTH_TEST);
 
-  //Events.on('contextlost', function() {
-  //  this.stop();
-  //}.bind(this));
+    //Events.on('contextlost', function() {
+    //  this.stop();
+    //}.bind(this));
 
-  //Events.on('contextrestored', function() {
-  //  this.start();
-  //}.bind(this));
-};
+    //Events.on('contextrestored', function() {
+    //  this.start();
+    //}.bind(this));
 
-Renderer.prototype = {
-
-  start: function() {
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
         Map.transform = new glx.Matrix()
@@ -3982,17 +4018,17 @@ Renderer.prototype = {
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
 
+        // TODO: do matrix operations only on map change + store vpMatrix here
         var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, this.perspective));
 
 //      this.layers.depth.render(vpMatrix);
-        this.layers.interaction.render(vpMatrix);
 
         GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
         this.layers.skydome.render(vpMatrix);
-        this.layers.basemap.render(vpMatrix);
         this.layers.buildings.render(vpMatrix);
+        this.layers.basemap.render(vpMatrix);
       }.bind(this));
     }.bind(this), 17);
   },
@@ -4069,34 +4105,32 @@ var Depth = {};
 
 // TODO: render only clicked area
 
-var Interaction = {};
+var Interaction = {
 
-(function() {
+  idMapping: [null],
+  viewportSize: 1024,
 
-  var shader;
-  var idMapping = [null], callback;
-
-  Interaction.initShader = function() {
-    shader = new glx.Shader(SHADERS.interaction);
-
-    Events.on('resize', function() {
-      shader.framebuffer.setSize(WIDTH, HEIGHT);
-    }.bind(this));
-
+  initShader: function() {
+    this.shader = new glx.Shader(SHADERS.interaction);
+    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
     return this;
-  };
+  },
 
-  Interaction.render = function(vpMatrix) {
-    if (!callback) {
-      return;
-    }
-
+  // TODO: maybe throttle calls
+  getTargetID: function(x, y, callback) {
     if (Map.zoom < MIN_ZOOM) {
-      callback();
       return;
     }
 
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+
+    var
+      shader = this.shader,
+      framebuffer = this.framebuffer;
+
+    GL.viewport(0, 0, this.viewportSize, this.viewportSize);
     shader.enable();
+    framebuffer.enable();
 
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
@@ -4128,40 +4162,40 @@ var Interaction = {};
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    //if (shader.framebuffer) {
-    var imageData = shader.framebuffer.getData();
-    //} else {
-    //  var imageData = new Uint8Array(WIDTH*HEIGHT*4);
-    //  GL.readPixels(0, 0, WIDTH, HEIGHT, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
-    //}
-    shader.disable();
-    callback(imageData);
-  };
+    var imageData = framebuffer.getData();
 
-  Interaction.idToColor = function(id) {
-    var index = idMapping.indexOf(id);
+    // DEBUG
+    // // disable framebuffer
+    // var imageData = new Uint8Array(WIDTH*HEIGHT*4);
+    // GL.readPixels(0, 0, WIDTH, HEIGHT, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
+
+    shader.disable();
+    framebuffer.disable();
+    GL.viewport(0, 0, WIDTH, HEIGHT);
+
+    //var index = ((HEIGHT-y/)*WIDTH + x) * 4;
+    x = x/WIDTH*this.viewportSize <<0;
+    y = y/HEIGHT*this.viewportSize <<0;
+    var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
+    var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+
+    callback(this.idMapping[color]);
+  },
+
+  idToColor: function(id) {
+    var index = this.idMapping.indexOf(id);
     if (index === -1) {
-      idMapping.push(id);
-      index = idMapping.length-1;
+      this.idMapping.push(id);
+      index = this.idMapping.length-1;
     }
-//  return { r:255, g:128,b:0 }
+//  return { r:255, g:128, b:0 }
     return {
       r:  index        & 0xff,
       g: (index >>  8) & 0xff,
       b: (index >> 16) & 0xff
     };
-  };
-
-  Interaction.getFeatureID = function(pos, fn) {
-    callback = function(imageData) {
-      var index = ((HEIGHT-pos.y)*WIDTH + pos.x) * 4;
-      var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
-      fn(idMapping[color]);
-      callback = null;
-    };
-  };
-
-}());
+  }
+};
 
 
 var SkyDome = {};
@@ -4215,8 +4249,6 @@ var SkyDome = {};
 
     shader.enable();
 
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
-
     var mMatrix = new glx.Matrix();
 
     var scale = getScale();
@@ -4226,8 +4258,8 @@ var SkyDome = {};
       .rotateZ(Map.rotation)
       .translate(WIDTH/2, HEIGHT/2, 0)
       .rotateX(Map.tilt)
-      .translate(0, HEIGHT/2, 0);
-//      .multiply(renderer.perspective);
+      .translate(0, HEIGHT/2, 0)
+      .multiply(Renderer.perspective);
 
     GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
     //mvp = glx.Matrix.multiply(mMatrix, vpMatrix);

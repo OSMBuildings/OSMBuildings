@@ -59,13 +59,10 @@ var SkyDome = {};
       .rotateZ(Map.rotation)
       .translate(WIDTH/2, HEIGHT/2, 0)
       .rotateX(Map.tilt)
-      .translate(0, HEIGHT/2, 0);
-//      .multiply(renderer.perspective);
+      .translate(0, HEIGHT/2, 0)
+      .multiply(Renderer.perspective);
 
     GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
-    //mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-    //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
-
 
     vertexBuffer.enable();
     GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);

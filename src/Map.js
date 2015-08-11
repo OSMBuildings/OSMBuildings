@@ -21,6 +21,7 @@ var Map = {};
 
   Map.center = { x:0, y:0 };
   Map.zoom = 0;
+  Map.transform = new glx.Matrix(); // there are very early actions that rely on an existing Map transform
 
   Map.init = function(options) {
     Map.minZoom = parseFloat(options.minZoom) || 10;

@@ -190,13 +190,18 @@
     var pos = map.transform(52.52, 13.37, 50);
 
     var label = document.getElementById('label');
-    label.style.left = pos.x + 'px';
-    label.style.top = pos.y + 'px';
+    label.style.left = Math.round(pos.x) + 'px';
+    label.style.top = Math.round(pos.y) + 'px';
   });
 
-  map.on('click', function(e) {
-console.log('clicked item id', e.target.id);
+  // map.on('pointerdown', function(e) {
+//  map.on('pointermove', function(e) {
+//    console.log('over item id', e.target.id);
+//  });
 
+  map.on('pointerdown', function(e) {
+console.log('clicked item id', e.target.id);
+return;
     if (e.target.id === selectedItemId) {
       return;
     }
@@ -204,7 +209,6 @@ console.log('clicked item id', e.target.id);
     map.removeModifier(highlightItem);
 
 console.log('modified item id', e.target.id);
-
 
     highlightItem = function(item) {
       if (item.id === e.target.id) {

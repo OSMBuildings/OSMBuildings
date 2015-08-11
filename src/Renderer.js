@@ -1,41 +1,38 @@
 
-var Renderer = function(options) {
-  this.layers = {};
+var Renderer = {
+
+  start: function(options) {
+    this.layers = {};
 
 //this.layers.depth       = Depth.initShader();
-  this.layers.interaction = Interaction.initShader();
-  this.layers.skydome     = SkyDome.initShader();
-  this.layers.basemap     = Basemap.initShader();
-  this.layers.buildings   = Buildings.initShader({
-    showBackfaces: options.showBackfaces
-  });
+    this.layers.skydome   = SkyDome.initShader();
+    this.layers.basemap   = Basemap.initShader();
+    this.layers.buildings = Buildings.initShader({
+      showBackfaces: options.showBackfaces
+    });
 
-  this.resize();
-  Events.on('resize', this.resize.bind(this));
+    this.resize();
+    Events.on('resize', this.resize.bind(this));
 
-  var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
-  this.backgroundColor = {
-    r: color.r/255,
-    g: color.g/255,
-    b: color.b/255
-  };
+    var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
+    this.backgroundColor = {
+      r: color.r/255,
+      g: color.g/255,
+      b: color.b/255
+    };
 
-  GL.cullFace(GL.BACK);
-  GL.enable(GL.CULL_FACE);
-  GL.enable(GL.DEPTH_TEST);
+    GL.cullFace(GL.BACK);
+    GL.enable(GL.CULL_FACE);
+    GL.enable(GL.DEPTH_TEST);
 
-  //Events.on('contextlost', function() {
-  //  this.stop();
-  //}.bind(this));
+    //Events.on('contextlost', function() {
+    //  this.stop();
+    //}.bind(this));
 
-  //Events.on('contextrestored', function() {
-  //  this.start();
-  //}.bind(this));
-};
+    //Events.on('contextrestored', function() {
+    //  this.start();
+    //}.bind(this));
 
-Renderer.prototype = {
-
-  start: function() {
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
         Map.transform = new glx.Matrix()
@@ -45,17 +42,17 @@ Renderer.prototype = {
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
 
+        // TODO: do matrix operations only on map change + store vpMatrix here
         var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, this.perspective));
 
 //      this.layers.depth.render(vpMatrix);
-        this.layers.interaction.render(vpMatrix);
 
         GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
         this.layers.skydome.render(vpMatrix);
-        this.layers.basemap.render(vpMatrix);
         this.layers.buildings.render(vpMatrix);
+        this.layers.basemap.render(vpMatrix);
       }.bind(this));
     }.bind(this), 17);
   },

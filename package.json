@@ -14,13 +14,11 @@
   "scripts": {},
   "dependencies": {},
   "devDependencies": {
-    "Color": "git+https://github.com/kekscom/Color.js",
-    "earcut": "~1.4.0",
-    "grunt": "~0.4.4",
-    "grunt-webpack": "~1.0.8",
-    "grunt-contrib-concat": "~0.4.0",
-    "grunt-contrib-uglify": "~0.4.0",
-    "grunt-contrib-jshint": "~0.11.0"
+    "grunt": "^0.4.4",
+    "grunt-webpack": "^1.0.8",
+    "grunt-contrib-concat": "^0.4.0",
+    "grunt-contrib-uglify": "^0.4.0",
+    "grunt-contrib-jshint": "^0.11.0"
   },
   "optionalDependencies": {}
 }

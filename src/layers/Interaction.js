@@ -1,34 +1,32 @@
 
 // TODO: render only clicked area
 
-var Interaction = {};
+var Interaction = {
 
-(function() {
+  idMapping: [null],
+  viewportSize: 1024,
 
-  var shader;
-  var idMapping = [null], callback;
-
-  Interaction.initShader = function() {
-    shader = new glx.Shader(SHADERS.interaction);
-
-    Events.on('resize', function() {
-      shader.framebuffer.setSize(WIDTH, HEIGHT);
-    }.bind(this));
-
+  initShader: function() {
+    this.shader = new glx.Shader(SHADERS.interaction);
+    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
     return this;
-  };
+  },
 
-  Interaction.render = function(vpMatrix) {
-    if (!callback) {
-      return;
-    }
-
+  // TODO: maybe throttle calls
+  getTargetID: function(x, y, callback) {
     if (Map.zoom < MIN_ZOOM) {
-      callback();
       return;
     }
 
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+
+    var
+      shader = this.shader,
+      framebuffer = this.framebuffer;
+
+    GL.viewport(0, 0, this.viewportSize, this.viewportSize);
     shader.enable();
+    framebuffer.enable();
 
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
@@ -60,37 +58,37 @@ var Interaction = {};
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    //if (shader.framebuffer) {
-    var imageData = shader.framebuffer.getData();
-    //} else {
-    //  var imageData = new Uint8Array(WIDTH*HEIGHT*4);
-    //  GL.readPixels(0, 0, WIDTH, HEIGHT, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
-    //}
-    shader.disable();
-    callback(imageData);
-  };
+    var imageData = framebuffer.getData();
 
-  Interaction.idToColor = function(id) {
-    var index = idMapping.indexOf(id);
+    // DEBUG
+    // // disable framebuffer
+    // var imageData = new Uint8Array(WIDTH*HEIGHT*4);
+    // GL.readPixels(0, 0, WIDTH, HEIGHT, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
+
+    shader.disable();
+    framebuffer.disable();
+    GL.viewport(0, 0, WIDTH, HEIGHT);
+
+    //var index = ((HEIGHT-y/)*WIDTH + x) * 4;
+    x = x/WIDTH*this.viewportSize <<0;
+    y = y/HEIGHT*this.viewportSize <<0;
+    var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
+    var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+
+    callback(this.idMapping[color]);
+  },
+
+  idToColor: function(id) {
+    var index = this.idMapping.indexOf(id);
     if (index === -1) {
-      idMapping.push(id);
-      index = idMapping.length-1;
+      this.idMapping.push(id);
+      index = this.idMapping.length-1;
     }
-//  return { r:255, g:128,b:0 }
+//  return { r:255, g:128, b:0 }
     return {
       r:  index        & 0xff,
       g: (index >>  8) & 0xff,
       b: (index >> 16) & 0xff
     };
-  };
-
-  Interaction.getFeatureID = function(pos, fn) {
-    callback = function(imageData) {
-      var index = ((HEIGHT-pos.y)*WIDTH + pos.x) * 4;
-      var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
-      fn(idMapping[color]);
-      callback = null;
-    };
-  };
-
-}());
+  }
+};

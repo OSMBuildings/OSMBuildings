@@ -11,11 +11,12 @@ var OSMBuildingsGL = function(containerId, options) {
   HEIGHT = container.offsetHeight;
   GL = new glx.View(container, WIDTH, HEIGHT);
 
-  this.renderer = new Renderer({
+  Renderer.start({
     backgroundColor: options.backgroundColor,
     showBackfaces: options.showBackfaces
   });
-  this.renderer.start();
+
+  Interaction.initShader();
 
   Map.init(options);
   Events.init(container);
@@ -159,7 +160,7 @@ OSMBuildingsGL.prototype = {
     var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
     var mapCenter = Map.center;
 
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, this.renderer.perspective));
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 
     var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
     var mMatrix = new glx.Matrix()
@@ -175,7 +176,7 @@ OSMBuildingsGL.prototype = {
 
   destroy: function() {
     glx.destroy(GL);
-    this.renderer.destroy();
+    Renderer.destroy();
     TileGrid.destroy();
     DataGrid.destroy();
   }

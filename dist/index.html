@@ -154,7 +154,7 @@
   var selectedItemId;
   var highlightItem;
 
-  map.on('click', function(e) {
+  map.on('pointerdown', function(e) {
     if (e.target.id === selectedItemId) {
       return;
     }

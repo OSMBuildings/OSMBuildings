@@ -2,13 +2,11 @@
   "shaders": {
     "interaction": {
       "attributes": ["aPosition", "aColor", "aHidden"],
-      "uniforms": ["uMatrix"],
-      "framebuffer": true
+      "uniforms": ["uMatrix"]
     },
     "depth": {
       "attributes": ["aPosition", "aHidden"],
-      "uniforms": ["uMatrix"],
-      "framebuffer": true
+      "uniforms": ["uMatrix"]
     },
     "textured": {
       "attributes": ["aPosition", "aTexCoord"],
@@ -22,7 +20,7 @@
 
 "lib": [
     "lib/earcut.js",
-    "node_modules/color/dist/Color.debug.js",
+    "lib/Color.debug.js",
     "lib/GLX.debug.js"
   ],
 

@@ -25,10 +25,8 @@ function loadShaders(config) {
     shader = config[name];
 
     SHADERS[name] = {
-      src: {},
       attributes: shader.attributes,
-      uniforms: shader.uniforms,
-      framebuffer: shader.framebuffer
+      uniforms: shader.uniforms
     };
 
     src = loadFile(baseURL +'src/shaders/'+ name +'.vertex.glsl');

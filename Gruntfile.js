@@ -83,10 +83,8 @@ module.exports = function(grunt) {
       shader = config[name];
 
       SHADERS[name] = {
-        src: {},
         attributes: shader.attributes,
-        uniforms: shader.uniforms,
-        framebuffer: shader.framebuffer
+        uniforms: shader.uniforms
       };
 
       var src = fs.readFileSync(baseURL + '/' + name + '.vertex.glsl', 'ascii');
