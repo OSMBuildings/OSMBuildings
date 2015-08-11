@@ -920,6 +920,16 @@ glx.destroy = function(GL) {
   GL.canvas = null;
 };
 
+//*****************************************************************************
+
+if (typeof define === 'function') {
+  define([], glx);
+} else if (typeof exports === 'object') {
+  module.exports = glx;
+} else {
+  global.glx = glx;
+}
+
 
 glx.util = {};
 
@@ -1054,10 +1064,6 @@ glx.Shader = function(config) {
 
   this.attributeNames = config.attributes;
   this.uniformNames   = config.uniforms;
-
-  if (config.framebuffer) {
-    this.framebuffer = new glx.Framebuffer();
-  }
 };
 
 glx.Shader.prototype = {
@@ -1112,10 +1118,6 @@ glx.Shader.prototype = {
       }
     }
 
-    if (this.framebuffer) {
-      this.framebuffer.enable();
-    }
-
     return this;
   },
 
@@ -1128,11 +1130,9 @@ glx.Shader.prototype = {
 
     this.attributes = null;
     this.uniforms = null;
-
-    if (this.framebuffer) {
-      this.framebuffer.disable();
-    }
-  }
+  },
+  
+  destroy: function() {}
 };
 
 
@@ -4262,9 +4262,6 @@ var SkyDome = {};
       .multiply(Renderer.perspective);
 
     GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
-    //mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-    //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
-
 
     vertexBuffer.enable();
     GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);

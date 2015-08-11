@@ -44,7 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(global) {
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(global) {
 	var earcut = (function() {
 
 	'use strict'
@@ -966,6 +966,16 @@
 	  GL.canvas = null;
 	};
 
+	//*****************************************************************************
+
+	if (true) {
+	  !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (glx), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	} else if (typeof exports === 'object') {
+	  module.exports = glx;
+	} else {
+	  global.glx = glx;
+	}
+
 
 	glx.util = {};
 
@@ -1100,10 +1110,6 @@
 
 	  this.attributeNames = config.attributes;
 	  this.uniformNames   = config.uniforms;
-
-	  if (config.framebuffer) {
-	    this.framebuffer = new glx.Framebuffer();
-	  }
 	};
 
 	glx.Shader.prototype = {
@@ -1158,10 +1164,6 @@
 	      }
 	    }
 
-	    if (this.framebuffer) {
-	      this.framebuffer.enable();
-	    }
-
 	    return this;
 	  },
 
@@ -1174,11 +1176,9 @@
 
 	    this.attributes = null;
 	    this.uniforms = null;
-
-	    if (this.framebuffer) {
-	      this.framebuffer.disable();
-	    }
-	  }
+	  },
+	  
+	  destroy: function() {}
 	};
 
 
@@ -4308,9 +4308,6 @@
 	      .multiply(Renderer.perspective);
 
 	    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
-	    //mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-	    //GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
-
 
 	    vertexBuffer.enable();
 	    GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
