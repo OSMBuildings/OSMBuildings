@@ -38,11 +38,10 @@ Renderer.prototype = {
   start: function() {
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
-        Map.transform = new glx.Matrix();
-        Map.transform.rotateZ(Map.rotation);
-        Map.transform.rotateX(Map.tilt);
-        Map.transform.translate(0, 0, -1220);
-// .translate(WIDTH/2, HEIGHT/2, 0)
+        Map.transform = new glx.Matrix()
+          .rotateZ(Map.rotation)
+          .rotateX(Map.tilt)
+          .translate(0, -HEIGHT/2, -1220); // map y offset to neutralize camera y offset, map z
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
 
@@ -66,10 +65,10 @@ Renderer.prototype = {
   },
 
   resize: function() {
-    this.perspective = new glx.Matrix();
-    this.perspective.scale(1, -1, 1); // flip Y
-    this.perspective.multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000));
-//    this.perspective.translate(0, -1, 0);
+    this.perspective = new glx.Matrix()
+      .scale(1, -1, 1) // flip Y
+      .multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000))
+      .translate(0, -1, 0); // camera y offset
     GL.viewport(0, 0, WIDTH, HEIGHT);
   },
 

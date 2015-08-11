@@ -183,7 +183,7 @@ var GeoJSON = {};
 
     var res = [];
     for (i = 0, il = polygonRings.length; i < il; i++) {
-      res[i] = makeWinding(polygonRings[i], !i ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE);
+      res[i] = makeWinding(polygonRings[i], i ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE);
     }
     return [res];
   }
