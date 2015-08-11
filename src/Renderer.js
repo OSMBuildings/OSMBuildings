@@ -41,7 +41,7 @@ Renderer.prototype = {
         Map.transform = new glx.Matrix();
         Map.transform.rotateZ(Map.rotation);
         Map.transform.rotateX(Map.tilt);
-        Map.transform.translate(0, 0, -300);
+        Map.transform.translate(0, 0, -1220);
 // .translate(WIDTH/2, HEIGHT/2, 0)
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
@@ -67,9 +67,9 @@ Renderer.prototype = {
 
   resize: function() {
     this.perspective = new glx.Matrix();
-    this.perspective.scale(1, -1, 1);
-    this.perspective.multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 1000));
-    this.perspective.translate(0, -1, 0);
+    this.perspective.scale(1, -1, 1); // flip Y
+    this.perspective.multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000));
+//    this.perspective.translate(0, -1, 0);
     GL.viewport(0, 0, WIDTH, HEIGHT);
   },
 

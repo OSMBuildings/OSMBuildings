@@ -67,6 +67,33 @@ var GeoJSON = {};
     return materialColors[baseMaterials[str] || str] || null;
   }
 
+  var WINDING_CLOCKWISE = 'CW';
+  var WINDING_COUNTER_CLOCKWISE = 'CCW';
+
+  // detect winding direction: clockwise or counter clockwise
+  function getWinding(polygon) {
+    var
+      x1, y1, x2, y2,
+      a = 0;
+
+    for (var i = 0, il = polygon.length-1; i < il; i++) {
+      x1 = polygon[i][0];
+      y1 = polygon[i][1];
+
+      x2 = polygon[i+1][0];
+      y2 = polygon[i+1][1];
+
+      a += x1*y2 - x2*y1;
+    }
+    return (a/2) > 0 ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE;
+  }
+
+  // enforce a polygon winding direcetion. Needed for proper backface culling.
+  function makeWinding(polygon, direction) {
+    var winding = getWinding(polygon);
+    return (winding === direction) ? polygon : polygon.reverse();
+  }
+
   function alignProperties(prop) {
     var item = {};
     var color;
@@ -127,9 +154,10 @@ var GeoJSON = {};
   }
 
   function getGeometries(geometry) {
-    var geometries = [], sub, i, il;
+    var i, il, polygonRings, sub;
     switch (geometry.type) {
       case 'GeometryCollection':
+        var geometries = [];
         for (i = 0, il = geometry.geometries.length; i < il; i++) {
           if ((sub = getGeometries(geometry.geometries[i]))) {
             geometries.push.apply(geometries, sub);
@@ -138,33 +166,41 @@ var GeoJSON = {};
         return geometries;
 
       case 'MultiPolygon':
+        var polygons = [];
         for (i = 0, il = geometry.coordinates.length; i < il; i++) {
           if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
-            geometries.push.apply(geometries, sub);
+            polygons.push.apply(geometries, sub);
           }
         }
-        return geometries;
+        return polygons;
 
       case 'Polygon':
-        return [geometry.coordinates];
+        polygonRings = geometry.coordinates;
+        break;
 
       default: return [];
     }
+
+    var res = [];
+    for (i = 0, il = polygonRings.length; i < il; i++) {
+      res[i] = makeWinding(polygonRings[i], !i ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE);
+    }
+    return [res];
   }
 
-  function transform(offsetX, offsetY, zoom, coordinates) {
+  function transform(offsetX, offsetY, zoom, polygon) {
     var
       worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
 
-    for (var c = 0, cl = coordinates.length; c < cl; c++) {
-      ring = coordinates[c];
-      res[c] = [];
+    for (var i = 0, il = polygon.length; i < il; i++) {
+      ring = polygon[i];
+      res[i] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
         p = project(ring[r][1], ring[r][0], worldSize);
-        res[c][r] = [p.x-offsetX, p.y-offsetY];
+        res[i][r] = [p.x-offsetX, p.y-offsetY];
       }
     }
 
