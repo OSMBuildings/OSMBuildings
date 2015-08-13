@@ -24,9 +24,9 @@ MapTile.prototype = {
 
   load: function(url) {
     this.url = url;
-    setBusy(url);
+    this.act = Activity.setBusy();
     this.texture.load(url, function(image) {
-      setIdle(url);
+      Activity.setIdle(this.act);
       if (image) {
         this.isLoaded = true;
       }
@@ -54,6 +54,6 @@ MapTile.prototype = {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
     this.texture.destroy();
-    setIdle(this.url);
+    Activity.setIdle(this.act);
   }
 };

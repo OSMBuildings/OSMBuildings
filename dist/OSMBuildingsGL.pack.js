@@ -44,7 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(global) {
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(global) {
 	var earcut = (function() {
 
 	'use strict'
@@ -1664,10 +1664,11 @@
 	  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
 	  OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-	  function chunkProcessGeoJSON(json) {
+	  function addGeoJSONChunked(json, callback) {
 	    if (!json.features.length) {
 	      return;
 	    }
+	    var worldSize = TILE_SIZE<<16;
 	    relax(function(startIndex, endIndex) {
 	      var
 	        features = json.features.slice(startIndex, endIndex),
@@ -1676,7 +1677,12 @@
 	        position = { latitude: coordinates0[1], longitude: coordinates0[0] },
 	        data = GeoJSON.parse(position, worldSize, geojson);
 	      new Mesh(data, position, options);
-	    }.bind(this), 0, json.features.length, 100, 100);
+
+	      if (endIndex === json.features.length) {
+	        console.log('END REACHED');
+	        callback();
+	      }
+	    }.bind(this), 0, json.features.length, 100, 50, callback);
 	  }
 
 	  OSMBuildingsGL.prototype = {
@@ -1692,16 +1698,19 @@
 
 	    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
 	    addOBJ: function(url, position, options) {
+	      var act = Activity.setBusy(l);
 	      Request.getText(url, function(str) {
 	        var match;
 	        if ((match = str.match(/^mtllib\s+(.*)$/m))) {
 	          Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
 	            var data = new OBJ.parse(str, mtl, options);
 	            new Mesh(data, position, options);
+	            Activity.setIdle(act);
 	          }.bind(this));
 	        } else {
 	          var data = new OBJ.parse(str, null, options);
 	          new Mesh(data, position, options);
+	          Activity.setIdle(act);
 	        }
 	      });
 
@@ -1710,11 +1719,17 @@
 
 	    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
 	    addGeoJSON: function(url, options) {
-	      var worldSize = TILE_SIZE<<16;
+	      var act = Activity.setBusy();
 	      if (typeof url === 'object') {
-	        chunkProcessGeoJSON(url);
+	        addGeoJSONChunked(url, function() {
+	          Activity.setIdle(act);
+	        });
 	      } else {
-	        Request.getJSON(url, chunkProcessGeoJSON);
+	        Request.getJSON(url, function(json) {
+	          addGeoJSONChunked(json, function() {
+	            Activity.setIdle(act);
+	          });
+	        });
 	      }
 	      return this;
 	    },
@@ -1827,6 +1842,16 @@
 	  };
 
 	}());
+
+	//*****************************************************************************
+
+	if (true) {
+	  !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (OSMBuildingsGL), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	} else if (typeof exports === 'object') {
+	  module.exports = OSMBuildingsGL;
+	} else {
+	  global.OSMBuildingsGL = OSMBuildingsGL;
+	}
 
 
 	var Map = {};
@@ -2217,6 +2242,49 @@
 	}
 
 
+	var Activity = {};
+
+	(function() {
+
+	  var id = 0;
+	  var items = [];
+	  var stack = 0;
+
+	  Activity.setBusy = function() {
+	    var key = ++id;
+	    if (!items.length) {
+	      Events.emit('busy');
+	    }
+	    if (items.indexOf(key) === -1) {
+	      items.push(key);
+	      stack++;
+	    }
+	    return key;
+	  };
+
+	  Activity.setIdle = function(key) {
+	    if (!items.length) {
+	      return;
+	    }
+	    var i = items.indexOf(key);
+	    if (i > -1) {
+	      items.splice(i, 1);
+	      stack--;
+	    }
+	    if (!items.length) {
+	      Events.emit('idle');
+	console.log('STACK', stack);
+	      id = 0;
+	    }
+	  };
+
+	  Activity.isBusy = function() {
+	    return !!items.length;
+	  };
+
+	}());
+
+
 	var State = {};
 
 	(function() {
@@ -2322,7 +2390,6 @@
 	      }
 
 	      delete queue[url];
-	      setIdle(url);
 
 	      if (!req.status || req.status<200 || req.status>299) {
 	        return;
@@ -2333,13 +2400,11 @@
 
 	    queue[url] = req;
 	    req.open('GET', url);
-	    setBusy(url);
 	    req.send(null);
 
 	    return {
 	      abort: function() {
 	        if (queue[url]) {
-	          setIdle(url);
 	          req.abort();
 	          delete queue[url];
 	        }
@@ -2393,31 +2458,6 @@
 
 	}());
 
-
-
-	var activities = [];
-
-	function setBusy(key) {
-	  if (!activities.length) {
-	    Events.emit('busy');
-	  }
-	  if (activities.indexOf(key) === -1) {
-	    activities.push(key);
-	  }
-	}
-
-	function setIdle(key) {
-	  if (!activities.length) {
-	    return;
-	  }
-	  var i = activities.indexOf(key);
-	  if (i > -1) {
-	    activities.splice(i, 1);
-	  }
-	  if (!activities.length) {
-	    Events.emit('idle');
-	  }
-	}
 
 	function clamp(value, min, max) {
 	  return Math.min(max, Math.max(value, min));
@@ -2958,6 +2998,7 @@
 	DataTile.prototype = {
 
 	  load: function(url) {
+	    var act = Activity.setBusy();
 	    this.request = Request.getJSON(url, function(geojson) {
 	      this.request = null;
 
@@ -2970,6 +3011,8 @@
 	        position = { latitude:coordinates0[1], longitude:coordinates0[0] },
 	        data = GeoJSON.parse(position, TILE_SIZE<<this.zoom, geojson);
 	      this.mesh = new Mesh(data, position);
+
+	      Activity.setIdle(act);
 	    }.bind(this));
 	  },
 
@@ -3154,9 +3197,9 @@
 
 	  load: function(url) {
 	    this.url = url;
-	    setBusy(url);
+	    this.act = Activity.setBusy();
 	    this.texture.load(url, function(image) {
-	      setIdle(url);
+	      Activity.setIdle(this.act);
 	      if (image) {
 	        this.isLoaded = true;
 	      }
@@ -3184,7 +3227,7 @@
 	    this.vertexBuffer.destroy();
 	    this.texCoordBuffer.destroy();
 	    this.texture.destroy();
-	    setIdle(this.url);
+	    Activity.setIdle(this.act);
 	  }
 	};
 
@@ -4178,9 +4221,9 @@
 	    vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
 	    texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
 	    texture = new glx.Texture();
-	    setBusy(url);
+	    var act = Activity.setBusy();
 	    texture.load(url, function(image) {
-	      setIdle(url);
+	      Activity.setIdle(act);
 	      if (image) {
 	        textureIsLoaded = true;
 	      }

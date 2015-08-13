@@ -28,6 +28,7 @@
     "src/index.js",
     "src/Map.js",
     "src/Events.js",
+    "src/Activity.js",
 
     "src/State.js",
 
