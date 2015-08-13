@@ -1574,7 +1574,6 @@ glx.mesh.Cube = function(size, color) {
 
 return glx;
 }(this));
-
 var GL;
 var WIDTH = 0, HEIGHT = 0;
 
@@ -1613,195 +1612,175 @@ var OSMBuildingsGL = function(containerId, options) {
   }
 };
 
-OSMBuildingsGL.VERSION = '0.1.8';
-OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
-OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
+(function() {
 
-OSMBuildingsGL.prototype = {
+  OSMBuildingsGL.VERSION = '0.1.8';
+  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
+  OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-  setStyle: function(style) {
-    var color = style.color || style.wallColor;
-    if (color) {
-      // TODO: move this to Renderer
-      DEFAULT_COLOR = Color.parse(color).toRGBA();
+  function chunkProcessGeoJSON(json) {
+    if (!json.features.length) {
+      return;
     }
-    return this;
-  },
-
-  addModifier: function(fn) {
-    Data.addModifier(fn);
-    return this;
-  },
-
-  removeModifier: function(fn) {
-    Data.removeModifier(fn);
-    return this;
-  },
-
-  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
-  addOBJ: function(url, options) {
-    Request.getText(url, function(str) {
-      var match;
-      if ((match = str.match(/^mtllib\s+(.*)$/m))) {
-        Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
-          var data = new OBJ.parse(str, mtl, options);
-          new Mesh(data, options);
-        }.bind(this));
-      } else {
-        var data = new OBJ.parse(str, null, options);
-        new Mesh(data, options);
-      }
-    });
-
-    return this;
-  },
-
-  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
-  addGeoJSON: function(url, options) {
-    var zoom = 16;
-    if (typeof url === 'object') {
-      var json = url;
-      relax(function(startIndex, endIndex) {
-        var
-          features = json.features.slice(startIndex, endIndex),
-          geojson = { type: 'FeatureCollection', features: features },
-          position = features[0].geometry.coordinates[0][0],
-          origin = project(position[1], position[0], TILE_SIZE<<zoom),
-          data = GeoJSON.parse(origin.x, origin.y, zoom, geojson);
-        new Mesh(data, options);
-      }.bind(this), 0, json.features.length, 100, 250);
-    } else {
-      Request.getJSON(url, function(json) {
-        relax(function(startIndex, endIndex) {
-          var
-            features = json.features.slice(startIndex, endIndex),
-            geojson = { type: 'FeatureCollection', features: features },
-            position = features[0].geometry.coordinates[0][0],
-            origin = project(position[1], position[0], TILE_SIZE<<zoom),
-            data = GeoJSON.parse(origin.x, origin.y, zoom, geojson);
-          new Mesh(data, options);
-        }.bind(this), 0, json.features.length, 100, 250);
-      });
-    }
-    return this;
-  },
-
-  on: function(type, fn) {
-    Events.on(type, fn);
-    return this;
-  },
-
-  off: function(type, fn) {
-    Events.off(type, fn);
-    return this;
-  },
-
-  setDisabled: function(flag) {
-    Events.setDisabled(flag);
-    return this;
-  },
-
-  isDisabled: function() {
-    return Events.isDisabled();
-  },
-
-  setZoom: function(zoom) {
-    Map.setZoom(zoom);
-    return this;
-  },
-
-  getZoom: function() {
-    return Map.zoom;
-  },
-
-  setPosition: function(position) {
-    Map.setPosition(position);
-    return this;
-  },
-
-  getPosition: function() {
-    return Map.getPosition();
-  },
-
-  getBounds: function() {
-    var mapBounds = Map.bounds;
-    var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
-    var nw = unproject(mapBounds.minX, mapBounds.maxY, worldSize);
-    var se = unproject(mapBounds.maxX, mapBounds.minY, worldSize);
-    return {
-      n: nw.latitude,
-      w: nw.longitude,
-      s: se.latitude,
-      e: se.longitude
-    };
-  },
-
-  setSize: function(size) {
-    if (size.width !== WIDTH || size.height !== HEIGHT) {
-      GL.canvas.width  = WIDTH  = size.width;
-      GL.canvas.height = HEIGHT = size.height;
-      Events.emit('resize');
-    }
-    return this;
-  },
-
-  getSize: function() {
-    return { width:WIDTH, height:HEIGHT };
-  },
-
-  setRotation: function(rotation) {
-    Map.setRotation(rotation);
-    return this;
-  },
-
-  getRotation: function() {
-    return Map.rotation;
-  },
-
-  setTilt: function(tilt) {
-    Map.setTilt(tilt);
-    return this;
-  },
-
-  getTilt: function() {
-    return Map.tilt;
-  },
-
-  transform: function(latitude, longitude, elevation) {
-    var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
-    var mapCenter = Map.center;
-
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
-
-    var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
-    var mMatrix = new glx.Matrix()
-      .translate(0, 0, elevation)
-      .scale(scale, scale, scale*0.65)
-      .translate(pos.x-mapCenter.x, pos.y-mapCenter.y, 0);
-
-    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-
-    var t = glx.Matrix.transform(mvp);
-    return { x:t.x*WIDTH, y:HEIGHT-t.y*HEIGHT };
-  },
-
-  destroy: function() {
-    glx.destroy(GL);
-    Renderer.destroy();
-    TileGrid.destroy();
-    DataGrid.destroy();
+    relax(function(startIndex, endIndex) {
+      var
+        features = json.features.slice(startIndex, endIndex),
+        geojson = { type: 'FeatureCollection', features: features },
+        coordinates0 = geojson.features[0].geometry.coordinates[0][0],
+        position = { latitude: coordinates0[1], longitude: coordinates0[0] },
+        data = GeoJSON.parse(position, worldSize, geojson);
+      new Mesh(data, position, options);
+    }.bind(this), 0, json.features.length, 100, 100);
   }
-};
 
-//*****************************************************************************
+  OSMBuildingsGL.prototype = {
 
-if (typeof define === 'function') {
-  define([], OSMBuildingsGL);
-} else if (typeof exports === 'object') {
-  module.exports = OSMBuildingsGL;
-} else {
-  global.OSMBuildingsGL = OSMBuildingsGL;
-}
+    setStyle: function(style) {
+      var color = style.color || style.wallColor;
+      if (color) {
+        // TODO: move this to Renderer
+        DEFAULT_COLOR = Color.parse(color).toRGBA();
+      }
+      return this;
+    },
+
+    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
+    addOBJ: function(url, position, options) {
+      Request.getText(url, function(str) {
+        var match;
+        if ((match = str.match(/^mtllib\s+(.*)$/m))) {
+          Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
+            var data = new OBJ.parse(str, mtl, options);
+            new Mesh(data, position, options);
+          }.bind(this));
+        } else {
+          var data = new OBJ.parse(str, null, options);
+          new Mesh(data, position, options);
+        }
+      });
+
+      return this;
+    },
+
+    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
+    addGeoJSON: function(url, options) {
+      var worldSize = TILE_SIZE<<16;
+      if (typeof url === 'object') {
+        chunkProcessGeoJSON(url);
+      } else {
+        Request.getJSON(url, chunkProcessGeoJSON);
+      }
+      return this;
+    },
+
+    on: function(type, fn) {
+      Events.on(type, fn);
+      return this;
+    },
+
+    off: function(type, fn) {
+      Events.off(type, fn);
+      return this;
+    },
+
+    setDisabled: function(flag) {
+      Events.setDisabled(flag);
+      return this;
+    },
+
+    isDisabled: function() {
+      return Events.isDisabled();
+    },
+
+    setZoom: function(zoom) {
+      Map.setZoom(zoom);
+      return this;
+    },
+
+    getZoom: function() {
+      return Map.zoom;
+    },
+
+    setPosition: function(position) {
+      Map.setPosition(position);
+      return this;
+    },
+
+    getPosition: function() {
+      return Map.getPosition();
+    },
+
+    getBounds: function() {
+      var mapBounds = Map.bounds;
+      var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
+      var nw = unproject(mapBounds.minX, mapBounds.maxY, worldSize);
+      var se = unproject(mapBounds.maxX, mapBounds.minY, worldSize);
+      return {
+        n: nw.latitude,
+        w: nw.longitude,
+        s: se.latitude,
+        e: se.longitude
+      };
+    },
+
+    setSize: function(size) {
+      if (size.width !== WIDTH || size.height !== HEIGHT) {
+        GL.canvas.width = WIDTH = size.width;
+        GL.canvas.height = HEIGHT = size.height;
+        Events.emit('resize');
+      }
+      return this;
+    },
+
+    getSize: function() {
+      return { width: WIDTH, height: HEIGHT };
+    },
+
+    setRotation: function(rotation) {
+      Map.setRotation(rotation);
+      return this;
+    },
+
+    getRotation: function() {
+      return Map.rotation;
+    },
+
+    setTilt: function(tilt) {
+      Map.setTilt(tilt);
+      return this;
+    },
+
+    getTilt: function() {
+      return Map.tilt;
+    },
+
+    transform: function(latitude, longitude, elevation) {
+      var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
+      var mapCenter = Map.center;
+
+      var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+
+      var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
+      var mMatrix = new glx.Matrix()
+        .translate(0, 0, elevation)
+        .scale(scale, scale, scale*0.65)
+        .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
+
+      var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+
+      var t = glx.Matrix.transform(mvp);
+      return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
+    },
+
+    destroy: function() {
+      glx.destroy(GL);
+      Renderer.destroy();
+      TileGrid.destroy();
+      DataGrid.destroy();
+    }
+  };
+
+}());
 
 
 var Map = {};
@@ -2935,8 +2914,16 @@ DataTile.prototype = {
   load: function(url) {
     this.request = Request.getJSON(url, function(geojson) {
       this.request = null;
-      var data = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
-      this.mesh = new Mesh(data);
+
+      if (!geojson || geojson.type !== 'FeatureCollection' || !geojson.features.length) {
+        return;
+      }
+
+      var
+        coordinates0 = geojson.features[0].geometry.coordinates[0][0],
+        position = { latitude:coordinates0[1], longitude:coordinates0[0] },
+        data = GeoJSON.parse(position, TILE_SIZE<<this.zoom, geojson);
+      this.mesh = new Mesh(data, position);
     }.bind(this));
   },
 
@@ -3159,7 +3146,6 @@ MapTile.prototype = {
 var Data = {
 
   items: [],
-  modifiers: [],
 
   add: function(item) {
     this.items.push(item);
@@ -3177,41 +3163,18 @@ var Data = {
 
   destroy: function() {
     this.items = null;
-  },
-
-  addModifier: function(fn) {
-    this.modifiers.push(fn);
-    Events.emit('modify');
-  },
-
-  removeModifier: function(fn) {
-    for (var i = 0; i < this.modifiers.length; i++) {
-      if (this.modifiers[i] === fn) {
-        this.modifiers.splice(i, 1);
-        break;
-      }
-    }
-    Events.emit('modify');
-  },
-
-  applyModifiers: function(item) {
-    var clonedItem = Object.create(item);
-    var modifiers = this.modifiers;
-    for (var i = 0, il = modifiers.length, j, jl; i < il; i++) {
-      modifiers[i](clonedItem);
-    }
-    return clonedItem;
   }
 };
 
 
-var Mesh = function(data, options) {
+// TODO: when and how to destroy mesh?
+
+var Mesh = function(data, position, options) {
+  this.position = position;
+
   options = options || {};
 
-  this.isReady = false;
-
   this.id        = options.id;
-  this.position  = options.position  || {};
   this.scale     = options.scale     || 1;
   this.rotation  = options.rotation  || 0;
   this.elevation = options.elevation || 0;
@@ -3220,9 +3183,15 @@ var Mesh = function(data, options) {
   }
   this.replaces  = options.replaces || [];
 
-//Events.on('modify', this.modify.bind(this));
-  this.items = []; // TODO: remove the need to keep items -> frop modifiers
+  this.items = []; // TODO: remove the need to keep items -> drop modifiers
   this.createBuffers(data);
+
+  // OBJ
+  // this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+
+  // GeoJSON
+  // this.zoom = 16;
+  // this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
 
   Data.add(this);
 };
@@ -3233,9 +3202,9 @@ var Mesh = function(data, options) {
 
     createBuffers: function(data) {
       var vertices = [], normals = [], colors = [], idColors = [];
-      var item, idColor, j, jl;
+      var item, idColor, i, il, j, jl;
 
-      for (var i = 0, il = data.length; i<il; i++) {
+      for (i = 0, il = data.length; i<il; i++) {
         item = data[i];
         item.color = this.color || item.color || DEFAULT_COLOR;
         item.id = this.id || item.id;
@@ -3243,8 +3212,6 @@ var Mesh = function(data, options) {
 
         idColor = Interaction.idToColor(item.id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-//          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
-//          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
           idColors.push(idColor.r, idColor.g, idColor.b);
         }
 
@@ -3261,7 +3228,23 @@ var Mesh = function(data, options) {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
       this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
 
-      this.modify();
+      var
+        newColors = [],
+        newVisibilities = [];
+
+      for (i = 0, il = this.items.length; i<il; i++) {
+        item = this.items[i];
+        for (j = 0, jl = item.numVertices; j<jl; j++) {
+          newColors.push(item.color.r, item.color.g, item.color.b);
+          newVisibilities.push(item.hidden ? 1 : 0);
+        }
+      }
+
+      this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
+      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
+
+      newColors = null;
+      newVisibilities = null;
 
       vertices = null;
       normals = null;
@@ -3278,7 +3261,11 @@ var Mesh = function(data, options) {
         mMatrix.translate(0, 0, this.elevation);
       }
 
+      // GeoJSON
+      this.zoom = 16;
       var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
+      // OBJ
+      // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
       mMatrix.scale(scale, scale, scale*0.65);
 
       mMatrix.rotateZ(-this.rotation);
@@ -3292,205 +3279,28 @@ var Mesh = function(data, options) {
       return mMatrix;
     },
 
-    _replaceItems: function() {
-      if (this.replaces.length) {
-        var replaces = this.replaces;
-        Data.addModifier(function(item) {
-          if (replaces.indexOf(item.id)>=0) {
-            item.hidden = true;
-          }
-        });
-      }
-    },
-
-    modify: function() {
-      if (!this.items) {
-        return;
-      }
-
-      var
-        newColors = [],
-        newVisibilities = [],
-        clonedItem;
-
-      for (var i = 0, il = this.items.length; i<il; i++) {
-        clonedItem = Data.applyModifiers(this.items[i]);
-        for (var j = 0, jl = clonedItem.numVertices; j<jl; j++) {
-          newColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
-          newVisibilities.push(clonedItem.hidden ? 1 : 0);
-        }
-      }
-
-      this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
-      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
-
-      newColors = null;
-      newVisibilities = null;
-
-      return this;
-    },
+  //_replaceItems: function() {
+    //  if (this.replaces.length) {
+    //    var replaces = this.replaces;
+    //    Data.addModifier(function(item) {
+    //      if (replaces.indexOf(item.id)>=0) {
+    //        item.hidden = true;
+    //      }
+    //    });
+    //  }
+    //},
 
     destroy: function() {
       Data.remove(this);
-
-      if (this.isReady) {
-        this.vertexBuffer.destroy();
-        this.normalBuffer.destroy();
-        this.colorBuffer.destroy();
-        this.idColorBuffer.destroy();
-        this.visibilityBuffer.destroy();
-      }
-
-      if (this.request) {
-        this.request.abort();
-        this.request = null;
-      }
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idColorBuffer.destroy();
+      this.visibilityBuffer.destroy();
     }
   };
 
 }());
-
-
-
-
-//// when and how to destroy mesh?
-//
-//var GeoJSONMesh = function(json, options) {
-//  Mesh.call(this, options);
-//  this.zoom = 16;
-////this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
-//};
-//
-//if (!items.length) {
-//  return;
-//}
-//this.position = { latitude: position[1], longitude: position[0] };
-//this._setItems(items);
-//this._replaceItems();
-
-
-//relax(function(startIndex, endIndex) {
-//  var
-//    features = json.features.slice(startIndex, endIndex),
-//    geojson = { type: 'FeatureCollection', features: features },
-//    position = features[0].geometry.coordinates[0][0],
-//    origin = project(position[1], position[0], TILE_SIZE<<this.zoom),
-//    items = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
-//
-//  if (!items.length) {
-//    return;
-//  }
-//
-//  this.position = { latitude: position[1], longitude: position[0] };
-//  this._setItems(items);
-//  this._replaceItems();
-
-
-//(function() {
-//
-//  GeoJSONMesh.prototype = Object.create(Mesh.prototype);
-//
-
-//
-//}());
-//
-//
-//
-//
-//var OBJMesh = function(str, options) {
-//  options = options || {};
-//  Mesh.call(this, options);
-//  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-//
-//  OBJ.parse(str, options.mtl, function(items) {
-//    this._setItems(items);
-//    this._replaceItems();
-//  }.bind(this));
-//};
-
-
-//  OBJMesh.prototype.getMatrix = function() {
-//    var mMatrix = new glx.Matrix();
-//
-//    if (this.elevation) {
-//      mMatrix.translate(0, 0, this.elevation);
-//    }
-//
-//    var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-//    mMatrix.scale(scale, scale, scale);
-//
-//    mMatrix.rotateZ(-this.rotation);
-//
-//    var
-//      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-//      mapCenter = Map.center;
-//
-//    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-//
-//    return mMatrix;
-//  };
-
-
-// when and how to destroy mesh?
-
-var GeoJSONMesh = function(json, options) {
-  Mesh.call(this, options);
-  this.zoom = 16;
-//this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
-console.log(json.features.length);
-  // parse in chunks of 1000 items, pause for 10ms in between
-  relax(function(startIndex, endIndex) {
-    var
-      features = json.features.slice(startIndex, endIndex),
-      geojson = { type: 'FeatureCollection', features: features },
-      position = features[0].geometry.coordinates[0][0],
-      origin = project(position[1], position[0], TILE_SIZE<<this.zoom),
-      items = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
-
-    if (!items.length) {
-      return;
-    }
-
-    this.position = { latitude: position[1], longitude: position[0] };
-    this._setItems(items);
-    this._replaceItems();
-
-  }.bind(this), 0, json.features.length, 100, 33);
-};
-
-(function() {
-
-  GeoJSONMesh.prototype = Object.create(Mesh.prototype);
-
-  GeoJSONMesh.prototype.getMatrix = function() {
-    var mMatrix = new glx.Matrix();
-
-    if (this.elevation) {
-      mMatrix.translate(0, 0, this.elevation);
-    }
-
-    var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
-    mMatrix.scale(scale, scale, scale*0.65);
-
-    mMatrix.rotateZ(-this.rotation);
-
-    var
-      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-      mapCenter = Map.center;
-
-    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
-    return mMatrix;
-  };
-
-}());
-
-//if (!items.length) {
-//  return;
-//}
-//this.position = { latitude: position[1], longitude: position[0] };
-//this._setItems(items);
-//this._replaceItems();
 
 
 var GeoJSON = {};
@@ -3681,9 +3491,8 @@ var GeoJSON = {};
     return [res];
   }
 
-  function transform(offsetX, offsetY, zoom, polygon) {
+  function transform(origin, worldSize, polygon) {
     var
-      worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
@@ -3693,14 +3502,14 @@ var GeoJSON = {};
       res[i] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
         p = project(ring[r][1], ring[r][0], worldSize);
-        res[i][r] = [p.x-offsetX, p.y-offsetY];
+        res[i][r] = [p.x-origin.x, p.y-origin.y];
       }
     }
 
     return res;
   }
 
-  function parseFeature(res, offsetX, offsetY, zoom, feature) {
+  function parseFeature(res, origin, worldSize, feature) {
     var
       geometries,
       tris,
@@ -3713,7 +3522,7 @@ var GeoJSON = {};
     geometries = getGeometries(feature.geometry);
 
     for (var  i = 0, il = geometries.length; i < il; i++) {
-      polygon = transform(offsetX, offsetY, zoom, geometries[i]);
+      polygon = transform(origin, worldSize, geometries[i]);
 
       id = feature.properties.relationId || feature.id || feature.properties.id;
 
@@ -3795,13 +3604,17 @@ var GeoJSON = {};
 
   //***************************************************************************
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson) {
+  GeoJSON.parse = function(position, worldSize, geojson) {
     var res = [];
 
     if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
-      var collection = geojson.features;
+
+      var
+        collection = geojson.features,
+        origin = project(position.latitude, position.longitude, worldSize);
+
       for (var i = 0, il = collection.length; i<il; i++) {
-        parseFeature(res, offsetX, offsetY, zoom, collection[i]);
+        parseFeature(res, origin, worldSize, collection[i]);
       }
     }
 
@@ -3958,14 +3771,11 @@ OBJ.prototype = {
   }
 };
 
-OBJ.parse = function(objStr, mtlStr, callback) {
+OBJ.parse = function(objStr, mtlStr) {
   var
     parser = new OBJ(),
     materials = mtlStr ? parser.parseMaterials(mtlStr) : {};
-
-  setTimeout(function() {
-    callback( parser.parseModel(objStr, materials) );
-  }, 10);
+  return parser.parseModel(objStr, materials);
 };
 
 
@@ -4116,7 +3926,7 @@ var Renderer = {
         GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-        this.layers.skydome.render(vpMatrix);
+//      this.layers.skydome.render(vpMatrix);
         this.layers.buildings.render(vpMatrix);
         this.layers.basemap.render(vpMatrix);
       }.bind(this));
