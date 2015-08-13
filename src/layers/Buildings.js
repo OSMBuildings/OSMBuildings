@@ -60,9 +60,6 @@ var Buildings = {};
       item.colorBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
 
-      item.visibilityBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
-
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 

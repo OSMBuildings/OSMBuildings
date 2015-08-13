@@ -23,10 +23,9 @@ var MapTile = function(tileX, tileY, zoom) {
 MapTile.prototype = {
 
   load: function(url) {
-    this.url = url;
-    this.act = Activity.setBusy();
+    Activity.setBusy();
     this.texture.load(url, function(image) {
-      Activity.setIdle(this.act);
+      Activity.setIdle();
       if (image) {
         this.isLoaded = true;
       }
@@ -54,6 +53,6 @@ MapTile.prototype = {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
     this.texture.destroy();
-    Activity.setIdle(this.act);
+    Activity.setIdle();
   }
 };

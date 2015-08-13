@@ -8,7 +8,7 @@ var DataTile = function(tileX, tileY, zoom) {
 DataTile.prototype = {
 
   load: function(url) {
-    var act = Activity.setBusy();
+    Activity.setBusy();
     this.request = Request.getJSON(url, function(geojson) {
       this.request = null;
 
@@ -22,7 +22,7 @@ DataTile.prototype = {
         data = GeoJSON.parse(position, TILE_SIZE<<this.zoom, geojson);
       this.mesh = new Mesh(data, position);
 
-      Activity.setIdle(act);
+      Activity.setIdle();
     }.bind(this));
   },
 

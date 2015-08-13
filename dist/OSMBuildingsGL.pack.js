@@ -1664,10 +1664,11 @@
 	  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
 	  OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-	  function addGeoJSONChunked(json, callback) {
+	  function addGeoJSONChunked(json, options, callback) {
 	    if (!json.features.length) {
 	      return;
 	    }
+
 	    var worldSize = TILE_SIZE<<16;
 	    relax(function(startIndex, endIndex) {
 	      var
@@ -1679,10 +1680,9 @@
 	      new Mesh(data, position, options);
 
 	      if (endIndex === json.features.length) {
-	        console.log('END REACHED');
 	        callback();
 	      }
-	    }.bind(this), 0, json.features.length, 100, 50, callback);
+	    }.bind(this), 0, json.features.length, 250, 50);
 	  }
 
 	  OSMBuildingsGL.prototype = {
@@ -1698,19 +1698,19 @@
 
 	    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
 	    addOBJ: function(url, position, options) {
-	      var act = Activity.setBusy(l);
+	      Activity.setBusy();
 	      Request.getText(url, function(str) {
 	        var match;
 	        if ((match = str.match(/^mtllib\s+(.*)$/m))) {
 	          Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
 	            var data = new OBJ.parse(str, mtl, options);
 	            new Mesh(data, position, options);
-	            Activity.setIdle(act);
+	            Activity.setIdle();
 	          }.bind(this));
 	        } else {
 	          var data = new OBJ.parse(str, null, options);
 	          new Mesh(data, position, options);
-	          Activity.setIdle(act);
+	          Activity.setIdle();
 	        }
 	      });
 
@@ -1719,15 +1719,15 @@
 
 	    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
 	    addGeoJSON: function(url, options) {
-	      var act = Activity.setBusy();
+	      Activity.setBusy();
 	      if (typeof url === 'object') {
-	        addGeoJSONChunked(url, function() {
-	          Activity.setIdle(act);
+	        addGeoJSONChunked(url, options, function() {
+	          Activity.setIdle();
 	        });
 	      } else {
 	        Request.getJSON(url, function(json) {
-	          addGeoJSONChunked(json, function() {
-	            Activity.setIdle(act);
+	          addGeoJSONChunked(json, options, function() {
+	            Activity.setIdle();
 	          });
 	        });
 	      }
@@ -2246,40 +2246,45 @@
 
 	(function() {
 
-	  var id = 0;
-	  var items = [];
-	  var stack = 0;
+	  var count = 0;
+	  var timer;
 
-	  Activity.setBusy = function() {
-	    var key = ++id;
-	    if (!items.length) {
-	      Events.emit('busy');
+	  Activity.setBusy = function(msg) {
+	    //if (msg) {
+	    //  console.log('setBusy', msg, count);
+	    //}
+
+	    if (!count) {
+	      if (timer) {
+	        clearTimeout(timer);
+	        timer = null;
+	      } else {
+	        Events.emit('busy');
+	      }
 	    }
-	    if (items.indexOf(key) === -1) {
-	      items.push(key);
-	      stack++;
-	    }
-	    return key;
+	    count++;
 	  };
 
-	  Activity.setIdle = function(key) {
-	    if (!items.length) {
+	  Activity.setIdle = function(msg) {
+	    if (!count) {
 	      return;
 	    }
-	    var i = items.indexOf(key);
-	    if (i > -1) {
-	      items.splice(i, 1);
-	      stack--;
+
+	    count--;
+	    if (!count) {
+	      timer = setTimeout(function() {
+	        timer = null;
+	        Events.emit('idle');
+	      }, 10);
 	    }
-	    if (!items.length) {
-	      Events.emit('idle');
-	console.log('STACK', stack);
-	      id = 0;
-	    }
+
+	    //if (msg) {
+	    //  console.log('setIdle', msg, count);
+	    //}
 	  };
 
 	  Activity.isBusy = function() {
-	    return !!items.length;
+	    return !!count;
 	  };
 
 	}());
@@ -2515,7 +2520,7 @@
 	  }
 	}
 
-	var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\n//uniform vec3  uCameraPosition;\n//uniform float uFogZNear;\n//uniform float uFogZFar;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvarying float vFogFactor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec3 uCameraPosition = vec3(0, 1, 0);\n    float uFogZNear = 1500.0;\n    float uFogZFar = 2000.0;\n    vec4 position = vec4(uMatrix * aPosition);\n    gl_Position = position;\n    vPosition = aPosition;\n    vec2  positionXZ       = vec2(position.x, position.z);\n    vec2  cameraPositionXZ = vec2(uCameraPosition.x, uCameraPosition.z);\n    float vertexDistanceXZ = length(positionXZ - cameraPositionXZ);\n    float fogFactor        = (vertexDistanceXZ - uFogZNear) / (uFogZFar - uFogZNear);\n    vFogFactor = min(max(fogFactor, 0.0), 1.0);\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\n//uniform vec4  uFogColor;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nvarying float vFogFactor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  vec4 uFogColor = vec4(1.0, 0.8, 0.8, 0.0);\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = mix(vec4(vColor - shading, uAlpha), uFogColor, vFogFactor);\n}\n"}};
+	var SHADERS = {"interaction":{"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\n//uniform vec3  uCameraPosition;\n//uniform float uFogZNear;\n//uniform float uFogZFar;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvarying float vFogFactor;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//    vColor = vec3(0.0, 0.0, 0.0);\n//  }\n  vec3 uCameraPosition = vec3(0, 1, 0);\n  float uFogZNear = 1500.0;\n  float uFogZFar = 2000.0;\n  vec4 position = vec4(uMatrix * aPosition);\n  gl_Position = position;\n  vPosition = aPosition;\n  vec2  positionXZ       = vec2(position.x, position.z);\n  vec2  cameraPositionXZ = vec2(uCameraPosition.x, uCameraPosition.z);\n  float vertexDistanceXZ = length(positionXZ - cameraPositionXZ);\n  float fogFactor        = (vertexDistanceXZ - uFogZNear) / (uFogZFar - uFogZNear);\n  vFogFactor = min(max(fogFactor, 0.0), 1.0);\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\n//uniform vec4  uFogColor;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nvarying float vFogFactor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  vec4 uFogColor = vec4(1.0, 0.8, 0.8, 0.0);\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = mix(vec4(vColor - shading, uAlpha), uFogColor, vFogFactor);\n}\n"}};
 
 
 
@@ -2998,7 +3003,7 @@
 	DataTile.prototype = {
 
 	  load: function(url) {
-	    var act = Activity.setBusy();
+	    Activity.setBusy();
 	    this.request = Request.getJSON(url, function(geojson) {
 	      this.request = null;
 
@@ -3012,7 +3017,7 @@
 	        data = GeoJSON.parse(position, TILE_SIZE<<this.zoom, geojson);
 	      this.mesh = new Mesh(data, position);
 
-	      Activity.setIdle(act);
+	      Activity.setIdle();
 	    }.bind(this));
 	  },
 
@@ -3196,10 +3201,9 @@
 	MapTile.prototype = {
 
 	  load: function(url) {
-	    this.url = url;
-	    this.act = Activity.setBusy();
+	    Activity.setBusy();
 	    this.texture.load(url, function(image) {
-	      Activity.setIdle(this.act);
+	      Activity.setIdle();
 	      if (image) {
 	        this.isLoaded = true;
 	      }
@@ -3227,7 +3231,7 @@
 	    this.vertexBuffer.destroy();
 	    this.texCoordBuffer.destroy();
 	    this.texture.destroy();
-	    Activity.setIdle(this.act);
+	    Activity.setIdle();
 	  }
 	};
 
@@ -3272,7 +3276,6 @@
 	  }
 	  this.replaces  = options.replaces || [];
 
-	  this.items = []; // TODO: remove the need to keep items -> drop modifiers
 	  this.createBuffers(data);
 
 	  // OBJ
@@ -3290,56 +3293,35 @@
 	  Mesh.prototype = {
 
 	    createBuffers: function(data) {
-	      var vertices = [], normals = [], colors = [], idColors = [];
-	      var item, idColor, i, il, j, jl;
+	      var
+	        vertices = [], normals = [], colors = [], idColors = [],
+	        item, color, idColor, i, il, j, jl;
 
 	      for (i = 0, il = data.length; i<il; i++) {
 	        item = data[i];
-	        item.color = this.color || item.color || DEFAULT_COLOR;
-	        item.id = this.id || item.id;
-	        item.numVertices = item.vertices.length/3;
-
-	        idColor = Interaction.idToColor(item.id);
-	        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-	          idColors.push(idColor.r, idColor.g, idColor.b);
-	        }
 
 	        vertices.push.apply(vertices, item.vertices);
 	        normals.push.apply(normals, item.normals);
 
-	        delete item.vertices;
-	        delete item.normals;
-
-	        this.items.push(item);
-	      }
-
-	      this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
-	      this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
-	      this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
-
-	      var
-	        newColors = [],
-	        newVisibilities = [];
-
-	      for (i = 0, il = this.items.length; i<il; i++) {
-	        item = this.items[i];
-	        for (j = 0, jl = item.numVertices; j<jl; j++) {
-	          newColors.push(item.color.r, item.color.g, item.color.b);
-	          newVisibilities.push(item.hidden ? 1 : 0);
+	        color = this.color || item.color || DEFAULT_COLOR;
+	        idColor = Interaction.idToColor(this.id || item.id);
+	        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+	          colors.push(color.r, color.g, color.b);
+	          idColors.push(idColor.r, idColor.g, idColor.b);
 	        }
 	      }
 
-	      this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
-	      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
+	      data = null;
 
-	      newColors = null;
-	      newVisibilities = null;
+	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(vertices));
+	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(normals));
+	      this.colorBuffer   = new glx.Buffer(3, new Uint8Array(colors));
+	      this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
 
 	      vertices = null;
 	      normals = null;
+	      colors = null;
 	      idColors = null;
-
-	      itemList = null;
 	    },
 
 	    // TODO: switch to mesh.transform
@@ -3371,7 +3353,6 @@
 	  //_replaceItems: function() {
 	    //  if (this.replaces.length) {
 	    //    var replaces = this.replaces;
-	    //    Data.addModifier(function(item) {
 	    //      if (replaces.indexOf(item.id)>=0) {
 	    //        item.hidden = true;
 	    //      }
@@ -3385,7 +3366,6 @@
 	      this.normalBuffer.destroy();
 	      this.colorBuffer.destroy();
 	      this.idColorBuffer.destroy();
-	      this.visibilityBuffer.destroy();
 	    }
 	  };
 
@@ -4145,9 +4125,6 @@
 	      item.idColorBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
 
-	      item.visibilityBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
-
 	      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
 
@@ -4221,9 +4198,9 @@
 	    vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
 	    texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
 	    texture = new glx.Texture();
-	    var act = Activity.setBusy();
+	    Activity.setBusy();
 	    texture.load(url, function(image) {
-	      Activity.setIdle(act);
+	      Activity.setIdle();
 	      if (image) {
 	        textureIsLoaded = true;
 	      }
@@ -4381,9 +4358,6 @@
 
 	      item.colorBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
-
-	      item.visibilityBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }

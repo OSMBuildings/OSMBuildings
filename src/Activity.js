@@ -3,40 +3,45 @@ var Activity = {};
 
 (function() {
 
-  var id = 0;
-  var items = [];
-  var stack = 0;
+  var count = 0;
+  var timer;
 
-  Activity.setBusy = function() {
-    var key = ++id;
-    if (!items.length) {
-      Events.emit('busy');
+  Activity.setBusy = function(msg) {
+    //if (msg) {
+    //  console.log('setBusy', msg, count);
+    //}
+
+    if (!count) {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      } else {
+        Events.emit('busy');
+      }
     }
-    if (items.indexOf(key) === -1) {
-      items.push(key);
-      stack++;
-    }
-    return key;
+    count++;
   };
 
-  Activity.setIdle = function(key) {
-    if (!items.length) {
+  Activity.setIdle = function(msg) {
+    if (!count) {
       return;
     }
-    var i = items.indexOf(key);
-    if (i > -1) {
-      items.splice(i, 1);
-      stack--;
+
+    count--;
+    if (!count) {
+      timer = setTimeout(function() {
+        timer = null;
+        Events.emit('idle');
+      }, 10);
     }
-    if (!items.length) {
-      Events.emit('idle');
-console.log('STACK', stack);
-      id = 0;
-    }
+
+    //if (msg) {
+    //  console.log('setIdle', msg, count);
+    //}
   };
 
   Activity.isBusy = function() {
-    return !!items.length;
+    return !!count;
   };
 
 }());

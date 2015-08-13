@@ -1,11 +1,11 @@
 {
   "shaders": {
     "interaction": {
-      "attributes": ["aPosition", "aColor", "aHidden"],
+      "attributes": ["aPosition", "aColor"],
       "uniforms": ["uMatrix"]
     },
     "depth": {
-      "attributes": ["aPosition", "aHidden"],
+      "attributes": ["aPosition"],
       "uniforms": ["uMatrix"]
     },
     "textured": {
@@ -13,7 +13,7 @@
       "uniforms": ["uMatrix", "uTileImage"]
     },
     "buildings": {
-      "attributes": ["aPosition", "aColor", "aNormal", "aHidden"],
+      "attributes": ["aPosition", "aColor", "aNormal"],
       "uniforms": ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection"]
     }
   },

@@ -42,10 +42,11 @@ var OSMBuildingsGL = function(containerId, options) {
   OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
   OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-  function addGeoJSONChunked(json) {
+  function addGeoJSONChunked(json, options, callback) {
     if (!json.features.length) {
       return;
     }
+
     var worldSize = TILE_SIZE<<16;
     relax(function(startIndex, endIndex) {
       var
@@ -55,7 +56,11 @@ var OSMBuildingsGL = function(containerId, options) {
         position = { latitude: coordinates0[1], longitude: coordinates0[0] },
         data = GeoJSON.parse(position, worldSize, geojson);
       new Mesh(data, position, options);
-    }.bind(this), 0, json.features.length, 100, 100);
+
+      if (endIndex === json.features.length) {
+        callback();
+      }
+    }.bind(this), 0, json.features.length, 250, 50);
   }
 
   OSMBuildingsGL.prototype = {
@@ -71,16 +76,19 @@ var OSMBuildingsGL = function(containerId, options) {
 
     // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
     addOBJ: function(url, position, options) {
+      Activity.setBusy();
       Request.getText(url, function(str) {
         var match;
         if ((match = str.match(/^mtllib\s+(.*)$/m))) {
           Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
             var data = new OBJ.parse(str, mtl, options);
             new Mesh(data, position, options);
+            Activity.setIdle();
           }.bind(this));
         } else {
           var data = new OBJ.parse(str, null, options);
           new Mesh(data, position, options);
+          Activity.setIdle();
         }
       });
 
@@ -89,10 +97,17 @@ var OSMBuildingsGL = function(containerId, options) {
 
     // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
     addGeoJSON: function(url, options) {
+      Activity.setBusy();
       if (typeof url === 'object') {
-        addGeoJSONChunked(url);
+        addGeoJSONChunked(url, options, function() {
+          Activity.setIdle();
+        });
       } else {
-        Request.getJSON(url, addGeoJSONChunked);
+        Request.getJSON(url, function(json) {
+          addGeoJSONChunked(json, options, function() {
+            Activity.setIdle();
+          });
+        });
       }
       return this;
     },
@@ -203,6 +218,8 @@ var OSMBuildingsGL = function(containerId, options) {
       DataGrid.destroy();
     }
   };
+
+}());
 
 //*****************************************************************************
 
