@@ -57,6 +57,7 @@
       cursor: pointer;
     }
   </style>
+  <link rel="stylesheet" href="OSMBuildings.css">
   <script src="OSMBuildingsGL.js"></script>
 </head>
 
@@ -91,7 +92,7 @@
     // dataSource: null, // null disables default OSM data,
     showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
     backgroundColor: '#bfb8b0',
-    attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
+    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
   map.addOBJ('data/Fernsehturm_Berlin.obj', { latitude:52.51941, longitude:13.40445 }, { id:'Fernsehturm', scale:0.095, elevation:8, rotation:51,

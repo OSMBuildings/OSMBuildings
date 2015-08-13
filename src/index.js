@@ -30,7 +30,7 @@ var OSMBuildingsGL = function(containerId, options) {
 
   if (options.attribution !== null && options.attribution !== false && options.attribution !== '') {
     var attribution = document.createElement('DIV');
-    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:1px 3px;background:rgba(255,255,255,0.5);font:11px sans-serif');
+    attribution.className = 'osmb-attribution';
     attribution.innerHTML = options.attribution || OSMBuildingsGL.ATTRIBUTION;
     container.appendChild(attribution);
   }
