@@ -4,7 +4,6 @@ var GeoJSON = {};
 (function() {
 
   var METERS_PER_LEVEL = 3;
-  var CHUNK_SIZE = 1000;
 
   var materialColors = {
     brick:'#cc7755',
@@ -207,127 +206,112 @@ var GeoJSON = {};
     return res;
   }
 
-  function parse(res, pos, offsetX, offsetY, zoom, geojson, callback) {
+  function parseFeature(res, offsetX, offsetY, zoom, feature) {
     var
-      collection = geojson.features,
-      max = pos + Math.min(collection.length-pos, CHUNK_SIZE),
-      feature,
       geometries,
       tris,
-      j, jl,
       item, polygon, bbox, radius, center, id;
 
-    for (; pos < max; pos++) {
-      feature = collection[pos];
-
-      if (!(item = alignProperties(feature.properties))) {
-        continue;
-      }
-
-      geometries = getGeometries(feature.geometry);
-
-      for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
-
-        id = feature.properties.relationId || feature.id || feature.properties.id;
-
-        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-          item.shape = 'cylinder';
-          item.isRotational = true;
-        }
-
-        bbox = getBBox(polygon);
-        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
-
-        if (item.isRotational) {
-          radius = (bbox.maxX-bbox.minX)/2;
-        }
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.shape) {
-          case 'cylinder':
-            Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-            break;
-
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-            break;
-
-          case 'sphere':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
-            break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-            break;
-
-          default:
-            Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-        }
-
-        res.push({
-          id: id,
-          color: item.wallColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.roofShape) {
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-            break;
-
-          case 'dome':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height+item.roofHeight);
-            Triangulate.circle(tris, center, radius/2, item.height+item.roofHeight);
-            break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-            break;
-
-          default:
-            if (item.shape === 'cylinder') {
-              Triangulate.circle(tris, center, radius, item.height);
-            } else if (item.shape === undefined) {
-              Triangulate.polygon(tris, polygon, item.height);
-            }
-        }
-
-        res.push({
-          id: id,
-          color: item.roofColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-      }
+    if (!(item = alignProperties(feature.properties))) {
+      return;
     }
 
-    if (pos === collection.length) {
-      geojson = null;
-      callback(res);
-    } else {
-      setTimeout(function() {
-        parse(res, pos, offsetX, offsetY, zoom, geojson, callback);
-      }, 10);
+    geometries = getGeometries(feature.geometry);
+
+    for (var  i = 0, il = geometries.length; i < il; i++) {
+      polygon = transform(offsetX, offsetY, zoom, geometries[i]);
+
+      id = feature.properties.relationId || feature.id || feature.properties.id;
+
+      if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
+        item.shape = 'cylinder';
+        item.isRotational = true;
+      }
+
+      bbox = getBBox(polygon);
+      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+
+      if (item.isRotational) {
+        radius = (bbox.maxX - bbox.minX)/2;
+      }
+
+      tris = { vertices: [], normals: [] };
+
+      switch (item.shape) {
+        case 'cylinder':
+          Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
+          break;
+
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
+          break;
+
+        case 'sphere':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
+          //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
+          break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
+          break;
+
+        default:
+          Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
+      }
+
+      res.push({
+        id: id,
+        color: item.wallColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
+
+      tris = { vertices: [], normals: [] };
+
+      switch (item.roofShape) {
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height + item.roofHeight);
+          break;
+
+        case 'dome':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height + item.roofHeight);
+          Triangulate.circle(tris, center, radius/2, item.height + item.roofHeight);
+          break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, polygon, center, item.height, item.height + item.roofHeight);
+          break;
+
+        default:
+          if (item.shape === 'cylinder') {
+            Triangulate.circle(tris, center, radius, item.height);
+          } else if (item.shape === undefined) {
+            Triangulate.polygon(tris, polygon, item.height);
+          }
+      }
+
+      res.push({
+        id: id,
+        color: item.roofColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
     }
   }
 
   //***************************************************************************
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
+  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson) {
     var res = [];
 
-    if (!geojson || geojson.type !== 'FeatureCollection') {
-      callback(res);
-      return;
+    if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
+      var collection = geojson.features;
+      for (var i = 0, il = collection.length; i<il; i++) {
+        parseFeature(res, offsetX, offsetY, zoom, collection[i]);
+      }
     }
 
-    parse(res, 0, offsetX, offsetY, zoom, geojson, callback);
+    return res;
   };
 
 }());

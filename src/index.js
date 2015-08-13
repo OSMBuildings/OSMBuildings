@@ -62,17 +62,59 @@ OSMBuildingsGL.prototype = {
     return this;
   },
 
-  // DEPRECATED
-  addMesh: function(url, options) {
-    console.warn('Method addMesh() is deprecated and will be removed soon. Use addGeoJSON() or addOBJ() instead.');
-  },
-
+  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
   addOBJ: function(url, options) {
-    return new OBJMesh(url, options);
+    Request.getText(url, function(str) {
+      var match;
+      if (match = str.match(/^mtllib\s+(.*)$/m)) {
+        Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
+          var data = new OBJ.parse(str, mtl, options);
+          new Mesh(data, options);
+        }.bind(this));
+      } else {
+        var data = new OBJ.parse(str, null, options);
+        new Mesh(data, options);
+      }
+    });
+
+    return this;
   },
 
+  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
   addGeoJSON: function(url, options) {
-    return new GeoJSONMesh(url, options);
+
+    //if (!items.length) {
+    //  return;
+    //}
+    //this.position = { latitude: position[1], longitude: position[0] };
+    //this._setItems(items);
+    //this._replaceItems();
+
+    if (typeof url === 'object') {
+      var json = url;
+      relax(function(startIndex, endIndex) {
+        var
+          features = json.features.slice(startIndex, endIndex),
+          geojson = { type: 'FeatureCollection', features: features },
+          position = features[0].geometry.coordinates[0][0],
+          origin = project(position[1], position[0], TILE_SIZE<<this.zoom),
+          data = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
+        new Mesh(data, options);
+      }.bind(this), 0, json.features.length, 100, 250);
+    } else {
+      Request.getJSON(url, function(json) {
+        relax(function(startIndex, endIndex) {
+          var
+            features = json.features.slice(startIndex, endIndex),
+            geojson = { type: 'FeatureCollection', features: features },
+            position = features[0].geometry.coordinates[0][0],
+            origin = project(position[1], position[0], TILE_SIZE<<this.zoom),
+            data = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
+          new Mesh(data, options);
+        }.bind(this), 0, json.features.length, 100, 250);
+      });
+    }
+    return this;
   },
 
   on: function(type, fn) {

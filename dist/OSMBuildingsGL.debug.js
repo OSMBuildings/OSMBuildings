@@ -1638,17 +1638,42 @@ OSMBuildingsGL.prototype = {
     return this;
   },
 
-  // DEPRECATED
-  addMesh: function(url, options) {
-    console.warn('Method addMesh() is deprecated and will be removed soon. Use addGeoJSON() or addOBJ() instead.');
-  },
-
+  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
   addOBJ: function(url, options) {
-    return new OBJMesh(url, options);
+    options = options || {};
+
+    var
+      mtlFile = options.mtl,
+      match;
+
+    Request.getText(url, function(str) {
+      if (!mtlFile && (match = str.match(/^mtllib\s+(.*)$/m))) {
+        mtlFile = url.replace(/[^\/]+$/, '') + match[1];
+      }
+
+      if (!mtlFile) {
+        new OBJMesh(str, options);
+      } else {
+        Request.getText(mtlFile, function(mtl) {
+          options.mtl = mtl;
+          new OBJMesh(str, options);
+        }.bind(this));
+      }
+    });
+
+    return this;
   },
 
+  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
   addGeoJSON: function(url, options) {
-    return new GeoJSONMesh(url, options);
+    if (typeof url === 'object') {
+      new GeoJSONMesh(url, options);
+    } else {
+      Request.getJSON(url, function(json) {
+        new GeoJSONMesh(json, options);
+      });
+    }
+    return this;
   },
 
   on: function(type, fn) {
@@ -2396,6 +2421,25 @@ function pattern(str, param) {
   });
 }
 
+function relax(callback, startIndex, dataLength, chunkSize, delay) {
+  chunkSize = chunkSize || 1000;
+  delay = delay || 1;
+
+  var endIndex = startIndex + Math.min((dataLength-startIndex), chunkSize);
+
+  if (startIndex === endIndex) {
+    return;
+  }
+
+  callback(startIndex, endIndex);
+
+  if (startIndex < dataLength) {
+    setTimeout(function() {
+      relax(callback, endIndex, dataLength, chunkSize, delay);
+    }, delay);
+  }
+}
+
 var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"}};
 
 
@@ -2879,13 +2923,15 @@ var DataTile = function(tileX, tileY, zoom) {
 DataTile.prototype = {
 
   load: function(url) {
-    this.mesh = new GeoJSONMesh(url);
+    this.request = Request.getJSON(url, function(json) {
+      new GeoJSONMesh(json);
+    });
   },
 
   destroy: function() {
-    if (this.mesh) {
-      this.mesh.destroy();
-      this.mesh = null;
+    if (this.request) {
+      this.request.abort();
+      this.request = null;
     }
   }
 };
@@ -3143,7 +3189,7 @@ var Data = {
 };
 
 
-var Mesh = function(url, options) {
+var Mesh = function(options) {
   options = options || {};
 
   this.isReady = false;
@@ -3180,10 +3226,13 @@ var Mesh = function(url, options) {
 
         idColor = Interaction.idToColor(item.id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
-          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
+//          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
+//          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
           idColors.push(idColor.r, idColor.g, idColor.b);
         }
+
+        vertices.push.apply(vertices, item.vertices);
+        normals.push.apply(normals, item.normals);
 
         delete item.vertices;
         delete item.normals;
@@ -3263,45 +3312,110 @@ var Mesh = function(url, options) {
 }());
 
 
-var GeoJSONMesh = function(url, options) {
-  Mesh.call(this, url, options);
+// when and how to destroy mesh?
+
+var GeoJSONMesh = function(json, options) {
+  Mesh.call(this, options);
   this.zoom = 16;
 //this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
 
-  if (typeof url === 'string') {
-    this.request = Request.getJSON(url, this._convert.bind(this));
-  } else {
-    this._convert(url);
-  }
+  // parse in chunks of 1000 items, pause for 10ms in between
+  relax(function(startIndex, endIndex) {
+    var
+      features = json.features.slice(startIndex, endIndex),
+      geojson = { type: 'FeatureCollection', features: features },
+      position = features[0].geometry.coordinates[0][0],
+      origin = project(position[1], position[0], TILE_SIZE<<this.zoom),
+      items = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
+
+    if (!items.length) {
+      return;
+    }
+
+    this.position = { latitude: position[1], longitude: position[0] };
+    this._setItems(items);
+    this._replaceItems();
+
+  }.bind(this), 0, json.features.length, 50, 50);
 };
 
 (function() {
 
   GeoJSONMesh.prototype = Object.create(Mesh.prototype);
 
-  GeoJSONMesh.prototype._convert = function(geojson) {
-    this.request = null;
+//  _setItems: function(itemList) {
+//    this.items = [];
+//
+//    var vertices = [], normals = [], colors = [], idColors = [];
+//    var item, idColor, j, jl;
+//
+//    for (var i = 0, il = itemList.length; i<il; i++) {
+//      item = itemList[i];
+//      item.color = this.color || item.color || DEFAULT_COLOR;
+//      item.id = this.id || item.id;
+//      item.numVertices = item.vertices.length/3;
+//
+//      idColor = Interaction.idToColor(item.id);
+//      for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+////          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
+////          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
+//        idColors.push(idColor.r, idColor.g, idColor.b);
+//      }
+//
+//      vertices.push.apply(vertices, item.vertices);
+//      normals.push.apply(normals, item.normals);
+//
+//      delete item.vertices;
+//      delete item.normals;
+//
+//      this.items.push(item);
+//    }
+//
+//    this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
+//    this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
+//    this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
+//
+//    this.modify();
+//
+//    if (!this.items) {
+//      return;
+//    }
+//
+//    var
+//      newColors = [],
+//      newVisibilities = [],
+//      clonedItem;
+//
+//    for (var i = 0, il = this.items.length; i<il; i++) {
+//      clonedItem = Data.applyModifiers(this.items[i]);
+//      for (var j = 0, jl = clonedItem.numVertices; j<jl; j++) {
+//        newColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
+//        newVisibilities.push(clonedItem.hidden ? 1 : 0);
+//      }
+//    }
+//
+//    this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
+//    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
+//
+//    newColors = null;
+//    newVisibilities = null;
+//
+//    vertices = null;
+//    normals = null;
+//    idColors = null;
+//
+//    itemList = null;
+//  },
 
-    if (!geojson.features.length) {
-      return;
-    }
 
-    var geoPos = geojson.features[0].geometry.coordinates[0][0];
-    this.position = { latitude:geoPos[1], longitude:geoPos[0] };
-    var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
 
-    GeoJSON.parse(position.x, position.y, this.zoom, geojson, function(itemList) {
-      this._setItems(itemList);
-      this._replaceItems();
-      this.isReady = true;
-    }.bind(this));
-  };
+
+
+
+
+
 
   GeoJSONMesh.prototype.getMatrix = function() {
-    if (!this.isReady) {
-      return;
-    }
-
     var mMatrix = new glx.Matrix();
 
     if (this.elevation) {
@@ -3324,46 +3438,22 @@ var GeoJSONMesh = function(url, options) {
 
 }());
 
-var OBJMesh = function(url, options) {
-  Mesh.call(this, url, options);
+var OBJMesh = function(str, options) {
+  options = options || {};
+  Mesh.call(this, options);
   this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 
-  this._baseURL = url.replace(/[^\/]+$/, '');
-  this.request = Request.getText(url, this._convert.bind(this));
+  OBJ.parse(str, options.mtl, function(items) {
+    this._setItems(items);
+    this._replaceItems();
+  }.bind(this));
 };
 
 (function() {
 
   OBJMesh.prototype = Object.create(Mesh.prototype);
 
-  OBJMesh.prototype._convert = function(objStr) {
-    var mtlFile = objStr.match(/^mtllib\s+(.*)$/m);
-
-    if (!mtlFile) {
-      setTimeout(function() {
-        OBJ.parse(objStr, null, function(itemList) {
-          this._setItems(itemList);
-          this._replaceItems();
-          this.isReady = true;
-        }.bind(this));
-      }.bind(this), 1);
-      return;
-    }
-
-    Request.getText(this._baseURL + mtlFile[1], function(mtlStr) {
-      OBJ.parse(objStr, mtlStr, function(itemList) {
-        this._setItems(itemList);
-        this._replaceItems();
-        this.isReady = true;
-      }.bind(this));
-    }.bind(this));
-  };
-
   OBJMesh.prototype.getMatrix = function() {
-    if (!this.isReady) {
-      return;
-    }
-
     var mMatrix = new glx.Matrix();
 
     if (this.elevation) {
@@ -3392,7 +3482,6 @@ var GeoJSON = {};
 (function() {
 
   var METERS_PER_LEVEL = 3;
-  var CHUNK_SIZE = 1000;
 
   var materialColors = {
     brick:'#cc7755',
@@ -3595,127 +3684,112 @@ var GeoJSON = {};
     return res;
   }
 
-  function parse(res, pos, offsetX, offsetY, zoom, geojson, callback) {
+  function parseFeature(res, offsetX, offsetY, zoom, feature) {
     var
-      collection = geojson.features,
-      max = pos + Math.min(collection.length-pos, CHUNK_SIZE),
-      feature,
       geometries,
       tris,
-      j, jl,
       item, polygon, bbox, radius, center, id;
 
-    for (; pos < max; pos++) {
-      feature = collection[pos];
-
-      if (!(item = alignProperties(feature.properties))) {
-        continue;
-      }
-
-      geometries = getGeometries(feature.geometry);
-
-      for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
-
-        id = feature.properties.relationId || feature.id || feature.properties.id;
-
-        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-          item.shape = 'cylinder';
-          item.isRotational = true;
-        }
-
-        bbox = getBBox(polygon);
-        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
-
-        if (item.isRotational) {
-          radius = (bbox.maxX-bbox.minX)/2;
-        }
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.shape) {
-          case 'cylinder':
-            Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-            break;
-
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-            break;
-
-          case 'sphere':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
-            break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-            break;
-
-          default:
-            Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-        }
-
-        res.push({
-          id: id,
-          color: item.wallColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.roofShape) {
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-            break;
-
-          case 'dome':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height+item.roofHeight);
-            Triangulate.circle(tris, center, radius/2, item.height+item.roofHeight);
-            break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-            break;
-
-          default:
-            if (item.shape === 'cylinder') {
-              Triangulate.circle(tris, center, radius, item.height);
-            } else if (item.shape === undefined) {
-              Triangulate.polygon(tris, polygon, item.height);
-            }
-        }
-
-        res.push({
-          id: id,
-          color: item.roofColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-      }
+    if (!(item = alignProperties(feature.properties))) {
+      return;
     }
 
-    if (pos === collection.length) {
-      geojson = null;
-      callback(res);
-    } else {
-      setTimeout(function() {
-        parse(res, pos, offsetX, offsetY, zoom, geojson, callback);
-      }, 10);
+    geometries = getGeometries(feature.geometry);
+
+    for (var  i = 0, il = geometries.length; i < il; i++) {
+      polygon = transform(offsetX, offsetY, zoom, geometries[i]);
+
+      id = feature.properties.relationId || feature.id || feature.properties.id;
+
+      if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
+        item.shape = 'cylinder';
+        item.isRotational = true;
+      }
+
+      bbox = getBBox(polygon);
+      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+
+      if (item.isRotational) {
+        radius = (bbox.maxX - bbox.minX)/2;
+      }
+
+      tris = { vertices: [], normals: [] };
+
+      switch (item.shape) {
+        case 'cylinder':
+          Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
+          break;
+
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
+          break;
+
+        case 'sphere':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
+          //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
+          break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
+          break;
+
+        default:
+          Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
+      }
+
+      res.push({
+        id: id,
+        color: item.wallColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
+
+      tris = { vertices: [], normals: [] };
+
+      switch (item.roofShape) {
+        case 'cone':
+          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height + item.roofHeight);
+          break;
+
+        case 'dome':
+          Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height + item.roofHeight);
+          Triangulate.circle(tris, center, radius/2, item.height + item.roofHeight);
+          break;
+
+        case 'pyramid':
+          Triangulate.pyramid(tris, polygon, center, item.height, item.height + item.roofHeight);
+          break;
+
+        default:
+          if (item.shape === 'cylinder') {
+            Triangulate.circle(tris, center, radius, item.height);
+          } else if (item.shape === undefined) {
+            Triangulate.polygon(tris, polygon, item.height);
+          }
+      }
+
+      res.push({
+        id: id,
+        color: item.roofColor,
+        vertices: tris.vertices,
+        normals: tris.normals
+      });
     }
   }
 
   //***************************************************************************
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
+  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson) {
     var res = [];
 
-    if (!geojson || geojson.type !== 'FeatureCollection') {
-      callback(res);
-      return;
+    if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
+      var collection = geojson.features;
+      for (var i = 0, il = collection.length; i<il; i++) {
+        parseFeature(res, offsetX, offsetY, zoom, collection[i]);
+      }
     }
 
-    parse(res, 0, offsetX, offsetY, zoom, geojson, callback);
+    return res;
   };
 
 }());
