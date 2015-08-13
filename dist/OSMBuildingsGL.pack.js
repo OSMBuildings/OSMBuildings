@@ -2520,7 +2520,7 @@
 	  }
 	}
 
-	var SHADERS = {"interaction":{"attributes":["aPosition","aColor"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\n//uniform vec3  uCameraPosition;\n//uniform float uFogZNear;\n//uniform float uFogZFar;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvarying float vFogFactor;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//    vColor = vec3(0.0, 0.0, 0.0);\n//  }\n  vec3 uCameraPosition = vec3(0, 1, 0);\n  float uFogZNear = 1500.0;\n  float uFogZFar = 2000.0;\n  vec4 position = vec4(uMatrix * aPosition);\n  gl_Position = position;\n  vPosition = aPosition;\n  vec2  positionXZ       = vec2(position.x, position.z);\n  vec2  cameraPositionXZ = vec2(uCameraPosition.x, uCameraPosition.z);\n  float vertexDistanceXZ = length(positionXZ - cameraPositionXZ);\n  float fogFactor        = (vertexDistanceXZ - uFogZNear) / (uFogZFar - uFogZNear);\n  vFogFactor = min(max(fogFactor, 0.0), 1.0);\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\n//uniform vec4  uFogColor;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nvarying float vFogFactor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  vec4 uFogColor = vec4(1.0, 0.8, 0.8, 0.0);\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = mix(vec4(vColor - shading, uAlpha), uFogColor, vFogFactor);\n}\n"}};
+	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uCamPosition;\nuniform float uFogNear;\nuniform float uFogFar;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvarying float vFogFactor;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//    vColor = vec3(0.0, 0.0, 0.0);\n//  }\n  vec4 position = vec4(uMatrix * aPosition);\n  vec2 positionXZ = vec2(position.x, position.z);\n  vec2 camPositionXZ = vec2(uCamPosition.x, uCamPosition.z);\n  float distanceXZ = length(positionXZ - camPositionXZ);\n  float fogFactor = (distanceXZ - uFogNear) / (uFogFar - uFogNear);\n  vFogFactor = clamp(fogFactor, 0.0, 1.0);\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n  gl_Position = position;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nuniform vec4 uFogColor;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nvarying float vFogFactor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float heightShading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = mix(vec4(vColor - heightShading, uAlpha), uFogColor, vFogFactor);\n}\n"}};
 
 
 
@@ -4031,7 +4031,13 @@
 	  var shader;
 
 	  Depth.initShader = function() {
-	    shader = new glx.Shader(SHADERS.depth);
+	    shader = new glx.Shader({
+	      vertexShader: SHADERS.depth.vertex,
+	      fragmentShader: SHADERS.depth.fragment,
+	      attributes: ["aPosition"],
+	      uniforms: ["uMatrix"]
+	    });
+
 	    return this;
 	  };
 
@@ -4080,7 +4086,13 @@
 	  viewportSize: 1024,
 
 	  initShader: function() {
-	    this.shader = new glx.Shader(SHADERS.interaction);
+	    this.shader = new glx.Shader({
+	      vertexShader: SHADERS.interaction.vertex,
+	      fragmentShader: SHADERS.interaction.fragment,
+	      attributes: ["aPosition", "aColor"],
+	      uniforms: ["uMatrix"]
+	    });
+
 	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
 	    return this;
 	  },
@@ -4194,7 +4206,13 @@
 	  SkyDome.initShader = function() {
 	    var url = 'skydome.jpg';
 
-	    shader = new glx.Shader(SHADERS.textured);
+	    shader = new glx.Shader({
+	      vertexShader: SHADERS.textured.vertex,
+	      fragmentShader: SHADERS.textured.fragment,
+	      attributes: ["aPosition", "aTexCoord"],
+	      uniforms: ["uMatrix", "uTileImage"]
+	    });
+
 	    vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
 	    texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
 	    texture = new glx.Texture();
@@ -4259,7 +4277,13 @@
 	  var shader;
 
 	  Basemap.initShader = function() {
-	    shader = new glx.Shader(SHADERS.textured);
+	    shader = new glx.Shader({
+	      vertexShader: SHADERS.textured.vertex,
+	      fragmentShader: SHADERS.textured.fragment,
+	      attributes: ["aPosition", "aTexCoord"],
+	      uniforms: ["uMatrix", "uTileImage"]
+	    });
+
 	    return this;
 	  };
 
@@ -4305,7 +4329,13 @@
 	  var shader;
 
 	  Buildings.initShader = function(options) {
-	    shader = new glx.Shader(SHADERS.buildings);
+	    shader = new glx.Shader({
+	      vertexShader: SHADERS.buildings.vertex,
+	      fragmentShader: SHADERS.buildings.fragment,
+	      attributes: ["aPosition", "aColor", "aNormal"],
+	      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uCamPosition", "uFogNear", "uFogFar", "uFogColor"]
+	    });
+
 	    this.showBackfaces = options.showBackfaces;
 	    return this;
 	  };
@@ -4349,6 +4379,11 @@
 
 	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+
+	      GL.uniform3fv(shader.uniforms.uCamPosition, [0, 1, 0]);
+	      GL.uniform1f(shader.uniforms.uFogNear, 1500);
+	      GL.uniform1f(shader.uniforms.uFogFar, 2000);
+	      GL.uniform4fv(shader.uniforms.uFogColor, [1, 1, 1, 0]);
 
 	      item.vertexBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);

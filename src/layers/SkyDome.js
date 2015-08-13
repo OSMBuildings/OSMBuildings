@@ -29,7 +29,13 @@ var SkyDome = {};
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
 
-    shader = new glx.Shader(SHADERS.textured);
+    shader = new glx.Shader({
+      vertexShader: SHADERS.textured.vertex,
+      fragmentShader: SHADERS.textured.fragment,
+      attributes: ["aPosition", "aTexCoord"],
+      uniforms: ["uMatrix", "uTileImage"]
+    });
+
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
     texture = new glx.Texture();

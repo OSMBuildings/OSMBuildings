@@ -6,7 +6,13 @@ var Depth = {};
   var shader;
 
   Depth.initShader = function() {
-    shader = new glx.Shader(SHADERS.depth);
+    shader = new glx.Shader({
+      vertexShader: SHADERS.depth.vertex,
+      fragmentShader: SHADERS.depth.fragment,
+      attributes: ["aPosition"],
+      uniforms: ["uMatrix"]
+    });
+
     return this;
   };
 

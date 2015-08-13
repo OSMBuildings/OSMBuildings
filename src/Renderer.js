@@ -50,7 +50,7 @@ var Renderer = {
         GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-        this.layers.skydome.render(vpMatrix);
+//      this.layers.skydome.render(vpMatrix);
         this.layers.buildings.render(vpMatrix);
         this.layers.basemap.render(vpMatrix);
       }.bind(this));
