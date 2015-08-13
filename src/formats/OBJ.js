@@ -146,12 +146,9 @@ OBJ.prototype = {
   }
 };
 
-OBJ.parse = function(objStr, mtlStr, callback) {
+OBJ.parse = function(objStr, mtlStr) {
   var
     parser = new OBJ(),
     materials = mtlStr ? parser.parseMaterials(mtlStr) : {};
-
-  setTimeout(function() {
-    callback( parser.parseModel(objStr, materials) );
-  }, 10);
+  return parser.parseModel(objStr, materials);
 };

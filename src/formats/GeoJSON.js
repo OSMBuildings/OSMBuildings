@@ -187,9 +187,8 @@ var GeoJSON = {};
     return [res];
   }
 
-  function transform(offsetX, offsetY, zoom, polygon) {
+  function transform(origin, worldSize, polygon) {
     var
-      worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
@@ -199,14 +198,14 @@ var GeoJSON = {};
       res[i] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
         p = project(ring[r][1], ring[r][0], worldSize);
-        res[i][r] = [p.x-offsetX, p.y-offsetY];
+        res[i][r] = [p.x-origin.x, p.y-origin.y];
       }
     }
 
     return res;
   }
 
-  function parseFeature(res, offsetX, offsetY, zoom, feature) {
+  function parseFeature(res, origin, worldSize, feature) {
     var
       geometries,
       tris,
@@ -219,7 +218,7 @@ var GeoJSON = {};
     geometries = getGeometries(feature.geometry);
 
     for (var  i = 0, il = geometries.length; i < il; i++) {
-      polygon = transform(offsetX, offsetY, zoom, geometries[i]);
+      polygon = transform(origin, worldSize, geometries[i]);
 
       id = feature.properties.relationId || feature.id || feature.properties.id;
 
@@ -301,13 +300,17 @@ var GeoJSON = {};
 
   //***************************************************************************
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson) {
+  GeoJSON.parse = function(position, worldSize, geojson) {
     var res = [];
 
     if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
-      var collection = geojson.features;
+
+      var
+        collection = geojson.features,
+        origin = project(position.latitude, position.longitude, worldSize);
+
       for (var i = 0, il = collection.length; i<il; i++) {
-        parseFeature(res, offsetX, offsetY, zoom, collection[i]);
+        parseFeature(res, origin, worldSize, collection[i]);
       }
     }
 

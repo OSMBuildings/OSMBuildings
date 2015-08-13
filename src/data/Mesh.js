@@ -1,11 +1,12 @@
 
-var Mesh = function(data, options) {
+// TODO: when and how to destroy mesh?
+
+var Mesh = function(data, position, options) {
+  this.position = position;
+
   options = options || {};
 
-  this.isReady = false;
-
   this.id        = options.id;
-  this.position  = options.position  || {};
   this.scale     = options.scale     || 1;
   this.rotation  = options.rotation  || 0;
   this.elevation = options.elevation || 0;
@@ -14,10 +15,17 @@ var Mesh = function(data, options) {
   }
   this.replaces  = options.replaces || [];
 
-  Data.add(this);
-  Events.on('modify', this.modify.bind(this));
-
+  this.items = []; // TODO: remove the need to keep items -> drop modifiers
   this.createBuffers(data);
+
+  // OBJ
+  // this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+
+  // GeoJSON
+  // this.zoom = 16;
+  // this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
+
+  Data.add(this);
 };
 
 (function() {
@@ -25,12 +33,10 @@ var Mesh = function(data, options) {
   Mesh.prototype = {
 
     createBuffers: function(data) {
-      this.items = [];
-
       var vertices = [], normals = [], colors = [], idColors = [];
-      var item, idColor, j, jl;
+      var item, idColor, i, il, j, jl;
 
-      for (var i = 0, il = data.length; i<il; i++) {
+      for (i = 0, il = data.length; i<il; i++) {
         item = data[i];
         item.color = this.color || item.color || DEFAULT_COLOR;
         item.id = this.id || item.id;
@@ -38,8 +44,6 @@ var Mesh = function(data, options) {
 
         idColor = Interaction.idToColor(item.id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-//          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
-//          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
           idColors.push(idColor.r, idColor.g, idColor.b);
         }
 
@@ -56,41 +60,15 @@ var Mesh = function(data, options) {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
       this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
 
-      this.modify();
-
-      vertices = null;
-      normals = null;
-      idColors = null;
-
-      itemList = null;
-    },
-
-    _replaceItems: function() {
-      if (this.replaces.length) {
-        var replaces = this.replaces;
-        Data.addModifier(function(item) {
-          if (replaces.indexOf(item.id)>=0) {
-            item.hidden = true;
-          }
-        });
-      }
-    },
-
-    modify: function() {
-      if (!this.items) {
-        return;
-      }
-
       var
         newColors = [],
-        newVisibilities = [],
-        clonedItem;
+        newVisibilities = [];
 
-      for (var i = 0, il = this.items.length; i<il; i++) {
-        clonedItem = Data.applyModifiers(this.items[i]);
-        for (var j = 0, jl = clonedItem.numVertices; j<jl; j++) {
-          newColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
-          newVisibilities.push(clonedItem.hidden ? 1 : 0);
+      for (i = 0, il = this.items.length; i<il; i++) {
+        item = this.items[i];
+        for (j = 0, jl = item.numVertices; j<jl; j++) {
+          newColors.push(item.color.r, item.color.g, item.color.b);
+          newVisibilities.push(item.hidden ? 1 : 0);
         }
       }
 
@@ -100,126 +78,58 @@ var Mesh = function(data, options) {
       newColors = null;
       newVisibilities = null;
 
-      return this;
+      vertices = null;
+      normals = null;
+      idColors = null;
+
+      itemList = null;
     },
+
+    // TODO: switch to mesh.transform
+    getMatrix: function() {
+      var mMatrix = new glx.Matrix();
+
+      if (this.elevation) {
+        mMatrix.translate(0, 0, this.elevation);
+      }
+
+      // GeoJSON
+      this.zoom = 16;
+      var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
+      // OBJ
+      // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
+      mMatrix.scale(scale, scale, scale*0.65);
+
+      mMatrix.rotateZ(-this.rotation);
+
+      var
+        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+        mapCenter = Map.center;
+
+      mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
+
+      return mMatrix;
+    },
+
+  //_replaceItems: function() {
+    //  if (this.replaces.length) {
+    //    var replaces = this.replaces;
+    //    Data.addModifier(function(item) {
+    //      if (replaces.indexOf(item.id)>=0) {
+    //        item.hidden = true;
+    //      }
+    //    });
+    //  }
+    //},
 
     destroy: function() {
       Data.remove(this);
-
-      if (this.isReady) {
-        this.vertexBuffer.destroy();
-        this.normalBuffer.destroy();
-        this.colorBuffer.destroy();
-        this.idColorBuffer.destroy();
-        this.visibilityBuffer.destroy();
-      }
-
-      if (this.request) {
-        this.request.abort();
-        this.request = null;
-      }
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idColorBuffer.destroy();
+      this.visibilityBuffer.destroy();
     }
   };
 
 }());
-
-
-
-
-
-//
-//
-//// when and how to destroy mesh?
-//
-//var GeoJSONMesh = function(json, options) {
-//  Mesh.call(this, options);
-//  this.zoom = 16;
-////this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
-//};
-//
-
-
-//relax(function(startIndex, endIndex) {
-//  var
-//    features = json.features.slice(startIndex, endIndex),
-//    geojson = { type: 'FeatureCollection', features: features },
-//    position = features[0].geometry.coordinates[0][0],
-//    origin = project(position[1], position[0], TILE_SIZE<<this.zoom),
-//    items = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
-//
-//  if (!items.length) {
-//    return;
-//  }
-//
-//  this.position = { latitude: position[1], longitude: position[0] };
-//  this._setItems(items);
-//  this._replaceItems();
-
-
-//(function() {
-//
-//  GeoJSONMesh.prototype = Object.create(Mesh.prototype);
-//
-//  GeoJSONMesh.prototype.getMatrix = function() {
-//    var mMatrix = new glx.Matrix();
-//
-//    if (this.elevation) {
-//      mMatrix.translate(0, 0, this.elevation);
-//    }
-//
-//    var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
-//    mMatrix.scale(scale, scale, scale*0.65);
-//
-//    mMatrix.rotateZ(-this.rotation);
-//
-//    var
-//      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-//      mapCenter = Map.center;
-//
-//    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-//
-//    return mMatrix;
-//  };
-//
-//}());
-//
-//
-//
-//
-//var OBJMesh = function(str, options) {
-//  options = options || {};
-//  Mesh.call(this, options);
-//  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-//
-//  OBJ.parse(str, options.mtl, function(items) {
-//    this._setItems(items);
-//    this._replaceItems();
-//  }.bind(this));
-//};
-//
-//(function() {
-//
-//  OBJMesh.prototype = Object.create(Mesh.prototype);
-//
-//  OBJMesh.prototype.getMatrix = function() {
-//    var mMatrix = new glx.Matrix();
-//
-//    if (this.elevation) {
-//      mMatrix.translate(0, 0, this.elevation);
-//    }
-//
-//    var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-//    mMatrix.scale(scale, scale, scale);
-//
-//    mMatrix.rotateZ(-this.rotation);
-//
-//    var
-//      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-//      mapCenter = Map.center;
-//
-//    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-//
-//    return mMatrix;
-//  };
-//
-//}());

@@ -10,8 +10,16 @@ DataTile.prototype = {
   load: function(url) {
     this.request = Request.getJSON(url, function(geojson) {
       this.request = null;
-      var data = GeoJSON.parse(geojson);
-      this.mesh = new Mesh(data);
+
+      if (!geojson || geojson.type !== 'FeatureCollection' || !geojson.features.length) {
+        return;
+      }
+
+      var
+        coordinates0 = geojson.features[0].geometry.coordinates[0][0],
+        position = { latitude:coordinates0[1], longitude:coordinates0[0] },
+        data = GeoJSON.parse(position, TILE_SIZE<<this.zoom, geojson);
+      this.mesh = new Mesh(data, position);
     }.bind(this));
   },
 

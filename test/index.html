@@ -143,7 +143,7 @@
     attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
-  var obj = map.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { position:{ latitude:52.51923, longitude:13.40371 }, id:'Fernsehturm', scale:0.1, "elevation":8,"rotation":51,
+  var obj = map.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { latitude:52.51923, longitude:13.40371 }, { id:'Fernsehturm', scale:0.1, elevation:8, rotation:51,
   replaces: [
     4564300,
     4065110,
@@ -179,13 +179,6 @@
   if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
 
-  function blend(a, b) {
-    return (a*0.5 + b*0.5) <<0;
-  };
-
-  var selectedItemId;
-  var highlightItem;
-
   map.on('change', function() {
     var pos = map.transform(52.52, 13.37, 50);
 
@@ -194,34 +187,15 @@
     label.style.top = Math.round(pos.y) + 'px';
   });
 
-  // map.on('pointerdown', function(e) {
 //  map.on('pointermove', function(e) {
 //    console.log('over item id', e.target.id);
 //  });
 
-  map.on('pointerdown', function(e) {
-console.log('clicked item id', e.target.id);
-return;
-    if (e.target.id === selectedItemId) {
-      return;
-    }
-
-    map.removeModifier(highlightItem);
-
-console.log('modified item id', e.target.id);
-
-    highlightItem = function(item) {
-      if (item.id === e.target.id) {
-        item.color = {
-          r: blend(240, item.color.r),
-          g: blend(128, item.color.g),
-          b: blend(0, item.color.b)
-        };
-      }
-    };
-
-    map.addModifier(highlightItem);
-  });
+//  map.on('pointerdown', function(e) {
+//    if (e.target.id === selectedItemId) {
+//      return;
+//    }
+//  });
 
   //*************************************************************************
 

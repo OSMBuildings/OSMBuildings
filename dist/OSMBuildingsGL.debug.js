@@ -1640,24 +1640,16 @@ OSMBuildingsGL.prototype = {
 
   // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
   addOBJ: function(url, options) {
-    options = options || {};
-
-    var
-      mtlFile = options.mtl,
-      match;
-
     Request.getText(url, function(str) {
-      if (!mtlFile && (match = str.match(/^mtllib\s+(.*)$/m))) {
-        mtlFile = url.replace(/[^\/]+$/, '') + match[1];
-      }
-
-      if (!mtlFile) {
-        new OBJMesh(str, options);
-      } else {
-        Request.getText(mtlFile, function(mtl) {
-          options.mtl = mtl;
-          new OBJMesh(str, options);
+      var match;
+      if ((match = str.match(/^mtllib\s+(.*)$/m))) {
+        Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
+          var data = new OBJ.parse(str, mtl, options);
+          new Mesh(data, options);
         }.bind(this));
+      } else {
+        var data = new OBJ.parse(str, null, options);
+        new Mesh(data, options);
       }
     });
 
@@ -1666,11 +1658,29 @@ OSMBuildingsGL.prototype = {
 
   // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
   addGeoJSON: function(url, options) {
+    var zoom = 16;
     if (typeof url === 'object') {
-      new GeoJSONMesh(url, options);
+      var json = url;
+      relax(function(startIndex, endIndex) {
+        var
+          features = json.features.slice(startIndex, endIndex),
+          geojson = { type: 'FeatureCollection', features: features },
+          position = features[0].geometry.coordinates[0][0],
+          origin = project(position[1], position[0], TILE_SIZE<<zoom),
+          data = GeoJSON.parse(origin.x, origin.y, zoom, geojson);
+        new Mesh(data, options);
+      }.bind(this), 0, json.features.length, 100, 250);
     } else {
       Request.getJSON(url, function(json) {
-        new GeoJSONMesh(json, options);
+        relax(function(startIndex, endIndex) {
+          var
+            features = json.features.slice(startIndex, endIndex),
+            geojson = { type: 'FeatureCollection', features: features },
+            position = features[0].geometry.coordinates[0][0],
+            origin = project(position[1], position[0], TILE_SIZE<<zoom),
+            data = GeoJSON.parse(origin.x, origin.y, zoom, geojson);
+          new Mesh(data, options);
+        }.bind(this), 0, json.features.length, 100, 250);
       });
     }
     return this;
@@ -2440,7 +2450,7 @@ function relax(callback, startIndex, dataLength, chunkSize, delay) {
   }
 }
 
-var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"}};
+var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\n//uniform vec3  uCameraPosition;\n//uniform float uFogZNear;\n//uniform float uFogZFar;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvarying float vFogFactor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec3 uCameraPosition = vec3(0, 1, 0);\n    float uFogZNear = 1500.0;\n    float uFogZFar = 2000.0;\n    vec4 position = vec4(uMatrix * aPosition);\n    gl_Position = position;\n    vPosition = aPosition;\n    vec2  positionXZ       = vec2(position.x, position.z);\n    vec2  cameraPositionXZ = vec2(uCameraPosition.x, uCameraPosition.z);\n    float vertexDistanceXZ = length(positionXZ - cameraPositionXZ);\n    float fogFactor        = (vertexDistanceXZ - uFogZNear) / (uFogZFar - uFogZNear);\n    vFogFactor = min(max(fogFactor, 0.0), 1.0);\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\n//uniform vec4  uFogColor;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nvarying float vFogFactor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  vec4 uFogColor = vec4(1.0, 0.8, 0.8, 0.0);\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = mix(vec4(vColor - shading, uAlpha), uFogColor, vFogFactor);\n}\n"}};
 
 
 
@@ -2923,15 +2933,21 @@ var DataTile = function(tileX, tileY, zoom) {
 DataTile.prototype = {
 
   load: function(url) {
-    this.request = Request.getJSON(url, function(json) {
-      new GeoJSONMesh(json);
-    });
+    this.request = Request.getJSON(url, function(geojson) {
+      this.request = null;
+      var data = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
+      this.mesh = new Mesh(data);
+    }.bind(this));
   },
 
   destroy: function() {
     if (this.request) {
       this.request.abort();
       this.request = null;
+    }
+    if (this.mesh) {
+      this.mesh.destroy();
+      this.mesh = null;
     }
   }
 };
@@ -3189,7 +3205,7 @@ var Data = {
 };
 
 
-var Mesh = function(options) {
+var Mesh = function(data, options) {
   options = options || {};
 
   this.isReady = false;
@@ -3204,22 +3220,23 @@ var Mesh = function(options) {
   }
   this.replaces  = options.replaces || [];
 
+//Events.on('modify', this.modify.bind(this));
+  this.items = []; // TODO: remove the need to keep items -> frop modifiers
+  this.createBuffers(data);
+
   Data.add(this);
-  Events.on('modify', this.modify.bind(this));
 };
 
 (function() {
 
   Mesh.prototype = {
 
-    _setItems: function(itemList) {
-      this.items = [];
-
+    createBuffers: function(data) {
       var vertices = [], normals = [], colors = [], idColors = [];
       var item, idColor, j, jl;
 
-      for (var i = 0, il = itemList.length; i<il; i++) {
-        item = itemList[i];
+      for (var i = 0, il = data.length; i<il; i++) {
+        item = data[i];
         item.color = this.color || item.color || DEFAULT_COLOR;
         item.id = this.id || item.id;
         item.numVertices = item.vertices.length/3;
@@ -3251,6 +3268,28 @@ var Mesh = function(options) {
       idColors = null;
 
       itemList = null;
+    },
+
+    // TODO: switch to mesh.transform
+    getMatrix: function() {
+      var mMatrix = new glx.Matrix();
+
+      if (this.elevation) {
+        mMatrix.translate(0, 0, this.elevation);
+      }
+
+      var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
+      mMatrix.scale(scale, scale, scale*0.65);
+
+      mMatrix.rotateZ(-this.rotation);
+
+      var
+        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+        mapCenter = Map.center;
+
+      mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
+
+      return mMatrix;
     },
 
     _replaceItems: function() {
@@ -3312,13 +3351,93 @@ var Mesh = function(options) {
 }());
 
 
+
+
+//// when and how to destroy mesh?
+//
+//var GeoJSONMesh = function(json, options) {
+//  Mesh.call(this, options);
+//  this.zoom = 16;
+////this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
+//};
+//
+//if (!items.length) {
+//  return;
+//}
+//this.position = { latitude: position[1], longitude: position[0] };
+//this._setItems(items);
+//this._replaceItems();
+
+
+//relax(function(startIndex, endIndex) {
+//  var
+//    features = json.features.slice(startIndex, endIndex),
+//    geojson = { type: 'FeatureCollection', features: features },
+//    position = features[0].geometry.coordinates[0][0],
+//    origin = project(position[1], position[0], TILE_SIZE<<this.zoom),
+//    items = GeoJSON.parse(origin.x, origin.y, this.zoom, geojson);
+//
+//  if (!items.length) {
+//    return;
+//  }
+//
+//  this.position = { latitude: position[1], longitude: position[0] };
+//  this._setItems(items);
+//  this._replaceItems();
+
+
+//(function() {
+//
+//  GeoJSONMesh.prototype = Object.create(Mesh.prototype);
+//
+
+//
+//}());
+//
+//
+//
+//
+//var OBJMesh = function(str, options) {
+//  options = options || {};
+//  Mesh.call(this, options);
+//  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+//
+//  OBJ.parse(str, options.mtl, function(items) {
+//    this._setItems(items);
+//    this._replaceItems();
+//  }.bind(this));
+//};
+
+
+//  OBJMesh.prototype.getMatrix = function() {
+//    var mMatrix = new glx.Matrix();
+//
+//    if (this.elevation) {
+//      mMatrix.translate(0, 0, this.elevation);
+//    }
+//
+//    var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
+//    mMatrix.scale(scale, scale, scale);
+//
+//    mMatrix.rotateZ(-this.rotation);
+//
+//    var
+//      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+//      mapCenter = Map.center;
+//
+//    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
+//
+//    return mMatrix;
+//  };
+
+
 // when and how to destroy mesh?
 
 var GeoJSONMesh = function(json, options) {
   Mesh.call(this, options);
   this.zoom = 16;
 //this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
-
+console.log(json.features.length);
   // parse in chunks of 1000 items, pause for 10ms in between
   relax(function(startIndex, endIndex) {
     var
@@ -3336,84 +3455,12 @@ var GeoJSONMesh = function(json, options) {
     this._setItems(items);
     this._replaceItems();
 
-  }.bind(this), 0, json.features.length, 50, 50);
+  }.bind(this), 0, json.features.length, 100, 33);
 };
 
 (function() {
 
   GeoJSONMesh.prototype = Object.create(Mesh.prototype);
-
-//  _setItems: function(itemList) {
-//    this.items = [];
-//
-//    var vertices = [], normals = [], colors = [], idColors = [];
-//    var item, idColor, j, jl;
-//
-//    for (var i = 0, il = itemList.length; i<il; i++) {
-//      item = itemList[i];
-//      item.color = this.color || item.color || DEFAULT_COLOR;
-//      item.id = this.id || item.id;
-//      item.numVertices = item.vertices.length/3;
-//
-//      idColor = Interaction.idToColor(item.id);
-//      for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-////          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
-////          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
-//        idColors.push(idColor.r, idColor.g, idColor.b);
-//      }
-//
-//      vertices.push.apply(vertices, item.vertices);
-//      normals.push.apply(normals, item.normals);
-//
-//      delete item.vertices;
-//      delete item.normals;
-//
-//      this.items.push(item);
-//    }
-//
-//    this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
-//    this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
-//    this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
-//
-//    this.modify();
-//
-//    if (!this.items) {
-//      return;
-//    }
-//
-//    var
-//      newColors = [],
-//      newVisibilities = [],
-//      clonedItem;
-//
-//    for (var i = 0, il = this.items.length; i<il; i++) {
-//      clonedItem = Data.applyModifiers(this.items[i]);
-//      for (var j = 0, jl = clonedItem.numVertices; j<jl; j++) {
-//        newColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
-//        newVisibilities.push(clonedItem.hidden ? 1 : 0);
-//      }
-//    }
-//
-//    this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
-//    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
-//
-//    newColors = null;
-//    newVisibilities = null;
-//
-//    vertices = null;
-//    normals = null;
-//    idColors = null;
-//
-//    itemList = null;
-//  },
-
-
-
-
-
-
-
-
 
   GeoJSONMesh.prototype.getMatrix = function() {
     var mMatrix = new glx.Matrix();
@@ -3438,43 +3485,12 @@ var GeoJSONMesh = function(json, options) {
 
 }());
 
-var OBJMesh = function(str, options) {
-  options = options || {};
-  Mesh.call(this, options);
-  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-
-  OBJ.parse(str, options.mtl, function(items) {
-    this._setItems(items);
-    this._replaceItems();
-  }.bind(this));
-};
-
-(function() {
-
-  OBJMesh.prototype = Object.create(Mesh.prototype);
-
-  OBJMesh.prototype.getMatrix = function() {
-    var mMatrix = new glx.Matrix();
-
-    if (this.elevation) {
-      mMatrix.translate(0, 0, this.elevation);
-    }
-
-    var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-    mMatrix.scale(scale, scale, scale);
-
-    mMatrix.rotateZ(-this.rotation);
-
-    var
-      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-      mapCenter = Map.center;
-
-    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
-    return mMatrix;
-  };
-
-}());
+//if (!items.length) {
+//  return;
+//}
+//this.position = { latitude: position[1], longitude: position[0] };
+//this._setItems(items);
+//this._replaceItems();
 
 
 var GeoJSON = {};
