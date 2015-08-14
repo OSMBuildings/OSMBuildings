@@ -78,7 +78,9 @@ var Mesh = function(data, position, options) {
       // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
       mMatrix.scale(scale, scale, scale*0.65);
 
-      mMatrix.rotateZ(-this.rotation);
+      if (this.rotation) {
+        mMatrix.rotateZ(-this.rotation);
+      }
 
       var
         position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
