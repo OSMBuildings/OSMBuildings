@@ -3,28 +3,20 @@ var SkyDome = {};
 
 (function() {
 
-  var radius = 100;
-
-  var NUM_LON_UNITS = 20;
-  var NUM_LAT_UNITS = 10;
+  var RADIUS = 3000;
 
   var shader;
 
   var vertices = [];
   var texCoords = [];
 
-  var tris = Triangulate.dome({}, {}, radius, 0, 0);
+  var tris = { vertices: [], texCoords: [] };
+  Triangulate.dome(tris, [0, 0], RADIUS, 0, RADIUS/2);
 
   var vertexBuffer;
   var texCoordBuffer;
   var texture;
   var textureIsLoaded;
-
-  function getScale() {
-    var screenRadius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT);
-    var scale = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
-    return screenRadius * scale / radius;
-  }
 
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
@@ -39,6 +31,7 @@ var SkyDome = {};
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
     texture = new glx.Texture();
+
     Activity.setBusy();
     texture.load(url, function(image) {
       Activity.setIdle();
@@ -46,6 +39,7 @@ var SkyDome = {};
         textureIsLoaded = true;
       }
     });
+
     return this;
   };
 
@@ -56,19 +50,17 @@ var SkyDome = {};
 
     shader.enable();
 
-    var mMatrix = new glx.Matrix();
+    var mMatrix = new glx.Matrix()
 
-    var scale = getScale();
-    mMatrix.scale(scale, scale, scale);
+var latitude = 52.52000;
+var inMeters = TILE_SIZE / (Math.cos(latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+var scale = Math.pow(2, 16) * inMeters;
+mMatrix.scale(scale, scale, scale);
 
-    mMatrix
-      .rotateZ(Map.rotation)
-      .translate(WIDTH/2, HEIGHT/2, 0)
-      .rotateX(Map.tilt)
-      .translate(0, HEIGHT/2, 0)
-      .multiply(Renderer.perspective);
 
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+
+    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
     vertexBuffer.enable();
     GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -82,10 +74,6 @@ var SkyDome = {};
     GL.drawArrays(GL.TRIANGLES, 0, vertexBuffer.numItems);
 
     shader.disable();
-  };
-
-  SkyDome.getRadius = function() {
-    return radius * getScale();
   };
 
 }());
