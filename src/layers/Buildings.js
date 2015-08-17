@@ -48,8 +48,8 @@ var Buildings = {};
 
     var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
     GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
-    GL.uniform1f(shader.uniforms.uFogNear, FOG_RADIUS-1000);
-    GL.uniform1f(shader.uniforms.uFogFar, FOG_RADIUS);
+    GL.uniform1f(shader.uniforms.uFogNear, Renderer.fogRadius-1000);
+    GL.uniform1f(shader.uniforms.uFogFar, Renderer.fogRadius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.backgroundColor.r, Renderer.backgroundColor.g, Renderer.backgroundColor.b]);
 
     var
@@ -74,7 +74,7 @@ var Buildings = {};
       GL.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.colorBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

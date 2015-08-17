@@ -11,7 +11,7 @@ var Mesh = function(data, position, options) {
   this.rotation  = options.rotation  || 0;
   this.elevation = options.elevation || 0;
   if (options.color) {
-    this.color = Color.parse(options.color).toRGBA();
+    this.color = Color.parse(options.color).toRGBA(true);
   }
   this.replaces  = options.replaces || [];
 
@@ -54,8 +54,8 @@ var Mesh = function(data, position, options) {
 
       this.vertexBuffer  = new glx.Buffer(3, new Float32Array(vertices));
       this.normalBuffer  = new glx.Buffer(3, new Float32Array(normals));
-      this.colorBuffer   = new glx.Buffer(3, new Uint8Array(colors));
-      this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
+      this.colorBuffer   = new glx.Buffer(3, new Float32Array(colors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(idColors));
 
       vertices = null;
       normals = null;

@@ -11,6 +11,7 @@ var OSMBuildingsGL = function(containerId, options) {
   GL = new glx.View(container, WIDTH, HEIGHT);
 
   Renderer.start({
+    fogRadius: options.fogRadius,
     backgroundColor: options.backgroundColor,
     showBackfaces: options.showBackfaces
   });

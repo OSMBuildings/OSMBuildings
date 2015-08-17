@@ -56,7 +56,7 @@ var Interaction = {
       GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.idColorBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

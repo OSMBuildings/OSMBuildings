@@ -33,8 +33,8 @@ var Basemap = {};
 
     var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
     GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
-    GL.uniform1f(shader.uniforms.uFogNear, FOG_RADIUS-1000);
-    GL.uniform1f(shader.uniforms.uFogFar, FOG_RADIUS);
+    GL.uniform1f(shader.uniforms.uFogNear, Renderer.fogRadius-1000);
+    GL.uniform1f(shader.uniforms.uFogFar, Renderer.fogRadius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.backgroundColor.r, Renderer.backgroundColor.g, Renderer.backgroundColor.b]);
 
     for (var key in tiles) {

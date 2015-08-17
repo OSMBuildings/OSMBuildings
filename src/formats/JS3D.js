@@ -90,7 +90,7 @@ var JS3D = {};
       j, k;
 
     if (properties.color) {
-      color = Color.parse(properties.color).toRGBA();
+      color = Color.parse(properties.color).toRGBA(true);
     }
 
     for (var i = 0, il = collection.length; i < il; i++) {

@@ -8,8 +8,7 @@ var SkyDome = {};
   var vertices = [];
   var texCoords = [];
 
-  var tris = { vertices: [], texCoords: [] };
-  Triangulate.dome(tris, [0, 0], FOG_RADIUS, 0, FOG_RADIUS/2);
+  var tris;
 
   var vertexBuffer;
   var texCoordBuffer;
@@ -18,6 +17,9 @@ var SkyDome = {};
 
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
+
+    tris = { vertices: [], texCoords: [] };
+    Triangulate.dome(tris, [0, 0], Renderer.fogRadius, 0, Renderer.fogRadius/2);
 
     shader = new glx.Shader({
       vertexShader: SHADERS.skydome.vertex,

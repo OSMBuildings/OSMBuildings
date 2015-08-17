@@ -2,8 +2,11 @@
 var Renderer = {
 
   start: function(options) {
-    this.layers = {};
+    this.fogRadius = options.fogRadius || FOG_RADIUS;
+    this.backgroundColor = options.backgroundColor ? Color.parse(options.backgroundColor).toRGBA(true) : FOG_COLOR;
 
+
+    this.layers = {};
 //this.layers.depth       = Depth.initShader();
     this.layers.skydome   = SkyDome.initShader();
     this.layers.basemap   = Basemap.initShader();
@@ -13,13 +16,6 @@ var Renderer = {
 
     this.resize();
     Events.on('resize', this.resize.bind(this));
-
-    var color = Color.parse(options.backgroundColor || 'rgb(190,200,210)').toRGBA();
-    this.backgroundColor = {
-      r: color.r/255,
-      g: color.g/255,
-      b: color.b/255
-    };
 
     GL.cullFace(GL.BACK);
     GL.enable(GL.CULL_FACE);
