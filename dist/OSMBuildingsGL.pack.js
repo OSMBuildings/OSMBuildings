@@ -819,12 +819,13 @@
 	  if (typeof r === 'object') {
 	    g = r.g / 255;
 	    b = r.b / 255;
-	    a = r.a;
+	    a = (r.a !== undefined ? r.a : 1);
 	    r = r.r / 255;
 	  } else {
 	    r /= 255;
 	    g /= 255;
 	    b /= 255;
+	    a = (a !== undefined ? a : 1);
 	  }
 
 	  var
@@ -850,7 +851,7 @@
 
 	Color.prototype = {
 
-	  toRGBA: function() {
+	  toRGBA: function(normalized) {
 	    var
 	      h = clamp(this.H, 360),
 	      s = clamp(this.S, 1),
@@ -871,6 +872,10 @@
 	      rgba.r = hue2rgb(p, q, h + 1/3);
 	      rgba.g = hue2rgb(p, q, h);
 	      rgba.b = hue2rgb(p, q, h - 1/3);
+	    }
+
+	    if (normalized) {
+	      return rgba;
 	    }
 
 	    return {
@@ -1632,8 +1637,14 @@
 	  HEIGHT = container.offsetHeight;
 	  GL = new glx.View(container, WIDTH, HEIGHT);
 
+	  // DEPRECATED
+	  if (options.backgroundColor) {
+	    console.warn('Option backgroundColor is deprecated. Use fogColor instead');
+	  }
+
 	  Renderer.start({
-	    backgroundColor: options.backgroundColor,
+	    fogRadius: options.fogRadius,
+	    fogColor: options.fogColor,
 	    showBackfaces: options.showBackfaces
 	  });
 
@@ -1768,7 +1779,7 @@
 	    },
 
 	    getPosition: function() {
-	      return Map.getPosition();
+	      return Map.position;
 	    },
 
 	    getBounds: function() {
@@ -1879,18 +1890,18 @@
 	  Map.transform = new glx.Matrix(); // there are very early actions that rely on an existing Map transform
 
 	  Map.init = function(options) {
-	    Map.minZoom = parseFloat(options.minZoom) || 10;
-	    Map.maxZoom = parseFloat(options.maxZoom) || 20;
+	    this.minZoom = parseFloat(options.minZoom) || 10;
+	    this.maxZoom = parseFloat(options.maxZoom) || 20;
 
-	    if (Map.maxZoom<Map.minZoom) {
-	      Map.maxZoom = Map.minZoom;
+	    if (this.maxZoom<this.minZoom) {
+	      this.maxZoom = this.minZoom;
 	    }
 
 	    options = State.load(options);
-	    Map.setPosition(options.position || { latitude: 52.52000, longitude: 13.41000 });
-	    Map.setZoom(options.zoom || Map.minZoom);
-	    Map.setRotation(options.rotation || 0);
-	    Map.setTilt(options.tilt || 0);
+	    this.setPosition(options.position || { latitude: 52.52000, longitude: 13.41000 });
+	    this.setZoom(options.zoom || this.minZoom);
+	    this.setRotation(options.rotation || 0);
+	    this.setTilt(options.tilt || 0);
 
 	    Events.on('resize', updateBounds);
 
@@ -1898,43 +1909,40 @@
 	  };
 
 	  Map.setZoom = function(zoom, e) {
-	    zoom = clamp(parseFloat(zoom), Map.minZoom, Map.maxZoom);
+	    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
-	    if (Map.zoom !== zoom) {
-	      var ratio = Math.pow(2, zoom-Map.zoom);
-	      Map.zoom = zoom;
+	    if (this.zoom !== zoom) {
+	      var ratio = Math.pow(2, zoom-this.zoom);
+	      this.zoom = zoom;
 	      if (!e) {
-	        Map.center.x *= ratio;
-	        Map.center.y *= ratio;
+	        this.center.x *= ratio;
+	        this.center.y *= ratio;
 	      } else {
 	        var dx = WIDTH/2  - e.clientX;
 	        var dy = HEIGHT/2 - e.clientY;
-	        Map.center.x -= dx;
-	        Map.center.y -= dy;
-	        Map.center.x *= ratio;
-	        Map.center.y *= ratio;
-	        Map.center.x += dx;
-	        Map.center.y += dy;
+	        this.center.x -= dx;
+	        this.center.y -= dy;
+	        this.center.x *= ratio;
+	        this.center.y *= ratio;
+	        this.center.x += dx;
+	        this.center.y += dy;
 	      }
 	      updateBounds();
 	      Events.emit('change');
 	    }
 	  };
 
-	  Map.getPosition = function() {
-	    return unproject(Map.center.x, Map.center.y, TILE_SIZE*Math.pow(2, Map.zoom));
-	  };
-
-	  Map.setPosition = function(position) {
-	    var latitude  = clamp(parseFloat(position.latitude), -90, 90);
-	    var longitude = clamp(parseFloat(position.longitude), -180, 180);
-	    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
-	    Map.setCenter(center);
+	  Map.setPosition = function(pos) {
+	    var latitude  = clamp(parseFloat(pos.latitude), -90, 90);
+	    var longitude = clamp(parseFloat(pos.longitude), -180, 180);
+	    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, this.zoom));
+	    this.setCenter(center);
 	  };
 
 	  Map.setCenter = function(center) {
-	    if (Map.center.x !== center.x || Map.center.y !== center.y) {
-	      Map.center = center;
+	    if (this.center.x !== center.x || this.center.y !== center.y) {
+	      this.center = center;
+	      this.position = unproject(center.x, center.y, TILE_SIZE*Math.pow(2, this.zoom));
 	      updateBounds();
 	      Events.emit('change');
 	    }
@@ -1942,8 +1950,8 @@
 
 	  Map.setRotation = function(rotation) {
 	    rotation = parseFloat(rotation)%360;
-	    if (Map.rotation !== rotation) {
-	      Map.rotation = rotation;
+	    if (this.rotation !== rotation) {
+	      this.rotation = rotation;
 	      updateBounds();
 	      Events.emit('change');
 	    }
@@ -1951,8 +1959,8 @@
 
 	  Map.setTilt = function(tilt) {
 	    tilt = clamp(parseFloat(tilt), 0, 60);
-	    if (Map.tilt !== tilt) {
-	      Map.tilt = tilt;
+	    if (this.tilt !== tilt) {
+	      this.tilt = tilt;
 	      updateBounds();
 	      Events.emit('change');
 	    }
@@ -2300,7 +2308,7 @@
 	    }
 
 	    var params = [];
-	    var position = map.getPosition();
+	    var position = map.position;
 	    params.push('lat=' + position.latitude.toFixed(5));
 	    params.push('lon=' + position.longitude.toFixed(5));
 	    params.push('zoom=' + map.zoom.toFixed(1));
@@ -2362,7 +2370,11 @@
 
 	var DEFAULT_HEIGHT = 10;
 
-	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA();
+	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
+
+	var FOG_RADIUS = 3000;
+	var FOG_COLOR = Color.parse('rgb(190, 200, 210)').toRGBA(true);
+
 	var STYLE = {
 	  zoomAlpha: {
 	    min: { zoom: 17, alpha: 1.0 },
@@ -2520,7 +2532,7 @@
 	  }
 	}
 
-	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uCamPosition;\nuniform float uFogNear;\nuniform float uFogFar;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvarying float vFogIntensity;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//    vColor = vec3(0.0, 0.0, 0.0);\n//  }\n  vec4 position = vec4(uMatrix * aPosition);\n  vec2 positionXZ = vec2(position.x, position.z);\n  vec2 camPositionXZ = vec2(uCamPosition.x, uCamPosition.z);\n  float distanceXZ = length(positionXZ - camPositionXZ);\n  float fogIntensity = (distanceXZ - uFogNear) / (uFogFar - uFogNear);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vColor = aColor + uLightColor * intensity;\n  gl_Position = position;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nuniform vec4 uFogColor;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nvarying float vFogIntensity;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float heightShading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = mix(vec4(vColor - heightShading, uAlpha), uFogColor, vFogIntensity);\n}\n"}};
+	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 50.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform mat4 uFogMatrix;\n//uniform mat4 uFogOrigin;\nuniform vec3 uFogColor;\nuniform float uFogNear;\nuniform float uFogFar;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  //*** light intensity, defined by light direction on surface ***\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vec3 color = aColor + uLightColor * lightIntensity;\n  //*** vertical shading ***\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog ***\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - uFogNear) / (uFogFar - uFogNear);\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform mat4 uFogMatrix;\n//uniform mat4 uFogOrigin;\nuniform float uFogNear;\nuniform float uFogFar;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  vTexCoord = aTexCoord;\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - uFogNear) / (uFogFar - uFogNear);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
 
 
 
@@ -2528,7 +2540,7 @@
 
 	(function() {
 
-	  var LAT_SEGMENTS = 32, LON_SEGMENTS = 32;
+	  var LAT_SEGMENTS = 16, LON_SEGMENTS = 24;
 
 	  function isVertical(a, b, c) {
 	    var d1x = a[0]-b[0];
@@ -2687,7 +2699,6 @@
 	      sin = Math.sin,
 	      cos = Math.cos,
 	      PI = Math.PI,
-	res = { vertices: [], texCoords: [] },
 	      azimuth1, x1, y1,
 	      azimuth2, x2, y2,
 	      polar1,
@@ -2697,7 +2708,8 @@
 	      tcRight,
 	      tcTop,
 	      tcBottom,
-	      tcs;
+	      tcs,
+	      halfLatSegments = LAT_SEGMENTS/2;
 
 	    for (var i = 0, j; i < LON_SEGMENTS; i++) {
 	      tcLeft = i/LON_SEGMENTS;
@@ -2710,30 +2722,28 @@
 	      x2 = cos(azimuth2)*radius;
 	      y2 = sin(azimuth2)*radius;
 
-	      for (j = 0; j < LAT_SEGMENTS; j++) {
-	        polar1 = j*PI/(LAT_SEGMENTS*2); //convert to radiants in [0..1/2*PI]
-	        polar2 = (j+1)*PI/(LAT_SEGMENTS*2);
+	      for (j = 0; j < halfLatSegments; j++) {
+	        polar1 = j*PI/(halfLatSegments*2); //convert to radiants in [0..1/2*PI]
+	        polar2 = (j+1)*PI/(halfLatSegments*2);
 
 	        A = [x1*cos(polar1), y1*cos(polar1), radius*sin(polar1)];
 	        B = [x2*cos(polar1), y2*cos(polar1), radius*sin(polar1)];
 	        C = [x2*cos(polar2), y2*cos(polar2), radius*sin(polar2)];
 	        D = [x1*cos(polar2), y1*cos(polar2), radius*sin(polar2)];
 
-	        res.vertices.push.apply(res.vertices, A);
-	        res.vertices.push.apply(res.vertices, B);
-	        res.vertices.push.apply(res.vertices, C);
-	        res.vertices.push.apply(res.vertices, A);
-	        res.vertices.push.apply(res.vertices, C);
-	        res.vertices.push.apply(res.vertices, D);
+	        tris.vertices.push.apply(tris.vertices, A);
+	        tris.vertices.push.apply(tris.vertices, B);
+	        tris.vertices.push.apply(tris.vertices, C);
+	        tris.vertices.push.apply(tris.vertices, A);
+	        tris.vertices.push.apply(tris.vertices, C);
+	        tris.vertices.push.apply(tris.vertices, D);
 
-	        tcTop    = 1 - (j+1)/LAT_SEGMENTS;
-	        tcBottom = 1 - j/LAT_SEGMENTS;
+	        tcTop    = 1 - (j+1)/halfLatSegments;
+	        tcBottom = 1 - j/halfLatSegments;
 
-	        res.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
+	        tris.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
 	      }
 	    }
-
-	    return res;
 	  };
 
 	  Triangulate.sphere = function(tris, center, radius, minHeight, height) {
@@ -3272,7 +3282,7 @@
 	  this.rotation  = options.rotation  || 0;
 	  this.elevation = options.elevation || 0;
 	  if (options.color) {
-	    this.color = Color.parse(options.color).toRGBA();
+	    this.color = Color.parse(options.color).toRGBA(true);
 	  }
 	  this.replaces  = options.replaces || [];
 
@@ -3315,8 +3325,8 @@
 
 	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(vertices));
 	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(normals));
-	      this.colorBuffer   = new glx.Buffer(3, new Uint8Array(colors));
-	      this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
+	      this.colorBuffer   = new glx.Buffer(3, new Float32Array(colors));
+	      this.idColorBuffer = new glx.Buffer(3, new Float32Array(idColors));
 
 	      vertices = null;
 	      normals = null;
@@ -3478,10 +3488,10 @@
 	    item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
 	    var wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
-	    item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA() : DEFAULT_COLOR;
+	    item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
 	    var roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
-	    item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA() : DEFAULT_COLOR;
+	    item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
 	    switch (prop.shape) {
 	      case 'cylinder':
@@ -3949,8 +3959,11 @@
 	var Renderer = {
 
 	  start: function(options) {
-	    this.layers = {};
+	    this.fogRadius = options.fogRadius || FOG_RADIUS;
+	    this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
 
+
+	    this.layers = {};
 	//this.layers.depth       = Depth.initShader();
 	    this.layers.skydome   = SkyDome.initShader();
 	    this.layers.basemap   = Basemap.initShader();
@@ -3960,13 +3973,6 @@
 
 	    this.resize();
 	    Events.on('resize', this.resize.bind(this));
-
-	    var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
-	    this.backgroundColor = {
-	      r: color.r/255,
-	      g: color.g/255,
-	      b: color.b/255
-	    };
 
 	    GL.cullFace(GL.BACK);
 	    GL.enable(GL.CULL_FACE);
@@ -3994,10 +4000,10 @@
 
 	//      this.layers.depth.render(vpMatrix);
 
-	        GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
+	        GL.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
 	        GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-	//      this.layers.skydome.render(vpMatrix);
+	        this.layers.skydome.render(vpMatrix);
 	        this.layers.buildings.render(vpMatrix);
 	        this.layers.basemap.render(vpMatrix);
 	      }.bind(this));
@@ -4137,7 +4143,7 @@
 	      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      item.idColorBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
+	      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
@@ -4182,42 +4188,35 @@
 
 	(function() {
 
-	  var radius = 100;
-
-	  var NUM_LON_UNITS = 20;
-	  var NUM_LAT_UNITS = 10;
-
 	  var shader;
 
 	  var vertices = [];
 	  var texCoords = [];
 
-	  var tris = Triangulate.dome({}, {}, radius, 0, 0);
+	  var tris;
 
 	  var vertexBuffer;
 	  var texCoordBuffer;
 	  var texture;
 	  var textureIsLoaded;
 
-	  function getScale() {
-	    var screenRadius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT);
-	    var scale = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
-	    return screenRadius * scale / radius;
-	  }
-
 	  SkyDome.initShader = function() {
 	    var url = 'skydome.jpg';
 
+	    tris = { vertices: [], texCoords: [] };
+	    Triangulate.dome(tris, [0, 0], Renderer.fogRadius, 0, Renderer.fogRadius/2);
+
 	    shader = new glx.Shader({
-	      vertexShader: SHADERS.textured.vertex,
-	      fragmentShader: SHADERS.textured.fragment,
+	      vertexShader: SHADERS.skydome.vertex,
+	      fragmentShader: SHADERS.skydome.fragment,
 	      attributes: ["aPosition", "aTexCoord"],
-	      uniforms: ["uMatrix", "uTileImage"]
+	      uniforms: ["uMatrix", "uTileImage", "uFogColor"]
 	    });
 
 	    vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
 	    texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
 	    texture = new glx.Texture();
+
 	    Activity.setBusy();
 	    texture.load(url, function(image) {
 	      Activity.setIdle();
@@ -4225,6 +4224,7 @@
 	        textureIsLoaded = true;
 	      }
 	    });
+
 	    return this;
 	  };
 
@@ -4235,19 +4235,15 @@
 
 	    shader.enable();
 
-	    var mMatrix = new glx.Matrix();
+	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
-	    var scale = getScale();
+	    var mMatrix = new glx.Matrix();
+	    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+	    var scale = Math.pow(2, 16) * inMeters;
 	    mMatrix.scale(scale, scale, scale);
 
-	    mMatrix
-	      .rotateZ(Map.rotation)
-	      .translate(WIDTH/2, HEIGHT/2, 0)
-	      .rotateX(Map.tilt)
-	      .translate(0, HEIGHT/2, 0)
-	      .multiply(Renderer.perspective);
-
-	    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+	    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+	    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 	    vertexBuffer.enable();
 	    GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -4263,10 +4259,6 @@
 	    shader.disable();
 	  };
 
-	  SkyDome.getRadius = function() {
-	    return radius * getScale();
-	  };
-
 	}());
 
 
@@ -4280,10 +4272,10 @@
 
 	  Basemap.initShader = function() {
 	    shader = new glx.Shader({
-	      vertexShader: SHADERS.textured.vertex,
-	      fragmentShader: SHADERS.textured.fragment,
+	      vertexShader: SHADERS.basemap.vertex,
+	      fragmentShader: SHADERS.basemap.fragment,
 	      attributes: ["aPosition", "aTexCoord"],
-	      uniforms: ["uMatrix", "uTileImage"]
+	      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uFogNear", "uFogFar", "uFogColor"]
 	    });
 
 	    return this;
@@ -4295,6 +4287,18 @@
 	      mMatrix, mvp;
 
 	    shader.enable();
+
+	    var mFogMatrix = new glx.Matrix();
+	    // TODO: move this to Map
+	    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+	    var fogScale = Math.pow(2, 16) * inMeters;
+	    mFogMatrix.scale(fogScale, fogScale, fogScale);
+
+	    var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
+	    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
+	    GL.uniform1f(shader.uniforms.uFogNear, Renderer.fogRadius-1000);
+	    GL.uniform1f(shader.uniforms.uFogFar, Renderer.fogRadius);
+	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
 	    for (var key in tiles) {
 	      item = tiles[key];
@@ -4335,7 +4339,7 @@
 	      vertexShader: SHADERS.buildings.vertex,
 	      fragmentShader: SHADERS.buildings.fragment,
 	      attributes: ["aPosition", "aColor", "aNormal"],
-	      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uCamPosition", "uFogNear", "uFogFar", "uFogColor"]
+	      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogNear", "uFogFar", "uFogColor"]
 	    });
 
 	    this.showBackfaces = options.showBackfaces;
@@ -4362,10 +4366,20 @@
 	    GL.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
 	    GL.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
-	    GL.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
-
 	    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
 	    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
+
+	    var mFogMatrix = new glx.Matrix();
+	    // TODO: move inMeters this to Map
+	    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+	    var fogScale = Math.pow(2, 16) * inMeters;
+	    mFogMatrix.scale(fogScale, fogScale, fogScale);
+
+	    var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
+	    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
+	    GL.uniform1f(shader.uniforms.uFogNear, Renderer.fogRadius-1000);
+	    GL.uniform1f(shader.uniforms.uFogFar, Renderer.fogRadius);
+	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
 	    var
 	      dataItems = Data.items,
@@ -4382,11 +4396,6 @@
 	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
-	      GL.uniform3fv(shader.uniforms.uCamPosition, [0, 1, 0]);
-	      GL.uniform1f(shader.uniforms.uFogNear, 1500);
-	      GL.uniform1f(shader.uniforms.uFogFar, 2000);
-	      GL.uniform4fv(shader.uniforms.uFogColor, [1, 1, 1, 0]);
-
 	      item.vertexBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
@@ -4394,7 +4403,7 @@
 	      GL.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      item.colorBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
+	      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }

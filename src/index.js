@@ -12,7 +12,7 @@ var OSMBuildingsGL = function(containerId, options) {
 
   Renderer.start({
     fogRadius: options.fogRadius,
-    backgroundColor: options.backgroundColor,
+    fogColor: options.fogColor,
     showBackfaces: options.showBackfaces
   });
 

@@ -3,7 +3,7 @@ var Renderer = {
 
   start: function(options) {
     this.fogRadius = options.fogRadius || FOG_RADIUS;
-    this.backgroundColor = options.backgroundColor ? Color.parse(options.backgroundColor).toRGBA(true) : FOG_COLOR;
+    this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
 
 
     this.layers = {};
@@ -43,7 +43,7 @@ var Renderer = {
 
 //      this.layers.depth.render(vpMatrix);
 
-        GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
+        GL.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
         this.layers.skydome.render(vpMatrix);
