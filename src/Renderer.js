@@ -14,7 +14,7 @@ var Renderer = {
     this.resize();
     Events.on('resize', this.resize.bind(this));
 
-    var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
+    var color = Color.parse(options.backgroundColor || 'rgb(190,200,210)').toRGBA();
     this.backgroundColor = {
       r: color.r/255,
       g: color.g/255,

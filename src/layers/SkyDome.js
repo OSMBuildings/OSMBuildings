@@ -20,10 +20,10 @@ var SkyDome = {};
     var url = 'skydome.jpg';
 
     shader = new glx.Shader({
-      vertexShader: SHADERS.textured.vertex,
-      fragmentShader: SHADERS.textured.fragment,
+      vertexShader: SHADERS.skydome.vertex,
+      fragmentShader: SHADERS.skydome.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uTileImage"]
+      uniforms: ["uMatrix", "uTileImage", "uFogColor"]
     });
 
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
@@ -47,6 +47,8 @@ var SkyDome = {};
     }
 
     shader.enable();
+
+    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.backgroundColor.r, Renderer.backgroundColor.g, Renderer.backgroundColor.b]);
 
     var mMatrix = new glx.Matrix();
     var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
