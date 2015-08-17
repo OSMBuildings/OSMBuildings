@@ -10,7 +10,7 @@ var Buildings = {};
       vertexShader: SHADERS.buildings.vertex,
       fragmentShader: SHADERS.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal"],
-      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uCamPosition", "uFogNear", "uFogFar", "uFogColor"]
+      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogNear", "uFogFar", "uFogColor"]
     });
 
     this.showBackfaces = options.showBackfaces;
@@ -37,10 +37,20 @@ var Buildings = {};
     GL.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
     GL.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
-    GL.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
-
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
+
+    var mFogMatrix = new glx.Matrix()
+
+    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+    var fogScale = Math.pow(2, 16) * inMeters;
+    mFogMatrix.scale(fogScale, fogScale, fogScale);
+
+    var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
+    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
+    GL.uniform1f(shader.uniforms.uFogNear, FOG_RADIUS-1000);
+    GL.uniform1f(shader.uniforms.uFogFar, FOG_RADIUS);
+    GL.uniform3fv(shader.uniforms.uFogColor, [180/255, 210/255, 220/255]);
 
     var
       dataItems = Data.items,
@@ -56,11 +66,6 @@ var Buildings = {};
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
-
-      GL.uniform3fv(shader.uniforms.uCamPosition, [0, 1, 0]);
-      GL.uniform1f(shader.uniforms.uFogNear, 1500);
-      GL.uniform1f(shader.uniforms.uFogFar, 2000);
-      GL.uniform4fv(shader.uniforms.uFogColor, [1, 1, 1, 0]);
 
       item.vertexBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);

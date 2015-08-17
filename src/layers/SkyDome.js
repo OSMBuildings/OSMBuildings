@@ -3,15 +3,13 @@ var SkyDome = {};
 
 (function() {
 
-  var RADIUS = 3000;
-
   var shader;
 
   var vertices = [];
   var texCoords = [];
 
   var tris = { vertices: [], texCoords: [] };
-  Triangulate.dome(tris, [0, 0], RADIUS, 0, RADIUS/2);
+  Triangulate.dome(tris, [0, 0], FOG_RADIUS, 0, FOG_RADIUS/2);
 
   var vertexBuffer;
   var texCoordBuffer;
@@ -52,12 +50,9 @@ var SkyDome = {};
 
     var mMatrix = new glx.Matrix()
 
-var latitude = 52.52000;
-var inMeters = TILE_SIZE / (Math.cos(latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-var scale = Math.pow(2, 16) * inMeters;
-mMatrix.scale(scale, scale, scale);
-
-
+    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+    var scale = Math.pow(2, 16) * inMeters;
+    mMatrix.scale(scale, scale, scale);
 
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
     GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);

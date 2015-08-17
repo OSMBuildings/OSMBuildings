@@ -146,7 +146,7 @@ var OSMBuildingsGL = function(containerId, options) {
     },
 
     getPosition: function() {
-      return Map.getPosition();
+      return Map.position;
     },
 
     getBounds: function() {
