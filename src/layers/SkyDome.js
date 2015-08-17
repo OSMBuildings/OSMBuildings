@@ -48,8 +48,7 @@ var SkyDome = {};
 
     shader.enable();
 
-    var mMatrix = new glx.Matrix()
-
+    var mMatrix = new glx.Matrix();
     var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
     var scale = Math.pow(2, 16) * inMeters;
     mMatrix.scale(scale, scale, scale);

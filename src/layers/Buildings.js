@@ -40,8 +40,8 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    var mFogMatrix = new glx.Matrix()
-
+    var mFogMatrix = new glx.Matrix();
+    // TODO: move inMeters this to Map
     var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
     var fogScale = Math.pow(2, 16) * inMeters;
     mFogMatrix.scale(fogScale, fogScale, fogScale);

@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "depth", "textured", "buildings"],
+  "shaders": ["interaction", "depth", "textured", "buildings", "basemap"],
 
   "lib": [
     "lib/earcut.js",

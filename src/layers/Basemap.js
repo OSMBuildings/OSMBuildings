@@ -9,10 +9,10 @@ var Basemap = {};
 
   Basemap.initShader = function() {
     shader = new glx.Shader({
-      vertexShader: SHADERS.textured.vertex,
-      fragmentShader: SHADERS.textured.fragment,
+      vertexShader: SHADERS.basemap.vertex,
+      fragmentShader: SHADERS.basemap.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uTileImage"]
+      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uFogNear", "uFogFar", "uFogColor"]
     });
 
     return this;
@@ -24,6 +24,18 @@ var Basemap = {};
       mMatrix, mvp;
 
     shader.enable();
+
+    var mFogMatrix = new glx.Matrix();
+    // TODO: move this to Map
+    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+    var fogScale = Math.pow(2, 16) * inMeters;
+    mFogMatrix.scale(fogScale, fogScale, fogScale);
+
+    var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
+    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
+    GL.uniform1f(shader.uniforms.uFogNear, FOG_RADIUS-1000);
+    GL.uniform1f(shader.uniforms.uFogFar, FOG_RADIUS);
+    GL.uniform3fv(shader.uniforms.uFogColor, [180/255, 210/255, 220/255]);
 
     for (var key in tiles) {
       item = tiles[key];

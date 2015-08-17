@@ -8,10 +8,8 @@ attribute vec3 aColor;
 
 uniform mat4 uMatrix;
 uniform mat3 uNormalTransform;
-
 uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
-
 uniform mat4 uFogMatrix;
 //uniform mat4 uFogOrigin;
 uniform vec3 uFogColor;
