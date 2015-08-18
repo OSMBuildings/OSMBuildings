@@ -53,8 +53,8 @@ var SkyDome = {};
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     var mMatrix = new glx.Matrix();
-    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-    var scale = Math.pow(2, 16) * inMeters;
+    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
+    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
     mMatrix.scale(scale, scale, scale);
 
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);

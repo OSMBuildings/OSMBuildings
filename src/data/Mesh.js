@@ -20,6 +20,11 @@ var Mesh = function(data, position, options) {
   // OBJ
   // this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 
+  // object at lat position
+  // var metersAtLatitude = (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+  // var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
+  // var scale = pixelsAtZoom / metersAtLatitude;
+
   // GeoJSON
   // this.zoom = 16;
   // this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);

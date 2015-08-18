@@ -10,7 +10,7 @@ var Buildings = {};
       vertexShader: SHADERS.buildings.vertex,
       fragmentShader: SHADERS.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal"],
-      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogNear", "uFogFar", "uFogColor"]
+      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogRadius", "uFogColor"]
     });
 
     this.showBackfaces = options.showBackfaces;
@@ -40,16 +40,15 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    var mFogMatrix = new glx.Matrix();
-    // TODO: move inMeters this to Map
-    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-    var fogScale = Math.pow(2, 16) * inMeters;
-    mFogMatrix.scale(fogScale, fogScale, fogScale);
+    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, vpMatrix.data);
 
-    var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
-    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
-    GL.uniform1f(shader.uniforms.uFogNear, Renderer.fogRadius-1000);
-    GL.uniform1f(shader.uniforms.uFogFar, Renderer.fogRadius);
+//  var fogOrigin = glx.Matrix.transform(vpMatrix);
+//  GL.uniformMatrix4fv(shader.uniforms.uFogOrigin, false, [fogOrigin.x, fogOrigin.y, fogOrigin.z, 1]);
+
+    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
+    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
+    var fogRadius = Renderer.fogRadius * scale;
+    GL.uniform1f(shader.uniforms.uFogRadius, fogRadius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     var

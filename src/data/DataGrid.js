@@ -37,14 +37,32 @@ var DataGrid = {};
     zoom = Math.round(fixedZoom || Map.zoom);
 
     var
-      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      scale = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds,
       perspectiveBuffer = 1;
 
-    minX = (mapBounds.minX*ratio <<0) - perspectiveBuffer;
-    minY = (mapBounds.minY*ratio <<0) + 1 - perspectiveBuffer;
-    maxX = Math.ceil(mapBounds.maxX*ratio) + perspectiveBuffer;
-    maxY = Math.ceil(mapBounds.maxY*ratio) + 1 + perspectiveBuffer;
+    minX = (mapBounds.minX*scale <<0) - perspectiveBuffer;
+    minY = (mapBounds.minY*scale <<0) + 1 - perspectiveBuffer;
+    maxX = Math.ceil(mapBounds.maxX*scale) + perspectiveBuffer;
+    maxY = Math.ceil(mapBounds.maxY*scale) + 1 + perspectiveBuffer;
+
+console.log('rect', minX, maxX, minY, maxY);
+
+
+
+var scale = Math.pow(2, Map.zoom) / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+
+    var
+      mapCenter = Map.center,
+      fogRadius = Renderer.fogRadius*scale;
+
+    var minX2 = ((mapCenter.x/TILE_SIZE-fogRadius) <<0) - perspectiveBuffer;
+    var minY2 = ((mapCenter.y/TILE_SIZE+fogRadius) <<0) + 1 - perspectiveBuffer;
+    var maxX2 = Math.ceil(mapCenter.x/TILE_SIZE+fogRadius) + perspectiveBuffer;
+    var maxY2 = Math.ceil(mapCenter.y/TILE_SIZE-fogRadius) + 1 + perspectiveBuffer;
+
+    console.log('circle', minX2, maxX2, minY2, maxY2, fogRadius);
+
   }
 
   function loadTiles() {

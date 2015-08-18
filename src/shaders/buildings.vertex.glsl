@@ -11,10 +11,11 @@ uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 uniform mat4 uFogMatrix;
-//uniform mat4 uFogOrigin;
+//uniform vec4 uFogOrigin;
 uniform vec3 uFogColor;
-uniform float uFogNear;
-uniform float uFogFar;
+uniform float uFogRadius;
+
+float fogBlur = uFogRadius * 0.9;
 
 varying vec3 vColor;
 
@@ -35,8 +36,8 @@ void main() {
   //*** fog ***
   vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));
   float distance = length(glPosition - fogOrigin);
-//float distance = length(glPosition - uFogOrigin);
-  float fogIntensity = (distance - uFogNear) / (uFogFar - uFogNear);
+//  float distance = length(glPosition - uFogOrigin);
+  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
   vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);
 

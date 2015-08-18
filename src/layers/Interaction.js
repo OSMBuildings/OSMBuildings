@@ -1,5 +1,6 @@
 
 // TODO: render only clicked area
+// TODO: take SkyDome into account
 
 var Interaction = {
 

@@ -12,7 +12,7 @@ var Basemap = {};
       vertexShader: SHADERS.basemap.vertex,
       fragmentShader: SHADERS.basemap.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uFogNear", "uFogFar", "uFogColor"]
+      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uFogRadius", "uFogColor"]
     });
 
     return this;
@@ -25,16 +25,12 @@ var Basemap = {};
 
     shader.enable();
 
-    var mFogMatrix = new glx.Matrix();
-    // TODO: move this to Map
-    var inMeters = TILE_SIZE / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-    var fogScale = Math.pow(2, 16) * inMeters;
-    mFogMatrix.scale(fogScale, fogScale, fogScale);
+    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, vpMatrix.data);
 
-    var mvpFog = glx.Matrix.multiply(mFogMatrix, vpMatrix);
-    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, mvpFog);
-    GL.uniform1f(shader.uniforms.uFogNear, Renderer.fogRadius-1000);
-    GL.uniform1f(shader.uniforms.uFogFar, Renderer.fogRadius);
+    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
+    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
+    var fogRadius = Renderer.fogRadius * scale;
+    GL.uniform1f(shader.uniforms.uFogRadius, fogRadius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     for (var key in tiles) {
