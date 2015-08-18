@@ -10,7 +10,7 @@ uniform mat4 uMatrix;
 varying vec2 vTexCoord;
 varying float vFogIntensity;
 
-float gradientHeight = 50.0;
+float gradientHeight = 10.0;
 float gradientStrength = 1.0;
 
 void main() {
