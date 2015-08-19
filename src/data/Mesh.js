@@ -81,7 +81,7 @@ var Mesh = function(data, position, options) {
       var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
       // OBJ
       // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-      mMatrix.scale(scale, scale, scale*0.65);
+      mMatrix.scale(scale, scale, scale*0.7);
 
       if (this.rotation) {
         mMatrix.rotateZ(-this.rotation);

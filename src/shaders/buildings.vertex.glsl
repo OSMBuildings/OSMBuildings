@@ -15,10 +15,9 @@ uniform mat4 uFogMatrix;
 uniform vec3 uFogColor;
 uniform float uFogRadius;
 
-float fogBlur = uFogRadius * 0.9;
-
 varying vec3 vColor;
 
+float fogBlur = uFogRadius * 0.95;
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 

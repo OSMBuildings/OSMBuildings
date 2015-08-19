@@ -1,3 +1,7 @@
+
+.osmb-container {
+}
+
 .osmb-attribution {
     position:absolute;
     right:0;
@@ -21,4 +25,3 @@
     text-decoration:underline;
     color:#f08000;
 }
-

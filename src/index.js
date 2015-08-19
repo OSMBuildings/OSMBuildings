@@ -5,6 +5,7 @@ var OSMBuildingsGL = function(containerId, options) {
   options = options || {};
 
   var container = document.getElementById(containerId);
+  container.classList.add('osmb-container');
 
   WIDTH = container.offsetWidth;
   HEIGHT = container.offsetHeight;
@@ -203,7 +204,7 @@ var OSMBuildingsGL = function(containerId, options) {
       var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
       var mMatrix = new glx.Matrix()
         .translate(0, 0, elevation)
-        .scale(scale, scale, scale*0.65)
+        .scale(scale, scale, scale*0.7)
         .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
 
       var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);

@@ -12,7 +12,7 @@ var DEFAULT_HEIGHT = 10;
 
 var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
 
-var FOG_RADIUS = 5000;
+var FOG_RADIUS = 7500;
 var FOG_COLOR = Color.parse('#f0f8ff').toRGBA(true);
 
 var STYLE = {

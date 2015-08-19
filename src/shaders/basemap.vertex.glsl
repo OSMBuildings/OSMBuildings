@@ -10,10 +10,10 @@ uniform mat4 uFogMatrix;
 //uniform mat4 uFogOrigin;
 uniform float uFogRadius;
 
-float fogBlur = uFogRadius * 0.9;
-
 varying vec2 vTexCoord;
 varying float vFogIntensity;
+
+float fogBlur = uFogRadius * 0.95;
 
 void main() {
   vec4 glPosition = vec4(uMatrix * aPosition);

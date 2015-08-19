@@ -46,21 +46,22 @@ var DataGrid = {};
     maxX = Math.ceil(mapBounds.maxX*scale) + perspectiveBuffer;
     maxY = Math.ceil(mapBounds.maxY*scale) + 1 + perspectiveBuffer;
 
-console.log('rect', minX, maxX, minY, maxY);
-
-
+//console.log('rect', minX, maxX, minY, maxY);
+//
+//
 //var scale = Math.pow(2, Map.zoom) / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+//var scale2 = Math.pow(2, zoom-Map.zoom);
 //
 //    var
 //      mapCenter = Map.center,
 //      fogRadius = Renderer.fogRadius*scale;
 //
-//    var minX = ((mapCenter.x/TILE_SIZE-fogRadius) <<0) - perspectiveBuffer;
-//    var minY = ((mapCenter.y/TILE_SIZE+fogRadius) <<0) + 1 - perspectiveBuffer;
-//    var maxX = Math.ceil(mapCenter.x/TILE_SIZE-fogRadius) + perspectiveBuffer;
-//    var maxY = Math.ceil(mapCenter.y/TILE_SIZE+fogRadius) + 1 + perspectiveBuffer;
+//    var minX2 = ((mapCenter.x/TILE_SIZE-fogRadius)*scale2 <<0) - 0 - perspectiveBuffer;
+//    var minY2 = ((mapCenter.y/TILE_SIZE+fogRadius)*scale2 <<0) - 1 - perspectiveBuffer;
+//    var maxX2 = Math.ceil(mapCenter.x/TILE_SIZE-fogRadius)*scale2 + 2 +perspectiveBuffer;
+//    var maxY2 = Math.ceil(mapCenter.y/TILE_SIZE+fogRadius)*scale2 + perspectiveBuffer;
 //
-//    console.log('circle', minX, maxX, minY, maxY, fogRadius);
+//    console.log('circle', minX2, maxX2, minY2, maxY2, fogRadius);
 
   }
 
