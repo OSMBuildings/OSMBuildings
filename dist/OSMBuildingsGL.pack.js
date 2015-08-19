@@ -1797,24 +1797,6 @@
 	      Renderer.destroy();
 	      TileGrid.destroy();
 	      DataGrid.destroy();
-	    },
-
-	    kill: function() {
-	      var ext = GL.getExtension("WEBGL_lose_context");
-
-	      GL.canvas.addEventListener('webglcontextlost', function(e) {
-	        console.log('LOST CONTEXT');
-	        setTimeout(function() {
-	          ext.restoreContext();
-
-	        }, 3000);
-	      });
-
-	      GL.canvas.addEventListener('webglcontextrestored', function(e) {
-	        console.log('RESTORED CONTEXT');
-	      });
-
-	      ext.loseContext();
 	    }
 	  };
 
@@ -2857,7 +2839,7 @@
 
 	  var
 	    source,
-	    isDelayed,
+	    isPlanned,
 
 	    zoom,
 	    minX,
@@ -2876,12 +2858,14 @@
 	      return;
 	    }
 
-	    if (!isDelayed) {
-	      isDelayed = setTimeout(function() {
-	        isDelayed = null;
-	        loadTiles();
-	      }, delay);
+	    if (isPlanned) {
+	      clearTimeout(isPlanned);
 	    }
+
+	    isPlanned = setTimeout(function() {
+	      isPlanned = null;
+	      loadTiles();
+	    }, delay);
 	  }
 
 	  // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
@@ -3008,7 +2992,7 @@
 	  };
 
 	  DataGrid.destroy = function() {
-	    clearTimeout(isDelayed);
+	    clearTimeout(isPlanned);
 	    for (var key in tiles) {
 	      tiles[key].destroy();
 	    }
@@ -3243,34 +3227,6 @@
 
 	var mesh = OSMBuildingsGL.mesh = {};
 
-	// TODO: switch to mesh.transform
-	mesh.getMatrix = function() {
-	  var mMatrix = new glx.Matrix();
-
-	  if (this.elevation) {
-	    mMatrix.translate(0, 0, this.elevation);
-	  }
-
-	  // GeoJSON
-	  this.zoom = 16;
-	  var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
-	  // OBJ
-	  // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-	  mMatrix.scale(scale, scale, scale*0.7);
-
-	  if (this.rotation) {
-	    mMatrix.rotateZ(-this.rotation);
-	  }
-
-	  var
-	    position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-	    mapCenter = Map.center;
-
-	  mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
-	  return mMatrix;
-	};
-
 	//mesh._replaceItems: function() {
 	//  if (this.replaces.length) {
 	//    var replaces = this.replaces;
@@ -3326,7 +3282,7 @@
 	  constructor.prototype = {
 
 	    _onLoad: function(json) {
-	      if (!json.features.length) {
+	      if (!json || !json.features.length) {
 	        return;
 	      }
 
@@ -3442,7 +3398,6 @@
 	    this.position  = position;
 
 	    this._inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-
 
 	    this._vertices = [];
 	    this._normals = [];

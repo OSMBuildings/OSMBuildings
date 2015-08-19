@@ -43,7 +43,7 @@ mesh.GeoJSON = (function() {
   constructor.prototype = {
 
     _onLoad: function(json) {
-      if (!json.features.length) {
+      if (!json || !json.features.length) {
         return;
       }
 

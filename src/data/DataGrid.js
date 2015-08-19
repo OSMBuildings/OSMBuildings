@@ -27,9 +27,9 @@ var DataGrid = {};
     if (!isDelayed) {
       isDelayed = setTimeout(function() {
         isDelayed = null;
-        loadTiles();
-      }, delay);
-    }
+      loadTiles();
+    }, delay);
+  }
   }
 
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
