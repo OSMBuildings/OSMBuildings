@@ -1634,6 +1634,7 @@
 	  options = options || {};
 
 	  var container = document.getElementById(containerId);
+	  container.classList.add('osmb-container');
 
 	  WIDTH = container.offsetWidth;
 	  HEIGHT = container.offsetHeight;
@@ -1669,7 +1670,7 @@
 	(function() {
 
 	  OSMBuildingsGL.VERSION = '0.1.8';
-	  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
+	  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
 	  OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
 	  function addGeoJSONChunked(json, options, callback) {
@@ -1832,7 +1833,7 @@
 	      var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
 	      var mMatrix = new glx.Matrix()
 	        .translate(0, 0, elevation)
-	        .scale(scale, scale, scale*0.65)
+	        .scale(scale, scale, scale*0.7)
 	        .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
 
 	      var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
@@ -2042,6 +2043,11 @@
 
 	  function onMouseUp(e) {
 	    if (isDisabled) {
+	      return;
+	    }
+
+	    // prevents clicks on other page elements
+	    if (!pointerIsDown) {
 	      return;
 	    }
 
@@ -2369,7 +2375,7 @@
 
 	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
 
-	var FOG_RADIUS = 5000;
+	var FOG_RADIUS = 7500;
 	var FOG_COLOR = Color.parse('#f0f8ff').toRGBA(true);
 
 	var STYLE = {
@@ -2529,7 +2535,7 @@
 	  }
 	}
 
-	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform mat4 uFogMatrix;\n//uniform vec4 uFogOrigin;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nfloat fogBlur = uFogRadius * 0.9;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  //*** light intensity, defined by light direction on surface ***\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vec3 color = aColor + uLightColor * lightIntensity;\n  //*** vertical shading ***\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog ***\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//  float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform mat4 uFogMatrix;\n//uniform mat4 uFogOrigin;\nuniform float uFogRadius;\nfloat fogBlur = uFogRadius * 0.9;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  vTexCoord = aTexCoord;\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
+	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform mat4 uFogMatrix;\n//uniform vec4 uFogOrigin;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nvarying vec3 vColor;\nfloat fogBlur = uFogRadius * 0.95;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  //*** light intensity, defined by light direction on surface ***\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vec3 color = aColor + uLightColor * lightIntensity;\n  //*** vertical shading ***\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog ***\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//  float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform mat4 uFogMatrix;\n//uniform mat4 uFogOrigin;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = uFogRadius * 0.95;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  vTexCoord = aTexCoord;\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
 
 
 
@@ -2899,21 +2905,22 @@
 	    maxX = Math.ceil(mapBounds.maxX*scale) + perspectiveBuffer;
 	    maxY = Math.ceil(mapBounds.maxY*scale) + 1 + perspectiveBuffer;
 
-	console.log('rect', minX, maxX, minY, maxY);
-
-
+	//console.log('rect', minX, maxX, minY, maxY);
+	//
+	//
 	//var scale = Math.pow(2, Map.zoom) / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+	//var scale2 = Math.pow(2, zoom-Map.zoom);
 	//
 	//    var
 	//      mapCenter = Map.center,
 	//      fogRadius = Renderer.fogRadius*scale;
 	//
-	//    var minX = ((mapCenter.x/TILE_SIZE-fogRadius) <<0) - perspectiveBuffer;
-	//    var minY = ((mapCenter.y/TILE_SIZE+fogRadius) <<0) + 1 - perspectiveBuffer;
-	//    var maxX = Math.ceil(mapCenter.x/TILE_SIZE-fogRadius) + perspectiveBuffer;
-	//    var maxY = Math.ceil(mapCenter.y/TILE_SIZE+fogRadius) + 1 + perspectiveBuffer;
+	//    var minX2 = ((mapCenter.x/TILE_SIZE-fogRadius)*scale2 <<0) - 0 - perspectiveBuffer;
+	//    var minY2 = ((mapCenter.y/TILE_SIZE+fogRadius)*scale2 <<0) - 1 - perspectiveBuffer;
+	//    var maxX2 = Math.ceil(mapCenter.x/TILE_SIZE-fogRadius)*scale2 + 2 +perspectiveBuffer;
+	//    var maxY2 = Math.ceil(mapCenter.y/TILE_SIZE+fogRadius)*scale2 + perspectiveBuffer;
 	//
-	//    console.log('circle', minX, maxX, minY, maxY, fogRadius);
+	//    console.log('circle', minX2, maxX2, minY2, maxY2, fogRadius);
 
 	  }
 
@@ -3366,7 +3373,7 @@
 	      var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
 	      // OBJ
 	      // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-	      mMatrix.scale(scale, scale, scale*0.65);
+	      mMatrix.scale(scale, scale, scale*0.7);
 
 	      if (this.rotation) {
 	        mMatrix.rotateZ(-this.rotation);
