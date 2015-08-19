@@ -41,7 +41,7 @@ var OSMBuildingsGL = function(containerId, options) {
 (function() {
 
   OSMBuildingsGL.VERSION = '0.1.8';
-  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
+  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
   OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
   function addGeoJSONChunked(json, options, callback) {
