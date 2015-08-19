@@ -21,14 +21,15 @@
     "src/shaders.js",
     "src/Triangulate.js",
 
+    "src/data/index.js",
     "src/data/DataGrid.js",
     "src/data/DataTile.js",
-
     "src/data/TileGrid.js",
     "src/data/MapTile.js",
 
-    "src/data/Data.js",
-    "src/data/Mesh.js",
+    "src/mesh/index.js",
+    "src/mesh/GeoJSON.js",
+    "src/mesh/OBJ.js",
 
     "src/formats/GeoJSON.js",
     "src/formats/OBJ.js",

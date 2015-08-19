@@ -67,7 +67,7 @@
 
 <div id="label" style="width:10px;height:10px;position:absolute;z-Index:1000;border:3px solid red;"></div>
 
-<div style="position:absolute;left:100px;top:20px;width:200px;height:100px;border:1px solid #ff8888; background:#fff">Clicks here should not change the map.</div>
+<div style="position:absolute;left:100px;top:20px;border:1px solid #ff8888; background:#fff;font-family:sans-serif;padding:10px;font-size:12px;}">Clicks here should not change the map.</div>
 
 <div class="control tilt">
   <button class="dec">&#8601;</button>
@@ -180,7 +180,7 @@
   map.addGeoJSON(gj);
 
   map.addGeoJSON('data/o2_nach_90.geo.json');
-  // map.addGeoJSON('data/w1-o4.geo.json');
+  //map.addGeoJSON('data/w1-o4.geo.json');
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');

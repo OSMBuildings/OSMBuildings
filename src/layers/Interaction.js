@@ -39,7 +39,7 @@ var Interaction = {
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     var
-      dataItems = Data.items,
+      dataItems = data.Index.items,
       item,
       mMatrix, mvp;
 

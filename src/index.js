@@ -44,27 +44,6 @@ var OSMBuildingsGL = function(containerId, options) {
   OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
   OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-  function addGeoJSONChunked(json, options, callback) {
-    if (!json.features.length) {
-      return;
-    }
-
-    var worldSize = TILE_SIZE<<16;
-    relax(function(startIndex, endIndex) {
-      var
-        features = json.features.slice(startIndex, endIndex),
-        geojson = { type: 'FeatureCollection', features: features },
-        coordinates0 = geojson.features[0].geometry.coordinates[0][0],
-        position = { latitude: coordinates0[1], longitude: coordinates0[0] },
-        data = GeoJSON.parse(position, worldSize, geojson);
-      new Mesh(data, position, options);
-
-      if (endIndex === json.features.length) {
-        callback();
-      }
-    }.bind(this), 0, json.features.length, 250, 50);
-  }
-
   OSMBuildingsGL.prototype = {
 
     setStyle: function(style) {
@@ -78,40 +57,11 @@ var OSMBuildingsGL = function(containerId, options) {
 
     // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
     addOBJ: function(url, position, options) {
-      Activity.setBusy();
-      Request.getText(url, function(str) {
-        var match;
-        if ((match = str.match(/^mtllib\s+(.*)$/m))) {
-          Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
-            var data = new OBJ.parse(str, mtl, options);
-            new Mesh(data, position, options);
-            Activity.setIdle();
-          }.bind(this));
-        } else {
-          var data = new OBJ.parse(str, null, options);
-          new Mesh(data, position, options);
-          Activity.setIdle();
-        }
-      });
-
-      return this;
+      return new OSMBuildingsGL.mesh.OBJ(url, position, options);
     },
 
-    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
     addGeoJSON: function(url, options) {
-      Activity.setBusy();
-      if (typeof url === 'object') {
-        addGeoJSONChunked(url, options, function() {
-          Activity.setIdle();
-        });
-      } else {
-        Request.getJSON(url, function(json) {
-          addGeoJSONChunked(json, options, function() {
-            Activity.setIdle();
-          });
-        });
-      }
-      return this;
+      return new OSMBuildingsGL.mesh.GeoJSON(url, options);
     },
 
     on: function(type, fn) {
@@ -225,10 +175,10 @@ var OSMBuildingsGL = function(containerId, options) {
 
 //*****************************************************************************
 
-if (typeof define === 'function') {
-  define([], OSMBuildingsGL);
-} else if (typeof exports === 'object') {
-  module.exports = OSMBuildingsGL;
+if (typeof global.define === 'function') {
+  global.define([], OSMBuildingsGL);
+} else if (typeof global.exports === 'object') {
+  global.module.exports = OSMBuildingsGL;
 } else {
   global.OSMBuildingsGL = OSMBuildingsGL;
 }

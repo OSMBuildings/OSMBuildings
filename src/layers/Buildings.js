@@ -52,7 +52,7 @@ var Buildings = {};
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     var
-      dataItems = Data.items,
+      dataItems = data.Index.items,
       item,
       mMatrix, mvp;
 

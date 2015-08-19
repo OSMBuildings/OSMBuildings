@@ -1627,27 +1627,6 @@ var OSMBuildingsGL = function(containerId, options) {
   OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
   OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
-  function addGeoJSONChunked(json, options, callback) {
-    if (!json.features.length) {
-      return;
-    }
-
-    var worldSize = TILE_SIZE<<16;
-    relax(function(startIndex, endIndex) {
-      var
-        features = json.features.slice(startIndex, endIndex),
-        geojson = { type: 'FeatureCollection', features: features },
-        coordinates0 = geojson.features[0].geometry.coordinates[0][0],
-        position = { latitude: coordinates0[1], longitude: coordinates0[0] },
-        data = GeoJSON.parse(position, worldSize, geojson);
-      new Mesh(data, position, options);
-
-      if (endIndex === json.features.length) {
-        callback();
-      }
-    }.bind(this), 0, json.features.length, 250, 50);
-  }
-
   OSMBuildingsGL.prototype = {
 
     setStyle: function(style) {
@@ -1661,40 +1640,11 @@ var OSMBuildingsGL = function(containerId, options) {
 
     // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
     addOBJ: function(url, position, options) {
-      Activity.setBusy();
-      Request.getText(url, function(str) {
-        var match;
-        if ((match = str.match(/^mtllib\s+(.*)$/m))) {
-          Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
-            var data = new OBJ.parse(str, mtl, options);
-            new Mesh(data, position, options);
-            Activity.setIdle();
-          }.bind(this));
-        } else {
-          var data = new OBJ.parse(str, null, options);
-          new Mesh(data, position, options);
-          Activity.setIdle();
-        }
-      });
-
-      return this;
+      return new OSMBuildingsGL.mesh.OBJ(url, position, options);
     },
 
-    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
     addGeoJSON: function(url, options) {
-      Activity.setBusy();
-      if (typeof url === 'object') {
-        addGeoJSONChunked(url, options, function() {
-          Activity.setIdle();
-        });
-      } else {
-        Request.getJSON(url, function(json) {
-          addGeoJSONChunked(json, options, function() {
-            Activity.setIdle();
-          });
-        });
-      }
-      return this;
+      return new OSMBuildingsGL.mesh.GeoJSON(url, options);
     },
 
     on: function(type, fn) {
@@ -1801,6 +1751,24 @@ var OSMBuildingsGL = function(containerId, options) {
       Renderer.destroy();
       TileGrid.destroy();
       DataGrid.destroy();
+    },
+
+    kill: function() {
+      var ext = GL.getExtension("WEBGL_lose_context");
+
+      GL.canvas.addEventListener('webglcontextlost', function(e) {
+        console.log('LOST CONTEXT');
+        setTimeout(function() {
+          ext.restoreContext();
+
+        }, 3000);
+      });
+
+      GL.canvas.addEventListener('webglcontextrestored', function(e) {
+        console.log('RESTORED CONTEXT');
+      });
+
+      ext.loseContext();
     }
   };
 
@@ -1808,10 +1776,10 @@ var OSMBuildingsGL = function(containerId, options) {
 
 //*****************************************************************************
 
-if (typeof define === 'function') {
-  define([], OSMBuildingsGL);
-} else if (typeof exports === 'object') {
-  module.exports = OSMBuildingsGL;
+if (typeof global.define === 'function') {
+  global.define([], OSMBuildingsGL);
+} else if (typeof global.exports === 'object') {
+  global.module.exports = OSMBuildingsGL;
 } else {
   global.OSMBuildingsGL = OSMBuildingsGL;
 }
@@ -2812,6 +2780,31 @@ var Triangulate = {};
 }());
 
 
+var data = {
+  Index: {
+    items: [],
+
+    add: function(item) {
+      this.items.push(item);
+    },
+
+    remove: function(item) {
+      var items = this.items;
+      for (var i = 0, il = items.length; i < il; i++) {
+        if (items[i] === item) {
+          items.splice(i, 1);
+          return;
+        }
+      }
+    },
+
+    destroy: function() {
+      this.items = null;
+    }
+  }
+};
+
+
 var DataGrid = {};
 
 (function() {
@@ -2988,29 +2981,10 @@ var DataTile = function(tileX, tileY, zoom) {
 DataTile.prototype = {
 
   load: function(url) {
-    Activity.setBusy();
-    this.request = Request.getJSON(url, function(geojson) {
-      this.request = null;
-
-      if (!geojson || geojson.type !== 'FeatureCollection' || !geojson.features.length) {
-        return;
-      }
-
-      var
-        coordinates0 = geojson.features[0].geometry.coordinates[0][0],
-        position = { latitude:coordinates0[1], longitude:coordinates0[0] },
-        data = GeoJSON.parse(position, TILE_SIZE<<this.zoom, geojson);
-      this.mesh = new Mesh(data, position);
-
-      Activity.setIdle();
-    }.bind(this));
+    this.mesh = new OSMBuildingsGL.mesh.GeoJSON(url);
   },
 
   destroy: function() {
-    if (this.request) {
-      this.request.abort();
-      this.request = null;
-    }
     if (this.mesh) {
       this.mesh.destroy();
       this.mesh = null;
@@ -3221,145 +3195,311 @@ MapTile.prototype = {
 };
 
 
-var Data = {
+var mesh = OSMBuildingsGL.mesh = {};
 
-  items: [],
+// TODO: switch to mesh.transform
+mesh.getMatrix = function() {
+  var mMatrix = new glx.Matrix();
 
-  add: function(item) {
-    this.items.push(item);
-  },
-
-  remove: function(item) {
-    var items = this.items;
-    for (var i = 0, il = items.length; i < il; i++) {
-      if (items[i] === item) {
-        items.splice(i, 1);
-        return;
-      }
-    }
-  },
-
-  destroy: function() {
-    this.items = null;
+  if (this.elevation) {
+    mMatrix.translate(0, 0, this.elevation);
   }
-};
-
-
-// TODO: when and how to destroy mesh?
-
-var Mesh = function(data, position, options) {
-  this.position = position;
-
-  options = options || {};
-
-  this.id        = options.id;
-  this.scale     = options.scale     || 1;
-  this.rotation  = options.rotation  || 0;
-  this.elevation = options.elevation || 0;
-  if (options.color) {
-    this.color = Color.parse(options.color).toRGBA(true);
-  }
-  this.replaces  = options.replaces || [];
-
-  this.createBuffers(data);
-
-  // OBJ
-  // this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-
-  // object at lat position
-  // var metersAtLatitude = (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-  // var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
-  // var scale = pixelsAtZoom / metersAtLatitude;
 
   // GeoJSON
-  // this.zoom = 16;
-  // this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
+  this.zoom = 16;
+  var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
+  // OBJ
+  // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
+  mMatrix.scale(scale, scale, scale*0.7);
 
-  Data.add(this);
+  if (this.rotation) {
+    mMatrix.rotateZ(-this.rotation);
+  }
+
+  var
+    position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+    mapCenter = Map.center;
+
+  mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
+
+  return mMatrix;
 };
 
-(function() {
+//mesh._replaceItems: function() {
+//  if (this.replaces.length) {
+//    var replaces = this.replaces;
+//      if (replaces.indexOf(item.id)>=0) {
+//        item.hidden = true;
+//      }
+//    });
+//  }
+//};
 
-  Mesh.prototype = {
 
-    createBuffers: function(data) {
-      var
-        vertices = [], normals = [], colors = [], idColors = [],
-        item, color, idColor, i, il, j, jl;
+mesh.GeoJSON = (function() {
 
-      for (i = 0, il = data.length; i<il; i++) {
-        item = data[i];
+  var
+    zoom = 16,
+    worldSize = TILE_SIZE <<zoom,
+    featuresPerChunk = 100,
+    delayPerChunk = 33;
 
-        vertices.push.apply(vertices, item.vertices);
-        normals.push.apply(normals, item.normals);
+  //***************************************************************************
 
-        color = this.color || item.color || DEFAULT_COLOR;
-        idColor = Interaction.idToColor(this.id || item.id);
-        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          colors.push(color.r, color.g, color.b);
-          idColors.push(idColor.r, idColor.g, idColor.b);
-        }
+  function constructor(url, options) {
+    options = options || {};
+
+    this._id = options.id;
+    if (options.color) {
+      this._color = Color.parse(options.color).toRGBA(true);
+    }
+    this._replaces = options.replaces || [];
+
+    this.scale     = options.scale     || 1;
+    this.rotation  = options.rotation  || 0;
+    this.elevation = options.elevation || 0;
+    this.position  = {};
+
+    this._vertices = [];
+    this._normals = [];
+    this._colors = [];
+    this._idColors = [];
+
+    Activity.setBusy();
+    if (typeof url === 'object') {
+      var json = url;
+      this._onLoad(json);
+    } else {
+      this._request = Request.getJSON(url, function(json) {
+        this._request = null;
+        this._onLoad(json);
+      }.bind(this));
+    }
+  }
+
+  constructor.prototype = {
+
+    _onLoad: function(json) {
+      if (!json.features.length) {
+        return;
       }
 
-      data = null;
+      var coordinates0 = json.features[0].geometry.coordinates[0][0];
+      this.position = { latitude: coordinates0[1], longitude: coordinates0[0] };
 
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(idColors));
+      relax(function(startIndex, endIndex) {
+        var features = json.features.slice(startIndex, endIndex);
+        var geojson = { type: 'FeatureCollection', features: features };
+        var data = GeoJSON.parse(this.position, worldSize, geojson);
 
-      vertices = null;
-      normals = null;
-      colors = null;
-      idColors = null;
+        this._addItems(data);
+
+        if (endIndex === json.features.length) {
+          this._onReady();
+        }
+      }.bind(this), 0, json.features.length, featuresPerChunk, delayPerChunk);
+    },
+
+    _addItems: function(items) {
+      var item, color, idColor, j, jl;
+
+      for (var i = 0, il = items.length; i<il; i++) {
+        item = items[i];
+
+        this._vertices.push.apply(this._vertices, item.vertices);
+        this._normals.push.apply(this._normals, item.normals);
+
+        color = this._color || item.color || DEFAULT_COLOR;
+        idColor = Interaction.idToColor(this._id || item.id);
+        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+          this._colors.push(color.r, color.g, color.b);
+          this._idColors.push(idColor.r, idColor.g, idColor.b);
+        }
+      }
+    },
+
+    _onReady: function() {
+      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._vertices));
+      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._normals));
+      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._colors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._idColors));
+
+      this._vertices = null;
+      this._normals = null;
+      this._colors = null;
+      this._idColors = null;
+
+      data.Index.add(this);
+      this._isReady = true;
+
+      Activity.setIdle();
     },
 
     // TODO: switch to mesh.transform
     getMatrix: function() {
-      var mMatrix = new glx.Matrix();
+      var matrix = new glx.Matrix();
 
       if (this.elevation) {
-        mMatrix.translate(0, 0, this.elevation);
+        matrix.translate(0, 0, this.elevation);
       }
 
-      // GeoJSON
-      this.zoom = 16;
-      var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
-      // OBJ
-      // var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-      mMatrix.scale(scale, scale, scale*0.7);
+      var scale = 1 / Math.pow(2, zoom - Map.zoom) * this.scale;
+      matrix.scale(scale, scale, scale*0.7);
 
       if (this.rotation) {
-        mMatrix.rotateZ(-this.rotation);
+        matrix.rotateZ(-this.rotation);
       }
 
       var
         position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
         mapCenter = Map.center;
 
-      mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
+      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
-      return mMatrix;
+      return matrix;
     },
 
-  //_replaceItems: function() {
-    //  if (this.replaces.length) {
-    //    var replaces = this.replaces;
-    //      if (replaces.indexOf(item.id)>=0) {
-    //        item.hidden = true;
-    //      }
-    //    });
-    //  }
-    //},
-
     destroy: function() {
-      Data.remove(this);
-      this.vertexBuffer.destroy();
-      this.normalBuffer.destroy();
-      this.colorBuffer.destroy();
-      this.idColorBuffer.destroy();
+      if (this._request) {
+        this._request.abort();
+      }
+
+      if (this._isReady) {
+        data.Index.remove(this);
+        this.vertexBuffer.destroy();
+        this.normalBuffer.destroy();
+        this.colorBuffer.destroy();
+        this.idColorBuffer.destroy();
+      }
     }
   };
+
+  return constructor;
+
+}());
+
+
+mesh.OBJ = (function() {
+
+  function constructor(url, position, options) {
+    options = options || {};
+
+    this._id = options.id;
+    if (options.color) {
+      this._color = Color.parse(options.color).toRGBA(true);
+    }
+    this.replaces  = options.replaces || [];
+
+    this.scale     = options.scale     || 1;
+    this.rotation  = options.rotation  || 0;
+    this.elevation = options.elevation || 0;
+    this.position  = position;
+
+    this._inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+
+
+    this._vertices = [];
+    this._normals = [];
+    this._colors = [];
+    this._idColors = [];
+
+    Activity.setBusy();
+    this._request = Request.getText(url, function(obj) {
+      this._request = null;
+      var match;
+      if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
+        this._request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
+          this._request = null;
+          this._onLoad(obj, mtl);
+        }.bind(this));
+      } else {
+        this._onLoad(obj, null);
+      }
+    }.bind(this));
+  }
+
+  constructor.prototype = {
+    _onLoad: function(obj, mtl) {
+      var data = new OBJ.parse(obj, mtl);
+      this._addItems(data);
+      this._onReady();
+    },
+
+    _addItems: function(items) {
+      var item, color, idColor, j, jl;
+
+      for (var i = 0, il = items.length; i<il; i++) {
+        item = items[i];
+
+        this._vertices.push.apply(this._vertices, item.vertices);
+        this._normals.push.apply(this._normals, item.normals);
+
+        color = this._color || item.color || DEFAULT_COLOR;
+        idColor = Interaction.idToColor(this._id || item.id);
+        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+          this._colors.push(color.r, color.g, color.b);
+          this._idColors.push(idColor.r, idColor.g, idColor.b);
+        }
+      }
+    },
+
+    _onReady: function() {
+      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._vertices));
+      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._normals));
+      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._colors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._idColors));
+
+      this._vertices = null;
+      this._normals = null;
+      this._colors = null;
+      this._idColors = null;
+
+      data.Index.add(this);
+      this._isReady = true;
+
+      Activity.setIdle();
+    },
+
+    // TODO: switch to mesh.transform
+    getMatrix: function() {
+      var matrix = new glx.Matrix();
+
+      if (this.elevation) {
+        matrix.translate(0, 0, this.elevation);
+      }
+
+      var scale = Math.pow(2, Map.zoom) * this._inMeters * this.scale;
+      matrix.scale(scale, scale, scale);
+
+      if (this.rotation) {
+        matrix.rotateZ(-this.rotation);
+      }
+
+      var
+        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+        mapCenter = Map.center;
+
+      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
+
+      return matrix;
+    },
+
+    destroy: function() {
+      if (this._request) {
+        this._request.abort();
+      }
+
+      if (this._isReady) {
+        data.Index.remove(this);
+        this.vertexBuffer.destroy();
+        this.normalBuffer.destroy();
+        this.colorBuffer.destroy();
+        this.idColorBuffer.destroy();
+      }
+    }
+  };
+
+  return constructor;
 
 }());
 
@@ -3832,11 +3972,11 @@ OBJ.prototype = {
   }
 };
 
-OBJ.parse = function(objStr, mtlStr) {
+OBJ.parse = function(obj, mtl) {
   var
     parser = new OBJ(),
-    materials = mtlStr ? parser.parseMaterials(mtlStr) : {};
-  return parser.parseModel(objStr, materials);
+    materials = mtl ? parser.parseMaterials(mtl) : {};
+  return parser.parseModel(obj, materials);
 };
 
 
@@ -4042,7 +4182,7 @@ var Depth = {};
     var item,
       mMatrix, mvp;
 
-    var dataItems = Data.items;
+    var dataItems = data.Index.items;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
@@ -4106,7 +4246,7 @@ var Interaction = {
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     var
-      dataItems = Data.items,
+      dataItems = data.Index.items,
       item,
       mMatrix, mvp;
 
@@ -4358,7 +4498,7 @@ var Buildings = {};
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     var
-      dataItems = Data.items,
+      dataItems = data.Index.items,
       item,
       mMatrix, mvp;
 
