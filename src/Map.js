@@ -31,15 +31,21 @@ var Map = {};
       this.maxZoom = this.minZoom;
     }
 
-    options = State.load(options);
-    this.setPosition(options.position || { latitude: 52.52000, longitude: 13.41000 });
-    this.setZoom(options.zoom || this.minZoom);
-    this.setRotation(options.rotation || 0);
-    this.setTilt(options.tilt || 0);
+    var state = State.load();
+    this.setPosition(state.position || options.position || { latitude: 52.52000, longitude: 13.41000 });
+    this.setZoom(state.zoom || options.zoom || this.minZoom);
+    this.setRotation(state.rotation || options.rotation || 0);
+    this.setTilt(state.tilt || options.tilt || 0);
 
     Events.on('resize', updateBounds);
 
-    State.save(Map);
+    if (options.state) {
+      State.save(Map);
+
+      Events.on('change', function() {
+        State.save(Map);
+      });
+    }
   };
 
   Map.setZoom = function(zoom, e) {

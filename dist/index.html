@@ -57,7 +57,7 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="OSMBuildings.css">
+  <link rel="stylesheet" href="OSMBuildingsGL.css">
   <script src="OSMBuildingsGL.js"></script>
 </head>
 
@@ -88,6 +88,7 @@
     // disabled: true, // disables user input - optional
     minZoom: 14.5,
     maxZoom: 22,
+    state: true,
     tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     // dataSource: null, // null disables default OSM data,
     showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
