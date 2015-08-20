@@ -1801,15 +1801,21 @@ var Map = {};
       Map.maxZoom = Map.minZoom;
     }
 
-    options = State.load(options);
-    Map.setPosition(options.position || { latitude: 52.52000, longitude: 13.41000 });
-    Map.setZoom(options.zoom || Map.minZoom);
-    Map.setRotation(options.rotation || 0);
-    Map.setTilt(options.tilt || 0);
+    var state = State.load();
+    Map.setPosition(state.position || options.position || { latitude: 52.52000, longitude: 13.41000 });
+    Map.setZoom(state.zoom || options.zoom || Map.minZoom);
+    Map.setRotation(state.rotation || options.rotation || 0);
+    Map.setTilt(state.tilt || options.tilt || 0);
 
     Events.on('resize', updateBounds);
 
-    State.save(Map);
+    if (options.state) {
+      State.save(Map);
+
+      Events.on('change', function() {
+        State.save(Map);
+      });
+    }
   };
 
   Map.setZoom = function(zoom, e) {
@@ -2176,7 +2182,8 @@ var State = {};
     history.replaceState({}, '', '?'+ params.join('&'));
   }
 
-  State.load = function(state) {
+  State.load = function() {
+    var state = {};
     var query = location.search;
     if (query) {
       var params = {};
@@ -2210,10 +2217,6 @@ var State = {};
       save(map);
     }, 1000);
   };
-
-  Events.on('change', function() {
-    State.save(Map);
-  });
 
 }());
 

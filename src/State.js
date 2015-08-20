@@ -18,7 +18,8 @@ var State = {};
     history.replaceState({}, '', '?'+ params.join('&'));
   }
 
-  State.load = function(state) {
+  State.load = function() {
+    var state = {};
     var query = location.search;
     if (query) {
       var params = {};
@@ -52,9 +53,5 @@ var State = {};
       save(map);
     }, 1000);
   };
-
-  Events.on('change', function() {
-    State.save(Map);
-  });
 
 }());
