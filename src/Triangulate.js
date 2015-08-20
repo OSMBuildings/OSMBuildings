@@ -4,7 +4,7 @@ var Triangulate = {};
 
 (function() {
 
-  var LAT_SEGMENTS = 32, LON_SEGMENTS = 32;
+  var LAT_SEGMENTS = 16, LON_SEGMENTS = 24;
 
   function isVertical(a, b, c) {
     var d1x = a[0]-b[0];
@@ -173,7 +173,8 @@ res = { vertices: [], texCoords: [] },
       tcRight,
       tcTop,
       tcBottom,
-      tcs;
+      tcs,
+      halfLatSegments = LAT_SEGMENTS/2;
 
     for (var i = 0, j; i < LON_SEGMENTS; i++) {
       tcLeft = i/LON_SEGMENTS;
@@ -186,9 +187,9 @@ res = { vertices: [], texCoords: [] },
       x2 = cos(azimuth2)*radius;
       y2 = sin(azimuth2)*radius;
 
-      for (j = 0; j < LAT_SEGMENTS; j++) {
-        polar1 = j*PI/(LAT_SEGMENTS*2); //convert to radiants in [0..1/2*PI]
-        polar2 = (j+1)*PI/(LAT_SEGMENTS*2);
+      for (j = 0; j < halfLatSegments; j++) {
+        polar1 = j*PI/(halfLatSegments*2); //convert to radiants in [0..1/2*PI]
+        polar2 = (j+1)*PI/(halfLatSegments*2);
 
         A = [x1*cos(polar1), y1*cos(polar1), radius*sin(polar1)];
         B = [x2*cos(polar1), y2*cos(polar1), radius*sin(polar1)];
@@ -202,8 +203,8 @@ res = { vertices: [], texCoords: [] },
         res.vertices.push.apply(res.vertices, C);
         res.vertices.push.apply(res.vertices, D);
 
-        tcTop    = 1 - (j+1)/LAT_SEGMENTS;
-        tcBottom = 1 - j/LAT_SEGMENTS;
+        tcTop    = 1 - (j+1)/halfLatSegments;
+        tcBottom = 1 - j/halfLatSegments;
 
         res.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
       }

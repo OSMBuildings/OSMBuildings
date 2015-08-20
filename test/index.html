@@ -57,7 +57,7 @@
       cursor: pointer;
     }
   </style>
-  <script>var baseURL = '../';</script>
+  <link rel="stylesheet" href="OSMBuildingsGL.css">
   <script src="loader.js"></script>
 </head>
 
@@ -65,6 +65,8 @@
 <div id="map"></div>
 
 <div id="label" style="width:10px;height:10px;position:absolute;z-Index:1000;border:3px solid red;"></div>
+
+<div style="position:absolute;left:100px;top:20px;border:1px solid #ff8888; background:#fff;font-family:sans-serif;padding:10px;font-size:12px;}">Clicks here should not change the map.</div>
 
 <div class="control tilt">
   <button class="dec">&#8601;</button>
@@ -141,7 +143,7 @@
     dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
     backgroundColor: '#bfb8b0',
-    attribution: '© <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> contributors, Map tiles © <a href="http://mapbox.com">MapBox</a>, 3D © <a href="http://osmbuildings.org">OSM Buildings</a></div>'
+    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
   var obj = map.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { position:{ latitude:52.51923, longitude:13.40371 }, id:'Fernsehturm', scale:0.1, "elevation":8,"rotation":51,
@@ -158,6 +160,9 @@
     304987172,
     304987176
   ]});
+
+  // map.addGeoJSON('data/ESB_light_GeoJSON.json');
+  // map.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
   var gj = { type: 'FeatureCollection', features: [
     { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 55, minHeight: 50 }, geometry:

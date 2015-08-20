@@ -76,6 +76,11 @@ var Events = {};
       return;
     }
 
+    // prevents clicks on other page elements
+    if (!pointerIsDown) {
+      return;
+    }
+
     if (e.button === 0 && !e.altKey) {
       if (Math.abs(e.clientX-startX) > 5 || Math.abs(e.clientY-startY) > 5) {
         moveMap(e);

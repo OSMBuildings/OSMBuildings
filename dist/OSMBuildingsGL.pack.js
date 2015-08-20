@@ -44,7 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(global) {
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(global) {
 	var earcut = (function() {
 
 	'use strict'
@@ -819,12 +819,13 @@
 	  if (typeof r === 'object') {
 	    g = r.g / 255;
 	    b = r.b / 255;
-	    a = r.a;
+	    a = (r.a !== undefined ? r.a : 1);
 	    r = r.r / 255;
 	  } else {
 	    r /= 255;
 	    g /= 255;
 	    b /= 255;
+	    a = (a !== undefined ? a : 1);
 	  }
 
 	  var
@@ -850,7 +851,7 @@
 
 	Color.prototype = {
 
-	  toRGBA: function() {
+	  toRGBA: function(normalized) {
 	    var
 	      h = clamp(this.H, 360),
 	      s = clamp(this.S, 1),
@@ -871,6 +872,10 @@
 	      rgba.r = hue2rgb(p, q, h + 1/3);
 	      rgba.g = hue2rgb(p, q, h);
 	      rgba.b = hue2rgb(p, q, h - 1/3);
+	    }
+
+	    if (normalized) {
+	      return rgba;
 	    }
 
 	    return {
@@ -1399,10 +1404,12 @@
 	  glx.Matrix.transform = function(m) {
 	    var X = m[12];
 	    var Y = m[13];
+	    var Z = m[14];
 	    var W = m[15];
 	    return {
 	      x: (X/W +1) / 2,
-	      y: (Y/W +1) / 2
+	      y: (Y/W +1) / 2,
+	      z: (Z/W +1) / 2
 	    };
 	  };
 
@@ -1628,6 +1635,7 @@
 	  options = options || {};
 
 	  var container = document.getElementById(containerId);
+	  container.classList.add('osmb-container');
 
 	  WIDTH = container.offsetWidth;
 	  HEIGHT = container.offsetHeight;
@@ -1653,14 +1661,14 @@
 
 	  if (options.attribution !== null && options.attribution !== false && options.attribution !== '') {
 	    var attribution = document.createElement('DIV');
-	    attribution.setAttribute('style', 'position:absolute;right:0;bottom:0;padding:1px 3px;background:rgba(255,255,255,0.5);font:11px sans-serif');
+	    attribution.className = 'osmb-attribution';
 	    attribution.innerHTML = options.attribution || OSMBuildingsGL.ATTRIBUTION;
 	    container.appendChild(attribution);
 	  }
 	};
 
 	OSMBuildingsGL.VERSION = '0.1.8';
-	OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)</a>';
+	OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
 	OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
 
 	OSMBuildingsGL.prototype = {
@@ -1787,7 +1795,7 @@
 	    var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
 	    var mMatrix = new glx.Matrix()
 	      .translate(0, 0, elevation)
-	      .scale(scale, scale, scale*0.65)
+	      .scale(scale, scale, scale*0.7)
 	      .translate(pos.x-mapCenter.x, pos.y-mapCenter.y, 0);
 
 	    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
@@ -1806,10 +1814,10 @@
 
 	//*****************************************************************************
 
-	if (true) {
-	  !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (OSMBuildingsGL), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	} else if (typeof exports === 'object') {
-	  module.exports = OSMBuildingsGL;
+	if (typeof global.define === 'function') {
+	  global.define([], OSMBuildingsGL);
+	} else if (typeof global.exports === 'object') {
+	  global.module.exports = OSMBuildingsGL;
 	} else {
 	  global.OSMBuildingsGL = OSMBuildingsGL;
 	}
@@ -1840,18 +1848,18 @@
 	  Map.transform = new glx.Matrix(); // there are very early actions that rely on an existing Map transform
 
 	  Map.init = function(options) {
-	    Map.minZoom = parseFloat(options.minZoom) || 10;
-	    Map.maxZoom = parseFloat(options.maxZoom) || 20;
+	    this.minZoom = parseFloat(options.minZoom) || 10;
+	    this.maxZoom = parseFloat(options.maxZoom) || 20;
 
-	    if (Map.maxZoom<Map.minZoom) {
-	      Map.maxZoom = Map.minZoom;
+	    if (this.maxZoom<this.minZoom) {
+	      this.maxZoom = this.minZoom;
 	    }
 
 	    var state = State.load();
-	    Map.setPosition(state.position || options.position || { latitude: 52.52000, longitude: 13.41000 });
-	    Map.setZoom(state.zoom || options.zoom || Map.minZoom);
-	    Map.setRotation(state.rotation || options.rotation || 0);
-	    Map.setTilt(state.tilt || options.tilt || 0);
+	    this.setPosition(state.position || options.position || { latitude: 52.52000, longitude: 13.41000 });
+	    this.setZoom(state.zoom || options.zoom || this.minZoom);
+	    this.setRotation(state.rotation || options.rotation || 0);
+	    this.setTilt(state.tilt || options.tilt || 0);
 
 	    Events.on('resize', updateBounds);
 
@@ -1865,23 +1873,23 @@
 	  };
 
 	  Map.setZoom = function(zoom, e) {
-	    zoom = clamp(parseFloat(zoom), Map.minZoom, Map.maxZoom);
+	    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
-	    if (Map.zoom !== zoom) {
-	      var ratio = Math.pow(2, zoom-Map.zoom);
-	      Map.zoom = zoom;
+	    if (this.zoom !== zoom) {
+	      var ratio = Math.pow(2, zoom-this.zoom);
+	      this.zoom = zoom;
 	      if (!e) {
-	        Map.center.x *= ratio;
-	        Map.center.y *= ratio;
+	        this.center.x *= ratio;
+	        this.center.y *= ratio;
 	      } else {
 	        var dx = WIDTH/2  - e.clientX;
 	        var dy = HEIGHT/2 - e.clientY;
-	        Map.center.x -= dx;
-	        Map.center.y -= dy;
-	        Map.center.x *= ratio;
-	        Map.center.y *= ratio;
-	        Map.center.x += dx;
-	        Map.center.y += dy;
+	        this.center.x -= dx;
+	        this.center.y -= dy;
+	        this.center.x *= ratio;
+	        this.center.y *= ratio;
+	        this.center.x += dx;
+	        this.center.y += dy;
 	      }
 	      updateBounds();
 	      Events.emit('change');
@@ -1889,19 +1897,19 @@
 	  };
 
 	  Map.getPosition = function() {
-	    return unproject(Map.center.x, Map.center.y, TILE_SIZE*Math.pow(2, Map.zoom));
+	    return unproject(this.center.x, this.center.y, TILE_SIZE*Math.pow(2, this.zoom));
 	  };
 
 	  Map.setPosition = function(position) {
 	    var latitude  = clamp(parseFloat(position.latitude), -90, 90);
 	    var longitude = clamp(parseFloat(position.longitude), -180, 180);
-	    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
-	    Map.setCenter(center);
+	    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, this.zoom));
+	    this.setCenter(center);
 	  };
 
 	  Map.setCenter = function(center) {
-	    if (Map.center.x !== center.x || Map.center.y !== center.y) {
-	      Map.center = center;
+	    if (this.center.x !== center.x || this.center.y !== center.y) {
+	      this.center = center;
 	      updateBounds();
 	      Events.emit('change');
 	    }
@@ -1909,8 +1917,8 @@
 
 	  Map.setRotation = function(rotation) {
 	    rotation = parseFloat(rotation)%360;
-	    if (Map.rotation !== rotation) {
-	      Map.rotation = rotation;
+	    if (this.rotation !== rotation) {
+	      this.rotation = rotation;
 	      updateBounds();
 	      Events.emit('change');
 	    }
@@ -1918,8 +1926,8 @@
 
 	  Map.setTilt = function(tilt) {
 	    tilt = clamp(parseFloat(tilt), 0, 60);
-	    if (Map.tilt !== tilt) {
-	      Map.tilt = tilt;
+	    if (this.tilt !== tilt) {
+	      this.tilt = tilt;
 	      updateBounds();
 	      Events.emit('change');
 	    }
@@ -2004,6 +2012,11 @@
 
 	  function onMouseUp(e) {
 	    if (isDisabled) {
+	      return;
+	    }
+
+	    // prevents clicks on other page elements
+	    if (!pointerIsDown) {
 	      return;
 	    }
 
@@ -2279,6 +2292,7 @@
 	var DEFAULT_HEIGHT = 10;
 
 	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA();
+
 	var STYLE = {
 	  zoomAlpha: {
 	    min: { zoom: 17, alpha: 1.0 },
@@ -2445,6 +2459,25 @@
 	  });
 	}
 
+	function relax(callback, startIndex, dataLength, chunkSize, delay) {
+	  chunkSize = chunkSize || 1000;
+	  delay = delay || 1;
+
+	  var endIndex = startIndex + Math.min((dataLength-startIndex), chunkSize);
+
+	  if (startIndex === endIndex) {
+	    return;
+	  }
+
+	  callback(startIndex, endIndex);
+
+	  if (startIndex < dataLength) {
+	    setTimeout(function() {
+	      relax(callback, endIndex, dataLength, chunkSize, delay);
+	    }, delay);
+	  }
+	}
+
 	var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"}};
 
 
@@ -2453,7 +2486,7 @@
 
 	(function() {
 
-	  var LAT_SEGMENTS = 32, LON_SEGMENTS = 32;
+	  var LAT_SEGMENTS = 16, LON_SEGMENTS = 24;
 
 	  function isVertical(a, b, c) {
 	    var d1x = a[0]-b[0];
@@ -2622,7 +2655,8 @@
 	      tcRight,
 	      tcTop,
 	      tcBottom,
-	      tcs;
+	      tcs,
+	      halfLatSegments = LAT_SEGMENTS/2;
 
 	    for (var i = 0, j; i < LON_SEGMENTS; i++) {
 	      tcLeft = i/LON_SEGMENTS;
@@ -2635,9 +2669,9 @@
 	      x2 = cos(azimuth2)*radius;
 	      y2 = sin(azimuth2)*radius;
 
-	      for (j = 0; j < LAT_SEGMENTS; j++) {
-	        polar1 = j*PI/(LAT_SEGMENTS*2); //convert to radiants in [0..1/2*PI]
-	        polar2 = (j+1)*PI/(LAT_SEGMENTS*2);
+	      for (j = 0; j < halfLatSegments; j++) {
+	        polar1 = j*PI/(halfLatSegments*2); //convert to radiants in [0..1/2*PI]
+	        polar2 = (j+1)*PI/(halfLatSegments*2);
 
 	        A = [x1*cos(polar1), y1*cos(polar1), radius*sin(polar1)];
 	        B = [x2*cos(polar1), y2*cos(polar1), radius*sin(polar1)];
@@ -2651,8 +2685,8 @@
 	        res.vertices.push.apply(res.vertices, C);
 	        res.vertices.push.apply(res.vertices, D);
 
-	        tcTop    = 1 - (j+1)/LAT_SEGMENTS;
-	        tcBottom = 1 - j/LAT_SEGMENTS;
+	        tcTop    = 1 - (j+1)/halfLatSegments;
+	        tcBottom = 1 - j/halfLatSegments;
 
 	        res.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
 	      }

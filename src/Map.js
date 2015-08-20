@@ -24,18 +24,18 @@ var Map = {};
   Map.transform = new glx.Matrix(); // there are very early actions that rely on an existing Map transform
 
   Map.init = function(options) {
-    Map.minZoom = parseFloat(options.minZoom) || 10;
-    Map.maxZoom = parseFloat(options.maxZoom) || 20;
+    this.minZoom = parseFloat(options.minZoom) || 10;
+    this.maxZoom = parseFloat(options.maxZoom) || 20;
 
-    if (Map.maxZoom<Map.minZoom) {
-      Map.maxZoom = Map.minZoom;
+    if (this.maxZoom<this.minZoom) {
+      this.maxZoom = this.minZoom;
     }
 
     var state = State.load();
-    Map.setPosition(state.position || options.position || { latitude: 52.52000, longitude: 13.41000 });
-    Map.setZoom(state.zoom || options.zoom || Map.minZoom);
-    Map.setRotation(state.rotation || options.rotation || 0);
-    Map.setTilt(state.tilt || options.tilt || 0);
+    this.setPosition(state.position || options.position || { latitude: 52.52000, longitude: 13.41000 });
+    this.setZoom(state.zoom || options.zoom || this.minZoom);
+    this.setRotation(state.rotation || options.rotation || 0);
+    this.setTilt(state.tilt || options.tilt || 0);
 
     Events.on('resize', updateBounds);
 
@@ -49,23 +49,23 @@ var Map = {};
   };
 
   Map.setZoom = function(zoom, e) {
-    zoom = clamp(parseFloat(zoom), Map.minZoom, Map.maxZoom);
+    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
-    if (Map.zoom !== zoom) {
-      var ratio = Math.pow(2, zoom-Map.zoom);
-      Map.zoom = zoom;
+    if (this.zoom !== zoom) {
+      var ratio = Math.pow(2, zoom-this.zoom);
+      this.zoom = zoom;
       if (!e) {
-        Map.center.x *= ratio;
-        Map.center.y *= ratio;
+        this.center.x *= ratio;
+        this.center.y *= ratio;
       } else {
         var dx = WIDTH/2  - e.clientX;
         var dy = HEIGHT/2 - e.clientY;
-        Map.center.x -= dx;
-        Map.center.y -= dy;
-        Map.center.x *= ratio;
-        Map.center.y *= ratio;
-        Map.center.x += dx;
-        Map.center.y += dy;
+        this.center.x -= dx;
+        this.center.y -= dy;
+        this.center.x *= ratio;
+        this.center.y *= ratio;
+        this.center.x += dx;
+        this.center.y += dy;
       }
       updateBounds();
       Events.emit('change');
@@ -73,19 +73,19 @@ var Map = {};
   };
 
   Map.getPosition = function() {
-    return unproject(Map.center.x, Map.center.y, TILE_SIZE*Math.pow(2, Map.zoom));
+    return unproject(this.center.x, this.center.y, TILE_SIZE*Math.pow(2, this.zoom));
   };
 
   Map.setPosition = function(position) {
     var latitude  = clamp(parseFloat(position.latitude), -90, 90);
     var longitude = clamp(parseFloat(position.longitude), -180, 180);
-    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
-    Map.setCenter(center);
+    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, this.zoom));
+    this.setCenter(center);
   };
 
   Map.setCenter = function(center) {
-    if (Map.center.x !== center.x || Map.center.y !== center.y) {
-      Map.center = center;
+    if (this.center.x !== center.x || this.center.y !== center.y) {
+      this.center = center;
       updateBounds();
       Events.emit('change');
     }
@@ -93,8 +93,8 @@ var Map = {};
 
   Map.setRotation = function(rotation) {
     rotation = parseFloat(rotation)%360;
-    if (Map.rotation !== rotation) {
-      Map.rotation = rotation;
+    if (this.rotation !== rotation) {
+      this.rotation = rotation;
       updateBounds();
       Events.emit('change');
     }
@@ -102,8 +102,8 @@ var Map = {};
 
   Map.setTilt = function(tilt) {
     tilt = clamp(parseFloat(tilt), 0, 60);
-    if (Map.tilt !== tilt) {
-      Map.tilt = tilt;
+    if (this.tilt !== tilt) {
+      this.tilt = tilt;
       updateBounds();
       Events.emit('change');
     }

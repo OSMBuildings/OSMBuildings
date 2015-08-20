@@ -1,5 +1,5 @@
 
-var baseURL = baseURL || './';
+var baseURL = '../';
 
 function loadFile(url) {
   var xhr = new XMLHttpRequest();
