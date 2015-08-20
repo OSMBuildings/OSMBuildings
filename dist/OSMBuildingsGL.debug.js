@@ -1621,154 +1621,136 @@ var OSMBuildingsGL = function(containerId, options) {
   }
 };
 
-<<<<<<< HEAD
-(function() {
-=======
 OSMBuildingsGL.VERSION = '0.1.8';
 OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
 OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
->>>>>>> master
 
-  OSMBuildingsGL.VERSION = '0.1.8';
-  OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
-  OSMBuildingsGL.ATTRIBUTION_HTML = '&copy; <a href="http://osmbuildings.org">OSM Buildings</a>';
+OSMBuildingsGL.prototype = {
 
-  OSMBuildingsGL.prototype = {
+  setStyle: function(style) {
+    var color = style.color || style.wallColor;
+    if (color) {
+      // TODO: move this to Renderer
+      DEFAULT_COLOR = Color.parse(color).toRGBA();
+    }
+    return this;
+  },
 
-    setStyle: function(style) {
-      var color = style.color || style.wallColor;
-      if (color) {
-        // TODO: move this to Renderer
-        DEFAULT_COLOR = Color.parse(color).toRGBA();
-      }
-      return this;
-    },
+  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
+  addOBJ: function(url, position, options) {
+    return new OSMBuildingsGL.mesh.OBJ(url, position, options);
+  },
 
-    // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
-    addOBJ: function(url, position, options) {
-      return new OSMBuildingsGL.mesh.OBJ(url, position, options);
-    },
+  addGeoJSON: function(url, options) {
+    return new OSMBuildingsGL.mesh.GeoJSON(url, options);
+  },
 
-    addGeoJSON: function(url, options) {
-      return new OSMBuildingsGL.mesh.GeoJSON(url, options);
-    },
+  on: function(type, fn) {
+    Events.on(type, fn);
+    return this;
+  },
 
-    on: function(type, fn) {
-      Events.on(type, fn);
-      return this;
-    },
+  off: function(type, fn) {
+    Events.off(type, fn);
+    return this;
+  },
 
-    off: function(type, fn) {
-      Events.off(type, fn);
-      return this;
-    },
+  setDisabled: function(flag) {
+    Events.setDisabled(flag);
+    return this;
+  },
 
-    setDisabled: function(flag) {
-      Events.setDisabled(flag);
-      return this;
-    },
+  isDisabled: function() {
+    return Events.isDisabled();
+  },
 
-    isDisabled: function() {
-      return Events.isDisabled();
-    },
+  setZoom: function(zoom) {
+    Map.setZoom(zoom);
+    return this;
+  },
 
-    setZoom: function(zoom) {
-      Map.setZoom(zoom);
-      return this;
-    },
+  getZoom: function() {
+    return Map.zoom;
+  },
 
-    getZoom: function() {
-      return Map.zoom;
-    },
+  setPosition: function(position) {
+    Map.setPosition(position);
+    return this;
+  },
 
-    setPosition: function(position) {
-      Map.setPosition(position);
-      return this;
-    },
+  getPosition: function() {
+    return Map.position;
+  },
 
-    getPosition: function() {
-      return Map.position;
-    },
+  getBounds: function() {
+    var mapBounds = Map.bounds;
+    var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
+    var nw = unproject(mapBounds.minX, mapBounds.maxY, worldSize);
+    var se = unproject(mapBounds.maxX, mapBounds.minY, worldSize);
+    return {
+      n: nw.latitude,
+      w: nw.longitude,
+      s: se.latitude,
+      e: se.longitude
+    };
+  },
 
-    getBounds: function() {
-      var mapBounds = Map.bounds;
-      var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
-      var nw = unproject(mapBounds.minX, mapBounds.maxY, worldSize);
-      var se = unproject(mapBounds.maxX, mapBounds.minY, worldSize);
-      return {
-        n: nw.latitude,
-        w: nw.longitude,
-        s: se.latitude,
-        e: se.longitude
-      };
-    },
+  setSize: function(size) {
+    if (size.width !== WIDTH || size.height !== HEIGHT) {
+      GL.canvas.width = WIDTH = size.width;
+      GL.canvas.height = HEIGHT = size.height;
+      Events.emit('resize');
+    }
+    return this;
+  },
 
-    setSize: function(size) {
-      if (size.width !== WIDTH || size.height !== HEIGHT) {
-        GL.canvas.width = WIDTH = size.width;
-        GL.canvas.height = HEIGHT = size.height;
-        Events.emit('resize');
-      }
-      return this;
-    },
+  getSize: function() {
+    return { width: WIDTH, height: HEIGHT };
+  },
 
-    getSize: function() {
-      return { width: WIDTH, height: HEIGHT };
-    },
+  setRotation: function(rotation) {
+    Map.setRotation(rotation);
+    return this;
+  },
 
-    setRotation: function(rotation) {
-      Map.setRotation(rotation);
-      return this;
-    },
+  getRotation: function() {
+    return Map.rotation;
+  },
 
-    getRotation: function() {
-      return Map.rotation;
-    },
+  setTilt: function(tilt) {
+    Map.setTilt(tilt);
+    return this;
+  },
 
-    setTilt: function(tilt) {
-      Map.setTilt(tilt);
-      return this;
-    },
+  getTilt: function() {
+    return Map.tilt;
+  },
 
-    getTilt: function() {
-      return Map.tilt;
-    },
+  transform: function(latitude, longitude, elevation) {
+    var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
+    var mapCenter = Map.center;
 
-    transform: function(latitude, longitude, elevation) {
-      var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
-      var mapCenter = Map.center;
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 
-      var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
-
-      var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
-      var mMatrix = new glx.Matrix()
-        .translate(0, 0, elevation)
-        .scale(scale, scale, scale*0.7)
-        .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
-
-<<<<<<< HEAD
-      var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-=======
     var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
     var mMatrix = new glx.Matrix()
       .translate(0, 0, elevation)
       .scale(scale, scale, scale*0.7)
-      .translate(pos.x-mapCenter.x, pos.y-mapCenter.y, 0);
->>>>>>> master
+      .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
 
-      var t = glx.Matrix.transform(mvp);
-      return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
-    },
+    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 
-    destroy: function() {
-      glx.destroy(GL);
-      Renderer.destroy();
-      TileGrid.destroy();
-      DataGrid.destroy();
-    }
-  };
+    var t = glx.Matrix.transform(mvp);
+    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
+  },
 
-}());
+  destroy: function() {
+    glx.destroy(GL);
+    Renderer.destroy();
+    TileGrid.destroy();
+    DataGrid.destroy();
+  }
+};
 
 //*****************************************************************************
 
@@ -1813,19 +1795,11 @@ var Map = {};
       this.maxZoom = this.minZoom;
     }
 
-<<<<<<< HEAD
-    options = State.load(options);
-    this.setPosition(options.position || { latitude: 52.52000, longitude: 13.41000 });
-    this.setZoom(options.zoom || this.minZoom);
-    this.setRotation(options.rotation || 0);
-    this.setTilt(options.tilt || 0);
-=======
     var state = State.load();
     this.setPosition(state.position || options.position || { latitude: 52.52000, longitude: 13.41000 });
     this.setZoom(state.zoom || options.zoom || this.minZoom);
     this.setRotation(state.rotation || options.rotation || 0);
     this.setTilt(state.tilt || options.tilt || 0);
->>>>>>> master
 
     Events.on('resize', updateBounds);
 
@@ -1862,19 +1836,9 @@ var Map = {};
     }
   };
 
-<<<<<<< HEAD
   Map.setPosition = function(pos) {
     var latitude  = clamp(parseFloat(pos.latitude), -90, 90);
     var longitude = clamp(parseFloat(pos.longitude), -180, 180);
-=======
-  Map.getPosition = function() {
-    return unproject(this.center.x, this.center.y, TILE_SIZE*Math.pow(2, this.zoom));
-  };
-
-  Map.setPosition = function(position) {
-    var latitude  = clamp(parseFloat(position.latitude), -90, 90);
-    var longitude = clamp(parseFloat(position.longitude), -180, 180);
->>>>>>> master
     var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, this.zoom));
     this.setCenter(center);
   };
@@ -1882,10 +1846,7 @@ var Map = {};
   Map.setCenter = function(center) {
     if (this.center.x !== center.x || this.center.y !== center.y) {
       this.center = center;
-<<<<<<< HEAD
       this.position = unproject(center.x, center.y, TILE_SIZE*Math.pow(2, this.zoom));
-=======
->>>>>>> master
       updateBounds();
       Events.emit('change');
     }
@@ -2315,14 +2276,10 @@ var DATA_SRC = 'http://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json';
 
 var DEFAULT_HEIGHT = 10;
 
-<<<<<<< HEAD
 var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
 
 var FOG_RADIUS = 7500;
 var FOG_COLOR = Color.parse('#f0f8ff').toRGBA(true);
-=======
-var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA();
->>>>>>> master
 
 var STYLE = {
   zoomAlpha: {
@@ -2481,11 +2438,7 @@ function relax(callback, startIndex, dataLength, chunkSize, delay) {
   }
 }
 
-<<<<<<< HEAD
 var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform mat4 uFogMatrix;\n//uniform vec4 uFogOrigin;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nvarying vec3 vColor;\nfloat fogBlur = uFogRadius * 0.95;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  //*** light intensity, defined by light direction on surface ***\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  vec3 color = aColor + uLightColor * lightIntensity;\n  //*** vertical shading ***\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog ***\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//  float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform mat4 uFogMatrix;\n//uniform mat4 uFogOrigin;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = uFogRadius * 0.95;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  vTexCoord = aTexCoord;\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
-=======
-var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"}};
->>>>>>> master
 
 
 
@@ -2839,7 +2792,7 @@ var DataGrid = {};
 
   var
     source,
-    isPlanned,
+    isDelayed,
 
     zoom,
     minX,
@@ -2858,14 +2811,6 @@ var DataGrid = {};
       return;
     }
 
-<<<<<<< HEAD
-    if (isPlanned) {
-      clearTimeout(isPlanned);
-    }
-
-    isPlanned = setTimeout(function() {
-      isPlanned = null;
-=======
     // strategy: start loading in {delay} after movement ends, skip any attempts until then
 
     if (isDelayed) {
@@ -2874,7 +2819,6 @@ var DataGrid = {};
 
     isDelayed = setTimeout(function() {
       isDelayed = null;
->>>>>>> master
       loadTiles();
     }, delay);
   }
@@ -3003,7 +2947,7 @@ var DataGrid = {};
   };
 
   DataGrid.destroy = function() {
-    clearTimeout(isPlanned);
+    clearTimeout(isDelayed);
     for (var key in tiles) {
       tiles[key].destroy();
     }
@@ -3448,13 +3392,8 @@ mesh.OBJ = (function() {
       for (var i = 0, il = items.length; i<il; i++) {
         item = items[i];
 
-<<<<<<< HEAD
         this._vertices.push.apply(this._vertices, item.vertices);
         this._normals.push.apply(this._normals, item.normals);
-=======
-    var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
-    mMatrix.scale(scale, scale, scale*0.70);
->>>>>>> master
 
         color = this._color || item.color || DEFAULT_COLOR;
         idColor = Interaction.idToColor(this._id || item.id);
