@@ -24,12 +24,16 @@ var DataGrid = {};
       return;
     }
 
-    if (!isDelayed) {
-      isDelayed = setTimeout(function() {
-        isDelayed = null;
-        loadTiles();
-      }, delay);
+    // strategy: start loading in {delay} after movement ends, skip any attempts until then
+
+    if (isDelayed) {
+      clearTimeout(isDelayed);
     }
+
+    isDelayed = setTimeout(function() {
+      isDelayed = null;
+      loadTiles();
+    }, delay);
   }
 
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
