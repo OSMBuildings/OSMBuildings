@@ -45,7 +45,7 @@ var GeoJSONMesh = function(url, options) {
     }
 
     var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
-    mMatrix.scale(scale, scale, scale*0.65);
+    mMatrix.scale(scale, scale, scale*0.70);
 
     mMatrix.rotateZ(-this.rotation);
 
