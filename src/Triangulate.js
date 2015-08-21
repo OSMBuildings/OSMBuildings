@@ -24,8 +24,8 @@ var Triangulate = {};
   }
 
   Triangulate.quad = function(tris, a, b, c, d) {
-    Triangulate.addTriangle(tris, a, b, c);
-    Triangulate.addTriangle(tris, b, d, c);
+    this.addTriangle(tris, a, b, c);
+    this.addTriangle(tris, b, d, c);
   };
 
   Triangulate.circle = function(tris, center, radius, z) {
@@ -33,7 +33,7 @@ var Triangulate = {};
     for (var i = 0; i < LON_SEGMENTS; i++) {
       u = i/LON_SEGMENTS;
       v = (i+1)/LON_SEGMENTS;
-      Triangulate.addTriangle(
+      this.addTriangle(
         tris,
         [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), z ],
         [ center[0],                                  center[1],                                  z ],
@@ -45,7 +45,7 @@ var Triangulate = {};
   Triangulate.polygon = function(tris, polygon, z) {
     var triangles = earcut(polygon);
     for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
-      Triangulate.addTriangle(
+      this.addTriangle(
         tris,
         [ triangles[t  ][0], triangles[t  ][1], z ],
         [ triangles[t+1][0], triangles[t+1][1], z ],
@@ -62,7 +62,7 @@ var Triangulate = {};
 //  { r:255, g:0, b:0 }
 
     if (ringLength <= 4) { // 3: a triangle
-      Triangulate.addTriangle(
+      this.addTriangle(
         tris,
         ring[0],
         ring[2],
@@ -91,7 +91,7 @@ var Triangulate = {};
 
       triangles = earcut(polygon);
       for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
-        Triangulate.addTriangle(
+        this.addTriangle(
           tris,
           [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
           [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
@@ -104,7 +104,7 @@ var Triangulate = {};
 
     triangles = earcut(polygon);
     for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
-      Triangulate.addTriangle(
+      this.addTriangle(
         tris,
         [ triangles[t  ][0], triangles[t  ][1], triangles[t  ][2] ],
         [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
@@ -114,42 +114,76 @@ var Triangulate = {};
   };
 
   Triangulate.cylinder = function(tris, center, radiusBottom, radiusTop, minHeight, height) {
-    var u, v;
-    var sinPhi1, cosPhi1;
-    var sinPhi2, cosPhi2;
+    var
+      currAngle, nextAngle,
+      currSin, currCos,
+      nextSin, nextCos,
+      num = LON_SEGMENTS,
+      doublePI = Math.PI*2;
 
-    for (var i = 0; i < LON_SEGMENTS; i++) {
-      u = i    /LON_SEGMENTS;
-      v = (i+1)/LON_SEGMENTS;
+    for (var i = 0; i < num; i++) {
+      currAngle = ( i   /num) * doublePI;
+      nextAngle = ((i+1)/num) * doublePI;
 
-      sinPhi1 = Math.sin(u*Math.PI*2);
-      cosPhi1 = Math.cos(u*Math.PI*2);
+      currSin = Math.sin(currAngle);
+      currCos = Math.cos(currAngle);
 
-      sinPhi2 = Math.sin(v*Math.PI*2);
-      cosPhi2 = Math.cos(v*Math.PI*2);
+      nextSin = Math.sin(nextAngle);
+      nextCos = Math.cos(nextAngle);
 
-      Triangulate.addTriangle(
+      this.addTriangle(
         tris,
-        [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ],
-        [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
-        [ center[0] + radiusBottom*sinPhi2, center[1] + radiusBottom*cosPhi2, minHeight ]
+        [ center[0] + radiusBottom*currSin, center[1] + radiusBottom*currCos, minHeight ],
+        [ center[0] + radiusTop   *nextSin, center[1] + radiusTop   *nextCos, height    ],
+        [ center[0] + radiusBottom*nextSin, center[1] + radiusBottom*nextCos, minHeight ]
       );
 
       if (radiusTop !== 0) {
-        Triangulate.addTriangle(
+        this.addTriangle(
           tris,
-          [ center[0] + radiusTop   *sinPhi1, center[1] + radiusTop   *cosPhi1, height    ],
-          [ center[0] + radiusTop   *sinPhi2, center[1] + radiusTop   *cosPhi2, height    ],
-          [ center[0] + radiusBottom*sinPhi1, center[1] + radiusBottom*cosPhi1, minHeight ]
+          [ center[0] + radiusTop   *currSin, center[1] + radiusTop   *currCos, height    ],
+          [ center[0] + radiusTop   *nextSin, center[1] + radiusTop   *nextCos, height    ],
+          [ center[0] + radiusBottom*currSin, center[1] + radiusBottom*currCos, minHeight ]
         );
       }
+    }
+  };
+
+  Triangulate.dome = function(tris, center, radius, minHeight, height) {
+    var
+      currAngle, nextAngle,
+      currSin, currCos,
+      nextSin, nextCos,
+      currRadius, nextRadius,
+      currY, nextY,
+      h = (height-minHeight),
+      num = LAT_SEGMENTS/2,
+      halfPI = Math.PI/2;
+
+    for (var i = 0; i < num; i++) {
+      currAngle = ( i   /num) * halfPI - halfPI;
+      nextAngle = ((i+1)/num) * halfPI - halfPI;
+
+      currSin = Math.sin(currAngle);
+      currCos = Math.cos(currAngle);
+
+      nextSin = Math.sin(nextAngle);
+      nextCos = Math.cos(nextAngle);
+
+      currRadius = currCos*radius;
+      nextRadius = nextCos*radius;
+
+      currY = minHeight - currSin*h;
+      nextY = minHeight - nextSin*h;
+
+      this.cylinder(tris, center, nextRadius, currRadius, nextY, currY);
     }
   };
 
   Triangulate.pyramid = function(tris, polygon, center, minHeight, height) {
     polygon = polygon[0];
     for (var i = 0, il = polygon.length-1; i < il; i++) {
-      Triangulate.addTriangle(
+      this.addTriangle(
         tris,
         [ polygon[i  ][0], polygon[i  ][1], minHeight ],
         [ polygon[i+1][0], polygon[i+1][1], minHeight ],
@@ -157,117 +191,6 @@ var Triangulate = {};
       );
     }
   };
-
-  Triangulate.dome = function(tris, center, radius, minHeight, height) {
-    var
-      sin = Math.sin,
-      cos = Math.cos,
-      PI = Math.PI,
-res = { vertices: [], texCoords: [] },
-      azimuth1, x1, y1,
-      azimuth2, x2, y2,
-      polar1,
-      polar2,
-      A, B, C, D,
-      tcLeft,
-      tcRight,
-      tcTop,
-      tcBottom,
-      tcs,
-      halfLatSegments = LAT_SEGMENTS/2;
-
-    for (var i = 0, j; i < LON_SEGMENTS; i++) {
-      tcLeft = i/LON_SEGMENTS;
-      azimuth1 = tcLeft*2*PI; // convert to radiants [0...2*PI]
-      x1 = cos(azimuth1)*radius;
-      y1 = sin(azimuth1)*radius;
-
-      tcRight = (i+1)/LON_SEGMENTS;
-      azimuth2 = tcRight*2*PI;
-      x2 = cos(azimuth2)*radius;
-      y2 = sin(azimuth2)*radius;
-
-      for (j = 0; j < halfLatSegments; j++) {
-        polar1 = j*PI/(halfLatSegments*2); //convert to radiants in [0..1/2*PI]
-        polar2 = (j+1)*PI/(halfLatSegments*2);
-
-        A = [x1*cos(polar1), y1*cos(polar1), radius*sin(polar1)];
-        B = [x2*cos(polar1), y2*cos(polar1), radius*sin(polar1)];
-        C = [x2*cos(polar2), y2*cos(polar2), radius*sin(polar2)];
-        D = [x1*cos(polar2), y1*cos(polar2), radius*sin(polar2)];
-
-        res.vertices.push.apply(res.vertices, A);
-        res.vertices.push.apply(res.vertices, B);
-        res.vertices.push.apply(res.vertices, C);
-        res.vertices.push.apply(res.vertices, A);
-        res.vertices.push.apply(res.vertices, C);
-        res.vertices.push.apply(res.vertices, D);
-
-        tcTop    = 1 - (j+1)/halfLatSegments;
-        tcBottom = 1 - j/halfLatSegments;
-
-        res.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
-      }
-    }
-
-    return res;
-  };
-
-  Triangulate.sphere = function(tris, center, radius, minHeight, height) {
-    var theta, sinTheta, cosTheta;
-
-    for (var i = 0; i < latSegments; i++) {
-      theta = i * Math.PI / LAT_SEGMENTS;
-      sinTheta = Math.sin(theta);
-      cosTheta = Math.cos(theta);
-      Triangulate.cylinder(tris, center, radiusBottom, radiusTop, minHeight, height);
-  //  x = cosPhi * sinTheta;
-  //  y = cosTheta;
-  //  z = sinPhi * sinTheta;
-  //  vertexPos.push(x*radius, y*radius, z*radius);
-    }
-  };
-
-//Triangulate._sphere = function(radius) {
-//  var lat = 0, lon = 0;
-//  var maxLat = 10, maxLon = 10;
-//
-//  var vertexPos = [];
-//  var indexData = [];
-//
-//  var theta, sinTheta, cosTheta;
-//  var phi, sinPhi, cosPhi;
-//  var x, y, z;
-//
-//  for (lat = 0; lat < maxLat; lat++) {
-//    theta = lat * Math.PI / maxLat;
-//    sinTheta = Math.sin(theta);
-//    cosTheta = Math.cos(theta);
-//
-//    for (lon = 0; lon <= maxLon; lon++) {
-//      phi = lon * 2 * Math.PI / maxLon;
-//      sinPhi = Math.sin(phi);
-//      cosPhi = Math.cos(phi);
-//
-//      x = cosPhi * sinTheta;
-//      y = cosTheta;
-//      z = sinPhi * sinTheta;
-//
-//      vertexPos.push(radius * x, radius * y, radius * z);
-//
-//      var first = (lat * (maxLon + 1)) + lon;
-//      var second = first + maxLon + 1;
-//
-//      indexData.push(first);
-//      indexData.push(second);
-//      indexData.push(first + 1);
-//
-//      indexData.push(second);
-//      indexData.push(second + 1);
-//      indexData.push(first + 1);
-//    }
-//  }
-//};
 
   Triangulate.extrusion = function(tris, polygon, minHeight, height) {
     var
@@ -288,7 +211,7 @@ res = { vertices: [], texCoords: [] },
         b = ring[r+1];
         z0 = minHeight;
         z1 = height;
-        Triangulate.quad(
+        this.quad(
           tris,
           [ a[0], a[1], z0 ],
           [ b[0], b[1], z0 ],
