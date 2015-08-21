@@ -245,9 +245,12 @@ var GeoJSON = {};
           Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
           break;
 
+        case 'dome':
+          Triangulate.dome(tris, center, radius, item.minHeight, item.height);
+          break;
+
         case 'sphere':
           Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-          //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
           break;
 
         case 'pyramid':
@@ -265,20 +268,19 @@ var GeoJSON = {};
         normals: tris.normals
       });
 
-      tris = { vertices: [], normals: [] };
+      tris = { vertices:[], normals:[] };
 
       switch (item.roofShape) {
         case 'cone':
-          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height + item.roofHeight);
+          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
           break;
 
         case 'dome':
-          Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height + item.roofHeight);
-          Triangulate.circle(tris, center, radius/2, item.height + item.roofHeight);
+          Triangulate.dome(tris, center, radius, item.height, item.height+item.roofHeight);
           break;
 
         case 'pyramid':
-          Triangulate.pyramid(tris, polygon, center, item.height, item.height + item.roofHeight);
+          Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
           break;
 
         default:
