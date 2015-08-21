@@ -2674,62 +2674,6 @@
 	    }
 	  };
 
-	  Triangulate.sphere = function(tris, center, radius, minHeight, height) {
-	    var theta, sinTheta, cosTheta;
-
-	    for (var i = 0; i < latSegments; i++) {
-	      theta = i * Math.PI / LAT_SEGMENTS;
-	      sinTheta = Math.sin(theta);
-	      cosTheta = Math.cos(theta);
-	      this.cylinder(tris, center, radiusBottom, radiusTop, minHeight, height);
-	  //  x = cosPhi * sinTheta;
-	  //  y = cosTheta;
-	  //  z = sinPhi * sinTheta;
-	  //  vertexPos.push(x*radius, y*radius, z*radius);
-	    }
-	  };
-
-	//Triangulate._sphere = function(radius) {
-	//  var lat = 0, lon = 0;
-	//  var maxLat = 10, maxLon = 10;
-	//
-	//  var vertexPos = [];
-	//  var indexData = [];
-	//
-	//  var theta, sinTheta, cosTheta;
-	//  var phi, sinPhi, cosPhi;
-	//  var x, y, z;
-	//
-	//  for (lat = 0; lat < maxLat; lat++) {
-	//    theta = lat * Math.PI / maxLat;
-	//    sinTheta = Math.sin(theta);
-	//    cosTheta = Math.cos(theta);
-	//
-	//    for (lon = 0; lon <= maxLon; lon++) {
-	//      phi = lon * 2 * Math.PI / maxLon;
-	//      sinPhi = Math.sin(phi);
-	//      cosPhi = Math.cos(phi);
-	//
-	//      x = cosPhi * sinTheta;
-	//      y = cosTheta;
-	//      z = sinPhi * sinTheta;
-	//
-	//      vertexPos.push(radius * x, radius * y, radius * z);
-	//
-	//      var first = (lat * (maxLon + 1)) + lon;
-	//      var second = first + maxLon + 1;
-	//
-	//      indexData.push(first);
-	//      indexData.push(second);
-	//      indexData.push(first + 1);
-	//
-	//      indexData.push(second);
-	//      indexData.push(second + 1);
-	//      indexData.push(first + 1);
-	//    }
-	//  }
-	//};
-
 	  Triangulate.extrusion = function(tris, polygon, minHeight, height) {
 	    var
 	      ring, last,
