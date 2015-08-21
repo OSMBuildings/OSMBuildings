@@ -4,6 +4,7 @@ var SkyDome = {};
 (function() {
 
   var shader;
+
   var vertexBuffer;
   var texCoordBuffer;
   var texture;

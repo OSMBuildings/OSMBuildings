@@ -2593,22 +2593,6 @@ var Triangulate = {};
 
   Triangulate.dome = function(tris, center, radius, minHeight, height) {
     var
-<<<<<<< HEAD
-      sin = Math.sin,
-      cos = Math.cos,
-      PI = Math.PI,
-      azimuth1, x1, y1,
-      azimuth2, x2, y2,
-      polar1,
-      polar2,
-      A, B, C, D,
-      tcLeft,
-      tcRight,
-      tcTop,
-      tcBottom,
-      tcs,
-      halfLatSegments = LAT_SEGMENTS/2;
-=======
       currAngle, nextAngle,
       currSin, currCos,
       nextSin, nextCos,
@@ -2617,7 +2601,6 @@ var Triangulate = {};
       h = (height-minHeight),
       num = LAT_SEGMENTS/2,
       halfPI = Math.PI/2;
->>>>>>> master
 
     for (var i = 0; i < num; i++) {
       currAngle = ( i   /num) * halfPI - halfPI;
@@ -2632,25 +2615,10 @@ var Triangulate = {};
       currRadius = currCos*radius;
       nextRadius = nextCos*radius;
 
-<<<<<<< HEAD
-        tris.vertices.push.apply(tris.vertices, A);
-        tris.vertices.push.apply(tris.vertices, B);
-        tris.vertices.push.apply(tris.vertices, C);
-        tris.vertices.push.apply(tris.vertices, A);
-        tris.vertices.push.apply(tris.vertices, C);
-        tris.vertices.push.apply(tris.vertices, D);
-
-        tcTop    = 1 - (j+1)/halfLatSegments;
-        tcBottom = 1 - j/halfLatSegments;
-
-        tris.texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
-      }
-=======
       currY = minHeight - currSin*h;
       nextY = minHeight - nextSin*h;
 
       this.cylinder(tris, center, nextRadius, currRadius, nextY, currY);
->>>>>>> master
     }
   };
 
@@ -3665,24 +3633,16 @@ var GeoJSON = {};
           Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
           break;
 
-<<<<<<< HEAD
         case 'cone':
           Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
           break;
-=======
-          case 'dome':
-            Triangulate.dome(tris, center, radius, item.minHeight, item.height);
-            break;
 
-          case 'sphere':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
-            break;
->>>>>>> master
+        case 'dome':
+          Triangulate.dome(tris, center, radius, item.minHeight, item.height);
+          break;
 
         case 'sphere':
           Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-          //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
           break;
 
         case 'pyramid':
@@ -3700,26 +3660,19 @@ var GeoJSON = {};
         normals: tris.normals
       });
 
-      tris = { vertices: [], normals: [] };
+      tris = { vertices:[], normals:[] };
 
-<<<<<<< HEAD
       switch (item.roofShape) {
         case 'cone':
-          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height + item.roofHeight);
+          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
           break;
-=======
-          case 'dome':
-            Triangulate.dome(tris, center, radius, item.height, item.height+item.roofHeight);
-            break;
->>>>>>> master
 
         case 'dome':
-          Triangulate.cylinder(tris, center, radius, radius/2, item.height, item.height + item.roofHeight);
-          Triangulate.circle(tris, center, radius/2, item.height + item.roofHeight);
+          Triangulate.dome(tris, center, radius, item.height, item.height+item.roofHeight);
           break;
 
         case 'pyramid':
-          Triangulate.pyramid(tris, polygon, center, item.height, item.height + item.roofHeight);
+          Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
           break;
 
         default:
@@ -4245,34 +4198,11 @@ var SkyDome = {};
 
 (function() {
 
-<<<<<<< HEAD
-=======
-  var radius = 100;
-
->>>>>>> master
   var shader;
-
-  var vertices = [];
-  var texCoords = [];
-
-<<<<<<< HEAD
-  var tris;
-=======
-  var tris = createDome(radius);
->>>>>>> master
-
   var vertexBuffer;
   var texCoordBuffer;
   var texture;
   var textureIsLoaded;
-
-<<<<<<< HEAD
-=======
-  function getScale() {
-    var screenRadius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT);
-    var scale = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
-    return screenRadius * scale / radius;
-  }
 
   function createDome(radius) {
     var
@@ -4290,8 +4220,7 @@ var SkyDome = {};
       tcLeft,
       tcRight,
       tcTop,
-      tcBottom,
-      tcs;
+      tcBottom;
 
     for (var i = 0, j; i < lonSegments; i++) {
       tcLeft = i/lonSegments;
@@ -4330,12 +4259,10 @@ var SkyDome = {};
     return res;
   }
 
->>>>>>> master
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
 
-    tris = { vertices: [], texCoords: [] };
-    Triangulate.dome(tris, [0, 0], Renderer.fogRadius, 0, Renderer.fogRadius/2);
+    var tris = createDome(Renderer.fogRadius);
 
     shader = new glx.Shader({
       vertexShader: SHADERS.skydome.vertex,
