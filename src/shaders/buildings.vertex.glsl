@@ -5,6 +5,7 @@
 attribute vec4 aPosition;
 attribute vec3 aNormal;
 attribute vec3 aColor;
+attribute vec3 aIDColor;
 
 uniform mat4 uMatrix;
 uniform mat3 uNormalTransform;
@@ -14,6 +15,8 @@ uniform mat4 uFogMatrix;
 //uniform vec4 uFogOrigin;
 uniform vec3 uFogColor;
 uniform float uFogRadius;
+uniform vec3 uHighlightColor;
+uniform vec3 uHighlightID;
 
 varying vec3 vColor;
 
@@ -24,10 +27,19 @@ float gradientStrength = 0.4;
 void main() {
   vec4 glPosition = vec4(uMatrix * aPosition);
 
+  //*** highlight object ***
+
+//  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
+//    vec3 color = mix(aColor, uHighlightColor, 0.5);
+//  } else {
+//    vec3 color = aColor;
+//  }
+    vec3 color = aColor;
+
   //*** light intensity, defined by light direction on surface ***
   vec3 transformedNormal = aNormal * uNormalTransform;
   float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
-  vec3 color = aColor + uLightColor * lightIntensity;
+  color = color + uLightColor * lightIntensity;
 
   //*** vertical shading ***
   float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);

@@ -193,15 +193,12 @@
     label.style.top = Math.round(pos.y) + 'px';
   });
 
-//  map.on('pointermove', function(e) {
-//    console.log('over item id', e.target.id);
-//  });
-
-//  map.on('pointerdown', function(e) {
-//    if (e.target.id === selectedItemId) {
-//      return;
-//    }
-//  });
+  map.on('pointermove', function(e) {
+    if (e.target) {
+//    console.log('item id', e.target.id);
+      map.highlight(e.target.id, '#f08000');
+    }
+  });
 
   //*************************************************************************
 

@@ -48,12 +48,11 @@ OSMBuildingsGL.prototype = {
     var color = style.color || style.wallColor;
     if (color) {
       // TODO: move this to Renderer
-      DEFAULT_COLOR = Color.parse(color).toRGBA();
+      DEFAULT_COLOR = Color.parse(color).toRGBA(true);
     }
     return this;
   },
 
-  // WARNING: does not return a ref to the mesh anymore. Critical for interacting with added items
   addOBJ: function(url, position, options) {
     return new OSMBuildingsGL.mesh.OBJ(url, position, options);
   },
@@ -159,6 +158,11 @@ OSMBuildingsGL.prototype = {
 
     var t = glx.Matrix.transform(mvp);
     return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
+  },
+
+  highlight: function(id, color) {
+    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
+    Buildings.highlightID = Interaction.idToColor(id);
   },
 
   destroy: function() {

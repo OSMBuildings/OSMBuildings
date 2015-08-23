@@ -9,8 +9,8 @@ var Buildings = {};
     shader = new glx.Shader({
       vertexShader: SHADERS.buildings.vertex,
       fragmentShader: SHADERS.buildings.fragment,
-      attributes: ["aPosition", "aColor", "aNormal"],
-      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogRadius", "uFogColor"]
+      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
+      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
     });
 
     this.showBackfaces = options.showBackfaces;
@@ -51,6 +51,16 @@ var Buildings = {};
     GL.uniform1f(shader.uniforms.uFogRadius, fogRadius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
+    if (!this.highlightColor) {
+      this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
+    }
+    GL.uniform3fv(shader.uniforms.uHighlightColor, [this.highlightColor.r, this.highlightColor.g, this.highlightColor.b]);
+
+    if (!this.highlightID) {
+      this.highlightID = { r:0, g:0, b:0 };
+    }
+    GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r/255, this.highlightID.g/255, this.highlightID.b/255]);
+
     var
       dataItems = data.Index.items,
       item,
@@ -74,6 +84,12 @@ var Buildings = {};
 
       item.colorBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.FLOAT, false, 0, 0);
+
+      item.idColorBuffer.enable();
+      GL.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
+
+//      item.visibilityBuffer.enable();
+//      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

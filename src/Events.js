@@ -44,7 +44,10 @@ var Events = {};
     pointerIsDown = true;
 
     Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+      var payload = { x: e.clientX, y: e.clientY };
+      if (targetID) {
+        payload.target = { id: targetID };
+      }
       Events.emit('pointerdown', payload);
     });
   }
@@ -66,7 +69,10 @@ var Events = {};
     }
 
     Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+      var payload = { x: e.clientX, y: e.clientY };
+      if (targetID) {
+        payload.target = { id: targetID };
+      }
       Events.emit('pointermove', payload);
     });
   }
@@ -92,7 +98,10 @@ var Events = {};
     pointerIsDown = false;
 
     Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+      var payload = { x: e.clientX, y: e.clientY };
+      if (targetID) {
+        payload.target = { id: targetID };
+      }
       Events.emit('pointerup', payload);
     });
   }
@@ -136,7 +145,10 @@ var Events = {};
     startX = prevX = e.clientX;
     startY = prevY = e.clientY;
 
-    var payload = { x:e.clientX, y: e.clientY };
+    var payload = { x: e.clientX, y: e.clientY };
+    if (targetID) {
+      payload.target = { id: targetID };
+    }
     Events.emit('pointerdown', payload);
   }
 
@@ -154,7 +166,10 @@ var Events = {};
     prevX = e.clientX;
     prevY = e.clientY;
 
-    var payload = { x:e.clientX, y: e.clientY };
+    var payload = { x: e.clientX, y: e.clientY };
+    if (targetID) {
+      payload.target = { id: targetID };
+    }
     Events.emit('pointermove', payload);
   }
 
@@ -171,7 +186,10 @@ var Events = {};
       moveMap(e);
     }
 
-    var payload = { x:e.clientX, y: e.clientY };
+    var payload = { x: e.clientX, y: e.clientY };
+    if (targetID) {
+      payload.target = { id: targetID };
+    }
     Events.emit('pointerup', payload);
   }
 
