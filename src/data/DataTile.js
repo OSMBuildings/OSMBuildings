@@ -8,7 +8,7 @@ var DataTile = function(tileX, tileY, zoom) {
 DataTile.prototype = {
 
   load: function(url) {
-    this.mesh = new OSMBuildingsGL.mesh.GeoJSON(url);
+    this.mesh = new mesh.GeoJSON(url);
   },
 
   destroy: function() {

@@ -74,9 +74,10 @@ mesh.GeoJSON = (function() {
 
         color = this._color || item.color || DEFAULT_COLOR;
         idColor = Interaction.idToColor(this._id || item.id);
+
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
           this._colors.push(color.r, color.g, color.b);
-          this._idColors.push(idColor.r, idColor.g, idColor.b);
+          this._idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
         }
       }
     },

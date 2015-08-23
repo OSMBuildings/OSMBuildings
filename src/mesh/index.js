@@ -1,5 +1,5 @@
 
-var mesh = OSMBuildingsGL.mesh = {};
+var mesh = {};
 
 //mesh._replaceItems: function() {
 //  if (this.replaces.length) {

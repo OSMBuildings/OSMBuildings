@@ -29,12 +29,11 @@ void main() {
 
   //*** highlight object ***
 
-//  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
-//    vec3 color = mix(aColor, uHighlightColor, 0.5);
-//  } else {
-//    vec3 color = aColor;
-//  }
-    vec3 color = aColor;
+  vec3 color = aColor;
+
+  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
+    color = mix(aColor, uHighlightColor, 0.5);
+  }
 
   //*** light intensity, defined by light direction on surface ***
   vec3 transformedNormal = aNormal * uNormalTransform;

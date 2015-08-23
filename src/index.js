@@ -54,11 +54,11 @@ OSMBuildingsGL.prototype = {
   },
 
   addOBJ: function(url, position, options) {
-    return new OSMBuildingsGL.mesh.OBJ(url, position, options);
+    return new mesh.OBJ(url, position, options);
   },
 
   addGeoJSON: function(url, options) {
-    return new OSMBuildingsGL.mesh.GeoJSON(url, options);
+    return new mesh.GeoJSON(url, options);
   },
 
   on: function(type, fn) {
