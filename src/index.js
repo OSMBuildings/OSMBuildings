@@ -48,7 +48,7 @@ OSMBuildingsGL.prototype = {
     var color = style.color || style.wallColor;
     if (color) {
       // TODO: move this to Renderer
-      DEFAULT_COLOR = Color.parse(color).toRGBA();
+      DEFAULT_COLOR = Color.parse(color).toRGBA(true);
     }
     return this;
   },
@@ -61,11 +61,6 @@ OSMBuildingsGL.prototype = {
   removeModifier: function(fn) {
     Data.removeModifier(fn);
     return this;
-  },
-
-  // DEPRECATED
-  addMesh: function(url, options) {
-    console.warn('Method addMesh() is deprecated and will be removed soon. Use addGeoJSON() or addOBJ() instead.');
   },
 
   addOBJ: function(url, options) {
@@ -180,6 +175,10 @@ OSMBuildingsGL.prototype = {
     Renderer.destroy();
     TileGrid.destroy();
     DataGrid.destroy();
+  },
+
+  highlight: function(id) {
+    Buildings.highlightID = Interaction.idToColor(id);
   }
 };
 

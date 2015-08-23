@@ -31,10 +31,13 @@ var Buildings = {};
     GL.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
     GL.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
-    GL.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
-
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
+
+    if (!this.highlightID) {
+      this.highlightID = { r:0, g:0, b:0 };
+    }
+    GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r/255, this.highlightID.g/255, this.highlightID.b/255]);
 
     var
       dataItems = Data.items,
@@ -58,7 +61,10 @@ var Buildings = {};
       GL.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.colorBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
+      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.FLOAT, false, 0, 0);
+
+      item.idColorBuffer.enable();
+      GL.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       item.visibilityBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);

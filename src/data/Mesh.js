@@ -10,7 +10,7 @@ var Mesh = function(url, options) {
   this.rotation  = options.rotation  || 0;
   this.elevation = options.elevation || 0;
   if (options.color) {
-    this.color = Color.parse(options.color).toRGBA();
+    this.color = Color.parse(options.color).toRGBA(true);
   }
   this.replaces  = options.replaces || [];
 
@@ -38,7 +38,7 @@ var Mesh = function(url, options) {
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
           vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
           normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
-          idColors.push(idColor.r, idColor.g, idColor.b);
+          idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
         }
 
         delete item.vertices;
@@ -49,7 +49,7 @@ var Mesh = function(url, options) {
 
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
-      this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(idColors));
 
       this.modify();
 
@@ -90,7 +90,7 @@ var Mesh = function(url, options) {
         }
       }
 
-      this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
+      this.colorBuffer = new glx.Buffer(3, new Float32Array(newColors));
       this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
 
       newColors = null;

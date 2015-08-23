@@ -13,8 +13,8 @@
       "uniforms": ["uMatrix", "uTileImage"]
     },
     "buildings": {
-      "attributes": ["aPosition", "aColor", "aNormal", "aHidden"],
-      "uniforms": ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection"]
+      "attributes": ["aPosition", "aColor", "aNormal", "aHidden", "aIDColor"],
+      "uniforms": ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uHighlightID"]
     }
   },
 

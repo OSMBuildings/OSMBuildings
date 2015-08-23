@@ -205,9 +205,11 @@
 //    console.log('over item id', e.target.id);
 //  });
 
-  map.on('pointerdown', function(e) {
-console.log('clicked item id', e.target.id);
+  map.on('pointermove', function(e) {
+console.log('item id', e.target.id);
+map.highlight(e.target.id);
 return;
+
     if (e.target.id === selectedItemId) {
       return;
     }

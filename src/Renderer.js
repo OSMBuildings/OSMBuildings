@@ -14,12 +14,7 @@ var Renderer = {
     this.resize();
     Events.on('resize', this.resize.bind(this));
 
-    var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
-    this.backgroundColor = {
-      r: color.r/255,
-      g: color.g/255,
-      b: color.b/255
-    };
+    this.backgroundColor = Color.parse(options.backgroundColor || '#cccccc').toRGBA(true);
 
     GL.cullFace(GL.BACK);
     GL.enable(GL.CULL_FACE);
