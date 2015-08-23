@@ -149,33 +149,10 @@
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
 
-  function blend(a, b) {
-    return (a*0.5 + b*0.5) <<0;
-  };
-
-  var selectedItemId;
-  var highlightItem;
-
-  map.on('pointerdown', function(e) {
-    if (e.target.id === selectedItemId) {
-      return;
+  map.on('pointermove', function(e) {
+    if (e.target) {
+      map.highlight(e.target.id, '#f08000');
     }
-
-    map.removeModifier(highlightItem);
-
-    console.log('selected item id', e.target.id);
-
-    highlightItem = function(item) {
-      if (item.id === e.target.id) {
-        item.color = {
-          r: blend(240, item.color.r),
-          g: blend(128, item.color.g),
-          b: blend(0, item.color.b)
-        };
-      }
-    };
-
-    map.addModifier(highlightItem);
   });
 
   //***************************************************************************

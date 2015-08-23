@@ -11,6 +11,7 @@ var DATA_SRC = 'http://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json';
 var DEFAULT_HEIGHT = 10;
 
 var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
+var DEFAULT_HIGHLIGHT_COLOR = Color.parse('#f08000').toRGBA(true);
 
 var document = global.document;
 

@@ -177,7 +177,8 @@ OSMBuildingsGL.prototype = {
     DataGrid.destroy();
   },
 
-  highlight: function(id) {
+  highlight: function(id, color) {
+    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
     Buildings.highlightID = Interaction.idToColor(id);
   }
 };

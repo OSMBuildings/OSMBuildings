@@ -1677,7 +1677,7 @@
 	    var color = style.color || style.wallColor;
 	    if (color) {
 	      // TODO: move this to Renderer
-	      DEFAULT_COLOR = Color.parse(color).toRGBA();
+	      DEFAULT_COLOR = Color.parse(color).toRGBA(true);
 	    }
 	    return this;
 	  },
@@ -1690,11 +1690,6 @@
 	  removeModifier: function(fn) {
 	    Data.removeModifier(fn);
 	    return this;
-	  },
-
-	  // DEPRECATED
-	  addMesh: function(url, options) {
-	    console.warn('Method addMesh() is deprecated and will be removed soon. Use addGeoJSON() or addOBJ() instead.');
 	  },
 
 	  addOBJ: function(url, options) {
@@ -1809,6 +1804,11 @@
 	    Renderer.destroy();
 	    TileGrid.destroy();
 	    DataGrid.destroy();
+	  },
+
+	  highlight: function(id, color) {
+	    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
+	    Buildings.highlightID = Interaction.idToColor(id);
 	  }
 	};
 
@@ -1983,7 +1983,10 @@
 	    pointerIsDown = true;
 
 	    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-	      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+	      var payload = { x: e.clientX, y: e.clientY };
+	      if (targetID) {
+	        payload.target = { id: targetID };
+	      }
 	      Events.emit('pointerdown', payload);
 	    });
 	  }
@@ -2005,7 +2008,10 @@
 	    }
 
 	    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-	      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+	      var payload = { x: e.clientX, y: e.clientY };
+	      if (targetID) {
+	        payload.target = { id: targetID };
+	      }
 	      Events.emit('pointermove', payload);
 	    });
 	  }
@@ -2031,7 +2037,10 @@
 	    pointerIsDown = false;
 
 	    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-	      var payload = { target: { id:targetID }, x:e.clientX, y: e.clientY };
+	      var payload = { x: e.clientX, y: e.clientY };
+	      if (targetID) {
+	        payload.target = { id: targetID };
+	      }
 	      Events.emit('pointerup', payload);
 	    });
 	  }
@@ -2075,7 +2084,10 @@
 	    startX = prevX = e.clientX;
 	    startY = prevY = e.clientY;
 
-	    var payload = { x:e.clientX, y: e.clientY };
+	    var payload = { x: e.clientX, y: e.clientY };
+	    if (targetID) {
+	      payload.target = { id: targetID };
+	    }
 	    Events.emit('pointerdown', payload);
 	  }
 
@@ -2093,7 +2105,10 @@
 	    prevX = e.clientX;
 	    prevY = e.clientY;
 
-	    var payload = { x:e.clientX, y: e.clientY };
+	    var payload = { x: e.clientX, y: e.clientY };
+	    if (targetID) {
+	      payload.target = { id: targetID };
+	    }
 	    Events.emit('pointermove', payload);
 	  }
 
@@ -2110,7 +2125,10 @@
 	      moveMap(e);
 	    }
 
-	    var payload = { x:e.clientX, y: e.clientY };
+	    var payload = { x: e.clientX, y: e.clientY };
+	    if (targetID) {
+	      payload.target = { id: targetID };
+	    }
 	    Events.emit('pointerup', payload);
 	  }
 
@@ -2291,14 +2309,8 @@
 
 	var DEFAULT_HEIGHT = 10;
 
-	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA();
-
-	var STYLE = {
-	  zoomAlpha: {
-	    min: { zoom: 17, alpha: 1.0 },
-	    max: { zoom: 20, alpha: 1.0 }
-	  }
-	};
+	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
+	var DEFAULT_HIGHLIGHT_COLOR = Color.parse('#f08000').toRGBA(true);
 
 	var document = global.document;
 
@@ -2478,7 +2490,7 @@
 	  }
 	}
 
-	var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    vColor = aColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uAlpha;\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, uAlpha);\n}\n"}};
+	var SHADERS = {"interaction":{"attributes":["aPosition","aColor","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"attributes":["aPosition","aHidden"],"uniforms":["uMatrix"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"textured":{"attributes":["aPosition","aTexCoord"],"uniforms":["uMatrix","uTileImage"],"vertexShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragmentShader":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"attributes":["aPosition","aColor","aNormal","aHidden","aIDColor"],"uniforms":["uMatrix","uNormalTransform","uAlpha","uLightColor","uLightDirection","uHighlightColor","uHighlightID"],"vertexShader":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n      vColor = mix(aColor, uHighlightColor, 0.5);\n    } else {\n      vColor = aColor;\n    }\n    vColor = vColor + uLightColor * intensity;\n  }\n}","fragmentShader":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, 1.0);\n}\n"}};
 
 
 
@@ -3148,12 +3160,10 @@
 	  },
 
 	  applyModifiers: function(item) {
-	    var clonedItem = Object.create(item);
 	    var modifiers = this.modifiers;
-	    for (var i = 0, il = modifiers.length, j, jl; i < il; i++) {
-	      modifiers[i](clonedItem);
+	    for (var i = 0, il = modifiers.length; i < il; i++) {
+	      modifiers[i](item);
 	    }
-	    return clonedItem;
 	  }
 	};
 
@@ -3169,7 +3179,7 @@
 	  this.rotation  = options.rotation  || 0;
 	  this.elevation = options.elevation || 0;
 	  if (options.color) {
-	    this.color = Color.parse(options.color).toRGBA();
+	    this.color = Color.parse(options.color).toRGBA(true);
 	  }
 	  this.replaces  = options.replaces || [];
 
@@ -3197,7 +3207,7 @@
 	        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
 	          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
 	          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
-	          idColors.push(idColor.r, idColor.g, idColor.b);
+	          idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
 	        }
 
 	        delete item.vertices;
@@ -3208,7 +3218,7 @@
 
 	      this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
 	      this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
-	      this.idColorBuffer = new glx.Buffer(3, new Uint8Array(idColors));
+	      this.idColorBuffer = new glx.Buffer(3, new Float32Array(idColors));
 
 	      this.modify();
 
@@ -3236,19 +3246,20 @@
 	      }
 
 	      var
+	        item,
 	        newColors = [],
-	        newVisibilities = [],
-	        clonedItem;
+	        newVisibilities = [];
 
 	      for (var i = 0, il = this.items.length; i<il; i++) {
-	        clonedItem = Data.applyModifiers(this.items[i]);
-	        for (var j = 0, jl = clonedItem.numVertices; j<jl; j++) {
-	          newColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
-	          newVisibilities.push(clonedItem.hidden ? 1 : 0);
+	        item = this.items[i];
+	        Data.applyModifiers(item);
+	        for (var j = 0, jl = item.numVertices; j<jl; j++) {
+	          newColors.push(item.color.r, item.color.g, item.color.b);
+	          newVisibilities.push(item.hidden ? 1 : 0);
 	        }
 	      }
 
-	      this.colorBuffer = new glx.Buffer(3, new Uint8Array(newColors));
+	      this.colorBuffer = new glx.Buffer(3, new Float32Array(newColors));
 	      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
 
 	      newColors = null;
@@ -3507,10 +3518,10 @@
 	    item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
 	    var wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
-	    item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA() : DEFAULT_COLOR;
+	    item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
 	    var roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
-	    item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA() : DEFAULT_COLOR;
+	    item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
 	    switch (prop.shape) {
 	      case 'cylinder':
@@ -3766,9 +3777,9 @@
 	        break;
 
 	  	    case 'Kd':
-	  	      data.color.r = parseFloat(cols[1])*255 <<0;
-	  	      data.color.g = parseFloat(cols[2])*255 <<0;
-	  	      data.color.b = parseFloat(cols[3])*255 <<0;
+	  	      data.color.r = parseFloat(cols[1]);
+	  	      data.color.g = parseFloat(cols[2]);
+	  	      data.color.b = parseFloat(cols[3]);
 	  	    break;
 
 	  	    case 'd':
@@ -4008,12 +4019,7 @@
 	    this.resize();
 	    Events.on('resize', this.resize.bind(this));
 
-	    var color = Color.parse(options.backgroundColor || '#cccccc').toRGBA();
-	    this.backgroundColor = {
-	      r: color.r/255,
-	      g: color.g/255,
-	      b: color.b/255
-	    };
+	    this.backgroundColor = Color.parse(options.backgroundColor || '#cccccc').toRGBA(true);
 
 	    GL.cullFace(GL.BACK);
 	    GL.enable(GL.CULL_FACE);
@@ -4172,7 +4178,7 @@
 	      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      item.idColorBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
+	      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      item.visibilityBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -4435,10 +4441,18 @@
 	    GL.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
 	    GL.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
-	    GL.uniform1f(shader.uniforms.uAlpha, adjust(Map.zoom, STYLE.zoomAlpha, 'zoom', 'alpha'));
-
 	    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
 	    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
+
+	    if (!this.highlightColor) {
+	      this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
+	    }
+	    GL.uniform3fv(shader.uniforms.uHighlightColor, [this.highlightColor.r, this.highlightColor.g, this.highlightColor.b]);
+
+	    if (!this.highlightID) {
+	      this.highlightID = { r:0, g:0, b:0 };
+	    }
+	    GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r/255, this.highlightID.g/255, this.highlightID.b/255]);
 
 	    var
 	      dataItems = Data.items,
@@ -4462,7 +4476,10 @@
 	      GL.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      item.colorBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.UNSIGNED_BYTE, true, 0, 0);
+	      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.FLOAT, false, 0, 0);
+
+	      item.idColorBuffer.enable();
+	      GL.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      item.visibilityBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);

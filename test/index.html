@@ -206,8 +206,10 @@
 //  });
 
   map.on('pointermove', function(e) {
-console.log('item id', e.target.id);
-map.highlight(e.target.id);
+    if (e.target) {
+//    console.log('item id', e.target.id);
+      map.highlight(e.target.id, '#f08000');
+    }
 return;
 
     if (e.target.id === selectedItemId) {

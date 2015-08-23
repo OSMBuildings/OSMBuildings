@@ -12,6 +12,7 @@ uniform mat4 uMatrix;
 uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
+uniform vec3 uHighlightColor;
 uniform vec3 uHighlightID;
 
 varying vec3 vColor;
@@ -23,15 +24,20 @@ void main() {
     vPosition = vec4(0.0);
     vColor = vec3(0.0, 0.0, 0.0);
   } else {
-    if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
-      vColor = vec3(1.0, 0.5, 0.5);
-    } else {
-      gl_Position = uMatrix * aPosition;
-      vPosition = aPosition;
+    gl_Position = uMatrix * aPosition;
+    vPosition = aPosition;
 
-      vec3 transformedNormal = aNormal * uNormalTransform;
-      float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
-      vColor = aColor + uLightColor * intensity;
+    vec3 transformedNormal = aNormal * uNormalTransform;
+    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
+
+
+    if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
+      vColor = mix(aColor, uHighlightColor, 0.5);
+    } else {
+      vColor = aColor;
     }
+
+    vColor = vColor + uLightColor * intensity;
+
   }
 }

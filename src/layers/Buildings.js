@@ -34,6 +34,11 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
+    if (!this.highlightColor) {
+      this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
+    }
+    GL.uniform3fv(shader.uniforms.uHighlightColor, [this.highlightColor.r, this.highlightColor.g, this.highlightColor.b]);
+
     if (!this.highlightID) {
       this.highlightID = { r:0, g:0, b:0 };
     }
