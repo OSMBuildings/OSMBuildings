@@ -77,15 +77,16 @@ var Mesh = function(url, options) {
       }
 
       var
+        item,
         newColors = [],
-        newVisibilities = [],
-        clonedItem;
+        newVisibilities = [];
 
       for (var i = 0, il = this.items.length; i<il; i++) {
-        clonedItem = Data.applyModifiers(this.items[i]);
-        for (var j = 0, jl = clonedItem.numVertices; j<jl; j++) {
-          newColors.push(clonedItem.color.r, clonedItem.color.g, clonedItem.color.b);
-          newVisibilities.push(clonedItem.hidden ? 1 : 0);
+        item = this.items[i];
+        Data.applyModifiers(item);
+        for (var j = 0, jl = item.numVertices; j<jl; j++) {
+          newColors.push(item.color.r, item.color.g, item.color.b);
+          newVisibilities.push(item.hidden ? 1 : 0);
         }
       }
 

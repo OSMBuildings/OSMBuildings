@@ -38,11 +38,9 @@ var Data = {
   },
 
   applyModifiers: function(item) {
-    var clonedItem = Object.create(item);
     var modifiers = this.modifiers;
-    for (var i = 0, il = modifiers.length, j, jl; i < il; i++) {
-      modifiers[i](clonedItem);
+    for (var i = 0, il = modifiers.length; i < il; i++) {
+      modifiers[i](item);
     }
-    return clonedItem;
   }
 };
