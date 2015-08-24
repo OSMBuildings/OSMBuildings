@@ -12,7 +12,7 @@ var Basemap = {};
       vertexShader: SHADERS.basemap.vertex,
       fragmentShader: SHADERS.basemap.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uFogRadius", "uFogColor"]
+      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uVPMatrix", "uFogColor"]
     });
 
     return this;
@@ -25,10 +25,8 @@ var Basemap = {};
 
     shader.enable();
 
-    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, vpMatrix.data);
+    GL.uniformMatrix4fv(shader.uniforms.uVPMatrix, false, vpMatrix.data);
 
-    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
-    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
     GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 

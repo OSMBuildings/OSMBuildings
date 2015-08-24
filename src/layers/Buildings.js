@@ -10,7 +10,7 @@ var Buildings = {};
       vertexShader: SHADERS.buildings.vertex,
       fragmentShader: SHADERS.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uVPMatrix", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
     });
 
     this.showBackfaces = options.showBackfaces;
@@ -40,13 +40,11 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, vpMatrix.data);
+    GL.uniformMatrix4fv(shader.uniforms.uVPMatrix, false, vpMatrix.data);
 
 //  var fogOrigin = glx.Matrix.transform(vpMatrix);
 //  GL.uniformMatrix4fv(shader.uniforms.uFogOrigin, false, [fogOrigin.x, fogOrigin.y, fogOrigin.z, 1]);
 
-    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
-    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
     GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 

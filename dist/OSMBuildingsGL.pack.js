@@ -1675,7 +1675,6 @@
 	  GL = new glx.View(container, WIDTH, HEIGHT);
 
 	  Renderer.start({
-	    fogRadius: options.fogRadius,
 	    fogColor: options.fogColor,
 	    showBackfaces: options.showBackfaces
 	  });
@@ -2534,7 +2533,7 @@
 	  }
 	}
 
-	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform mat4 uFogMatrix;\n//uniform vec4 uFogOrigin;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = uFogRadius * 0.95;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  //*** highlight object ***\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ***\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ***\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog ***\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//  float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform mat4 uFogMatrix;\n//uniform mat4 uFogOrigin;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = uFogRadius * 0.95;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  vTexCoord = aTexCoord;\n  vec4 fogOrigin = vec4(uFogMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_Position = glPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
+	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vColor = aColor;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform mat4 uVPMatrix;\n//uniform vec4 uFogOrigin;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = uFogRadius * 0.05;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  gl_Position = glPosition;\n  //*** highlight object ******************************************************\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ****************\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ******************************************************\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog *******************************************************************\n  vec4 fogOrigin = vec4(uVPMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - uFogRadius) / fogBlur;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //***************************************************************************\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform mat4 uVPMatrix;\n//uniform mat4 uFogOrigin;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = uFogRadius * 0.95;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  gl_Position = glPosition;\n  vTexCoord = aTexCoord;\n  //*** fog *******************************************************************\n  vec4 fogOrigin = vec4(uVPMatrix * vec4(0.0, 0.0, 0.0, 1.0));\n  float distance = length(glPosition - fogOrigin);\n//float distance = length(glPosition - uFogOrigin);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
 
 
 
@@ -4067,9 +4066,7 @@
 	var Renderer = {
 
 	  start: function(options) {
-	    this.fogRadius = options.fogRadius || FOG_RADIUS;
 	    this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
-
 
 	    this.layers = {};
 	//this.layers.depth       = Depth.initShader();
@@ -4301,6 +4298,7 @@
 	(function() {
 
 	  var shader;
+	  var baseRadius = 500;
 
 	  var vertexBuffer;
 	  var texCoordBuffer;
@@ -4365,7 +4363,10 @@
 	  SkyDome.initShader = function() {
 	    var url = 'skydome.jpg';
 
-	    var tris = createDome(Renderer.fogRadius);
+	    var tris = createDome(baseRadius);
+
+	    this.resize();
+	    Events.on('resize', this.resize.bind(this));
 
 	    shader = new glx.Shader({
 	      vertexShader: SHADERS.skydome.vertex,
@@ -4387,6 +4388,11 @@
 	    return this;
 	  };
 
+	  SkyDome.resize = function() {
+	    var maxSize = Math.max(WIDTH, HEIGHT)/2;
+	    this.radius = Math.sqrt(maxSize*maxSize*2);
+	  };
+
 	  SkyDome.render = function(vpMatrix) {
 	    if (!textureIsLoaded) {
 	      return;
@@ -4397,8 +4403,7 @@
 	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
 	    var mMatrix = new glx.Matrix();
-	    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
-	    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
+	    var scale = this.radius/baseRadius;
 	    mMatrix.scale(scale, scale, scale);
 
 	    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
@@ -4434,7 +4439,7 @@
 	      vertexShader: SHADERS.basemap.vertex,
 	      fragmentShader: SHADERS.basemap.fragment,
 	      attributes: ["aPosition", "aTexCoord"],
-	      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uFogRadius", "uFogColor"]
+	      uniforms: ["uMatrix", "uTileImage", "uFogMatrix", "uVPMatrix", "uFogColor"]
 	    });
 
 	    return this;
@@ -4447,12 +4452,9 @@
 
 	    shader.enable();
 
-	    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, vpMatrix.data);
+	    GL.uniformMatrix4fv(shader.uniforms.uVPMatrix, false, vpMatrix.data);
 
-	    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
-	    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
-	    var fogRadius = Renderer.fogRadius * scale;
-	    GL.uniform1f(shader.uniforms.uFogRadius, fogRadius);
+	    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
 	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
 	    for (var key in tiles) {
@@ -4494,7 +4496,7 @@
 	      vertexShader: SHADERS.buildings.vertex,
 	      fragmentShader: SHADERS.buildings.fragment,
 	      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-	      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogMatrix", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+	      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uVPMatrix", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
 	    });
 
 	    this.showBackfaces = options.showBackfaces;
@@ -4524,15 +4526,12 @@
 	    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
 	    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-	    GL.uniformMatrix4fv(shader.uniforms.uFogMatrix, false, vpMatrix.data);
+	    GL.uniformMatrix4fv(shader.uniforms.uVPMatrix, false, vpMatrix.data);
 
 	//  var fogOrigin = glx.Matrix.transform(vpMatrix);
 	//  GL.uniformMatrix4fv(shader.uniforms.uFogOrigin, false, [fogOrigin.x, fogOrigin.y, fogOrigin.z, 1]);
 
-	    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
-	    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
-	    var fogRadius = Renderer.fogRadius * scale;
-	    GL.uniform1f(shader.uniforms.uFogRadius, fogRadius);
+	    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
 	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
 	    if (!this.highlightColor) {
