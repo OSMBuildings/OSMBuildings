@@ -10,21 +10,20 @@ var MapTile = function(tileX, tileY, zoom) {
     0,   255, 0,
     0,     0, 0
   ]));
+
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
     1, 1,
     1, 0,
     0, 1,
     0, 0
   ]));
-
-  this.texture = new glx.Texture();
 };
 
 MapTile.prototype = {
 
   load: function(url) {
     Activity.setBusy();
-    this.texture.load(url, function(image) {
+    this.texture = new glx.texture.Image(url, function(image) {
       Activity.setIdle();
       if (image) {
         this.isLoaded = true;
@@ -52,7 +51,9 @@ MapTile.prototype = {
   destroy: function() {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
-    this.texture.destroy();
+    if (this.texture) {
+      this.texture.destroy();
+    }
     Activity.setIdle();
   }
 };

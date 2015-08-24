@@ -944,8 +944,16 @@
 	    throw new Error('WebGL not supported');
 	  }
 
-	  //canvas.addEventListener('webglcontextlost', function(e) {});
-	  //canvas.addEventListener('webglcontextrestored', function(e) {});
+	  canvas.addEventListener('webglcontextlost', function(e) {
+	    console.warn('context lost');
+	  });
+
+	  canvas.addEventListener('webglcontextrestored', function(e) {
+	    console.warn('context restored');
+	  });
+
+	  //var ext = GL.getExtension("WEBGL_lose_context");
+	  //ext.loseContext();
 
 	  GL.viewport(0, 0, width, height);
 	  GL.cullFace(GL.BACK);
@@ -1064,10 +1072,10 @@
 	      this.renderTexture.destroy();
 	    }
 
-	    this.renderTexture = new glx.Texture({ size:size });
+	    this.renderTexture = new glx.texture.Data(size);
 
 	    GL.framebufferRenderbuffer(GL.FRAMEBUFFER, GL.DEPTH_ATTACHMENT, GL.RENDERBUFFER, this.renderBuffer);
-	    GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, this.renderTexture.id, 0); ////////
+	    GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, this.renderTexture.id, 0);
 
 	    if (GL.checkFramebufferStatus(GL.FRAMEBUFFER) !== GL.FRAMEBUFFER_COMPLETE) {
 	      throw new Error('This combination of framebuffer attachments does not work');
@@ -1416,44 +1424,25 @@
 	}());
 
 
-	glx.Texture = function(options) {
-	  options = options || {};
+	glx.texture = {};
 
+
+	glx.texture.Image = function(src, callback) {
 	  this.id = GL.createTexture();
 	  GL.bindTexture(GL.TEXTURE_2D, this.id);
 
-	  if (options.size) {
-	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
-	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
-	    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, options.size, options.size, 0, GL.RGBA, GL.UNSIGNED_BYTE, null);
-	  } else {
-	    GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
-	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, options.filter || GL.LINEAR);
 	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
+	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
 	//  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 	//  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 
-	    if (options.image) {
-	      this.setImage(options.image);
-	    }
-
+	  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
 	    GL.bindTexture(GL.TEXTURE_2D, null);
-	  }
-	};
 
-	glx.Texture.prototype = {
-	  enable: function(index) {
-	    GL.bindTexture(GL.TEXTURE_2D, this.id);
-	    GL.activeTexture(GL.TEXTURE0 + (index || 0));
-	  },
+	  var image = new Image();
 
-	  disable: function() {
-	    GL.bindTexture(GL.TEXTURE_2D, null);
-	  },
-
-	  load: function(url, callback) {
-	    var image = this.image = new Image();
 	    image.crossOrigin = '*';
+
 	    image.onload = function() {
 	      // TODO: do this only once
 	      var maxTexSize = GL.getParameter(GL.MAX_TEXTURE_SIZE);
@@ -1476,7 +1465,11 @@
 	        image = canvas;
 	      }
 
-	      this.setImage(image);
+	    GL.bindTexture(GL.TEXTURE_2D, this.id);
+	    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
+	    GL.generateMipmap(GL.TEXTURE_2D);
+	    GL.bindTexture(GL.TEXTURE_2D, null);
+
 	      this.isLoaded = true;
 
 	      if (callback) {
@@ -1491,30 +1484,71 @@
 	      }
 	    };
 
-	    image.src = url;
+	  image.src = src;
+	};
+
+	glx.texture.Image.prototype = {
+
+	  enable: function(index) {
+	    GL.bindTexture(GL.TEXTURE_2D, this.id);
+	    GL.activeTexture(GL.TEXTURE0 + (index || 0));
 	  },
 
-	  setImage: function(image) {
-	    GL.bindTexture(GL.TEXTURE_2D, this.id);
-	    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
-	    GL.generateMipmap(GL.TEXTURE_2D);
-	    image = null;
+	  disable: function() {
+	    GL.bindTexture(GL.TEXTURE_2D, null);
 	  },
 
 	  destroy: function() {
 	    GL.bindTexture(GL.TEXTURE_2D, null);
 	    GL.deleteTexture(this.id);
-	    if (this.image) {
-	      this.isLoaded = null;
-	      this.image.src = '';
-	      this.image = null;
 	    }
+	};
+
+
+	glx.texture.Data = function(size, data, options) {
+	  //options = options || {};
+
+	  this.id = GL.createTexture();
+	  GL.bindTexture(GL.TEXTURE_2D, this.id);
+
+	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+
+	  //if (options.flipY) {
+	  //  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+	  //}
+
+	  var bytes = null;
+
+	  if (data) {
+	    var length = size*size*4;
+	    bytes = new Uint8Array(length);
+	    bytes.set(data.subarray(0, length));
+	  }
+
+	  GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, size, size, 0, GL.RGBA, GL.UNSIGNED_BYTE, bytes);
+	  GL.bindTexture(GL.TEXTURE_2D, null);
+	};
+
+	glx.texture.Data.prototype = {
+
+	  enable: function(index) {
+	    GL.bindTexture(GL.TEXTURE_2D, this.id);
+	    GL.activeTexture(GL.TEXTURE0 + (index || 0));
+	  },
+
+	  disable: function() {
+	    GL.bindTexture(GL.TEXTURE_2D, null);
+	  },
+
+	  destroy: function() {
+	    GL.bindTexture(GL.TEXTURE_2D, null);
+	    GL.deleteTexture(this.id);
 	  }
 	};
 
 
 	glx.mesh = {};
-
 
 	glx.mesh.addQuad = function(data, a, b, c, d, color) {
 	  this.addTriangle(data, a, b, c, color);
@@ -3131,16 +3165,21 @@
 	    0, 1,
 	    0, 0
 	  ]));
-
-	  this.texture = new glx.Texture();
 	};
 
 	MapTile.prototype = {
 
 	  load: function(url) {
+<<<<<<< HEAD
 	    Activity.setBusy();
 	    this.texture.load(url, function(image) {
 	      Activity.setIdle();
+=======
+	    this.url = url;
+	    setBusy(url);
+	    this.texture = new glx.texture.Image(url, function(image) {
+	      setIdle(url);
+>>>>>>> master
 	      if (image) {
 	        this.isLoaded = true;
 	      }
@@ -3167,8 +3206,14 @@
 	  destroy: function() {
 	    this.vertexBuffer.destroy();
 	    this.texCoordBuffer.destroy();
+	    if (this.texture) {
 	    this.texture.destroy();
+<<<<<<< HEAD
 	    Activity.setIdle();
+=======
+	    }
+	    setIdle(this.url);
+>>>>>>> master
 	  }
 	};
 
@@ -4341,11 +4386,17 @@
 
 	    vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
 	    texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
+<<<<<<< HEAD
 	    texture = new glx.Texture();
 
 	    Activity.setBusy();
 	    texture.load(url, function(image) {
 	      Activity.setIdle();
+=======
+	    setBusy(url);
+	    texture = new glx.texture.Image(url, function(image) {
+	      setIdle(url);
+>>>>>>> master
 	      if (image) {
 	        textureIsLoaded = true;
 	      }

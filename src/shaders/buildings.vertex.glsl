@@ -28,9 +28,7 @@ void main() {
   vec4 glPosition = vec4(uMatrix * aPosition);
 
   //*** highlight object ***
-
   vec3 color = aColor;
-
   if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
     color = mix(aColor, uHighlightColor, 0.5);
   }
