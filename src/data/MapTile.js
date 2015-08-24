@@ -16,8 +16,6 @@ var MapTile = function(tileX, tileY, zoom) {
     0, 1,
     0, 0
   ]));
-
-  this.texture = new glx.Texture();
 };
 
 MapTile.prototype = {
@@ -25,7 +23,7 @@ MapTile.prototype = {
   load: function(url) {
     this.url = url;
     setBusy(url);
-    this.texture.load(url, function(image) {
+    this.texture = new glx.texture.Image(url, function(image) {
       setIdle(url);
       if (image) {
         this.isLoaded = true;
@@ -53,7 +51,9 @@ MapTile.prototype = {
   destroy: function() {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
+    if (this.texture) {
     this.texture.destroy();
+    }
     setIdle(this.url);
   }
 };

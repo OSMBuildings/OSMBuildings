@@ -85,9 +85,8 @@ var SkyDome = {};
     shader = new glx.Shader(SHADERS.textured);
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
-    texture = new glx.Texture();
     setBusy(url);
-    texture.load(url, function(image) {
+    texture = new glx.texture.Image(url, function(image) {
       setIdle(url);
       if (image) {
         textureIsLoaded = true;

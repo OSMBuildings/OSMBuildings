@@ -30,7 +30,6 @@ void main() {
     vec3 transformedNormal = aNormal * uNormalTransform;
     float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
 
-
     if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
       vColor = mix(aColor, uHighlightColor, 0.5);
     } else {
