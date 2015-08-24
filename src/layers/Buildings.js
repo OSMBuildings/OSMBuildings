@@ -6,7 +6,13 @@ var Buildings = {};
   var shader;
 
   Buildings.initShader = function(options) {
-    shader = new glx.Shader(SHADERS.buildings);
+    shader = new glx.Shader({
+      vertexShader: SHADERS.buildings.vertex,
+      fragmentShader: SHADERS.buildings.fragment,
+      attributes: ["aPosition", "aColor", "aNormal", "aHidden", "aIDColor"],
+      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uHighlightColor", "uHighlightID"]
+    });
+
     this.showBackfaces = options.showBackfaces;
     return this;
   };

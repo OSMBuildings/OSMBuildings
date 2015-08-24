@@ -39,8 +39,7 @@ var SkyDome = {};
       tcLeft,
       tcRight,
       tcTop,
-      tcBottom,
-      tcs;
+      tcBottom;
 
     for (var i = 0, j; i < lonSegments; i++) {
       tcLeft = i/lonSegments;
@@ -82,7 +81,13 @@ var SkyDome = {};
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
 
-    shader = new glx.Shader(SHADERS.textured);
+    shader = new glx.Shader({
+      vertexShader: SHADERS.skydome.vertex,
+      fragmentShader: SHADERS.skydome.fragment,
+      attributes: ["aPosition", "aTexCoord"],
+      uniforms: ["uMatrix", "uTileImage"]
+    });
+
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
     setBusy(url);

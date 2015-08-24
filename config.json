@@ -1,24 +1,8 @@
 {
-  "shaders": {
-    "interaction": {
-      "attributes": ["aPosition", "aColor", "aHidden"],
-      "uniforms": ["uMatrix"]
-    },
-    "depth": {
-      "attributes": ["aPosition", "aHidden"],
-      "uniforms": ["uMatrix"]
-    },
-    "textured": {
-      "attributes": ["aPosition", "aTexCoord"],
-      "uniforms": ["uMatrix", "uTileImage"]
-    },
-    "buildings": {
-      "attributes": ["aPosition", "aColor", "aNormal", "aHidden", "aIDColor"],
-      "uniforms": ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uHighlightColor", "uHighlightID"]
-    }
-  },
+  "shaders": ["interaction", "depth", "skydome", "buildings", "basemap"],
 
-"lib": [
+
+  "lib": [
     "lib/earcut.js",
     "lib/Color.debug.js",
     "lib/GLX.debug.js"

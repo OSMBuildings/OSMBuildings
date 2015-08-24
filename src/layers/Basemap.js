@@ -8,7 +8,13 @@ var Basemap = {};
   var shader;
 
   Basemap.initShader = function() {
-    shader = new glx.Shader(SHADERS.textured);
+    shader = new glx.Shader({
+      vertexShader: SHADERS.basemap.vertex,
+      fragmentShader: SHADERS.basemap.fragment,
+      attributes: ["aPosition", "aTexCoord"],
+      uniforms: ["uMatrix", "uTileImage"]
+    });
+
     return this;
   };
 

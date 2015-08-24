@@ -7,7 +7,13 @@ var Interaction = {
   viewportSize: 1024,
 
   initShader: function() {
-    this.shader = new glx.Shader(SHADERS.interaction);
+    this.shader = new glx.Shader({
+      vertexShader: SHADERS.interaction.vertex,
+      fragmentShader: SHADERS.interaction.fragment,
+      attributes: ["aPosition", "aColor", "aHidden"],
+      uniforms: ["uMatrix"]
+    });
+
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
     return this;
   },
