@@ -3113,6 +3113,7 @@ var MapTile = function(tileX, tileY, zoom) {
     0,   255, 0,
     0,     0, 0
   ]));
+
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
     1, 1,
     1, 0,
@@ -3124,16 +3125,9 @@ var MapTile = function(tileX, tileY, zoom) {
 MapTile.prototype = {
 
   load: function(url) {
-<<<<<<< HEAD
     Activity.setBusy();
-    this.texture.load(url, function(image) {
-      Activity.setIdle();
-=======
-    this.url = url;
-    setBusy(url);
     this.texture = new glx.texture.Image(url, function(image) {
-      setIdle(url);
->>>>>>> master
+      Activity.setIdle();
       if (image) {
         this.isLoaded = true;
       }
@@ -3161,13 +3155,9 @@ MapTile.prototype = {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
     if (this.texture) {
-    this.texture.destroy();
-<<<<<<< HEAD
-    Activity.setIdle();
-=======
+      this.texture.destroy();
     }
-    setIdle(this.url);
->>>>>>> master
+    Activity.setIdle();
   }
 };
 
@@ -4340,17 +4330,9 @@ var SkyDome = {};
 
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
-<<<<<<< HEAD
-    texture = new glx.Texture();
-
     Activity.setBusy();
-    texture.load(url, function(image) {
-      Activity.setIdle();
-=======
-    setBusy(url);
     texture = new glx.texture.Image(url, function(image) {
-      setIdle(url);
->>>>>>> master
+      Activity.setIdle();
       if (image) {
         textureIsLoaded = true;
       }
