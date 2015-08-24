@@ -2,9 +2,7 @@
 var Renderer = {
 
   start: function(options) {
-    this.fogRadius = options.fogRadius || FOG_RADIUS;
     this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
-
 
     this.layers = {};
 //this.layers.depth       = Depth.initShader();

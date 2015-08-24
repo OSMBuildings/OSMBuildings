@@ -29,8 +29,7 @@ var Basemap = {};
 
     var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
     var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
-    var fogRadius = Renderer.fogRadius * scale;
-    GL.uniform1f(shader.uniforms.uFogRadius, fogRadius);
+    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     for (var key in tiles) {

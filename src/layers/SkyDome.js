@@ -4,6 +4,7 @@ var SkyDome = {};
 (function() {
 
   var shader;
+  var baseRadius = 500;
 
   var vertexBuffer;
   var texCoordBuffer;
@@ -68,7 +69,10 @@ var SkyDome = {};
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
 
-    var tris = createDome(Renderer.fogRadius);
+    var tris = createDome(baseRadius);
+
+    this.resize();
+    Events.on('resize', this.resize.bind(this));
 
     shader = new glx.Shader({
       vertexShader: SHADERS.skydome.vertex,
@@ -90,6 +94,11 @@ var SkyDome = {};
     return this;
   };
 
+  SkyDome.resize = function() {
+    var maxSize = Math.max(WIDTH, HEIGHT)/2;
+    this.radius = Math.sqrt(maxSize*maxSize*2);
+  };
+
   SkyDome.render = function(vpMatrix) {
     if (!textureIsLoaded) {
       return;
@@ -100,8 +109,7 @@ var SkyDome = {};
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     var mMatrix = new glx.Matrix();
-    var pixelsAtZoom = TILE_SIZE * Math.pow(2, Map.zoom);
-    var scale = pixelsAtZoom / EARTH_CIRCUMFERENCE;
+    var scale = this.radius/baseRadius;
     mMatrix.scale(scale, scale, scale);
 
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
