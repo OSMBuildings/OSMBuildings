@@ -96,7 +96,7 @@ var SkyDome = {};
 
   SkyDome.resize = function() {
     var maxSize = Math.max(WIDTH, HEIGHT);
-    this.radius = Math.sqrt(maxSize*maxSize*2);
+    this.radius = maxSize * Math.sqrt(2) / 1;
   };
 
   SkyDome.render = function(vpMatrix) {

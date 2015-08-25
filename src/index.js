@@ -147,7 +147,7 @@ OSMBuildingsGL.prototype = {
 
     var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 
-    var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
+    var scale = 1/Math.pow(2, 16 - Map.zoom);
     var mMatrix = new glx.Matrix()
       .translate(0, 0, elevation)
       .scale(scale, scale, scale*0.7)
