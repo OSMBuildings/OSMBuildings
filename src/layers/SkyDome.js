@@ -95,7 +95,7 @@ var SkyDome = {};
   };
 
   SkyDome.resize = function() {
-    var maxSize = Math.max(WIDTH, HEIGHT)/2;
+    var maxSize = Math.max(WIDTH, HEIGHT);
     this.radius = Math.sqrt(maxSize*maxSize*2);
   };
 
