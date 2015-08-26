@@ -1689,13 +1689,6 @@
 	    this.setStyle(options.style);
 	  }
 
-	  if (typeof Worker !== 'undefined') {
-	    var worker = new Worker('Worker.js');
-	    worker.onmessage = function(e) {
-	      console.log(e.data);
-	    };
-	  }
-
 	  TileGrid.setSource(options.tileSource);
 	  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
@@ -2570,6 +2563,7 @@
 	  Triangulate.quad = function(tris, a, b, c, d) {
 	    this.addTriangle(tris, a, b, c);
 	    this.addTriangle(tris, b, d, c);
+	    return 6;
 	  };
 
 	  Triangulate.circle = function(tris, center, radius, z) {
@@ -2584,29 +2578,32 @@
 	        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), z ]
 	      );
 	    }
+	    return LON_SEGMENTS*3;
 	  };
 
 	  Triangulate.polygon = function(tris, polygon, z) {
-	    var triangles = earcut(polygon);
-	    for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
+	    var vertices = earcut(polygon);
+	    for (var i = 0, il = vertices.length-2; i < il; i+=3) {
 	      this.addTriangle(
 	        tris,
-	        [ triangles[t  ][0], triangles[t  ][1], z ],
-	        [ triangles[t+1][0], triangles[t+1][1], z ],
-	        [ triangles[t+2][0], triangles[t+2][1], z ]
+	        [ vertices[i  ][0], vertices[i  ][1], z ],
+	        [ vertices[i+1][0], vertices[i+1][1], z ],
+	        [ vertices[i+2][0], vertices[i+2][1], z ]
 	      );
 	    }
+	    return vertices.length;
 	  };
 
 	  Triangulate.polygon3d = function(tris, polygon) {
 	    var ring = polygon[0];
 	    var ringLength = ring.length;
-	    var triangles, t, tl;
+	    var vertices, t, tl;
 
 	//  { r:255, g:0, b:0 }
 
 	    if (ringLength <= 4) { // 3: a triangle
-	      this.addTriangle(
+	      var vertexCount = 0;
+	      vertexCount += this.addTriangle(
 	        tris,
 	        ring[0],
 	        ring[2],
@@ -2614,14 +2611,14 @@
 	      );
 
 	      if (ringLength === 4) { // 4: a quad (2 triangles)
-	        this.addTriangle(
+	        vertexCount += this.addTriangle(
 	          tris,
 	          ring[0],
 	          ring[3],
 	          ring[2]
 	        );
 	      }
-	      return;
+	      return vertexCount;
 	    }
 
 	    if (isVertical(ring[0], ring[1], ring[2])) {
@@ -2633,32 +2630,35 @@
 	        ];
 	      }
 
-	      triangles = earcut(polygon);
-	      for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
+	      vertices = earcut(polygon);
+	      for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
 	        this.addTriangle(
 	          tris,
-	          [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
-	          [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
-	          [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ]
+	          [ vertices[t  ][2], vertices[t  ][1], vertices[t  ][0] ],
+	          [ vertices[t+1][2], vertices[t+1][1], vertices[t+1][0] ],
+	          [ vertices[t+2][2], vertices[t+2][1], vertices[t+2][0] ]
 	        );
 	      }
 
-	      return;
+	      return vertices.length;
 	    }
 
-	    triangles = earcut(polygon);
-	    for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
+	    vertices = earcut(polygon);
+	    for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
 	      this.addTriangle(
 	        tris,
-	        [ triangles[t  ][0], triangles[t  ][1], triangles[t  ][2] ],
-	        [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
-	        [ triangles[t+2][0], triangles[t+2][1], triangles[t+2][2] ]
+	        [ vertices[t  ][0], vertices[t  ][1], vertices[t  ][2] ],
+	        [ vertices[t+1][0], vertices[t+1][1], vertices[t+1][2] ],
+	        [ vertices[t+2][0], vertices[t+2][1], vertices[t+2][2] ]
 	      );
 	    }
+
+	    return vertices.length;
 	  };
 
 	  Triangulate.cylinder = function(tris, center, radiusBottom, radiusTop, minHeight, height) {
 	    var
+	      vertexCount = 0,
 	      currAngle, nextAngle,
 	      currSin, currCos,
 	      nextSin, nextCos,
@@ -2675,7 +2675,7 @@
 	      nextSin = Math.sin(nextAngle);
 	      nextCos = Math.cos(nextAngle);
 
-	      this.addTriangle(
+	      vertexCount += this.addTriangle(
 	        tris,
 	        [ center[0] + radiusBottom*currSin, center[1] + radiusBottom*currCos, minHeight ],
 	        [ center[0] + radiusTop   *nextSin, center[1] + radiusTop   *nextCos, height    ],
@@ -2683,7 +2683,7 @@
 	      );
 
 	      if (radiusTop !== 0) {
-	        this.addTriangle(
+	        vertexCount += this.addTriangle(
 	          tris,
 	          [ center[0] + radiusTop   *currSin, center[1] + radiusTop   *currCos, height    ],
 	          [ center[0] + radiusTop   *nextSin, center[1] + radiusTop   *nextCos, height    ],
@@ -2691,10 +2691,13 @@
 	        );
 	      }
 	    }
+
+	    return vertexCount;
 	  };
 
 	  Triangulate.dome = function(tris, center, radius, minHeight, height) {
 	    var
+	      vertexCount = 0,
 	      currAngle, nextAngle,
 	      currSin, currCos,
 	      nextSin, nextCos,
@@ -2720,24 +2723,29 @@
 	      currY = minHeight - currSin*h;
 	      nextY = minHeight - nextSin*h;
 
-	      this.cylinder(tris, center, nextRadius, currRadius, nextY, currY);
+	      vertexCount += this.cylinder(tris, center, nextRadius, currRadius, nextY, currY);
 	    }
+
+	    return vertexCount;
 	  };
 
 	  Triangulate.pyramid = function(tris, polygon, center, minHeight, height) {
 	    polygon = polygon[0];
+	    var vertexCount = 0;
 	    for (var i = 0, il = polygon.length-1; i < il; i++) {
-	      this.addTriangle(
+	      vertexCount += this.addTriangle(
 	        tris,
 	        [ polygon[i  ][0], polygon[i  ][1], minHeight ],
 	        [ polygon[i+1][0], polygon[i+1][1], minHeight ],
 	        [ center[0], center[1], height ]
 	      );
 	    }
+	    return vertexCount;
 	  };
 
 	  Triangulate.extrusion = function(tris, polygon, minHeight, height) {
 	    var
+	      vertexCount = 0,
 	      ring, last,
 	      a, b, z0, z1;
 
@@ -2755,7 +2763,7 @@
 	        b = ring[r+1];
 	        z0 = minHeight;
 	        z1 = height;
-	        this.quad(
+	        vertexCount += this.quad(
 	          tris,
 	          [ a[0], a[1], z0 ],
 	          [ b[0], b[1], z0 ],
@@ -2764,6 +2772,7 @@
 	        );
 	      }
 	    }
+	    return vertexCount;
 	  };
 
 	  Triangulate.addTriangle = function(tris, a, b, c) {
@@ -2784,6 +2793,8 @@
 	      n[0], n[1], n[2],
 	      n[0], n[1], n[2]
 	    );
+
+	    return 3;
 	  };
 
 	}());
@@ -3232,8 +3243,8 @@
 	  var
 	    zoom = 16,
 	    worldSize = TILE_SIZE <<zoom,
-	    featuresPerChunk = 50,
-	    delayPerChunk = 66;
+	    featuresPerChunk = 100,
+	    delayPerChunk = 33;
 
 	  //***************************************************************************
 
@@ -3251,10 +3262,12 @@
 	    this.elevation = options.elevation || 0;
 	    this.position  = {};
 
-	    this._vertices = [];
-	    this._normals = [];
-	    this._colors = [];
-	    this._idColors = [];
+	    this._data = {
+	      vertices: [],
+	      normals: [],
+	      colors: [],
+	      idColors: []
+	    };
 
 	    Activity.setBusy();
 	    if (typeof url === 'object') {
@@ -3292,34 +3305,69 @@
 	    },
 
 	    _addItems: function(items) {
-	      var item, color, idColor, j, jl;
-
-	      for (var i = 0, il = items.length; i<il; i++) {
+	      var
+	        item, color, idColor, bbox, center, radius,
+	        vertexCount,
+	        j;
+	      for (var i = 0, il = items.length; i < il; i++) {
 	        item = items[i];
 
-	        this._vertices.push.apply(this._vertices, item.vertices);
-	        this._normals.push.apply(this._normals, item.normals);
-
-	        color = this._color || item.color || DEFAULT_COLOR;
 	        idColor = Interaction.idToColor(this._id || item.id);
 
-	        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-	          this._colors.push(color.r, color.g, color.b);
-	          this._idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+	        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry)) {
+	          item.shape = 'cylinder';
+	          item.isRotational = true;
+	        }
+
+	        bbox = getBBox(item.geometry);
+	        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+
+	        if (item.isRotational) {
+	          radius = (bbox.maxX - bbox.minX)/2;
+	        }
+
+	        switch (item.shape) {
+	          case 'cylinder': vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
+	          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.minHeight, item.height); break;
+	          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.minHeight, item.height); break;
+	          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius/2, item.minHeight, item.height); break;
+	          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.minHeight, item.height); break;
+	          default:         vertexCount = Triangulate.extrusion(this._data, item.geometry, item.minHeight, item.height);
+	        }
+
+	        color = this._color || item.wallColor || DEFAULT_COLOR;
+	        for (j = 0; j < vertexCount; j++) {
+	          this._data.colors.push(color.r, color.g, color.b);
+	          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+	        }
+
+	        switch (item.roofShape) {
+	          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.height, item.height+item.roofHeight); break;
+	          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height+item.roofHeight); break;
+	          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.height, item.height+item.roofHeight); break;
+	          default:
+	            if (item.shape === 'cylinder') {
+	              vertexCount = Triangulate.circle(this._data, center, radius, item.height);
+	            } else if (item.shape === undefined) {
+	              vertexCount = Triangulate.polygon(this._data, item.geometry, item.height);
+	            }
+	        }
+
+	        color = this._color || item.roofColor || DEFAULT_COLOR;
+	        for (j = 0; j < vertexCount; j++) {
+	          this._data.colors.push(color.r, color.g, color.b);
+	          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
 	        }
 	      }
 	    },
 
 	    _onReady: function() {
-	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._vertices));
-	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._normals));
-	      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._colors));
-	      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._idColors));
+	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._data.vertices));
+	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._data.normals));
+	      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._data.colors));
+	      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._data.idColors));
 
-	      this._vertices = null;
-	      this._normals = null;
-	      this._colors = null;
-	      this._idColors = null;
+	      this._data = null;
 
 	      data.Index.add(this);
 	      this._isReady = true;
@@ -3590,19 +3638,20 @@
 	    return (winding === direction) ? polygon : polygon.reverse();
 	  }
 
-	  function alignProperties(prop) {
-	    var item = {};
-	    var color;
-
-	    prop = prop || {};
+	  function parseFeature(res, origin, worldSize, feature) {
+	    var
+	      prop = feature.properties,
+	      item = {},
+	      color,
+	      wallColor, roofColor;
 
 	    item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
 	    item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
-	    var wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
+	    wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
 	    item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
-	    var roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
+	    roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
 	    item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
 	    switch (prop.shape) {
@@ -3638,15 +3687,25 @@
 	      item.roofHeight = 0;
 	    }
 
-	    if (item.height+item.roofHeight <= item.minHeight) {
-	      return;
-	    }
+	    //if (item.height+item.roofHeight <= item.minHeight) {
+	    //  return;
+	    //}
 
-	    if (prop.relationId) {
-	      item.relationId = prop.relationId;
-	    }
+	    item.id = prop.relationId || feature.id || prop.id;
 
-	    return item;
+	    var geometries = getGeometries(feature.geometry);
+	    var clonedItem = Object.create(item);
+
+	    for (var i = 0, il = geometries.length; i < il; i++) {
+	      clonedItem.geometry = transform(origin, worldSize, geometries[i]);
+
+	      if ((clonedItem.roofShape === 'cone' || clonedItem.roofShape === 'dome') && !clonedItem.shape && isRotational(clonedItem.geometry)) {
+	        clonedItem.shape = 'cylinder';
+	        clonedItem.isRotational = true;
+	      }
+
+	      res.push(clonedItem);
+	    }
 	  }
 
 	  function getGeometries(geometry) {
@@ -3700,101 +3759,6 @@
 	    }
 
 	    return res;
-	  }
-
-	  function parseFeature(res, origin, worldSize, feature) {
-	    var
-	      geometries,
-	      tris,
-	      item, polygon, bbox, radius, center, id;
-
-	    if (!(item = alignProperties(feature.properties))) {
-	      return;
-	    }
-
-	    geometries = getGeometries(feature.geometry);
-
-	    for (var  i = 0, il = geometries.length; i < il; i++) {
-	      polygon = transform(origin, worldSize, geometries[i]);
-
-	      id = feature.properties.relationId || feature.id || feature.properties.id;
-
-	      if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-	        item.shape = 'cylinder';
-	        item.isRotational = true;
-	      }
-
-	      bbox = getBBox(polygon);
-	      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
-
-	      if (item.isRotational) {
-	        radius = (bbox.maxX - bbox.minX)/2;
-	      }
-
-	      tris = { vertices: [], normals: [] };
-
-	      switch (item.shape) {
-	        case 'cylinder':
-	          Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-	          break;
-
-	        case 'cone':
-	          Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-	          break;
-
-	        case 'dome':
-	          Triangulate.dome(tris, center, radius, item.minHeight, item.height);
-	          break;
-
-	        case 'sphere':
-	          Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-	          break;
-
-	        case 'pyramid':
-	          Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-	          break;
-
-	        default:
-	          Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-	      }
-
-	      res.push({
-	        id: id,
-	        color: item.wallColor,
-	        vertices: tris.vertices,
-	        normals: tris.normals
-	      });
-
-	      tris = { vertices:[], normals:[] };
-
-	      switch (item.roofShape) {
-	        case 'cone':
-	          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-	          break;
-
-	        case 'dome':
-	          Triangulate.dome(tris, center, radius, item.height, item.height+item.roofHeight);
-	          break;
-
-	        case 'pyramid':
-	          Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-	          break;
-
-	        default:
-	          if (item.shape === 'cylinder') {
-	            Triangulate.circle(tris, center, radius, item.height);
-	          } else if (item.shape === undefined) {
-	            Triangulate.polygon(tris, polygon, item.height);
-	          }
-	      }
-
-	      res.push({
-	        id: id,
-	        color: item.roofColor,
-	        vertices: tris.vertices,
-	        normals: tris.normals
-	      });
-	    }
 	  }
 
 	  //***************************************************************************

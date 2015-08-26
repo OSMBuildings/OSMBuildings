@@ -44,9 +44,6 @@ module.exports = function(grunt) {
       },{
         src: 'src/skydome.jpg',
         dest: 'dist/skydome.jpg'
-      },{
-        src: 'src/Worker.js',
-        dest: 'dist/Worker.js'
       }]
     },
 

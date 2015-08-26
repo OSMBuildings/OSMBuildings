@@ -26,13 +26,6 @@ var OSMBuildingsGL = function(containerId, options) {
     this.setStyle(options.style);
   }
 
-  //if (typeof Worker !== 'undefined') {
-  //  var worker = new Worker('Worker.js');
-  //  worker.onmessage = function(e) {
-  //    console.log(e.data);
-  //  };
-  //}
-
   TileGrid.setSource(options.tileSource);
   DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 

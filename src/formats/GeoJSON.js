@@ -93,19 +93,20 @@ var GeoJSON = {};
     return (winding === direction) ? polygon : polygon.reverse();
   }
 
-  function alignProperties(prop) {
-    var item = {};
-    var color;
-
-    prop = prop || {};
+  function parseFeature(res, origin, worldSize, feature) {
+    var
+      prop = feature.properties,
+      item = {},
+      color,
+      wallColor, roofColor;
 
     item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
     item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
-    var wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
+    wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
     item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
-    var roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
+    roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
     item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
     switch (prop.shape) {
@@ -141,15 +142,25 @@ var GeoJSON = {};
       item.roofHeight = 0;
     }
 
-    if (item.height+item.roofHeight <= item.minHeight) {
-      return;
-    }
+    //if (item.height+item.roofHeight <= item.minHeight) {
+    //  return;
+    //}
 
-    if (prop.relationId) {
-      item.relationId = prop.relationId;
-    }
+    item.id = prop.relationId || feature.id || prop.id;
 
-    return item;
+    var geometries = getGeometries(feature.geometry);
+    var clonedItem = Object.create(item);
+
+    for (var i = 0, il = geometries.length; i < il; i++) {
+      clonedItem.geometry = transform(origin, worldSize, geometries[i]);
+
+      if ((clonedItem.roofShape === 'cone' || clonedItem.roofShape === 'dome') && !clonedItem.shape && isRotational(clonedItem.geometry)) {
+        clonedItem.shape = 'cylinder';
+        clonedItem.isRotational = true;
+      }
+
+      res.push(clonedItem);
+    }
   }
 
   function getGeometries(geometry) {
@@ -203,101 +214,6 @@ var GeoJSON = {};
     }
 
     return res;
-  }
-
-  function parseFeature(res, origin, worldSize, feature) {
-    var
-      geometries,
-      tris,
-      item, polygon, bbox, radius, center, id;
-
-    if (!(item = alignProperties(feature.properties))) {
-      return;
-    }
-
-    geometries = getGeometries(feature.geometry);
-
-    for (var  i = 0, il = geometries.length; i < il; i++) {
-      polygon = transform(origin, worldSize, geometries[i]);
-
-      id = feature.properties.relationId || feature.id || feature.properties.id;
-
-      if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-        item.shape = 'cylinder';
-        item.isRotational = true;
-      }
-
-      bbox = getBBox(polygon);
-      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
-
-      if (item.isRotational) {
-        radius = (bbox.maxX - bbox.minX)/2;
-      }
-
-      tris = { vertices: [], normals: [] };
-
-      switch (item.shape) {
-        case 'cylinder':
-          Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-          break;
-
-        case 'cone':
-          Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-          break;
-
-        case 'dome':
-          Triangulate.dome(tris, center, radius, item.minHeight, item.height);
-          break;
-
-        case 'sphere':
-          Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-          break;
-
-        case 'pyramid':
-          Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-          break;
-
-        default:
-          Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-      }
-
-      res.push({
-        id: id,
-        color: item.wallColor,
-        vertices: tris.vertices,
-        normals: tris.normals
-      });
-
-      tris = { vertices:[], normals:[] };
-
-      switch (item.roofShape) {
-        case 'cone':
-          Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-          break;
-
-        case 'dome':
-          Triangulate.dome(tris, center, radius, item.height, item.height+item.roofHeight);
-          break;
-
-        case 'pyramid':
-          Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-          break;
-
-        default:
-          if (item.shape === 'cylinder') {
-            Triangulate.circle(tris, center, radius, item.height);
-          } else if (item.shape === undefined) {
-            Triangulate.polygon(tris, polygon, item.height);
-          }
-      }
-
-      res.push({
-        id: id,
-        color: item.roofColor,
-        vertices: tris.vertices,
-        normals: tris.normals
-      });
-    }
   }
 
   //***************************************************************************

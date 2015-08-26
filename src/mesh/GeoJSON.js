@@ -4,10 +4,8 @@ mesh.GeoJSON = (function() {
   var
     zoom = 16,
     worldSize = TILE_SIZE <<zoom,
-    //featuresPerChunk = 100,
-    featuresPerChunk = 50,
-    //delayPerChunk = 33;
-    delayPerChunk = 66;
+    featuresPerChunk = 100,
+    delayPerChunk = 33;
 
   //***************************************************************************
 
@@ -25,15 +23,12 @@ mesh.GeoJSON = (function() {
     this.elevation = options.elevation || 0;
     this.position  = {};
 
-    this._vertices = [];
-    this._normals = [];
-    this._colors = [];
-    this._idColors = [];
-
-    this._verticesLength = 0;
-    this._normalsLength = 0;
-    this._colorsLength = 0;
-    this._idColorsLength = 0;
+    this._data = {
+      vertices: [],
+      normals: [],
+      colors: [],
+      idColors: []
+    };
 
     Activity.setBusy();
     if (typeof url === 'object') {
@@ -70,70 +65,70 @@ mesh.GeoJSON = (function() {
       }.bind(this), 0, json.features.length, featuresPerChunk, delayPerChunk);
     },
 
-//function Float32Concat(first, second) {
-//  var firstLength = first.length,
-//    result = new Float32Array(firstLength + second.length);
-//
-//  result.set(first);
-//  result.set(second, firstLength);
-//
-//  return result;
-//}
-
     _addItems: function(items) {
-      var item, color, idColor, j, jl;
-
-      var vertices = [];
-      var normals = [];
-      var colors = [];
-      var idColors = [];
-
-      for (var i = 0, il = items.length; i<il; i++) {
+      var
+        item, color, idColor, bbox, center, radius,
+        vertexCount,
+        j;
+      for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
-        //this._vertices.push.apply(this._vertices, item.vertices);
-        //this._normals.push.apply(this._normals, item.normals);
-        vertices.push.apply(this._vertices, item.vertices);
-        normals.push.apply(this._normals, item.normals);
-
-        color = this._color || item.color || DEFAULT_COLOR;
         idColor = Interaction.idToColor(this._id || item.id);
 
-        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          //this._colors.push(color.r, color.g, color.b);
-          //this._idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
-          colors.push(color.r, color.g, color.b);
-          idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry)) {
+          item.shape = 'cylinder';
+          item.isRotational = true;
+        }
+
+        bbox = getBBox(item.geometry);
+        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+
+        if (item.isRotational) {
+          radius = (bbox.maxX - bbox.minX)/2;
+        }
+
+        switch (item.shape) {
+          case 'cylinder': vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
+          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.minHeight, item.height); break;
+          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.minHeight, item.height); break;
+          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius/2, item.minHeight, item.height); break;
+          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.minHeight, item.height); break;
+          default:         vertexCount = Triangulate.extrusion(this._data, item.geometry, item.minHeight, item.height);
+        }
+
+        color = this._color || item.wallColor || DEFAULT_COLOR;
+        for (j = 0; j < vertexCount; j++) {
+          this._data.colors.push(color.r, color.g, color.b);
+          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+        }
+
+        switch (item.roofShape) {
+          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.height, item.height+item.roofHeight); break;
+          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height+item.roofHeight); break;
+          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.height, item.height+item.roofHeight); break;
+          default:
+            if (item.shape === 'cylinder') {
+              vertexCount = Triangulate.circle(this._data, center, radius, item.height);
+            } else if (item.shape === undefined) {
+              vertexCount = Triangulate.polygon(this._data, item.geometry, item.height);
+            }
+        }
+
+        color = this._color || item.roofColor || DEFAULT_COLOR;
+        for (j = 0; j < vertexCount; j++) {
+          this._data.colors.push(color.r, color.g, color.b);
+          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
         }
       }
-
-      this._vertices.push(new Float32Array(vertices));
-      this._verticesLength += vertices.length;
-      vertices = null;
-
-      this._normals.push(new Float32Array(normals));
-      this._normalsLength += normals.length;
-      normals = null;
-
-      this._colors.push(new Float32Array(colors));
-      this._colorsLength += colors.length;
-      colors = null;
-
-      this._idColors.push(new Float32Array(idColors));
-      this._idColorsLength += idColors.length;
-      idColors = null;
     },
 
     _onReady: function() {
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._idColors));
+      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._data.vertices));
+      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._data.normals));
+      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._data.colors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._data.idColors));
 
-      this._vertices = null;
-      this._normals = null;
-      this._colors = null;
-      this._idColors = null;
+      this._data = null;
 
       data.Index.add(this);
       this._isReady = true;
