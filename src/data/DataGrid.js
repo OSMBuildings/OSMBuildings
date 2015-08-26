@@ -41,14 +41,14 @@ var DataGrid = {};
     zoom = Math.round(fixedZoom || Map.zoom);
 
     var
-      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      scale = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapBounds = Map.bounds,
       perspectiveBuffer = 1;
 
-    minX = (mapBounds.minX*ratio <<0) - perspectiveBuffer;
-    minY = (mapBounds.minY*ratio <<0) + 1 - perspectiveBuffer;
-    maxX = Math.ceil(mapBounds.maxX*ratio) + perspectiveBuffer;
-    maxY = Math.ceil(mapBounds.maxY*ratio) + 1 + perspectiveBuffer;
+    minX = (mapBounds.minX*scale <<0) - perspectiveBuffer;
+    minY = (mapBounds.minY*scale <<0) + 1 - perspectiveBuffer;
+    maxX = Math.ceil(mapBounds.maxX*scale) + perspectiveBuffer;
+    maxY = Math.ceil(mapBounds.maxY*scale) + 1 + perspectiveBuffer;
   }
 
   function loadTiles() {

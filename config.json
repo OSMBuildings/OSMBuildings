@@ -1,7 +1,6 @@
 {
   "shaders": ["interaction", "depth", "skydome", "buildings", "basemap"],
 
-
   "lib": [
     "lib/earcut.js",
     "lib/Color.debug.js",

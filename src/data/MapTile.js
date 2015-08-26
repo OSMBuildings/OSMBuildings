@@ -10,6 +10,7 @@ var MapTile = function(tileX, tileY, zoom) {
     0,   255, 0,
     0,     0, 0
   ]));
+
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
     1, 1,
     1, 0,

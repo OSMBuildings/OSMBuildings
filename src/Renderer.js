@@ -33,7 +33,7 @@ var Renderer = {
         Map.transform = new glx.Matrix()
           .rotateZ(Map.rotation)
           .rotateX(Map.tilt)
-          .translate(0, -HEIGHT/2, -1220); // map y offset to neutralize camera y offset, map z
+          .translate(0, -HEIGHT/2, -1220); // 0, map y offset to neutralize camera y offset, map z -1220 scales map tiles to ~256px
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
 

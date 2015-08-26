@@ -7,9 +7,6 @@ var SkyDome = {};
 
   var shader;
 
-  var vertices = [];
-  var texCoords = [];
-
   var tris = createDome(radius);
 
   var vertexBuffer;

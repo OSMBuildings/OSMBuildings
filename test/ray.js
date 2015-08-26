@@ -1,6 +1,10 @@
+<html>
+<head>
+<script src="../lib/GLX.debug.js"></script>
+</head>
+<body>
+<script>
 // https://github.com/mattdesl/ray-plane-intersection
-
-var Matrix = require('../src/geometry/Matrix.js');
 
 function dot(a, b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -94,14 +98,16 @@ var distance = -2;
 // distance can be determined with a second point on the plane, like so:
 //var distance = -dot(normal, point)
 
-var hit = intersectRayPlane(origin, direction, normal, distance);
-//console.log(hit);
 
-var mat = new Matrix()
-  .rotateZ(90)
-  .rotateX(0)
+var hit = intersectRayPlane(origin, direction, normal, distance);
+var mat = new glx.Matrix()
   //.multiply(Scene.perspective);
 
 console.log(transform([ 0,  0,  0], mat.data));
-console.log(transform([-1, -1,  0], mat.data));
-console.log(transform([ 0,  1, -1], mat.data));
+
+
+
+
+</script>
+</body>
+</html>
