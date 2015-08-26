@@ -4,8 +4,10 @@ mesh.GeoJSON = (function() {
   var
     zoom = 16,
     worldSize = TILE_SIZE <<zoom,
-    featuresPerChunk = 100,
-    delayPerChunk = 33;
+    //featuresPerChunk = 100,
+    featuresPerChunk = 50,
+    //delayPerChunk = 33;
+    delayPerChunk = 66;
 
   //***************************************************************************
 
@@ -27,6 +29,11 @@ mesh.GeoJSON = (function() {
     this._normals = [];
     this._colors = [];
     this._idColors = [];
+
+    this._verticesLength = 0;
+    this._normalsLength = 0;
+    this._colorsLength = 0;
+    this._idColorsLength = 0;
 
     Activity.setBusy();
     if (typeof url === 'object') {
@@ -63,23 +70,58 @@ mesh.GeoJSON = (function() {
       }.bind(this), 0, json.features.length, featuresPerChunk, delayPerChunk);
     },
 
+//function Float32Concat(first, second) {
+//  var firstLength = first.length,
+//    result = new Float32Array(firstLength + second.length);
+//
+//  result.set(first);
+//  result.set(second, firstLength);
+//
+//  return result;
+//}
+
     _addItems: function(items) {
       var item, color, idColor, j, jl;
+
+      var vertices = [];
+      var normals = [];
+      var colors = [];
+      var idColors = [];
 
       for (var i = 0, il = items.length; i<il; i++) {
         item = items[i];
 
-        this._vertices.push.apply(this._vertices, item.vertices);
-        this._normals.push.apply(this._normals, item.normals);
+        //this._vertices.push.apply(this._vertices, item.vertices);
+        //this._normals.push.apply(this._normals, item.normals);
+        vertices.push.apply(this._vertices, item.vertices);
+        normals.push.apply(this._normals, item.normals);
 
         color = this._color || item.color || DEFAULT_COLOR;
         idColor = Interaction.idToColor(this._id || item.id);
 
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          this._colors.push(color.r, color.g, color.b);
-          this._idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+          //this._colors.push(color.r, color.g, color.b);
+          //this._idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+          colors.push(color.r, color.g, color.b);
+          idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
         }
       }
+
+      this._vertices.push(new Float32Array(vertices));
+      this._verticesLength += vertices.length;
+      vertices = null;
+
+      this._normals.push(new Float32Array(normals));
+      this._normalsLength += normals.length;
+      normals = null;
+
+      this._colors.push(new Float32Array(colors));
+      this._colorsLength += colors.length;
+      colors = null;
+
+      this._idColors.push(new Float32Array(idColors));
+      this._idColorsLength += idColors.length;
+      idColors = null;
     },
 
     _onReady: function() {

@@ -1689,6 +1689,13 @@
 	    this.setStyle(options.style);
 	  }
 
+	  if (typeof Worker !== 'undefined') {
+	    var worker = new Worker('Worker.js');
+	    worker.onmessage = function(e) {
+	      console.log(e.data);
+	    };
+	  }
+
 	  TileGrid.setSource(options.tileSource);
 	  DataGrid.setSource(options.dataSource, options.dataKey || DATA_KEY);
 
@@ -1810,7 +1817,7 @@
 
 	    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 
-	    var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
+	    var scale = 1/Math.pow(2, 16 - Map.zoom);
 	    var mMatrix = new glx.Matrix()
 	      .translate(0, 0, elevation)
 	      .scale(scale, scale, scale*0.7)
@@ -2368,7 +2375,7 @@
 
 	var PI = Math.PI;
 
-	var MIN_ZOOM = 14.5;
+	var MIN_ZOOM = 15;
 
 	var TILE_SIZE = 256;
 
@@ -3225,8 +3232,8 @@
 	  var
 	    zoom = 16,
 	    worldSize = TILE_SIZE <<zoom,
-	    featuresPerChunk = 100,
-	    delayPerChunk = 33;
+	    featuresPerChunk = 50,
+	    delayPerChunk = 66;
 
 	  //***************************************************************************
 
@@ -4096,7 +4103,7 @@
 	        Map.transform = new glx.Matrix()
 	          .rotateZ(Map.rotation)
 	          .rotateX(Map.tilt)
-	          .translate(0, -HEIGHT/2, -1220); // map y offset to neutralize camera y offset, map z
+	          .translate(0, -HEIGHT/2, -1220); // 0, map y offset to neutralize camera y offset, map z -1220 scales map tiles to ~256px
 
 	// console.log('CONTEXT LOST?', GL.isContextLost());
 
@@ -4389,8 +4396,8 @@
 	  };
 
 	  SkyDome.resize = function() {
-	    var maxSize = Math.max(WIDTH, HEIGHT)/2;
-	    this.radius = Math.sqrt(maxSize*maxSize*2);
+	    var maxSize = Math.max(WIDTH, HEIGHT);
+	    this.radius = maxSize * Math.sqrt(2) / 1;
 	  };
 
 	  SkyDome.render = function(vpMatrix) {

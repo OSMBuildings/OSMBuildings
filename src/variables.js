@@ -1,7 +1,7 @@
 
 var PI = Math.PI;
 
-var MIN_ZOOM = 14.5;
+var MIN_ZOOM = 15;
 
 var TILE_SIZE = 256;
 
