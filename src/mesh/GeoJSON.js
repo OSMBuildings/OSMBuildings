@@ -16,7 +16,7 @@ mesh.GeoJSON = (function() {
     if (options.color) {
       this._color = Color.parse(options.color).toRGBA(true);
     }
-    this._replaces = options.replaces || [];
+    //this._replaces = options.replaces || [];
 
     this.scale     = options.scale     || 1;
     this.rotation  = options.rotation  || 0;

@@ -36,7 +36,6 @@ var DataGrid = {};
     }, delay);
   }
 
-  // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
     zoom = Math.round(fixedZoom || Map.zoom);
 

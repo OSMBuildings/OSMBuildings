@@ -26,13 +26,13 @@ MapTile.prototype = {
     this.texture = new glx.texture.Image(url, function(image) {
       Activity.setIdle();
       if (image) {
-        this.isLoaded = true;
+        this.isReady = true;
       }
     }.bind(this));
   },
 
   getMatrix: function() {
-    if (!this.isLoaded) {
+    if (!this.isReady) {
       return;
     }
 

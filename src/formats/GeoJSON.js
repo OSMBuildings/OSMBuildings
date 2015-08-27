@@ -100,6 +100,10 @@ var GeoJSON = {};
       color,
       wallColor, roofColor;
 
+    if (!prop) {
+      return;
+    }
+
     item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
     item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
