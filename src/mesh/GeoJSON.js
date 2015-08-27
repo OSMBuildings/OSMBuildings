@@ -4,8 +4,8 @@ mesh.GeoJSON = (function() {
   var
     zoom = 16,
     worldSize = TILE_SIZE <<zoom,
-    featuresPerChunk = 100,
-    delayPerChunk = 33;
+    featuresPerChunk = 150,
+    delayPerChunk = 66;
 
   //***************************************************************************
 
