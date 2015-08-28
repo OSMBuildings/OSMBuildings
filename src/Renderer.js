@@ -55,10 +55,13 @@ var Renderer = {
   },
 
   resize: function() {
+    var refHeight = 1024;
+    var refVFOV = 45;
+
     this.perspective = new glx.Matrix()
       .translate(0, -HEIGHT/2, -1220) // 0, map y offset to neutralize camera y offset, map z -1220 scales map tiles to ~256px
       .scale(1, -1, 1) // flip Y
-      .multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000))
+      .multiply(new glx.Matrix.Perspective(refVFOV * HEIGHT / refHeight, WIDTH/HEIGHT, 0.1, 5000))
       .translate(0, -1, 0); // camera y offset
 
     GL.viewport(0, 0, WIDTH, HEIGHT);
