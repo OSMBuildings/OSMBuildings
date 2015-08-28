@@ -31,8 +31,7 @@ var Renderer = {
       requestAnimationFrame(function() {
         Map.transform = new glx.Matrix()
           .rotateZ(Map.rotation)
-          .rotateX(Map.tilt)
-          .translate(0, -HEIGHT/2, -1220); // 0, map y offset to neutralize camera y offset, map z -1220 scales map tiles to ~256px
+          .rotateX(Map.tilt);
 
 // console.log('CONTEXT LOST?', GL.isContextLost());
 
@@ -57,6 +56,7 @@ var Renderer = {
 
   resize: function() {
     this.perspective = new glx.Matrix()
+      .translate(0, -HEIGHT/2, -1220) // 0, map y offset to neutralize camera y offset, map z -1220 scales map tiles to ~256px
       .scale(1, -1, 1) // flip Y
       .multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000))
       .translate(0, -1, 0); // camera y offset

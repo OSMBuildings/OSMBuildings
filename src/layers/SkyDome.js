@@ -96,7 +96,7 @@ var SkyDome = {};
 
   SkyDome.resize = function() {
     var maxSize = Math.max(WIDTH, HEIGHT);
-    this.radius = maxSize * Math.sqrt(2) / 1;
+    this.radius = maxSize * Math.sqrt(2) / 2;
   };
 
   SkyDome.render = function(vpMatrix) {
@@ -108,8 +108,25 @@ var SkyDome = {};
 
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
+    //var mapZ = 0;
+    //var vFOV = 45;
+    //
+    //var hFOV = vFOV*WIDTH/HEIGHT;
+    //var virtualCamDistance = (WIDTH/2) / Math.tan( (hFOV/2) * (Math.PI/180) );
+    //var mapCamDistance = virtualCamDistance + mapZ;
+    //var ratio = mapCamDistance / virtualCamDistance;
+    //var r1 = (WIDTH/2) * ratio <<0;
+    //var r2 = (HEIGHT/2) * ratio <<0;
+    //
+    //console.log(ratio);
+    //console.log(WIDTH/2, r1, HEIGHT/2, r2);
+    //
+    //var r = Math.max(r1, r2);
+
+    var r = Math.max(WIDTH, HEIGHT);
+
     var mMatrix = new glx.Matrix();
-    var scale = this.radius/baseRadius;
+    var scale = r/baseRadius;
     mMatrix.scale(scale, scale, scale);
 
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);

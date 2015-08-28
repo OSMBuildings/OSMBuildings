@@ -2,6 +2,7 @@
 <head>
 <script src="../lib/GLX.debug.js"></script>
 </head>
+
 <body>
 <script>
 // https://github.com/mattdesl/ray-plane-intersection
@@ -74,39 +75,38 @@ function transform(a, m) {
 }
 
 
-function intersectRayPlane(origin, direction, normal, distance) {
-  var denom = dot(direction, normal);
+function intersectRayPlane(camera, viewDirection, planeNormal, planeDistance) {
+  var denom = dot(viewDirection, planeNormal);
   if (denom !== 0) {
-    var t = -(dot(origin, normal) + distance) / denom;
+    var t = -(dot(camera, planeNormal) + planeDistance) / denom;
     if (t === 0) {
       return;
     }
-    return add(origin, scale(direction, t));
+    return add(camera, scale(viewDirection, t));
   }
-  if (dot(normal, origin) + dist === 0) {
-    return origin;
+  if (dot(planeNormal, camera) + planeDistance === 0) {
+    return camera;
   }
 }
 
-var origin = [0, 1, -1];
-var corner = [-1, -1, 0];
-var direction = normalize(sub(origin, corner));
-
-var normal = [0, 0, 1];
-var distance = -2;
 
 // distance can be determined with a second point on the plane, like so:
 //var distance = -dot(normal, point)
 
+var point = [-1, -1, 0];
+var camera = [0, 0, 0];
+var viewDirection = normalize(sub(camera, point));
+var planeNormal = [0, 0, 1];
+var planeDistance = -1220;
+var hit = intersectRayPlane(camera, viewDirection, planeNormal, planeDistance);
 
-var hit = intersectRayPlane(origin, direction, normal, distance);
-var mat = new glx.Matrix()
+
+console.log(point, hit)
+
+
+//var mat = new glx.Matrix()
   //.multiply(Scene.perspective);
-
-console.log(transform([0,  0,  0], mat.data));
-
-
-
+//console.log(transform([0,  0,  0], mat.data));
 
 </script>
 </body>
