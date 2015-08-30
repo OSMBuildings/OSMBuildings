@@ -27,5 +27,5 @@ void main() {
   vec4 mPosition = vec4(uMMatrix * aPosition);
   float distance = length(mPosition);
   float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);
-  vFogIntensity = fogIntensity; // clamp(fogIntensity, 0.0, 1.0);
+  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);
 }
