@@ -1,4 +1,3 @@
-
 var GL;
 var WIDTH = 0, HEIGHT = 0;
 
@@ -13,7 +12,7 @@ var OSMBuildingsGL = function(containerId, options) {
   GL = new glx.View(container, WIDTH, HEIGHT);
 
   Renderer.start({
-    backgroundColor: options.backgroundColor,
+    fogColor: options.fogColor,
     showBackfaces: options.showBackfaces
   });
 
@@ -53,22 +52,12 @@ OSMBuildingsGL.prototype = {
     return this;
   },
 
-  addModifier: function(fn) {
-    Data.addModifier(fn);
-    return this;
-  },
-
-  removeModifier: function(fn) {
-    Data.removeModifier(fn);
-    return this;
-  },
-
-  addOBJ: function(url, options) {
-    return new OBJMesh(url, options);
+  addOBJ: function(url, position, options) {
+    return new mesh.OBJ(url, position, options);
   },
 
   addGeoJSON: function(url, options) {
-    return new GeoJSONMesh(url, options);
+    return new mesh.GeoJSON(url, options);
   },
 
   on: function(type, fn) {
@@ -105,7 +94,7 @@ OSMBuildingsGL.prototype = {
   },
 
   getPosition: function() {
-    return Map.getPosition();
+    return Map.position;
   },
 
   getBounds: function() {
@@ -123,7 +112,7 @@ OSMBuildingsGL.prototype = {
 
   setSize: function(size) {
     if (size.width !== WIDTH || size.height !== HEIGHT) {
-      GL.canvas.width  = WIDTH  = size.width;
+      GL.canvas.width = WIDTH = size.width;
       GL.canvas.height = HEIGHT = size.height;
       Events.emit('resize');
     }
@@ -131,7 +120,7 @@ OSMBuildingsGL.prototype = {
   },
 
   getSize: function() {
-    return { width:WIDTH, height:HEIGHT };
+    return { width: WIDTH, height: HEIGHT };
   },
 
   setRotation: function(rotation) {
@@ -158,16 +147,21 @@ OSMBuildingsGL.prototype = {
 
     var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 
-    var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
+    var scale = 1/Math.pow(2, 16 - Map.zoom);
     var mMatrix = new glx.Matrix()
       .translate(0, 0, elevation)
       .scale(scale, scale, scale*0.7)
-      .translate(pos.x-mapCenter.x, pos.y-mapCenter.y, 0);
+      .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
 
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 
     var t = glx.Matrix.transform(mvp);
-    return { x:t.x*WIDTH, y:HEIGHT-t.y*HEIGHT };
+    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
+  },
+
+  highlight: function(id, color) {
+    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
+    Buildings.highlightID = Interaction.idToColor(id);
   },
 
   destroy: function() {
@@ -175,11 +169,6 @@ OSMBuildingsGL.prototype = {
     Renderer.destroy();
     TileGrid.destroy();
     DataGrid.destroy();
-  },
-
-  highlight: function(id, color) {
-    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
-    Buildings.highlightID = Interaction.idToColor(id);
   }
 };
 

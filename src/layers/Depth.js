@@ -29,7 +29,7 @@ var Depth = {};
     var item,
       mMatrix, mvp;
 
-    var dataItems = Data.items;
+    var dataItems = data.Index.items;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];

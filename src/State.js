@@ -9,7 +9,7 @@ var State = {};
     }
 
     var params = [];
-    var position = map.getPosition();
+    var position = map.position;
     params.push('lat=' + position.latitude.toFixed(5));
     params.push('lon=' + position.longitude.toFixed(5));
     params.push('zoom=' + map.zoom.toFixed(1));

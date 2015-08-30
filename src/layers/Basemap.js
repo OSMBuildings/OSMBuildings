@@ -12,7 +12,7 @@ var Basemap = {};
       vertexShader: SHADERS.basemap.vertex,
       fragmentShader: SHADERS.basemap.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uTileImage"]
+      uniforms: ["uMMatrix", "uMatrix", "uTileImage", "uFogRadius", "uFogColor"]
     });
 
     return this;
@@ -25,12 +25,17 @@ var Basemap = {};
 
     shader.enable();
 
+    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+
     for (var key in tiles) {
       item = tiles[key];
 
       if (!(mMatrix = item.getMatrix())) {
         continue;
       }
+
+      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);

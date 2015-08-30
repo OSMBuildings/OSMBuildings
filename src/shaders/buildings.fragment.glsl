@@ -2,13 +2,8 @@
   precision mediump float;
 #endif
 
-varying vec4 vPosition;
 varying vec3 vColor;
 
-float gradientHeight = 90.0;
-float maxGradientStrength = 0.3;
-
 void main() {
-  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);
-  gl_FragColor = vec4(vColor - shading, 1.0);
+  gl_FragColor = vec4(vColor, 1.0);
 }

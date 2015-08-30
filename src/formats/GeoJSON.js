@@ -4,7 +4,6 @@ var GeoJSON = {};
 (function() {
 
   var METERS_PER_LEVEL = 3;
-  var CHUNK_SIZE = 1000;
 
   var materialColors = {
     brick:'#cc7755',
@@ -94,19 +93,24 @@ var GeoJSON = {};
     return (winding === direction) ? polygon : polygon.reverse();
   }
 
-  function alignProperties(prop) {
-    var item = {};
-    var color;
+  function parseFeature(res, origin, worldSize, feature) {
+    var
+      prop = feature.properties,
+      item = {},
+      color,
+      wallColor, roofColor;
 
-    prop = prop || {};
+    if (!prop) {
+      return;
+    }
 
     item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
     item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
-    var wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
+    wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
     item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
-    var roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
+    roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
     item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
     switch (prop.shape) {
@@ -142,15 +146,25 @@ var GeoJSON = {};
       item.roofHeight = 0;
     }
 
-    if (item.height+item.roofHeight <= item.minHeight) {
-      return;
-    }
+    //if (item.height+item.roofHeight <= item.minHeight) {
+    //  return;
+    //}
 
-    if (prop.relationId) {
-      item.relationId = prop.relationId;
-    }
+    item.id = prop.relationId || feature.id || prop.id;
 
-    return item;
+    var geometries = getGeometries(feature.geometry);
+    var clonedItem = Object.create(item);
+
+    for (var i = 0, il = geometries.length; i < il; i++) {
+      clonedItem.geometry = transform(origin, worldSize, geometries[i]);
+
+      if ((clonedItem.roofShape === 'cone' || clonedItem.roofShape === 'dome') && !clonedItem.shape && isRotational(clonedItem.geometry)) {
+        clonedItem.shape = 'cylinder';
+        clonedItem.isRotational = true;
+      }
+
+      res.push(clonedItem);
+    }
   }
 
   function getGeometries(geometry) {
@@ -188,9 +202,8 @@ var GeoJSON = {};
     return [res];
   }
 
-  function transform(offsetX, offsetY, zoom, polygon) {
+  function transform(origin, worldSize, polygon) {
     var
-      worldSize = TILE_SIZE * Math.pow(2, zoom),
       res = [],
       r, rl, p,
       ring;
@@ -200,137 +213,30 @@ var GeoJSON = {};
       res[i] = [];
       for (r = 0, rl = ring.length-1; r < rl; r++) {
         p = project(ring[r][1], ring[r][0], worldSize);
-        res[i][r] = [p.x-offsetX, p.y-offsetY];
+        res[i][r] = [p.x-origin.x, p.y-origin.y];
       }
     }
 
     return res;
   }
 
-  function parse(res, pos, offsetX, offsetY, zoom, geojson, callback) {
-    var
-      collection = geojson.features,
-      max = pos + Math.min(collection.length-pos, CHUNK_SIZE),
-      feature,
-      geometries,
-      tris,
-      j, jl,
-      item, polygon, bbox, radius, center, id;
-
-    for (; pos < max; pos++) {
-      feature = collection[pos];
-
-      if (!(item = alignProperties(feature.properties))) {
-        continue;
-      }
-
-      geometries = getGeometries(feature.geometry);
-
-      for (j = 0, jl = geometries.length; j < jl; j++) {
-        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
-
-        id = feature.properties.relationId || feature.id || feature.properties.id;
-
-        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-          item.shape = 'cylinder';
-          item.isRotational = true;
-        }
-
-        bbox = getBBox(polygon);
-        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
-
-        if (item.isRotational) {
-          radius = (bbox.maxX-bbox.minX)/2;
-        }
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.shape) {
-          case 'cylinder':
-            Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-            break;
-
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-            break;
-
-          case 'dome':
-            Triangulate.dome(tris, center, radius, item.minHeight, item.height);
-            break;
-
-          case 'sphere':
-            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
-            break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-            break;
-
-          default:
-            Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-        }
-
-        res.push({
-          id: id,
-          color: item.wallColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-
-        tris = { vertices:[], normals:[] };
-
-        switch (item.roofShape) {
-          case 'cone':
-            Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-            break;
-
-          case 'dome':
-            Triangulate.dome(tris, center, radius, item.height, item.height+item.roofHeight);
-            break;
-
-          case 'pyramid':
-            Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-            break;
-
-          default:
-            if (item.shape === 'cylinder') {
-              Triangulate.circle(tris, center, radius, item.height);
-            } else if (item.shape === undefined) {
-              Triangulate.polygon(tris, polygon, item.height);
-            }
-        }
-
-        res.push({
-          id: id,
-          color: item.roofColor,
-          vertices: tris.vertices,
-          normals: tris.normals
-        });
-      }
-    }
-
-    if (pos === collection.length) {
-      geojson = null;
-      callback(res);
-    } else {
-      setTimeout(function() {
-        parse(res, pos, offsetX, offsetY, zoom, geojson, callback);
-      }, 10);
-    }
-  }
-
   //***************************************************************************
 
-  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
+  GeoJSON.parse = function(position, worldSize, geojson) {
     var res = [];
 
-    if (!geojson || geojson.type !== 'FeatureCollection') {
-      callback(res);
-      return;
+    if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
+
+      var
+        collection = geojson.features,
+        origin = project(position.latitude, position.longitude, worldSize);
+
+      for (var i = 0, il = collection.length; i<il; i++) {
+        parseFeature(res, origin, worldSize, collection[i]);
+      }
     }
 
-    parse(res, 0, offsetX, offsetY, zoom, geojson, callback);
+    return res;
   };
 
 }());

@@ -22,18 +22,17 @@ var MapTile = function(tileX, tileY, zoom) {
 MapTile.prototype = {
 
   load: function(url) {
-    this.url = url;
-    setBusy(url);
+    Activity.setBusy();
     this.texture = new glx.texture.Image(url, function(image) {
-      setIdle(url);
+      Activity.setIdle();
       if (image) {
-        this.isLoaded = true;
+        this.isReady = true;
       }
     }.bind(this));
   },
 
   getMatrix: function() {
-    if (!this.isLoaded) {
+    if (!this.isReady) {
       return;
     }
 
@@ -53,8 +52,8 @@ MapTile.prototype = {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
     if (this.texture) {
-    this.texture.destroy();
+      this.texture.destroy();
     }
-    setIdle(this.url);
+    Activity.setIdle();
   }
 };

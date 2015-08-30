@@ -3,22 +3,14 @@ var SkyDome = {};
 
 (function() {
 
-  var radius = 100;
-
   var shader;
 
-  var tris = createDome(radius);
+  var baseRadius = 500;
 
   var vertexBuffer;
   var texCoordBuffer;
   var texture;
   var textureIsLoaded;
-
-  function getScale() {
-    var screenRadius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT);
-    var scale = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
-    return screenRadius * scale / radius;
-  }
 
   function createDome(radius) {
     var
@@ -78,23 +70,33 @@ var SkyDome = {};
   SkyDome.initShader = function() {
     var url = 'skydome.jpg';
 
+    var tris = createDome(baseRadius);
+
+    this.resize();
+    Events.on('resize', this.resize.bind(this));
+
     shader = new glx.Shader({
       vertexShader: SHADERS.skydome.vertex,
       fragmentShader: SHADERS.skydome.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uTileImage"]
+      uniforms: ["uMatrix", "uTileImage", "uFogColor"]
     });
 
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
-    setBusy(url);
+    Activity.setBusy();
     texture = new glx.texture.Image(url, function(image) {
-      setIdle(url);
+      Activity.setIdle();
       if (image) {
         textureIsLoaded = true;
       }
     });
+
     return this;
+  };
+
+  SkyDome.resize = function() {
+    this.radius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT) / 2;
   };
 
   SkyDome.render = function(vpMatrix) {
@@ -104,19 +106,14 @@ var SkyDome = {};
 
     shader.enable();
 
-    var mMatrix = new glx.Matrix();
+    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
-    var scale = getScale();
+    var mMatrix = new glx.Matrix();
+    var scale = this.radius/baseRadius;
     mMatrix.scale(scale, scale, scale);
 
-    mMatrix
-      .rotateZ(Map.rotation)
-      .translate(WIDTH/2, HEIGHT/2, 0)
-      .rotateX(Map.tilt)
-      .translate(0, HEIGHT/2, 0)
-      .multiply(Renderer.perspective);
-
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
     vertexBuffer.enable();
     GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -130,10 +127,6 @@ var SkyDome = {};
     GL.drawArrays(GL.TRIANGLES, 0, vertexBuffer.numItems);
 
     shader.disable();
-  };
-
-  SkyDome.getRadius = function() {
-    return radius * getScale();
   };
 
 }());

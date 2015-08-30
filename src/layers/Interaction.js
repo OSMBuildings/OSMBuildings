@@ -1,5 +1,5 @@
 
-// TODO: render only clicked area
+// TODO: perhaps render only clicked area
 
 var Interaction = {
 
@@ -10,8 +10,8 @@ var Interaction = {
     this.shader = new glx.Shader({
       vertexShader: SHADERS.interaction.vertex,
       fragmentShader: SHADERS.interaction.fragment,
-      attributes: ["aPosition", "aColor", "aHidden"],
-      uniforms: ["uMatrix"]
+      attributes: ["aPosition", "aColor"],
+      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -37,8 +37,10 @@ var Interaction = {
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
+    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+
     var
-      dataItems = Data.items,
+      dataItems = data.Index.items,
       item,
       mMatrix, mvp;
 
@@ -49,6 +51,8 @@ var Interaction = {
         continue;
       }
 
+      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
@@ -58,8 +62,8 @@ var Interaction = {
       item.idColorBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
-      item.visibilityBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      //item.visibilityBuffer.enable();
+      //GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

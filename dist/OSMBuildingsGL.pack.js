@@ -1431,58 +1431,60 @@
 	  this.id = GL.createTexture();
 	  GL.bindTexture(GL.TEXTURE_2D, this.id);
 
-	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
+	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
 	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-	//  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-	//  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+	//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+	//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 
 	  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
-	    GL.bindTexture(GL.TEXTURE_2D, null);
+	  GL.bindTexture(GL.TEXTURE_2D, null);
 
 	  var image = new Image();
 
-	    image.crossOrigin = '*';
+	  image.crossOrigin = '*';
 
-	    image.onload = function() {
-	      // TODO: do this only once
-	      var maxTexSize = GL.getParameter(GL.MAX_TEXTURE_SIZE);
-	      if (image.width > maxTexSize || image.height > maxTexSize) {
-	        var w = maxTexSize, h = maxTexSize;
-	        var ratio = image.width/image.height;
-	        // TODO: if other dimension doesn't fit to POT after resize, there is still trouble
-	        if (ratio < 1) {
-	          w = Math.round(h*ratio);
-	        } else {
-	          h = Math.round(w/ratio);
-	        }
-
-	        var canvas = document.createElement('CANVAS');
-	        canvas.width  = w;
-	        canvas.height = h;
-
-	        var context = canvas.getContext('2d');
-	        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-	        image = canvas;
+	  image.onload = function() {
+	    // TODO: do this only once
+	    var maxTexSize = GL.getParameter(GL.MAX_TEXTURE_SIZE);
+	    if (image.width > maxTexSize || image.height > maxTexSize) {
+	      var w = maxTexSize, h = maxTexSize;
+	      var ratio = image.width/image.height;
+	      // TODO: if other dimension doesn't fit to POT after resize, there is still trouble
+	      if (ratio < 1) {
+	        w = Math.round(h*ratio);
+	      } else {
+	        h = Math.round(w/ratio);
 	      }
 
-	    GL.bindTexture(GL.TEXTURE_2D, this.id);
-	    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
-	    GL.generateMipmap(GL.TEXTURE_2D);
-	    GL.bindTexture(GL.TEXTURE_2D, null);
+	      var canvas = document.createElement('CANVAS');
+	      canvas.width  = w;
+	      canvas.height = h;
 
-	      this.isLoaded = true;
+	      var context = canvas.getContext('2d');
+	      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+	      image = canvas;
+	    }
 
-	      if (callback) {
-	        callback(image);
-	      }
+	    if (!this.id) {
+	      image = null;
+	    } else {
+	      GL.bindTexture(GL.TEXTURE_2D, this.id);
+	      GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
+	      GL.generateMipmap(GL.TEXTURE_2D);
+	      GL.bindTexture(GL.TEXTURE_2D, null);
+	    }
 
-	    }.bind(this);
+	    if (callback) {
+	      callback(image);
+	    }
 
-	    image.onerror = function() {
-	      if (callback) {
-	        callback();
-	      }
-	    };
+	  }.bind(this);
+
+	  image.onerror = function() {
+	    if (callback) {
+	      callback();
+	    }
+	  };
 
 	  image.src = src;
 	};
@@ -1490,6 +1492,9 @@
 	glx.texture.Image.prototype = {
 
 	  enable: function(index) {
+	    if (!this.id) {
+	      return;
+	    }
 	    GL.bindTexture(GL.TEXTURE_2D, this.id);
 	    GL.activeTexture(GL.TEXTURE0 + (index || 0));
 	  },
@@ -1501,7 +1506,8 @@
 	  destroy: function() {
 	    GL.bindTexture(GL.TEXTURE_2D, null);
 	    GL.deleteTexture(this.id);
-	    }
+	    this.id = null;
+	  }
 	};
 
 
@@ -1661,7 +1667,6 @@
 
 	return glx;
 	}(this));
-
 	var GL;
 	var WIDTH = 0, HEIGHT = 0;
 
@@ -1676,7 +1681,7 @@
 	  GL = new glx.View(container, WIDTH, HEIGHT);
 
 	  Renderer.start({
-	    backgroundColor: options.backgroundColor,
+	    fogColor: options.fogColor,
 	    showBackfaces: options.showBackfaces
 	  });
 
@@ -1716,22 +1721,12 @@
 	    return this;
 	  },
 
-	  addModifier: function(fn) {
-	    Data.addModifier(fn);
-	    return this;
-	  },
-
-	  removeModifier: function(fn) {
-	    Data.removeModifier(fn);
-	    return this;
-	  },
-
-	  addOBJ: function(url, options) {
-	    return new OBJMesh(url, options);
+	  addOBJ: function(url, position, options) {
+	    return new mesh.OBJ(url, position, options);
 	  },
 
 	  addGeoJSON: function(url, options) {
-	    return new GeoJSONMesh(url, options);
+	    return new mesh.GeoJSON(url, options);
 	  },
 
 	  on: function(type, fn) {
@@ -1768,7 +1763,7 @@
 	  },
 
 	  getPosition: function() {
-	    return Map.getPosition();
+	    return Map.position;
 	  },
 
 	  getBounds: function() {
@@ -1786,7 +1781,7 @@
 
 	  setSize: function(size) {
 	    if (size.width !== WIDTH || size.height !== HEIGHT) {
-	      GL.canvas.width  = WIDTH  = size.width;
+	      GL.canvas.width = WIDTH = size.width;
 	      GL.canvas.height = HEIGHT = size.height;
 	      Events.emit('resize');
 	    }
@@ -1794,7 +1789,7 @@
 	  },
 
 	  getSize: function() {
-	    return { width:WIDTH, height:HEIGHT };
+	    return { width: WIDTH, height: HEIGHT };
 	  },
 
 	  setRotation: function(rotation) {
@@ -1821,16 +1816,21 @@
 
 	    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 
-	    var scale = 1/Math.pow(2, 16 - Map.zoom); // scales to tile data size, not perfectly clear yet
+	    var scale = 1/Math.pow(2, 16 - Map.zoom);
 	    var mMatrix = new glx.Matrix()
 	      .translate(0, 0, elevation)
 	      .scale(scale, scale, scale*0.7)
-	      .translate(pos.x-mapCenter.x, pos.y-mapCenter.y, 0);
+	      .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
 
 	    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 
 	    var t = glx.Matrix.transform(mvp);
-	    return { x:t.x*WIDTH, y:HEIGHT-t.y*HEIGHT };
+	    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
+	  },
+
+	  highlight: function(id, color) {
+	    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
+	    Buildings.highlightID = Interaction.idToColor(id);
 	  },
 
 	  destroy: function() {
@@ -1838,11 +1838,6 @@
 	    Renderer.destroy();
 	    TileGrid.destroy();
 	    DataGrid.destroy();
-	  },
-
-	  highlight: function(id, color) {
-	    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
-	    Buildings.highlightID = Interaction.idToColor(id);
 	  }
 	};
 
@@ -1930,13 +1925,9 @@
 	    }
 	  };
 
-	  Map.getPosition = function() {
-	    return unproject(this.center.x, this.center.y, TILE_SIZE*Math.pow(2, this.zoom));
-	  };
-
-	  Map.setPosition = function(position) {
-	    var latitude  = clamp(parseFloat(position.latitude), -90, 90);
-	    var longitude = clamp(parseFloat(position.longitude), -180, 180);
+	  Map.setPosition = function(pos) {
+	    var latitude  = clamp(parseFloat(pos.latitude), -90, 90);
+	    var longitude = clamp(parseFloat(pos.longitude), -180, 180);
 	    var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, this.zoom));
 	    this.setCenter(center);
 	  };
@@ -1944,6 +1935,7 @@
 	  Map.setCenter = function(center) {
 	    if (this.center.x !== center.x || this.center.y !== center.y) {
 	      this.center = center;
+	      this.position = unproject(center.x, center.y, TILE_SIZE*Math.pow(2, this.zoom));
 	      updateBounds();
 	      Events.emit('change');
 	    }
@@ -2274,6 +2266,54 @@
 	}
 
 
+	var Activity = {};
+
+	(function() {
+
+	  var count = 0;
+	  var timer;
+
+	  Activity.setBusy = function(msg) {
+	    //if (msg) {
+	    //  console.log('setBusy', msg, count);
+	    //}
+
+	    if (!count) {
+	      if (timer) {
+	        clearTimeout(timer);
+	        timer = null;
+	      } else {
+	        Events.emit('busy');
+	      }
+	    }
+	    count++;
+	  };
+
+	  Activity.setIdle = function(msg) {
+	    if (!count) {
+	      return;
+	    }
+
+	    count--;
+	    if (!count) {
+	      timer = setTimeout(function() {
+	        timer = null;
+	        Events.emit('idle');
+	      }, 10);
+	    }
+
+	    //if (msg) {
+	    //  console.log('setIdle', msg, count);
+	    //}
+	  };
+
+	  Activity.isBusy = function() {
+	    return !!count;
+	  };
+
+	}());
+
+
 	var State = {};
 
 	(function() {
@@ -2284,7 +2324,7 @@
 	    }
 
 	    var params = [];
-	    var position = map.getPosition();
+	    var position = map.position;
 	    params.push('lat=' + position.latitude.toFixed(5));
 	    params.push('lon=' + position.longitude.toFixed(5));
 	    params.push('zoom=' + map.zoom.toFixed(1));
@@ -2334,7 +2374,7 @@
 
 	var PI = Math.PI;
 
-	var MIN_ZOOM = 14.5;
+	var MIN_ZOOM = 15;
 
 	var TILE_SIZE = 256;
 
@@ -2345,6 +2385,9 @@
 
 	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
 	var DEFAULT_HIGHLIGHT_COLOR = Color.parse('#f08000').toRGBA(true);
+
+	var FOG_RADIUS = 7500;
+	var FOG_COLOR = Color.parse('#f0f8ff').toRGBA(true);
 
 	var document = global.document;
 
@@ -2371,7 +2414,6 @@
 	      }
 
 	      delete queue[url];
-	      setIdle(url);
 
 	      if (!req.status || req.status<200 || req.status>299) {
 	        return;
@@ -2382,13 +2424,11 @@
 
 	    queue[url] = req;
 	    req.open('GET', url);
-	    setBusy(url);
 	    req.send(null);
 
 	    return {
 	      abort: function() {
 	        if (queue[url]) {
-	          setIdle(url);
 	          req.abort();
 	          delete queue[url];
 	        }
@@ -2442,31 +2482,6 @@
 
 	}());
 
-
-
-	var activities = [];
-
-	function setBusy(key) {
-	  if (!activities.length) {
-	    Events.emit('busy');
-	  }
-	  if (activities.indexOf(key) === -1) {
-	    activities.push(key);
-	  }
-	}
-
-	function setIdle(key) {
-	  if (!activities.length) {
-	    return;
-	  }
-	  var i = activities.indexOf(key);
-	  if (i > -1) {
-	    activities.splice(i, 1);
-	  }
-	  if (!activities.length) {
-	    Events.emit('idle');
-	  }
-	}
 
 	function clamp(value, min, max) {
 	  return Math.min(max, Math.max(value, min));
@@ -2524,7 +2539,11 @@
 	  }
 	}
 
+<<<<<<< HEAD
 	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec3 vColor;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vColor = vec3(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vColor = aColor;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute float aHidden;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n  }\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nattribute float aHidden;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nvarying vec4 vPosition;\nvoid main() {\n  if (aHidden == 1.0) {\n    gl_Position = vec4(0.0);\n    vPosition = vec4(0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vPosition = aPosition;\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float intensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n      vColor = mix(aColor, uHighlightColor, 0.5);\n    } else {\n      vColor = aColor;\n    }\n    vColor = vColor + uLightColor * intensity;\n  }\n}","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vPosition;\nvarying vec3 vColor;\nfloat gradientHeight = 90.0;\nfloat maxGradientStrength = 0.3;\nvoid main() {\n  float shading = clamp((gradientHeight-vPosition.z) / (gradientHeight/maxGradientStrength), 0.0, maxGradientStrength);\n  gl_FragColor = vec4(vColor - shading, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y));\n}\n"}};
+=======
+	var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec4 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  if (distance > uFogRadius) {\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vColor = vec4(aColor, 1.0);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"depth":{"vertex":"#ifdef GL_ES\nprecision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat4 uMMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = uFogRadius * 0.05;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  gl_Position = glPosition;\n  //*** highlight object ******************************************************\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ****************\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ******************************************************\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog *******************************************************************\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //***************************************************************************\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = uFogRadius * 0.95;\nvoid main() {\n  vec4 glPosition = vec4(uMatrix * aPosition);\n  gl_Position = glPosition;\n  vTexCoord = aTexCoord;\n  //*** fog *******************************************************************\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
+>>>>>>> develop
 
 
 
@@ -2554,6 +2573,7 @@
 	  Triangulate.quad = function(tris, a, b, c, d) {
 	    this.addTriangle(tris, a, b, c);
 	    this.addTriangle(tris, b, d, c);
+	    return 6;
 	  };
 
 	  Triangulate.circle = function(tris, center, radius, z) {
@@ -2568,29 +2588,32 @@
 	        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), z ]
 	      );
 	    }
+	    return LON_SEGMENTS*3;
 	  };
 
 	  Triangulate.polygon = function(tris, polygon, z) {
-	    var triangles = earcut(polygon);
-	    for (var t = 0, tl = triangles.length-2; t < tl; t+=3) {
+	    var vertices = earcut(polygon);
+	    for (var i = 0, il = vertices.length-2; i < il; i+=3) {
 	      this.addTriangle(
 	        tris,
-	        [ triangles[t  ][0], triangles[t  ][1], z ],
-	        [ triangles[t+1][0], triangles[t+1][1], z ],
-	        [ triangles[t+2][0], triangles[t+2][1], z ]
+	        [ vertices[i  ][0], vertices[i  ][1], z ],
+	        [ vertices[i+1][0], vertices[i+1][1], z ],
+	        [ vertices[i+2][0], vertices[i+2][1], z ]
 	      );
 	    }
+	    return vertices.length;
 	  };
 
 	  Triangulate.polygon3d = function(tris, polygon) {
 	    var ring = polygon[0];
 	    var ringLength = ring.length;
-	    var triangles, t, tl;
+	    var vertices, t, tl;
 
 	//  { r:255, g:0, b:0 }
 
 	    if (ringLength <= 4) { // 3: a triangle
-	      this.addTriangle(
+	      var vertexCount = 0;
+	      vertexCount += this.addTriangle(
 	        tris,
 	        ring[0],
 	        ring[2],
@@ -2598,14 +2621,14 @@
 	      );
 
 	      if (ringLength === 4) { // 4: a quad (2 triangles)
-	        this.addTriangle(
+	        vertexCount += this.addTriangle(
 	          tris,
 	          ring[0],
 	          ring[3],
 	          ring[2]
 	        );
 	      }
-	      return;
+	      return vertexCount;
 	    }
 
 	    if (isVertical(ring[0], ring[1], ring[2])) {
@@ -2617,32 +2640,35 @@
 	        ];
 	      }
 
-	      triangles = earcut(polygon);
-	      for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
+	      vertices = earcut(polygon);
+	      for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
 	        this.addTriangle(
 	          tris,
-	          [ triangles[t  ][2], triangles[t  ][1], triangles[t  ][0] ],
-	          [ triangles[t+1][2], triangles[t+1][1], triangles[t+1][0] ],
-	          [ triangles[t+2][2], triangles[t+2][1], triangles[t+2][0] ]
+	          [ vertices[t  ][2], vertices[t  ][1], vertices[t  ][0] ],
+	          [ vertices[t+1][2], vertices[t+1][1], vertices[t+1][0] ],
+	          [ vertices[t+2][2], vertices[t+2][1], vertices[t+2][0] ]
 	        );
 	      }
 
-	      return;
+	      return vertices.length;
 	    }
 
-	    triangles = earcut(polygon);
-	    for (t = 0, tl = triangles.length-2; t < tl; t+=3) {
+	    vertices = earcut(polygon);
+	    for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
 	      this.addTriangle(
 	        tris,
-	        [ triangles[t  ][0], triangles[t  ][1], triangles[t  ][2] ],
-	        [ triangles[t+1][0], triangles[t+1][1], triangles[t+1][2] ],
-	        [ triangles[t+2][0], triangles[t+2][1], triangles[t+2][2] ]
+	        [ vertices[t  ][0], vertices[t  ][1], vertices[t  ][2] ],
+	        [ vertices[t+1][0], vertices[t+1][1], vertices[t+1][2] ],
+	        [ vertices[t+2][0], vertices[t+2][1], vertices[t+2][2] ]
 	      );
 	    }
+
+	    return vertices.length;
 	  };
 
 	  Triangulate.cylinder = function(tris, center, radiusBottom, radiusTop, minHeight, height) {
 	    var
+	      vertexCount = 0,
 	      currAngle, nextAngle,
 	      currSin, currCos,
 	      nextSin, nextCos,
@@ -2659,7 +2685,7 @@
 	      nextSin = Math.sin(nextAngle);
 	      nextCos = Math.cos(nextAngle);
 
-	      this.addTriangle(
+	      vertexCount += this.addTriangle(
 	        tris,
 	        [ center[0] + radiusBottom*currSin, center[1] + radiusBottom*currCos, minHeight ],
 	        [ center[0] + radiusTop   *nextSin, center[1] + radiusTop   *nextCos, height    ],
@@ -2667,7 +2693,7 @@
 	      );
 
 	      if (radiusTop !== 0) {
-	        this.addTriangle(
+	        vertexCount += this.addTriangle(
 	          tris,
 	          [ center[0] + radiusTop   *currSin, center[1] + radiusTop   *currCos, height    ],
 	          [ center[0] + radiusTop   *nextSin, center[1] + radiusTop   *nextCos, height    ],
@@ -2675,10 +2701,13 @@
 	        );
 	      }
 	    }
+
+	    return vertexCount;
 	  };
 
 	  Triangulate.dome = function(tris, center, radius, minHeight, height) {
 	    var
+	      vertexCount = 0,
 	      currAngle, nextAngle,
 	      currSin, currCos,
 	      nextSin, nextCos,
@@ -2704,24 +2733,29 @@
 	      currY = minHeight - currSin*h;
 	      nextY = minHeight - nextSin*h;
 
-	      this.cylinder(tris, center, nextRadius, currRadius, nextY, currY);
+	      vertexCount += this.cylinder(tris, center, nextRadius, currRadius, nextY, currY);
 	    }
+
+	    return vertexCount;
 	  };
 
 	  Triangulate.pyramid = function(tris, polygon, center, minHeight, height) {
 	    polygon = polygon[0];
+	    var vertexCount = 0;
 	    for (var i = 0, il = polygon.length-1; i < il; i++) {
-	      this.addTriangle(
+	      vertexCount += this.addTriangle(
 	        tris,
 	        [ polygon[i  ][0], polygon[i  ][1], minHeight ],
 	        [ polygon[i+1][0], polygon[i+1][1], minHeight ],
 	        [ center[0], center[1], height ]
 	      );
 	    }
+	    return vertexCount;
 	  };
 
 	  Triangulate.extrusion = function(tris, polygon, minHeight, height) {
 	    var
+	      vertexCount = 0,
 	      ring, last,
 	      a, b, z0, z1;
 
@@ -2739,7 +2773,7 @@
 	        b = ring[r+1];
 	        z0 = minHeight;
 	        z1 = height;
-	        this.quad(
+	        vertexCount += this.quad(
 	          tris,
 	          [ a[0], a[1], z0 ],
 	          [ b[0], b[1], z0 ],
@@ -2748,6 +2782,7 @@
 	        );
 	      }
 	    }
+	    return vertexCount;
 	  };
 
 	  Triangulate.addTriangle = function(tris, a, b, c) {
@@ -2768,9 +2803,36 @@
 	      n[0], n[1], n[2],
 	      n[0], n[1], n[2]
 	    );
+
+	    return 3;
 	  };
 
 	}());
+
+
+	var data = {
+	  Index: {
+	    items: [],
+
+	    add: function(item) {
+	      this.items.push(item);
+	    },
+
+	    remove: function(item) {
+	      var items = this.items;
+	      for (var i = 0, il = items.length; i < il; i++) {
+	        if (items[i] === item) {
+	          items.splice(i, 1);
+	          return;
+	        }
+	      }
+	    },
+
+	    destroy: function() {
+	      this.items = null;
+	    }
+	  }
+	};
 
 
 	var DataGrid = {};
@@ -2810,7 +2872,6 @@
 	    }, delay);
 	  }
 
-	  // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
 	  function updateTileBounds() {
 	    zoom = Math.round(fixedZoom || Map.zoom);
 
@@ -2823,6 +2884,27 @@
 	    minY = (mapBounds.minY*scale <<0) + 1 - perspectiveBuffer;
 	    maxX = Math.ceil(mapBounds.maxX*scale) + perspectiveBuffer;
 	    maxY = Math.ceil(mapBounds.maxY*scale) + 1 + perspectiveBuffer;
+<<<<<<< HEAD
+=======
+
+	//console.log('rect', minX, maxX, minY, maxY);
+	//
+	//
+	//var scale = Math.pow(2, Map.zoom) / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+	//var scale2 = Math.pow(2, zoom-Map.zoom);
+	//
+	//    var
+	//      mapCenter = Map.center,
+	//      fogRadius = Renderer.fogRadius*scale;
+	//
+	//    var minX2 = ((mapCenter.x/TILE_SIZE-fogRadius)*scale2 <<0) - 0 - perspectiveBuffer;
+	//    var minY2 = ((mapCenter.y/TILE_SIZE+fogRadius)*scale2 <<0) - 1 - perspectiveBuffer;
+	//    var maxX2 = Math.ceil(mapCenter.x/TILE_SIZE-fogRadius)*scale2 + 2 +perspectiveBuffer;
+	//    var maxY2 = Math.ceil(mapCenter.y/TILE_SIZE+fogRadius)*scale2 + perspectiveBuffer;
+	//
+	//    console.log('circle', minX2, maxX2, minY2, maxY2, fogRadius);
+
+>>>>>>> develop
 	  }
 
 	  function loadTiles() {
@@ -2935,7 +3017,7 @@
 	DataTile.prototype = {
 
 	  load: function(url) {
-	    this.mesh = new GeoJSONMesh(url);
+	    this.mesh = new mesh.GeoJSON(url);
 	  },
 
 	  destroy: function() {
@@ -3118,18 +3200,17 @@
 	MapTile.prototype = {
 
 	  load: function(url) {
-	    this.url = url;
-	    setBusy(url);
+	    Activity.setBusy();
 	    this.texture = new glx.texture.Image(url, function(image) {
-	      setIdle(url);
+	      Activity.setIdle();
 	      if (image) {
-	        this.isLoaded = true;
+	        this.isReady = true;
 	      }
 	    }.bind(this));
 	  },
 
 	  getMatrix: function() {
-	    if (!this.isLoaded) {
+	    if (!this.isReady) {
 	      return;
 	    }
 
@@ -3149,301 +3230,328 @@
 	    this.vertexBuffer.destroy();
 	    this.texCoordBuffer.destroy();
 	    if (this.texture) {
-	    this.texture.destroy();
+	      this.texture.destroy();
 	    }
-	    setIdle(this.url);
+	    Activity.setIdle();
 	  }
 	};
 
 
-	var Data = {
+	var mesh = {};
 
-	  items: [],
-	  modifiers: [],
+	//mesh._replaceItems: function() {
+	//  if (this.replaces.length) {
+	//    var replaces = this.replaces;
+	//      if (replaces.indexOf(item.id)>=0) {
+	//        item.hidden = true;
+	//      }
+	//    });
+	//  }
+	//};
 
-	  add: function(item) {
-	    this.items.push(item);
-	  },
 
-	  remove: function(item) {
-	    var items = this.items;
-	    for (var i = 0, il = items.length; i < il; i++) {
-	      if (items[i] === item) {
-	        items.splice(i, 1);
+	mesh.GeoJSON = (function() {
+
+	  var
+	    zoom = 16,
+	    worldSize = TILE_SIZE <<zoom,
+	    featuresPerChunk = 150,
+	    delayPerChunk = 66;
+
+	  //***************************************************************************
+
+	  function constructor(url, options) {
+	    options = options || {};
+
+	    this._id = options.id;
+	    if (options.color) {
+	      this._color = Color.parse(options.color).toRGBA(true);
+	    }
+	    //this._replaces = options.replaces || [];
+
+	    this.scale     = options.scale     || 1;
+	    this.rotation  = options.rotation  || 0;
+	    this.elevation = options.elevation || 0;
+	    this.position  = {};
+
+	    this._data = {
+	      vertices: [],
+	      normals: [],
+	      colors: [],
+	      idColors: []
+	    };
+
+	    Activity.setBusy();
+	    if (typeof url === 'object') {
+	      var json = url;
+	      this._onLoad(json);
+	    } else {
+	      this._request = Request.getJSON(url, function(json) {
+	        this._request = null;
+	        this._onLoad(json);
+	      }.bind(this));
+	    }
+	  }
+
+	  constructor.prototype = {
+
+	    _onLoad: function(json) {
+	      if (!json || !json.features.length) {
 	        return;
 	      }
-	    }
-	  },
 
-	  destroy: function() {
-	    this.items = null;
-	  },
+	      var coordinates0 = json.features[0].geometry.coordinates[0][0];
+	      this.position = { latitude: coordinates0[1], longitude: coordinates0[0] };
 
-	  addModifier: function(fn) {
-	    this.modifiers.push(fn);
-	    Events.emit('modify');
-	  },
+	      relax(function(startIndex, endIndex) {
+	        var features = json.features.slice(startIndex, endIndex);
+	        var geojson = { type: 'FeatureCollection', features: features };
+	        var data = GeoJSON.parse(this.position, worldSize, geojson);
 
-	  removeModifier: function(fn) {
-	    for (var i = 0; i < this.modifiers.length; i++) {
-	      if (this.modifiers[i] === fn) {
-	        this.modifiers.splice(i, 1);
-	        break;
-	      }
-	    }
-	    Events.emit('modify');
-	  },
+	        this._addItems(data);
 
-	  applyModifiers: function(item) {
-	    var modifiers = this.modifiers;
-	    for (var i = 0, il = modifiers.length; i < il; i++) {
-	      modifiers[i](item);
-	    }
-	  }
-	};
+	        if (endIndex === json.features.length) {
+	          this._onReady();
+	        }
+	      }.bind(this), 0, json.features.length, featuresPerChunk, delayPerChunk);
+	    },
 
+	    _addItems: function(items) {
+	      var
+	        item, color, idColor, bbox, center, radius,
+	        vertexCount,
+	        j;
+	      for (var i = 0, il = items.length; i < il; i++) {
+	        item = items[i];
 
-	var Mesh = function(url, options) {
-	  options = options || {};
+	        idColor = Interaction.idToColor(this._id || item.id);
 
-	  this.isReady = false;
-
-	  this.id        = options.id;
-	  this.position  = options.position  || {};
-	  this.scale     = options.scale     || 1;
-	  this.rotation  = options.rotation  || 0;
-	  this.elevation = options.elevation || 0;
-	  if (options.color) {
-	    this.color = Color.parse(options.color).toRGBA(true);
-	  }
-	  this.replaces  = options.replaces || [];
-
-	  Data.add(this);
-	  Events.on('modify', this.modify.bind(this));
-	};
-
-	(function() {
-
-	  Mesh.prototype = {
-
-	    _setItems: function(itemList) {
-	      this.items = [];
-
-	      var vertices = [], normals = [], colors = [], idColors = [];
-	      var item, idColor, j, jl;
-
-	      for (var i = 0, il = itemList.length; i<il; i++) {
-	        item = itemList[i];
-	        item.color = this.color || item.color || DEFAULT_COLOR;
-	        item.id = this.id || item.id;
-	        item.numVertices = item.vertices.length/3;
-
-	        idColor = Interaction.idToColor(item.id);
-	        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-	          vertices.push(item.vertices[j], item.vertices[j + 1], item.vertices[j + 2]);
-	          normals.push(item.normals[j], item.normals[j + 1], item.normals[j + 2]);
-	          idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+	        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry)) {
+	          item.shape = 'cylinder';
+	          item.isRotational = true;
 	        }
 
-	        delete item.vertices;
-	        delete item.normals;
+	        bbox = getBBox(item.geometry);
+	        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
 
-	        this.items.push(item);
+	        if (item.isRotational) {
+	          radius = (bbox.maxX - bbox.minX)/2;
+	        }
+
+	        switch (item.shape) {
+	          case 'cylinder': vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
+	          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.minHeight, item.height); break;
+	          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.minHeight, item.height); break;
+	          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius/2, item.minHeight, item.height); break;
+	          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.minHeight, item.height); break;
+	          default:         vertexCount = Triangulate.extrusion(this._data, item.geometry, item.minHeight, item.height);
+	        }
+
+	        color = this._color || item.wallColor || DEFAULT_COLOR;
+	        for (j = 0; j < vertexCount; j++) {
+	          this._data.colors.push(color.r, color.g, color.b);
+	          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+	        }
+
+	        switch (item.roofShape) {
+	          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.height, item.height+item.roofHeight); break;
+	          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height+item.roofHeight); break;
+	          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.height, item.height+item.roofHeight); break;
+	          default:
+	            if (item.shape === 'cylinder') {
+	              vertexCount = Triangulate.circle(this._data, center, radius, item.height);
+	            } else if (item.shape === undefined) {
+	              vertexCount = Triangulate.polygon(this._data, item.geometry, item.height);
+	            }
+	        }
+
+	        color = this._color || item.roofColor || DEFAULT_COLOR;
+	        for (j = 0; j < vertexCount; j++) {
+	          this._data.colors.push(color.r, color.g, color.b);
+	          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+	        }
 	      }
-
-	      this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
-	      this.normalBuffer = new glx.Buffer(3, new Float32Array(normals));
-	      this.idColorBuffer = new glx.Buffer(3, new Float32Array(idColors));
-
-	      this.modify();
-
-	      vertices = null;
-	      normals = null;
-	      idColors = null;
-
-	      itemList = null;
 	    },
 
-	    _replaceItems: function() {
-	      if (this.replaces.length) {
-	        var replaces = this.replaces;
-	        Data.addModifier(function(item) {
-	          if (replaces.indexOf(item.id)>=0) {
-	            item.hidden = true;
-	          }
-	        });
-	      }
+	    _onReady: function() {
+	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._data.vertices));
+	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._data.normals));
+	      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._data.colors));
+	      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._data.idColors));
+
+	      this._data = null;
+
+	      data.Index.add(this);
+	      this._isReady = true;
+
+	      Activity.setIdle();
 	    },
 
-	    modify: function() {
-	      if (!this.items) {
-	        return;
+	    // TODO: switch to mesh.transform
+	    getMatrix: function() {
+	      var matrix = new glx.Matrix();
+
+	      if (this.elevation) {
+	        matrix.translate(0, 0, this.elevation);
+	      }
+
+	      var scale = 1 / Math.pow(2, zoom - Map.zoom) * this.scale;
+	      matrix.scale(scale, scale, scale*0.7);
+
+	      if (this.rotation) {
+	        matrix.rotateZ(-this.rotation);
 	      }
 
 	      var
-	        item,
-	        newColors = [],
-	        newVisibilities = [];
+	        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+	        mapCenter = Map.center;
 
-	      for (var i = 0, il = this.items.length; i<il; i++) {
-	        item = this.items[i];
-	        Data.applyModifiers(item);
-	        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-	          newColors.push(item.color.r, item.color.g, item.color.b);
-	          newVisibilities.push(item.hidden ? 1 : 0);
-	        }
-	      }
+	      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
-	      this.colorBuffer = new glx.Buffer(3, new Float32Array(newColors));
-	      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
-
-	      newColors = null;
-	      newVisibilities = null;
-
-	      return this;
+	      return matrix;
 	    },
 
 	    destroy: function() {
-	      Data.remove(this);
+	      if (this._request) {
+	        this._request.abort();
+	      }
 
-	      if (this.isReady) {
+	      if (this._isReady) {
+	        data.Index.remove(this);
 	        this.vertexBuffer.destroy();
 	        this.normalBuffer.destroy();
 	        this.colorBuffer.destroy();
 	        this.idColorBuffer.destroy();
-	        this.visibilityBuffer.destroy();
-	      }
-
-	      if (this.request) {
-	        this.request.abort();
-	        this.request = null;
 	      }
 	    }
 	  };
 
-	}());
-
-
-	var GeoJSONMesh = function(url, options) {
-	  Mesh.call(this, url, options);
-	  this.zoom = 16;
-	//this.inMeters = TILE_SIZE / (Math.cos(1) * EARTH_CIRCUMFERENCE);
-
-	  if (typeof url === 'string') {
-	    this.request = Request.getJSON(url, this._convert.bind(this));
-	  } else {
-	    this._convert(url);
-	  }
-	};
-
-	(function() {
-
-	  GeoJSONMesh.prototype = Object.create(Mesh.prototype);
-
-	  GeoJSONMesh.prototype._convert = function(geojson) {
-	    this.request = null;
-
-	    if (!geojson.features.length) {
-	      return;
-	    }
-
-	    var geoPos = geojson.features[0].geometry.coordinates[0][0];
-	    this.position = { latitude:geoPos[1], longitude:geoPos[0] };
-	    var position = project(geoPos[1], geoPos[0], TILE_SIZE<<this.zoom);
-
-	    GeoJSON.parse(position.x, position.y, this.zoom, geojson, function(itemList) {
-	      this._setItems(itemList);
-	      this._replaceItems();
-	      this.isReady = true;
-	    }.bind(this));
-	  };
-
-	  GeoJSONMesh.prototype.getMatrix = function() {
-	    if (!this.isReady) {
-	      return;
-	    }
-
-	    var mMatrix = new glx.Matrix();
-
-	    if (this.elevation) {
-	      mMatrix.translate(0, 0, this.elevation);
-	    }
-
-	    var scale = 1/Math.pow(2, this.zoom - Map.zoom) * this.scale;
-	    mMatrix.scale(scale, scale, scale*0.70);
-
-	    mMatrix.rotateZ(-this.rotation);
-
-	    var
-	      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-	      mapCenter = Map.center;
-
-	    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
-	    return mMatrix;
-	  };
+	  return constructor;
 
 	}());
 
-	var OBJMesh = function(url, options) {
-	  Mesh.call(this, url, options);
-	  this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 
-	  this._baseURL = url.replace(/[^\/]+$/, '');
-	  this.request = Request.getText(url, this._convert.bind(this));
-	};
+	mesh.OBJ = (function() {
 
-	(function() {
+	  function constructor(url, position, options) {
+	    options = options || {};
 
-	  OBJMesh.prototype = Object.create(Mesh.prototype);
+	    this._id = options.id;
+	    if (options.color) {
+	      this._color = Color.parse(options.color).toRGBA(true);
+	    }
+	    this.replaces  = options.replaces || [];
 
-	  OBJMesh.prototype._convert = function(objStr) {
-	    var mtlFile = objStr.match(/^mtllib\s+(.*)$/m);
+	    this.scale     = options.scale     || 1;
+	    this.rotation  = options.rotation  || 0;
+	    this.elevation = options.elevation || 0;
+	    this.position  = position;
 
-	    if (!mtlFile) {
-	      setTimeout(function() {
-	        OBJ.parse(objStr, null, function(itemList) {
-	          this._setItems(itemList);
-	          this._replaceItems();
-	          this.isReady = true;
+	    this._inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+
+	    this._vertices = [];
+	    this._normals = [];
+	    this._colors = [];
+	    this._idColors = [];
+
+	    Activity.setBusy();
+	    this._request = Request.getText(url, function(obj) {
+	      this._request = null;
+	      var match;
+	      if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
+	        this._request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
+	          this._request = null;
+	          this._onLoad(obj, mtl);
 	        }.bind(this));
-	      }.bind(this), 1);
-	      return;
-	    }
-
-	    Request.getText(this._baseURL + mtlFile[1], function(mtlStr) {
-	      OBJ.parse(objStr, mtlStr, function(itemList) {
-	        this._setItems(itemList);
-	        this._replaceItems();
-	        this.isReady = true;
-	      }.bind(this));
+	      } else {
+	        this._onLoad(obj, null);
+	      }
 	    }.bind(this));
+	  }
+
+	  constructor.prototype = {
+	    _onLoad: function(obj, mtl) {
+	      var data = new OBJ.parse(obj, mtl);
+	      this._addItems(data);
+	      this._onReady();
+	    },
+
+	    _addItems: function(items) {
+	      var item, color, idColor, j, jl;
+
+	      for (var i = 0, il = items.length; i<il; i++) {
+	        item = items[i];
+
+	        this._vertices.push.apply(this._vertices, item.vertices);
+	        this._normals.push.apply(this._normals, item.normals);
+
+	        color = this._color || item.color || DEFAULT_COLOR;
+	        idColor = Interaction.idToColor(this._id || item.id);
+
+	        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+	          this._colors.push(color.r, color.g, color.b);
+	          this._idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+	        }
+	      }
+	    },
+
+	    _onReady: function() {
+	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._vertices));
+	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._normals));
+	      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._colors));
+	      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._idColors));
+
+	      this._vertices = null;
+	      this._normals = null;
+	      this._colors = null;
+	      this._idColors = null;
+
+	      data.Index.add(this);
+	      this._isReady = true;
+
+	      Activity.setIdle();
+	    },
+
+	    // TODO: switch to mesh.transform
+	    getMatrix: function() {
+	      var matrix = new glx.Matrix();
+
+	      if (this.elevation) {
+	        matrix.translate(0, 0, this.elevation);
+	      }
+
+	      var scale = Math.pow(2, Map.zoom) * this._inMeters * this.scale;
+	      matrix.scale(scale, scale, scale);
+
+	      if (this.rotation) {
+	        matrix.rotateZ(-this.rotation);
+	      }
+
+	      var
+	        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
+	        mapCenter = Map.center;
+
+	      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
+
+	      return matrix;
+	    },
+
+	    destroy: function() {
+	      if (this._request) {
+	        this._request.abort();
+	      }
+
+	      if (this._isReady) {
+	        data.Index.remove(this);
+	        this.vertexBuffer.destroy();
+	        this.normalBuffer.destroy();
+	        this.colorBuffer.destroy();
+	        this.idColorBuffer.destroy();
+	      }
+	    }
 	  };
 
-	  OBJMesh.prototype.getMatrix = function() {
-	    if (!this.isReady) {
-	      return;
-	    }
-
-	    var mMatrix = new glx.Matrix();
-
-	    if (this.elevation) {
-	      mMatrix.translate(0, 0, this.elevation);
-	    }
-
-	    var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
-	    mMatrix.scale(scale, scale, scale);
-
-	    mMatrix.rotateZ(-this.rotation);
-
-	    var
-	      position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-	      mapCenter = Map.center;
-
-	    mMatrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
-	    return mMatrix;
-	  };
+	  return constructor;
 
 	}());
 
@@ -3453,7 +3561,6 @@
 	(function() {
 
 	  var METERS_PER_LEVEL = 3;
-	  var CHUNK_SIZE = 1000;
 
 	  var materialColors = {
 	    brick:'#cc7755',
@@ -3543,19 +3650,24 @@
 	    return (winding === direction) ? polygon : polygon.reverse();
 	  }
 
-	  function alignProperties(prop) {
-	    var item = {};
-	    var color;
+	  function parseFeature(res, origin, worldSize, feature) {
+	    var
+	      prop = feature.properties,
+	      item = {},
+	      color,
+	      wallColor, roofColor;
 
-	    prop = prop || {};
+	    if (!prop) {
+	      return;
+	    }
 
 	    item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
 	    item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
-	    var wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
+	    wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
 	    item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
-	    var roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
+	    roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
 	    item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
 
 	    switch (prop.shape) {
@@ -3591,15 +3703,25 @@
 	      item.roofHeight = 0;
 	    }
 
-	    if (item.height+item.roofHeight <= item.minHeight) {
-	      return;
-	    }
+	    //if (item.height+item.roofHeight <= item.minHeight) {
+	    //  return;
+	    //}
 
-	    if (prop.relationId) {
-	      item.relationId = prop.relationId;
-	    }
+	    item.id = prop.relationId || feature.id || prop.id;
 
-	    return item;
+	    var geometries = getGeometries(feature.geometry);
+	    var clonedItem = Object.create(item);
+
+	    for (var i = 0, il = geometries.length; i < il; i++) {
+	      clonedItem.geometry = transform(origin, worldSize, geometries[i]);
+
+	      if ((clonedItem.roofShape === 'cone' || clonedItem.roofShape === 'dome') && !clonedItem.shape && isRotational(clonedItem.geometry)) {
+	        clonedItem.shape = 'cylinder';
+	        clonedItem.isRotational = true;
+	      }
+
+	      res.push(clonedItem);
+	    }
 	  }
 
 	  function getGeometries(geometry) {
@@ -3637,9 +3759,8 @@
 	    return [res];
 	  }
 
-	  function transform(offsetX, offsetY, zoom, polygon) {
+	  function transform(origin, worldSize, polygon) {
 	    var
-	      worldSize = TILE_SIZE * Math.pow(2, zoom),
 	      res = [],
 	      r, rl, p,
 	      ring;
@@ -3649,137 +3770,30 @@
 	      res[i] = [];
 	      for (r = 0, rl = ring.length-1; r < rl; r++) {
 	        p = project(ring[r][1], ring[r][0], worldSize);
-	        res[i][r] = [p.x-offsetX, p.y-offsetY];
+	        res[i][r] = [p.x-origin.x, p.y-origin.y];
 	      }
 	    }
 
 	    return res;
 	  }
 
-	  function parse(res, pos, offsetX, offsetY, zoom, geojson, callback) {
-	    var
-	      collection = geojson.features,
-	      max = pos + Math.min(collection.length-pos, CHUNK_SIZE),
-	      feature,
-	      geometries,
-	      tris,
-	      j, jl,
-	      item, polygon, bbox, radius, center, id;
-
-	    for (; pos < max; pos++) {
-	      feature = collection[pos];
-
-	      if (!(item = alignProperties(feature.properties))) {
-	        continue;
-	      }
-
-	      geometries = getGeometries(feature.geometry);
-
-	      for (j = 0, jl = geometries.length; j < jl; j++) {
-	        polygon = transform(offsetX, offsetY, zoom, geometries[j]);
-
-	        id = feature.properties.relationId || feature.id || feature.properties.id;
-
-	        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(polygon)) {
-	          item.shape = 'cylinder';
-	          item.isRotational = true;
-	        }
-
-	        bbox = getBBox(polygon);
-	        center = [ bbox.minX + (bbox.maxX-bbox.minX)/2, bbox.minY + (bbox.maxY-bbox.minY)/2 ];
-
-	        if (item.isRotational) {
-	          radius = (bbox.maxX-bbox.minX)/2;
-	        }
-
-	        tris = { vertices:[], normals:[] };
-
-	        switch (item.shape) {
-	          case 'cylinder':
-	            Triangulate.cylinder(tris, center, radius, radius, item.minHeight, item.height);
-	            break;
-
-	          case 'cone':
-	            Triangulate.cylinder(tris, center, radius, 0, item.minHeight, item.height);
-	            break;
-
-	          case 'dome':
-	            Triangulate.dome(tris, center, radius, item.minHeight, item.height);
-	            break;
-
-	          case 'sphere':
-	            Triangulate.cylinder(tris, center, radius, radius/2, item.minHeight, item.height);
-	            //Triangulate.circle(tris, center, radius/2, item.height, item.roofColor);
-	            break;
-
-	          case 'pyramid':
-	            Triangulate.pyramid(tris, polygon, center, item.minHeight, item.height);
-	            break;
-
-	          default:
-	            Triangulate.extrusion(tris, polygon, item.minHeight, item.height);
-	        }
-
-	        res.push({
-	          id: id,
-	          color: item.wallColor,
-	          vertices: tris.vertices,
-	          normals: tris.normals
-	        });
-
-	        tris = { vertices:[], normals:[] };
-
-	        switch (item.roofShape) {
-	          case 'cone':
-	            Triangulate.cylinder(tris, center, radius, 0, item.height, item.height+item.roofHeight);
-	            break;
-
-	          case 'dome':
-	            Triangulate.dome(tris, center, radius, item.height, item.height+item.roofHeight);
-	            break;
-
-	          case 'pyramid':
-	            Triangulate.pyramid(tris, polygon, center, item.height, item.height+item.roofHeight);
-	            break;
-
-	          default:
-	            if (item.shape === 'cylinder') {
-	              Triangulate.circle(tris, center, radius, item.height);
-	            } else if (item.shape === undefined) {
-	              Triangulate.polygon(tris, polygon, item.height);
-	            }
-	        }
-
-	        res.push({
-	          id: id,
-	          color: item.roofColor,
-	          vertices: tris.vertices,
-	          normals: tris.normals
-	        });
-	      }
-	    }
-
-	    if (pos === collection.length) {
-	      geojson = null;
-	      callback(res);
-	    } else {
-	      setTimeout(function() {
-	        parse(res, pos, offsetX, offsetY, zoom, geojson, callback);
-	      }, 10);
-	    }
-	  }
-
 	  //***************************************************************************
 
-	  GeoJSON.parse = function(offsetX, offsetY, zoom, geojson, callback) {
+	  GeoJSON.parse = function(position, worldSize, geojson) {
 	    var res = [];
 
-	    if (!geojson || geojson.type !== 'FeatureCollection') {
-	      callback(res);
-	      return;
+	    if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
+
+	      var
+	        collection = geojson.features,
+	        origin = project(position.latitude, position.longitude, worldSize);
+
+	      for (var i = 0, il = collection.length; i<il; i++) {
+	        parseFeature(res, origin, worldSize, collection[i]);
+	      }
 	    }
 
-	    parse(res, 0, offsetX, offsetY, zoom, geojson, callback);
+	    return res;
 	  };
 
 	}());
@@ -3932,14 +3946,11 @@
 	  }
 	};
 
-	OBJ.parse = function(objStr, mtlStr, callback) {
+	OBJ.parse = function(obj, mtl) {
 	  var
 	    parser = new OBJ(),
-	    materials = mtlStr ? parser.parseMaterials(mtlStr) : {};
-
-	  setTimeout(function() {
-	    callback( parser.parseModel(objStr, materials) );
-	  }, 10);
+	    materials = mtl ? parser.parseMaterials(mtl) : {};
+	  return parser.parseModel(obj, materials);
 	};
 
 
@@ -4042,8 +4053,9 @@
 	var Renderer = {
 
 	  start: function(options) {
-	    this.layers = {};
+	    this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
 
+	    this.layers = {};
 	//this.layers.depth       = Depth.initShader();
 	    this.layers.skydome   = SkyDome.initShader();
 	    this.layers.basemap   = Basemap.initShader();
@@ -4053,8 +4065,6 @@
 
 	    this.resize();
 	    Events.on('resize', this.resize.bind(this));
-
-	    this.backgroundColor = Color.parse(options.backgroundColor || '#cccccc').toRGBA(true);
 
 	    GL.cullFace(GL.BACK);
 	    GL.enable(GL.CULL_FACE);
@@ -4072,8 +4082,12 @@
 	      requestAnimationFrame(function() {
 	        Map.transform = new glx.Matrix()
 	          .rotateZ(Map.rotation)
+<<<<<<< HEAD
 	          .rotateX(Map.tilt)
 	          .translate(0, -HEIGHT/2, -1220); // 0, map y offset to neutralize camera y offset, map z -1220 scales map tiles to ~256px
+=======
+	          .rotateX(Map.tilt);
+>>>>>>> develop
 
 	// console.log('CONTEXT LOST?', GL.isContextLost());
 
@@ -4082,7 +4096,7 @@
 
 	//      this.layers.depth.render(vpMatrix);
 
-	        GL.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, 1);
+	        GL.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
 	        GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
 	        this.layers.skydome.render(vpMatrix);
@@ -4097,9 +4111,13 @@
 	  },
 
 	  resize: function() {
+	    var refHeight = 1024;
+	    var refVFOV = 45;
+
 	    this.perspective = new glx.Matrix()
+	      .translate(0, -HEIGHT/2, -1220) // 0, map y offset to neutralize camera y offset, map z -1220 scales map tiles to ~256px
 	      .scale(1, -1, 1) // flip Y
-	      .multiply(new glx.Matrix.Perspective(45, WIDTH/HEIGHT, 0.1, 5000))
+	      .multiply(new glx.Matrix.Perspective(refVFOV * HEIGHT / refHeight, WIDTH/HEIGHT, 0.1, 5000))
 	      .translate(0, -1, 0); // camera y offset
 
 	    GL.viewport(0, 0, WIDTH, HEIGHT);
@@ -4144,7 +4162,7 @@
 	    var item,
 	      mMatrix, mvp;
 
-	    var dataItems = Data.items;
+	    var dataItems = data.Index.items;
 
 	    for (var i = 0, il = dataItems.length; i < il; i++) {
 	      item = dataItems[i];
@@ -4169,6 +4187,7 @@
 
 
 	// TODO: render only clicked area
+	// TODO: take SkyDome into account
 
 	var Interaction = {
 
@@ -4179,8 +4198,13 @@
 	    this.shader = new glx.Shader({
 	      vertexShader: SHADERS.interaction.vertex,
 	      fragmentShader: SHADERS.interaction.fragment,
+<<<<<<< HEAD
 	      attributes: ["aPosition", "aColor", "aHidden"],
 	      uniforms: ["uMatrix"]
+=======
+	      attributes: ["aPosition", "aColor"],
+	      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
+>>>>>>> develop
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -4206,8 +4230,10 @@
 	    GL.clearColor(0, 0, 0, 1);
 	    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
+	    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+
 	    var
-	      dataItems = Data.items,
+	      dataItems = data.Index.items,
 	      item,
 	      mMatrix, mvp;
 
@@ -4218,6 +4244,8 @@
 	        continue;
 	      }
 
+	      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+
 	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
@@ -4227,8 +4255,8 @@
 	      item.idColorBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
-	      item.visibilityBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
+	      //item.visibilityBuffer.enable();
+	      //GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
@@ -4273,22 +4301,18 @@
 
 	(function() {
 
-	  var radius = 100;
-
 	  var shader;
+<<<<<<< HEAD
 
 	  var tris = createDome(radius);
+=======
+	  var baseRadius = 500;
+>>>>>>> develop
 
 	  var vertexBuffer;
 	  var texCoordBuffer;
 	  var texture;
 	  var textureIsLoaded;
-
-	  function getScale() {
-	    var screenRadius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT);
-	    var scale = 1/Math.pow(2, MIN_ZOOM-Map.zoom);
-	    return screenRadius * scale / radius;
-	  }
 
 	  function createDome(radius) {
 	    var
@@ -4348,23 +4372,40 @@
 	  SkyDome.initShader = function() {
 	    var url = 'skydome.jpg';
 
+<<<<<<< HEAD
+=======
+	    var tris = createDome(baseRadius);
+
+	    this.resize();
+	    Events.on('resize', this.resize.bind(this));
+
+>>>>>>> develop
 	    shader = new glx.Shader({
 	      vertexShader: SHADERS.skydome.vertex,
 	      fragmentShader: SHADERS.skydome.fragment,
 	      attributes: ["aPosition", "aTexCoord"],
+<<<<<<< HEAD
 	      uniforms: ["uMatrix", "uTileImage"]
+=======
+	      uniforms: ["uMatrix", "uTileImage", "uFogColor"]
+>>>>>>> develop
 	    });
 
 	    vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
 	    texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
-	    setBusy(url);
+	    Activity.setBusy();
 	    texture = new glx.texture.Image(url, function(image) {
-	      setIdle(url);
+	      Activity.setIdle();
 	      if (image) {
 	        textureIsLoaded = true;
 	      }
 	    });
+
 	    return this;
+	  };
+
+	  SkyDome.resize = function() {
+	    this.radius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT) / 2;
 	  };
 
 	  SkyDome.render = function(vpMatrix) {
@@ -4374,19 +4415,14 @@
 
 	    shader.enable();
 
-	    var mMatrix = new glx.Matrix();
+	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
-	    var scale = getScale();
+	    var mMatrix = new glx.Matrix();
+	    var scale = this.radius/baseRadius;
 	    mMatrix.scale(scale, scale, scale);
 
-	    mMatrix
-	      .rotateZ(Map.rotation)
-	      .translate(WIDTH/2, HEIGHT/2, 0)
-	      .rotateX(Map.tilt)
-	      .translate(0, HEIGHT/2, 0)
-	      .multiply(Renderer.perspective);
-
-	    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mMatrix.data);
+	    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+	    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
 	    vertexBuffer.enable();
 	    GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -4400,10 +4436,6 @@
 	    GL.drawArrays(GL.TRIANGLES, 0, vertexBuffer.numItems);
 
 	    shader.disable();
-	  };
-
-	  SkyDome.getRadius = function() {
-	    return radius * getScale();
 	  };
 
 	}());
@@ -4422,7 +4454,11 @@
 	      vertexShader: SHADERS.basemap.vertex,
 	      fragmentShader: SHADERS.basemap.fragment,
 	      attributes: ["aPosition", "aTexCoord"],
+<<<<<<< HEAD
 	      uniforms: ["uMatrix", "uTileImage"]
+=======
+	      uniforms: ["uMMatrix", "uMatrix", "uTileImage", "uFogRadius", "uFogColor"]
+>>>>>>> develop
 	    });
 
 	    return this;
@@ -4435,12 +4471,17 @@
 
 	    shader.enable();
 
+	    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+
 	    for (var key in tiles) {
 	      item = tiles[key];
 
 	      if (!(mMatrix = item.getMatrix())) {
 	        continue;
 	      }
+
+	      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
 	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
@@ -4473,8 +4514,13 @@
 	    shader = new glx.Shader({
 	      vertexShader: SHADERS.buildings.vertex,
 	      fragmentShader: SHADERS.buildings.fragment,
+<<<<<<< HEAD
 	      attributes: ["aPosition", "aColor", "aNormal", "aHidden", "aIDColor"],
 	      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uHighlightColor", "uHighlightID"]
+=======
+	      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
+	      uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+>>>>>>> develop
 	    });
 
 	    this.showBackfaces = options.showBackfaces;
@@ -4504,6 +4550,9 @@
 	    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
 	    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
+	    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+
 	    if (!this.highlightColor) {
 	      this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
 	    }
@@ -4515,7 +4564,7 @@
 	    GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r/255, this.highlightID.g/255, this.highlightID.b/255]);
 
 	    var
-	      dataItems = Data.items,
+	      dataItems = data.Index.items,
 	      item,
 	      mMatrix, mvp;
 
@@ -4525,6 +4574,8 @@
 	      if (!(mMatrix = item.getMatrix())) {
 	        continue;
 	      }
+
+	      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
 	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
@@ -4541,8 +4592,8 @@
 	      item.idColorBuffer.enable();
 	      GL.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
-	      item.visibilityBuffer.enable();
-	      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
+	//      item.visibilityBuffer.enable();
+	//      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
 	      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }

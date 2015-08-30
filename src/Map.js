@@ -72,13 +72,9 @@ var Map = {};
     }
   };
 
-  Map.getPosition = function() {
-    return unproject(this.center.x, this.center.y, TILE_SIZE*Math.pow(2, this.zoom));
-  };
-
-  Map.setPosition = function(position) {
-    var latitude  = clamp(parseFloat(position.latitude), -90, 90);
-    var longitude = clamp(parseFloat(position.longitude), -180, 180);
+  Map.setPosition = function(pos) {
+    var latitude  = clamp(parseFloat(pos.latitude), -90, 90);
+    var longitude = clamp(parseFloat(pos.longitude), -180, 180);
     var center = project(latitude, longitude, TILE_SIZE*Math.pow(2, this.zoom));
     this.setCenter(center);
   };
@@ -86,6 +82,7 @@ var Map = {};
   Map.setCenter = function(center) {
     if (this.center.x !== center.x || this.center.y !== center.y) {
       this.center = center;
+      this.position = unproject(center.x, center.y, TILE_SIZE*Math.pow(2, this.zoom));
       updateBounds();
       Events.emit('change');
     }

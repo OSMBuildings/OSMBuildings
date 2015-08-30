@@ -9,8 +9,8 @@ var Buildings = {};
     shader = new glx.Shader({
       vertexShader: SHADERS.buildings.vertex,
       fragmentShader: SHADERS.buildings.fragment,
-      attributes: ["aPosition", "aColor", "aNormal", "aHidden", "aIDColor"],
-      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uHighlightColor", "uHighlightID"]
+      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
+      uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
     });
 
     this.showBackfaces = options.showBackfaces;
@@ -40,6 +40,9 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
+    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
     }
@@ -51,7 +54,7 @@ var Buildings = {};
     GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r/255, this.highlightID.g/255, this.highlightID.b/255]);
 
     var
-      dataItems = Data.items,
+      dataItems = data.Index.items,
       item,
       mMatrix, mvp;
 
@@ -61,6 +64,8 @@ var Buildings = {};
       if (!(mMatrix = item.getMatrix())) {
         continue;
       }
+
+      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
@@ -77,8 +82,8 @@ var Buildings = {};
       item.idColorBuffer.enable();
       GL.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
-      item.visibilityBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
+//      item.visibilityBuffer.enable();
+//      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

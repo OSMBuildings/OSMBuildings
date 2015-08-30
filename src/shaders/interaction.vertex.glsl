@@ -1,21 +1,26 @@
 #ifdef GL_ES
-precision mediump float;
+  precision mediump float;
 #endif
 
 attribute vec4 aPosition;
 attribute vec3 aColor;
-attribute float aHidden;
 
+uniform mat4 uMMatrix;
 uniform mat4 uMatrix;
 
-varying vec3 vColor;
+uniform float uFogRadius;
+
+varying vec4 vColor;
 
 void main() {
-  if (aHidden == 1.0) {
-    gl_Position = vec4(0.0);
-    vColor = vec3(0.0);
+  gl_Position = uMatrix * aPosition;
+
+  vec4 mPosition = vec4(uMMatrix * aPosition);
+  float distance = length(mPosition);
+
+  if (distance > uFogRadius) {
+    vColor = vec4(0.0, 0.0, 0.0, 0.0);
   } else {
-    gl_Position = uMatrix * aPosition;
-    vColor = aColor;
+    vColor = vec4(aColor, 1.0);
   }
 }

@@ -18,7 +18,6 @@ var Request = {};
       }
 
       delete queue[url];
-      setIdle(url);
 
       if (!req.status || req.status<200 || req.status>299) {
         return;
@@ -29,13 +28,11 @@ var Request = {};
 
     queue[url] = req;
     req.open('GET', url);
-    setBusy(url);
     req.send(null);
 
     return {
       abort: function() {
         if (queue[url]) {
-          setIdle(url);
           req.abort();
           delete queue[url];
         }

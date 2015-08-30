@@ -133,20 +133,20 @@
     // rotation: 0, // optional
     // tilt: 0, // optional
     // disabled: true, // disables user input - optional
-    minZoom: 14.5,
+    minZoom: 12,
     maxZoom: 22,
     state: true,
     // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
     tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
     // dataSource: null, // null disables default OSM data,
-    dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    backgroundColor: '#bfb8b0',
+    // fogColor: '#ffffff',
     attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a></div>'
   });
 
-  var obj = map.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { position:{ latitude:52.51923, longitude:13.40371 }, id:'Fernsehturm', scale:0.1, "elevation":8,"rotation":51,
+  map.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { latitude:52.51923, longitude:13.40371 }, { id:'Fernsehturm', scale:0.1, elevation:8, rotation:51,
   replaces: [
     4564300,
     4065110,
@@ -178,19 +178,11 @@
 
   map.addGeoJSON(gj);
 
-  //var obj = map.addOBJ('data/o2_nach_90.obj', { position:{ latitude:52.48821, longitude:13.38965 }, elevation:-9, color:'#f08000' });
-  var obj = map.addGeoJSON('data/o2_nach_90.geo.json');
-  //var obj = map.addGeoJSON('data/w1-o4.geo.json');
+  map.addGeoJSON('data/o2_nach_90.geo.json');
+  //map.addGeoJSON('data/w1-o4.geo.json');
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
-
-  function blend(a, b) {
-    return (a*0.5 + b*0.5) <<0;
-  };
-
-  var selectedItemId;
-  var highlightItem;
 
   map.on('change', function() {
     var pos = map.transform(52.52, 13.37, 50);
@@ -200,37 +192,11 @@
     label.style.top = Math.round(pos.y) + 'px';
   });
 
-  // map.on('pointerdown', function(e) {
-//  map.on('pointermove', function(e) {
-//    console.log('over item id', e.target.id);
-//  });
-
   map.on('pointermove', function(e) {
     if (e.target) {
 //    console.log('item id', e.target.id);
       map.highlight(e.target.id, '#f08000');
     }
-return;
-
-    if (e.target.id === selectedItemId) {
-      return;
-    }
-
-    map.removeModifier(highlightItem);
-
-console.log('modified item id', e.target.id);
-
-    highlightItem = function(item) {
-      if (item.id === e.target.id) {
-        item.color = {
-          r: blend(240, item.color.r),
-          g: blend(128, item.color.g),
-          b: blend(0, item.color.b)
-        };
-      }
-    };
-
-    map.addModifier(highlightItem);
   });
 
   //*************************************************************************

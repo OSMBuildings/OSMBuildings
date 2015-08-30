@@ -1,7 +1,7 @@
 
 var PI = Math.PI;
 
-var MIN_ZOOM = 14.5;
+var MIN_ZOOM = 15;
 
 var TILE_SIZE = 256;
 
@@ -12,6 +12,9 @@ var DEFAULT_HEIGHT = 10;
 
 var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
 var DEFAULT_HIGHLIGHT_COLOR = Color.parse('#f08000').toRGBA(true);
+
+var FOG_RADIUS = 7500;
+var FOG_COLOR = Color.parse('#f0f8ff').toRGBA(true);
 
 var document = global.document;
 
