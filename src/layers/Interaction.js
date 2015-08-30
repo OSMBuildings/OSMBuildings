@@ -12,7 +12,7 @@ var Interaction = {
       vertexShader: SHADERS.interaction.vertex,
       fragmentShader: SHADERS.interaction.fragment,
       attributes: ["aPosition", "aColor"],
-      uniforms: ["uMatrix"]
+      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -38,6 +38,8 @@ var Interaction = {
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
+    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+
     var
       dataItems = data.Index.items,
       item,
@@ -49,6 +51,8 @@ var Interaction = {
       if (!(mMatrix = item.getMatrix())) {
         continue;
       }
+
+      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);

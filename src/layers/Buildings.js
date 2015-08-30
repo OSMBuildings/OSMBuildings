@@ -10,7 +10,7 @@ var Buildings = {};
       vertexShader: SHADERS.buildings.vertex,
       fragmentShader: SHADERS.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uVPMatrix", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+      uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
     });
 
     this.showBackfaces = options.showBackfaces;
@@ -40,11 +40,6 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    GL.uniformMatrix4fv(shader.uniforms.uVPMatrix, false, vpMatrix.data);
-
-//  var fogOrigin = glx.Matrix.transform(vpMatrix);
-//  GL.uniformMatrix4fv(shader.uniforms.uFogOrigin, false, [fogOrigin.x, fogOrigin.y, fogOrigin.z, 1]);
-
     GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
@@ -69,6 +64,8 @@ var Buildings = {};
       if (!(mMatrix = item.getMatrix())) {
         continue;
       }
+
+      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);

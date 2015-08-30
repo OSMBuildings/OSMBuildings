@@ -8,19 +8,22 @@ attribute vec3 aColor;
 attribute vec3 aIDColor;
 
 uniform mat4 uMatrix;
+uniform mat4 uMMatrix;
+
 uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
-uniform mat4 uVPMatrix;
-//uniform vec4 uFogOrigin;
+
 uniform vec3 uFogColor;
 uniform float uFogRadius;
+
 uniform vec3 uHighlightColor;
 uniform vec3 uHighlightID;
 
 varying vec3 vColor;
 
 float fogBlur = uFogRadius * 0.05;
+
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 
@@ -48,11 +51,16 @@ void main() {
 
   //*** fog *******************************************************************
 
-  vec4 fogOrigin = vec4(uVPMatrix * vec4(0.0, 0.0, 0.0, 1.0));
-  float distance = length(glPosition - fogOrigin);
-//float distance = length(glPosition - uFogOrigin);
-  float fogIntensity = (distance - uFogRadius) / fogBlur;
-  fogIntensity = clamp(fogIntensity, 0.0, 1.0);
+  vec4 mPosition = vec4(uMMatrix * aPosition);
+  float distance = length(mPosition);
+  float fogIntensity = 0.0;
+//float fogIntensity = (distance - uFogRadius) / fogBlur;
+//fogIntensity = clamp(fogIntensity, 0.0, 1.0);
+  if (distance > uFogRadius) {
+    fogIntensity = 1.0;
+  } else {
+    fogIntensity = 0.0;
+  }
 
   //***************************************************************************
 
