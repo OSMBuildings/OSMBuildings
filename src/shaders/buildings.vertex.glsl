@@ -29,7 +29,7 @@ float gradientStrength = 0.4;
 
 void main() {
 
-  vec4 glPosition = vec4(uMatrix * aPosition);
+  vec4 glPosition = uMatrix * aPosition;
   gl_Position = glPosition;
 
   //*** highlight object ******************************************************
@@ -51,7 +51,7 @@ void main() {
 
   //*** fog *******************************************************************
 
-  vec4 mPosition = vec4(uMMatrix * aPosition);
+  vec4 mPosition = uMMatrix * aPosition;
   float distance = length(mPosition);
   float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);

@@ -1,5 +1,5 @@
 #ifdef GL_ES
-precision mediump float;
+  precision mediump float;
 #endif
 
 attribute vec4 aPosition;
@@ -13,6 +13,7 @@ void main() {
 //    gl_Position = vec4(0.0);
 //    vPosition = vec4(0.0);
 //  }
+
   gl_Position = uMatrix * aPosition;
   vPosition = aPosition;
 }
