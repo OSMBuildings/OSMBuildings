@@ -66,31 +66,17 @@ var GeoJSON = {};
     return materialColors[baseMaterials[str] || str] || null;
   }
 
-  var WINDING_CLOCKWISE = 'CW';
-  var WINDING_COUNTER_CLOCKWISE = 'CCW';
+  /**
+   * from turf.rewind
+   * Uses [Shoelace Formula]{@link http://en.wikipedia.org/wiki/Shoelace_formula}
+   * @author Abel Vázquez
+   * @version 1.0.0
+   */
 
-  // detect winding direction: clockwise or counter clockwise
-  function getWinding(polygon) {
-    var
-      x1, y1, x2, y2,
-      a = 0;
-
-    for (var i = 0, il = polygon.length-1; i < il; i++) {
-      x1 = polygon[i][0];
-      y1 = polygon[i][1];
-
-      x2 = polygon[i+1][0];
-      y2 = polygon[i+1][1];
-
-      a += x1*y2 - x2*y1;
-    }
-    return (a/2) > 0 ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE;
-  }
-
-  // enforce a polygon winding direcetion. Needed for proper backface culling.
-  function makeWinding(polygon, direction) {
-    var winding = getWinding(polygon);
-    return (winding === direction) ? polygon : polygon.reverse();
+  function isClockWise(latlngs) {
+    return 0 < latlngs.reduce(function(a, b, c, d) {
+        return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0)
+      }, 0);
   }
 
   function parseFeature(res, origin, worldSize, feature) {
@@ -197,7 +183,7 @@ var GeoJSON = {};
 
     var res = [];
     for (i = 0, il = polygonRings.length; i < il; i++) {
-      res[i] = makeWinding(polygonRings[i], i ? WINDING_CLOCKWISE : WINDING_COUNTER_CLOCKWISE);
+      res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
     }
     return [res];
   }
