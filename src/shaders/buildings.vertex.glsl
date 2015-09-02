@@ -22,7 +22,7 @@ uniform vec3 uHighlightID;
 
 varying vec3 vColor;
 
-float fogBlur = uFogRadius * 0.05;
+float fogBlur = 200.0;
 
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
@@ -53,7 +53,7 @@ void main() {
 
   vec4 mPosition = uMMatrix * aPosition;
   float distance = length(mPosition);
-  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);
+  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
   //***************************************************************************

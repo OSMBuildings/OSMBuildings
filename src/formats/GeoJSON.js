@@ -75,7 +75,7 @@ var GeoJSON = {};
 
   function isClockWise(latlngs) {
     return 0 < latlngs.reduce(function(a, b, c, d) {
-        return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0)
+        return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
       }, 0);
   }
 

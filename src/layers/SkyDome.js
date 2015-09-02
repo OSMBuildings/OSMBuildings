@@ -12,11 +12,12 @@ var SkyDome = {};
   var texture;
   var textureIsLoaded;
 
+  var latSegments = 8;
+  var lonSegments = 24;
+
   function createDome(radius) {
     var
       res = { vertices: [], texCoords: [] },
-      latSegments = 8,
-      lonSegments = 24,
       sin = Math.sin,
       cos = Math.cos,
       PI = Math.PI,
@@ -96,7 +97,7 @@ var SkyDome = {};
   };
 
   SkyDome.resize = function() {
-    this.radius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT) / 2;
+    this.radius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT) / 1; // 2 would fit fine but camera is too close
   };
 
   SkyDome.render = function(vpMatrix) {

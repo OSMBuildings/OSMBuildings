@@ -4,19 +4,34 @@ var MapTile = function(tileX, tileY, zoom) {
   this.tileY = tileY;
   this.zoom = zoom;
 
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array([
-    255, 255, 0,
-    255,   0, 0,
-    0,   255, 0,
-    0,     0, 0
-  ]));
+  var numSegments = 4;
 
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
-    1, 1,
-    1, 0,
-    0, 1,
-    0, 0
-  ]));
+  var meshStep = 255/numSegments;
+  var textureStep = 1/numSegments;
+
+  var vertices = [];
+  var texCoords = [];
+
+  for (var cols = 0; cols < numSegments; cols++) {
+    for (var rows = 0; rows < numSegments; rows++) {
+      vertices.push(
+        (cols+1)*meshStep, (rows+1)*meshStep, 0,
+        (cols+1)*meshStep, (rows+0)*meshStep, 0,
+        (cols+0)*meshStep, (rows+1)*meshStep, 0,
+        (cols+0)*meshStep, (rows+0)*meshStep, 0
+      );
+
+      texCoords.push(
+        (cols+1)*textureStep, (rows+1)*textureStep,
+        (cols+1)*textureStep, (rows+0)*textureStep,
+        (cols+0)*textureStep, (rows+1)*textureStep,
+        (cols+0)*textureStep, (rows+0)*textureStep
+      );
+    }
+  }
+
+  this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
+  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
 };
 
 MapTile.prototype = {

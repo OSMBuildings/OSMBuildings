@@ -13,7 +13,7 @@ uniform float uFogRadius;
 varying vec2 vTexCoord;
 varying float vFogIntensity;
 
-float fogBlur = uFogRadius * 0.95;
+float fogBlur = 200.0;
 
 void main() {
 
@@ -26,6 +26,8 @@ void main() {
 
   vec4 mPosition = uMMatrix * aPosition;
   float distance = length(mPosition);
-  float fogIntensity = (distance - fogBlur) / (uFogRadius - fogBlur);
+// (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));
+  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
+
   vFogIntensity = clamp(fogIntensity, 0.0, 1.0);
 }
