@@ -9,6 +9,43 @@ mesh.GeoJSON = (function() {
 
   //***************************************************************************
 
+  function isRotational(coordinates, bbox, center) {
+    var
+      ring = coordinates[0],
+      length = ring.length;
+
+    if (length < 16) {
+      return false;
+    }
+
+    var
+      width = bbox.maxX-bbox.minX,
+      height = bbox.maxY-bbox.minY,
+      ratio = width/height;
+
+    if (ratio < 0.85 || ratio > 1.15) {
+      return false;
+    }
+
+    var
+      radius = (width+height)/4,
+      sqRadius = radius*radius,
+      dist;
+
+
+    for (var i = 0; i < length; i++) {
+      dist = distance2(ring[i], center);
+      if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
+        return false;
+      }
+    }
+    console.log(123)
+
+    return true;
+  }
+
+  //***************************************************************************
+
   function constructor(url, options) {
     options = options || {};
 
@@ -75,13 +112,14 @@ mesh.GeoJSON = (function() {
 
         idColor = Interaction.idToColor(this._id || item.id);
 
-        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry)) {
+        bbox = getBBox(item.geometry);
+        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+
+        //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry, bbox, center)) {
+        if (!item.shape && isRotational(item.geometry, bbox, center)) {
           item.shape = 'cylinder';
           item.isRotational = true;
         }
-
-        bbox = getBBox(item.geometry);
-        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
 
         if (item.isRotational) {
           radius = (bbox.maxX - bbox.minX)/2;
@@ -91,7 +129,7 @@ mesh.GeoJSON = (function() {
           case 'cylinder': vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
           case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.minHeight, item.height); break;
           case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.minHeight, item.height); break;
-          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius/2, item.minHeight, item.height); break;
+          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
           case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.minHeight, item.height); break;
           default:         vertexCount = Triangulate.extrusion(this._data, item.geometry, item.minHeight, item.height);
         }

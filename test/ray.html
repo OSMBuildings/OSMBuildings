@@ -79,7 +79,7 @@ function intersectRayPlane(camera, viewDirection, planeNormal, planeDistance) {
   var denom = dot(viewDirection, planeNormal);
   if (denom !== 0) {
     var t = -(dot(camera, planeNormal) + planeDistance) / denom;
-    if (t === 0) {
+    if (t >= 0) {
       return;
     }
     return add(camera, scale(viewDirection, t));
@@ -93,18 +93,35 @@ function intersectRayPlane(camera, viewDirection, planeNormal, planeDistance) {
 // distance can be determined with a second point on the plane, like so:
 //var distance = -dot(normal, point)
 
-var point = [-1, -1, 0];
-var camera = [0, 0, 0];
+
+var WIDTH = innerWidth;
+var HEIGHT = innerHeight;
+var dist = 1220;
+var fov = 45;
+
+
+var camZ = (HEIGHT/2) / Math.tan((fov/2)*(Math.PI/180));
+
+var point = [-WIDTH/2, -HEIGHT/2, 0]; // top left of 800x600 screen
+var camera = [0, 0, camZ];
 var viewDirection = normalize(sub(camera, point));
 var planeNormal = [0, 0, 1];
-var planeDistance = -1220;
+var planeDistance = dist;
 var hit = intersectRayPlane(camera, viewDirection, planeNormal, planeDistance);
 
-console.log(point, hit)
+console.log('A', point, hit)
 
-//var mat = new glx.Matrix()
-//  .multiply(Scene.perspective);
-//console.log(transform([0,  0,  0], mat.data));
+
+// scales viewport properly according to distance from map
+// missing are transformation and projection
+
+var yScale = Math.tan((fov/2)*(Math.PI/180));
+var xScale = yScale * WIDTH/HEIGHT;
+
+var H = HEIGHT/2 + dist * yScale;
+var W = WIDTH/2  + dist * xScale;
+
+console.log('B', W, H, dist)
 
 </script>
 </body>

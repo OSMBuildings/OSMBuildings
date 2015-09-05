@@ -143,12 +143,6 @@ var GeoJSON = {};
 
     for (var i = 0, il = geometries.length; i < il; i++) {
       clonedItem.geometry = transform(origin, worldSize, geometries[i]);
-
-      if ((clonedItem.roofShape === 'cone' || clonedItem.roofShape === 'dome') && !clonedItem.shape && isRotational(clonedItem.geometry)) {
-        clonedItem.shape = 'cylinder';
-        clonedItem.isRotational = true;
-      }
-
       res.push(clonedItem);
     }
   }
@@ -183,7 +177,8 @@ var GeoJSON = {};
 
     var res = [];
     for (i = 0, il = polygonRings.length; i < il; i++) {
-      res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
+//    res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
+      res[i] = polygonRings[i];
     }
     return [res];
   }
