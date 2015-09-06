@@ -1723,8 +1723,8 @@ OSMBuildingsGL.prototype = {
   getBounds: function() {
     var mapBounds = Map.bounds;
     var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
-    var nw = unproject(mapBounds.minX, mapBounds.maxY, worldSize);
-    var se = unproject(mapBounds.maxX, mapBounds.minY, worldSize);
+    var nw = unproject(mapBounds.minX, mapBounds.minY, worldSize);
+    var se = unproject(mapBounds.maxX, mapBounds.maxY, worldSize);
     return {
       n: nw.latitude,
       w: nw.longitude,
@@ -1779,8 +1779,78 @@ OSMBuildingsGL.prototype = {
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 
     var t = glx.Matrix.transform(mvp);
-    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
+    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z };
   },
+
+  trxf: function(x, y, z) {
+    var mapCenter = Map.center;
+
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+
+    var scale = 1/Math.pow(2, 16 - Map.zoom);
+    var mMatrix = new glx.Matrix()
+      .translate(0, 0, z)
+      .scale(scale, scale, scale*0.7)
+      .translate(x, y, 0);
+
+    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+    var t = glx.Matrix.transform(mvp);
+    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z*1220 };
+  },
+
+  tx: function() {
+    var dist = 1220;
+    var fov = 45;
+    var mapCenter = Map.center;
+
+    var W = WIDTH/2;
+    var H = HEIGHT/2;
+
+    var nw = this.trxf(-W, -H, 0);
+    var ne = this.trxf(+W, -H, 0);
+    var se = this.trxf(+W, +H, 0);
+    var sw = this.trxf(-W, +H, 0);
+
+console.log('A', nw, ne, se, sw);
+
+    // unproject in order to get lat/lon
+    var NW = unproject(mapCenter.x+ne.x, mapCenter.y+nw.y, TILE_SIZE*Math.pow(2, Map.zoom));
+    var NE = unproject(mapCenter.x+nw.x, mapCenter.y+ne.y, TILE_SIZE*Math.pow(2, Map.zoom));
+    var SE = unproject(mapCenter.x+se.x, mapCenter.y+se.y, TILE_SIZE*Math.pow(2, Map.zoom));
+    var SW = unproject(mapCenter.x+sw.x, mapCenter.y+sw.y, TILE_SIZE*Math.pow(2, Map.zoom));
+
+console.log('B', NW, NE, SE, SW);
+    return { nw:NW, ne:NE, se:SE, sw:SW };
+  },
+
+//  tx: function() {
+//    var dist = 1220;
+//    var fov = 45;
+//    var mapCenter = Map.center;
+//
+//    // get scaled half WIDTH/HEIGHT
+//    var vRatio = Math.tan((fov/2)*(Math.PI/180));
+//    var hRatio = vRatio * WIDTH/HEIGHT;
+//
+//    var H = HEIGHT/2 + dist * vRatio;
+//    var W = WIDTH/2  + dist * hRatio;
+//
+//console.log('W/H', WIDTH, HEIGHT, W<<0, H<<0)
+//
+//    var nw = this.trxf(-W, -H, dist);
+//    var ne = this.trxf(+W, -H, dist);
+//    var se = this.trxf(+W, +H, dist);
+//    var sw = this.trxf(-W, +H, dist);
+//
+//console.log('XXX', nw, ne, se, sw);
+//return
+//    // unproject in order to get lat/lon
+//    var NW = unproject(mapCenter.x-W-a.x, mapCenter.y-H-a.y, TILE_SIZE*Math.pow(2, Map.zoom));
+//    var SE = unproject(mapCenter.x+W-b.x, mapCenter.y+H-b.y, TILE_SIZE*Math.pow(2, Map.zoom));
+//
+//    //console.log('RES lat/lon', NW, SE, dist);
+//  },
+
 
   highlight: function(id, color) {
     Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
@@ -3221,6 +3291,42 @@ mesh.GeoJSON = (function() {
 
   //***************************************************************************
 
+  function isRotational(coordinates, bbox, center) {
+    var
+      ring = coordinates[0],
+      length = ring.length;
+
+    if (length < 16) {
+      return false;
+    }
+
+    var
+      width = bbox.maxX-bbox.minX,
+      height = bbox.maxY-bbox.minY,
+      ratio = width/height;
+
+    if (ratio < 0.85 || ratio > 1.15) {
+      return false;
+    }
+
+    var
+      radius = (width+height)/4,
+      sqRadius = radius*radius,
+      dist;
+
+
+    for (var i = 0; i < length; i++) {
+      dist = distance2(ring[i], center);
+      if (dist/sqRadius < 0.7 || dist/sqRadius > 1.3) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  //***************************************************************************
+
   function constructor(url, options) {
     options = options || {};
 
@@ -3287,13 +3393,14 @@ mesh.GeoJSON = (function() {
 
         idColor = Interaction.idToColor(this._id || item.id);
 
-        if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry)) {
+        bbox = getBBox(item.geometry);
+        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+
+        //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry, bbox, center)) {
+        if (!item.shape && isRotational(item.geometry, bbox, center)) {
           item.shape = 'cylinder';
           item.isRotational = true;
         }
-
-        bbox = getBBox(item.geometry);
-        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
 
         if (item.isRotational) {
           radius = (bbox.maxX - bbox.minX)/2;
@@ -3303,7 +3410,7 @@ mesh.GeoJSON = (function() {
           case 'cylinder': vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
           case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.minHeight, item.height); break;
           case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.minHeight, item.height); break;
-          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius/2, item.minHeight, item.height); break;
+          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
           case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.minHeight, item.height); break;
           default:         vertexCount = Triangulate.extrusion(this._data, item.geometry, item.minHeight, item.height);
         }
@@ -3316,7 +3423,7 @@ mesh.GeoJSON = (function() {
 
         switch (item.roofShape) {
           case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.height, item.height+item.roofHeight); break;
-          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height+item.roofHeight); break;
+          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
           case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.height, item.height+item.roofHeight); break;
           default:
             if (item.shape === 'cylinder') {
@@ -3661,12 +3768,6 @@ var GeoJSON = {};
 
     for (var i = 0, il = geometries.length; i < il; i++) {
       clonedItem.geometry = transform(origin, worldSize, geometries[i]);
-
-      if ((clonedItem.roofShape === 'cone' || clonedItem.roofShape === 'dome') && !clonedItem.shape && isRotational(clonedItem.geometry)) {
-        clonedItem.shape = 'cylinder';
-        clonedItem.isRotational = true;
-      }
-
       res.push(clonedItem);
     }
   }
@@ -3701,7 +3802,8 @@ var GeoJSON = {};
 
     var res = [];
     for (i = 0, il = polygonRings.length; i < il; i++) {
-      res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
+//    res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
+      res[i] = polygonRings[i];
     }
     return [res];
   }
@@ -3906,49 +4008,6 @@ function distance2(a, b) {
     dx = a[0]-b[0],
     dy = a[1]-b[1];
   return dx*dx + dy*dy;
-}
-
-function isRotational(coordinates) {
-  var
-    ring = coordinates[0],
-    length = ring.length;
-
-  if (length < 16) {
-    return false;
-  }
-
-  var i;
-
-  var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (i = 0; i < length; i++) {
-    minX = Math.min(minX, ring[i][0]);
-    maxX = Math.max(maxX, ring[i][0]);
-    minY = Math.min(minY, ring[i][1]);
-    maxY = Math.max(maxY, ring[i][1]);
-  }
-
-  var
-    width = maxX-minX,
-    height = (maxY-minY),
-    ratio = width/height;
-
-  if (ratio < 0.85 || ratio > 1.15) {
-    return false;
-  }
-
-  var
-    center = [ minX+width/2, minY+height/2 ],
-    radius = (width+height)/4,
-    sqRadius = radius*radius;
-
-  for (i = 0; i < length; i++) {
-    var dist = distance2(ring[i], center);
-    if (dist/sqRadius < 0.8 || dist/sqRadius > 1.2) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function getBBox(coordinates) {

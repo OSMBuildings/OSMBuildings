@@ -126,7 +126,7 @@
   }
 
   //*************************************************************************
-  
+
   var map = new OSMBuildingsGL('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
@@ -136,15 +136,44 @@
     minZoom: 12,
     maxZoom: 22,
     state: true,
+
     // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
     tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
+
     // dataSource: null, // null disables default OSM data,
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-    // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+    showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+
     // fogColor: '#ff0000',
-    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a></div>'
+
+    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a>'
   });
+
+/***
+  map.addTileLayer(
+//  'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
+//  'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
+    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    {
+//    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a>'
+      attribution: '© Map <a href="http://mapbox.com">MapBox</a>'
+    }
+  );
+
+  map.addGeoJSONLayer(
+    // 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    {
+//    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a>'
+      attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a>'
+   // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+      buffer:
+      bgColor:
+    }
+  );
+
+  map.addOSMLayer();
+***/
 
   map.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { latitude:52.51923, longitude:13.40371 }, { id:'Fernsehturm', scale:0.1, elevation:8, rotation:51,
   replaces: [
@@ -184,18 +213,37 @@
   if (typeof obj !== 'undefined') positionOnMap(obj);
   // map.addMesh('data/Lichtenberg1.gml');
 
+  var label = document.getElementById('label');
+
+  var nw = label.cloneNode(true);
+  var se = label.cloneNode(true);
+  document.body.appendChild(nw);
+  document.body.appendChild(se);
+  nw.style.borderColor = 'blue';
+  se.style.borderColor = 'green';
+
   map.on('change', function() {
     var pos = map.transform(52.52, 13.37, 50);
-
-    var label = document.getElementById('label');
     label.style.left = Math.round(pos.x) + 'px';
     label.style.top = Math.round(pos.y) + 'px';
+
+    var c = map.tx();
+
+    pos = c.nw;
+    nw.style.left = Math.round(pos.x) + 'px';
+    nw.style.top = Math.round(pos.y) + 'px';
+
+    pos = c.se;
+    se.style.left = Math.round(pos.x) + 'px';
+    se.style.top = Math.round(pos.y) + 'px';
   });
 
   map.on('pointermove', function(e) {
     if (e.target) {
 //    console.log('item id', e.target.id);
       map.highlight(e.target.id, '#f08000');
+    } else {
+      map.highlight(null);
     }
   });
 

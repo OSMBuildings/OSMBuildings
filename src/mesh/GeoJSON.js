@@ -39,7 +39,6 @@ mesh.GeoJSON = (function() {
         return false;
       }
     }
-    console.log(123)
 
     return true;
   }
@@ -107,6 +106,7 @@ mesh.GeoJSON = (function() {
         item, color, idColor, bbox, center, radius,
         vertexCount,
         j;
+
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
@@ -142,7 +142,7 @@ mesh.GeoJSON = (function() {
 
         switch (item.roofShape) {
           case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.height, item.height+item.roofHeight); break;
-          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height+item.roofHeight); break;
+          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
           case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.height, item.height+item.roofHeight); break;
           default:
             if (item.shape === 'cylinder') {

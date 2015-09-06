@@ -177,7 +177,7 @@ var GeoJSON = {};
 
     var res = [];
     for (i = 0, il = polygonRings.length; i < il; i++) {
-//    res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
+      //res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
       res[i] = polygonRings[i];
     }
     return [res];

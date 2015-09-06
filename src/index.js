@@ -156,12 +156,64 @@ OSMBuildingsGL.prototype = {
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 
     var t = glx.Matrix.transform(mvp);
-    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT };
+    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z };
+  },
+
+  //trxf: function(x, y, z) {
+  //  var mapCenter = Map.center;
+  //
+  //  var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+  //
+  //  var scale = 1/Math.pow(2, 16 - Map.zoom);
+  //  var mMatrix = new glx.Matrix()
+  //    .translate(0, 0, z)
+  //    .scale(scale, scale, scale*0.7)
+  //    .translate(x, y, 0);
+  //
+  //  var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+  //  var t = glx.Matrix.transform(mvp);
+  //  return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z*1220 };
+  //},
+
+  tx: function() {
+    var mapCenter = Map.center;
+    var W = WIDTH/2;
+    var H = HEIGHT/2;
+
+    var NW = unproject(mapCenter.x-W, mapCenter.y-H, TILE_SIZE*Math.pow(2, Map.zoom));
+    var NE = unproject(mapCenter.x+W, mapCenter.y-H, TILE_SIZE*Math.pow(2, Map.zoom));
+    var SE = unproject(mapCenter.x+W, mapCenter.y+H, TILE_SIZE*Math.pow(2, Map.zoom));
+    var SW = unproject(mapCenter.x-W, mapCenter.y+H, TILE_SIZE*Math.pow(2, Map.zoom));
+
+
+    console.log({
+      NW:NW,
+      NE:NE,
+      SE:SE,
+      SW:SW
+    });
+
+    var nw = this.transform(NW.latitude, NW.longitude, 0);
+    var ne = this.transform(NE.latitude, NE.longitude, 0);
+    var se = this.transform(SE.latitude, SE.longitude, 0);
+    var sw = this.transform(SW.latitude, SW.longitude, 0);
+console.log({
+  nw:nw,
+  ne:ne,
+  se:se,
+  sw:sw
+});
+    return {
+      nw:nw,
+      ne:ne,
+      se:se,
+      sw:sw
+    };
   },
 
   highlight: function(id, color) {
-    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
-    Buildings.highlightID = Interaction.idToColor(id);
+    Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
+    Buildings.highlightID = id ? Interaction.idToColor(id) : null;
   },
 
   destroy: function() {
