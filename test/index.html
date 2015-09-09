@@ -227,15 +227,15 @@
     label.style.left = Math.round(pos.x) + 'px';
     label.style.top = Math.round(pos.y) + 'px';
 
-    var c = map.tx();
-
-    pos = c.nw;
-    nw.style.left = Math.round(pos.x) + 'px';
-    nw.style.top = Math.round(pos.y) + 'px';
-
-    pos = c.se;
-    se.style.left = Math.round(pos.x) + 'px';
-    se.style.top = Math.round(pos.y) + 'px';
+//    var b = map.getBounds();
+//
+//    var pos = map.transform(b.n, b.w, 0);
+//    nw.style.left = Math.round(pos.x+5) + 'px';
+//    nw.style.top  = Math.round(pos.y+5) + 'px';
+//
+//    var pos = map.transform(b.s, b.e, 0);
+//    se.style.left = Math.round(pos.x-5) + 'px';
+//    se.style.top  = Math.round(pos.y-5) + 'px';
   });
 
   map.on('pointermove', function(e) {
