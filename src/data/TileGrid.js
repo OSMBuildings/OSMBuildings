@@ -14,8 +14,6 @@ var TileGrid = {};
     tiles = {};
 
   function update(delay) {
-    updateTileBounds();
-
     if (!delay) {
       loadTiles();
       return;
@@ -37,19 +35,19 @@ var TileGrid = {};
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
     zoom = Math.round(Map.zoom);
-
     var
+      radius = SkyDome.radius,
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
-      mapBounds = Map.bounds,
-      perspectiveBuffer = 1;
-
-    minX = (mapBounds.minX*ratio <<0) - perspectiveBuffer;
-    minY = (mapBounds.minY*ratio <<0) - perspectiveBuffer;
-    maxX = Math.ceil(mapBounds.maxX*ratio) + perspectiveBuffer;
-    maxY = Math.ceil(mapBounds.maxY*ratio) + perspectiveBuffer;
+      mapCenter = Map.center;
+    minX = ((mapCenter.x-radius)*ratio <<0);
+    minY = ((mapCenter.y-radius)*ratio <<0);
+    maxX = Math.ceil((mapCenter.x+radius)*ratio);
+    maxY = Math.ceil((mapCenter.y+radius)*ratio);
   }
 
   function loadTiles() {
+    updateTileBounds();
+
     var
       tileX, tileY,
       key,

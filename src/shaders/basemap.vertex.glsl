@@ -30,4 +30,5 @@ void main() {
   float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
 
   vFogIntensity = clamp(fogIntensity, 0.0, 1.0);
+  //vFogIntensity = 0.0;
 }

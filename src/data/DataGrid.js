@@ -17,8 +17,6 @@ var DataGrid = {};
     fixedZoom = 16;
 
   function update(delay) {
-    updateTileBounds();
-
     if (!delay) {
       loadTiles();
       return;
@@ -38,39 +36,22 @@ var DataGrid = {};
 
   function updateTileBounds() {
     zoom = Math.round(fixedZoom || Map.zoom);
-
     var
-      scale = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
-      mapBounds = Map.bounds,
-      perspectiveBuffer = 1;
-
-    minX = (mapBounds.minX*scale <<0) - perspectiveBuffer;
-    minY = (mapBounds.minY*scale <<0) + 1 - perspectiveBuffer;
-    maxX = Math.ceil(mapBounds.maxX*scale) + perspectiveBuffer;
-    maxY = Math.ceil(mapBounds.maxY*scale) + 1 + perspectiveBuffer;
-
-//console.log('rect', minX, maxX, minY, maxY);
-//
-//
-//var scale = Math.pow(2, Map.zoom) / (Math.cos(Map.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-//var scale2 = Math.pow(2, zoom-Map.zoom);
-//
-//    var
-//      mapCenter = Map.center,
-//      fogRadius = Renderer.fogRadius*scale;
-//
-//    var minX2 = ((mapCenter.x/TILE_SIZE-fogRadius)*scale2 <<0) - 0 - perspectiveBuffer;
-//    var minY2 = ((mapCenter.y/TILE_SIZE+fogRadius)*scale2 <<0) - 1 - perspectiveBuffer;
-//    var maxX2 = Math.ceil(mapCenter.x/TILE_SIZE-fogRadius)*scale2 + 2 +perspectiveBuffer;
-//    var maxY2 = Math.ceil(mapCenter.y/TILE_SIZE+fogRadius)*scale2 + perspectiveBuffer;
-//
-//    console.log('circle', minX2, maxX2, minY2, maxY2, fogRadius);
+      radius = SkyDome.radius,
+      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
+      mapCenter = Map.center;
+    minX = ((mapCenter.x-radius)*ratio <<0);
+    minY = ((mapCenter.y-radius)*ratio <<0);
+    maxX = Math.ceil((mapCenter.x+radius)*ratio);
+    maxY = Math.ceil((mapCenter.y+radius)*ratio);
   }
 
   function loadTiles() {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
+
+    updateTileBounds();
 
     var
       tileX, tileY,
