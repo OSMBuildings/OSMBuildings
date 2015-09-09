@@ -8,8 +8,8 @@ mesh.OBJ = (function() {
     if (options.color) {
       this._color = Color.parse(options.color).toRGBA(true);
     }
-    this.replaces  = options.replaces || [];
 
+    this.replace   = !!options.replace;
     this.scale     = options.scale     || 1;
     this.rotation  = options.rotation  || 0;
     this.elevation = options.elevation || 0;
@@ -17,10 +17,12 @@ mesh.OBJ = (function() {
 
     this._inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 
-    this._vertices = [];
-    this._normals = [];
-    this._colors = [];
-    this._idColors = [];
+    this._data = {
+      vertices: [],
+      normals: [],
+      colors: [],
+      idColors: []
+    };
 
     Activity.setBusy();
     this._request = Request.getText(url, function(obj) {
@@ -50,29 +52,25 @@ mesh.OBJ = (function() {
       for (var i = 0, il = items.length; i<il; i++) {
         item = items[i];
 
-        this._vertices.push.apply(this._vertices, item.vertices);
-        this._normals.push.apply(this._normals, item.normals);
+        this._data.vertices.push.apply(this._data.vertices, item.vertices);
+        this._data.normals.push.apply(this._data.normals, item.normals);
 
         color = this._color || item.color || DEFAULT_COLOR;
         idColor = Interaction.idToColor(this._id || item.id);
-
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          this._colors.push(color.r, color.g, color.b);
-          this._idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+          this._data.colors.push(color.r, color.g, color.b);
+          this._data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }
     },
 
     _onReady: function() {
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._idColors));
+      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._data.vertices));
+      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._data.normals));
+      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._data.colors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._data.idColors));
 
-      this._vertices = null;
-      this._normals = null;
-      this._colors = null;
-      this._idColors = null;
+      this._data = null;
 
       data.Index.add(this);
       this._isReady = true;

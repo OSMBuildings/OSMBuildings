@@ -51,7 +51,7 @@ var Buildings = {};
     if (!this.highlightID) {
       this.highlightID = { r:0, g:0, b:0 };
     }
-    GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r/255, this.highlightID.g/255, this.highlightID.b/255]);
+    GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r, this.highlightID.g, this.highlightID.b]);
 
     var
       dataItems = data.Index.items,

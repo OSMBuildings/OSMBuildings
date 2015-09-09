@@ -52,8 +52,8 @@ mesh.GeoJSON = (function() {
     if (options.color) {
       this._color = Color.parse(options.color).toRGBA(true);
     }
-    //this._replaces = options.replaces || [];
 
+    this.replace   = !!options.replace;
     this.scale     = options.scale     || 1;
     this.rotation  = options.rotation  || 0;
     this.elevation = options.elevation || 0;
@@ -137,7 +137,7 @@ mesh.GeoJSON = (function() {
         color = this._color || item.wallColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
           this._data.colors.push(color.r, color.g, color.b);
-          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+          this._data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
 
         switch (item.roofShape) {
@@ -155,7 +155,7 @@ mesh.GeoJSON = (function() {
         color = this._color || item.roofColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
           this._data.colors.push(color.r, color.g, color.b);
-          this._data.idColors.push(idColor.r/255, idColor.g/255, idColor.b/255);
+          this._data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }
     },

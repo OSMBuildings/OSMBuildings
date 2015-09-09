@@ -1,10 +1,6 @@
 
 var mesh = {};
 
-//var Mesh = function(url, options) {
-//  this.replaces  = options.replaces || [];
-//};
-//
 //  Mesh.prototype = {
 //    _setItems: function(itemList) {
 //      this.items = [];
@@ -14,9 +10,9 @@ var mesh = {};
 //      }
 //      this.modify();
 //    },
-//
+
 //    _replaceItems: function() {
-//      if (this.replaces.length) {
+//      if (this.replace) {
 //        var replaces = this.replaces;
 //        Data.addModifier(function(item) {
 //          if (replaces.indexOf(item.id)>=0) {
@@ -25,7 +21,7 @@ var mesh = {};
 //        });
 //      }
 //    },
-//
+
 //    modify: function() {
 //      if (!this.items) {
 //        return;

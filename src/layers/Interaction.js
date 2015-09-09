@@ -4,7 +4,7 @@
 var Interaction = {
 
   idMapping: [null],
-  viewportSize: 1024,
+  viewportSize: 512,
 
   initShader: function() {
     this.shader = new glx.Shader({
@@ -94,11 +94,10 @@ var Interaction = {
       this.idMapping.push(id);
       index = this.idMapping.length-1;
     }
-//  return { r:255, g:128, b:0 }
     return {
-      r:  index        & 0xff,
-      g: (index >>  8) & 0xff,
-      b: (index >> 16) & 0xff
+      r: ( index        & 0xff) / 255,
+      g: ((index >>  8) & 0xff) / 255,
+      b: ((index >> 16) & 0xff) / 255
     };
   }
 };
