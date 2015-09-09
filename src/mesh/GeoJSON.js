@@ -9,9 +9,9 @@ mesh.GeoJSON = (function() {
 
   //***************************************************************************
 
-  function isRotational(coordinates, bbox, center) {
+  function isRotational(item, center) {
     var
-      ring = coordinates[0],
+      ring = item.geometry[0],
       length = ring.length;
 
     if (length < 16) {
@@ -19,8 +19,8 @@ mesh.GeoJSON = (function() {
     }
 
     var
-      width = bbox.maxX-bbox.minX,
-      height = bbox.maxY-bbox.minY,
+      width = item.max.x-item.min.x,
+      height = item.max.y-item.min.y,
       ratio = width/height;
 
     if (ratio < 0.85 || ratio > 1.15) {
@@ -103,7 +103,7 @@ mesh.GeoJSON = (function() {
 
     _addItems: function(items) {
       var
-        item, color, idColor, bbox, center, radius,
+        item, color, idColor, center, radius,
         vertexCount,
         j;
 
@@ -112,17 +112,16 @@ mesh.GeoJSON = (function() {
 
         idColor = Interaction.idToColor(this._id || item.id);
 
-        bbox = getBBox(item.geometry);
-        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+        center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
 
-        //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item.geometry, bbox, center)) {
-        if (!item.shape && isRotational(item.geometry, bbox, center)) {
+        //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item, center)) {
+        if (!item.shape && isRotational(item, center)) {
           item.shape = 'cylinder';
           item.isRotational = true;
         }
 
         if (item.isRotational) {
-          radius = (bbox.maxX - bbox.minX)/2;
+          radius = (item.max.x - item.min.x)/2;
         }
 
         switch (item.shape) {

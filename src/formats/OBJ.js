@@ -1,6 +1,6 @@
 
 var OBJ = function() {
-  this.vertices = [];
+  this.vertexIndex = [];
 };
 
 if (typeof module !== 'undefined') {
@@ -79,7 +79,7 @@ OBJ.prototype = {
         break;
 
         case 'v':
-          this.vertices.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
+          this.vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
         break;
 
   	    case 'f':
@@ -102,7 +102,9 @@ OBJ.prototype = {
         id: id,
         color: color,
         vertices: geometry.vertices,
-        normals: geometry.normals
+        normals: geometry.normals,
+        min: geometry.min,
+        max: geometry.max
       });
     }
   },
@@ -111,13 +113,22 @@ OBJ.prototype = {
   	var v0, v1, v2;
   	var e1, e2;
   	var nor, len;
+    var x = y = z = Infinity, X = Y = Z = -Infinity;
 
-    var geometry = { vertices:[], normals:[] };
+    var geometry = { vertices:[], normals:[] };
 
     for (var i = 0, il = faces.length; i < il; i++) {
-  		v0 = this.vertices[ faces[i][0] ];
-  		v1 = this.vertices[ faces[i][1] ];
-  		v2 = this.vertices[ faces[i][2] ];
+  		v0 = this.vertexIndex[ faces[i][0] ];
+  		v1 = this.vertexIndex[ faces[i][1] ];
+  		v2 = this.vertexIndex[ faces[i][2] ];
+
+      x = Math.min(x, v0[0], v1[0], v2[0]);
+      y = Math.min(x, v0[2], v1[2], v2[2]);
+      z = Math.min(x, v0[1], v1[1], v2[1]);
+
+      X = Math.max(X, v0[0], v1[0], v2[0]);
+      Y = Math.max(Y, v0[2], v1[2], v2[2]);
+      Z = Math.max(Z, v0[1], v1[1], v2[1]);
 
       e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
   		e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
@@ -142,6 +153,8 @@ OBJ.prototype = {
       );
     }
 
+    geometry.min = { x:x, y:y, z:z };
+    geometry.max = { x:X, y:Y, z:Z };
     return geometry;
   }
 };

@@ -66,20 +66,13 @@ var GeoJSON = {};
     return materialColors[baseMaterials[str] || str] || null;
   }
 
-  /**
-   * from turf.rewind
-   * Uses [Shoelace Formula]{@link http://en.wikipedia.org/wiki/Shoelace_formula}
-   * @author Abel Vázquez
-   * @version 1.0.0
-   */
-
   function isClockWise(latlngs) {
     return 0 < latlngs.reduce(function(a, b, c, d) {
-        return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-      }, 0);
+      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
+    }, 0);
   }
 
-  function parseFeature(res, origin, worldSize, feature) {
+  function parseFeature(res, feature, origin, worldSize) {
     var
       prop = feature.properties,
       item = {},
@@ -138,16 +131,30 @@ var GeoJSON = {};
 
     item.id = prop.relationId || feature.id || prop.id;
 
-    var geometries = getGeometries(feature.geometry);
+    var geometries = getGeometries(feature.geometry, origin, worldSize);
     var clonedItem = Object.create(item);
 
     for (var i = 0, il = geometries.length; i < il; i++) {
-      clonedItem.geometry = transform(origin, worldSize, geometries[i]);
+      clonedItem.geometry = geometries[i];
+
+      var ring = geometries[i][0];
+      var x = y = Infinity, X = Y = -Infinity;
+      for (var j = 0; j < ring.length; j++) {
+        x = Math.min(x, ring[j][0]);
+        y = Math.min(y, ring[j][1]);
+
+        X = Math.max(X, ring[j][0]);
+        Y = Math.max(Y, ring[j][1]);
+      }
+
+      clonedItem.min = { x:x, y:y };
+      clonedItem.max = { x:X, y:Y };
+
       res.push(clonedItem);
     }
   }
 
-  function getGeometries(geometry) {
+  function getGeometries(geometry, origin, worldSize) {
     var i, il, polygonRings, sub;
     switch (geometry.type) {
       case 'GeometryCollection':
@@ -178,28 +185,38 @@ var GeoJSON = {};
     var res = [];
     for (i = 0, il = polygonRings.length; i < il; i++) {
       //res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
-      res[i] = polygonRings[i];
+      res[i] = transform(polygonRings[i], origin, worldSize);
     }
+
     return [res];
   }
 
-  function transform(origin, worldSize, polygon) {
-    var
-      res = [],
-      r, rl, p,
-      ring;
-
-    for (var i = 0, il = polygon.length; i < il; i++) {
-      ring = polygon[i];
-      res[i] = [];
-      for (r = 0, rl = ring.length-1; r < rl; r++) {
-        p = project(ring[r][1], ring[r][0], worldSize);
-        res[i][r] = [p.x-origin.x, p.y-origin.y];
-      }
+  function transform(ring, origin, worldSize) {
+    var p, res = [];
+    for (var i = 0, len = ring.length; i < len; i++) {
+      p = project(ring[i][1], ring[i][0], worldSize);
+      res[i] = [p.x-origin.x, p.y-origin.y];
     }
 
     return res;
   }
+
+  //function getBBox(ring) {
+  //  var x = y = Infinity, X = Y = -Infinity;
+  //  for (var i = 0; i < ring.length; i++) {
+  //    x = Math.min(x, ring[i][0]);
+  //    y = Math.min(y, ring[i][1]);
+  //
+  //    X = Math.max(X, ring[i][0]);
+  //    Y = Math.max(Y, ring[i][1]);
+  //  }
+  //
+  //  return {
+  //    min: { x:x, y:y },
+  //    max: { x:X, y:Y }
+  //  };
+  //}
+
 
   //***************************************************************************
 
@@ -213,7 +230,7 @@ var GeoJSON = {};
         origin = project(position.latitude, position.longitude, worldSize);
 
       for (var i = 0, il = collection.length; i<il; i++) {
-        parseFeature(res, origin, worldSize, collection[i]);
+        parseFeature(res, collection[i], origin, worldSize);
       }
     }
 

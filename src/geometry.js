@@ -6,18 +6,6 @@ function distance2(a, b) {
   return dx*dx + dy*dy;
 }
 
-function getBBox(coordinates) {
-  var ring = coordinates[0];
-  var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (var i = 0; i < ring.length; i++) {
-    minX = Math.min(minX, ring[i][0]);
-    maxX = Math.max(maxX, ring[i][0]);
-    minY = Math.min(minY, ring[i][1]);
-    maxY = Math.max(maxY, ring[i][1]);
-  }
-  return { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
-}
-
 function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
   var d1x = ax-bx;
   var d1y = ay-by;

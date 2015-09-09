@@ -49,7 +49,7 @@ mesh.OBJ = (function() {
     _addItems: function(items) {
       var item, color, idColor, j, jl;
 
-      for (var i = 0, il = items.length; i<il; i++) {
+      for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
         this._data.vertices.push.apply(this._data.vertices, item.vertices);
