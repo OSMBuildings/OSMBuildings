@@ -183,7 +183,7 @@ mesh.GeoJSON = (function() {
       }
 
       var scale = 1 / Math.pow(2, zoom - Map.zoom) * this.scale;
-      matrix.scale(scale, scale, scale*0.7);
+      matrix.scale(scale, scale, scale*HEIGHT_SCALE);
 
       if (this.rotation) {
         matrix.rotateZ(-this.rotation);

@@ -108,6 +108,33 @@ OSMBuildingsGL.prototype = {
       s: se.latitude,
       e: se.longitude
     };
+
+    //var scale = 1/Math.pow(2, 16 - Map.zoom);
+    //var mapTransform = new glx.Matrix().rotateZ(-Map.rotation).rotateX(-Map.tilt);
+    //
+    //function ttt(x, y) {
+    //  var mMatrix = new glx.Matrix().scale(scale, scale, 1).translate(x, y, 0);
+    //  var mvp = glx.Matrix.multiply(mMatrix, mapTransform);
+    //  var t = glx.Matrix.transform(mvp);
+    //  return t;
+    //}
+    //
+    //// TODO: these values do not respect any map rotation, tilt, perspective yet!
+    //var nw = ttt(-WIDTH/2, -HEIGHT/2);
+    //var se = ttt( WIDTH/2,  HEIGHT/2);
+    //
+    //var mapCenter = Map.center;
+    //var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
+    //
+    //var NW = unproject(nw.x+mapCenter.x, nw.y+mapCenter.y, worldSize);
+    //var SE = unproject(se.x+mapCenter.x, se.y+mapCenter.y, worldSize);
+    //
+    //return {
+    //  n: NW.latitude,
+    //  w: NW.longitude,
+    //  s: SE.latitude,
+    //  e: SE.longitude
+    //};
   },
 
   setSize: function(size) {
@@ -142,74 +169,45 @@ OSMBuildingsGL.prototype = {
   },
 
   transform: function(latitude, longitude, elevation) {
-    var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
     var mapCenter = Map.center;
-
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
-
-    var scale = 1/Math.pow(2, 16 - Map.zoom);
-    var mMatrix = new glx.Matrix()
-      .translate(0, 0, elevation)
-      .scale(scale, scale, scale*0.7)
-      .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
-
-    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-
-    var t = glx.Matrix.transform(mvp);
-    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z };
+    var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
+    return transform(pos.x-mapCenter.x, pos.y-mapCenter.y, elevation);
   },
 
   //trxf: function(x, y, z) {
-  //  var mapCenter = Map.center;
-  //
   //  var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
   //
   //  var scale = 1/Math.pow(2, 16 - Map.zoom);
   //  var mMatrix = new glx.Matrix()
   //    .translate(0, 0, z)
-  //    .scale(scale, scale, scale*0.7)
+  //    .scale(scale, scale, scale*HEIGHT_SCALE)
   //    .translate(x, y, 0);
   //
   //  var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-  //  var t = glx.Matrix.transform(mvp);
-  //  return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z*1220 };
+  //
+  //  var t = glx.Matrix.transform(glx.Matrix.invert(mvp));
+  //  return { x: t.x, y: - t.y, z: t.z };
   //},
-
-  tx: function() {
-    var mapCenter = Map.center;
-    var W = WIDTH/2;
-    var H = HEIGHT/2;
-
-    var NW = unproject(mapCenter.x-W, mapCenter.y-H, TILE_SIZE*Math.pow(2, Map.zoom));
-    var NE = unproject(mapCenter.x+W, mapCenter.y-H, TILE_SIZE*Math.pow(2, Map.zoom));
-    var SE = unproject(mapCenter.x+W, mapCenter.y+H, TILE_SIZE*Math.pow(2, Map.zoom));
-    var SW = unproject(mapCenter.x-W, mapCenter.y+H, TILE_SIZE*Math.pow(2, Map.zoom));
-
-
-    console.log({
-      NW:NW,
-      NE:NE,
-      SE:SE,
-      SW:SW
-    });
-
-    var nw = this.transform(NW.latitude, NW.longitude, 0);
-    var ne = this.transform(NE.latitude, NE.longitude, 0);
-    var se = this.transform(SE.latitude, SE.longitude, 0);
-    var sw = this.transform(SW.latitude, SW.longitude, 0);
-console.log({
-  nw:nw,
-  ne:ne,
-  se:se,
-  sw:sw
-});
-    return {
-      nw:nw,
-      ne:ne,
-      se:se,
-      sw:sw
-    };
-  },
+  //
+  //tx: function() {
+  //  var W2 = WIDTH/2;
+  //  var H2 = HEIGHT/2;
+  //
+  //  var NW = this.trxf(-W2, -H2, 0);
+  //  var NE = this.trxf(+W2, -H2, 0);
+  //  var SE = this.trxf(+W2, +H2, 0);
+  //  var SW = this.trxf(-W2, +H2, 0);
+  //
+  //  var res = {
+  //    NW:NW,
+  //    NE:NE,
+  //    SE:SE,
+  //    SW:SW
+  //  };
+  //
+  //  console.log(res);
+  //  return res;
+  //},
 
   highlight: function(id, color) {
     Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;

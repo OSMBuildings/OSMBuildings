@@ -14,6 +14,21 @@ function adjust(inValue, style, inProperty, outProperty) {
   return min[outProperty] + (max[outProperty]-min[outProperty]) * normalized;
 }
 
+function transform(x, y, z) {
+  var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+
+  var scale = 1/Math.pow(2, 16 - Map.zoom);
+  var mMatrix = new glx.Matrix()
+    .translate(0, 0, z)
+    .scale(scale, scale, scale*HEIGHT_SCALE)
+    .translate(x, y, 0);
+
+  var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+
+  var t = glx.Matrix.transform(mvp);
+  return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z }; // takes current cam pos into account.
+}
+
 function project(latitude, longitude, worldSize) {
   var
     x = longitude/360 + 0.5,
