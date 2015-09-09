@@ -1163,7 +1163,7 @@ glx.Matrix = function(data) {
     return a * Math.PI/180;
   }
 
-  function multiply(a, b) {
+  function multiply(res, a, b) {
     var
       a00 = a[0],
       a01 = a[1],
@@ -1199,27 +1199,25 @@ glx.Matrix = function(data) {
       b32 = b[14],
       b33 = b[15];
 
-    return new Float32Array([
-      a00*b00 + a01*b10 + a02*b20 + a03*b30,
-      a00*b01 + a01*b11 + a02*b21 + a03*b31,
-      a00*b02 + a01*b12 + a02*b22 + a03*b32,
-      a00*b03 + a01*b13 + a02*b23 + a03*b33,
+    res[ 0] = a00*b00 + a01*b10 + a02*b20 + a03*b30;
+    res[ 1] = a00*b01 + a01*b11 + a02*b21 + a03*b31;
+    res[ 2] = a00*b02 + a01*b12 + a02*b22 + a03*b32;
+    res[ 3] = a00*b03 + a01*b13 + a02*b23 + a03*b33;
 
-      a10*b00 + a11*b10 + a12*b20 + a13*b30,
-      a10*b01 + a11*b11 + a12*b21 + a13*b31,
-      a10*b02 + a11*b12 + a12*b22 + a13*b32,
-      a10*b03 + a11*b13 + a12*b23 + a13*b33,
+    res[ 4] = a10*b00 + a11*b10 + a12*b20 + a13*b30;
+    res[ 5] = a10*b01 + a11*b11 + a12*b21 + a13*b31;
+    res[ 6] = a10*b02 + a11*b12 + a12*b22 + a13*b32;
+    res[ 7] = a10*b03 + a11*b13 + a12*b23 + a13*b33;
 
-      a20*b00 + a21*b10 + a22*b20 + a23*b30,
-      a20*b01 + a21*b11 + a22*b21 + a23*b31,
-      a20*b02 + a21*b12 + a22*b22 + a23*b32,
-      a20*b03 + a21*b13 + a22*b23 + a23*b33,
+    res[ 8] = a20*b00 + a21*b10 + a22*b20 + a23*b30;
+    res[ 9] = a20*b01 + a21*b11 + a22*b21 + a23*b31;
+    res[10] = a20*b02 + a21*b12 + a22*b22 + a23*b32;
+    res[11] = a20*b03 + a21*b13 + a22*b23 + a23*b33;
 
-      a30*b00 + a31*b10 + a32*b20 + a33*b30,
-      a30*b01 + a31*b11 + a32*b21 + a33*b31,
-      a30*b02 + a31*b12 + a32*b22 + a33*b32,
-      a30*b03 + a31*b13 + a32*b23 + a33*b33
-    ]);
+    res[12] = a30*b00 + a31*b10 + a32*b20 + a33*b30;
+    res[13] = a30*b01 + a31*b11 + a32*b21 + a33*b31;
+    res[14] = a30*b02 + a31*b12 + a32*b22 + a33*b32;
+    res[15] = a30*b03 + a31*b13 + a32*b23 + a33*b33;
   }
 
   glx.Matrix.prototype = {
@@ -1235,12 +1233,12 @@ glx.Matrix = function(data) {
     },
 
     multiply: function(m) {
-      this.data = multiply(this.data, m.data);
+      multiply(this.data, this.data, m.data);
       return this;
     },
 
     translate: function(x, y, z) {
-      this.data = multiply(this.data, [
+      multiply(this.data, this.data, [
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
@@ -1251,7 +1249,7 @@ glx.Matrix = function(data) {
 
     rotateX: function(angle) {
       var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-      this.data = multiply(this.data, [
+      multiply(this.data, this.data, [
         1, 0, 0, 0,
         0, c, s, 0,
         0, -s, c, 0,
@@ -1262,7 +1260,7 @@ glx.Matrix = function(data) {
 
     rotateY: function(angle) {
       var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-      this.data = multiply(this.data, [
+      multiply(this.data, this.data, [
         c, 0, -s, 0,
         0, 1, 0, 0,
         s, 0, c, 0,
@@ -1273,7 +1271,7 @@ glx.Matrix = function(data) {
 
     rotateZ: function(angle) {
       var a = rad(angle), c = Math.cos(a), s = Math.sin(a);
-      this.data = multiply(this.data, [
+      multiply(this.data, this.data, [
         c, -s, 0, 0,
         s, c, 0, 0,
         0, 0, 1, 0,
@@ -1283,7 +1281,7 @@ glx.Matrix = function(data) {
     },
 
     scale: function(x, y, z) {
-      this.data = multiply(this.data, [
+      multiply(this.data, this.data, [
         x, 0, 0, 0,
         0, y, 0, 0,
         0, 0, z, 0,
@@ -1294,7 +1292,9 @@ glx.Matrix = function(data) {
   };
 
   glx.Matrix.multiply = function(a, b) {
-    return multiply(a.data, b.data);
+    var res = new Float32Array(16);
+    multiply(res, a.data, b.data);
+    return res;
   };
 
   glx.Matrix.Perspective = function(fov, aspect, near, far) {
@@ -1369,10 +1369,64 @@ glx.Matrix = function(data) {
     var Z = m[14];
     var W = m[15];
     return {
-      x: (X/W +1) / 2,
-      y: (Y/W +1) / 2,
-      z: (Z/W +1) / 2
+      x: (X/W + 1) / 2,
+      y: (Y/W + 1) / 2,
+      z: (Z/W + 1) / 2
     };
+  };
+
+  glx.Matrix.invert = function(a) {
+    var
+      res = new Float32Array(16),
+
+      a00 = a[ 0], a01 = a[ 1], a02 = a[ 2], a03 = a[ 3],
+      a10 = a[ 4], a11 = a[ 5], a12 = a[ 6], a13 = a[ 7],
+      a20 = a[ 8], a21 = a[ 9], a22 = a[10], a23 = a[11],
+      a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15],
+
+      b00 = a00 * a11 - a01 * a10,
+      b01 = a00 * a12 - a02 * a10,
+      b02 = a00 * a13 - a03 * a10,
+      b03 = a01 * a12 - a02 * a11,
+      b04 = a01 * a13 - a03 * a11,
+      b05 = a02 * a13 - a03 * a12,
+      b06 = a20 * a31 - a21 * a30,
+      b07 = a20 * a32 - a22 * a30,
+      b08 = a20 * a33 - a23 * a30,
+      b09 = a21 * a32 - a22 * a31,
+      b10 = a21 * a33 - a23 * a31,
+      b11 = a22 * a33 - a23 * a32,
+
+      // Calculate the determinant
+      det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+    if (!det) {
+      return;
+    }
+
+    det = 1 / det;
+
+    res[ 0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+    res[ 1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+    res[ 2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+    res[ 3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+
+    res[ 4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+    res[ 5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+    res[ 6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+    res[ 7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+
+    res[ 8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+    res[ 9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+    res[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+    res[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+
+    res[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+    res[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+    res[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+    res[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+
+    return res;
   };
 
 }());
@@ -1421,7 +1475,7 @@ glx.texture.Image = function(src, callback) {
 
     if (!this.id) {
       image = null;
-    } else {
+    } else {
       GL.bindTexture(GL.TEXTURE_2D, this.id);
       GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
       GL.generateMipmap(GL.TEXTURE_2D);
@@ -1731,6 +1785,33 @@ OSMBuildingsGL.prototype = {
       s: se.latitude,
       e: se.longitude
     };
+
+    //var scale = 1/Math.pow(2, 16 - Map.zoom);
+    //var mapTransform = new glx.Matrix().rotateZ(-Map.rotation).rotateX(-Map.tilt);
+    //
+    //function ttt(x, y) {
+    //  var mMatrix = new glx.Matrix().scale(scale, scale, 1).translate(x, y, 0);
+    //  var mvp = glx.Matrix.multiply(mMatrix, mapTransform);
+    //  var t = glx.Matrix.transform(mvp);
+    //  return t;
+    //}
+    //
+    //// TODO: these values do not respect any map rotation, tilt, perspective yet!
+    //var nw = ttt(-WIDTH/2, -HEIGHT/2);
+    //var se = ttt( WIDTH/2,  HEIGHT/2);
+    //
+    //var mapCenter = Map.center;
+    //var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
+    //
+    //var NW = unproject(nw.x+mapCenter.x, nw.y+mapCenter.y, worldSize);
+    //var SE = unproject(se.x+mapCenter.x, se.y+mapCenter.y, worldSize);
+    //
+    //return {
+    //  n: NW.latitude,
+    //  w: NW.longitude,
+    //  s: SE.latitude,
+    //  e: SE.longitude
+    //};
   },
 
   setSize: function(size) {
@@ -1765,96 +1846,49 @@ OSMBuildingsGL.prototype = {
   },
 
   transform: function(latitude, longitude, elevation) {
+    var mapCenter = Map.center;
     var pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, Map.zoom));
-    var mapCenter = Map.center;
-
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
-
-    var scale = 1/Math.pow(2, 16 - Map.zoom);
-    var mMatrix = new glx.Matrix()
-      .translate(0, 0, elevation)
-      .scale(scale, scale, scale*0.7)
-      .translate(pos.x - mapCenter.x, pos.y - mapCenter.y, 0);
-
-    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-
-    var t = glx.Matrix.transform(mvp);
-    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z };
+    return transform(pos.x-mapCenter.x, pos.y-mapCenter.y, elevation);
   },
 
-  trxf: function(x, y, z) {
-    var mapCenter = Map.center;
-
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
-
-    var scale = 1/Math.pow(2, 16 - Map.zoom);
-    var mMatrix = new glx.Matrix()
-      .translate(0, 0, z)
-      .scale(scale, scale, scale*0.7)
-      .translate(x, y, 0);
-
-    var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-    var t = glx.Matrix.transform(mvp);
-    return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z*1220 };
-  },
-
-  tx: function() {
-    var dist = 1220;
-    var fov = 45;
-    var mapCenter = Map.center;
-
-    var W = WIDTH/2;
-    var H = HEIGHT/2;
-
-    var nw = this.trxf(-W, -H, 0);
-    var ne = this.trxf(+W, -H, 0);
-    var se = this.trxf(+W, +H, 0);
-    var sw = this.trxf(-W, +H, 0);
-
-console.log('A', nw, ne, se, sw);
-
-    // unproject in order to get lat/lon
-    var NW = unproject(mapCenter.x+ne.x, mapCenter.y+nw.y, TILE_SIZE*Math.pow(2, Map.zoom));
-    var NE = unproject(mapCenter.x+nw.x, mapCenter.y+ne.y, TILE_SIZE*Math.pow(2, Map.zoom));
-    var SE = unproject(mapCenter.x+se.x, mapCenter.y+se.y, TILE_SIZE*Math.pow(2, Map.zoom));
-    var SW = unproject(mapCenter.x+sw.x, mapCenter.y+sw.y, TILE_SIZE*Math.pow(2, Map.zoom));
-
-console.log('B', NW, NE, SE, SW);
-    return { nw:NW, ne:NE, se:SE, sw:SW };
-  },
-
-//  tx: function() {
-//    var dist = 1220;
-//    var fov = 45;
-//    var mapCenter = Map.center;
-//
-//    // get scaled half WIDTH/HEIGHT
-//    var vRatio = Math.tan((fov/2)*(Math.PI/180));
-//    var hRatio = vRatio * WIDTH/HEIGHT;
-//
-//    var H = HEIGHT/2 + dist * vRatio;
-//    var W = WIDTH/2  + dist * hRatio;
-//
-//console.log('W/H', WIDTH, HEIGHT, W<<0, H<<0)
-//
-//    var nw = this.trxf(-W, -H, dist);
-//    var ne = this.trxf(+W, -H, dist);
-//    var se = this.trxf(+W, +H, dist);
-//    var sw = this.trxf(-W, +H, dist);
-//
-//console.log('XXX', nw, ne, se, sw);
-//return
-//    // unproject in order to get lat/lon
-//    var NW = unproject(mapCenter.x-W-a.x, mapCenter.y-H-a.y, TILE_SIZE*Math.pow(2, Map.zoom));
-//    var SE = unproject(mapCenter.x+W-b.x, mapCenter.y+H-b.y, TILE_SIZE*Math.pow(2, Map.zoom));
-//
-//    //console.log('RES lat/lon', NW, SE, dist);
-//  },
-
+  //trxf: function(x, y, z) {
+  //  var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+  //
+  //  var scale = 1/Math.pow(2, 16 - Map.zoom);
+  //  var mMatrix = new glx.Matrix()
+  //    .translate(0, 0, z)
+  //    .scale(scale, scale, scale*HEIGHT_SCALE)
+  //    .translate(x, y, 0);
+  //
+  //  var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+  //
+  //  var t = glx.Matrix.transform(glx.Matrix.invert(mvp));
+  //  return { x: t.x, y: - t.y, z: t.z };
+  //},
+  //
+  //tx: function() {
+  //  var W2 = WIDTH/2;
+  //  var H2 = HEIGHT/2;
+  //
+  //  var NW = this.trxf(-W2, -H2, 0);
+  //  var NE = this.trxf(+W2, -H2, 0);
+  //  var SE = this.trxf(+W2, +H2, 0);
+  //  var SW = this.trxf(-W2, +H2, 0);
+  //
+  //  var res = {
+  //    NW:NW,
+  //    NE:NE,
+  //    SE:SE,
+  //    SW:SW
+  //  };
+  //
+  //  console.log(res);
+  //  return res;
+  //},
 
   highlight: function(id, color) {
-    Buildings.highlightColor = color ? Color.parse(color).toRGBA(true) : null;
-    Buildings.highlightID = Interaction.idToColor(id);
+    Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
+    Buildings.highlightID = id ? Interaction.idToColor(id) : null;
   },
 
   destroy: function() {
@@ -2406,6 +2440,7 @@ var DATA_KEY = 'anonymous';
 var DATA_SRC = 'http://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json';
 
 var DEFAULT_HEIGHT = 10;
+var HEIGHT_SCALE = 0.7;
 
 var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
 var DEFAULT_HIGHLIGHT_COLOR = Color.parse('#f08000').toRGBA(true);
@@ -2522,6 +2557,21 @@ function adjust(inValue, style, inProperty, outProperty) {
   return min[outProperty] + (max[outProperty]-min[outProperty]) * normalized;
 }
 
+function transform(x, y, z) {
+  var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+
+  var scale = 1/Math.pow(2, 16 - Map.zoom);
+  var mMatrix = new glx.Matrix()
+    .translate(0, 0, z)
+    .scale(scale, scale, scale*HEIGHT_SCALE)
+    .translate(x, y, 0);
+
+  var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+
+  var t = glx.Matrix.transform(mvp);
+  return { x: t.x*WIDTH, y: HEIGHT - t.y*HEIGHT, z: t.z }; // takes current cam pos into account.
+}
+
 function project(latitude, longitude, worldSize) {
   var
     x = longitude/360 + 0.5,
@@ -2563,7 +2613,7 @@ function relax(callback, startIndex, dataLength, chunkSize, delay) {
   }
 }
 
-var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec4 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  if (distance > uFogRadius) {\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vColor = vec4(aColor, 1.0);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"depth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat4 uMMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = 200.0;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  //*** highlight object ******************************************************\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ****************\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ******************************************************\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog *******************************************************************\n  vec4 mPosition = uMMatrix * aPosition;\n  float distance = length(mPosition);\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //***************************************************************************\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = 200.0;\nvoid main() {\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  vTexCoord = aTexCoord;\n  //*** fog *******************************************************************\n  vec4 mPosition = uMMatrix * aPosition;\n  float distance = length(mPosition);\n// (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
+var SHADERS = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec4 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  if (distance > uFogRadius) {\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vColor = vec4(aColor, 1.0);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"depth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvarying vec4 vPosition;\nvoid main() {\n//  if (aHidden == 1.0) {\n//    gl_Position = vec4(0.0);\n//    vPosition = vec4(0.0);\n//  }\n  gl_Position = uMatrix * aPosition;\n  vPosition = aPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vPosition;\nvoid main() {\n\tgl_FragColor = vec4(vPosition.xyz, length(vPosition));\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat4 uMMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = 200.0;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  //*** highlight object ******************************************************\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ****************\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ******************************************************\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog *******************************************************************\n  vec4 mPosition = uMMatrix * aPosition;\n  float distance = length(mPosition);\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //***************************************************************************\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = 200.0;\nvoid main() {\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  vTexCoord = aTexCoord;\n  //*** fog *******************************************************************\n  vec4 mPosition = uMMatrix * aPosition;\n  float distance = length(mPosition);\n  // => (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTileImage;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTileImage, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"}};
 
 
 
@@ -3317,7 +3367,7 @@ mesh.GeoJSON = (function() {
 
     for (var i = 0; i < length; i++) {
       dist = distance2(ring[i], center);
-      if (dist/sqRadius < 0.7 || dist/sqRadius > 1.3) {
+      if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
         return false;
       }
     }
@@ -3388,6 +3438,7 @@ mesh.GeoJSON = (function() {
         item, color, idColor, bbox, center, radius,
         vertexCount,
         j;
+
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
@@ -3464,7 +3515,7 @@ mesh.GeoJSON = (function() {
       }
 
       var scale = 1 / Math.pow(2, zoom - Map.zoom) * this.scale;
-      matrix.scale(scale, scale, scale*0.7);
+      matrix.scale(scale, scale, scale*HEIGHT_SCALE);
 
       if (this.rotation) {
         matrix.rotateZ(-this.rotation);
@@ -3802,7 +3853,7 @@ var GeoJSON = {};
 
     var res = [];
     for (i = 0, il = polygonRings.length; i < il; i++) {
-//    res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
+      //res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
       res[i] = polygonRings[i];
     }
     return [res];
