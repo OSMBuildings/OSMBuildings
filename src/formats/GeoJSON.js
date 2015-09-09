@@ -133,23 +133,13 @@ var GeoJSON = {};
 
     var geometries = getGeometries(feature.geometry, origin, worldSize);
     var clonedItem = Object.create(item);
+    var bbox;
 
     for (var i = 0, il = geometries.length; i < il; i++) {
       clonedItem.geometry = geometries[i];
-
-      var ring = geometries[i][0];
-      var x = y = Infinity, X = Y = -Infinity;
-      for (var j = 0; j < ring.length; j++) {
-        x = Math.min(x, ring[j][0]);
-        y = Math.min(y, ring[j][1]);
-
-        X = Math.max(X, ring[j][0]);
-        Y = Math.max(Y, ring[j][1]);
-      }
-
-      clonedItem.min = { x:x, y:y };
-      clonedItem.max = { x:X, y:Y };
-
+      bbox = getBBox(geometries[i][0]);
+      clonedItem.min = bbox.min;
+      clonedItem.max = bbox.max;
       res.push(clonedItem);
     }
   }
@@ -201,22 +191,24 @@ var GeoJSON = {};
     return res;
   }
 
-  //function getBBox(ring) {
-  //  var x = y = Infinity, X = Y = -Infinity;
-  //  for (var i = 0; i < ring.length; i++) {
-  //    x = Math.min(x, ring[i][0]);
-  //    y = Math.min(y, ring[i][1]);
-  //
-  //    X = Math.max(X, ring[i][0]);
-  //    Y = Math.max(Y, ring[i][1]);
-  //  }
-  //
-  //  return {
-  //    min: { x:x, y:y },
-  //    max: { x:X, y:Y }
-  //  };
-  //}
+  function getBBox(ring) {
+    var
+      x =  Infinity, y =  Infinity,
+      X = -Infinity, Y = -Infinity;
 
+    for (var i = 0; i < ring.length; i++) {
+      x = Math.min(x, ring[i][0]);
+      y = Math.min(y, ring[i][1]);
+
+      X = Math.max(X, ring[i][0]);
+      Y = Math.max(Y, ring[i][1]);
+    }
+
+    return {
+      min: { x:x, y:y },
+      max: { x:X, y:Y }
+    };
+  }
 
   //***************************************************************************
 

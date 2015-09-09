@@ -113,7 +113,9 @@ OBJ.prototype = {
   	var v0, v1, v2;
   	var e1, e2;
   	var nor, len;
-    var x = y = z = Infinity, X = Y = Z = -Infinity;
+    var
+      x =  Infinity, y =  Infinity, z =  Infinity,
+      X = -Infinity, Y = -Infinity, Z = -Infinity;
 
     var geometry = { vertices:[], normals:[] };
 
