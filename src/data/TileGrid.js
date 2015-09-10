@@ -13,14 +13,14 @@ var TileGrid = {};
     maxY,
     tiles = {};
 
+  // strategy: start loading after {delay}ms, skip any attempts until then
+  // effectively loads in intervals during movement
+
   function update(delay) {
     if (!delay) {
       loadTiles();
       return;
     }
-
-    // strategy: start loading after {delay}, skip any attempts until then
-    // effectively loads in intervals during movement
 
     if (isDelayed) {
       return;
@@ -53,8 +53,8 @@ var TileGrid = {};
       key,
       queue = [], queueLength,
       tileAnchor = [
-        minX + (maxX-minX-1)/2,
-        maxY
+        Map.center.x/TILE_SIZE <<0,
+        Map.center.y/TILE_SIZE <<0
       ];
 
     for (tileY = minY; tileY < maxY; tileY++) {
@@ -122,7 +122,7 @@ var TileGrid = {};
     source = src;
 
     Events.on('change', function() {
-      update(500);
+      update(2000);
     });
 
     Events.on('resize', update);

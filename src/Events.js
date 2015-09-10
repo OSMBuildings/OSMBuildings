@@ -17,6 +17,17 @@ var Events = {};
     resizeTimer;
 
   //***************************************************************************
+
+  function getPayload(e, callback) {
+    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
+      var payload = { x: e.clientX, y: e.clientY };
+      if (targetID) {
+        payload.target = { id: targetID };
+      }
+      callback(payload);
+    });
+  }
+
   //***************************************************************************
 
   function onDoubleClick(e) {
@@ -43,11 +54,7 @@ var Events = {};
 
     pointerIsDown = true;
 
-    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-      var payload = { x: e.clientX, y: e.clientY };
-      if (targetID) {
-        payload.target = { id: targetID };
-      }
+    getPayload(e, function(payload) {
       Events.emit('pointerdown', payload);
     });
   }
@@ -68,11 +75,7 @@ var Events = {};
       prevY = e.clientY;
     }
 
-    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-      var payload = { x: e.clientX, y: e.clientY };
-      if (targetID) {
-        payload.target = { id: targetID };
-      }
+    getPayload(e, function(payload) {
       Events.emit('pointermove', payload);
     });
   }
@@ -97,11 +100,7 @@ var Events = {};
 
     pointerIsDown = false;
 
-    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-      var payload = { x: e.clientX, y: e.clientY };
-      if (targetID) {
-        payload.target = { id: targetID };
-      }
+    getPayload(e, function(payload) {
       Events.emit('pointerup', payload);
     });
   }
@@ -145,11 +144,9 @@ var Events = {};
     startX = prevX = e.clientX;
     startY = prevY = e.clientY;
 
-    var payload = { x: e.clientX, y: e.clientY };
-    if (targetID) {
-      payload.target = { id: targetID };
-    }
-    Events.emit('pointerdown', payload);
+    getPayload(e, function(payload) {
+      Events.emit('pointerdown', payload);
+    });
   }
 
   function onTouchMove(e) {
@@ -166,11 +163,9 @@ var Events = {};
     prevX = e.clientX;
     prevY = e.clientY;
 
-    var payload = { x: e.clientX, y: e.clientY };
-    if (targetID) {
-      payload.target = { id: targetID };
-    }
-    Events.emit('pointermove', payload);
+    getPayload(e, function(payload) {
+      Events.emit('pointermove', payload);
+    });
   }
 
   function onTouchEnd(e) {
@@ -186,11 +181,9 @@ var Events = {};
       moveMap(e);
     }
 
-    var payload = { x: e.clientX, y: e.clientY };
-    if (targetID) {
-      payload.target = { id: targetID };
-    }
-    Events.emit('pointerup', payload);
+    getPayload(e, function(payload) {
+      Events.emit('pointerup', payload);
+    });
   }
 
   function onGestureChange(e) {
@@ -262,9 +255,11 @@ var Events = {};
     if (!listeners[type]) {
       return;
     }
-    for (var i = 0, il = listeners[type].length; i<il; i++) {
-      listeners[type][i](payload);
-    }
+    setTimeout(function() {
+      for (var i = 0, il = listeners[type].length; i<il; i++) {
+        listeners[type][i](payload);
+      }
+    },1);
   };
 
   Events.setDisabled = function(flag) {

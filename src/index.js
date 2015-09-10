@@ -98,10 +98,18 @@ OSMBuildingsGL.prototype = {
   },
 
   getBounds: function() {
-    var mapBounds = Map.bounds;
-    var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
-    var nw = unproject(mapBounds.minX, mapBounds.minY, worldSize);
-    var se = unproject(mapBounds.maxX, mapBounds.maxY, worldSize);
+    var
+      center = Map.center,
+      halfWidth  = WIDTH/2,
+      halfHeight = HEIGHT/2,
+      maxY = center.y + halfHeight,
+      minX = center.x - halfWidth,
+      minY = center.y - halfHeight,
+      maxX = center.x + halfWidth,
+      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+      nw = unproject(minX, minY, worldSize),
+      se = unproject(maxX, maxY, worldSize);
+
     return {
       n: nw.latitude,
       w: nw.longitude,

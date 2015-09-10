@@ -1,20 +1,18 @@
 
-// creates 2 cylinders and checks
-function checkCollision(a, b) {
-
-}
+// create 2 cylinders and check
+// function checkCollision(a, b) {
+// }
 
 var data = {
   Index: {
-
     items: [],
-    blockers: [],
+//  blockers: [],
 
     add: function(item) {
       this.items.push(item);
-      //if (item.replace) {
-        //this.blockers.push(item);
-//      Events.emit('modify');
+//      if (item.replace) {
+//        this.blockers.push(item);
+//        Events.emit('modify');
 //      }
     },
 
@@ -37,19 +35,19 @@ var data = {
       }
     },
 
-    // check with other objects
-    checkCollisions: function(item) {
-      for (var i = 0, il = this.blockers.length; i < il; i++) {
-  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
-  //     return true;
-  //    }
-      }
-      return false;
-    },
+//    // check with other objects
+//    checkCollisions: function(item) {
+//      for (var i = 0, il = this.blockers.length; i < il; i++) {
+//        if (this.blockers.indexOf(item.id) >= 0) { // real collision check
+//          return true;
+//        }
+//      }
+//      return false;
+//    },
 
     destroy: function() {
       this.items = null;
-      this.blockers = null;
+//    this.blockers = null;
     }
   }
 };

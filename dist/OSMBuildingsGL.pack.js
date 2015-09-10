@@ -1821,10 +1821,18 @@
 	  },
 
 	  getBounds: function() {
-	    var mapBounds = Map.bounds;
-	    var worldSize = TILE_SIZE*Math.pow(2, Map.zoom);
-	    var nw = unproject(mapBounds.minX, mapBounds.minY, worldSize);
-	    var se = unproject(mapBounds.maxX, mapBounds.maxY, worldSize);
+	      var
+	        center = Map.center,
+	        halfWidth  = WIDTH/2,
+	        halfHeight = HEIGHT/2,
+	        maxY = center.y + halfHeight,
+	        minX = center.x - halfWidth,
+	        minY = center.y - halfHeight,
+	        maxX = center.x + halfWidth,
+	        worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+	        nw = unproject(minX, minY, worldSize),
+	        se = unproject(maxX, maxY, worldSize);
+
 	    return {
 	      n: nw.latitude,
 	      w: nw.longitude,
@@ -1898,22 +1906,6 @@
 
 	(function() {
 
-	  function updateBounds() {
-	    var
-	      center = Map.center,
-	      halfWidth  = WIDTH/2,
-	      halfHeight = HEIGHT/2;
-
-	    Map.bounds = {
-	      maxY: center.y + halfHeight,
-	      minX: center.x - halfWidth,
-	      minY: center.y - halfHeight,
-	      maxX: center.x + halfWidth
-	    };
-	  }
-
-	  //***************************************************************************
-
 	  Map.center = { x:0, y:0 };
 	  Map.zoom = 0;
 	  Map.transform = new glx.Matrix(); // there are very early actions that rely on an existing Map transform
@@ -1931,8 +1923,6 @@
 	    this.setZoom(state.zoom || options.zoom || this.minZoom);
 	    this.setRotation(state.rotation || options.rotation || 0);
 	    this.setTilt(state.tilt || options.tilt || 0);
-
-	    Events.on('resize', updateBounds);
 
 	    if (options.state) {
 	      State.save(Map);
@@ -1962,7 +1952,6 @@
 	        this.center.x += dx;
 	        this.center.y += dy;
 	      }
-	      updateBounds();
 	      Events.emit('change');
 	    }
 	  };
@@ -1978,7 +1967,6 @@
 	    if (this.center.x !== center.x || this.center.y !== center.y) {
 	      this.center = center;
 	      this.position = unproject(center.x, center.y, TILE_SIZE*Math.pow(2, this.zoom));
-	      updateBounds();
 	      Events.emit('change');
 	    }
 	  };
@@ -1987,7 +1975,6 @@
 	    rotation = parseFloat(rotation)%360;
 	    if (this.rotation !== rotation) {
 	      this.rotation = rotation;
-	      updateBounds();
 	      Events.emit('change');
 	    }
 	  };
@@ -1996,7 +1983,6 @@
 	    tilt = clamp(parseFloat(tilt), 0, 60);
 	    if (this.tilt !== tilt) {
 	      this.tilt = tilt;
-	      updateBounds();
 	      Events.emit('change');
 	    }
 	  };
@@ -2024,6 +2010,17 @@
 	    resizeTimer;
 
 	  //***************************************************************************
+
+	  function getPayload(e, callback) {
+	    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
+	      var payload = { x: e.clientX, y: e.clientY };
+	      if (targetID) {
+	        payload.target = { id: targetID };
+	      }
+	      callback(payload);
+	    });
+	  }
+
 	  //***************************************************************************
 
 	  function onDoubleClick(e) {
@@ -2050,11 +2047,7 @@
 
 	    pointerIsDown = true;
 
-	    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-	      var payload = { x: e.clientX, y: e.clientY };
-	      if (targetID) {
-	        payload.target = { id: targetID };
-	      }
+	    getPayload(e, function(payload) {
 	      Events.emit('pointerdown', payload);
 	    });
 	  }
@@ -2075,11 +2068,7 @@
 	      prevY = e.clientY;
 	    }
 
-	    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-	      var payload = { x: e.clientX, y: e.clientY };
-	      if (targetID) {
-	        payload.target = { id: targetID };
-	      }
+	    getPayload(e, function(payload) {
 	      Events.emit('pointermove', payload);
 	    });
 	  }
@@ -2104,11 +2093,7 @@
 
 	    pointerIsDown = false;
 
-	    Interaction.getTargetID(e.clientX, e.clientY, function(targetID) {
-	      var payload = { x: e.clientX, y: e.clientY };
-	      if (targetID) {
-	        payload.target = { id: targetID };
-	      }
+	    getPayload(e, function(payload) {
 	      Events.emit('pointerup', payload);
 	    });
 	  }
@@ -2152,11 +2137,9 @@
 	    startX = prevX = e.clientX;
 	    startY = prevY = e.clientY;
 
-	    var payload = { x: e.clientX, y: e.clientY };
-	    if (targetID) {
-	      payload.target = { id: targetID };
-	    }
-	    Events.emit('pointerdown', payload);
+	    getPayload(e, function(payload) {
+	      Events.emit('pointerdown', payload);
+	    });
 	  }
 
 	  function onTouchMove(e) {
@@ -2173,11 +2156,9 @@
 	    prevX = e.clientX;
 	    prevY = e.clientY;
 
-	    var payload = { x: e.clientX, y: e.clientY };
-	    if (targetID) {
-	      payload.target = { id: targetID };
-	    }
-	    Events.emit('pointermove', payload);
+	    getPayload(e, function(payload) {
+	      Events.emit('pointermove', payload);
+	    });
 	  }
 
 	  function onTouchEnd(e) {
@@ -2193,11 +2174,9 @@
 	      moveMap(e);
 	    }
 
-	    var payload = { x: e.clientX, y: e.clientY };
-	    if (targetID) {
-	      payload.target = { id: targetID };
-	    }
-	    Events.emit('pointerup', payload);
+	    getPayload(e, function(payload) {
+	      Events.emit('pointerup', payload);
+	    });
 	  }
 
 	  function onGestureChange(e) {
@@ -2269,9 +2248,11 @@
 	    if (!listeners[type]) {
 	      return;
 	    }
-	    for (var i = 0, il = listeners[type].length; i<il; i++) {
-	      listeners[type][i](payload);
-	    }
+	    setTimeout(function() {
+	      for (var i = 0, il = listeners[type].length; i<il; i++) {
+	        listeners[type][i](payload);
+	      }
+	    },1);
 	  };
 
 	  Events.setDisabled = function(flag) {
@@ -2864,22 +2845,20 @@
 	}());
 
 
-	// creates 2 cylinders and checks
-	function checkCollision(a, b) {
-
-	}
+	// create 2 cylinders and check
+	// function checkCollision(a, b) {
+	// }
 
 	var data = {
 	  Index: {
-
 	    items: [],
-	    blockers: [],
+	//  blockers: [],
 
 	    add: function(item) {
 	      this.items.push(item);
-	      //if (item.replace) {
-	        //this.blockers.push(item);
-	//      Events.emit('modify');
+	//      if (item.replace) {
+	//        this.blockers.push(item);
+	//        Events.emit('modify');
 	//      }
 	    },
 
@@ -2902,19 +2881,19 @@
 	      }
 	    },
 
-	    // check with other objects
-	    checkCollisions: function(item) {
-	      for (var i = 0, il = this.blockers.length; i < il; i++) {
-	  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
-	  //     return true;
-	  //    }
-	      }
-	      return false;
-	    },
+	//    // check with other objects
+	//    checkCollisions: function(item) {
+	//      for (var i = 0, il = this.blockers.length; i < il; i++) {
+	//        if (this.blockers.indexOf(item.id) >= 0) { // real collision check
+	//          return true;
+	//        }
+	//      }
+	//      return false;
+	//    },
 
 	    destroy: function() {
 	      this.items = null;
-	      this.blockers = null;
+	//    this.blockers = null;
 	    }
 	  }
 	};
@@ -2937,13 +2916,13 @@
 	    tiles = {},
 	    fixedZoom = 16;
 
+	  // strategy: start loading in {delay}ms after movement ends, ignore any attempts until then
+
 	  function update(delay) {
 	    if (!delay) {
 	      loadTiles();
 	      return;
 	    }
-
-	    // strategy: start loading in {delay} after movement ends, skip any attempts until then
 
 	    if (isDelayed) {
 	      clearTimeout(isDelayed);
@@ -2979,8 +2958,8 @@
 	      key,
 	      queue = [], queueLength,
 	      tileAnchor = [
-	        minX + (maxX-minX-1)/2,
-	        maxY
+	        Map.center.x/TILE_SIZE <<0,
+	        Map.center.y/TILE_SIZE <<0
 	      ];
 
 	    for (tileY = minY; tileY < maxY; tileY++) {
@@ -3051,7 +3030,7 @@
 	    source = src;
 
 	    Events.on('change', function() {
-	      update(500);
+	      update(2000);
 	    });
 
 	    Events.on('resize', update);
@@ -3105,14 +3084,14 @@
 	    maxY,
 	    tiles = {};
 
+	  // strategy: start loading after {delay}ms, skip any attempts until then
+	  // effectively loads in intervals during movement
+
 	  function update(delay) {
 	    if (!delay) {
 	      loadTiles();
 	      return;
 	    }
-
-	    // strategy: start loading after {delay}, skip any attempts until then
-	    // effectively loads in intervals during movement
 
 	    if (isDelayed) {
 	      return;
@@ -3145,8 +3124,8 @@
 	      key,
 	      queue = [], queueLength,
 	      tileAnchor = [
-	        minX + (maxX-minX-1)/2,
-	        maxY
+	        Map.center.x/TILE_SIZE <<0,
+	        Map.center.y/TILE_SIZE <<0
 	      ];
 
 	    for (tileY = minY; tileY < maxY; tileY++) {
@@ -3214,7 +3193,7 @@
 	    source = src;
 
 	    Events.on('change', function() {
-	      update(500);
+	      update(2000);
 	    });
 
 	    Events.on('resize', update);
@@ -3428,7 +3407,7 @@
 	        item = items[i];
 
 	//      item.numVertices = item.vertices.length/3;
-	//        this.items.push({ id:item.id, min:item.min, max:item.max });
+	//      this.items.push({ id:item.id, min:item.min, max:item.max });
 
 	        idColor = Interaction.idToColor(this.id || item.id);
 
@@ -3479,26 +3458,26 @@
 	      }
 	    },
 
-	    modify: function() {
-	      if (!this.items) {
-	        return;
-	      }
-
-	      var item, hidden, visibilities = [];
-	      for (var i = 0, il = this.items.length; i<il; i++) {
-	        item = this.items[i];
-	        //hidden = data.Index.checkCollisions(item);
-	//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-	//          visibilities.push(item.hidden ? 1 : 0);
-	//        }
-	      }
-
-	      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
-	      visibilities = null;
-	    },
+	//  modify: function() {
+	//    if (!this.items) {
+	//      return;
+	//    }
+	//
+	//    var item, hidden, visibilities = [];
+	//    for (var i = 0, il = this.items.length; i<il; i++) {
+	//      item = this.items[i];
+	//      hidden = data.Index.checkCollisions(item);
+	//      for (var j = 0, jl = item.numVertices; j<jl; j++) {
+	//        visibilities.push(item.hidden ? 1 : 0);
+	//      }
+	//    }
+	//
+	//    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
+	//    visibilities = null;
+	//  },
 
 	    onReady: function() {
-	      //this.modify();
+	//    this.modify();
 
 	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
 	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
@@ -3615,7 +3594,7 @@
 	        item = items[i];
 
 	//      item.numVertices = item.vertices.length/3;
-	//        this.items.push({ id:item.id, min:item.min, max:item.max });
+	//      this.items.push({ id:item.id, min:item.min, max:item.max });
 
 	        this.data.vertices.push.apply(this.data.vertices, item.vertices);
 	        this.data.normals.push.apply(this.data.normals, item.normals);
@@ -3629,26 +3608,26 @@
 	      }
 	    },
 
-	    modify: function() {
-	      if (!this.items) {
-	        return;
-	      }
-
-	      var item, hidden, visibilities = [];
-	      for (var i = 0, il = this.items.length; i<il; i++) {
-	        item = this.items[i];
-	        //hidden = data.Index.checkCollisions(item);
-	//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-	//          visibilities.push(item.hidden ? 1 : 0);
-	//        }
-	      }
-
-	      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
-	      visibilities = null;
-	    },
+	//  modify: function() {
+	//    if (!this.items) {
+	//      return;
+	//    }
+	//
+	//    var item, hidden, visibilities = [];
+	//    for (var i = 0, il = this.items.length; i<il; i++) {
+	//      item = this.items[i];
+	//      hidden = data.Index.checkCollisions(item);
+	//      for (var j = 0, jl = item.numVertices; j<jl; j++) {
+	//        visibilities.push(item.hidden ? 1 : 0);
+	//      }
+	//    }
+	//
+	//    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
+	//    visibilities = null;
+	//  },
 
 	    onReady: function() {
-	      //this.modify();
+	//    this.modify();
 
 	      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
 	      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));

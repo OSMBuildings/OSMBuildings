@@ -16,13 +16,13 @@ var DataGrid = {};
     tiles = {},
     fixedZoom = 16;
 
+  // strategy: start loading in {delay}ms after movement ends, ignore any attempts until then
+
   function update(delay) {
     if (!delay) {
       loadTiles();
       return;
     }
-
-    // strategy: start loading in {delay} after movement ends, skip any attempts until then
 
     if (isDelayed) {
       clearTimeout(isDelayed);
@@ -58,8 +58,8 @@ var DataGrid = {};
       key,
       queue = [], queueLength,
       tileAnchor = [
-        minX + (maxX-minX-1)/2,
-        maxY
+        Map.center.x/TILE_SIZE <<0,
+        Map.center.y/TILE_SIZE <<0
       ];
 
     for (tileY = minY; tileY < maxY; tileY++) {
@@ -130,7 +130,7 @@ var DataGrid = {};
     source = src;
 
     Events.on('change', function() {
-      update(500);
+      update(2000);
     });
 
     Events.on('resize', update);

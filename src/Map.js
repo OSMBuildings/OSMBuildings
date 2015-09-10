@@ -3,22 +3,6 @@ var Map = {};
 
 (function() {
 
-  function updateBounds() {
-    var
-      center = Map.center,
-      halfWidth  = WIDTH/2,
-      halfHeight = HEIGHT/2;
-
-    Map.bounds = {
-      maxY: center.y + halfHeight,
-      minX: center.x - halfWidth,
-      minY: center.y - halfHeight,
-      maxX: center.x + halfWidth
-    };
-  }
-
-  //***************************************************************************
-
   Map.center = { x:0, y:0 };
   Map.zoom = 0;
   Map.transform = new glx.Matrix(); // there are very early actions that rely on an existing Map transform
@@ -36,8 +20,6 @@ var Map = {};
     this.setZoom(state.zoom || options.zoom || this.minZoom);
     this.setRotation(state.rotation || options.rotation || 0);
     this.setTilt(state.tilt || options.tilt || 0);
-
-    Events.on('resize', updateBounds);
 
     if (options.state) {
       State.save(Map);
@@ -67,7 +49,6 @@ var Map = {};
         this.center.x += dx;
         this.center.y += dy;
       }
-      updateBounds();
       Events.emit('change');
     }
   };
@@ -83,7 +64,6 @@ var Map = {};
     if (this.center.x !== center.x || this.center.y !== center.y) {
       this.center = center;
       this.position = unproject(center.x, center.y, TILE_SIZE*Math.pow(2, this.zoom));
-      updateBounds();
       Events.emit('change');
     }
   };
@@ -92,7 +72,6 @@ var Map = {};
     rotation = parseFloat(rotation)%360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
-      updateBounds();
       Events.emit('change');
     }
   };
@@ -101,7 +80,6 @@ var Map = {};
     tilt = clamp(parseFloat(tilt), 0, 60);
     if (this.tilt !== tilt) {
       this.tilt = tilt;
-      updateBounds();
       Events.emit('change');
     }
   };
