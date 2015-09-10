@@ -2818,26 +2818,58 @@ var Triangulate = {};
 }());
 
 
+// creates 2 cylinders and checks
+function checkCollision(a, b) {
+
+}
+
 var data = {
   Index: {
+
     items: [],
+    blockers: [],
 
     add: function(item) {
       this.items.push(item);
+      //if (item.replace) {
+        //this.blockers.push(item);
+//      Events.emit('modify');
+//      }
     },
 
     remove: function(item) {
       var items = this.items;
       for (var i = 0, il = items.length; i < il; i++) {
         if (items[i] === item) {
+          //if (items[i].replace) {
+          //  for (var j = 0; j < this.blockers.length; j++) {
+          //    if (this.blockers[j] === items[i]) {
+          //      this.blockers.splice(j, 1);
+          //      break;
+          //    }
+          //  }
+          //Events.emit('modify');
+          //}
           items.splice(i, 1);
           return;
         }
       }
     },
 
+    // check with other objects
+    checkCollisions: function(item) {
+    //  for (var i = 0, il = this.blockers.length; i < il; i++) {
+  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
+  //     return true;
+  //    }
+  //    }
+
+      return false;
+    },
+
     destroy: function() {
       this.items = null;
+      this.blockers = null;
     }
   }
 };
@@ -3237,52 +3269,6 @@ MapTile.prototype = {
 
 var mesh = {};
 
-//  Mesh.prototype = {
-//    _setItems: function(itemList) {
-//      this.items = [];
-//      for (var i = 0, il = itemList.length; i<il; i++) {
-//        item.numVertices = item.vertices.length/3;
-//        this.items.push(item);
-//      }
-//      this.modify();
-//    },
-
-//    _replaceItems: function() {
-//      if (this.replace) {
-//        var replaces = this.replaces;
-//        Data.addModifier(function(item) {
-//          if (replaces.indexOf(item.id)>=0) {
-//            item.hidden = true;
-//          }
-//        });
-//      }
-//    },
-
-//    modify: function() {
-//      if (!this.items) {
-//        return;
-//      }
-//
-//      var
-//        item,
-//        newVisibilities = [];
-//
-//      for (var i = 0, il = this.items.length; i<il; i++) {
-//        item = this.items[i];
-//        Data.applyModifiers(item);
-//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-//          newVisibilities.push(item.hidden ? 1 : 0);
-//        }
-//      }
-//
-//      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(newVisibilities));
-//
-//      newVisibilities = null;
-//
-//      return this;
-//    }
-//  };
-
 
 mesh.GeoJSON = (function() {
 
@@ -3333,9 +3319,9 @@ mesh.GeoJSON = (function() {
   function constructor(url, options) {
     options = options || {};
 
-    this._id = options.id;
+    this.id = options.id;
     if (options.color) {
-      this._color = Color.parse(options.color).toRGBA(true);
+      this.color = Color.parse(options.color).toRGBA(true);
     }
 
     this.replace   = !!options.replace;
@@ -3344,7 +3330,7 @@ mesh.GeoJSON = (function() {
     this.elevation = options.elevation || 0;
     this.position  = {};
 
-    this._data = {
+    this.data = {
       vertices: [],
       normals: [],
       colors: [],
@@ -3354,39 +3340,40 @@ mesh.GeoJSON = (function() {
     Activity.setBusy();
     if (typeof url === 'object') {
       var json = url;
-      this._onLoad(json);
+      this.onLoad(json);
     } else {
-      this._request = Request.getJSON(url, function(json) {
-        this._request = null;
-        this._onLoad(json);
+      this.request = Request.getJSON(url, function(json) {
+        this.request = null;
+        this.onLoad(json);
       }.bind(this));
     }
   }
 
   constructor.prototype = {
 
-    _onLoad: function(json) {
+    onLoad: function(json) {
       if (!json || !json.features.length) {
         return;
       }
 
       var coordinates0 = json.features[0].geometry.coordinates[0][0];
       this.position = { latitude: coordinates0[1], longitude: coordinates0[0] };
+      this.items = [];
 
       relax(function(startIndex, endIndex) {
         var features = json.features.slice(startIndex, endIndex);
         var geojson = { type: 'FeatureCollection', features: features };
         var data = GeoJSON.parse(this.position, worldSize, geojson);
 
-        this._addItems(data);
+        this.addItems(data);
 
         if (endIndex === json.features.length) {
-          this._onReady();
+          this.onReady();
         }
       }.bind(this), 0, json.features.length, featuresPerChunk, delayPerChunk);
     },
 
-    _addItems: function(items) {
+    addItems: function(items) {
       var
         item, color, idColor, center, radius,
         vertexCount,
@@ -3395,7 +3382,10 @@ mesh.GeoJSON = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
-        idColor = Interaction.idToColor(this._id || item.id);
+//      item.numVertices = item.vertices.length/3;
+        this.items.push({ id:item.id, min:item.min, max:item.max });
+
+        idColor = Interaction.idToColor(this.id || item.id);
 
         center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
 
@@ -3410,51 +3400,72 @@ mesh.GeoJSON = (function() {
         }
 
         switch (item.shape) {
-          case 'cylinder': vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
-          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.minHeight, item.height); break;
-          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.minHeight, item.height); break;
-          case 'sphere':   vertexCount = Triangulate.cylinder(this._data, center, radius, radius, item.minHeight, item.height); break;
-          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.minHeight, item.height); break;
-          default:         vertexCount = Triangulate.extrusion(this._data, item.geometry, item.minHeight, item.height);
+          case 'cylinder': vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
+          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.minHeight, item.height); break;
+          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.minHeight, item.height); break;
+          case 'sphere':   vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
+          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.minHeight, item.height); break;
+          default:         vertexCount = Triangulate.extrusion(this.data, item.geometry, item.minHeight, item.height);
         }
 
-        color = this._color || item.wallColor || DEFAULT_COLOR;
+        color = this.color || item.wallColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
-          this._data.colors.push(color.r, color.g, color.b);
-          this._data.idColors.push(idColor.r, idColor.g, idColor.b);
+          this.data.colors.push(color.r, color.g, color.b);
+          this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
 
         switch (item.roofShape) {
-          case 'cone':     vertexCount = Triangulate.cylinder(this._data, center, radius, 0, item.height, item.height+item.roofHeight); break;
-          case 'dome':     vertexCount = Triangulate.dome(this._data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
-          case 'pyramid':  vertexCount = Triangulate.pyramid(this._data, item.geometry, center, item.height, item.height+item.roofHeight); break;
+          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.height, item.height+item.roofHeight); break;
+          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
+          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.height, item.height+item.roofHeight); break;
           default:
             if (item.shape === 'cylinder') {
-              vertexCount = Triangulate.circle(this._data, center, radius, item.height);
+              vertexCount = Triangulate.circle(this.data, center, radius, item.height);
             } else if (item.shape === undefined) {
-              vertexCount = Triangulate.polygon(this._data, item.geometry, item.height);
+              vertexCount = Triangulate.polygon(this.data, item.geometry, item.height);
             }
         }
 
-        color = this._color || item.roofColor || DEFAULT_COLOR;
+        color = this.color || item.roofColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
-          this._data.colors.push(color.r, color.g, color.b);
-          this._data.idColors.push(idColor.r, idColor.g, idColor.b);
+          this.data.colors.push(color.r, color.g, color.b);
+          this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }
     },
 
-    _onReady: function() {
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._data.vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._data.normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._data.colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._data.idColors));
+    modify: function() {
+      if (!this.items) {
+        return;
+      }
 
-      this._data = null;
+      var item, hidden, visibilities = [];
+      for (var i = 0, il = this.items.length; i<il; i++) {
+        item = this.items[i];
+        hidden = data.Index.checkCollisions(item);
+//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
+//          visibilities.push(item.hidden ? 1 : 0);
+//        }
+      }
+
+      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
+      visibilities = null;
+    },
+
+    onReady: function() {
+      //this.modify();
+
+      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this.data.idColors));
+
+      this.data = null;
 
       data.Index.add(this);
-      this._isReady = true;
+//    Events.on('modify', this.modify.bind(this));
 
+      this.isReady = true;
       Activity.setIdle();
     },
 
@@ -3483,11 +3494,13 @@ mesh.GeoJSON = (function() {
     },
 
     destroy: function() {
-      if (this._request) {
-        this._request.abort();
+      if (this.request) {
+        this.request.abort();
       }
 
-      if (this._isReady) {
+      this.items = null;
+
+      if (this.isReady) {
         data.Index.remove(this);
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
@@ -3507,9 +3520,9 @@ mesh.OBJ = (function() {
   function constructor(url, position, options) {
     options = options || {};
 
-    this._id = options.id;
+    this.id = options.id;
     if (options.color) {
-      this._color = Color.parse(options.color).toRGBA(true);
+      this.color = Color.parse(options.color).toRGBA(true);
     }
 
     this.replace   = !!options.replace;
@@ -3518,9 +3531,9 @@ mesh.OBJ = (function() {
     this.elevation = options.elevation || 0;
     this.position  = position;
 
-    this._inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
+    this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 
-    this._data = {
+    this.data = {
       vertices: [],
       normals: [],
       colors: [],
@@ -3528,56 +3541,81 @@ mesh.OBJ = (function() {
     };
 
     Activity.setBusy();
-    this._request = Request.getText(url, function(obj) {
-      this._request = null;
+    this.request = Request.getText(url, function(obj) {
+      this.request = null;
       var match;
       if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
-        this._request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
-          this._request = null;
-          this._onLoad(obj, mtl);
+        this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
+          this.request = null;
+          this.onLoad(obj, mtl);
         }.bind(this));
       } else {
-        this._onLoad(obj, null);
+        this.onLoad(obj, null);
       }
     }.bind(this));
   }
 
   constructor.prototype = {
-    _onLoad: function(obj, mtl) {
+    onLoad: function(obj, mtl) {
       var data = new OBJ.parse(obj, mtl);
-      this._addItems(data);
-      this._onReady();
+      this.items = [];
+      this.addItems(data);
+      this.onReady();
     },
 
-    _addItems: function(items) {
+    addItems: function(items) {
       var item, color, idColor, j, jl;
 
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
-        this._data.vertices.push.apply(this._data.vertices, item.vertices);
-        this._data.normals.push.apply(this._data.normals, item.normals);
+//      item.numVertices = item.vertices.length/3;
+//        this.items.push({ id:item.id, min:item.min, max:item.max });
 
-        color = this._color || item.color || DEFAULT_COLOR;
-        idColor = Interaction.idToColor(this._id || item.id);
+        this.data.vertices.push.apply(this.data.vertices, item.vertices);
+        this.data.normals.push.apply(this.data.normals, item.normals);
+
+        color = this.color || item.color || DEFAULT_COLOR;
+        idColor = Interaction.idToColor(this.id || item.id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          this._data.colors.push(color.r, color.g, color.b);
-          this._data.idColors.push(idColor.r, idColor.g, idColor.b);
+          this.data.colors.push(color.r, color.g, color.b);
+          this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }
     },
 
-    _onReady: function() {
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this._data.vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this._data.normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this._data.colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this._data.idColors));
+    modify: function() {
+      if (!this.items) {
+        return;
+      }
 
-      this._data = null;
+      var item, hidden, visibilities = [];
+      for (var i = 0, il = this.items.length; i<il; i++) {
+        item = this.items[i];
+        hidden = data.Index.checkCollisions(item);
+//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
+//          visibilities.push(item.hidden ? 1 : 0);
+//        }
+      }
+
+      this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
+      visibilities = null;
+    },
+
+    onReady: function() {
+      //this.modify();
+
+      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this.data.idColors));
+
+      this.data = null;
 
       data.Index.add(this);
-      this._isReady = true;
+//    Events.on('modify', this.modify.bind(this));
 
+      this.isReady = true;
       Activity.setIdle();
     },
 
@@ -3589,7 +3627,7 @@ mesh.OBJ = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      var scale = Math.pow(2, Map.zoom) * this._inMeters * this.scale;
+      var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
       matrix.scale(scale, scale, scale);
 
       if (this.rotation) {
@@ -3606,11 +3644,13 @@ mesh.OBJ = (function() {
     },
 
     destroy: function() {
-      if (this._request) {
-        this._request.abort();
+      if (this.request) {
+        this.request.abort();
       }
 
-      if (this._isReady) {
+      this.items = null;
+
+      if (this.isReady) {
         data.Index.remove(this);
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();

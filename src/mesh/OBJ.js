@@ -54,7 +54,7 @@ mesh.OBJ = (function() {
         item = items[i];
 
 //      item.numVertices = item.vertices.length/3;
-        this.items.push(item);
+//        this.items.push({ id:item.id, min:item.min, max:item.max });
 
         this.data.vertices.push.apply(this.data.vertices, item.vertices);
         this.data.normals.push.apply(this.data.normals, item.normals);
@@ -73,12 +73,12 @@ mesh.OBJ = (function() {
         return;
       }
 
-      var item, visibilities = [];
+      var item, hidden, visibilities = [];
       for (var i = 0, il = this.items.length; i<il; i++) {
         item = this.items[i];
-//        Data.applyModifiers(item);
+        //hidden = data.Index.checkCollisions(item);
 //        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-//          newVisibilities.push(item.hidden ? 1 : 0);
+//          visibilities.push(item.hidden ? 1 : 0);
 //        }
       }
 
@@ -87,7 +87,7 @@ mesh.OBJ = (function() {
     },
 
     onReady: function() {
-      this.modify();
+      //this.modify();
 
       this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
@@ -97,8 +97,9 @@ mesh.OBJ = (function() {
       this.data = null;
 
       data.Index.add(this);
-      this.isReady = true;
+//    Events.on('modify', this.modify.bind(this));
 
+      this.isReady = true;
       Activity.setIdle();
     },
 
