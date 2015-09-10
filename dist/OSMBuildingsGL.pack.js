@@ -2904,12 +2904,11 @@
 
 	    // check with other objects
 	    checkCollisions: function(item) {
-	    //  for (var i = 0, il = this.blockers.length; i < il; i++) {
+	      for (var i = 0, il = this.blockers.length; i < il; i++) {
 	  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
 	  //     return true;
 	  //    }
-	  //    }
-
+	      }
 	      return false;
 	    },
 
@@ -3429,7 +3428,7 @@
 	        item = items[i];
 
 	//      item.numVertices = item.vertices.length/3;
-	        this.items.push({ id:item.id, min:item.min, max:item.max });
+	//        this.items.push({ id:item.id, min:item.min, max:item.max });
 
 	        idColor = Interaction.idToColor(this.id || item.id);
 
@@ -3488,7 +3487,7 @@
 	      var item, hidden, visibilities = [];
 	      for (var i = 0, il = this.items.length; i<il; i++) {
 	        item = this.items[i];
-	        hidden = data.Index.checkCollisions(item);
+	        //hidden = data.Index.checkCollisions(item);
 	//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
 	//          visibilities.push(item.hidden ? 1 : 0);
 	//        }
@@ -3638,7 +3637,7 @@
 	      var item, hidden, visibilities = [];
 	      for (var i = 0, il = this.items.length; i<il; i++) {
 	        item = this.items[i];
-	        hidden = data.Index.checkCollisions(item);
+	        //hidden = data.Index.checkCollisions(item);
 	//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
 	//          visibilities.push(item.hidden ? 1 : 0);
 	//        }
