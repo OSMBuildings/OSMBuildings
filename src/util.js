@@ -1,19 +1,4 @@
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(value, min));
-}
-
-function normalize(value, min, max) {
-  var range = max-min;
-  return clamp((value-min)/range, 0, 1);
-}
-
-function adjust(inValue, style, inProperty, outProperty) {
-  var min = style.min, max = style.max;
-  var normalized = normalize(inValue, min[inProperty], max[inProperty]);
-  return min[outProperty] + (max[outProperty]-min[outProperty]) * normalized;
-}
-
 function transform(x, y, z) {
   var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
 

@@ -4,16 +4,15 @@
   "lib": [
     "lib/earcut.js",
     "lib/Color.debug.js",
+    "lib/GLMap.debug.js",
     "lib/glx/glx.debug.js"
   ],
 
   "src": [
     "src/index.js",
-    "src/Map.js",
     "src/Events.js",
+    "src/Adapter.js",
     "src/Activity.js",
-
-    "src/State.js",
 
     "src/variables.js",
     "src/Request.js",

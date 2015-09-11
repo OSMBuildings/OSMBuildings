@@ -190,7 +190,7 @@
 
   map.addGeoJSON(gj);
 
-  map.addGeoJSON('data/o2_nach_90.geo.json');
+  //map.addGeoJSON('data/o2_nach_90.geo.json');
   //map.addGeoJSON('data/w1-o4.geo.json');
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
@@ -223,7 +223,6 @@
 
   map.on('pointermove', function(e) {
     if (e.target) {
-//    console.log('item id', e.target.id);
       map.highlight(e.target.id, '#f08000');
     } else {
       map.highlight(null);

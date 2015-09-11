@@ -1,4 +1,4 @@
-var GL;
+var GL, Map;
 var WIDTH = 0, HEIGHT = 0;
 
 var OSMBuildingsGL = function(containerId, options) {
@@ -17,9 +17,7 @@ var OSMBuildingsGL = function(containerId, options) {
   });
 
   Interaction.initShader();
-
-  Map.init(options);
-  Events.init(container);
+  Map = Adapter.initMap(container, options);
 
   this.setDisabled(options.disabled);
   if (options.style) {
@@ -71,12 +69,12 @@ OSMBuildingsGL.prototype = {
   },
 
   setDisabled: function(flag) {
-    Events.setDisabled(flag);
+    Map.setDisabled(flag);
     return this;
   },
 
   isDisabled: function() {
-    return Events.isDisabled();
+    return Map.isDisabled();
   },
 
   setZoom: function(zoom) {
