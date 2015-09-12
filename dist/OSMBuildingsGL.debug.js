@@ -957,7 +957,7 @@ GLMap.prototype = {
       params.push('tilt=' + this.tilt.toFixed(1));
       params.push('rotation=' + this.rotation.toFixed(1));
       history.replaceState({}, '', '?'+ params.join('&'));
-    }.bind(this), 2000);
+    }.bind(this), 1000);
   },
 
   setCenter: function(center) {
@@ -968,27 +968,31 @@ GLMap.prototype = {
     }
   },
 
-  emitDebounce: null,
   emit: function(type, payload) {
     if (!this.listeners[type]) {
       return;
     }
-    clearTimeout(this.emitDebounce);
     var listeners = this.listeners[type];
-    this.emitDebounce = setTimeout(function() {
-      for (var i = 0, il = listeners.length; i < il; i++) {
-        listeners[i](payload);
+
+    if (listeners.timer) {
+      return;
+    }
+
+    listeners.timer = setTimeout(function() {
+      for (var i = 0, il = listeners.fn.length; i < il; i++) {
+        listeners.fn[i](payload);
       }
-    }, 1);
+      listeners.timer = null;
+    }.bind(this), 17);
   },
 
   //***************************************************************************
 
   on: function(type, fn) {
     if (!this.listeners[type]) {
-      this.listeners[type] = [];
+      this.listeners[type] = { timer:null, fn:[] };
     }
-    this.listeners[type].push(fn);
+    this.listeners[type].fn.push(fn);
   },
 
   off: function(type, fn) {},
@@ -1236,7 +1240,7 @@ Interaction.prototype = {
       delta = -e.detail;
     }
 
-    var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+    var adjust = 0.5*(delta>0 ? 1 : delta<0 ? -1 : 0);
     this.map.setZoom(this.map.zoom + adjust, e);
   },
 
@@ -2292,18 +2296,34 @@ OSMBuildingsGL.prototype = {
   },
 
   getBounds: function() {
-    var
-      center = Map.center,
-      halfWidth  = WIDTH/2,
-      halfHeight = HEIGHT/2,
-      maxY = center.y + halfHeight,
-      minX = center.x - halfWidth,
-      minY = center.y - halfHeight,
-      maxX = center.x + halfWidth,
-      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      nw = unproject(minX, minY, worldSize),
-      se = unproject(maxX, maxY, worldSize);
+    //var
+    //  center = Map.center,
+    //  halfWidth  = WIDTH/2,
+    //  halfHeight = HEIGHT/2,
+    //  maxY = center.y + halfHeight,
+    //  minX = center.x - halfWidth,
+    //  minY = center.y - halfHeight,
+    //  maxX = center.x + halfWidth,
+    //  worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+    //  nw = unproject(minX, minY, worldSize),
+    //  se = unproject(maxX, maxY, worldSize);
+    //
+    //return {
+    //  n: nw.latitude,
+    //  w: nw.longitude,
+    //  s: se.latitude,
+    //  e: se.longitude
+    //};
 
+    var
+      W2 = WIDTH/2, H2 = HEIGHT/2,
+      angle = Map.rotation*Math.PI/180,
+      x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
+      y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
+      center = Map.center,
+      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+      nw = unproject(center.x - x, center.y - y, worldSize),
+      se = unproject(center.x + x, center.y + y, worldSize);
     return {
       n: nw.latitude,
       w: nw.longitude,
@@ -2378,13 +2398,13 @@ var Events = {};
 (function() {
 
   var listeners = {};
-  var emitDebounce;
 
   Events.on = function(type, fn) {
     if (!listeners[type]) {
-      listeners[type] = [];
+      listeners[type] = { fn:[] };
     }
-    listeners[type].push(fn);
+
+    listeners[type].fn.push(fn);
   };
 
   Events.off = function(type, fn) {};
@@ -2393,12 +2413,17 @@ var Events = {};
     if (!listeners[type]) {
       return;
     }
-    clearTimeout(emitDebounce);
-    emitDebounce = setTimeout(function() {
-      for (var i = 0, il = listeners[type].length; i < il; i++) {
-        listeners[type][i](payload);
+
+    var l = listeners[type];
+    if (l.timer) {
+      return;
+    }
+    l.timer = setTimeout(function() {
+      l.timer = null;
+      for (var i = 0, il = l.fn.length; i < il; i++) {
+        l.fn[i](payload);
       }
-    }, 1);
+    }, 17);
   };
 
   Events.destroy = function() {
@@ -2489,7 +2514,7 @@ var Activity = {};
       timer = setTimeout(function() {
         timer = null;
         Events.emit('idle');
-      }, 10);
+      }, 33);
     }
 
     //if (msg) {

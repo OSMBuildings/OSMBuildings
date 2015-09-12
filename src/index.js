@@ -96,18 +96,34 @@ OSMBuildingsGL.prototype = {
   },
 
   getBounds: function() {
-    var
-      center = Map.center,
-      halfWidth  = WIDTH/2,
-      halfHeight = HEIGHT/2,
-      maxY = center.y + halfHeight,
-      minX = center.x - halfWidth,
-      minY = center.y - halfHeight,
-      maxX = center.x + halfWidth,
-      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
-      nw = unproject(minX, minY, worldSize),
-      se = unproject(maxX, maxY, worldSize);
+    //var
+    //  center = Map.center,
+    //  halfWidth  = WIDTH/2,
+    //  halfHeight = HEIGHT/2,
+    //  maxY = center.y + halfHeight,
+    //  minX = center.x - halfWidth,
+    //  minY = center.y - halfHeight,
+    //  maxX = center.x + halfWidth,
+    //  worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+    //  nw = unproject(minX, minY, worldSize),
+    //  se = unproject(maxX, maxY, worldSize);
+    //
+    //return {
+    //  n: nw.latitude,
+    //  w: nw.longitude,
+    //  s: se.latitude,
+    //  e: se.longitude
+    //};
 
+    var
+      W2 = WIDTH/2, H2 = HEIGHT/2,
+      angle = Map.rotation*Math.PI/180,
+      x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
+      y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
+      center = Map.center,
+      worldSize = TILE_SIZE*Math.pow(2, Map.zoom),
+      nw = unproject(center.x - x, center.y - y, worldSize),
+      se = unproject(center.x + x, center.y + y, worldSize);
     return {
       n: nw.latitude,
       w: nw.longitude,

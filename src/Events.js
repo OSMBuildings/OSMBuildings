@@ -4,13 +4,13 @@ var Events = {};
 (function() {
 
   var listeners = {};
-  var emitDebounce;
 
   Events.on = function(type, fn) {
     if (!listeners[type]) {
-      listeners[type] = [];
+      listeners[type] = { fn:[] };
     }
-    listeners[type].push(fn);
+
+    listeners[type].fn.push(fn);
   };
 
   Events.off = function(type, fn) {};
@@ -19,12 +19,17 @@ var Events = {};
     if (!listeners[type]) {
       return;
     }
-    clearTimeout(emitDebounce);
-    emitDebounce = setTimeout(function() {
-      for (var i = 0, il = listeners[type].length; i < il; i++) {
-        listeners[type][i](payload);
+
+    var l = listeners[type];
+    if (l.timer) {
+      return;
+    }
+    l.timer = setTimeout(function() {
+      l.timer = null;
+      for (var i = 0, il = l.fn.length; i < il; i++) {
+        l.fn[i](payload);
       }
-    }, 1);
+    }, 17);
   };
 
   Events.destroy = function() {

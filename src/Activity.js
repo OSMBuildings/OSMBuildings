@@ -32,7 +32,7 @@ var Activity = {};
       timer = setTimeout(function() {
         timer = null;
         Events.emit('idle');
-      }, 10);
+      }, 33);
     }
 
     //if (msg) {
