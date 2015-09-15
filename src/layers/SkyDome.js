@@ -68,7 +68,7 @@ var SkyDome = {};
     return res;
   }
 
-  SkyDome.initShader = function() {
+  SkyDome.initShader = function(options) {
     var url = 'skydome.jpg';
 
     var tris = createDome(baseRadius);
@@ -82,6 +82,8 @@ var SkyDome = {};
       attributes: ["aPosition", "aTexCoord"],
       uniforms: ["uMatrix", "uTileImage", "uFogColor"]
     });
+
+    this.fogColor = options.fogColor;
 
     vertexBuffer = new glx.Buffer(3, new Float32Array(tris.vertices));
     texCoordBuffer = new glx.Buffer(2, new Float32Array(tris.texCoords));
@@ -97,6 +99,7 @@ var SkyDome = {};
   };
 
   SkyDome.resize = function() {
+    this.radius = Math.sqrt(MAP.width*MAP.width + MAP.height*MAP.height) / 1; // 2 would fit fine but camera is too close
   };
 
   SkyDome.render = function(vpMatrix) {
@@ -108,7 +111,7 @@ var SkyDome = {};
 
     shader.enable();
 
-    gl.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+    gl.uniform3fv(shader.uniforms.uFogColor, [this.fogColor.r, this.fogColor.g, this.fogColor.b]);
 
     var mMatrix = new glx.Matrix();
     var scale = this.radius/baseRadius;

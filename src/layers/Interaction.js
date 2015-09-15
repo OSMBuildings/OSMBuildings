@@ -26,7 +26,7 @@ var Interaction = {
 
     var gl = MAP.getContext();
 
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(MAP.transform, Renderer.perspective));
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(MAP.transform, MAP.perspective));
 
     var
       shader = this.shader,

@@ -1,6 +1,6 @@
 var MAP;
 
-var OSMBuildingsGL = function(containerId, options) {
+var OSMBuildingsGL = function(options) {
   options = options || {};
 
   if (options.style) {
@@ -20,11 +20,13 @@ OSMBuildingsGL.prototype = {
 
   addTo: function(map) {
     MAP = map;
+    MAP.addLayer(this);
+
     glx.setContext(MAP.getContext());
 
     Interaction.initShader();
-    SkyDome.initShader();
-    Buildings.initShader({ showBackfaces: this.showBackfaces });
+    SkyDome.initShader({ fogColor: this.fogColor });
+    Buildings.initShader({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
 
     return this;
   },
@@ -36,10 +38,6 @@ OSMBuildingsGL.prototype = {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
-    gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    Interaction.render(vpMatrix);
     SkyDome.render(vpMatrix);
     Buildings.render(vpMatrix);
   },

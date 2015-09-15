@@ -148,16 +148,16 @@
     }
   ).addTo(map);
 
-  var osmb = new OSMBuildingsGL('map', {
+  var osmb = new OSMBuildingsGL({
     minZoom: 15,
     maxZoom: 22,
     state: true,
     attribution: '© Data <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
-/*
+
   osmb.addGeoJSONTiles(
-  // dataSource: null, // null disables default OSM data,
-  // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    // dataSource: null, // null disables default OSM data,
+    // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
@@ -165,8 +165,7 @@
     bgColor: '#f08000'
   });
 
-  osmb.addOSMTiles();
-*/
+//  osmb.addOSMTiles();
 
 //  osmb.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { latitude:52.51923, longitude:13.40371 }, { id:'Fernsehturm', scale:0.1, elevation:8, rotation:51 });
 

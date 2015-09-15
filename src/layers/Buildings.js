@@ -14,6 +14,7 @@ var Buildings = {};
     });
 
     this.showBackfaces = options.showBackfaces;
+    this.fogColor = options.fogColor;
     return this;
   };
 
@@ -43,7 +44,7 @@ var Buildings = {};
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
     gl.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
-    gl.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+    gl.uniform3fv(shader.uniforms.uFogColor, [this.fogColor.r, this.fogColor.g, this.fogColor.b]);
 
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;

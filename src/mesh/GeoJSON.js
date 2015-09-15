@@ -112,7 +112,7 @@ mesh.GeoJSON = (function() {
         item = items[i];
 
 //      item.numVertices = item.vertices.length/3;
-//      this.items.push({ id:item.id, min:item.min, max:item.max });
+//        this.items.push({ id:item.id, min:item.min, max:item.max });
 
         idColor = Interaction.idToColor(this.id || item.id);
 
@@ -171,10 +171,10 @@ mesh.GeoJSON = (function() {
 //    var item, hidden, visibilities = [];
 //    for (var i = 0, il = this.items.length; i<il; i++) {
 //      item = this.items[i];
-//      hidden = data.Index.checkCollisions(item);
-//      for (var j = 0, jl = item.numVertices; j<jl; j++) {
-//        visibilities.push(item.hidden ? 1 : 0);
-//      }
+        //hidden = data.Index.checkCollisions(item);
+//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
+//          visibilities.push(item.hidden ? 1 : 0);
+//        }
 //    }
 //
 //    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
@@ -182,7 +182,7 @@ mesh.GeoJSON = (function() {
 //  },
 
     onReady: function() {
-//    this.modify();
+      //this.modify();
 
       this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
