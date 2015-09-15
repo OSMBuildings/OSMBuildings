@@ -1,10 +1,9 @@
 {
-  "shaders": ["interaction", "skydome", "buildings"],
+  "shaders": ["interaction", "buildings"],
 
   "lib": [
     "lib/earcut.js",
     "lib/Color.debug.js",
-    "lib/GLMap/GLMap.debug.js",
     "lib/glx/glx.debug.js"
   ],
 
@@ -32,8 +31,7 @@
 
     "src/geometry.js",
 
-    "src/layers/Interaction.js",
-    "src/layers/SkyDome.js",
-    "src/layers/Buildings.js"
+    "src/passes/Interaction.js",
+    "src/passes/Buildings.js"
   ]
 }

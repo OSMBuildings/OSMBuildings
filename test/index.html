@@ -57,7 +57,8 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="../lib/GLMap/GLMap.css">
+  <link rel="stylesheet" href="../dist/GLMap/GLMap.css">
+  <script src="../dist/GLMap/GLMap.js"></script>
   <script src="loader.js"></script>
 </head>
 
@@ -148,7 +149,7 @@
     }
   ).addTo(map);
 
-  var osmb = new OSMBuildingsGL({
+  var osmb = new OSMBuildings({
     minZoom: 15,
     maxZoom: 22,
     state: true,

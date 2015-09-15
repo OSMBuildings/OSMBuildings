@@ -25,10 +25,10 @@ function loadShaders(config) {
 
     SHADERS[name] = {};
 
-    src = loadFile(baseURL +'src/shaders/'+ name +'.vertex.glsl');
+    src = loadFile(baseURL +'src/shaders/'+ name +'.vs');
     SHADERS[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
 
-    src = loadFile(baseURL +'src/shaders/'+ name +'.fragment.glsl');
+    src = loadFile(baseURL +'src/shaders/'+ name +'.fs');
     SHADERS[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
   }
 

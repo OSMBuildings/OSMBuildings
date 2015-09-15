@@ -1413,6 +1413,7 @@ var Layers = {
 //        gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
           gl.clearColor(0.5, 0.5, 0.5, 1);
           gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+debugger
         for (var i = 0; i < this.items.length; i++) {
           this.items[i].render(vpMatrix);
         }

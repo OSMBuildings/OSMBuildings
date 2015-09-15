@@ -2,7 +2,7 @@
 module.exports = function(grunt) {
 
   grunt.initConfig({
-    product: 'OSMBuildingsGL',
+    product: 'OSMBuildings-GLMap',
 
     pkg: grunt.file.readJSON('package.json'),
 
@@ -14,15 +14,15 @@ module.exports = function(grunt) {
       },
       dist: {
         src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],
-        dest:  'dist/<%=product%>.debug.js'
+        dest:  'dist/OSMBuildings/<%=product%>.debug.js'
       }
     },
 
     uglify: {
       options: {},
       build: {
-        src: 'dist/<%=product%>.debug.js',
-        dest: 'dist/<%=product%>.js'
+        src: 'dist/OSMBuildings/<%=product%>.debug.js',
+        dest: 'dist/OSMBuildings/<%=product%>.js'
       }
     },
 
@@ -34,14 +34,11 @@ module.exports = function(grunt) {
     },
 
     clean: {
-      dist: ['./dist/<%=product%>.pack.js']
+      dist: ['./dist/OSMBuildings/<%=product%>.pack.js']
     },
 
     copy: {
-      dist: [{
-        src: 'src/skydome.jpg',
-        dest: 'dist/skydome.jpg'
-      }]
+      dist: []
     },
 
     jshint: {
@@ -56,9 +53,9 @@ module.exports = function(grunt) {
     // just testing, whether wepack *would* work
     webpack: {
       test: {
-        entry: './dist/<%=product%>.debug.js',
+        entry: './dist/OSMBuildings/<%=product%>.debug.js',
         output: {
-            path: './dist',
+            path: './dist/OSMBuildings',
             filename: '<%=product%>.pack.js',
         },
         stats: false, // the stats output
@@ -98,10 +95,10 @@ module.exports = function(grunt) {
 
       SHADERS[name] = {};
 
-      var src = fs.readFileSync(baseURL + '/' + name + '.vertex.glsl', 'ascii');
+      var src = fs.readFileSync(baseURL + '/' + name + '.vs', 'ascii');
       SHADERS[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
 
-      var src = fs.readFileSync(baseURL + '/' + name + '.fragment.glsl', 'ascii');
+      var src = fs.readFileSync(baseURL + '/' + name + '.fs', 'ascii');
       SHADERS[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
     }
 

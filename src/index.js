@@ -1,6 +1,6 @@
 var MAP;
 
-var OSMBuildingsGL = function(options) {
+var OSMBuildings = function(options) {
   options = options || {};
 
   if (options.style) {
@@ -11,12 +11,12 @@ var OSMBuildingsGL = function(options) {
   this.showBackfaces = options.showBackfaces;
 };
 
-OSMBuildingsGL.VERSION = '1.0.0';
-OSMBuildingsGL.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
+OSMBuildings.VERSION = '1.0.0';
+OSMBuildings.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
 
-OSMBuildingsGL.prototype = {
+OSMBuildings.prototype = {
 
-  attribution: OSMBuildingsGL.ATTRIBUTION,
+  attribution: OSMBuildings.ATTRIBUTION,
 
   addTo: function(map) {
     MAP = map;
@@ -25,7 +25,6 @@ OSMBuildingsGL.prototype = {
     glx.setContext(MAP.getContext());
 
     Interaction.initShader();
-    SkyDome.initShader({ fogColor: this.fogColor });
     Buildings.initShader({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
 
     return this;
@@ -38,7 +37,6 @@ OSMBuildingsGL.prototype = {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
-    SkyDome.render(vpMatrix);
     Buildings.render(vpMatrix);
   },
 
@@ -74,7 +72,6 @@ OSMBuildingsGL.prototype = {
 
   destroy: function() {
     Interaction.destroy();
-    SkyDome.destroy();
     Buildings.destroy();
     DataGrid.destroy();
   }
@@ -83,9 +80,9 @@ OSMBuildingsGL.prototype = {
 //*****************************************************************************
 
 if (typeof global.define === 'function') {
-  global.define([], OSMBuildingsGL);
+  global.define([], OSMBuildings);
 } else if (typeof global.exports === 'object') {
-  global.module.exports = OSMBuildingsGL;
+  global.module.exports = OSMBuildings;
 } else {
-  global.OSMBuildingsGL = OSMBuildingsGL;
+  global.OSMBuildings = OSMBuildings;
 }

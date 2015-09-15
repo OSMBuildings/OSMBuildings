@@ -37,7 +37,7 @@ var DataGrid = {};
   function updateTileBounds() {
     zoom = Math.round(fixedZoom || MAP.zoom);
     var
-      radius = SkyDome.radius,
+      radius = 1500, // SkyDome.radius,
       ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
     minX = ((mapCenter.x-radius)*ratio <<0);
