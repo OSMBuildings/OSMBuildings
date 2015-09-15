@@ -35,11 +35,11 @@ var DataGrid = {};
   }
 
   function updateTileBounds() {
-    zoom = Math.round(fixedZoom || Map.zoom);
+    zoom = Math.round(fixedZoom || MAP.zoom);
     var
       radius = SkyDome.radius,
-      ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
-      mapCenter = Map.center;
+      ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
+      mapCenter = MAP.center;
     minX = ((mapCenter.x-radius)*ratio <<0);
     minY = ((mapCenter.y-radius)*ratio <<0);
     maxX = Math.ceil((mapCenter.x+radius)*ratio);
@@ -47,7 +47,7 @@ var DataGrid = {};
   }
 
   function loadTiles() {
-    if (Map.zoom < MIN_ZOOM) {
+    if (MAP.zoom < MIN_ZOOM) {
       return;
     }
 
@@ -58,8 +58,8 @@ var DataGrid = {};
       key,
       queue = [], queueLength,
       tileAnchor = [
-        Map.center.x/TILE_SIZE <<0,
-        Map.center.y/TILE_SIZE <<0
+        MAP.center.x/TILE_SIZE <<0,
+        MAP.center.y/TILE_SIZE <<0
       ];
 
     for (tileY = minY; tileY < maxY; tileY++) {

@@ -20,24 +20,26 @@ var Interaction = {
 
   // TODO: maybe throttle calls
   getTargetID: function(x, y, callback) {
-    if (Map.zoom < MIN_ZOOM) {
+    if (MAP.zoom < MIN_ZOOM) {
       return;
     }
 
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(Map.transform, Renderer.perspective));
+    var gl = MAP.getContext();
+
+    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(MAP.transform, Renderer.perspective));
 
     var
       shader = this.shader,
       framebuffer = this.framebuffer;
 
-    GL.viewport(0, 0, this.viewportSize, this.viewportSize);
+    gl.viewport(0, 0, this.viewportSize, this.viewportSize);
     shader.enable();
     framebuffer.enable();
 
-    GL.clearColor(0, 0, 0, 1);
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    gl.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
 
     var
       dataItems = data.Index.items,
@@ -51,37 +53,36 @@ var Interaction = {
         continue;
       }
 
-      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.idColorBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       //item.visibilityBuffer.enable();
-      //GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      //gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     var imageData = framebuffer.getData();
 
     // DEBUG
     // // disable framebuffer
-    // var imageData = new Uint8Array(WIDTH*HEIGHT*4);
-    // GL.readPixels(0, 0, WIDTH, HEIGHT, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
-
+    // var imageData = new Uint8Array(MAP.width*MAP.height*4);
     shader.disable();
     framebuffer.disable();
-    GL.viewport(0, 0, WIDTH, HEIGHT);
 
-    //var index = ((HEIGHT-y/)*WIDTH + x) * 4;
-    x = x/WIDTH*this.viewportSize <<0;
-    y = y/HEIGHT*this.viewportSize <<0;
+    gl.viewport(0, 0, MAP.width, MAP.height);
+
+    //var index = ((MAP.height-y/)*MAP.width + x) * 4;
+    x = x/MAP.width*this.viewportSize <<0;
+    y = y/MAP.height*this.viewportSize <<0;
     var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
     var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
 

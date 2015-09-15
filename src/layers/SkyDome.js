@@ -97,7 +97,6 @@ var SkyDome = {};
   };
 
   SkyDome.resize = function() {
-    this.radius = Math.sqrt(WIDTH*WIDTH + HEIGHT*HEIGHT) / 1; // 2 would fit fine but camera is too close
   };
 
   SkyDome.render = function(vpMatrix) {
@@ -105,27 +104,29 @@ var SkyDome = {};
       return;
     }
 
+    var gl = MAP.getContext();
+
     shader.enable();
 
-    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+    gl.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     var mMatrix = new glx.Matrix();
     var scale = this.radius/baseRadius;
     mMatrix.scale(scale, scale, scale);
 
     var mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
     vertexBuffer.enable();
-    GL.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(shader.attributes.aPosition, vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     texCoordBuffer.enable();
-    GL.vertexAttribPointer(shader.attributes.aTexCoord, texCoordBuffer.itemSize, GL.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(shader.attributes.aTexCoord, texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     texture.enable(0);
-    GL.uniform1i(shader.uniforms.uTileImage, 0);
+    gl.uniform1i(shader.uniforms.uTileImage, 0);
 
-    GL.drawArrays(GL.TRIANGLES, 0, vertexBuffer.numItems);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexBuffer.numItems);
 
     shader.disable();
   };

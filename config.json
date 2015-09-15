@@ -1,17 +1,16 @@
 {
-  "shaders": ["interaction", "depth", "skydome", "buildings", "basemap"],
+  "shaders": ["interaction", "skydome", "buildings"],
 
   "lib": [
     "lib/earcut.js",
     "lib/Color.debug.js",
-    "lib/GLMap.debug.js",
+    "lib/GLMap/GLMap.debug.js",
     "lib/glx/glx.debug.js"
   ],
 
   "src": [
     "src/index.js",
     "src/Events.js",
-    "src/Adapter.js",
     "src/Activity.js",
 
     "src/variables.js",
@@ -23,8 +22,6 @@
     "src/data/index.js",
     "src/data/DataGrid.js",
     "src/data/DataTile.js",
-    "src/data/TileGrid.js",
-    "src/data/MapTile.js",
 
     "src/mesh/index.js",
     "src/mesh/GeoJSON.js",
@@ -35,12 +32,8 @@
 
     "src/geometry.js",
 
-    "src/Renderer.js",
-
-    "src/layers/Depth.js",
     "src/layers/Interaction.js",
     "src/layers/SkyDome.js",
-    "src/layers/Basemap.js",
     "src/layers/Buildings.js"
   ]
 }

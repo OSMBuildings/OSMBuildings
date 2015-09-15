@@ -18,40 +18,42 @@ var Buildings = {};
   };
 
   Buildings.render = function(vpMatrix) {
-    if (Map.zoom < MIN_ZOOM) {
+    if (MAP.zoom < MIN_ZOOM) {
       return;
     }
 
-//  GL.enable(GL.BLEND);
-//  GL.blendFunc(GL.SRC_ALPHA, GL.ONE);
-//  GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-//  GL.disable(GL.DEPTH_TEST);
+    var gl = MAP.getContext();
+
+//  gl.enable(gl.BLEND);
+//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+//  gl.disable(gl.DEPTH_TEST);
 
     shader.enable();
 
     if (this.showBackfaces) {
-      GL.disable(GL.CULL_FACE);
+      gl.disable(gl.CULL_FACE);
     }
 
     // TODO: suncalc
-    GL.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    GL.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
+    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
+    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
-    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
+    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
-    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+    gl.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    gl.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
     }
-    GL.uniform3fv(shader.uniforms.uHighlightColor, [this.highlightColor.r, this.highlightColor.g, this.highlightColor.b]);
+    gl.uniform3fv(shader.uniforms.uHighlightColor, [this.highlightColor.r, this.highlightColor.g, this.highlightColor.b]);
 
     if (!this.highlightID) {
       this.highlightID = { r:0, g:0, b:0 };
     }
-    GL.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r, this.highlightID.g, this.highlightID.b]);
+    gl.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r, this.highlightID.g, this.highlightID.b]);
 
     var
       dataItems = data.Index.items,
@@ -65,31 +67,31 @@ var Buildings = {};
         continue;
       }
 
-      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-      GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.normalBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.colorBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.idColorBuffer.enable();
-      GL.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, GL.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 //      item.visibilityBuffer.enable();
-//      GL.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, GL.FLOAT, false, 0, 0);
+//      gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     if (this.showBackfaces) {
-      GL.enable(GL.CULL_FACE);
+      gl.enable(gl.CULL_FACE);
     }
 
     shader.disable();

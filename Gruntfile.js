@@ -39,9 +39,6 @@ module.exports = function(grunt) {
 
     copy: {
       dist: [{
-        src: 'src/styles.css',
-        dest: 'dist/OSMBuildingsGL.css'
-      },{
         src: 'src/skydome.jpg',
         dest: 'dist/skydome.jpg'
       }]

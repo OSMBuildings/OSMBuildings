@@ -111,7 +111,7 @@ mesh.OBJ = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      var scale = Math.pow(2, Map.zoom) * this.inMeters * this.scale;
+      var scale = Math.pow(2, MAP.zoom) * this.inMeters * this.scale;
       matrix.scale(scale, scale, scale);
 
       if (this.rotation) {
@@ -119,8 +119,8 @@ mesh.OBJ = (function() {
       }
 
       var
-        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-        mapCenter = Map.center;
+        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
+        mapCenter = MAP.center;
 
       matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 

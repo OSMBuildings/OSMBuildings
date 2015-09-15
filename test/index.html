@@ -57,7 +57,7 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="OSMBuildingsGL.css">
+  <link rel="stylesheet" href="../lib/GLMap/GLMap.css">
   <script src="loader.js"></script>
 </head>
 
@@ -127,53 +127,50 @@
 
   //*************************************************************************
 
-  var map = new OSMBuildingsGL('map', {
+  var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
-    // rotation: 0, // optional
-    // tilt: 0, // optional
-    // disabled: true, // disables user input - optional
-    minZoom: 12,
-    maxZoom: 22,
+    rotation: 0, // optional
+    tilt: 0, // optional
+    // disabled: true, // disables user input
     state: true,
-    // tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-    tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-    // tileSource: 'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
-    // dataSource: null, // null disables default OSM data,
-    // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-    // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    // fogColor: '#ff0000',
-    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a>'
+    minZoom: 12,
+    maxZoom: 20,
+    attribution: 'GLMap'
   });
 
-/***
-  map.addTileLayer(
-//  'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-//  'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
+  new GLMap.TileLayer(
+    //'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
+    //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
     'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     {
-//    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a>'
-      attribution: '© Map <a href="http://mapbox.com">MapBox</a>'
+      attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a>'
     }
-  );
+  ).addTo(map);
 
-  map.addGeoJSONLayer(
-    // 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-    {
-//    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a>'
-      attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a>'
-   // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-      buffer:
-      bgColor:
-    }
-  );
+  var osmb = new OSMBuildingsGL('map', {
+    minZoom: 15,
+    maxZoom: 22,
+    state: true,
+    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+  }).addTo(map);
+/*
+  osmb.addGeoJSONTiles(
+  // dataSource: null, // null disables default OSM data,
+  // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+  {
+    // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+    buffer: 0, // how many tiles to preload around visible area
+    bgColor: '#f08000'
+  });
 
-  map.addOSMLayer();
-***/
+  osmb.addOSMTiles();
+*/
 
-//  map.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { latitude:52.51923, longitude:13.40371 }, { id:'Fernsehturm', scale:0.1, elevation:8, rotation:51 });
+//  osmb.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { latitude:52.51923, longitude:13.40371 }, { id:'Fernsehturm', scale:0.1, elevation:8, rotation:51 });
 
-  // map.addGeoJSON('data/ESB_light_GeoJSON.json');
+  // osmb.addGeoJSON('data/ESB_light_GeoJSON.json');
   // map.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
   var gj = { type: 'FeatureCollection', features: [
@@ -188,13 +185,13 @@
     }
   ] };
 
-  map.addGeoJSON(gj);
+  osmb.addGeoJSON(gj);
 
-  //map.addGeoJSON('data/o2_nach_90.geo.json');
-  //map.addGeoJSON('data/w1-o4.geo.json');
+  //osmb.addGeoJSON('data/o2_nach_90.geo.json');
+  //osmb.addGeoJSON('data/w1-o4.geo.json');
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
-  // map.addMesh('data/Lichtenberg1.gml');
+  // osmb.addMesh('data/Lichtenberg1.gml');
 
   var label = document.getElementById('label');
 
@@ -224,22 +221,62 @@
   map.on('pointermove', function(e) {
     if (e.target) {
       document.body.style.cursor = 'pointer';
-      map.highlight(e.target.id, '#f08000');
+      osmb.highlight(e.target.id, '#f08000');
     } else {
       document.body.style.cursor = 'default';
-      map.highlight(null);
+      osmb.highlight(null);
     }
   });
 
+  //map.on('change', function() {
+  //  Events.emit('change');
+  //});
+  //
+  //map.on('resize', function() {
+  //  if (container.offsetWidth !== WIDTH || container.offsetHeight !== HEIGHT) {
+  //    GL.canvas.width  = WIDTH  = container.offsetWidth;
+  //    GL.canvas.height = HEIGHT = container.offsetHeight;
+  //    Events.emit('resize');
+  //  }
+  //});
+  //
+  //map.on('pointerdown', function(e) {
+  //  Interaction.getTargetID(e.x, e.y, function(id) {
+  //    if (id) {
+  //      e.target = { id: id };
+  //    }
+  //    Events.emit('pointerdown', e);
+  //  });
+  //});
+  //
+  //map.on('pointermove', function(e) {
+  //  Interaction.getTargetID(e.x, e.y, function(id) {
+  //    if (id) {
+  //      e.target = { id: id };
+  //    }
+  //    Events.emit('pointermove', e);
+  //  });
+  //});
+  //
+  //map.on('pointerup', function(e) {
+  //  Interaction.getTargetID(e.x, e.y, function(id) {
+  //    if (id) {
+  //      e.target = { id: id };
+  //    }
+  //    Events.emit('pointerup', e);
+  //  });
+  //});
+
+
   //*************************************************************************
 
-  map.on('idle', function() {
-    console.log('IDLE');
-  });
-
-  map.on('busy', function() {
-    console.log('BUSY');
-  });
+//  osmb.on('idle', function() {
+//    console.log('IDLE');
+//  });
+//
+//  osmb.on('busy', function() {
+//    console.log('BUSY');
+//  });
 
   //*************************************************************************
 

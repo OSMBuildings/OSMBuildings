@@ -206,7 +206,7 @@ mesh.GeoJSON = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      var scale = 1 / Math.pow(2, zoom - Map.zoom) * this.scale;
+      var scale = 1 / Math.pow(2, zoom - MAP.zoom) * this.scale;
       matrix.scale(scale, scale, scale*HEIGHT_SCALE);
 
       if (this.rotation) {
@@ -214,8 +214,8 @@ mesh.GeoJSON = (function() {
       }
 
       var
-        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, Map.zoom)),
-        mapCenter = Map.center;
+        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
+        mapCenter = MAP.center;
 
       matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
 
