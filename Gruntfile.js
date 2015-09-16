@@ -29,7 +29,7 @@ module.exports = function(grunt) {
     shaders: {
       dist: {
         src: 'src/shaders',
-        dest: 'src/shaders.js'
+        dest: 'src/Shaders.min.js'
       }
     },
 
@@ -88,21 +88,21 @@ module.exports = function(grunt) {
     var baseURL = this.files[0].src;
 
     var config = grunt.file.readJSON('config.json').shaders;
-    var src, name, SHADERS = {};
+    var src, name, Shaders = {};
 
     for (var i = 0; i < config.length; i++) {
       name = config[i];
 
-      SHADERS[name] = {};
+      Shaders[name] = {};
 
       var src = fs.readFileSync(baseURL + '/' + name + '.vs', 'ascii');
-      SHADERS[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
+      Shaders[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
 
       var src = fs.readFileSync(baseURL + '/' + name + '.fs', 'ascii');
-      SHADERS[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
+      Shaders[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
     }
 
-    fs.writeFileSync(dest, 'var SHADERS = '+ JSON.stringify(SHADERS) +';\n');
+    fs.writeFileSync(dest, 'var Shaders = '+ JSON.stringify(Shaders) +';\n');
   });
 
   grunt.registerMultiTask('clean', 'Clean up', function() {

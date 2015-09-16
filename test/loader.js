@@ -18,22 +18,22 @@ function loadFile(url) {
 }
 
 function loadShaders(config) {
-  var src, name, SHADERS = {};
+  var src, name, Shaders = {};
 
   for (var i = 0; i < config.length; i++) {
     name = config[i];
 
-    SHADERS[name] = {};
+    Shaders[name] = {};
 
     src = loadFile(baseURL +'src/shaders/'+ name +'.vs');
-    SHADERS[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
+    Shaders[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
 
     src = loadFile(baseURL +'src/shaders/'+ name +'.fs');
-    SHADERS[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
+    Shaders[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
   }
 
-  console.log('SHADERS', SHADERS);
-  return 'var SHADERS = '+ JSON.stringify(SHADERS) +';\n';
+  console.log('Shaders', Shaders);
+  return 'var Shaders = '+ JSON.stringify(Shaders) +';\n';
 }
 
 var config = JSON.parse(loadFile(baseURL +'config.json'));

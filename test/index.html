@@ -57,8 +57,8 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="../dist/GLMap/GLMap.css">
-  <script src="../dist/GLMap/GLMap.js"></script>
+  <link rel="stylesheet" href="GLMap/GLMap.css">
+  <script src="GLMap/GLMap.js"></script>
   <script src="loader.js"></script>
 </head>
 
@@ -219,13 +219,15 @@
   });
 
   map.on('pointermove', function(e) {
-    if (e.target) {
-      document.body.style.cursor = 'pointer';
-      osmb.highlight(e.target.id, '#f08000');
-    } else {
-      document.body.style.cursor = 'default';
-      osmb.highlight(null);
-    }
+    osmb.getTarget(e.x, e.y, function(id) {
+      if (id) {
+        document.body.style.cursor = 'pointer';
+        osmb.highlight(id, '#f08000');
+      } else {
+        document.body.style.cursor = 'default';
+        osmb.highlight(null);
+      }
+    });
   });
 
   //map.on('change', function() {

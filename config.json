@@ -4,7 +4,7 @@
   "lib": [
     "lib/earcut.js",
     "lib/Color.debug.js",
-    "lib/glx/glx.debug.js"
+    "lib/GLX.debug.js"
   ],
 
   "src": [
@@ -15,7 +15,7 @@
     "src/variables.js",
     "src/Request.js",
     "src/util.js",
-    "src/shaders.js",
+    "src/Shaders.min.js",
     "src/Triangulate.js",
 
     "src/data/index.js",

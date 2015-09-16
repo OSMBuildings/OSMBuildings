@@ -7,8 +7,8 @@ var Buildings = {};
 
   Buildings.initShader = function(options) {
     shader = new glx.Shader({
-      vertexShader: SHADERS.buildings.vertex,
-      fragmentShader: SHADERS.buildings.fragment,
+      vertexShader: Shaders.buildings.vertex,
+      fragmentShader: Shaders.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
       uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
     });
@@ -23,7 +23,7 @@ var Buildings = {};
       return;
     }
 
-    var gl = MAP.getContext();
+    var gl = glx.context;
 
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -85,8 +85,8 @@ var Buildings = {};
       item.idColorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-//      item.visibilityBuffer.enable();
-//      gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
+//    item.visibilityBuffer.enable();
+//    gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

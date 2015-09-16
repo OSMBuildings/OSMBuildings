@@ -14,7 +14,6 @@ var HEIGHT_SCALE = 0.7;
 var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
 var DEFAULT_HIGHLIGHT_COLOR = Color.parse('#f08000').toRGBA(true);
 
-var FOG_RADIUS = 7500;
 var FOG_COLOR = Color.parse('#f0f8ff').toRGBA(true);
 
 var document = global.document;

@@ -1,4 +1,5 @@
 var MAP;
+var glx;
 
 var OSMBuildings = function(options) {
   options = options || {};
@@ -20,9 +21,9 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    MAP.addLayer(this);
+    glx = GLX.use(MAP.context);
 
-    glx.setContext(MAP.getContext());
+    MAP.addLayer(this);
 
     Interaction.initShader();
     Buildings.initShader({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
@@ -31,7 +32,7 @@ OSMBuildings.prototype = {
   },
 
   render: function(vpMatrix) {
-    var gl = MAP.getContext();
+    var gl = glx.context;
 
     gl.cullFace(gl.BACK);
     gl.enable(gl.CULL_FACE);
