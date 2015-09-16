@@ -2510,11 +2510,11 @@
 
 	    source = src;
 
-	    Events.on('change', function() {
+	    MAP.on('change', function() {
 	      update(2000);
 	    });
 
-	    Events.on('resize', update);
+	    MAP.on('resize', update);
 
 	    update();
 	  };
@@ -3122,10 +3122,17 @@
 	      default: return [];
 	    }
 
+	    var ring;
 	    var res = [];
+
 	    for (i = 0, il = polygonRings.length; i < il; i++) {
-	      //res[i] = isClockWise(polygonRings[i]) && !i ? polygonRings[i] : polygonRings[i].reverse();
-	      res[i] = transform(polygonRings[i], origin, worldSize);
+	      if (!i) {
+	        ring = isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
+	      } else {
+	        ring = !isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
+	      }
+
+	      res[i] = transform(ring, origin, worldSize);
 	    }
 
 	    return [res];
