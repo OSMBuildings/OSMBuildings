@@ -75,42 +75,181 @@ Add OSM Buildings to the map and let it load data tiles.
 
 This is just a brief overview. For more information see <a href="https://github.com/OSMBuildings/GLMap">https://github.com/OSMBuildings/GLMap</a>
 
+option | value | description
+--- | --- | ---
+position | object | geo position of map center
+zoom | float | map zoom
+rotation | float | map rotation
+tilt | float | map tilt
+disabled | boolean | disables user input, default false
+minZoom | float | minimum allowed zoom
+maxZoom | float | maximum allowed zoom
+attribution | string | attribution, optional
+state | boolean | stores map position/rotation in url, default false
+
+### GLMap methods
+
+method | parameters | description
+--- | --- | ---
+on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup 
+off | type, fn | remove event listener
+setDisabled | boolean | disables any user input
+isDisabled | | check wheether user input is disabled
+project | latitude, longitude, worldSize | transforms geo coordinates to world pixel coordinates (tile size << zoom)
+unproject | x, y, worldSize | transforms world (tile size << zoom) pixel coordinates to geo coordinates (EPSG:4326)
+transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
+getBounds | | returns geocordinates of current map view, respects tilt and rotation but ignores perspective
+setZoom | float | sets current zoom
+getZoom | | gets current zoom
+setPosition | object | sets current geo position of map center
+getPosition | | gets current geo position of map center
+setSize | object | {width,height} sets current map size in pixels
+getSize |  | gets current map size in pixels
+setRotation | float | sets current rotation
+getRotation | | gets current rotation
+setTilt | float | sets current tilt
+getTilt | | gets current tilt
+
+### OSM Buildings options
+
+option | value | description
+--- | --- | ---
+minZoom | float | minimum allowed zoom
+maxZoom | float | maximum allowed zoom
+attribution | string | attribution, optional
+showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
+
+### OSM Buildings methods
+
+method | parameters | description
+--- | --- | ---
+addTo | map | adds it as a layer to an GLMap instance
+addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
+addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color}
+addGeoJSONTiles | url | add a GeoJSON tile set
+getTarget | x, y | get a building id at position
+highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
+
+
+## Examples
+
+### Moving label
+
+THis label moves virtually in space.
+
+~~ html 
+<div id="label" style="width:10px;height:10px;position:absolute;z-Index:10;border:3px solid red;"></div>
 ~~~
-position: { latitude:52.52000, longitude:13.41000 },
-zoom: 16,
-rotation: 0,
-tilt: 0,
-disabled: true, // disables user input
-minZoom: 12,
-maxZoom: 20,
-attribution: 'GLMap',
-state: true // stores map position/rotation in url
+
+~~~ javascript
+var label = document.getElementById('label');
+map.on('change', function() {
+  var pos = map.transform(52.52, 13.37, 50);
+  label.style.left = Math.round(pos.x) + 'px';
+  label.stye.top = Math.round(pos.y) + 'px';
+});
 ~~~
 
-### GLMap Methods
+### Highlight buildings
 
-~~~
-  on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup 
-  off | type, fn | remove event listener
-  setDisabled | boolean | disables any user input
-  isDisabled | | check wheether user input is disabled
-  project | latitude, longitude, worldSize | transforms geo coordinates to world pixel coordinates (tile size << zoom)
-  unproject | x, y, worldSize | transforms world (tile size << zoom) pixel coordinates to geo coordinates (EPSG:4326)
-  transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
-  getBounds | | returns geocordinates of current map view, respects tilt and rotation but ignores perspective
-  setZoom | float | sets current zoom
-  getZoom | | gets current zoom
-  getPosition | sets current geo position of map center
-  setPosition | | | sets current geo position of map center
-  getSize | | | gets current map size in pixels
-  setSize | sets current map size in pixels
-  setRotation | | sets current rotation
-  getRotation | | sets current rotation
-  setTilt | | sets current tilt
-  getTilt | | sets current tilt
+~~~ javascript
+map.on('pointermove', function(e) {
+  var id = osmb.getTarget(e.x, e.y);
+  if (id) {
+    osmb.highlight(id, '#f08000');
+  } else {
+    osmb.highlight(null);
+  }
+});
 ~~~
 
+### Map control buttons
+
+~~~ html
+<div class="control tilt">
+  <button class="dec">&#8601;</button>
+  <button class="inc">&#8599;</button>
+</div>
+
+<div class="control rotation">
+  <button class="inc">&#8630;</button>
+  <button class="dec">&#8631;</button>
+</div>
+
+<div class="control zoom">
+  <button class="dec">-</button>
+  <button class="inc">+</button>
+</div>
+~~~
+
+~~~ javascript
+var controlButtons = document.querySelectorAll('.control button');
+
+for (var i = 0; i < controlButtons.length; i++) {
+  controlButtons[i].addEventListener('click', function(e) {
+    var button = this;
+    var parentClassList = button.parentNode.classList;
+    var direction = button.classList.contains('inc') ? 1 : -1;
+    var increment;
+    var property;
+
+    if (parentClassList.contains('tilt')) {
+      property = 'Tilt';
+      increment = direction*10;
+    }
+    if (parentClassList.contains('rotation')) {
+      property = 'Rotation';
+      increment = direction*10;
+    }
+    if (parentClassList.contains('zoom')) {
+      property = 'Zoom';
+      increment = direction*1;
+    }
+    if (property) {
+      map['set'+ property](map['get'+ property]()+increment);
+    }
+  });
+}
+~~~
+
+### Add GeoJSON
+
+~~~ javascript
+var geojson = {
+  type: 'FeatureCollection',
+  features: [{
+    type: 'Feature',
+    properties: {
+      color: '#ff0000',
+      roofColor: '#cc0000',
+      height: 50,
+      minHeight: 0
+    },
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [13.37000, 52.52000],
+          [13.37010, 52.52000],
+          [13.37010, 52.52010],
+          [13.37000, 52.52010],
+          [13.37000, 52.52000]
+        ]
+      ]
+    }
+  }]
+};
+osmb.addGeoJSON(geojson);
+~~~
 
 
-### Extras
+
+
+
+
+
+There is also documentation of OSM Buildings Server side:
+https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md
+
+For further information visit http://osmbuildings.org, follow [@osmbuildings](https://twitter.com/osmbuildings/) on Twitter or report issues [here on Github](https://github.com/kekscom/osmbuildings/issues/).
 
