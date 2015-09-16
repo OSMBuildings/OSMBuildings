@@ -18,8 +18,8 @@ var Interaction = {
     return this;
   },
 
-  // TODO: maybe throttle calls
-  getTargetID: function(x, y, callback) {
+  // TODO: throttle calls
+  getTarget: function(x, y) {
     if (MAP.zoom < MIN_ZOOM) {
       return;
     }
@@ -84,7 +84,7 @@ var Interaction = {
     var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
     var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
 
-    callback(this.idMapping[color]);
+    return this.idMapping[color];
   },
 
   idToColor: function(id) {

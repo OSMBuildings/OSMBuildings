@@ -30,6 +30,11 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  remove: function() {
+    MAP.removeLayer(this);
+    MAP = null;
+  },
+
   render: function(vpMatrix) {
     var gl = glx.context;
 
@@ -66,8 +71,8 @@ OSMBuildings.prototype = {
     Buildings.highlightID = id ? Interaction.idToColor(id) : null;
   },
 
-  getTarget: function(x, y, callback) {
-    Interaction.getTargetID(x, y, callback);
+  getTarget: function(x, y) {
+    return Interaction.getTarget(x, y);
   },
 
   destroy: function() {
