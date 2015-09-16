@@ -1,29 +1,46 @@
 
-<img src="http://osmbuildings.org/logo.svg" width="100" height="88">
+# OSM Buildings #
+
+<img src="http://osmbuildings.org/logo.svg" width="100" height="88"/>
 
 OSM Buildings is a JavaScript library for visualizing OpenStreetMap building geometry on 2D and 3D maps.
 
-This version is using a custom WebGL base map for any event and tile logic.
+The library version in this repository is a WebGL only variant of OSM Buildings.
+At some point it will fully integrate the classic 2.5D version.
 
-Example: [http://osmbuildings.org/gl/](http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40)
+Example: http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40
 
-It is the very first public version of OSM Buildings using a WebGL renderer.
+Not sure which version to use?
 
-There are many known issues, performance bottlenecks and missing features.
-I'm trying hard to achieve the best but always lacking time and other resources.
+## Classic 2.5D ##
 
-If you're willing to support, I'm grateful for any contribution.
-Thank you very much.
+Source: https://github.com/kekscom/osmbuildings
 
-=> mail@osmbuildings.org
+Best for:
+- great device compatibility
+- good performance on older hardware
+- shadow simulation
+- full integration with Leaflet or OpenLayers 2
+
+## Modern 3D ##
+
+Source: you are here
+
+Best for:
+- great performance on modern graphics hardware
+- huge amounts of objects
+- mixing various data sources
+
+This version uses a simple WebGL base map ('GLMap') for any events and layers logic.
+More information here: <a href="https://github.com/OSMBuildings/GLMap">https://github.com/OSMBuildings/GLMap</a>
+
+
+
+
+
 
 There is also documentation of OSM Buildings Server side:
 https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md
-
-
-
-
-
 
 
 **Example** http://osmbuildings.org/gl

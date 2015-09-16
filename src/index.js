@@ -10,14 +10,13 @@ var OSMBuildings = function(options) {
 
   this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
   this.showBackfaces = options.showBackfaces;
+  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 };
 
 OSMBuildings.VERSION = '1.0.0';
-OSMBuildings.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
+OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">http://osmbuildings.org</a>';
 
 OSMBuildings.prototype = {
-
-  attribution: OSMBuildings.ATTRIBUTION,
 
   addTo: function(map) {
     MAP = map;
