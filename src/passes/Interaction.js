@@ -6,10 +6,10 @@ var Interaction = {
   idMapping: [null],
   viewportSize: 512,
 
-  initShader: function() {
+  initShader: function(options) {
     this.shader = new glx.Shader({
-      vertexShader: SHADERS.interaction.vertex,
-      fragmentShader: SHADERS.interaction.fragment,
+      vertexShader: Shaders.interaction.vertex,
+      fragmentShader: Shaders.interaction.fragment,
       attributes: ["aPosition", "aColor"],
       uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
     });
@@ -24,11 +24,9 @@ var Interaction = {
       return;
     }
 
-    var gl = MAP.getContext();
-
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(MAP.transform, MAP.perspective));
-
     var
+      gl = glx.context,
+      vpMatrix = MAP.getMatrix(),
       shader = this.shader,
       framebuffer = this.framebuffer;
 
@@ -39,7 +37,7 @@ var Interaction = {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniform1f(shader.uniforms.uFogRadius, 1500/*SkyDome.radius*/);
+    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
 
     var
       dataItems = data.Index.items,

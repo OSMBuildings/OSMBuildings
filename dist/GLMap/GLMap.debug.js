@@ -1288,8 +1288,12 @@ GLMap.prototype = {
     return this.tilt;
   },
 
-  getPerspective: function() {
-    return this.renderer.pMatrix;
+  getMatrix: function() {
+    return this.renderer.vpMatrix;
+  },
+
+  getFogRadius: function() {
+    return this.renderer.fogRadius;
   },
 
   addLayer: function(layer) {

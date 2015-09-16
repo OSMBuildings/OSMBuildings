@@ -13,8 +13,8 @@ var Buildings = {};
       uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
     });
 
-    this.showBackfaces = options.showBackfaces;
     this.fogColor = options.fogColor;
+    this.showBackfaces = options.showBackfaces;
     return this;
   };
 
@@ -43,7 +43,7 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    gl.uniform1f(shader.uniforms.uFogRadius, 1500/*SkyDome.radius*/);
+    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
     gl.uniform3fv(shader.uniforms.uFogColor, [this.fogColor.r, this.fogColor.g, this.fogColor.b]);
 
     if (!this.highlightColor) {

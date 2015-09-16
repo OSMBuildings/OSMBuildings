@@ -59,7 +59,7 @@
   </style>
   <link rel="stylesheet" href="GLMap/GLMap.css">
   <script src="GLMap/GLMap.js"></script>
-  <script src="OSMBuildings/OSMBuildingsGL.js"></script>
+  <script src="OSMBuildings/OSMBuildings-GLMap.js"></script>
 </head>
 
 <body>
@@ -81,22 +81,40 @@
 </div>
 
 <script>
-  var map = new OSMBuildingsGL('map', {
+  var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
-    // rotation: 0, // optional
-    // tilt: 0, // optional
-    // disabled: true, // disables user input - optional
-    minZoom: 14.5,
-    maxZoom: 22,
+    rotation: 0, // optional
+    tilt: 0, // optional
+    // disabled: true, // disables user input
     state: true,
-    tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-    // dataSource: null, // null disables default OSM data,
-    showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    fogColor: '#bfb8b0',
-    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a> © 3D <a href="http://osmbuildings.org">OSM Buildings</a></div>'
+    minZoom: 12,
+    maxZoom: 20,
+    attribution: 'GLMap'
   });
 
+  new GLMap.TileLayer(
+    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    {
+      attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a>'
+    }
+  ).addTo(map);
+
+  var osmb = new OSMBuildings({
+    minZoom: 15,
+    maxZoom: 22,
+    state: true,
+    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+  }).addTo(map);
+
+  osmb.addGeoJSONTiles(
+    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    {
+      // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+      // buffer: 0, // how many tiles to preload around visible area
+    });
+
+/*
   map.addOBJ('data/Fernsehturm_Berlin.obj', { latitude:52.51941, longitude:13.40445 }, { id:'Fernsehturm', scale:0.095, elevation:8, rotation:51,
     replaces: [
       4564300,
@@ -122,6 +140,7 @@
       153273223,
       153273224
     ]});
+*/
 
   if (typeof obj !== 'undefined') positionOnMap(obj);
 

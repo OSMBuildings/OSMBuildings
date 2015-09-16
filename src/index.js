@@ -21,7 +21,7 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    glx = GLX.use(MAP.context);
+    glx = GLX.use(MAP.getContext());
 
     MAP.addLayer(this);
 

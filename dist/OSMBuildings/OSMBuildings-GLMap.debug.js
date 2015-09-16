@@ -867,17 +867,11 @@ Color.prototype = {
 };
 
 return Color; }(this));
-var glx = (function(global) {
-var glx = {};
 
-var GL;
+//var ext = GL.getExtension('WEBGL_lose_context');
+//ext.loseContext();
 
-glx.setContext = function(context) {
-  GL = context;
-};
-
-glx.View = function(container, width, height) {
-
+var GLX = function(container, width, height) {
   var canvas = document.createElement('CANVAS');
   canvas.style.position = 'absolute';
   canvas.width = width;
@@ -890,15 +884,17 @@ glx.View = function(container, width, height) {
     premultipliedAlpha: false
   };
 
+  var context;
+
   try {
-    GL = canvas.getContext('webgl', options);
+    context = canvas.getContext('webgl', options);
   } catch (ex) {}
-  if (!GL) {
+  if (!context) {
     try {
-      GL = canvas.getContext('experimental-webgl', options);
+      context = canvas.getContext('experimental-webgl', options);
     } catch (ex) {}
   }
-  if (!GL) {
+  if (!context) {
     throw new Error('WebGL not supported');
   }
 
@@ -910,42 +906,37 @@ glx.View = function(container, width, height) {
     console.warn('context restored');
   });
 
-  //var ext = GL.getExtension("WEBGL_lose_context");
-  //ext.loseContext();
+  context.viewport(0, 0, width, height);
+  context.cullFace(context.BACK);
+  context.enable(context.CULL_FACE);
+  context.enable(context.DEPTH_TEST);
+  context.clearColor(0.5, 0.5, 0.5, 1);
 
-  GL.viewport(0, 0, width, height);
-  GL.cullFace(GL.BACK);
-  GL.enable(GL.CULL_FACE);
-  GL.enable(GL.DEPTH_TEST);
-  GL.clearColor(0.5, 0.5, 0.5, 1);
-
-  return GL;
+  return GLX.use(context);
 };
 
-glx.start = function(render) {
-  return setInterval(function() {
-    requestAnimationFrame(render);
-  }, 17);
-};
+GLX.use = function(context) {
 
-glx.stop = function(loop) {
-  clearInterval(loop);
-};
+  return (function(GL) {
 
-glx.destroy = function(GL) {
-  GL.canvas.parentNode.removeChild(GL.canvas);
-  GL.canvas = null;
-};
+    var glx = {};
 
-//*****************************************************************************
+    glx.context = context;
 
-if (typeof define === 'function') {
-  define([], glx);
-} else if (typeof exports === 'object') {
-  module.exports = glx;
-} else {
-  global.glx = glx;
-}
+    glx.start = function(render) {
+      return setInterval(function() {
+        requestAnimationFrame(render);
+      }, 17);
+    };
+
+    glx.stop = function(loop) {
+      clearInterval(loop);
+    };
+
+    glx.destroy = function(GL) {
+      GL.canvas.parentNode.removeChild(GL.canvas);
+      GL.canvas = null;
+    };
 
 
 glx.util = {};
@@ -1677,9 +1668,22 @@ glx.mesh.Cube = function(size, color) {
   this.transform = new glx.Matrix();
 };
 
-return glx;
-}(this));
+
+    return glx;
+
+  }(context));
+};
+
+if (typeof define === 'function') {
+  define([], GLX);
+} else if (typeof exports === 'object') {
+  module.exports = GLX;
+} else {
+  global.GLX = GLX;
+}
+
 var MAP;
+var glx;
 
 var OSMBuildings = function(options) {
   options = options || {};
@@ -1701,9 +1705,9 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    MAP.addLayer(this);
+    glx = GLX.use(MAP.getContext());
 
-    glx.setContext(MAP.getContext());
+    MAP.addLayer(this);
 
     Interaction.initShader();
     Buildings.initShader({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
@@ -1712,7 +1716,7 @@ OSMBuildings.prototype = {
   },
 
   render: function(vpMatrix) {
-    var gl = MAP.getContext();
+    var gl = glx.context;
 
     gl.cullFace(gl.BACK);
     gl.enable(gl.CULL_FACE);
@@ -2008,6 +2012,8 @@ function relax(callback, startIndex, dataLength, chunkSize, delay) {
     }, delay);
   }
 }
+
+var Shaders = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec4 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  if (distance > uFogRadius) {\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vColor = vec4(aColor, 1.0);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat4 uMMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = 200.0;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  //*** highlight object ******************************************************\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ****************\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ******************************************************\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog *******************************************************************\n  vec4 mPosition = uMMatrix * aPosition;\n  float distance = length(mPosition);\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //***************************************************************************\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"}};
 
 
 
@@ -3348,7 +3354,7 @@ var Interaction = {
   idMapping: [null],
   viewportSize: 512,
 
-  initShader: function() {
+  initShader: function(options) {
     this.shader = new glx.Shader({
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,
@@ -3366,11 +3372,9 @@ var Interaction = {
       return;
     }
 
-    var gl = MAP.getContext();
-
-    var vpMatrix = new glx.Matrix(glx.Matrix.multiply(MAP.transform, MAP.perspective));
-
     var
+      gl = glx.context,
+      vpMatrix = MAP.getMatrix(),
       shader = this.shader,
       framebuffer = this.framebuffer;
 
@@ -3381,7 +3385,7 @@ var Interaction = {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniform1f(shader.uniforms.uFogRadius, 1500/*SkyDome.radius*/);
+    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
 
     var
       dataItems = data.Index.items,
@@ -3460,8 +3464,8 @@ var Buildings = {};
       uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
     });
 
-    this.showBackfaces = options.showBackfaces;
     this.fogColor = options.fogColor;
+    this.showBackfaces = options.showBackfaces;
     return this;
   };
 
@@ -3470,7 +3474,7 @@ var Buildings = {};
       return;
     }
 
-    var gl = MAP.getContext();
+    var gl = glx.context;
 
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -3490,7 +3494,7 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    gl.uniform1f(shader.uniforms.uFogRadius, 1500/*SkyDome.radius*/);
+    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
     gl.uniform3fv(shader.uniforms.uFogColor, [this.fogColor.r, this.fogColor.g, this.fogColor.b]);
 
     if (!this.highlightColor) {
@@ -3532,8 +3536,8 @@ var Buildings = {};
       item.idColorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-//      item.visibilityBuffer.enable();
-//      gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
+//    item.visibilityBuffer.enable();
+//    gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
