@@ -5,10 +5,15 @@
 
 OSM Buildings is a JavaScript library for visualizing OpenStreetMap building geometry on 2D and 3D maps.
 
+**Reminder: we are a very small team with few time for the project and limited profit.
+You could push us a lot forward with spreading the word, donations, code contributions and testing.**
+
 The library version in this repository is a WebGL only variant of OSM Buildings.
 At some point it will fully integrate the classic 2.5D version.
 
 Example: http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40
+
+For latest information about the project follow on Twitter https://twitter.com/osmbuildings, read our blog http://blog.osmbuildings.org, or just mail us: mail@osmbuildings.org. 
 
 Not sure which version to use?
 
@@ -130,14 +135,18 @@ addGeoJSONTiles | url | add a GeoJSON tile set
 getTarget | x, y | get a building id at position
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
 
+### OSM Buildings server
+
+There is also documentation of OSM Buildings Server side. See https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md
+
 
 ## Examples
 
 ### Moving label
 
-THis label moves virtually in space.
+This label moves virtually in space.
 
-~~ html 
+~~~ html
 <div id="label" style="width:10px;height:10px;position:absolute;z-Index:10;border:3px solid red;"></div>
 ~~~
 
@@ -242,14 +251,47 @@ var geojson = {
 osmb.addGeoJSON(geojson);
 ~~~
 
+### Position a map object
 
+~~~javascript
+var obj = osmb.addGeoJSON(geojson);
 
+/*
+ * ## Key codes for object positioning ##
+ * Cursor keys: move
+ * +/- : scale
+ * w/s : elevate
+ * a/d : rotate
+ *
+ * Pressing Alt the same time accelerates
+ */
+document.addEventListener('keydown', function(e) {
+  var transInc = e.altKey ? 0.0002 : 0.00002;
+  var scaleInc = e.altKey ? 0.1 : 0.01;
+  var rotaInc = e.altKey ? 10 : 1;
+  var eleInc = e.altKey ? 10 : 1;
 
-
-
-
-There is also documentation of OSM Buildings Server side:
-https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md
-
-For further information visit http://osmbuildings.org, follow [@osmbuildings](https://twitter.com/osmbuildings/) on Twitter or report issues [here on Github](https://github.com/kekscom/osmbuildings/issues/).
-
+  switch (e.which) {
+    case 37: obj.position.longitude -= transInc; break;
+    case 39: obj.position.longitude += transInc; break;
+    case 38: obj.position.latitude += transInc; break;
+    case 40: obj.position.latitude -= transInc; break;
+    case 187: obj.scale += scaleInc; break;
+    case 189: obj.scale -= scaleInc; break;
+    case 65: obj.rotation += rotaInc; break;
+    case 68: obj.rotation -= rotaInc; break;
+    case 87: obj.elevation += eleInc; break;
+    case 83: obj.elevation -= eleInc; break;
+    default: return;
+  }
+  console.log(JSON.stringify({
+    position:{
+      latitude:parseFloat(obj.position.latitude.toFixed(5)),
+      longitude:parseFloat(obj.position.longitude.toFixed(5))
+    },
+    elevation:parseFloat(obj.elevation.toFixed(2)),
+    scale:parseFloat(obj.scale.toFixed(2)),
+    rotation:parseInt(obj.rotation, 10)
+  }));
+});
+~~~

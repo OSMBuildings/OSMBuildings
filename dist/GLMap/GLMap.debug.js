@@ -1029,7 +1029,7 @@ var GLMap = function(container, options) {
     this.setDisabled(true);
   }
 
-  this.attribution = options.attribution ? [options.attribution] : [];
+  this.attribution = options.attribution;
   this.attributionDiv = document.createElement('DIV');
   this.attributionDiv.className = 'glmap-attribution';
   this.container.appendChild(this.attributionDiv);
@@ -1043,7 +1043,11 @@ GLMap.TILE_SIZE = 256;
 GLMap.prototype = {
 
   updateAttribution: function() {
-    this.attributionDiv.innerHTML = this.layers.getAttribution(this.attribution).join(' &middot; ');
+    var attribution = this.layers.getAttribution();
+    if (this.attribution) {
+      attribution.unshift(this.attribution);
+    }
+    this.attributionDiv.innerHTML = attribution.join(' &middot; ');
   },
 
   restoreState: function(options) {
@@ -1778,8 +1782,8 @@ Layers.prototype = {
     }
   },
 
-  getAttribution: function(attribution) {
-    attribution = attribution || [];
+  getAttribution: function() {
+    var attribution = [];
     for (var i = 0; i < this.items.length; i++) {
       if (this.items[i].attribution) {
         attribution.push(this.items[i].attribution);

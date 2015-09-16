@@ -10,14 +10,13 @@ var OSMBuildings = function(options) {
 
   this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
   this.showBackfaces = options.showBackfaces;
+  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 };
 
 OSMBuildings.VERSION = '1.0.0';
-OSMBuildings.ATTRIBUTION = '© OSM Buildings (http://osmbuildings.org)';
+OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">http://osmbuildings.org</a>';
 
 OSMBuildings.prototype = {
-
-  attribution: OSMBuildings.ATTRIBUTION,
 
   addTo: function(map) {
     MAP = map;
@@ -29,6 +28,11 @@ OSMBuildings.prototype = {
     Buildings.initShader({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
 
     return this;
+  },
+
+  remove: function() {
+    MAP.removeLayer(this);
+    MAP = null;
   },
 
   render: function(vpMatrix) {
@@ -67,8 +71,8 @@ OSMBuildings.prototype = {
     Buildings.highlightID = id ? Interaction.idToColor(id) : null;
   },
 
-  getTarget: function(x, y, callback) {
-    Interaction.getTargetID(x, y, callback);
+  getTarget: function(x, y) {
+    return Interaction.getTarget(x, y);
   },
 
   destroy: function() {

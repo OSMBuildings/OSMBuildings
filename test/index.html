@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>OSM Buildings GL</title>
+  <title>OSM Buildings</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
@@ -67,7 +67,7 @@
 
 <div id="label" style="width:10px;height:10px;position:absolute;z-Index:1000;border:3px solid red;"></div>
 
-<div style="position:absolute;left:100px;top:20px;border:1px solid #ff8888; background:#fff;font-family:sans-serif;padding:10px;font-size:12px;}">Clicks here should not change the map.</div>
+<div style="position:absolute;left:100px;top:20px;border:1px solid #ff8888; background:#fff;font-family:sans-serif;padding:10px;font-size:12px;}">Click?</div>
 
 <div class="control tilt">
   <button class="dec">&#8601;</button>
@@ -131,13 +131,13 @@
   var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
-    rotation: 0, // optional
-    tilt: 0, // optional
+    rotation: 0,
+    tilt: 0,
     // disabled: true, // disables user input
-    state: true,
     minZoom: 12,
     maxZoom: 20,
-    attribution: 'GLMap'
+    // attribution: 'GLMap',
+    state: true // stores map position/rotation in url
   });
 
   new GLMap.TileLayer(
@@ -145,7 +145,7 @@
     //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
     'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     {
-      attribution: '© Data <a href="http://osmbuildings.org/copyright/">OpenStreetMap</a> © Map <a href="http://mapbox.com">MapBox</a>'
+      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> &middot; © Map <a href="http://mapbox.com">MapBox</a>'
     }
   ).addTo(map);
 
@@ -153,7 +153,7 @@
     minZoom: 15,
     maxZoom: 22,
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    attribution: '© Data <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+    attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
   osmb.addGeoJSONTiles(
@@ -166,13 +166,13 @@
 
 //  osmb.addOSMTiles();
 
-//  osmb.addOBJ('../dist/data/Fernsehturm_Berlin.obj', { latitude:52.51923, longitude:13.40371 }, { id:'Fernsehturm', scale:0.1, elevation:8, rotation:51 });
+  // map.addOBJ('data/Fernsehturm_Berlin.obj', { latitude:52.51941, longitude:13.40445 }, { id:'Fernsehturm', scale:0.095, elevation:8, rotation:51 });
+  // map.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { elevation:-3, rotation:97, id:'London Eye' });
 
-  // osmb.addGeoJSON('data/ESB_light_GeoJSON.json');
   // map.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
   var gj = { type: 'FeatureCollection', features: [
-    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 55, minHeight: 50 }, geometry:
+    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 50, minHeight: 0 }, geometry:
     { type: 'Polygon', coordinates: [[
       [ 13.37000, 52.52000 ],
       [ 13.37010, 52.52000 ],
@@ -183,13 +183,10 @@
     }
   ] };
 
-  osmb.addGeoJSON(gj);
+  var obj = osmb.addGeoJSON(gj);
 
   //osmb.addGeoJSON('data/o2_nach_90.geo.json');
   //osmb.addGeoJSON('data/w1-o4.geo.json');
-
-  if (typeof obj !== 'undefined') positionOnMap(obj);
-  // osmb.addMesh('data/Lichtenberg1.gml');
 
   var label = document.getElementById('label');
 
@@ -217,68 +214,29 @@
   });
 
   map.on('pointermove', function(e) {
-    osmb.getTarget(e.x, e.y, function(id) {
-      if (id) {
-        document.body.style.cursor = 'pointer';
-        osmb.highlight(id, '#f08000');
-      } else {
-        document.body.style.cursor = 'default';
-        osmb.highlight(null);
-      }
-    });
+    var id = osmb.getTarget(e.x, e.y);
+    if (id) {
+      document.body.style.cursor = 'pointer';
+      osmb.highlight(id, '#f08000');
+    } else {
+      document.body.style.cursor = 'default';
+      osmb.highlight(null);
+    }
   });
-
-  //map.on('change', function() {
-  //  Events.emit('change');
-  //});
-  //
-  //map.on('resize', function() {
-  //  if (container.offsetWidth !== WIDTH || container.offsetHeight !== HEIGHT) {
-  //    GL.canvas.width  = WIDTH  = container.offsetWidth;
-  //    GL.canvas.height = HEIGHT = container.offsetHeight;
-  //    Events.emit('resize');
-  //  }
-  //});
-  //
-  //map.on('pointerdown', function(e) {
-  //  Interaction.getTargetID(e.x, e.y, function(id) {
-  //    if (id) {
-  //      e.target = { id: id };
-  //    }
-  //    Events.emit('pointerdown', e);
-  //  });
-  //});
-  //
-  //map.on('pointermove', function(e) {
-  //  Interaction.getTargetID(e.x, e.y, function(id) {
-  //    if (id) {
-  //      e.target = { id: id };
-  //    }
-  //    Events.emit('pointermove', e);
-  //  });
-  //});
-  //
-  //map.on('pointerup', function(e) {
-  //  Interaction.getTargetID(e.x, e.y, function(id) {
-  //    if (id) {
-  //      e.target = { id: id };
-  //    }
-  //    Events.emit('pointerup', e);
-  //  });
-  //});
-
 
   //*************************************************************************
 
 //  osmb.on('idle', function() {
 //    console.log('IDLE');
 //  });
-//
+
 //  osmb.on('busy', function() {
 //    console.log('BUSY');
 //  });
 
   //*************************************************************************
+
+  if (typeof obj !== 'undefined') positionOnMap(obj);
 
   var controlButtons = document.querySelectorAll('.control button');
 
