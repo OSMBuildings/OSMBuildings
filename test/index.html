@@ -152,7 +152,7 @@
   var osmb = new OSMBuildings({
     minZoom: 15,
     maxZoom: 22,
-    state: true,
+    // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
     attribution: '© Data <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
@@ -161,9 +161,7 @@
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
-    // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    buffer: 0, // how many tiles to preload around visible area
-    bgColor: '#f08000'
+    // buffer: 0, // how many tiles to preload around visible area - not yet!
   });
 
 //  osmb.addOSMTiles();

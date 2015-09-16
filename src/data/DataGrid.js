@@ -129,11 +129,11 @@ var DataGrid = {};
 
     source = src;
 
-    Events.on('change', function() {
+    MAP.on('change', function() {
       update(2000);
     });
 
-    Events.on('resize', update);
+    MAP.on('resize', update);
 
     update();
   };
