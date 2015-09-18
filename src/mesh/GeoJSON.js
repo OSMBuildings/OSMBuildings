@@ -106,6 +106,7 @@ mesh.GeoJSON = (function() {
       var
         item, color, idColor, center, radius,
         vertexCount,
+        colorVariance,
         j;
 
       for (var i = 0, il = items.length; i < il; i++) {
@@ -114,7 +115,10 @@ mesh.GeoJSON = (function() {
 //      item.numVertices = item.vertices.length/3;
 //        this.items.push({ id:item.id, min:item.min, max:item.max });
 
-        idColor = Interaction.idToColor(this.id || item.id);
+        var id = this.id || item.id;
+
+        idColor = Interaction.idToColor(id);
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
 
         center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
 
@@ -139,7 +143,7 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.wallColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color.r, color.g, color.b);
+          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
 
@@ -157,7 +161,7 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.roofColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color.r, color.g, color.b);
+          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }
