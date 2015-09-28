@@ -48,9 +48,11 @@ mesh.OBJ = (function() {
     },
 
     addItems: function(items) {
-      var item, color, idColor, j, jl;
+      var
+        item, color, idColor, j, jl,
+        id, colorVariance;
 
-      for (var i = 0, il = items.length; i < il; i++) {
+        for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
 //      item.numVertices = item.vertices.length/3;
@@ -59,10 +61,12 @@ mesh.OBJ = (function() {
         this.data.vertices.push.apply(this.data.vertices, item.vertices);
         this.data.normals.push.apply(this.data.normals, item.normals);
 
+        id = this.id || item.id;
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
         color = this.color || item.color || DEFAULT_COLOR;
-        idColor = Interaction.idToColor(this.id || item.id);
+        idColor = Interaction.idToColor(id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          this.data.colors.push(color.r, color.g, color.b);
+          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }

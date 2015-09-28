@@ -106,7 +106,7 @@ mesh.GeoJSON = (function() {
       var
         item, color, idColor, center, radius,
         vertexCount,
-        colorVariance,
+        id, colorVariance,
         j;
 
       for (var i = 0, il = items.length; i < il; i++) {
@@ -115,8 +115,7 @@ mesh.GeoJSON = (function() {
 //      item.numVertices = item.vertices.length/3;
 //        this.items.push({ id:item.id, min:item.min, max:item.max });
 
-        var id = this.id || item.id;
-
+        id = this.id || item.id;
         idColor = Interaction.idToColor(id);
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
 
@@ -132,6 +131,7 @@ mesh.GeoJSON = (function() {
           radius = (item.max.x - item.min.x)/2;
         }
 
+        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.shape) {
           case 'cylinder': vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
           case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.minHeight, item.height); break;
@@ -147,6 +147,7 @@ mesh.GeoJSON = (function() {
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
 
+        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.roofShape) {
           case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.height, item.height+item.roofHeight); break;
           case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;

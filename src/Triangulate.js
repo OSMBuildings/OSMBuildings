@@ -24,48 +24,51 @@ var Triangulate = {};
   }
 
   Triangulate.quad = function(tris, a, b, c, d) {
-    this.addTriangle(tris, a, b, c);
-    this.addTriangle(tris, b, d, c);
-    return 6;
+    var vertexCount = 0;
+    vertexCount += this.addTriangle(tris, a, b, c);
+    vertexCount += this.addTriangle(tris, b, d, c);
+    return vertexCount;
   };
 
   Triangulate.circle = function(tris, center, radius, z) {
     var u, v;
+    var vertexCount = 0;
     for (var i = 0; i < LON_SEGMENTS; i++) {
       u = i/LON_SEGMENTS;
       v = (i+1)/LON_SEGMENTS;
-      this.addTriangle(
+      vertexCount += this.addTriangle(
         tris,
         [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), z ],
         [ center[0],                                  center[1],                                  z ],
         [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), z ]
       );
     }
-    return LON_SEGMENTS*3;
+    return vertexCount;
   };
 
   Triangulate.polygon = function(tris, polygon, z) {
     var vertices = earcut(polygon);
+    var vertexCount = 0;
     for (var i = 0, il = vertices.length-2; i < il; i+=3) {
-      this.addTriangle(
+      vertexCount += this.addTriangle(
         tris,
         [ vertices[i  ][0], vertices[i  ][1], z ],
         [ vertices[i+1][0], vertices[i+1][1], z ],
         [ vertices[i+2][0], vertices[i+2][1], z ]
       );
     }
-    return vertices.length;
+    return vertexCount;
   };
 
   Triangulate.polygon3d = function(tris, polygon) {
     var ring = polygon[0];
     var ringLength = ring.length;
     var vertices, t, tl;
+    var vertexCount = 0;
 
 //  { r:255, g:0, b:0 }
 
     if (ringLength <= 4) { // 3: a triangle
-      var vertexCount = 0;
       vertexCount += this.addTriangle(
         tris,
         ring[0],
@@ -95,7 +98,7 @@ var Triangulate = {};
 
       vertices = earcut(polygon);
       for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
-        this.addTriangle(
+        vertexCount += this.addTriangle(
           tris,
           [ vertices[t  ][2], vertices[t  ][1], vertices[t  ][0] ],
           [ vertices[t+1][2], vertices[t+1][1], vertices[t+1][0] ],
@@ -103,12 +106,12 @@ var Triangulate = {};
         );
       }
 
-      return vertices.length;
+      return vertexCount;
     }
 
     vertices = earcut(polygon);
     for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
-      this.addTriangle(
+      vertexCount += this.addTriangle(
         tris,
         [ vertices[t  ][0], vertices[t  ][1], vertices[t  ][2] ],
         [ vertices[t+1][0], vertices[t+1][1], vertices[t+1][2] ],
@@ -116,7 +119,7 @@ var Triangulate = {};
       );
     }
 
-    return vertices.length;
+    return vertexCount;
   };
 
   Triangulate.cylinder = function(tris, center, radiusBottom, radiusTop, minHeight, height) {
