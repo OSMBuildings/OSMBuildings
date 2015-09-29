@@ -1,14 +1,15 @@
 
-var DataTile = function(tileX, tileY, zoom) {
-  this.tileX = tileX;
-  this.tileY = tileY;
-  this.zoom = zoom;
+var DataTile = function(tileX, tileY, zoom, options) {
+  this.tileX   = tileX;
+  this.tileY   = tileY;
+  this.zoom    = zoom;
+  this.options = options;
 };
 
 DataTile.prototype = {
 
   load: function(url) {
-    this.mesh = new mesh.GeoJSON(url);
+    this.mesh = new mesh.GeoJSON(url, this.options);
   },
 
   destroy: function() {

@@ -63,7 +63,7 @@ OSMBuildings.prototype = {
 
   // TODO: what to return? allow multiple layers?
   addGeoJSONTiles: function(url, options) {
-    DataGrid.setSource(url, options.dataKey || DATA_KEY);
+    this.dataGrid = new DataGrid(url, options);
   },
 
   highlight: function(id, color) {
@@ -78,7 +78,7 @@ OSMBuildings.prototype = {
   destroy: function() {
     Interaction.destroy();
     Buildings.destroy();
-    DataGrid.destroy();
+    this.dataGrid.destroy();
   }
 };
 
