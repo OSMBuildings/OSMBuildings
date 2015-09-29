@@ -159,8 +159,9 @@
   osmb.addGeoJSONTiles(
     // dataSource: null, // null disables default OSM data,
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-    'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
+    color: '#00ff00'
     // buffer: 0, // how many tiles to preload around visible area - not yet!
   });
 
@@ -185,7 +186,7 @@
 
   osmb.addGeoJSON(gj);
 
-  var obj = osmb.addGeoJSON('data/o2_nach_90.geo.json');
+  //var obj = osmb.addGeoJSON('data/o2 vor 90.geo.json-MERGED.geo.json', { color: '#00ccff' });
   //osmb.addGeoJSON('data/w1-o4.geo.json');
 
   var label = document.getElementById('label');

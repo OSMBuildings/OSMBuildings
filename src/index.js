@@ -13,7 +13,7 @@ var OSMBuildings = function(options) {
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 };
 
-OSMBuildings.VERSION = '1.0.0';
+OSMBuildings.VERSION = '1.0.1';
 OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">http://osmbuildings.org</a>';
 
 OSMBuildings.prototype = {

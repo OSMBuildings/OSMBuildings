@@ -1697,7 +1697,7 @@ var OSMBuildings = function(options) {
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 };
 
-OSMBuildings.VERSION = '1.0.0';
+OSMBuildings.VERSION = '1.0.1';
 OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">http://osmbuildings.org</a>';
 
 OSMBuildings.prototype = {
@@ -1747,7 +1747,7 @@ OSMBuildings.prototype = {
 
   // TODO: what to return? allow multiple layers?
   addGeoJSONTiles: function(url, options) {
-    DataGrid.setSource(url, options.dataKey || DATA_KEY);
+    this.dataGrid = new DataGrid(url, options);
   },
 
   highlight: function(id, color) {
@@ -1762,7 +1762,7 @@ OSMBuildings.prototype = {
   destroy: function() {
     Interaction.destroy();
     Buildings.destroy();
-    DataGrid.destroy();
+    this.dataGrid.destroy();
   }
 };
 
@@ -2045,48 +2045,51 @@ var Triangulate = {};
   }
 
   Triangulate.quad = function(tris, a, b, c, d) {
-    this.addTriangle(tris, a, b, c);
-    this.addTriangle(tris, b, d, c);
-    return 6;
+    var vertexCount = 0;
+    vertexCount += this.addTriangle(tris, a, b, c);
+    vertexCount += this.addTriangle(tris, b, d, c);
+    return vertexCount;
   };
 
   Triangulate.circle = function(tris, center, radius, z) {
     var u, v;
+    var vertexCount = 0;
     for (var i = 0; i < LON_SEGMENTS; i++) {
       u = i/LON_SEGMENTS;
       v = (i+1)/LON_SEGMENTS;
-      this.addTriangle(
+      vertexCount += this.addTriangle(
         tris,
         [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), z ],
         [ center[0],                                  center[1],                                  z ],
         [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), z ]
       );
     }
-    return LON_SEGMENTS*3;
+    return vertexCount;
   };
 
   Triangulate.polygon = function(tris, polygon, z) {
     var vertices = earcut(polygon);
+    var vertexCount = 0;
     for (var i = 0, il = vertices.length-2; i < il; i+=3) {
-      this.addTriangle(
+      vertexCount += this.addTriangle(
         tris,
         [ vertices[i  ][0], vertices[i  ][1], z ],
         [ vertices[i+1][0], vertices[i+1][1], z ],
         [ vertices[i+2][0], vertices[i+2][1], z ]
       );
     }
-    return vertices.length;
+    return vertexCount;
   };
 
   Triangulate.polygon3d = function(tris, polygon) {
     var ring = polygon[0];
     var ringLength = ring.length;
     var vertices, t, tl;
+    var vertexCount = 0;
 
 //  { r:255, g:0, b:0 }
 
     if (ringLength <= 4) { // 3: a triangle
-      var vertexCount = 0;
       vertexCount += this.addTriangle(
         tris,
         ring[0],
@@ -2116,7 +2119,7 @@ var Triangulate = {};
 
       vertices = earcut(polygon);
       for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
-        this.addTriangle(
+        vertexCount += this.addTriangle(
           tris,
           [ vertices[t  ][2], vertices[t  ][1], vertices[t  ][0] ],
           [ vertices[t+1][2], vertices[t+1][1], vertices[t+1][0] ],
@@ -2124,12 +2127,12 @@ var Triangulate = {};
         );
       }
 
-      return vertices.length;
+      return vertexCount;
     }
 
     vertices = earcut(polygon);
     for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
-      this.addTriangle(
+      vertexCount += this.addTriangle(
         tris,
         [ vertices[t  ][0], vertices[t  ][1], vertices[t  ][2] ],
         [ vertices[t+1][0], vertices[t+1][1], vertices[t+1][2] ],
@@ -2137,7 +2140,7 @@ var Triangulate = {};
       );
     }
 
-    return vertices.length;
+    return vertexCount;
   };
 
   Triangulate.cylinder = function(tris, center, radiusBottom, radiusTop, minHeight, height) {
@@ -2338,59 +2341,67 @@ var data = {
 };
 
 
-var DataGrid = {};
+var DataGrid = function(src, options) {
+  this.options = options || {};
 
-(function() {
+  this.tiles = {};
+  this.fixedZoom = 16;
 
-  var
-    source,
-    isDelayed,
+  if (src === undefined || src === false || src === '') {
+    src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
+  }
 
-    zoom,
-    minX,
-    minY,
-    maxX,
-    maxY,
+  this.source = src;
 
-    tiles = {},
-    fixedZoom = 16;
+  MAP.on('change', function() {
+    this.update(2000);
+  }.bind(this));
 
-  // strategy: start loading in {delay}ms after movement ends, ignore any attempts until then
+  MAP.on('resize', this.update.bind(this));
 
-  function update(delay) {
+  this.update();
+};
+
+DataGrid.prototype = {
+
+  // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
+
+  update: function(delay) {
     if (!delay) {
-      loadTiles();
+      this.loadTiles();
       return;
     }
 
-    if (isDelayed) {
-      clearTimeout(isDelayed);
+    if (this.isDelayed) {
+      clearTimeout(this.isDelayed);
     }
 
-    isDelayed = setTimeout(function() {
-      isDelayed = null;
-      loadTiles();
-    }, delay);
-  }
+    this.isDelayed = setTimeout(function() {
+      this.isDelayed = null;
+      this.loadTiles();
+    }.bind(this), delay);
+  },
 
-  function updateTileBounds() {
-    zoom = Math.round(fixedZoom || MAP.zoom);
+  updateTileBounds: function() {
+    this.zoom = Math.round(this.fixedZoom || MAP.zoom);
+
     var
       radius = 1500, // SkyDome.radius,
-      ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
+      ratio = Math.pow(2, this.zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
-    minX = ((mapCenter.x-radius)*ratio <<0);
-    minY = ((mapCenter.y-radius)*ratio <<0);
-    maxX = Math.ceil((mapCenter.x+radius)*ratio);
-    maxY = Math.ceil((mapCenter.y+radius)*ratio);
-  }
 
-  function loadTiles() {
+    this.minX = ((mapCenter.x-radius)*ratio <<0);
+    this.minY = ((mapCenter.y-radius)*ratio <<0);
+    this.maxX = Math.ceil((mapCenter.x+radius)*ratio);
+    this.maxY = Math.ceil((mapCenter.y+radius)*ratio);
+  },
+
+  loadTiles: function() {
     if (MAP.zoom < MIN_ZOOM) {
       return;
     }
 
-    updateTileBounds();
+    this.updateTileBounds();
 
     var
       tileX, tileY,
@@ -2401,14 +2412,14 @@ var DataGrid = {};
         MAP.center.y/TILE_SIZE <<0
       ];
 
-    for (tileY = minY; tileY < maxY; tileY++) {
-      for (tileX = minX; tileX < maxX; tileX++) {
-        key = [tileX, tileY, zoom].join(',');
-        if (tiles[key]) {
+    for (tileY = this.minY; tileY < this.maxY; tileY++) {
+      for (tileX = this.minX; tileX < this.maxX; tileX++) {
+        key = [tileX, tileY, this.zoom].join(',');
+        if (this.tiles[key]) {
           continue;
         }
-        tiles[key] = new DataTile(tileX, tileY, zoom);
-        queue.push({ tile:tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
+        this.tiles[key] = new DataTile(tileX, tileY, this.zoom, this.options);
+        queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }
 
@@ -2423,81 +2434,59 @@ var DataGrid = {};
     var tile;
     for (var i = 0; i < queueLength; i++) {
       tile = queue[i].tile;
-      tile.load(getURL(tile.tileX, tile.tileY, tile.zoom));
+      tile.load(this.getURL(tile.tileX, tile.tileY, tile.zoom));
     }
 
-    purge();
-  }
+    this.purge();
+  },
 
-  function purge() {
-    for (var key in tiles) {
-      if (!isVisible(tiles[key], 1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
-        tiles[key].destroy();
-        delete tiles[key];
+  purge: function() {
+    for (var key in this.tiles) {
+      if (!this.isVisible(this.tiles[key], 1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+        this.tiles[key].destroy();
+        delete this.tiles[key];
       }
     }
-  }
+  },
 
-  function isVisible(tile, buffer) {
+  isVisible: function(tile, buffer) {
     buffer = buffer || 0;
 
     var
       tileX = tile.tileX,
       tileY = tile.tileY;
 
-    return (tile.zoom === zoom &&
+    return (tile.zoom === this.zoom &&
       // TODO: factor in tile origin
-    (tileX >= minX-buffer && tileX <= maxX+buffer && tileY >= minY-buffer && tileY <= maxY+buffer));
-  }
+    (tileX >= this.minX-buffer && tileX <= this.maxX+buffer && tileY >= this.minY-buffer && tileY <= this.maxY+buffer));
+  },
 
-  function getURL(x, y, z) {
+  getURL: function(x, y, z) {
     var s = 'abcd'[(x+y) % 4];
-    return pattern(source, { s:s, x:x, y:y, z:z });
+    return pattern(this.source, { s:s, x:x, y:y, z:z });
+  },
+
+  destroy: function() {
+    clearTimeout(this.isDelayed);
+    for (var key in this.tiles) {
+      this.tiles[key].destroy();
+    }
+    this.tiles = null;
   }
-
-  //***************************************************************************
-
-  DataGrid.setSource = function(src, dataKey) {
-    if (src === undefined || src === false || src === '') {
-      src = DATA_SRC.replace('{k}', dataKey);
-    }
-
-    if (!src) {
-      return;
-    }
-
-    source = src;
-
-    MAP.on('change', function() {
-      update(2000);
-    });
-
-    MAP.on('resize', update);
-
-    update();
-  };
-
-  DataGrid.destroy = function() {
-    clearTimeout(isDelayed);
-    for (var key in tiles) {
-      tiles[key].destroy();
-    }
-    tiles = null;
-  };
-
-}());
+};
 
 
-var DataTile = function(tileX, tileY, zoom) {
-  this.tileX = tileX;
-  this.tileY = tileY;
-  this.zoom = zoom;
+var DataTile = function(tileX, tileY, zoom, options) {
+  this.tileX   = tileX;
+  this.tileY   = tileY;
+  this.zoom    = zoom;
+  this.options = options;
 };
 
 DataTile.prototype = {
 
   load: function(url) {
-    this.mesh = new mesh.GeoJSON(url);
+    this.mesh = new mesh.GeoJSON(url, this.options);
   },
 
   destroy: function() {
@@ -2619,6 +2608,7 @@ mesh.GeoJSON = (function() {
       var
         item, color, idColor, center, radius,
         vertexCount,
+        id, colorVariance,
         j;
 
       for (var i = 0, il = items.length; i < il; i++) {
@@ -2627,7 +2617,9 @@ mesh.GeoJSON = (function() {
 //      item.numVertices = item.vertices.length/3;
 //        this.items.push({ id:item.id, min:item.min, max:item.max });
 
-        idColor = Interaction.idToColor(this.id || item.id);
+        id = this.id || item.id;
+        idColor = Interaction.idToColor(id);
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
 
         center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
 
@@ -2641,6 +2633,7 @@ mesh.GeoJSON = (function() {
           radius = (item.max.x - item.min.x)/2;
         }
 
+        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.shape) {
           case 'cylinder': vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
           case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.minHeight, item.height); break;
@@ -2652,10 +2645,11 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.wallColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color.r, color.g, color.b);
+          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
 
+        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.roofShape) {
           case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.height, item.height+item.roofHeight); break;
           case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
@@ -2670,7 +2664,7 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.roofColor || DEFAULT_COLOR;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color.r, color.g, color.b);
+          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }
@@ -2806,9 +2800,11 @@ mesh.OBJ = (function() {
     },
 
     addItems: function(items) {
-      var item, color, idColor, j, jl;
+      var
+        item, color, idColor, j, jl,
+        id, colorVariance;
 
-      for (var i = 0, il = items.length; i < il; i++) {
+        for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
 //      item.numVertices = item.vertices.length/3;
@@ -2817,10 +2813,12 @@ mesh.OBJ = (function() {
         this.data.vertices.push.apply(this.data.vertices, item.vertices);
         this.data.normals.push.apply(this.data.normals, item.normals);
 
+        id = this.id || item.id;
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
         color = this.color || item.color || DEFAULT_COLOR;
-        idColor = Interaction.idToColor(this.id || item.id);
+        idColor = Interaction.idToColor(id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          this.data.colors.push(color.r, color.g, color.b);
+          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);
         }
       }
