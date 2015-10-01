@@ -1480,7 +1480,11 @@
 	  this.id = GL.createTexture();
 	  GL.bindTexture(GL.TEXTURE_2D, this.id);
 
-	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
+	  //GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
+	  
+	  // this is less blurry than the LINEAR_MIPMAP_NEAREST / Janne
+	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_LINEAR);
+	  
 	  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
 	//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 	//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
@@ -1793,7 +1797,7 @@
 
 	  // TODO: what to return? allow multiple layers?
 	  addGeoJSONTiles: function(url, options) {
-	    this.dataGrid = new DataGrid(url, options);
+	    return (this.dataGrid = new DataGrid(url, options));
 	  },
 
 	  highlight: function(id, color) {
@@ -1923,7 +1927,9 @@
 	var DEFAULT_HEIGHT = 10;
 	var HEIGHT_SCALE = 0.7;
 
-	var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
+	//var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toRGBA(true);
+	var DEFAULT_COLOR = Color.parse('rgb(178, 159, 130)').toRGBA(true);
+
 	var DEFAULT_HIGHLIGHT_COLOR = Color.parse('#f08000').toRGBA(true);
 
 	var FOG_COLOR = Color.parse('#f0f8ff').toRGBA(true);
@@ -2063,7 +2069,7 @@
 	  }
 	}
 
-	var Shaders = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec4 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  if (distance > uFogRadius) {\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vColor = vec4(aColor, 1.0);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat4 uMMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = 200.0;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  //*** highlight object ******************************************************\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ****************\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ******************************************************\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog *******************************************************************\n  vec4 mPosition = uMMatrix * aPosition;\n  float distance = length(mPosition);\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //***************************************************************************\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"}};
+	var Shaders = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aColor;\nuniform mat4 uMMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec4 vColor;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vec4 mPosition = vec4(uMMatrix * aPosition);\n  float distance = length(mPosition);\n  if (distance > uFogRadius) {\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vColor = vec4(aColor, 1.0);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define pi2 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aIDColor;\nuniform mat4 uMatrix;\nuniform mat4 uMMatrix;\nuniform mat4 vpMatrix;\nuniform mat4 tMatrix;\nuniform mat4 pMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = 300.0;\n//float gradientHeight = 90.0;\n//float gradientStrength = 0.4;\n// helsinki has small buildings:\nfloat gradientHeight = 30.0;\nfloat gradientStrength = 0.3;\nuniform float uRadius;\nuniform float uDistance;\nvoid main() {\n  vec4 mwPosition = tMatrix * uMMatrix * aPosition;\n  float innerRadius = uRadius + mwPosition.y;\n  float depth = abs(mwPosition.z);\n  float s = depth-uDistance;\n  float theta = min(max(s, 0.0 )/uRadius,pi2);\n  \n  // pi2*uRadius, not pi2*innerRadius, because the \"base\" of a building\n  // travels the full uRadius path\n  float newy = cos(theta)*innerRadius -uRadius - max(s-pi2*uRadius, 0.0);\n  float newz = normalize(mwPosition.z) * (min(depth, uDistance) + sin(theta)*innerRadius);\n  vec4 newPosition = vec4( mwPosition.x, newy, newz, 1.0 );\n  gl_Position = pMatrix * newPosition;\n  \n  //*** highlight object ******************************************************\n  vec3 color = aColor;\n  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {\n    color = mix(aColor, uHighlightColor, 0.5);\n  }\n  //*** light intensity, defined by light direction on surface ****************\n  vec3 transformedNormal = aNormal * uNormalTransform;\n  float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n  color = color + uLightColor * lightIntensity;\n  //*** vertical shading ******************************************************\n  float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n  //*** fog *******************************************************************\n  vec4 mPosition = uMMatrix * aPosition;\n  float distance = length(mPosition);\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  fogIntensity = clamp(fogIntensity, 0.0, 0.2);\n  //***************************************************************************\n  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"}};
 
 
 
@@ -3440,7 +3446,8 @@
 	    gl.clearColor(0, 0, 0, 1);
 	    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
+	    //gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
+	    GL.uniform1f(shader.uniforms.uFogRadius, 9999);
 
 	    var
 	      dataItems = data.Index.items,
@@ -3516,7 +3523,7 @@
 	      vertexShader: Shaders.buildings.vertex,
 	      fragmentShader: Shaders.buildings.fragment,
 	      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-	      uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+	      uniforms: ["uMMatrix", "vpMatrix", "tMatrix", "pMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
 	    });
 
 	    this.fogColor = options.fogColor;
@@ -3524,7 +3531,7 @@
 	    return this;
 	  };
 
-	  Buildings.render = function(vpMatrix) {
+	  Buildings.render = function(vpMatrix, tMatrix, pMatrix, radius, distance) {
 	    if (MAP.zoom < MIN_ZOOM) {
 	      return;
 	    }
@@ -3543,14 +3550,23 @@
 	    }
 
 	    // TODO: suncalc
-	    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-	    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
+
+	    // increased brightness
+	    GL.uniform3fv(shader.uniforms.uLightColor, [0.65, 0.65, 0.6]);
+
+	    // adjusted light direction to make shadows more distinct
+	    GL.uniform3fv(shader.uniforms.uLightDirection, unit(0, 0.5, 1));
 
 	    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
-	    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
+	    GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-	    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
-	    gl.uniform3fv(shader.uniforms.uFogColor, [this.fogColor.r, this.fogColor.g, this.fogColor.b]);
+	    GL.uniform1f(shader.uniforms.uFogRadius, 1000);
+	    //GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+
+	    GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+
+	    GL.uniform1f(shader.uniforms.uRadius, radius);
+	    GL.uniform1f(shader.uniforms.uDistance, distance);
 
 	    if (!this.highlightColor) {
 	      this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
@@ -3574,7 +3590,10 @@
 	        continue;
 	      }
 
-	      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+	      GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+	      GL.uniformMatrix4fv(shader.uniforms.vpMatrix, false, vpMatrix.data);
+	      GL.uniformMatrix4fv(shader.uniforms.tMatrix, false, tMatrix.data);
+	      GL.uniformMatrix4fv(shader.uniforms.pMatrix, false, pMatrix.data);
 
 	      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);

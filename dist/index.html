@@ -65,32 +65,36 @@
 <body>
 <div id="map"></div>
 
-<div class="control tilt">
+<!--<div class="control tilt">
   <button class="dec">&#8601;</button>
   <button class="inc">&#8599;</button>
 </div>
+
+<div class="control zoom">
+  <button class="dec">-</button>
+  <button class="inc">+</button>
+</div>-->
 
 <div class="control rotation">
   <button class="inc">&#8630;</button>
   <button class="dec">&#8631;</button>
 </div>
 
-<div class="control zoom">
-  <button class="dec">-</button>
-  <button class="inc">+</button>
-</div>
-
 <script>
   var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
-    rotation: 0,
-    tilt: 0,
-    // disabled: true, // disables user input
     minZoom: 12,
+//  minZoom: 14.5,
     maxZoom: 20,
+//  maxZoom: 22,
     // attribution: 'GLMap',
     state: true // stores map position/rotation in url
+    // rotation: 0, // optional
+    // tilt: 0, // optional
+    // disabled: true, // disables user input - optional
+    tileSource: 'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    fogColor: '#bfb8b0'
   });
 
   new GLMap.TileLayer(
