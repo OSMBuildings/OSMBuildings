@@ -63,7 +63,7 @@ OSMBuildings.prototype = {
 
   // TODO: what to return? allow multiple layers?
   addGeoJSONTiles: function(url, options) {
-    this.dataGrid = new DataGrid(url, options);
+    return (this.dataGrid = new DataGrid(url, options));
   },
 
   highlight: function(id, color) {
