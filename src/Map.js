@@ -98,7 +98,10 @@ var Map = {};
   };
 
   Map.setTilt = function(tilt) {
-    tilt = clamp(parseFloat(tilt), 0, 60);
+    // fixme: inception need tilt=90 for some reason
+    // (should maybe make a separate transf matrix for the tilt that is
+    // applied outside the model transoformation) / Janne
+    tilt = clamp(parseFloat(tilt), 90, 90);
     if (this.tilt !== tilt) {
       this.tilt = tilt;
       updateBounds();

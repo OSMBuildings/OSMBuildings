@@ -34,9 +34,15 @@ var TileGrid = {};
 
   // TODO: signal, if bbox changed => for loadTiles() + Tile.isVisible()
   function updateTileBounds() {
-    zoom = Math.round(Map.zoom);
+    //zoom = Math.round(Map.zoom);
+    
+    // for inception, we want larger tiles / Janne
+    // tile zooms 17 and larger get quite slow for some reason
+    zoom = Math.round(16);
+    
     var
-      radius = SkyDome.radius,
+      //radius = SkyDome.radius,
+      radius = 6000,
       ratio = Math.pow(2, zoom-Map.zoom)/TILE_SIZE,
       mapCenter = Map.center;
     minX = ((mapCenter.x-radius)*ratio <<0);

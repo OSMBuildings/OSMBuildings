@@ -10,14 +10,14 @@ var Buildings = {};
       vertexShader: SHADERS.buildings.vertex,
       fragmentShader: SHADERS.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+      uniforms: ["uMMatrix", "vpMatrix", "tMatrix", "pMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
     });
 
     this.showBackfaces = options.showBackfaces;
     return this;
   };
 
-  Buildings.render = function(vpMatrix) {
+  Buildings.render = function(vpMatrix, tMatrix, pMatrix, radius, distance) {
     if (Map.zoom < MIN_ZOOM) {
       return;
     }
@@ -34,15 +34,24 @@ var Buildings = {};
     }
 
     // TODO: suncalc
-    GL.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    GL.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
+    
+    // increased brightness
+    GL.uniform3fv(shader.uniforms.uLightColor, [0.65, 0.65, 0.6]);
+    
+    // adjusted light direction to make shadows more distinct
+    GL.uniform3fv(shader.uniforms.uLightDirection, unit(0, 0.5, 1));
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     GL.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    GL.uniform1f(shader.uniforms.uFogRadius, 1000);
+    //GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
-
+    
+    GL.uniform1f(shader.uniforms.uRadius, radius);
+    GL.uniform1f(shader.uniforms.uDistance, distance);
+    
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
     }
@@ -66,6 +75,9 @@ var Buildings = {};
       }
 
       GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+      GL.uniformMatrix4fv(shader.uniforms.vpMatrix, false, vpMatrix.data);
+      GL.uniformMatrix4fv(shader.uniforms.tMatrix, false, tMatrix.data);
+      GL.uniformMatrix4fv(shader.uniforms.pMatrix, false, pMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);

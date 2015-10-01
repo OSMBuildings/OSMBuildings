@@ -37,7 +37,8 @@ var Interaction = {
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    //GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    GL.uniform1f(shader.uniforms.uFogRadius, 9999);
 
     var
       dataItems = data.Index.items,

@@ -12,20 +12,24 @@ var Basemap = {};
       vertexShader: SHADERS.basemap.vertex,
       fragmentShader: SHADERS.basemap.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMMatrix", "uMatrix", "uTileImage", "uFogRadius", "uFogColor"]
+      uniforms: ["uMMatrix", "vpMatrix", "uMatrix", "pMatrix", "tMatrix", "uTileImage", "uFogRadius", "uFogColor", "uRadius", "uDistance"]
     });
 
     return this;
   };
 
-  Basemap.render = function(vpMatrix) {
+  Basemap.render = function(vpMatrix, tMatrix, pMatrix, radius, distance) {
     var
       tiles = TileGrid.getTiles(), item,
       mMatrix, mvp;
 
     shader.enable();
 
-    GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    //GL.uniform1f(shader.uniforms.uFogRadius, SkyDome.radius);
+    GL.uniform1f(shader.uniforms.uFogRadius, 1000);
+    GL.uniform1f(shader.uniforms.uRadius, radius);
+    GL.uniform1f(shader.uniforms.uDistance, distance);
+    
     GL.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     for (var key in tiles) {
@@ -36,6 +40,9 @@ var Basemap = {};
       }
 
       GL.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+      GL.uniformMatrix4fv(shader.uniforms.vpMatrix, false, vpMatrix.data);
+      GL.uniformMatrix4fv(shader.uniforms.tMatrix, false, tMatrix.data);
+      GL.uniformMatrix4fv(shader.uniforms.pMatrix, false, pMatrix.data);
 
       mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
       GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
