@@ -27,7 +27,7 @@ uniform vec3 uHighlightID;
 
 varying vec3 vColor;
 
-float fogBlur = 300.0;
+float fogBlur = 200.0;
 
 //float gradientHeight = 90.0;
 //float gradientStrength = 0.4;

@@ -37,8 +37,7 @@ var Interaction = {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    //gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
-    GL.uniform1f(shader.uniforms.uFogRadius, 9999);
+    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
 
     var
       dataItems = data.Index.items,
