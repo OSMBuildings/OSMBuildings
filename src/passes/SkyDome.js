@@ -1,27 +1,27 @@
 
-var SkyDome = function() {
-  var geometry = this.createGeometry(this.baseRadius);
-  this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
+var SkyDome = {
 
-  this.shader = new glx.Shader({
-    vertexShader: Shaders.skydome.vertex,
-    fragmentShader: Shaders.skydome.fragment,
-    attributes: ["aPosition", "aTexCoord"],
-    uniforms: ["uMatrix", "uTexIndex", "uFogColor"]
-  });
+  initShader: function() {
+    var geometry = this.createGeometry(this.baseRadius);
+    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
 
-//Activity.setBusy();
-  var url = 'OSMBuildings/skydome.jpg';
-  this.texture = new glx.texture.Image(url, function(image) {
-//  Activity.setIdle();
-    if (image) {
-      this.isReady = true;
-    }
-  }.bind(this));
-};
+    this.shader = new glx.Shader({
+      vertexShader: Shaders.skydome.vertex,
+      fragmentShader: Shaders.skydome.fragment,
+      attributes: ["aPosition", "aTexCoord"],
+      uniforms: ["uMatrix", "uTexIndex", "uFogColor"]
+    });
 
-SkyDome.prototype = {
+  //Activity.setBusy();
+    var url = 'OSMBuildings/skydome.jpg';
+    this.texture = new glx.texture.Image(url, function(image) {
+  //  Activity.setIdle();
+      if (image) {
+        this.isReady = true;
+      }
+    }.bind(this));
+  },
 
   baseRadius: 500,
 
@@ -81,13 +81,13 @@ SkyDome.prototype = {
     return { vertices: vertices, texCoords: texCoords };
   },
 
-  render: function(vpMatrix) {
+  render: function() {
     if (!this.isReady) {
       return;
     }
 
     var
-      fogColor = this.renderer.fogColor,
+      fogColor = Renderer.fogColor,
       shader = this.shader;
 
     shader.enable();
@@ -95,10 +95,10 @@ SkyDome.prototype = {
     gl.uniform3fv(shader.uniforms.uFogColor, [fogColor.r, fogColor.g, fogColor.b]);
 
     var mMatrix = new glx.Matrix();
-    var scale = this.renderer.fogRadius/this.baseRadius;
+    var scale = Renderer.fogRadius/this.baseRadius;
     mMatrix.scale(scale, scale, scale);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(mMatrix, vpMatrix));
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(mMatrix, Renderer.vpMatrix));
 
     this.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

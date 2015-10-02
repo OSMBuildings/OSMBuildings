@@ -1,21 +1,21 @@
 
 // TODO: perhaps render only clicked area
 
-var Interaction = function() {
-  this.shader = new glx.Shader({
-    vertexShader: Shaders.interaction.vertex,
-    fragmentShader: Shaders.interaction.fragment,
-    attributes: ["aPosition", "aColor"],
-    uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
-  });
-
-  this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
-};
-
-Interaction.prototype = {
+var Interaction = {
 
   idMapping: [null],
   viewportSize: 512,
+
+  initShader: function() {
+    this.shader = new glx.Shader({
+      vertexShader: Shaders.interaction.vertex,
+      fragmentShader: Shaders.interaction.fragment,
+      attributes: ["aPosition", "aColor"],
+      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
+    });
+
+    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+  },
 
   // TODO: throttle calls
   getTarget: function(x, y) {
@@ -24,7 +24,6 @@ Interaction.prototype = {
     }
 
     var
-      vpMatrix = this.renderer.vpMatrix,
       shader = this.shader,
       framebuffer = this.framebuffer;
 
@@ -35,7 +34,7 @@ Interaction.prototype = {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniform1f(shader.uniforms.uFogRadius, this.renderer.fogRadius);
+    gl.uniform1f(shader.uniforms.uFogRadius, Renderer.fogRadius);
 
     var
       dataItems = data.Index.items,
@@ -51,7 +50,7 @@ Interaction.prototype = {
 
       gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
 
-      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
+      mvp = glx.Matrix.multiply(mMatrix, Renderer.vpMatrix);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
 
       item.vertexBuffer.enable();
@@ -96,5 +95,7 @@ Interaction.prototype = {
       g: ((index >>  8) & 0xff) / 255,
       b: ((index >> 16) & 0xff) / 255
     };
-  }
+  },
+
+  destroy: function() {}
 };

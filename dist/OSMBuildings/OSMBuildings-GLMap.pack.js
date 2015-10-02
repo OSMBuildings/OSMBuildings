@@ -1728,8 +1728,7 @@
 	  global.GLX = GLX;
 	}
 
-	var MAP;
-	var glx;
+	var MAP, glx, gl;
 
 	var OSMBuildings = function(options) {
 	  options = options || {};
@@ -1738,9 +1737,10 @@
 	    this.setStyle(options.style);
 	  }
 
-	  this.fogColor      = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
-	  this.showBackfaces = options.showBackfaces;
-	  this.attribution   = options.attribution || OSMBuildings.ATTRIBUTION;
+	  Renderer.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
+	  Buildings.showBackfaces = options.showBackfaces;
+
+	  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 	};
 
 	OSMBuildings.VERSION = '1.0.1';
@@ -1751,11 +1751,11 @@
 	  addTo: function(map) {
 	    MAP = map;
 	    glx = new GLX(MAP.container, MAP.width, MAP.height);
+	    gl = glx.context;
 
 	    MAP.addLayer(this);
 
-	    this.renderer = new Renderer({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
-	    this.interaction = new Interaction();
+	    Renderer.start();
 
 	    return this;
 	  },
@@ -1765,7 +1765,7 @@
 	    MAP = null;
 	  },
 
-	  render: function(vpMatrix) {},
+	  render: function() {},
 
 	  setStyle: function(style) {
 	    var color = style.color || style.wallColor;
@@ -1789,17 +1789,16 @@
 	  },
 
 	  highlight: function(id, color) {
-	    this.renderer.buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
-	    this.renderer.buildings.highlightID = id ? this.interaction.idToColor(id) : null;
+	    Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
+	    Buildings.highlightID = id ? Interaction.idToColor(id) : null;
 	  },
 
 	  getTarget: function(x, y) {
-	    return this.interaction.getTarget(x, y);
+	    return Interaction.getTarget(x, y);
 	  },
 
 	  destroy: function() {
-	    this.renderer.destroy();
-	    this.interaction.destroy();
+	    Renderer.destroy();
 	    this.dataGrid.destroy();
 	  }
 	};
@@ -1903,38 +1902,37 @@
 	}());
 
 
-	var Renderer = function(options) {
-	  this.fogColor = options.fogColor;
+	var Renderer = {
 
-	  this.vMatrix  = new glx.Matrix();
-	  this.pMatrix  = new glx.Matrix();
-	  this.vpMatrix = new glx.Matrix();
+	  start: function() {
+	    this.vMatrix = new glx.Matrix();
+	    this.pMatrix = new glx.Matrix();
+	    this.vpMatrix = new glx.Matrix();
 
-	  MAP.on('resize', this.onResize.bind(this));
-	  this.onResize();
+	    MAP.on('resize', this.onResize.bind(this));
+	    this.onResize();
 
-	  MAP.on('change', this.onChange.bind(this));
-	  this.onChange();
+	    MAP.on('change', this.onChange.bind(this));
+	    this.onChange();
 
-	  gl.cullFace(gl.BACK);
-	  gl.enable(gl.CULL_FACE);
-	  gl.enable(gl.DEPTH_TEST);
+	    gl.cullFace(gl.BACK);
+	    gl.enable(gl.CULL_FACE);
+	    gl.enable(gl.DEPTH_TEST);
 
-	  this.skydome   = new SkyDome();
-	  this.buildings = new Buildings({ showBackfaces: this.showBackfaces });
+	    Interaction.initShader();
+	    Buildings.initShader();
+	    SkyDome.initShader();
 
-	  this.loop = setInterval(function() {
-	    requestAnimationFrame(function() {
-	      gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
-	      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	    this.loop = setInterval(function() {
+	      requestAnimationFrame(function() {
+	        gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
+	        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	      this.skydome.render(this.vpMatrix);
-	      this.buildings.render(this.vpMatrix);
-	    }.bind(this));
-	  }.bind(this), 17);
-	};
-
-	Renderer.prototype = {
+	        SkyDome.render(this.vpMatrix);
+	        Buildings.render(this.vpMatrix);
+	      }.bind(this));
+	    }.bind(this), 17);
+	  },
 
 	  onChange: function() {
 	    this.vMatrix = new glx.Matrix()
@@ -1966,8 +1964,9 @@
 
 	  destroy: function() {
 	    clearInterval(this.loop);
-	    this.skydome.destroy();
-	    this.buildings.destroy();
+	    Skydome.destroy();
+	    Buildings.destroy();
+	    Interaction.destroy();
 	  }
 	};
 
@@ -3465,21 +3464,21 @@
 
 	// TODO: perhaps render only clicked area
 
-	var Interaction = function() {
-	  this.shader = new glx.Shader({
-	    vertexShader: Shaders.interaction.vertex,
-	    fragmentShader: Shaders.interaction.fragment,
-	    attributes: ["aPosition", "aColor"],
-	    uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
-	  });
-
-	  this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
-	};
-
-	Interaction.prototype = {
+	var Interaction = {
 
 	  idMapping: [null],
 	  viewportSize: 512,
+
+	  initShader: function(options) {
+	    this.shader = new glx.Shader({
+	      vertexShader: Shaders.interaction.vertex,
+	      fragmentShader: Shaders.interaction.fragment,
+	      attributes: ["aPosition", "aColor"],
+	      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
+	    });
+
+	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+	  },
 
 	  // TODO: throttle calls
 	  getTarget: function(x, y) {
@@ -3488,7 +3487,7 @@
 	    }
 
 	    var
-	      vpMatrix = this.renderer.vpMatrix,
+	      vpMatrix = Renderer.vpMatrix,
 	      shader = this.shader,
 	      framebuffer = this.framebuffer;
 
@@ -3499,7 +3498,7 @@
 	    gl.clearColor(0, 0, 0, 1);
 	    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	    gl.uniform1f(shader.uniforms.uFogRadius, this.renderer.fogRadius);
+	    gl.uniform1f(shader.uniforms.uFogRadius, Renderer.fogRadius);
 
 	    var
 	      dataItems = data.Index.items,
@@ -3564,27 +3563,28 @@
 	};
 
 
-	var Buildings = function(options) {
-	  this.shader = new glx.Shader({
-	    vertexShader: Shaders.buildings.vertex,
-	    fragmentShader: Shaders.buildings.fragment,
-	    attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-	    uniforms: ["uMMatrix", "tMatrix", "pMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
-	  });
+	var Buildings = {};
 
-	  //this.fogColor = options.fogColor;
-	  this.showBackfaces = options.showBackfaces;
-	};
+	(function() {
 
-	Buildings.prototype = {
+	  var shader;
 
-	  render: function(transformMatrix, projectionMatrix, radius, distance) {
+	  Buildings.initShader = function(options) {
+	    shader = new glx.Shader({
+	      vertexShader: Shaders.buildings.vertex,
+	      fragmentShader: Shaders.buildings.fragment,
+	      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
+	      uniforms: ["uMMatrix", "tMatrix", "pMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
+	    });
+
+	    //this.fogColor = options.fogColor;
+	    this.showBackfaces = options.showBackfaces;
+	  };
+
+	  Buildings.render = function(transformMatrix, projectionMatrix, radius, distance) {
 	    if (MAP.zoom < MIN_ZOOM) {
 	      return;
 	    }
-
-	    var shader = this.shader;
-	    var renderer = this.renderer;
 
 	//  gl.enable(gl.BLEND);
 	//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -3608,8 +3608,8 @@
 	    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
 	    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-	    gl.uniform1f(shader.uniforms.uFogRadius, renderer.fogRadius);
-	    gl.uniform3fv(shader.uniforms.uFogColor, [renderer.fogColor.r, renderer.fogColor.g, renderer.fogColor.b]);
+	    gl.uniform1f(shader.uniforms.uFogRadius, Renderer.fogRadius);
+	    gl.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
 	    if (!this.highlightColor) {
 	      this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
@@ -3661,16 +3661,21 @@
 	    }
 
 	    shader.disable();
-	  }
-	};
+	  };
+
+	}());
 
 
-	var SkyDome = function() {
+	var SkyDome = {};
+
+	var shader;
+
+	SkyDome.initShader = function() {
 	  var geometry = this.createGeometry(this.baseRadius);
 	  this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
 	  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
 
-	  this.shader = new glx.Shader({
+	  shader = new glx.Shader({
 	    vertexShader: Shaders.skydome.vertex,
 	    fragmentShader: Shaders.skydome.fragment,
 	    attributes: ["aPosition", "aTexCoord"],

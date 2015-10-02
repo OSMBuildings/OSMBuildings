@@ -7,9 +7,10 @@ var OSMBuildings = function(options) {
     this.setStyle(options.style);
   }
 
-  this.fogColor      = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
-  this.showBackfaces = options.showBackfaces;
-  this.attribution   = options.attribution || OSMBuildings.ATTRIBUTION;
+  Renderer.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
+  Buildings.showBackfaces = options.showBackfaces;
+
+  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 };
 
 OSMBuildings.VERSION = '1.0.1';
@@ -24,8 +25,7 @@ OSMBuildings.prototype = {
 
     MAP.addLayer(this);
 
-    this.renderer = new Renderer({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
-    this.interaction = new Interaction();
+    Renderer.start();
 
     return this;
   },
@@ -35,7 +35,7 @@ OSMBuildings.prototype = {
     MAP = null;
   },
 
-  render: function(vpMatrix) {},
+  render: function() {},
 
   setStyle: function(style) {
     var color = style.color || style.wallColor;
@@ -59,17 +59,16 @@ OSMBuildings.prototype = {
   },
 
   highlight: function(id, color) {
-    this.renderer.buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
-    this.renderer.buildings.highlightID = id ? this.interaction.idToColor(id) : null;
+    Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
+    Buildings.highlightID = id ? Interaction.idToColor(id) : null;
   },
 
   getTarget: function(x, y) {
-    return this.interaction.getTarget(x, y);
+    return Interaction.getTarget(x, y);
   },
 
   destroy: function() {
-    this.renderer.destroy();
-    this.interaction.destroy();
+    Renderer.destroy();
     this.dataGrid.destroy();
   }
 };

@@ -141,14 +141,14 @@
     state: true // stores map position/rotation in url
   });
 
-  new GLMap.TileLayer(
-    //'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-    //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
-    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-    {
-      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> &middot; © Map <a href="http://mapbox.com">MapBox</a>'
-    }
-  ).addTo(map);
+//  new GLMap.TileLayer(
+//    //'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
+//    //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
+//    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+//    {
+//      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> &middot; © Map <a href="http://mapbox.com">MapBox</a>'
+//    }
+//  ).addTo(map);
 
   var osmb = new OSMBuildings({
     minZoom: 15,
@@ -201,9 +201,9 @@
   se.style.borderColor = 'green';
 
   map.on('change', function() {
-    var pos = map.transform(52.52, 13.37, 50);
-    label.style.left = Math.round(pos.x) + 'px';
-    label.style.top = Math.round(pos.y) + 'px';
+//    var pos = map.transform(52.52, 13.37, 50);
+//    label.style.left = Math.round(pos.x) + 'px';
+//    label.style.top = Math.round(pos.y) + 'px';
 
 //    var b = map.getBounds();
 //

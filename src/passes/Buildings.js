@@ -1,31 +1,26 @@
 
-var Buildings = function(options) {
-  this.shader = new glx.Shader({
-    vertexShader: Shaders.buildings.vertex,
-    fragmentShader: Shaders.buildings.fragment,
-    attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-    uniforms: ["uMMatrix", "tMatrix", "pMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
-  });
+var Buildings = {
 
-  //this.fogColor = options.fogColor;
-  this.showBackfaces = options.showBackfaces;
-};
+  initShader: function() {
+    this.shader = new glx.Shader({
+      vertexShader: Shaders.buildings.vertex,
+      fragmentShader: Shaders.buildings.fragment,
+      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
+      uniforms: ["uMMatrix", "tMatrix", "pMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
+    });
+  },
 
-Buildings.prototype = {
-
-  render: function(transformMatrix, projectionMatrix, radius, distance) {
+  render: function(radius, distance) {
     if (MAP.zoom < MIN_ZOOM) {
       return;
     }
-
-    var shader = this.shader;
-    var renderer = this.renderer;
 
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
+    var shader = this.shader;
     shader.enable();
 
     if (this.showBackfaces) {
@@ -43,8 +38,8 @@ Buildings.prototype = {
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    gl.uniform1f(shader.uniforms.uFogRadius, renderer.fogRadius);
-    gl.uniform3fv(shader.uniforms.uFogColor, [renderer.fogColor.r, renderer.fogColor.g, renderer.fogColor.b]);
+    gl.uniform1f(shader.uniforms.uFogRadius, Renderer.fogRadius);
+    gl.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
 
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
@@ -59,19 +54,19 @@ Buildings.prototype = {
     var
       dataItems = data.Index.items,
       item,
-      mMatrix;
+      modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(modelMatrix = item.getMatrix())) {
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.vpMatrix, false, vpMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.tMatrix, false, tMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.pMatrix, false, pMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, modelMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.vpMatrix, false, Renderer.vpMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.tMatrix, false, Renderer.transformMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.pMatrix, false, Renderer.projectionMatrix.data);
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -96,5 +91,7 @@ Buildings.prototype = {
     }
 
     shader.disable();
-  }
+  },
+
+  destroy: function() {}
 };
