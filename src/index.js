@@ -1,5 +1,4 @@
-var MAP;
-var glx;
+var MAP, glx, gl;
 
 var OSMBuildings = function(options) {
   options = options || {};
@@ -8,9 +7,9 @@ var OSMBuildings = function(options) {
     this.setStyle(options.style);
   }
 
-  this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
+  this.fogColor      = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
   this.showBackfaces = options.showBackfaces;
-  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
+  this.attribution   = options.attribution || OSMBuildings.ATTRIBUTION;
 };
 
 OSMBuildings.VERSION = '1.0.1';
@@ -20,12 +19,13 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    glx = GLX.use(MAP.getContext());
+    glx = new GLX(MAP.container, MAP.width, MAP.height);
+    gl = glx.context;
 
     MAP.addLayer(this);
 
-    Interaction.initShader();
-    Buildings.initShader({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
+    this.renderer = new Renderer({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
+    this.interaction = new Interaction();
 
     return this;
   },
@@ -35,15 +35,7 @@ OSMBuildings.prototype = {
     MAP = null;
   },
 
-  render: function(vpMatrix) {
-    var gl = glx.context;
-
-    gl.cullFace(gl.BACK);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-
-    Buildings.render(vpMatrix);
-  },
+  render: function(vpMatrix) {},
 
   setStyle: function(style) {
     var color = style.color || style.wallColor;
@@ -67,17 +59,17 @@ OSMBuildings.prototype = {
   },
 
   highlight: function(id, color) {
-    Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
-    Buildings.highlightID = id ? Interaction.idToColor(id) : null;
+    this.renderer.buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
+    this.renderer.buildings.highlightID = id ? this.interaction.idToColor(id) : null;
   },
 
   getTarget: function(x, y) {
-    return Interaction.getTarget(x, y);
+    return this.interaction.getTarget(x, y);
   },
 
   destroy: function() {
-    Interaction.destroy();
-    Buildings.destroy();
+    this.renderer.destroy();
+    this.interaction.destroy();
     this.dataGrid.destroy();
   }
 };

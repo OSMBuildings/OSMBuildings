@@ -2,16 +2,14 @@
   precision mediump float;
 #endif
 
-#define pi2 1.57079632679
+#define halfPi 1.57079632679
 
 attribute vec4 aPosition;
 attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec3 aIDColor;
 
-uniform mat4 uMatrix;
 uniform mat4 uMMatrix;
-uniform mat4 vpMatrix;
 uniform mat4 tMatrix;
 uniform mat4 pMatrix;
 
@@ -46,11 +44,11 @@ void main() {
   float innerRadius = uRadius + mwPosition.y;
   float depth = abs(mwPosition.z);
   float s = depth-uDistance;
-  float theta = min(max(s, 0.0 )/uRadius,pi2);
+  float theta = min(max(s, 0.0 )/uRadius, halfPi);
   
   // pi2*uRadius, not pi2*innerRadius, because the "base" of a building
   // travels the full uRadius path
-  float newy = cos(theta)*innerRadius -uRadius - max(s-pi2*uRadius, 0.0);
+  float newy = cos(theta)*innerRadius -uRadius - max(s-halfPi*uRadius, 0.0);
   float newz = normalize(mwPosition.z) * (min(depth, uDistance) + sin(theta)*innerRadius);
 
   vec4 newPosition = vec4( mwPosition.x, newy, newz, 1.0 );
@@ -79,7 +77,7 @@ void main() {
   vec4 mPosition = uMMatrix * aPosition;
   float distance = length(mPosition);
   float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
-  fogIntensity = clamp(fogIntensity, 0.0, 0.2);
+  fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
   //***************************************************************************
 

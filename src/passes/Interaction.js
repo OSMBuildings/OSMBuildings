@@ -1,22 +1,21 @@
 
 // TODO: perhaps render only clicked area
 
-var Interaction = {
+var Interaction = function() {
+  this.shader = new glx.Shader({
+    vertexShader: Shaders.interaction.vertex,
+    fragmentShader: Shaders.interaction.fragment,
+    attributes: ["aPosition", "aColor"],
+    uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
+  });
+
+  this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+};
+
+Interaction.prototype = {
 
   idMapping: [null],
   viewportSize: 512,
-
-  initShader: function(options) {
-    this.shader = new glx.Shader({
-      vertexShader: Shaders.interaction.vertex,
-      fragmentShader: Shaders.interaction.fragment,
-      attributes: ["aPosition", "aColor"],
-      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
-    });
-
-    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
-    return this;
-  },
 
   // TODO: throttle calls
   getTarget: function(x, y) {
@@ -25,8 +24,7 @@ var Interaction = {
     }
 
     var
-      gl = glx.context,
-      vpMatrix = MAP.getMatrix(),
+      vpMatrix = this.renderer.vpMatrix,
       shader = this.shader,
       framebuffer = this.framebuffer;
 
@@ -37,7 +35,7 @@ var Interaction = {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
+    gl.uniform1f(shader.uniforms.uFogRadius, this.renderer.fogRadius);
 
     var
       dataItems = data.Index.items,

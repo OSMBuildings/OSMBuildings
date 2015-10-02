@@ -38,7 +38,10 @@ module.exports = function(grunt) {
     },
 
     copy: {
-      dist: []
+      dist: [{
+        src: 'src/skydome.jpg',
+        dest: 'dist/OSMBuildings/skydome.jpg'
+      }]
     },
 
     jshint: {

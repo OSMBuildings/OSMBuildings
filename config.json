@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "buildings"],
+  "shaders": ["interaction", "buildings", "skydome", "basemap"],
 
   "lib": [
     "lib/earcut.js",
@@ -11,6 +11,7 @@
     "src/index.js",
     "src/Events.js",
     "src/Activity.js",
+    "src/Renderer.js",
 
     "src/variables.js",
     "src/Request.js",
@@ -32,6 +33,7 @@
     "src/geometry.js",
 
     "src/passes/Interaction.js",
-    "src/passes/Buildings.js"
+    "src/passes/Buildings.js",
+    "src/passes/SkyDome.js"
   ]
 }
