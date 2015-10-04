@@ -2,6 +2,8 @@
   precision mediump float;
 #endif
 
+#define halfPi 1.57079632679
+
 attribute vec4 aPosition;
 attribute vec3 aColor;
 
@@ -13,6 +15,9 @@ uniform mat4 uMatrix;
 uniform float uFogRadius;
 
 varying vec4 vColor;
+
+uniform float uBendRadius;
+uniform float uBendDistance;
 
 void main() {
 

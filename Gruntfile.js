@@ -6,27 +6,17 @@ module.exports = function(grunt) {
 
     pkg: grunt.file.readJSON('package.json'),
 
-    concat: [{
+    concat: {
       options: {
         separator: "\n",
         banner: "(function(global) {",
         footer: "}(this));"
       },
-      dist: [{
+      dist: {
         src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],
         dest:  'dist/OSMBuildings/<%=product%>.debug.js'
-      }]
-    },{
-      options: {
-        separator: "\n",
-        banner: "(function(global) {",
-        footer: "}(this));"
-      },
-      dist: [{
-        src: 'src/adapter/index.js',
-        dest:  'dist/BasicMap/BasicMap.js'
-      }]
-    }],
+      }
+    },
 
     uglify: {
       options: {},
