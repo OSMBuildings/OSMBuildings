@@ -94,3 +94,8 @@ and is used under the license conditions stated there:
 commercial work, and you don't have to name me if you don't want to. the only
 restriction is that you can't sell them. that's all."
 
+===============================================================================
+
+Inception style rendering
+https://github.com/jaukia/OSMBuildings/tree/inception
+Janne Aukia
