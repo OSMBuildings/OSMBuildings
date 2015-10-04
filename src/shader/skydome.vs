@@ -18,10 +18,8 @@ varying float vFogIntensity;
 float gradientHeight = 10.0;
 float gradientStrength = 1.0;
 
-//uniform float uRadius;
-//uniform float uDistance;
-float uRadius = 500.0;
-float uDistance = 700.0;
+uniform float uBendRadius;
+uniform float uBendDistance;
 
 void main() {
 
@@ -29,15 +27,15 @@ void main() {
 
   vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
 
-  float innerRadius = uRadius + mwPosition.y;
+  float innerRadius = uBendRadius + mwPosition.y;
   float depth = abs(mwPosition.z);
-  float s = depth-uDistance;
-  float theta = min(max(s, 0.0)/uRadius, halfPi);
+  float s = depth-uBendDistance;
+  float theta = min(max(s, 0.0)/uBendRadius, halfPi);
 
-  // halfPi*uRadius, not halfPi*innerRadius, because the "base" of a building
-  // travels the full uRadius path
-  float newY = cos(theta)*innerRadius -uRadius - max(s-halfPi*uRadius, 0.0);
-  float newZ = normalize(mwPosition.z) * (min(depth, uDistance) + sin(theta)*innerRadius);
+  // halfPi*uBendRadius, not halfPi*innerRadius, because the "base" of a building
+  // travels the full uBendRadius path
+  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);
+  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);
 
   vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
   gl_Position = uProjMatrix * newPosition;

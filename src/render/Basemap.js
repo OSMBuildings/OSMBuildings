@@ -6,7 +6,7 @@ render.Basemap = {
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uTexIndex", "uFogRadius", "uFogColor"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uTexIndex", "uFogRadius", "uFogColor", "uBendRadius", "uBendDistance"]
     });
   },
 
@@ -23,6 +23,9 @@ render.Basemap = {
 
     gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
     gl.uniform3fv(shader.uniforms.uFogColor, [fogColor.r, fogColor.g, fogColor.b]);
+
+    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
+    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
     var tiles = basemap.Grid.tiles;
 

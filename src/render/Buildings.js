@@ -6,7 +6,7 @@ render.Buildings = {
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uBendRadius", "uBendDistance", "uHighlightColor", "uHighlightID"]
     });
   },
 
@@ -32,6 +32,9 @@ render.Buildings = {
 
     gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
     gl.uniform3fv(shader.uniforms.uFogColor, [render.fogColor.r, render.fogColor.g, render.fogColor.b]);
+
+    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
+    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;

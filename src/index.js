@@ -8,6 +8,9 @@ var OSMBuildings = function(options) {
     this.setStyle(options.style);
   }
 
+  render.bendRadius = 500;
+  render.bendDistance = 500;
+
   render.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
   render.Buildings.showBackfaces = options.showBackfaces;
 
