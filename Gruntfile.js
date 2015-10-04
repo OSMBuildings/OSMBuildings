@@ -28,7 +28,7 @@ module.exports = function(grunt) {
 
     shaders: {
       dist: {
-        src: 'src/shaders',
+        src: 'src/shader',
         dest: 'src/Shaders.min.js'
       }
     },

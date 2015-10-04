@@ -26,12 +26,12 @@
     "src/mesh/GeoJSON.js",
     "src/mesh/OBJ.js",
 
-    "src/formats/GeoJSON.js",
-    "src/formats/OBJ.js",
+    "src/format/GeoJSON.js",
+    "src/format/OBJ.js",
 
     "src/geometry.js",
 
-    "src/passes/Interaction.js",
-    "src/passes/Buildings.js"
+    "src/render/Interaction.js",
+    "src/render/Buildings.js"
   ]
 }
