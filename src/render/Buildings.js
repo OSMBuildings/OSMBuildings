@@ -6,7 +6,7 @@ render.Buildings = {
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
     });
   },
 
@@ -24,12 +24,8 @@ render.Buildings = {
     }
 
     // TODO: suncalc
-
-    // increased brightness
-    gl.uniform3fv(shader.uniforms.uLightColor, [0.65, 0.65, 0.6]);
-
-    // adjusted light direction to make shadows more distinct
-    gl.uniform3fv(shader.uniforms.uLightDirection, unit(0, 0.5, 1));
+    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
+    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));

@@ -11,7 +11,7 @@ render.Interaction = {
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,
       attributes: ["aPosition", "aColor"],
-      uniforms: ["uModelMatrix", "uMatrix", "uFogRadius"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uFogRadius"]
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
