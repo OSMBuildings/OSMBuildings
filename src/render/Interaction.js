@@ -11,7 +11,7 @@ render.Interaction = {
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,
       attributes: ["aPosition", "aColor"],
-      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
+      uniforms: ["uModelMatrix", "uMatrix", "uFogRadius"]
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -34,24 +34,23 @@ render.Interaction = {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniform1f(shader.uniforms.uFogRadius, Renderer.fogRadius);
+    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
 
     var
       dataItems = data.Index.items,
       item,
-      mMatrix, mvp;
+      modelMatrix, mvp;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(modelMatrix = item.getMatrix())) {
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
 
-      mvp = glx.Matrix.multiply(mMatrix, Renderer.vpMatrix);
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

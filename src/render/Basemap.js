@@ -6,13 +6,13 @@ render.Basemap = {
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uMMatrix", "uTexIndex", "uFogRadius", "uFogColor"]
+      uniforms: ["uMatrix", "uModelMatrix", "uTexIndex", "uFogRadius", "uFogColor"]
     });
   },
 
   render: function() {
     var
-      fogColor = Renderer.fogColor,
+      fogColor = render.fogColor,
       shader = this.shader,
       tile, modelMatrix,
       tileZoom = Math.round(MAP.zoom),
@@ -21,7 +21,7 @@ render.Basemap = {
 
     shader.enable();
 
-    gl.uniform1f(shader.uniforms.uFogRadius, Renderer.fogRadius);
+    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
     gl.uniform3fv(shader.uniforms.uFogColor, [fogColor.r, fogColor.g, fogColor.b]);
 
     var tiles = basemap.Grid.tiles;
@@ -37,8 +37,8 @@ render.Basemap = {
       modelMatrix.scale(ratio * 1.005, ratio * 1.005, 1);
       modelMatrix.translate(tile.x * BaseMap.TILE_SIZE * ratio - mapCenter.x, tile.y * BaseMap.TILE_SIZE * ratio - mapCenter.y, 0);
 
-      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, Renderer.vpMatrix));
+      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       tile.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

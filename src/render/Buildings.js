@@ -6,7 +6,7 @@ render.Buildings = {
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uMMatrix", "tMatrix", "pMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uRadius", "uDistance", "uHighlightColor", "uHighlightID"]
     });
   },
 
@@ -34,8 +34,8 @@ render.Buildings = {
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    gl.uniform1f(shader.uniforms.uFogRadius, Renderer.fogRadius);
-    gl.uniform3fv(shader.uniforms.uFogColor, [Renderer.fogColor.r, Renderer.fogColor.g, Renderer.fogColor.b]);
+    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+    gl.uniform3fv(shader.uniforms.uFogColor, [render.fogColor.r, render.fogColor.g, render.fogColor.b]);
 
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
@@ -59,10 +59,10 @@ render.Buildings = {
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.vpMatrix, false, Renderer.vpMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.tMatrix, false, Renderer.transformMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.pMatrix, false, Renderer.projectionMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix,    false, modelMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uViewProjMatrix, false, render.viewProjMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,     false, render.viewMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,     false, render.projMatrix.data);
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

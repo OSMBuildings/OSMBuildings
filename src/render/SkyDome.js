@@ -87,18 +87,18 @@ render.SkyDome = {
     }
 
     var
-      fogColor = Renderer.fogColor,
+      fogColor = render.fogColor,
       shader = this.shader;
 
     shader.enable();
 
     gl.uniform3fv(shader.uniforms.uFogColor, [fogColor.r, fogColor.g, fogColor.b]);
 
-    var mMatrix = new glx.Matrix();
-    var scale = Renderer.fogRadius/this.baseRadius;
-    mMatrix.scale(scale, scale, scale);
+    var modelMatrix = new glx.Matrix();
+    var scale = render.fogRadius/this.baseRadius;
+    modelMatrix.scale(scale, scale, scale);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(mMatrix, Renderer.vpMatrix));
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
     this.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

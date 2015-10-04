@@ -5,7 +5,7 @@
 attribute vec4 aPosition;
 attribute vec2 aTexCoord;
 
-uniform mat4 uMMatrix;
+uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
 
 uniform float uFogRadius;
@@ -24,7 +24,7 @@ void main() {
 
   //*** fog *******************************************************************
 
-  vec4 mPosition = uMMatrix * aPosition;
+  vec4 mPosition = uModelMatrix * aPosition;
   float distance = length(mPosition);
   // => (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));
   float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out

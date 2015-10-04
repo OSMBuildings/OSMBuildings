@@ -9,9 +9,9 @@ attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec3 aIDColor;
 
-uniform mat4 uMMatrix;
-uniform mat4 tMatrix;
-uniform mat4 pMatrix;
+uniform mat4 uModelMatrix;
+uniform mat4 uViewMatrix;
+uniform mat4 uProjMatrix;
 
 uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
@@ -39,7 +39,7 @@ uniform float uDistance;
 
 void main() {
 
-  vec4 mwPosition = tMatrix * uMMatrix * aPosition;
+  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
 
   float innerRadius = uRadius + mwPosition.y;
   float depth = abs(mwPosition.z);
@@ -53,7 +53,7 @@ void main() {
 
   vec4 newPosition = vec4( mwPosition.x, newy, newz, 1.0 );
 
-  gl_Position = pMatrix * newPosition;
+  gl_Position = uProjMatrix * newPosition;
   
   //*** highlight object ******************************************************
 
@@ -74,7 +74,7 @@ void main() {
 
   //*** fog *******************************************************************
 
-  vec4 mPosition = uMMatrix * aPosition;
+  vec4 mPosition = uModelMatrix * aPosition;
   float distance = length(mPosition);
   float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);

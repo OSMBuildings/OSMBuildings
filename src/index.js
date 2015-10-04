@@ -8,7 +8,7 @@ var OSMBuildings = function(options) {
     this.setStyle(options.style);
   }
 
-  Renderer.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
+  render.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
   render.Buildings.showBackfaces = options.showBackfaces;
 
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
@@ -32,13 +32,13 @@ OSMBuildings.prototype = {
 
     MAP.addLayer(this);
 
-    Renderer.start();
+    render.start();
 
     return this;
   },
 
   remove: function() {
-    Renderer.stop();
+    render.stop();
     MAP.removeLayer(this);
     MAP = null;
   },
@@ -60,13 +60,12 @@ OSMBuildings.prototype = {
       y = pos.y-MAP.center.y;
 
     var scale = 1/Math.pow(2, 16 - MAP.zoom);
-    var mMatrix = new glx.Matrix()
+    var modelMatrix = new glx.Matrix()
       .translate(0, 0, elevation)
       .scale(scale, scale, scale*HEIGHT_SCALE)
       .translate(x, y, 0);
 
-    var mvp = glx.Matrix.multiply(mMatrix, Renderer.vpMatrix);
-
+    var mvp = glx.Matrix.multiply(modelMatrix, render.viewProjMatrix);
     var t = glx.Matrix.transform(mvp);
     return { x: t.x*MAP.width, y: MAP.height - t.y*MAP.height, z: t.z }; // takes current cam pos into account.
   },
@@ -97,7 +96,7 @@ OSMBuildings.prototype = {
   },
 
   destroy: function() {
-    Renderer.destroy();
+    render.destroy();
     this.dataTiles.destroy();
     if (this.basemap) {
       this.basemap.destroy();

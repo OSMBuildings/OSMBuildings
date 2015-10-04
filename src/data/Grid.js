@@ -43,8 +43,7 @@ data.Grid.prototype = {
     }.bind(this), delay);
   },
 
-  updateTileBounds: function() {
-
+  updateBounds: function() {
     var
       zoom = Math.round(this.internalZoom || MAP.zoom),
       radius = 1500, // render.SkyDome.radius,
@@ -66,7 +65,7 @@ data.Grid.prototype = {
   },
 
   loadTiles: function() {
-    this.updateTileBounds();
+    this.updateBounds();
 
     var
       tileX, tileY,
@@ -108,7 +107,7 @@ data.Grid.prototype = {
 
   purge: function() {
     for (var key in this.tiles) {
-      if (!this.tiles[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+      if (!this.tiles[key].isVisible(this.bounds, this.buffer)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixed internalZoom
         this.tiles[key].destroy();
         delete this.tiles[key];
       }

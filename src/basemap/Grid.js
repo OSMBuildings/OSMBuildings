@@ -41,9 +41,9 @@ basemap.Grid.prototype = {
 
   updateBounds: function() {
     var
-      zoom = Math.round(MAP.zoom),
+      zoom = Math.round(this.internalZoom || MAP.zoom),
       radius = 1500, // render.SkyDome.radius,
-      ratio = Math.pow(2, zoom-MAP.zoom)/GLMap.TILE_SIZE,
+      ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
 
     this.bounds = {
@@ -51,7 +51,7 @@ basemap.Grid.prototype = {
       minX: ((mapCenter.x-radius)*ratio <<0),
       minY: ((mapCenter.y-radius)*ratio <<0),
       maxX: Math.ceil((mapCenter.x+radius)*ratio),
-      maxY: Math.ceil((mapCenter.y+radius)*ratio),
+      maxY: Math.ceil((mapCenter.y+radius)*ratio)
     };
   },
 
@@ -69,8 +69,8 @@ basemap.Grid.prototype = {
       queue = [], queueLength,
       bounds = this.bounds,
       tileAnchor = [
-        MAP.center.x/GLMap.TILE_SIZE <<0,
-        MAP.center.y/GLMap.TILE_SIZE <<0
+        MAP.center.x/TILE_SIZE <<0,
+        MAP.center.y/TILE_SIZE <<0
       ];
 
     for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
