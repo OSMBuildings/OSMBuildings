@@ -77,11 +77,11 @@ OSMBuildings.prototype = {
   },
 
   addGeoJSONTiles: function(url, options) {
-    return (this.dataTiles = new data.Grid(url, options));
+    return data.Grid.init(url, options);
   },
 
   addMapTiles: function(url, options) {
-    return (this.basemap = new basemap.Grid(url, options));
+    return basemap.Grid.init(url, options);
   },
 
   highlight: function(id, color) {
@@ -95,10 +95,8 @@ OSMBuildings.prototype = {
 
   destroy: function() {
     render.destroy();
-    this.dataTiles.destroy();
-    if (this.basemap) {
-      this.basemap.destroy();
-    }
+    this.data.Grid.destroy();
+    this.basemap.Grid.destroy();
   }
 };
 

@@ -1,21 +1,21 @@
 
-basemap.Grid = function(src, options) {
-  this.source = src;
-  this.options = options || {};
+basemap.Grid = {
 
-  this.buffer = this.options.buffer || 1;
-  this.tiles = {};
+  tiles: {},
 
-  MAP.on('change', function() {
-    this.update(2000);
-  }.bind(this));
+  init: function(src, options) {
+    this.source = src;
+    this.options = options || {};
+    this.buffer = this.options.buffer || 1;
 
-  MAP.on('resize', this.update.bind(this));
+    MAP.on('change', function() {
+      this.update(2000);
+    }.bind(this));
 
-  this.update();
-};
+    MAP.on('resize', this.update.bind(this));
 
-basemap.Grid.prototype = {
+    this.update();
+  },
 
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement

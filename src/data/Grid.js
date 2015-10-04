@@ -1,26 +1,25 @@
 
-data.Grid = function(src, options) {
-  if (src === undefined || src === false || src === '') {
-    src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
-  }
-  this.source = src;
-  this.options = options || {};
+data.Grid = {
 
-  this.buffer = this.options.buffer || 1;
-  this.tiles = {};
+  tiles: {},
+  internalZoom: 16,
 
-  this.internalZoom = 16;
+  init: function(src, options) {
+    if (src === undefined || src === false || src === '') {
+      src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
+    }
+    this.source = src;
+    this.options = options || {};
+    this.buffer = this.options.buffer || 1;
 
-  MAP.on('change', function() {
-    this.update(2000);
-  }.bind(this));
+    MAP.on('change', function() {
+      this.update(2000);
+    }.bind(this));
 
-  MAP.on('resize', this.update.bind(this));
+    MAP.on('resize', this.update.bind(this));
 
-  this.update();
-};
-
-data.Grid.prototype = {
+    this.update();
+  },
 
   // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
   update: function(delay) {
