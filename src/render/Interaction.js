@@ -1,12 +1,12 @@
 
 // TODO: perhaps render only clicked area
 
-var Interaction = {
+render.Interaction = {
 
   idMapping: [null],
   viewportSize: 512,
 
-  initShader: function() {
+  init: function() {
     this.shader = new glx.Shader({
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,

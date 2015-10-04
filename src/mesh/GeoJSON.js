@@ -116,7 +116,7 @@ mesh.GeoJSON = (function() {
 //        this.items.push({ id:item.id, min:item.min, max:item.max });
 
         id = this.id || item.id;
-        idColor = Interaction.idToColor(id);
+        idColor = render.Interaction.idToColor(id);
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
 
         center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];

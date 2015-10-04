@@ -1,7 +1,7 @@
 
-var SkyDome = {
+render.SkyDome = {
 
-  initShader: function() {
+  init: function() {
     var geometry = this.createGeometry(this.baseRadius);
     this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
     this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));

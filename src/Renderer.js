@@ -16,19 +16,24 @@ var Renderer = {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
-    Interaction.initShader();
-    Buildings.initShader();
-    SkyDome.initShader();
+    render.Interaction.init(); // redners only on demand
+    render.SkyDome.init();
+    render.Buildings.init();
+    render.Basemap.init();
 
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
         gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        SkyDome.render(this.vpMatrix);
-        Buildings.render(this.vpMatrix);
+        render.SkyDome.render(this.vpMatrix);
+        render.Buildings.render(this.vpMatrix);
+        render.Basemap.render(this.vpMatrix);
       }.bind(this));
     }.bind(this), 17);
+  },
+
+  stop: function() {
+    clearInterval(this.loop);
   },
 
   onChange: function() {
@@ -60,9 +65,10 @@ var Renderer = {
   },
 
   destroy: function() {
-    clearInterval(this.loop);
-    Skydome.destroy();
-    Buildings.destroy();
-    Interaction.destroy();
+    this.stop();
+    render.Interaction.destroy();
+    render.Skydome.destroy();
+    render.Buildings.destroy();
+    render.Basemap.destroy();
   }
 };

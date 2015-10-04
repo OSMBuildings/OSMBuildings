@@ -1,8 +1,6 @@
 
 var PI = Math.PI;
 
-var MIN_ZOOM = 15;
-
 var TILE_SIZE = 256;
 
 var DATA_KEY = 'anonymous';

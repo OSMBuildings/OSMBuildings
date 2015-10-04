@@ -1,15 +1,15 @@
 
-var DataGrid = function(src, options) {
-  this.options = options || {};
-
-  this.tiles = {};
-  this.fixedZoom = 16;
-
+data.Grid = function(src, options) {
   if (src === undefined || src === false || src === '') {
     src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
   }
-
   this.source = src;
+  this.options = options || {};
+
+  this.buffer = this.options.buffer || 1;
+  this.tiles = {};
+
+  this.internalZoom = 16;
 
   MAP.on('change', function() {
     this.update(2000);
@@ -20,11 +20,14 @@ var DataGrid = function(src, options) {
   this.update();
 };
 
-DataGrid.prototype = {
+data.Grid.prototype = {
 
   // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
-
   update: function(delay) {
+    if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+      return;
+    }
+
     if (!delay) {
       this.loadTiles();
       return;
@@ -41,42 +44,47 @@ DataGrid.prototype = {
   },
 
   updateTileBounds: function() {
-    this.zoom = Math.round(this.fixedZoom || MAP.zoom);
 
     var
-      radius = 1500, // SkyDome.radius,
-      ratio = Math.pow(2, this.zoom-MAP.zoom)/TILE_SIZE,
+      zoom = Math.round(this.internalZoom || MAP.zoom),
+      radius = 1500, // render.SkyDome.radius,
+      ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
 
-    this.minX = ((mapCenter.x-radius)*ratio <<0);
-    this.minY = ((mapCenter.y-radius)*ratio <<0);
-    this.maxX = Math.ceil((mapCenter.x+radius)*ratio);
-    this.maxY = Math.ceil((mapCenter.y+radius)*ratio);
+    this.bounds = {
+      zoom: zoom,
+      minX: ((mapCenter.x-radius)*ratio <<0),
+      minY: ((mapCenter.y-radius)*ratio <<0),
+      maxX: Math.ceil((mapCenter.x+radius)*ratio),
+      maxY: Math.ceil((mapCenter.y+radius)*ratio)
+    };
+  },
+
+  getURL: function(x, y, z) {
+    var s = 'abcd'[(x+y) % 4];
+    return pattern(this.source, { s:s, x:x, y:y, z:z });
   },
 
   loadTiles: function() {
-    if (MAP.zoom < MIN_ZOOM) {
-      return;
-    }
-
     this.updateTileBounds();
 
     var
       tileX, tileY,
       key,
       queue = [], queueLength,
+      bounds = this.bounds,
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
         MAP.center.y/TILE_SIZE <<0
       ];
 
-    for (tileY = this.minY; tileY < this.maxY; tileY++) {
-      for (tileX = this.minX; tileX < this.maxX; tileX++) {
-        key = [tileX, tileY, this.zoom].join(',');
+    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
+      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
+        key = [tileX, tileY, bounds.zoom].join(',');
         if (this.tiles[key]) {
           continue;
         }
-        this.tiles[key] = new DataTile(tileX, tileY, this.zoom, this.options);
+        this.tiles[key] = new data.Tile(tileX, tileY, bounds.zoom, this.options);
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }
@@ -92,7 +100,7 @@ DataGrid.prototype = {
     var tile;
     for (var i = 0; i < queueLength; i++) {
       tile = queue[i].tile;
-      tile.load(this.getURL(tile.tileX, tile.tileY, tile.zoom));
+      tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
 
     this.purge();
@@ -100,28 +108,11 @@ DataGrid.prototype = {
 
   purge: function() {
     for (var key in this.tiles) {
-      if (!this.isVisible(this.tiles[key], 1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
+      if (!this.tiles[key].isVisible(1)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixedTileSIze
         this.tiles[key].destroy();
         delete this.tiles[key];
       }
     }
-  },
-
-  isVisible: function(tile, buffer) {
-    buffer = buffer || 0;
-
-    var
-      tileX = tile.tileX,
-      tileY = tile.tileY;
-
-    return (tile.zoom === this.zoom &&
-      // TODO: factor in tile origin
-    (tileX >= this.minX-buffer && tileX <= this.maxX+buffer && tileY >= this.minY-buffer && tileY <= this.maxY+buffer));
-  },
-
-  getURL: function(x, y, z) {
-    var s = 'abcd'[(x+y) % 4];
-    return pattern(this.source, { s:s, x:x, y:y, z:z });
   },
 
   destroy: function() {

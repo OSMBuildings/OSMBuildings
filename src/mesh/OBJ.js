@@ -64,7 +64,7 @@ mesh.OBJ = (function() {
         id = this.id || item.id;
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
         color = this.color || item.color || DEFAULT_COLOR;
-        idColor = Interaction.idToColor(id);
+        idColor = render.Interaction.idToColor(id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
           this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
           this.data.idColors.push(idColor.r, idColor.g, idColor.b);

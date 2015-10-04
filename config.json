@@ -20,20 +20,26 @@
     "src/Triangulate.js",
 
     "src/data/index.js",
-    "src/data/DataGrid.js",
-    "src/data/DataTile.js",
+    "src/data/Grid.js",
+    "src/data/Tile.js",
 
     "src/mesh/index.js",
     "src/mesh/GeoJSON.js",
     "src/mesh/OBJ.js",
 
-    "src/formats/GeoJSON.js",
-    "src/formats/OBJ.js",
+    "src/format/GeoJSON.js",
+    "src/format/OBJ.js",
 
     "src/geometry.js",
 
-    "src/passes/Interaction.js",
-    "src/passes/Buildings.js",
-    "src/passes/SkyDome.js"
+    "src/render/index.js",
+    "src/render/Interaction.js",
+    "src/render/SkyDome.js",
+    "src/render/Buildings.js",
+    "src/render/Basemap.js",
+
+    "src/basemap/index.js",
+    "src/basemap/Grid.js",
+    "src/basemap/Tile.js"
   ]
 }

@@ -57,6 +57,8 @@
       cursor: pointer;
     }
   </style>
+  <link rel="stylesheet" href="GLMap/GLMap.css">
+  <script src="GLMap/GLMap.js"></script>
   <script src="loader.js"></script>
 </head>
 
@@ -83,7 +85,7 @@
 </div>
 
 <script>
-  var map = new BaseMap('map', {
+  var map = new GLMap('map', {
 //  position: { latitude:52.52000, longitude:13.41000 },
     position: { latitude:40.69924, longitude:-74.01692 },
     zoom: 17,
@@ -95,15 +97,6 @@
     state: true // stores map position/rotation in url
   });
 
-  new BaseMap.TileLayer(
-    //'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-    //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
-    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-    {
-      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> &middot; © Map <a href="http://mapbox.com">MapBox</a>'
-    }
-  ).addTo(map);
-
   //***************************************************************************
 
   var osmb = new OSMBuildings({
@@ -112,6 +105,15 @@
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
+
+  osmb.addMapTiles(
+    //'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
+    //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
+    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    {
+      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> &middot; © Map <a href="http://mapbox.com">MapBox</a>'
+    }
+  );
 
   osmb.addGeoJSONTiles(
     // dataSource: null, // null disables default OSM data,

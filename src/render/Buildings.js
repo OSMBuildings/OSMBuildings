@@ -1,7 +1,7 @@
 
-var Buildings = {
+render.Buildings = {
 
-  initShader: function() {
+  init: function() {
     this.shader = new glx.Shader({
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
@@ -11,10 +11,6 @@ var Buildings = {
   },
 
   render: function(radius, distance) {
-    if (MAP.zoom < MIN_ZOOM) {
-      return;
-    }
-
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

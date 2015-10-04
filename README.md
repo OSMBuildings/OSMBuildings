@@ -36,7 +36,7 @@ Best for:
 - huge amounts of objects
 - mixing various data sources
 
-This version uses a generic BaseMap for any events and layers logic.
+This version uses GLMap for any events and layers logic.
 
 
 ## Documentation
@@ -49,7 +49,9 @@ Link all required libraries in your HTML head section. Files are provided in fol
 
 ~~~ html
 <head>
-  <script src="OSMBuildings/OSMBuildings.js"></script>
+  <link rel="stylesheet" href="GLMap/GLMap.css">
+  <script src="GLMap/GLMap.js"></script>
+  <script src="OSMBuildings/OSMBuildings-GLMap.js"></script>
 </head>
 
 <body>
@@ -59,12 +61,12 @@ Link all required libraries in your HTML head section. Files are provided in fol
 In a script section initialize the map and add a map tile layer.
 
 ~~~ javascript
-  var map = new BaseMap('map', {
+  var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16
   });
 
-  new BaseMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
+  new OSMBuildings.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
 ~~~
 
 Add OSM Buildings to the map and let it load data tiles.
@@ -74,7 +76,7 @@ Add OSM Buildings to the map and let it load data tiles.
   osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
 ~~~
 
-### BaseMap Options
+### GLMap Options
 
 option | value | description
 --- | --- | ---
@@ -82,13 +84,14 @@ position | object | geo position of map center
 zoom | float | map zoom
 rotation | float | map rotation
 tilt | float | map tilt
+bend | float | map bend
 disabled | boolean | disables user input, default false
 minZoom | float | minimum allowed zoom
 maxZoom | float | maximum allowed zoom
 attribution | string | attribution, optional
 state | boolean | stores map position/rotation in url, default false
 
-### BaseMap methods
+### GLMap methods
 
 method | parameters | description
 --- | --- | ---
@@ -98,7 +101,6 @@ setDisabled | boolean | disables any user input
 isDisabled | | check wheether user input is disabled
 project | latitude, longitude, worldSize | transforms geo coordinates to world pixel coordinates (tile size << zoom)
 unproject | x, y, worldSize | transforms world (tile size << zoom) pixel coordinates to geo coordinates (EPSG:4326)
-transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 getBounds | | returns geocordinates of current map view, respects tilt and rotation but ignores perspective
 setZoom | float | sets current zoom
 getZoom | | gets current zoom
@@ -124,12 +126,13 @@ showBackfaces | boolean | render front and backsides of polygons. false increase
 
 method | parameters | description
 --- | --- | ---
-addTo | map | adds it as a layer to a BaseMap instance
+addTo | map | adds it as a layer to a GLMap instance
 addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
 addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color}
 addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {scale, rotation, elevation, id, color}
 getTarget | x, y | get a building id at position
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
+transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 
 ### OSM Buildings server
 
@@ -149,7 +152,7 @@ This label moves virtually in space.
 ~~~ javascript
 var label = document.getElementById('label');
 map.on('change', function() {
-  var pos = map.transform(52.52, 13.37, 50);
+  var pos = osmb.transform(52.52, 13.37, 50);
   label.style.left = Math.round(pos.x) + 'px';
   label.stye.top = Math.round(pos.y) + 'px';
 });
@@ -185,6 +188,11 @@ map.on('pointermove', function(e) {
   <button class="dec">-</button>
   <button class="inc">+</button>
 </div>
+
+<div class="control bend">
+  <button class="dec">A</button>
+  <button class="inc">V</button>
+</div>
 ~~~
 
 ~~~ javascript
@@ -208,6 +216,10 @@ for (var i = 0; i < controlButtons.length; i++) {
     }
     if (parentClassList.contains('zoom')) {
       property = 'Zoom';
+      increment = direction*1;
+    }
+    if (parentClassList.contains('bend')) {
+      property = 'Bend';
       increment = direction*1;
     }
     if (property) {
