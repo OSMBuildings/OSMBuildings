@@ -1,6 +1,6 @@
   transform: function(latitude, longitude, elevation) {
     var
-      pos = MAP.project(latitude, longitude, GLMap.TILE_SIZE*Math.pow(2, MAP.zoom)),
+      pos = MAP.project(latitude, longitude, BaseMap.TILE_SIZE*Math.pow(2, MAP.zoom)),
       x = pos.x-MAP.center.x,
       y = pos.y-MAP.center.y;
 
@@ -23,7 +23,7 @@
       x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
       y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
       center = MAP.center,
-      worldSize = GLMap.TILE_SIZE*Math.pow(2, MAP.zoom),
+      worldSize = BaseMap.TILE_SIZE*Math.pow(2, MAP.zoom),
       nw = MAP.unproject(center.x - x, center.y - y, worldSize),
       se = MAP.unproject(center.x + x, center.y + y, worldSize);
     return {
