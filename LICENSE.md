@@ -1,10 +1,14 @@
 
-OSM Buildings
+## OSM Buildings
+
 https://github.com/OSMBuildings/OSMBuildings
+
 Copyright (c) 2015, Jan Marsch, OSM Buildings
 
-Color.js
+## Color.js
+
 https://github.com/kekscom/Color.js
+
 Copyright (c) 2015, Jan Marsch, keks.com
 
 All rights reserved.
@@ -29,10 +33,10 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABI
 TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-===============================================================================
+## Earcut
 
-Earcut
 https://github.com/mapbox/earcut
+
 Copyright (c) 2015, Vladimir Agafonkin, Mapbox
 
 (ISC License)
@@ -49,10 +53,10 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
-===============================================================================
+## Clockwise winding check
 
-Clockwise winding check
 https://github.com/Turfjs/turf-rewind
+
 Abel Vázquez
 
 Uses Shoelace Formula (http://en.wikipedia.org/wiki/Shoelace_formula)
@@ -77,10 +81,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-===============================================================================
+## Skydome code
 
-Skydome code
 https://github.com/rbuch703/osmstreetview/
+
 Robert Buchholz
 
 Copyright 2014, Robert Buchholz <rbuch703@gmail.com>.
@@ -94,8 +98,8 @@ and is used under the license conditions stated there:
 commercial work, and you don't have to name me if you don't want to. the only
 restriction is that you can't sell them. that's all."
 
-===============================================================================
+## Inception style rendering
 
-Inception style rendering
 https://github.com/jaukia/OSMBuildings/tree/inception
+
 Janne Aukia
