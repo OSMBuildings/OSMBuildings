@@ -28,37 +28,38 @@ varying vec3 vColor;
 
 float fogBlur = 200.0;
 
-//float gradientHeight = 90.0;
-//float gradientStrength = 0.4;
+float gradientHeight = 90.0;
+float gradientStrength = 0.4;
 
-// helsinki has small buildings:
-float gradientHeight = 30.0;
-float gradientStrength = 0.3;
+// helsinki has small buildings :-)
+//float gradientHeight = 30.0;
+//float gradientStrength = 0.3;
 
-uniform float uRadius;
-uniform float uDistance;
+//uniform float uRadius;
+//uniform float uDistance;
+float uRadius = 500.0;
+float uDistance = 700.0;
 
 void main() {
 
   //*** bending ***************************************************************
 
-//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
-//
-//  float innerRadius = uRadius + mwPosition.y;
-//  float depth = abs(mwPosition.z);
-//  float s = depth-uDistance;
-//  float theta = min(max(s, 0.0 )/uRadius, halfPi);
-//
-//  // pi2*uRadius, not pi2*innerRadius, because the "base" of a building
-//  // travels the full uRadius path
-//  float newy = cos(theta)*innerRadius -uRadius - max(s-halfPi*uRadius, 0.0);
-//  float newz = normalize(mwPosition.z) * (min(depth, uDistance) + sin(theta)*innerRadius);
-//
-//  vec4 newPosition = vec4( mwPosition.x, newy, newz, 1.0 );
-//
-//  gl_Position = uProjMatrix * newPosition;
+  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
 
-  gl_Position = uMatrix * aPosition;
+  float innerRadius = uRadius + mwPosition.y;
+  float depth = abs(mwPosition.z);
+  float s = depth-uDistance;
+  float theta = min(max(s, 0.0)/uRadius, halfPi);
+
+  // halfPi*uRadius, not halfPi*innerRadius, because the "base" of a building
+  // travels the full uRadius path
+  float newY = cos(theta)*innerRadius -uRadius - max(s-halfPi*uRadius, 0.0);
+  float newZ = normalize(mwPosition.z) * (min(depth, uDistance) + sin(theta)*innerRadius);
+
+  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
+  gl_Position = uProjMatrix * newPosition;
+
+//  gl_Position = uMatrix * aPosition;
 
   //*** highlight object ******************************************************
 

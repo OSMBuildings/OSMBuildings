@@ -10,7 +10,7 @@ render.SkyDome = {
       vertexShader: Shaders.skydome.vertex,
       fragmentShader: Shaders.skydome.fragment,
       attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uTexIndex", "uFogColor"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uTexIndex", "uFogColor"]
     });
 
   //Activity.setBusy();
@@ -98,6 +98,9 @@ render.SkyDome = {
     var scale = render.fogRadius/this.baseRadius;
     modelMatrix.scale(scale, scale, scale);
 
+    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
     this.vertexBuffer.enable();
