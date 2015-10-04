@@ -59,10 +59,10 @@ render.Buildings = {
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix,    false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewProjMatrix, false, render.viewProjMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,     false, render.viewMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,     false, render.projMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

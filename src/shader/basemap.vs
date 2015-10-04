@@ -6,6 +6,8 @@ attribute vec4 aPosition;
 attribute vec2 aTexCoord;
 
 uniform mat4 uModelMatrix;
+uniform mat4 uViewMatrix;
+uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
 
 uniform float uFogRadius;

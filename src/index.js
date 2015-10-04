@@ -43,8 +43,6 @@ OSMBuildings.prototype = {
     MAP = null;
   },
 
-  render: function() {},
-
   setStyle: function(style) {
     var color = style.color || style.wallColor;
     if (color) {

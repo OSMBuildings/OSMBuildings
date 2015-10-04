@@ -12,6 +12,7 @@ attribute vec3 aIDColor;
 uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uProjMatrix;
+uniform mat4 uMatrix;
 
 uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
@@ -39,22 +40,26 @@ uniform float uDistance;
 
 void main() {
 
-  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
+  //*** bending ***************************************************************
 
-  float innerRadius = uRadius + mwPosition.y;
-  float depth = abs(mwPosition.z);
-  float s = depth-uDistance;
-  float theta = min(max(s, 0.0 )/uRadius, halfPi);
-  
-  // pi2*uRadius, not pi2*innerRadius, because the "base" of a building
-  // travels the full uRadius path
-  float newy = cos(theta)*innerRadius -uRadius - max(s-halfPi*uRadius, 0.0);
-  float newz = normalize(mwPosition.z) * (min(depth, uDistance) + sin(theta)*innerRadius);
+//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
+//
+//  float innerRadius = uRadius + mwPosition.y;
+//  float depth = abs(mwPosition.z);
+//  float s = depth-uDistance;
+//  float theta = min(max(s, 0.0 )/uRadius, halfPi);
+//
+//  // pi2*uRadius, not pi2*innerRadius, because the "base" of a building
+//  // travels the full uRadius path
+//  float newy = cos(theta)*innerRadius -uRadius - max(s-halfPi*uRadius, 0.0);
+//  float newz = normalize(mwPosition.z) * (min(depth, uDistance) + sin(theta)*innerRadius);
+//
+//  vec4 newPosition = vec4( mwPosition.x, newy, newz, 1.0 );
+//
+//  gl_Position = uProjMatrix * newPosition;
 
-  vec4 newPosition = vec4( mwPosition.x, newy, newz, 1.0 );
+  gl_Position = uMatrix * aPosition;
 
-  gl_Position = uProjMatrix * newPosition;
-  
   //*** highlight object ******************************************************
 
   vec3 color = aColor;
