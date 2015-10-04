@@ -2,7 +2,7 @@
 module.exports = function(grunt) {
 
   grunt.initConfig({
-    product: 'OSMBuildings-GLMap',
+    product: 'OSMBuildings',
 
     pkg: grunt.file.readJSON('package.json'),
 

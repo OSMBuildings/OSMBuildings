@@ -36,7 +36,7 @@ Best for:
 - huge amounts of objects
 - mixing various data sources
 
-This version uses GLMap for any events and layers logic.
+This version uses a generic BaseMap for any events and layers logic.
 
 
 ## Documentation
@@ -49,9 +49,7 @@ Link all required libraries in your HTML head section. Files are provided in fol
 
 ~~~ html
 <head>
-  <link rel="stylesheet" href="GLMap/GLMap.css">
-  <script src="GLMap/GLMap.js"></script>
-  <script src="OSMBuildings/OSMBuildings-GLMap.js"></script>
+  <script src="OSMBuildings/OSMBuildings.js"></script>
 </head>
 
 <body>
@@ -61,12 +59,12 @@ Link all required libraries in your HTML head section. Files are provided in fol
 In a script section initialize the map and add a map tile layer.
 
 ~~~ javascript
-  var map = new GLMap('map', {
+  var map = new BaseMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16
   });
 
-  new GLMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
+  new BaseMap.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png').addTo(map);
 ~~~
 
 Add OSM Buildings to the map and let it load data tiles.
@@ -76,9 +74,7 @@ Add OSM Buildings to the map and let it load data tiles.
   osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
 ~~~
 
-### GLMap Options
-
-This is just a brief overview. For more information see <a href="https://github.com/OSMBuildings/GLMap">https://github.com/OSMBuildings/GLMap</a>
+### BaseMap Options
 
 option | value | description
 --- | --- | ---
@@ -92,7 +88,7 @@ maxZoom | float | maximum allowed zoom
 attribution | string | attribution, optional
 state | boolean | stores map position/rotation in url, default false
 
-### GLMap methods
+### BaseMap methods
 
 method | parameters | description
 --- | --- | ---
@@ -128,7 +124,7 @@ showBackfaces | boolean | render front and backsides of polygons. false increase
 
 method | parameters | description
 --- | --- | ---
-addTo | map | adds it as a layer to an GLMap instance
+addTo | map | adds it as a layer to a BaseMap instance
 addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
 addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color}
 addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {scale, rotation, elevation, id, color}

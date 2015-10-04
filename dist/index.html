@@ -57,9 +57,7 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="GLMap/GLMap.css">
-  <script src="GLMap/GLMap.js"></script>
-  <script src="OSMBuildings/OSMBuildings-GLMap.js"></script>
+  <script src="OSMBuildings/OSMBuildings.js"></script>
 </head>
 
 <body>
@@ -81,7 +79,7 @@
 </div>
 
 <script>
-  var map = new GLMap('map', {
+  var map = new BaseMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
     rotation: 0,
@@ -89,11 +87,10 @@
     // disabled: true, // disables user input
     minZoom: 12,
     maxZoom: 20,
-    // attribution: 'GLMap',
     state: true // stores map position/rotation in url
   });
 
-  new GLMap.TileLayer(
+  new BaseMap.TileLayer(
     'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     {
       attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> &middot; © Map <a href="http://mapbox.com">MapBox</a>'
