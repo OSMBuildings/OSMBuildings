@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "buildings"],
+  "shaders": ["interaction", "buildings", "skydome", "basemap"],
 
   "lib": [
     "lib/earcut.js",
@@ -19,8 +19,8 @@
     "src/Triangulate.js",
 
     "src/data/index.js",
-    "src/data/DataGrid.js",
-    "src/data/DataTile.js",
+    "src/data/Grid.js",
+    "src/data/Tile.js",
 
     "src/mesh/index.js",
     "src/mesh/GeoJSON.js",
@@ -31,7 +31,14 @@
 
     "src/geometry.js",
 
+    "src/render/index.js",
     "src/render/Interaction.js",
-    "src/render/Buildings.js"
+    "src/render/SkyDome.js",
+    "src/render/Buildings.js",
+    "src/render/Basemap.js",
+
+    "src/basemap/index.js",
+    "src/basemap/Grid.js",
+    "src/basemap/Tile.js"
   ]
 }

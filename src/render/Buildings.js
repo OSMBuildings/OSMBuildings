@@ -1,35 +1,22 @@
 
-var Buildings = {};
+render.Buildings = {
 
-(function() {
-
-  var shader;
-
-  Buildings.initShader = function(options) {
-    shader = new glx.Shader({
+  init: function() {
+    this.shader = new glx.Shader({
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
       attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uMMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uHighlightColor", "uHighlightID"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uBendRadius", "uBendDistance", "uHighlightColor", "uHighlightID"]
     });
+  },
 
-    this.fogColor = options.fogColor;
-    this.showBackfaces = options.showBackfaces;
-    return this;
-  };
-
-  Buildings.render = function(vpMatrix) {
-    if (MAP.zoom < MIN_ZOOM) {
-      return;
-    }
-
-    var gl = glx.context;
-
+  render: function(radius, distance) {
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 //  gl.disable(gl.DEPTH_TEST);
 
+    var shader = this.shader;
     shader.enable();
 
     if (this.showBackfaces) {
@@ -43,8 +30,11 @@ var Buildings = {};
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
-    gl.uniform3fv(shader.uniforms.uFogColor, [this.fogColor.r, this.fogColor.g, this.fogColor.b]);
+    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+    gl.uniform3fv(shader.uniforms.uFogColor, [render.fogColor.r, render.fogColor.g, render.fogColor.b]);
+
+    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
+    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
     if (!this.highlightColor) {
       this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
@@ -59,19 +49,19 @@ var Buildings = {};
     var
       dataItems = data.Index.items,
       item,
-      mMatrix, mvp;
+      modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(modelMatrix = item.getMatrix())) {
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
-
-      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -96,6 +86,7 @@ var Buildings = {};
     }
 
     shader.disable();
-  };
+  },
 
-}());
+  destroy: function() {}
+};

@@ -1,4 +1,6 @@
 
+// all commented sections are for collision checks
+
 // create 2 cylinders and check
 // function checkCollision(a, b) {
 // }

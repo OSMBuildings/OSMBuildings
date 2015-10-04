@@ -29,7 +29,8 @@ module.exports = function(grunt) {
     shaders: {
       dist: {
         src: 'src/shader',
-        dest: 'src/Shaders.min.js'
+        dest: 'src/Shaders.min.js',
+        names: grunt.file.readJSON('config.json').shaders
       }
     },
 
@@ -38,7 +39,10 @@ module.exports = function(grunt) {
     },
 
     copy: {
-      dist: []
+      dist: [{
+        src: 'src/skydome.jpg',
+        dest: 'dist/OSMBuildings/skydome.jpg'
+      }]
     },
 
     jshint: {
@@ -83,26 +87,23 @@ module.exports = function(grunt) {
 
   grunt.registerMultiTask('shaders', 'Build shaders', function() {
     var fs = require('fs');
-    var dest = this.files[0].dest;
 
-    var baseURL = this.files[0].src;
+    // grunt.log.writeln(JSON.stringify(this.data));
+    var config = this.data;
 
-    var config = grunt.file.readJSON('config.json').shaders;
     var src, name, Shaders = {};
-
-    for (var i = 0; i < config.length; i++) {
-      name = config[i];
-
+    for (var i = 0; i < config.names.length; i++) {
+      name = config.names[i];
       Shaders[name] = {};
 
-      var src = fs.readFileSync(baseURL + '/' + name + '.vs', 'ascii');
+      src = fs.readFileSync(config.src + '/' + name + '.vs', 'ascii');
       Shaders[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
 
-      var src = fs.readFileSync(baseURL + '/' + name + '.fs', 'ascii');
+      src = fs.readFileSync(config.src + '/' + name + '.fs', 'ascii');
       Shaders[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
     }
 
-    fs.writeFileSync(dest, 'var Shaders = '+ JSON.stringify(Shaders) +';\n');
+    fs.writeFileSync(config.dest, 'var Shaders = '+ JSON.stringify(Shaders) +';\n');
   });
 
   grunt.registerMultiTask('clean', 'Clean up', function() {

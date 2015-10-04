@@ -1,21 +1,20 @@
 
 // TODO: perhaps render only clicked area
 
-var Interaction = {
+render.Interaction = {
 
   idMapping: [null],
   viewportSize: 512,
 
-  initShader: function(options) {
+  init: function() {
     this.shader = new glx.Shader({
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,
       attributes: ["aPosition", "aColor"],
-      uniforms: ["uMMatrix", "uMatrix", "uFogRadius"]
+      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uFogRadius", "uBendRadius", "uBendDistance"]
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
-    return this;
   },
 
   // TODO: throttle calls
@@ -25,8 +24,6 @@ var Interaction = {
     }
 
     var
-      gl = glx.context,
-      vpMatrix = MAP.getMatrix(),
       shader = this.shader,
       framebuffer = this.framebuffer;
 
@@ -37,24 +34,30 @@ var Interaction = {
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniform1f(shader.uniforms.uFogRadius, MAP.getFogRadius());
+    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+
+    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
+    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
     var
       dataItems = data.Index.items,
       item,
-      mMatrix, mvp;
+      modelMatrix, mvp;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (!(mMatrix = item.getMatrix())) {
+      if (!(modelMatrix = item.getMatrix())) {
         continue;
       }
 
-      gl.uniformMatrix4fv(shader.uniforms.uMMatrix, false, mMatrix.data);
+      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
-      mvp = glx.Matrix.multiply(mMatrix, vpMatrix);
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, mvp);
+      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -98,5 +101,7 @@ var Interaction = {
       g: ((index >>  8) & 0xff) / 255,
       b: ((index >> 16) & 0xff) / 255
     };
-  }
+  },
+
+  destroy: function() {}
 };

@@ -76,3 +76,21 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+===============================================================================
+
+Skydome code
+https://github.com/rbuch703/osmstreetview/
+Robert Buchholz
+
+Copyright 2014, Robert Buchholz <rbuch703@gmail.com>.
+
+It is licensed under the GNU General Public License version 3.
+
+The skydome image is taken from 
+http://blenderartists.org/forum/showthread.php?24038-Free-high-res-skymaps-%28Massive-07-update!%29
+and is used under the license conditions stated there:
+"There are no restrictions on using these textures, you can use these for 
+commercial work, and you don't have to name me if you don't want to. the only
+restriction is that you can't sell them. that's all."
+

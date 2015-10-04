@@ -1,9 +1,8 @@
-node_modules
-test/data
-.DS_Store
-.idea
-dist/OSMBuildings.pack.js
-
-test/mp
-test/7wonders
-src/_scratch
+/node_modules/
+/test/data/
+/.DS_Store/
+/.idea/
+/dist/OSMBuildings.pack.js
+/test/mp/
+/test/7wonders/
+/_scratch/

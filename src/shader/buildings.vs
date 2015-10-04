@@ -2,13 +2,17 @@
   precision mediump float;
 #endif
 
+#define halfPi 1.57079632679
+
 attribute vec4 aPosition;
 attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec3 aIDColor;
 
+uniform mat4 uModelMatrix;
+uniform mat4 uViewMatrix;
+uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
-uniform mat4 uMMatrix;
 
 uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
@@ -27,10 +31,33 @@ float fogBlur = 200.0;
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 
+// helsinki has small buildings :-)
+//float gradientHeight = 30.0;
+//float gradientStrength = 0.3;
+
+uniform float uBendRadius;
+uniform float uBendDistance;
+
 void main() {
 
-  vec4 glPosition = uMatrix * aPosition;
-  gl_Position = glPosition;
+  //*** bending ***************************************************************
+
+  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
+
+  float innerRadius = uBendRadius + mwPosition.y;
+  float depth = abs(mwPosition.z);
+  float s = depth-uBendDistance;
+  float theta = min(max(s, 0.0)/uBendRadius, halfPi);
+
+  // halfPi*uBendRadius, not halfPi*innerRadius, because the "base" of a building
+  // travels the full uBendRadius path
+  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);
+  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);
+
+  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
+  gl_Position = uProjMatrix * newPosition;
+
+//  gl_Position = uMatrix * aPosition;
 
   //*** highlight object ******************************************************
 
@@ -51,7 +78,7 @@ void main() {
 
   //*** fog *******************************************************************
 
-  vec4 mPosition = uMMatrix * aPosition;
+  vec4 mPosition = uModelMatrix * aPosition;
   float distance = length(mPosition);
   float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);

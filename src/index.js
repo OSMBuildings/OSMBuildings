@@ -1,5 +1,5 @@
-var MAP;
-var glx;
+var MAP, glx, gl;
+var MIN_ZOOM, MAX_ZOOM;
 
 var OSMBuildings = function(options) {
   options = options || {};
@@ -8,9 +8,19 @@ var OSMBuildings = function(options) {
     this.setStyle(options.style);
   }
 
-  this.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
-  this.showBackfaces = options.showBackfaces;
+  render.bendRadius = 500;
+  render.bendDistance = 500;
+
+  render.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
+  render.Buildings.showBackfaces = options.showBackfaces;
+
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
+
+  MIN_ZOOM = parseFloat(options.minZoom) || 15;
+  MAX_ZOOM = parseFloat(options.maxZoom) || 22;
+  if (MAX_ZOOM < MIN_ZOOM) {
+    MAX_ZOOM = MIN_ZOOM;
+  }
 };
 
 OSMBuildings.VERSION = '1.0.1';
@@ -20,29 +30,20 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    glx = GLX.use(MAP.getContext());
+    glx = new GLX(MAP.container, MAP.width, MAP.height);
+    gl = glx.context;
 
     MAP.addLayer(this);
 
-    Interaction.initShader();
-    Buildings.initShader({ showBackfaces: this.showBackfaces, fogColor: this.fogColor });
+    render.start();
 
     return this;
   },
 
   remove: function() {
+    render.stop();
     MAP.removeLayer(this);
     MAP = null;
-  },
-
-  render: function(vpMatrix) {
-    var gl = glx.context;
-
-    gl.cullFace(gl.BACK);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-
-    Buildings.render(vpMatrix);
   },
 
   setStyle: function(style) {
@@ -53,6 +54,23 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  transform: function(latitude, longitude, elevation) {
+    var
+      pos = MAP.project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
+      x = pos.x-MAP.center.x,
+      y = pos.y-MAP.center.y;
+
+    var scale = 1/Math.pow(2, 16 - MAP.zoom);
+    var modelMatrix = new glx.Matrix()
+      .translate(0, 0, elevation)
+      .scale(scale, scale, scale*HEIGHT_SCALE)
+      .translate(x, y, 0);
+
+    var mvp = glx.Matrix.multiply(modelMatrix, render.viewProjMatrix);
+    var t = glx.Matrix.transform(mvp);
+    return { x: t.x*MAP.width, y: MAP.height - t.y*MAP.height, z: t.z }; // takes current cam pos into account.
+  },
+
   addOBJ: function(url, position, options) {
     return new mesh.OBJ(url, position, options);
   },
@@ -61,24 +79,27 @@ OSMBuildings.prototype = {
     return new mesh.GeoJSON(url, options);
   },
 
-  // TODO: what to return? allow multiple layers?
   addGeoJSONTiles: function(url, options) {
-    this.dataGrid = new DataGrid(url, options);
+    return data.Grid.init(url, options);
+  },
+
+  addMapTiles: function(url, options) {
+    return basemap.Grid.init(url, options);
   },
 
   highlight: function(id, color) {
-    Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
-    Buildings.highlightID = id ? Interaction.idToColor(id) : null;
+    render.Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
+    render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 
   getTarget: function(x, y) {
-    return Interaction.getTarget(x, y);
+    return render.Interaction.getTarget(x, y);
   },
 
   destroy: function() {
-    Interaction.destroy();
-    Buildings.destroy();
-    this.dataGrid.destroy();
+    render.destroy();
+    this.data.Grid.destroy();
+    this.basemap.Grid.destroy();
   }
 };
 
