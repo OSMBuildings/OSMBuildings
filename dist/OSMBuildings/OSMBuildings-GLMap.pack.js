@@ -2419,6 +2419,7 @@
 	    }
 	    this.source = src;
 	    this.options = options || {};
+	    // TODO: buffer is a bad idea with fixed internalZoom
 	    this.buffer = this.options.buffer || 1;
 
 	    MAP.on('change', function() {
@@ -2460,10 +2461,10 @@
 
 	    this.bounds = {
 	      zoom: zoom,
-	      minX: ((mapCenter.x-radius)*ratio <<0),
-	      minY: ((mapCenter.y-radius)*ratio <<0),
-	      maxX: Math.ceil((mapCenter.x+radius)*ratio),
-	      maxY: Math.ceil((mapCenter.y+radius)*ratio)
+	      minX: ((mapCenter.x-radius)*ratio <<0) - this.buffer,
+	      minY: ((mapCenter.y-radius)*ratio <<0) - this.buffer,
+	      maxX: Math.ceil((mapCenter.x+radius)*ratio) + this.buffer,
+	      maxY: Math.ceil((mapCenter.y+radius)*ratio) + this.buffer
 	    };
 	  },
 
@@ -2515,7 +2516,7 @@
 
 	  purge: function() {
 	    for (var key in this.tiles) {
-	      if (!this.tiles[key].isVisible(this.bounds, this.buffer)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixed internalZoom
+	      if (!this.tiles[key].isVisible(this.bounds)) {
 	        this.tiles[key].destroy();
 	        delete this.tiles[key];
 	      }
@@ -2545,10 +2546,9 @@
 	    this.mesh = new mesh.GeoJSON(url, this.options);
 	  },
 
-	  isVisible: function(bounds, buffer) {
-	    buffer = buffer || 0;
+	  isVisible: function(bounds) {
 	    // TODO: factor in tile origin
-	    return (this.zoom === bounds.zoom && (this.x >= bounds.minX-buffer && this.x <= bounds.maxX+buffer && this.y >= bounds.minY-buffer && this.y <= bounds.maxY+buffer));
+	    return (this.zoom === bounds.zoom && (this.x >= bounds.minX && this.x <= bounds.maxX && this.y >= bounds.minY && this.y <= bounds.maxY));
 	  },
 
 	  destroy: function() {
@@ -3470,12 +3470,14 @@
 	      refHeight = 1024,
 	      refVFOV = 45;
 
-	    this.projMatrix = new glx.Matrix()
+	      this.projMatrix = new glx.Matrix()
 	      .translate(0, -height/2, -1220) // 0, MAP y offset to neutralize camera y offset, MAP z -1220 scales MAP tiles to ~256px
 	      .scale(1, -1, 1) // flip Y
 	      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 0.1, 5000))
 	      .translate(0, -1, 0); // camera y offset
 
+	    glx.context.canvas.width  = width;
+	    glx.context.canvas.height = height;
 	    glx.context.viewport(0, 0, width, height);
 
 	    this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
@@ -3938,10 +3940,10 @@
 
 	    this.bounds = {
 	      zoom: zoom,
-	      minX: ((mapCenter.x-radius)*ratio <<0),
-	      minY: ((mapCenter.y-radius)*ratio <<0),
-	      maxX: Math.ceil((mapCenter.x+radius)*ratio),
-	      maxY: Math.ceil((mapCenter.y+radius)*ratio)
+	      minX: ((mapCenter.x-radius)*ratio <<0) - this.buffer,
+	      minY: ((mapCenter.y-radius)*ratio <<0) - this.buffer,
+	      maxX: Math.ceil((mapCenter.x+radius)*ratio) + this.buffer,
+	      maxY: Math.ceil((mapCenter.y+radius)*ratio) + this.buffer
 	    };
 	  },
 
@@ -3994,7 +3996,7 @@
 
 	  purge: function() {
 	    for (var key in this.tiles) {
-	      if (!this.tiles[key].isVisible(this.bounds, this.buffer)) {
+	      if (!this.tiles[key].isVisible(this.bounds)) {
 	        this.tiles[key].destroy();
 	        delete this.tiles[key];
 	      }
@@ -4056,10 +4058,9 @@
 	    }.bind(this));
 	  },
 
-	  isVisible: function(bounds, buffer) {
-	    buffer = buffer || 0;
+	  isVisible: function(bounds) {
 	    // TODO: factor in tile origin
-	    return (this.zoom === bounds.zoom && (this.x >= bounds.minX-buffer && this.x <= bounds.maxX+buffer && this.y >= bounds.minY-buffer && this.y <= bounds.maxY+buffer));
+	    return (this.zoom === bounds.zoom && (this.x >= bounds.minX && this.x <= bounds.maxX && this.y >= bounds.minY && this.y <= bounds.maxY));
 	  },
 
 	  destroy: function() {

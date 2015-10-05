@@ -10,6 +10,7 @@ data.Grid = {
     }
     this.source = src;
     this.options = options || {};
+    // TODO: buffer is a bad idea with fixed internalZoom
     this.buffer = this.options.buffer || 1;
 
     MAP.on('change', function() {
@@ -51,10 +52,10 @@ data.Grid = {
 
     this.bounds = {
       zoom: zoom,
-      minX: ((mapCenter.x-radius)*ratio <<0),
-      minY: ((mapCenter.y-radius)*ratio <<0),
-      maxX: Math.ceil((mapCenter.x+radius)*ratio),
-      maxY: Math.ceil((mapCenter.y+radius)*ratio)
+      minX: ((mapCenter.x-radius)*ratio <<0) - this.buffer,
+      minY: ((mapCenter.y-radius)*ratio <<0) - this.buffer,
+      maxX: Math.ceil((mapCenter.x+radius)*ratio) + this.buffer,
+      maxY: Math.ceil((mapCenter.y+radius)*ratio) + this.buffer
     };
   },
 
@@ -106,7 +107,7 @@ data.Grid = {
 
   purge: function() {
     for (var key in this.tiles) {
-      if (!this.tiles[key].isVisible(this.bounds, this.buffer)) { // testing with buffer of n tiles around viewport TODO: this is bad with fixed internalZoom
+      if (!this.tiles[key].isVisible(this.bounds)) {
         this.tiles[key].destroy();
         delete this.tiles[key];
       }

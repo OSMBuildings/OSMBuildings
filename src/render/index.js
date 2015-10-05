@@ -51,12 +51,14 @@ var render = {
       refHeight = 1024,
       refVFOV = 45;
 
-    this.projMatrix = new glx.Matrix()
+      this.projMatrix = new glx.Matrix()
       .translate(0, -height/2, -1220) // 0, MAP y offset to neutralize camera y offset, MAP z -1220 scales MAP tiles to ~256px
       .scale(1, -1, 1) // flip Y
       .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 0.1, 5000))
       .translate(0, -1, 0); // camera y offset
 
+    glx.context.canvas.width  = width;
+    glx.context.canvas.height = height;
     glx.context.viewport(0, 0, width, height);
 
     this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));

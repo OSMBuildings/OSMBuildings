@@ -48,10 +48,10 @@ basemap.Grid = {
 
     this.bounds = {
       zoom: zoom,
-      minX: ((mapCenter.x-radius)*ratio <<0),
-      minY: ((mapCenter.y-radius)*ratio <<0),
-      maxX: Math.ceil((mapCenter.x+radius)*ratio),
-      maxY: Math.ceil((mapCenter.y+radius)*ratio)
+      minX: ((mapCenter.x-radius)*ratio <<0) - this.buffer,
+      minY: ((mapCenter.y-radius)*ratio <<0) - this.buffer,
+      maxX: Math.ceil((mapCenter.x+radius)*ratio) + this.buffer,
+      maxY: Math.ceil((mapCenter.y+radius)*ratio) + this.buffer
     };
   },
 
@@ -104,7 +104,7 @@ basemap.Grid = {
 
   purge: function() {
     for (var key in this.tiles) {
-      if (!this.tiles[key].isVisible(this.bounds, this.buffer)) {
+      if (!this.tiles[key].isVisible(this.bounds)) {
         this.tiles[key].destroy();
         delete this.tiles[key];
       }

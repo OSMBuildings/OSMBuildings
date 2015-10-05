@@ -44,10 +44,9 @@ basemap.Tile.prototype = {
     }.bind(this));
   },
 
-  isVisible: function(bounds, buffer) {
-    buffer = buffer || 0;
+  isVisible: function(bounds) {
     // TODO: factor in tile origin
-    return (this.zoom === bounds.zoom && (this.x >= bounds.minX-buffer && this.x <= bounds.maxX+buffer && this.y >= bounds.minY-buffer && this.y <= bounds.maxY+buffer));
+    return (this.zoom === bounds.zoom && (this.x >= bounds.minX && this.x <= bounds.maxX && this.y >= bounds.minY && this.y <= bounds.maxY));
   },
 
   destroy: function() {
