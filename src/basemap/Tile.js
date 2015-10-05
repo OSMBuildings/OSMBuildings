@@ -35,9 +35,9 @@ basemap.Tile = function(x, y, zoom) {
 
 basemap.Tile.prototype = {
   load: function(url) {
-    //Activity.setBusy();
+    Activity.setBusy();
     this.texture = new glx.texture.Image(url, function(image) {
-      //Activity.setIdle();
+      Activity.setIdle();
       if (image) {
         this.isReady = true;
       }

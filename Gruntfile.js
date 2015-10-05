@@ -14,9 +14,29 @@ module.exports = function(grunt) {
       },
       dist: {
         src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],
-        dest:  'dist/OSMBuildings/<%=product%>.debug.js'
+        dest: 'dist/OSMBuildings/<%=product%>.debug.js'
       }
     },
+
+    //'GLMap-concat': {
+    //  options: {
+    //    separator: "\n",
+    //    banner: "(function(global) {",
+    //    footer: "}(this));"
+    //  },
+    //  dist: {
+    //    src: ['src/engines/index.js', 'src/engines/Interaction.js', 'src/engines/Layers.js'],
+    //    dest: 'dist/GLMap/GLMap.debug.js'
+    //  }
+    //},
+    //
+    //'GLMap-uglify': {
+    //  options: {},
+    //  build: {
+    //    src: 'dist/GLMap/GLMap.debug.js',
+    //    dest: 'dist/GLMap/GLMap.js'
+    //  }
+    //},
 
     uglify: {
       options: {},

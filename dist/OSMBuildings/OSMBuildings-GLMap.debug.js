@@ -3569,10 +3569,10 @@ render.SkyDome = {
       uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uTexIndex", "uFogColor", "uBendRadius", "uBendDistance"]
     });
 
-  //Activity.setBusy();
+    Activity.setBusy();
     var url = 'OSMBuildings/skydome.jpg';
     this.texture = new glx.texture.Image(url, function(image) {
-  //  Activity.setIdle();
+      Activity.setIdle();
       if (image) {
         this.isReady = true;
       }
@@ -4001,9 +4001,9 @@ basemap.Tile = function(x, y, zoom) {
 
 basemap.Tile.prototype = {
   load: function(url) {
-    //Activity.setBusy();
+    Activity.setBusy();
     this.texture = new glx.texture.Image(url, function(image) {
-      //Activity.setIdle();
+      Activity.setIdle();
       if (image) {
         this.isReady = true;
       }
