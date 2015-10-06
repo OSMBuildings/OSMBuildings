@@ -20,8 +20,10 @@ var render = {
     render.SkyDome.init();
     render.Buildings.init();
     render.Basemap.init();
-    //render.HudRect.init();
-    //render.NormalMap.init();
+    render.HudRect.init();
+    render.NormalMap.init();
+    render.DepthMap.init();
+    render.AmbientMap.init();
 
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
@@ -30,8 +32,14 @@ var render = {
         render.SkyDome.render();
         render.Buildings.render();
         render.Basemap.render();
+
         //render.NormalMap.render();
-        //render.HudRect.render(render.NormalMap.framebuffer.renderTexture.id);
+
+/*
+        render.DepthMap.render();
+        render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
+        render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
+*/
       }.bind(this));
     }.bind(this), 17);
   },
