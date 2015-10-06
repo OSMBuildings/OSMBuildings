@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "buildings", "skydome", "basemap"],
+  "shaders": ["interaction", "buildings", "skydome", "basemap", "texture", "normalmap"],
 
   "lib": [
     "lib/earcut.js",
@@ -36,6 +36,8 @@
     "src/render/SkyDome.js",
     "src/render/Buildings.js",
     "src/render/Basemap.js",
+    "src/render/HudRect.js",
+    "src/render/NormalMap.js",
 
     "src/basemap/index.js",
     "src/basemap/Grid.js",
