@@ -6,3 +6,6 @@
 /test/mp/
 /test/7wonders/
 /_scratch/
+
+# backup files
+*~
