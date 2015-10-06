@@ -10,7 +10,6 @@ uniform mat4 uMatrix;
 varying vec3 vNormal;
 
 void main() {
-
   gl_Position = uMatrix * aPosition;
   vNormal = aNormal;
 }

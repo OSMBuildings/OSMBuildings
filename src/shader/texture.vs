@@ -10,7 +10,6 @@ uniform mat4 uMatrix;
 varying vec2 vTexCoord;
 
 void main() {
-
   gl_Position = uMatrix * aPosition;
   vTexCoord = aTexCoord;
 }
