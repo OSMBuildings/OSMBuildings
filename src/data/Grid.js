@@ -12,8 +12,8 @@ data.Grid = {
     this.source = src;
     this.options = options || {};
 
-    if (options.bounds) {
-      this.fixedBounds = options.bounds;
+    if (this.options.bounds) {
+      this.fixedBounds = this.options.bounds;
     }
 
     MAP.on('change', function() {
