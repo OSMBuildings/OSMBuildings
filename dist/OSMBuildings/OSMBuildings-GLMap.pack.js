@@ -1745,6 +1745,7 @@
 
 	var MAP, glx, gl;
 	var MIN_ZOOM, MAX_ZOOM;
+	var BASE_URL;
 
 	var OSMBuildings = function(options) {
 	  options = options || {};
@@ -1752,6 +1753,8 @@
 	  if (options.style) {
 	    this.setStyle(options.style);
 	  }
+
+	  BASE_URL = options.baseURL || '.';
 
 	  render.bendRadius = 500;
 	  render.bendDistance = 500;
@@ -3685,7 +3688,7 @@
 	    });
 
 	    Activity.setBusy();
-	    var url = 'OSMBuildings/skydome.jpg';
+	    var url = BASE_URL + '/skydome.jpg';
 	    this.texture = new glx.texture.Image(url, function(image) {
 	      Activity.setIdle();
 	      if (image) {

@@ -120,6 +120,7 @@ minZoom | float | minimum allowed zoom
 maxZoom | float | maximum allowed zoom
 attribution | string | attribution, optional
 showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
+baseURL | string | for locating assets, this is relative to calling page 
 
 ### OSM Buildings methods
 
