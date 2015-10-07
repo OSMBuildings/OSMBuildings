@@ -24,7 +24,7 @@ var Events = {};
         return;
       }
     }
-  },
+  };
 
   Events.emit = function(type, payload) {
     if (!listeners[type]) {

@@ -9,6 +9,7 @@
     padding:1px 3px;
     background:rgba(255,255,255,0.5);
     font:11px sans-serif;
+    z-index: 10;
 }
 
 .glmap-attribution a {

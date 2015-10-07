@@ -1873,7 +1873,18 @@
 	    listeners[type].fn.push(fn);
 	  };
 
-	  Events.off = function(type, fn) {};
+	  Events.off = function(type, fn) {
+	    if (!listeners[type]) {
+	      return;
+	    }
+	    var listenerFn = listeners[type].fn;
+	    for (var i = 0; i < listenerFn.length; i++) {
+	      if (listenerFn[i] === fn) {
+	        listenerFn.splice(i, 1);
+	        return;
+	      }
+	    }
+	  };
 
 	  Events.emit = function(type, payload) {
 	    if (!listeners[type]) {
@@ -2439,11 +2450,11 @@
 	      this.fixedBounds = this.options.bounds;
 	    }
 
-	    MAP.on('change', function() {
+	    MAP.on('change', this._onChange = function() {
 	      this.update(1000);
 	    }.bind(this));
 
-	    MAP.on('resize', this.update.bind(this));
+	    MAP.on('resize', this._onResize = this.update.bind(this));
 
 	    this.update();
 	  },
@@ -2558,6 +2569,9 @@
 	  },
 
 	  destroy: function() {
+	    MAP.off('change', this._onChange);
+	    MAP.off('resize', this._onResize);
+
 	    clearTimeout(this.isDelayed);
 	    for (var key in this.tiles) {
 	      this.tiles[key].destroy();
@@ -3458,11 +3472,11 @@
 	    this.projMatrix = new glx.Matrix();
 	    this.viewProjMatrix = new glx.Matrix();
 
-	    MAP.on('resize', this.onResize.bind(this));
-	    this.onResize();
-
-	    MAP.on('change', this.onChange.bind(this));
+	    MAP.on('change', this._onChange = this.onChange.bind(this));
 	    this.onChange();
+
+	    MAP.on('resize', this._onResize = this.onResize.bind(this));
+	    this.onResize();
 
 	    gl.cullFace(gl.BACK);
 	    gl.enable(gl.CULL_FACE);
@@ -3536,6 +3550,9 @@
 	  },
 
 	  destroy: function() {
+	    MAP.off('change', this._onChange);
+	    MAP.off('resize', this._onResize);
+
 	    this.stop();
 	    render.Interaction.destroy();
 	    render.SkyDome.destroy();
@@ -4282,11 +4299,11 @@
 	      this.fixedBounds = this.options.bounds;
 	    }
 
-	    MAP.on('change', function() {
+	    MAP.on('change', this._onChange = function() {
 	      this.update(1000);
 	    }.bind(this));
 
-	    MAP.on('resize', this.update.bind(this));
+	    MAP.on('resize', this._onResize = this.update.bind(this));
 
 	    this.update();
 	  },
@@ -4403,6 +4420,9 @@
 	  },
 
 	  destroy: function() {
+	    MAP.off('change', this._onChange);
+	    MAP.off('resize', this._onResize);
+
 	    clearTimeout(this.isDelayed);
 	    for (var key in this.tiles) {
 	      this.tiles[key].destroy();
