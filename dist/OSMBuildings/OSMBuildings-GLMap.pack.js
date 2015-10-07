@@ -1893,7 +1893,7 @@
 	  };
 
 	  Events.destroy = function() {
-	    listeners = null;
+	    listeners = {};
 	  };
 
 	}());
@@ -2050,7 +2050,6 @@
 
 	  Request.destroy = function() {
 	    this.abortAll();
-	    queue = null;
 	  };
 
 	}());
@@ -2416,8 +2415,8 @@
 	//    },
 
 	    destroy: function() {
-	      this.items = null;
-	//    this.blockers = null;
+	      this.items = [];
+	//    this.blockers = [];
 	    }
 	  }
 	};
@@ -2441,7 +2440,7 @@
 	    }
 
 	    MAP.on('change', function() {
-	      this.update(2000);
+	      this.update(1000);
 	    }.bind(this));
 
 	    MAP.on('resize', this.update.bind(this));
@@ -2563,7 +2562,7 @@
 	    for (var key in this.tiles) {
 	      this.tiles[key].destroy();
 	    }
-	    this.tiles = null;
+	    this.tiles = [];
 	  }
 	};
 
@@ -2589,7 +2588,6 @@
 	  destroy: function() {
 	    if (this.mesh) {
 	      this.mesh.destroy();
-	      this.mesh = null;
 	    }
 	  }
 	};
@@ -2831,7 +2829,7 @@
 	        this.request.abort();
 	      }
 
-	      this.items = null;
+	      this.items = [];
 
 	      if (this.isReady) {
 	        data.Index.remove(this);
@@ -2985,7 +2983,7 @@
 	        this.request.abort();
 	      }
 
-	      this.items = null;
+	      this.items = [];
 
 	      if (this.isReady) {
 	        data.Index.remove(this);
@@ -4285,7 +4283,7 @@
 	    }
 
 	    MAP.on('change', function() {
-	      this.update(2000);
+	      this.update(1000);
 	    }.bind(this));
 
 	    MAP.on('resize', this.update.bind(this));
@@ -4409,7 +4407,7 @@
 	    for (var key in this.tiles) {
 	      this.tiles[key].destroy();
 	    }
-	    this.tiles = null;
+	    this.tiles = [];
 	  }
 	};
 

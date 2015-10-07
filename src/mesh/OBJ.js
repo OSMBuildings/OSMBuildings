@@ -136,7 +136,7 @@ mesh.OBJ = (function() {
         this.request.abort();
       }
 
-      this.items = null;
+      this.items = [];
 
       if (this.isReady) {
         data.Index.remove(this);

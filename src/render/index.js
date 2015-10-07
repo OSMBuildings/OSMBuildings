@@ -6,11 +6,11 @@ var render = {
     this.projMatrix = new glx.Matrix();
     this.viewProjMatrix = new glx.Matrix();
 
-    MAP.on('resize', this.onResize.bind(this));
-    this.onResize();
-
-    MAP.on('change', this.onChange.bind(this));
+    MAP.on('change', this._onChange = this.onChange.bind(this));
     this.onChange();
+
+    MAP.on('resize', this._onResize = this.onResize.bind(this));
+    this.onResize();
 
     gl.cullFace(gl.BACK);
     gl.enable(gl.CULL_FACE);
@@ -84,6 +84,9 @@ var render = {
   },
 
   destroy: function() {
+    MAP.off('change', this._onChange);
+    MAP.off('resize', this._onResize);
+
     this.stop();
     render.Interaction.destroy();
     render.SkyDome.destroy();

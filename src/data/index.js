@@ -48,8 +48,8 @@ var data = {
 //    },
 
     destroy: function() {
-      this.items = null;
-//    this.blockers = null;
+      this.items = [];
+//    this.blockers = [];
     }
   }
 };

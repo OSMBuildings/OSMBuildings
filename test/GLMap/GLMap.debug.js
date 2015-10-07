@@ -173,7 +173,18 @@ GLMap.prototype = {
     return this;
   },
 
-  off: function(type, fn) {},
+  off: function(type, fn) {
+    if (!this.listeners[type]) {
+      return;
+    }
+    var listenerFn = this.listeners[type].fn;
+    for (var i = 0; i < listenerFn.length; i++) {
+      if (listenerFn[i] === fn) {
+        listenerFn.splice(i, 1);
+        return;
+      }
+    }
+  },
 
   setDisabled: function(flag) {
     this.interaction.disabled = !!flag;

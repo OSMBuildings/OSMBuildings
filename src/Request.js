@@ -81,7 +81,6 @@ var Request = {};
 
   Request.destroy = function() {
     this.abortAll();
-    queue = null;
   };
 
 }());

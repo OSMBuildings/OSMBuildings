@@ -16,11 +16,11 @@ data.Grid = {
       this.fixedBounds = this.options.bounds;
     }
 
-    MAP.on('change', function() {
+    MAP.on('change', this._onChange = function() {
       this.update(1000);
     }.bind(this));
 
-    MAP.on('resize', this.update.bind(this));
+    MAP.on('resize', this._onResize = this.update.bind(this));
 
     this.update();
   },
@@ -135,10 +135,13 @@ data.Grid = {
   },
 
   destroy: function() {
+    MAP.off('change', this._onChange);
+    MAP.off('resize', this._onResize);
+
     clearTimeout(this.isDelayed);
     for (var key in this.tiles) {
       this.tiles[key].destroy();
     }
-    this.tiles = null;
+    this.tiles = [];
   }
 };

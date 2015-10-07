@@ -13,7 +13,18 @@ var Events = {};
     listeners[type].fn.push(fn);
   };
 
-  Events.off = function(type, fn) {};
+  Events.off = function(type, fn) {
+    if (!listeners[type]) {
+      return;
+    }
+    var listenerFn = listeners[type].fn;
+    for (var i = 0; i < listenerFn.length; i++) {
+      if (listenerFn[i] === fn) {
+        listenerFn.splice(i, 1);
+        return;
+      }
+    }
+  },
 
   Events.emit = function(type, payload) {
     if (!listeners[type]) {
@@ -33,7 +44,7 @@ var Events = {};
   };
 
   Events.destroy = function() {
-    listeners = null;
+    listeners = {};
   };
 
 }());

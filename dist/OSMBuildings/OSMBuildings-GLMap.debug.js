@@ -1847,7 +1847,7 @@ var Events = {};
   };
 
   Events.destroy = function() {
-    listeners = null;
+    listeners = {};
   };
 
 }());
@@ -2004,7 +2004,6 @@ var Request = {};
 
   Request.destroy = function() {
     this.abortAll();
-    queue = null;
   };
 
 }());
@@ -2370,8 +2369,8 @@ var data = {
 //    },
 
     destroy: function() {
-      this.items = null;
-//    this.blockers = null;
+      this.items = [];
+//    this.blockers = [];
     }
   }
 };
@@ -2513,12 +2512,11 @@ data.Grid = {
   },
 
   destroy: function() {
-    debugger
     clearTimeout(this.isDelayed);
     for (var key in this.tiles) {
       this.tiles[key].destroy();
     }
-    this.tiles = null;
+    this.tiles = [];
   }
 };
 
@@ -2544,7 +2542,6 @@ data.Tile.prototype = {
   destroy: function() {
     if (this.mesh) {
       this.mesh.destroy();
-      this.mesh = null;
     }
   }
 };
@@ -2786,7 +2783,7 @@ mesh.GeoJSON = (function() {
         this.request.abort();
       }
 
-      this.items = null;
+      this.items = [];
 
       if (this.isReady) {
         data.Index.remove(this);
@@ -2940,7 +2937,7 @@ mesh.OBJ = (function() {
         this.request.abort();
       }
 
-      this.items = null;
+      this.items = [];
 
       if (this.isReady) {
         data.Index.remove(this);
@@ -4360,12 +4357,11 @@ basemap.Grid = {
   },
 
   destroy: function() {
-    debugger
     clearTimeout(this.isDelayed);
     for (var key in this.tiles) {
       this.tiles[key].destroy();
     }
-    this.tiles = null;
+    this.tiles = [];
   }
 };
 

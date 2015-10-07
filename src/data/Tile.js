@@ -20,7 +20,6 @@ data.Tile.prototype = {
   destroy: function() {
     if (this.mesh) {
       this.mesh.destroy();
-      this.mesh = null;
     }
   }
 };
