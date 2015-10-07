@@ -58,7 +58,7 @@
     }
   </style>
   <link rel="stylesheet" href="GLMap/GLMap.css">
-  <script src="GLMap/GLMap.js"></script>
+  <script src="GLMap/GLMap.debug.js"></script>
   <script src="loader.js"></script>
 </head>
 
@@ -88,6 +88,7 @@
   var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
 //  position: { latitude:40.69924, longitude:-74.01692 },
+    //bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
     zoom: 17,
     rotation: 0,
     tilt: 0, // optional
@@ -120,7 +121,6 @@
     // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
-    buffer: 0 // optional
 //    color: '#00ff00'
     // buffer: 0, // how many tiles to preload around visible area - not yet!
     // bounds
