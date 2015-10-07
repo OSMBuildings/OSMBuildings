@@ -86,6 +86,7 @@ bend | float | map bend
 disabled | boolean | disables user input, default false
 minZoom | float | minimum allowed zoom
 maxZoom | float | maximum allowed zoom
+bounds | object | n, e, s, w coordinates of bounds where the map can be moved within
 attribution | string | attribution, optional
 state | boolean | stores map position/rotation in url, default false
 
@@ -127,8 +128,8 @@ method | parameters | description
 addTo | map | adds it as a layer to a GLMap instance
 addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
 addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color}
-addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {scale, rotation, elevation, id, color}
-addTileLayer | url, options | add a map tile set and specify options {buffer}
+addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color}
+addTileLayer | url, options | add a map tile set and specify options {bounds}
 getTarget | x, y | get a building id at position
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
 transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position

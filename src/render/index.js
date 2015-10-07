@@ -29,6 +29,11 @@ var render = {
       requestAnimationFrame(function() {
         gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+          return;
+        }
+
         render.SkyDome.render();
         render.Buildings.render();
         render.Basemap.render();

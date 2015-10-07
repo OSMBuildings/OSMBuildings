@@ -2380,7 +2380,8 @@ var data = {
 data.Grid = {
 
   tiles: {},
-  internalZoom: 16,
+  fixedZoom: 16,
+  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
 
   init: function(src, options) {
     if (src === undefined || src === false || src === '') {
@@ -2388,8 +2389,10 @@ data.Grid = {
     }
     this.source = src;
     this.options = options || {};
-    // TODO: buffer is a bad idea with fixed internalZoom
-    this.buffer = this.options.buffer || 1;
+
+    if (options.bounds) {
+      this.fixedBounds = options.bounds;
+    }
 
     MAP.on('change', function() {
       this.update(2000);
@@ -2422,8 +2425,25 @@ data.Grid = {
   },
 
   updateBounds: function() {
+    var zoom = Math.round(this.fixedZoom || MAP.zoom);
+
+    if (this.fixedBounds) {
+      var
+        min = project(this.fixedBounds.s, this.fixedBounds.w, 1<<zoom),
+        max = project(this.fixedBounds.n, this.fixedBounds.e, 1<<zoom);
+
+      this.bounds = {
+        zoom: zoom,
+        minX: (min.x <<0) - this.buffer,
+        minY: (min.y <<0) - this.buffer,
+        maxX: (max.x <<0) + this.buffer,
+        maxY: (max.y <<0) + this.buffer
+      };
+
+      return;
+    }
+
     var
-      zoom = Math.round(this.internalZoom || MAP.zoom),
       radius = 1500, // render.SkyDome.radius,
       ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
@@ -3417,6 +3437,11 @@ var render = {
       requestAnimationFrame(function() {
         gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+          return;
+        }
+
         render.SkyDome.render();
         render.Buildings.render();
         render.Basemap.render();
@@ -4203,11 +4228,15 @@ var basemap = {};
 basemap.Grid = {
 
   tiles: {},
+  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
 
   init: function(src, options) {
     this.source = src;
     this.options = options || {};
-    this.buffer = this.options.buffer || 1;
+
+    if (options.bounds) {
+      this.fixedBounds = options.bounds;
+    }
 
     MAP.on('change', function() {
       this.update(2000);
@@ -4241,8 +4270,25 @@ basemap.Grid = {
   },
 
   updateBounds: function() {
+    var zoom = Math.round(this.fixedZoom || MAP.zoom);
+
+    if (this.fixedBounds) {
+      var
+        min = project(this.fixedBounds.s, this.fixedBounds.w, 1<<zoom),
+        max = project(this.fixedBounds.n, this.fixedBounds.e, 1<<zoom);
+
+      this.bounds = {
+        zoom: zoom,
+        minX: (min.x <<0) - this.buffer,
+        minY: (min.y <<0) - this.buffer,
+        maxX: (max.x <<0) + this.buffer,
+        maxY: (max.y <<0) + this.buffer
+      };
+
+      return;
+    }
+
     var
-      zoom = Math.round(this.internalZoom || MAP.zoom),
       radius = 1500, // render.SkyDome.radius,
       ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
