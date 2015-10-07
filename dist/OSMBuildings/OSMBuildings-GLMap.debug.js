@@ -1797,8 +1797,8 @@ OSMBuildings.prototype = {
 
   destroy: function() {
     render.destroy();
-    this.data.Grid.destroy();
-    this.basemap.Grid.destroy();
+    data.Grid.destroy();
+    basemap.Grid.destroy();
   }
 };
 
@@ -2395,7 +2395,7 @@ data.Grid = {
     }
 
     MAP.on('change', function() {
-      this.update(2000);
+      this.update(1000);
     }.bind(this));
 
     MAP.on('resize', this.update.bind(this));
@@ -2513,6 +2513,7 @@ data.Grid = {
   },
 
   destroy: function() {
+    debugger
     clearTimeout(this.isDelayed);
     for (var key in this.tiles) {
       this.tiles[key].destroy();
@@ -3494,7 +3495,7 @@ var render = {
   destroy: function() {
     this.stop();
     render.Interaction.destroy();
-    render.Skydome.destroy();
+    render.SkyDome.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
   }
@@ -4239,7 +4240,7 @@ basemap.Grid = {
     }
 
     MAP.on('change', function() {
-      this.update(2000);
+      this.update(1000);
     }.bind(this));
 
     MAP.on('resize', this.update.bind(this));
@@ -4359,6 +4360,7 @@ basemap.Grid = {
   },
 
   destroy: function() {
+    debugger
     clearTimeout(this.isDelayed);
     for (var key in this.tiles) {
       this.tiles[key].destroy();

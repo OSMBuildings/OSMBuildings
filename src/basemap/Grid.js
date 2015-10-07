@@ -13,7 +13,7 @@ basemap.Grid = {
     }
 
     MAP.on('change', function() {
-      this.update(2000);
+      this.update(1000);
     }.bind(this));
 
     MAP.on('resize', this.update.bind(this));

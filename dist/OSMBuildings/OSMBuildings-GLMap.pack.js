@@ -1843,8 +1843,8 @@
 
 	  destroy: function() {
 	    render.destroy();
-	    this.data.Grid.destroy();
-	    this.basemap.Grid.destroy();
+	    data.Grid.destroy();
+	    basemap.Grid.destroy();
 	  }
 	};
 
@@ -3540,7 +3540,7 @@
 	  destroy: function() {
 	    this.stop();
 	    render.Interaction.destroy();
-	    render.Skydome.destroy();
+	    render.SkyDome.destroy();
 	    render.Buildings.destroy();
 	    render.Basemap.destroy();
 	  }

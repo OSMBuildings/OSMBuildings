@@ -86,7 +86,7 @@ var render = {
   destroy: function() {
     this.stop();
     render.Interaction.destroy();
-    render.Skydome.destroy();
+    render.SkyDome.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
   }

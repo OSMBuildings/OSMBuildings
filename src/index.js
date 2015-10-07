@@ -98,8 +98,8 @@ OSMBuildings.prototype = {
 
   destroy: function() {
     render.destroy();
-    this.data.Grid.destroy();
-    this.basemap.Grid.destroy();
+    data.Grid.destroy();
+    basemap.Grid.destroy();
   }
 };
 
