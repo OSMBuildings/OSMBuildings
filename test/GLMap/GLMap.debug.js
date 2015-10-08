@@ -59,7 +59,7 @@ GLMap.prototype = {
     if (this.attribution) {
       attribution.unshift(this.attribution);
     }
-    this.attributionDiv.innerHTML = attribution.join(' &middot; ');
+    this.attributionDiv.innerHTML = attribution.join(' · ');
   },
 
   restoreState: function(options) {

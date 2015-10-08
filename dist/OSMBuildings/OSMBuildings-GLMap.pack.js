@@ -3599,6 +3599,7 @@
 
 	        //render.NormalMap.render();
 
+	/*
 	        render.DepthMap.render();
 	        render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
 	        // first=source is ambient map, second=dest is color framebuffer
@@ -3606,7 +3607,7 @@
 	        gl.enable(gl.BLEND);
 	        render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
 	        gl.disable(gl.BLEND);
-
+	*/
 	      }.bind(this));
 	    }.bind(this), 17);
 	  },
