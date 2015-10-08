@@ -31,13 +31,13 @@ render.HudRect = {
                   1, 1, 1E-5,
                   0, 1, 1E-5);
 
-    texCoords.push(0,0,
-                   1,0,
-                   1,1);
+    texCoords.push(0.5,0.5,
+                   1.0,0.5,
+                   1.0,1.0);
 
-    texCoords.push(0,0,
-                   1,1,
-                   0,1);
+    texCoords.push(0.5,0.5,
+                   1.0,1.0,
+                   0.5,1.0);
 
     return { vertices: vertices , texCoords: texCoords };
   },
