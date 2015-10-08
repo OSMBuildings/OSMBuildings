@@ -19,12 +19,12 @@ render.NormalMap = {
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
-
     // enable texture filtering for framebuffer texture
     gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
+    this.mapPlane = new mesh.MapPlane();
   },
 
   render: function() {
@@ -42,7 +42,7 @@ render.NormalMap = {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var
-      dataItems = data.Index.items,
+      dataItems = data.Index.items.concat([this.mapPlane]),
       item,
       modelMatrix, mvp;
 

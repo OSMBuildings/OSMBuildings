@@ -24,6 +24,7 @@
 
     "src/mesh/index.js",
     "src/mesh/GeoJSON.js",
+    "src/mesh/MapPlane.js",
     "src/mesh/OBJ.js",
 
     "src/format/GeoJSON.js",
