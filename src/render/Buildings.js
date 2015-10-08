@@ -5,8 +5,8 @@ render.Buildings = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
-      attributes: ["aPosition", "aColor", "aNormal", "aIDColor"],
-      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uNormalTransform", "uAlpha", "uLightColor", "uLightDirection", "uFogRadius", "uFogColor", "uBendRadius", "uBendDistance", "uHighlightColor", "uHighlightID"]
+      attributes: ['aPosition', 'aColor', 'aNormal', 'aIDColor'],
+      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uNormalTransform', 'uAlpha', 'uLightColor', 'uLightDirection', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uHighlightColor', 'uHighlightID']
     });
   },
 

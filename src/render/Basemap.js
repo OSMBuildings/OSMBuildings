@@ -5,8 +5,8 @@ render.Basemap = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
-      attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uTexIndex", "uFogRadius", "uFogColor", "uBendRadius", "uBendDistance"]
+      attributes: ['aPosition', 'aTexCoord'],
+      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance']
     });
   },
 

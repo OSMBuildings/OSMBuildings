@@ -13,8 +13,8 @@ render.HudRect = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
-      attributes: ["aPosition", "aTexCoord"],
-      uniforms: [ "uMatrix", "uTexIndex", "uColor"]
+      attributes: ['aPosition', 'aTexCoord'],
+      uniforms: [ 'uMatrix', 'uTexIndex', 'uColor']
     });
 
     this.isReady = true;

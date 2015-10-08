@@ -15,8 +15,8 @@ render.DepthMap = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.depth.vertex,
       fragmentShader: Shaders.depth.fragment,
-      attributes: ["aPosition"],
-      uniforms: ["uMatrix"]
+      attributes: ['aPosition'],
+      uniforms: ['uMatrix']
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);

@@ -5,7 +5,7 @@
   "version": "1.2.10",
   "homepage": "http://osmbuildings.org",
   "author": "@kekscom",
-  "contributors": [],
+  "contributors": ["@rbuch703"],
   "maintainers": [],
   "repository": {
     "type": "git",

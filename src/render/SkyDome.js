@@ -9,8 +9,8 @@ render.SkyDome = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.skydome.vertex,
       fragmentShader: Shaders.skydome.fragment,
-      attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uModelMatrix", "uViewMatrix", "uProjMatrix", "uMatrix", "uTexIndex", "uFogColor", "uBendRadius", "uBendDistance"]
+      attributes: ['aPosition', 'aTexCoord'],
+      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogColor', 'uBendRadius', 'uBendDistance']
     });
 
     Activity.setBusy();

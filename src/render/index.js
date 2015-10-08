@@ -48,7 +48,7 @@ var render = {
         gl.enable(gl.BLEND);
         render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
         gl.disable(gl.BLEND);
-*/        
+*/
       }.bind(this));
     }.bind(this), 17);
   },

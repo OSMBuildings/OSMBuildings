@@ -14,8 +14,8 @@ render.NormalMap = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.normalmap.vertex,
       fragmentShader: Shaders.normalmap.fragment,
-      attributes: ["aPosition", "aNormal"],
-      uniforms: [/*"uModelMatrix", "uViewMatrix", "uProjMatrix",*/ "uMatrix"]
+      attributes: ['aPosition', 'aNormal'],
+      uniforms: [/*'uModelMatrix', 'uViewMatrix', 'uProjMatrix',*/ 'uMatrix']
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);

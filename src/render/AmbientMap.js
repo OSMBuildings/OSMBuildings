@@ -7,8 +7,8 @@ render.AmbientMap = {
     this.shader = new glx.Shader({
       vertexShader:   Shaders.ambientFromDepth.vertex,
       fragmentShader: Shaders.ambientFromDepth.fragment,
-      attributes: ["aPosition", "aTexCoord"],
-      uniforms: ["uMatrix", "uInverseTexWidth", "uInverseTexHeight", "uTexIndex"]
+      attributes: ['aPosition', 'aTexCoord'],
+      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
