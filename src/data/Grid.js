@@ -1,32 +1,30 @@
 
-var Grid = function(source, tileClass, options) {
-  this.source = source;
-  this.tileClass = tileClass;
+data.Grid = {
 
-  options = options || {};
-
-  this.fixedBounds = options.bounds;
-  this.fixedZoom = options.fixedZoom;
-  this.minZoom = options.minZoom; // not used yet
-  this.maxZoom = options.maxZoom; // not used yet
-
-  this.tileOptions = { color:options.color };
-
-  MAP.on('change', this._onChange = function() {
-    this.update(250);
-  }.bind(this));
-
-  MAP.on('resize', this._onResize = this.update.bind(this));
-
-  this.update();
-};
-
-Grid.prototype = {
   tiles: {},
+  fixedZoom: 16,
   buffer: 1,
 
-  // strategy: start loading after {delay}ms, skip any attempts until then
-  // effectively loads in intervals during movement
+  init: function(src, options) {
+    this.source = src;
+    this.options = options || {};
+
+    if (this.options.bounds) {
+      this.fixedBounds = this.options.bounds;
+    }
+
+    this.fixedZoom = options.fixedZoom;
+
+    MAP.on('change', this._onChange = function() {
+    this.update(250);
+    }.bind(this));
+
+    MAP.on('resize', this._onResize = this.update.bind(this));
+
+    this.update();
+  },
+
+  // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
   update: function(delay) {
     if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
@@ -38,7 +36,7 @@ Grid.prototype = {
     }
 
     if (this.isDelayed) {
-      return;
+      clearTimeout(this.isDelayed);
     }
 
     this.isDelayed = setTimeout(function() {
@@ -105,8 +103,7 @@ Grid.prototype = {
         if (this.tiles[key]) {
           continue;
         }
-
-        this.tiles[key] = new this.tileClass(tileX, tileY, bounds.zoom, this.tileOptions);
+        this.tiles[key] = new data.Tile(tileX, tileY, bounds.zoom, this.options);
         // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
@@ -126,7 +123,7 @@ Grid.prototype = {
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
 
-    //this.purge();
+    this.purge();
   },
 
   purge: function() {
