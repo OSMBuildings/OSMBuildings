@@ -11,9 +11,15 @@ render.Basemap = {
   },
 
   render: function() {
-    if (!APP._basemapGrid) {
+    var layer = APP._basemapGrid;
+
+    if (!layer) {
       return;
-    };
+    }
+
+    if (MAP.zoom < layer.minZoom || MAP.zoom > layer.maxZoom) {
+      return;
+    }
 
     var
       fogColor = render.fogColor,
@@ -31,12 +37,10 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    var tiles = APP._basemapGrid.tiles;
+    for (var key in layer.tiles) {
+      tile = layer.tiles[key];
 
-    for (var key in tiles) {
-      tile = tiles[key];
-
-      if (!tile.isReady || !tile.isVisible(APP._basemapGrid.bounds)) {
+      if (!tile.isReady || !tile.isVisible(layer.bounds)) {
         continue;
       }
 

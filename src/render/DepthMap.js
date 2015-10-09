@@ -31,9 +31,7 @@ render.DepthMap = {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP);*/
 
-
     this.mapPlane = new mesh.MapPlane();
-    
   },
 
   // TODO: throttle calls
@@ -57,6 +55,10 @@ render.DepthMap = {
 
     for (var i = 0; i < dataItems.length; i++) {
       item = dataItems[i];
+
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+        continue;
+      }
 
       if (!(modelMatrix = item.getMatrix())) {
         continue;

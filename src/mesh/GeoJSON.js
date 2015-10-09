@@ -59,6 +59,12 @@ mesh.GeoJSON = (function() {
     this.elevation = options.elevation || 0;
     this.position  = {};
 
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
+
     this.data = {
       vertices: [],
       normals: [],

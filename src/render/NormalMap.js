@@ -44,10 +44,14 @@ render.NormalMap = {
     var
       dataItems = data.Index.items.concat([this.mapPlane]),
       item,
-      modelMatrix, mvp;
+      modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
+
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+        continue;
+      }
 
       if (!(modelMatrix = item.getMatrix())) {
         continue;

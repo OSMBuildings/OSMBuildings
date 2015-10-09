@@ -23,6 +23,9 @@ mesh.MapPlane = (function() {
 
     this.radius = options.radius || 500;
     this.createGlGeometry();
+
+    this.minZoom = APP.minZoom;
+    this.maxZoom = APP.maxZoom;
   }
 
   constructor.prototype = {
