@@ -56,7 +56,6 @@ render.AmbientMap = {
     gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/this.viewportSize);
     gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/this.viewportSize);
 
-
     this.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 

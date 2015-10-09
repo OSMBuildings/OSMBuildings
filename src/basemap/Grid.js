@@ -14,6 +14,8 @@ basemap.Grid = {
 
     this.fixedZoom = options.fixedZoom;
 
+    this.tileOptions = { color:options.color };
+
     this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
     this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
     if (this.maxZoom < this.minZoom) {
@@ -109,7 +111,8 @@ basemap.Grid = {
         if (this.tiles[key]) {
           continue;
         }
-        this.tiles[key] = new basemap.Tile(tileX, tileY, bounds.zoom);
+
+        this.tiles[key] = new basemap.Tile(tileX, tileY, bounds.zoom, this.tileOptions);
         // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }

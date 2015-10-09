@@ -19,10 +19,6 @@ render.Interaction = {
 
   // TODO: throttle calls
   getTarget: function(x, y) {
-    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
-      return;
-    }
-
     var
       shader = this.shader,
       framebuffer = this.framebuffer;
@@ -42,10 +38,14 @@ render.Interaction = {
     var
       dataItems = data.Index.items,
       item,
-      modelMatrix, mvp;
+      modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
+
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+        continue;
+      }
 
       if (!(modelMatrix = item.getMatrix())) {
         continue;

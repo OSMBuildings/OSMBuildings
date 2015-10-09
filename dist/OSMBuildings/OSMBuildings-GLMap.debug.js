@@ -1697,18 +1697,19 @@ if (typeof define === 'function') {
   global.GLX = GLX;
 }
 
+var APP;
 var MAP, glx, gl;
-var MIN_ZOOM, MAX_ZOOM;
-var BASE_URL;
 
 var OSMBuildings = function(options) {
+  APP = this; // references to this. Should make other globals obsolete.
+
   options = options || {};
 
   if (options.style) {
     this.setStyle(options.style);
   }
 
-  BASE_URL = options.baseURL || '.';
+  APP.baseURL = options.baseURL || '.';
 
   render.bendRadius = 500;
   render.bendDistance = 500;
@@ -1718,10 +1719,10 @@ var OSMBuildings = function(options) {
 
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
-  MIN_ZOOM = parseFloat(options.minZoom) || 15;
-  MAX_ZOOM = parseFloat(options.maxZoom) || 22;
-  if (MAX_ZOOM < MIN_ZOOM) {
-    MAX_ZOOM = MIN_ZOOM;
+  APP.minZoom = parseFloat(options.minZoom) || 15;
+  APP.maxZoom = parseFloat(options.maxZoom) || 22;
+  if (APP.maxZoom < APP.minZoom) {
+    APP.maxZoom = APP.minZoom;
   }
 };
 
@@ -1782,6 +1783,8 @@ OSMBuildings.prototype = {
   },
 
   addGeoJSONTiles: function(url, options) {
+    options = options || {};
+    options.fixedZoom = options.fixedZoom || 16;
     return data.Grid.init(url, options);
   },
 
@@ -1918,9 +1921,6 @@ var Activity = {};
 var PI = Math.PI;
 
 var TILE_SIZE = 256;
-
-var DATA_KEY = 'anonymous';
-var DATA_SRC = 'http://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json';
 
 var DEFAULT_HEIGHT = 10;
 var HEIGHT_SCALE = 0.7;
@@ -2393,13 +2393,9 @@ var data = {
 data.Grid = {
 
   tiles: {},
-  fixedZoom: 16,
   buffer: 1,
 
   init: function(src, options) {
-    if (src === undefined || src === false || src === '') {
-      src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
-    }
     this.source = src;
     this.options = options || {};
 
@@ -2409,8 +2405,14 @@ data.Grid = {
 
     this.fixedZoom = options.fixedZoom;
 
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
+
     MAP.on('change', this._onChange = function() {
-      this.update(1000);
+    this.update(250);
     }.bind(this));
 
     MAP.on('resize', this._onResize = this.update.bind(this));
@@ -2420,7 +2422,7 @@ data.Grid = {
 
   // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
   update: function(delay) {
-    if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
       return;
     }
 
@@ -2458,8 +2460,9 @@ data.Grid = {
       return;
     }
 
+    // TODO: use visibility trapezoid here
     var
-      radius = 1500, // render.SkyDome.radius,
+      radius = 1500,
       ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
 
@@ -2497,6 +2500,7 @@ data.Grid = {
           continue;
         }
         this.tiles[key] = new data.Tile(tileX, tileY, bounds.zoom, this.options);
+        // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }
@@ -2628,6 +2632,12 @@ mesh.GeoJSON = (function() {
     this.rotation  = options.rotation  || 0;
     this.elevation = options.elevation || 0;
     this.position  = {};
+
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
 
     this.data = {
       vertices: [],
@@ -2843,6 +2853,9 @@ mesh.MapPlane = (function() {
 
     this.radius = options.radius || 500;
     this.createGlGeometry();
+
+    this.minZoom = APP.minZoom;
+    this.maxZoom = APP.maxZoom;
   }
 
   constructor.prototype = {
@@ -2924,6 +2937,12 @@ mesh.OBJ = (function() {
     this.rotation  = options.rotation  || 0;
     this.elevation = options.elevation || 0;
     this.position  = position;
+
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
 
     this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 
@@ -3545,7 +3564,7 @@ var render = {
         gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+        if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
           return;
         }
 
@@ -3635,10 +3654,6 @@ render.Interaction = {
 
   // TODO: throttle calls
   getTarget: function(x, y) {
-    if (MAP.zoom < MIN_ZOOM) {
-      return;
-    }
-
     var
       shader = this.shader,
       framebuffer = this.framebuffer;
@@ -3658,10 +3673,14 @@ render.Interaction = {
     var
       dataItems = data.Index.items,
       item,
-      modelMatrix, mvp;
+      modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
+
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+        continue;
+      }
 
       if (!(modelMatrix = item.getMatrix())) {
         continue;
@@ -3738,7 +3757,7 @@ render.SkyDome = {
     });
 
     Activity.setBusy();
-    var url = BASE_URL + '/skydome.jpg';
+    var url = APP.baseURL + '/skydome.jpg';
     this.texture = new glx.texture.Image(url, function(image) {
       Activity.setIdle();
       if (image) {
@@ -3905,6 +3924,10 @@ render.Buildings = {
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+        continue;
+      }
+
       if (!(modelMatrix = item.getMatrix())) {
         continue;
       }
@@ -3955,6 +3978,16 @@ render.Basemap = {
   },
 
   render: function() {
+    var layer = basemap.Grid;
+
+    if (!layer) {
+      return;
+    }
+
+    if (MAP.zoom < layer.minZoom || MAP.zoom > layer.maxZoom) {
+      return;
+    }
+
     var
       fogColor = render.fogColor,
       shader = this.shader,
@@ -3971,12 +4004,10 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    var tiles = basemap.Grid.tiles;
+    for (var key in layer.tiles) {
+      tile = layer.tiles[key];
 
-    for (var key in tiles) {
-      tile = tiles[key];
-
-      if (!tile.isReady || !tile.isVisible(basemap.Grid.bounds)) {
+      if (!tile.isReady || !tile.isVisible(layer.bounds)) {
         continue;
       }
 
@@ -4130,10 +4161,14 @@ render.NormalMap = {
     var
       dataItems = data.Index.items.concat([this.mapPlane]),
       item,
-      modelMatrix, mvp;
+      modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
+
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+        continue;
+      }
 
       if (!(modelMatrix = item.getMatrix())) {
         continue;
@@ -4202,9 +4237,7 @@ render.DepthMap = {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP);*/
 
-
     this.mapPlane = new mesh.MapPlane();
-    
   },
 
   // TODO: throttle calls
@@ -4228,6 +4261,10 @@ render.DepthMap = {
 
     for (var i = 0; i < dataItems.length; i++) {
       item = dataItems[i];
+
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+        continue;
+      }
 
       if (!(modelMatrix = item.getMatrix())) {
         continue;
@@ -4322,7 +4359,6 @@ render.AmbientMap = {
     gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/this.viewportSize);
     gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/this.viewportSize);
 
-
     this.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
@@ -4356,8 +4392,7 @@ var basemap = {};
 basemap.Grid = {
 
   tiles: {},
-  fixedZoom: 16,
-  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
+  buffer: 1,
 
   init: function(src, options) {
     this.source = src;
@@ -4369,8 +4404,16 @@ basemap.Grid = {
 
     this.fixedZoom = options.fixedZoom;
 
+  this.tileOptions = { color:options.color };
+
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
+
     MAP.on('change', this._onChange = function() {
-      this.update(1000);
+    this.update(250);
     }.bind(this));
 
     MAP.on('resize', this._onResize = this.update.bind(this));
@@ -4381,7 +4424,7 @@ basemap.Grid = {
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
-    if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
       return;
     }
 
@@ -4419,8 +4462,9 @@ basemap.Grid = {
       return;
     }
 
+    // TODO: use visibility trapezoid here
     var
-      radius = 1500, // render.SkyDome.radius,
+      radius = 1500,
       ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
 
@@ -4457,6 +4501,7 @@ basemap.Grid = {
         if (this.tiles[key]) {
           continue;
         }
+
         this.tiles[key] = new basemap.Tile(tileX, tileY, bounds.zoom);
         // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });

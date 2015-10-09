@@ -15,6 +15,12 @@ mesh.OBJ = (function() {
     this.elevation = options.elevation || 0;
     this.position  = position;
 
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
+
     this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
 
     this.data = {
