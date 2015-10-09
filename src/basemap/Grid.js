@@ -2,6 +2,7 @@
 basemap.Grid = {
 
   tiles: {},
+  fixedZoom: 16,
   buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
 
   init: function(src, options) {
@@ -11,6 +12,8 @@ basemap.Grid = {
     if (this.options.bounds) {
       this.fixedBounds = this.options.bounds;
     }
+
+    this.fixedZoom = options.fixedZoom;
 
     MAP.on('change', this._onChange = function() {
       this.update(1000);
