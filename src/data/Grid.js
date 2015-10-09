@@ -2,7 +2,6 @@
 data.Grid = {
 
   tiles: {},
-  fixedZoom: 16,
   buffer: 1,
 
   init: function(src, options) {
@@ -15,6 +14,12 @@ data.Grid = {
 
     this.fixedZoom = options.fixedZoom;
 
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
+
     MAP.on('change', this._onChange = function() {
     this.update(250);
     }.bind(this));
@@ -26,7 +31,7 @@ data.Grid = {
 
   // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
   update: function(delay) {
-    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
+    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
       return;
     }
 

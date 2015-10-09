@@ -84,6 +84,8 @@ OSMBuildings.prototype = {
   },
 
   addGeoJSONTiles: function(url, options) {
+    options = options || {};
+    options.fixedZoom = options.fixedZoom || 16;
     return data.Grid.init(url, options);
   },
 

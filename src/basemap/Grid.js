@@ -2,8 +2,7 @@
 basemap.Grid = {
 
   tiles: {},
-  fixedZoom: 16,
-  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
+  buffer: 1,
 
   init: function(src, options) {
     this.source = src;
@@ -14,6 +13,12 @@ basemap.Grid = {
     }
 
     this.fixedZoom = options.fixedZoom;
+
+    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    if (this.maxZoom < this.minZoom) {
+      this.maxZoom = this.minZoom;
+    }
 
     MAP.on('change', this._onChange = function() {
     this.update(250);
@@ -27,7 +32,7 @@ basemap.Grid = {
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
-    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
+    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
       return;
     }
 
