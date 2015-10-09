@@ -86,7 +86,7 @@ OSMBuildings.prototype = {
   // TODO: allow more data layers later on
   addGeoJSONTiles: function(url, options) {
     options = options || {};
-    options.fixedZoom = 16;
+    options.fixedZoom = options.fixedZoom || 16;
     APP._dataGrid = new Grid(url, data.Tile, options);
     return APP._dataGrid;
   },

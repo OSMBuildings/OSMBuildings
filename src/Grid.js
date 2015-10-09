@@ -10,6 +10,12 @@ var Grid = function(source, tileClass, options) {
 
   this.tileOptions = { color:options.color };
 
+  this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+  this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+  if (this.maxZoom < this.minZoom) {
+    this.maxZoom = this.minZoom;
+  }
+
   MAP.on('change', this._onChange = function() {
     this.update(250);
   }.bind(this));
@@ -26,7 +32,7 @@ Grid.prototype = {
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
-    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
+    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
       return;
     }
 
