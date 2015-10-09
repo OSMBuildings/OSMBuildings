@@ -64,8 +64,9 @@ data.Grid = {
       return;
     }
 
+    // TODO: use visibility trapezoid here
     var
-      radius = 1500, // render.SkyDome.radius,
+      radius = 1500,
       ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
 
