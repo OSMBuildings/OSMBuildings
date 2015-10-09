@@ -6,9 +6,6 @@ data.Grid = {
   buffer: 1,
 
   init: function(src, options) {
-    if (src === undefined || src === false || src === '') {
-      src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
-    }
     this.source = src;
     this.options = options || {};
 
@@ -19,7 +16,7 @@ data.Grid = {
     this.fixedZoom = options.fixedZoom;
 
     MAP.on('change', this._onChange = function() {
-      this.update(1000);
+    this.update(250);
     }.bind(this));
 
     MAP.on('resize', this._onResize = this.update.bind(this));
@@ -29,7 +26,7 @@ data.Grid = {
 
   // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
   update: function(delay) {
-    if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
     }
 
@@ -106,6 +103,7 @@ data.Grid = {
           continue;
         }
         this.tiles[key] = new data.Tile(tileX, tileY, bounds.zoom, this.options);
+        // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }

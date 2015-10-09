@@ -1,15 +1,16 @@
+var APP;
 var MAP, glx, gl;
-var MIN_ZOOM, MAX_ZOOM;
-var BASE_URL;
 
 var OSMBuildings = function(options) {
+  APP = this; // references to this. Should make other globals obsolete.
+
   options = options || {};
 
   if (options.style) {
     this.setStyle(options.style);
   }
 
-  BASE_URL = options.baseURL || '.';
+  APP.baseURL = options.baseURL || '.';
 
   render.bendRadius = 500;
   render.bendDistance = 500;
@@ -19,10 +20,10 @@ var OSMBuildings = function(options) {
 
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
-  MIN_ZOOM = parseFloat(options.minZoom) || 15;
-  MAX_ZOOM = parseFloat(options.maxZoom) || 22;
-  if (MAX_ZOOM < MIN_ZOOM) {
-    MAX_ZOOM = MIN_ZOOM;
+  APP.minZoom = parseFloat(options.minZoom) || 15;
+  APP.maxZoom = parseFloat(options.maxZoom) || 22;
+  if (APP.maxZoom < APP.minZoom) {
+    APP.maxZoom = APP.minZoom;
   }
 };
 

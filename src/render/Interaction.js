@@ -19,7 +19,7 @@ render.Interaction = {
 
   // TODO: throttle calls
   getTarget: function(x, y) {
-    if (MAP.zoom < MIN_ZOOM) {
+    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
     }
 

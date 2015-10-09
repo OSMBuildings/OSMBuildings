@@ -16,7 +16,7 @@ basemap.Grid = {
     this.fixedZoom = options.fixedZoom;
 
     MAP.on('change', this._onChange = function() {
-      this.update(1000);
+    this.update(250);
     }.bind(this));
 
     MAP.on('resize', this._onResize = this.update.bind(this));
@@ -27,7 +27,7 @@ basemap.Grid = {
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
-    if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
     }
 

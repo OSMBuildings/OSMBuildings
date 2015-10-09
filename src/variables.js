@@ -3,9 +3,6 @@ var PI = Math.PI;
 
 var TILE_SIZE = 256;
 
-var DATA_KEY = 'anonymous';
-var DATA_SRC = 'http://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json';
-
 var DEFAULT_HEIGHT = 10;
 var HEIGHT_SCALE = 0.7;
 
