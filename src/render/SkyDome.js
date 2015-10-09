@@ -14,7 +14,7 @@ render.SkyDome = {
     });
 
     Activity.setBusy();
-    var url = BASE_URL + '/skydome.jpg';
+    var url = APP.baseURL + '/skydome.jpg';
     this.texture = new glx.texture.Image(url, function(image) {
       Activity.setIdle();
       if (image) {

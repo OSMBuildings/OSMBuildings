@@ -30,7 +30,7 @@ var render = {
         gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+        if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
           return;
         }
 

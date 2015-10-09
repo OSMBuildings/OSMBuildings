@@ -1,33 +1,34 @@
 
-basemap.Grid = {
+var Grid = function(source, tileClass, options) {
+  this.source = source;
+  this.tileClass = tileClass;
 
+  options = options || {};
+
+  this.fixedBounds = options.bounds;
+  this.fixedZoom = options.fixedZoom;
+  this.minZoom = options.minZoom; // not used yet
+  this.maxZoom = options.maxZoom; // not used yet
+
+  this.tileOptions = { color:options.color };
+
+  MAP.on('change', this._onChange = function() {
+    this.update(250);
+  }.bind(this));
+
+  MAP.on('resize', this._onResize = this.update.bind(this));
+
+  this.update();
+};
+
+Grid.prototype = {
   tiles: {},
-  fixedZoom: 16,
-  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
-
-  init: function(src, options) {
-    this.source = src;
-    this.options = options || {};
-
-    if (this.options.bounds) {
-      this.fixedBounds = this.options.bounds;
-    }
-
-    this.fixedZoom = options.fixedZoom;
-
-    MAP.on('change', this._onChange = function() {
-      this.update(1000);
-    }.bind(this));
-
-    MAP.on('resize', this._onResize = this.update.bind(this));
-
-    this.update();
-  },
+  buffer: 1,
 
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
-    if (MAP.zoom < MIN_ZOOM || MAP.zoom > MAX_ZOOM) {
+    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
     }
 
@@ -66,7 +67,7 @@ basemap.Grid = {
     }
 
     var
-      radius = 1500, // render.SkyDome.radius,
+      radius = render.SkyDome.radius,
       ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
       mapCenter = MAP.center;
 
@@ -103,7 +104,8 @@ basemap.Grid = {
         if (this.tiles[key]) {
           continue;
         }
-        this.tiles[key] = new basemap.Tile(tileX, tileY, bounds.zoom);
+
+        this.tiles[key] = new this.tileClass(tileX, tileY, bounds.zoom, this.tileOptions);
         // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
@@ -123,14 +125,19 @@ basemap.Grid = {
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
 
-    this.purge();
+    //this.purge();
   },
 
   purge: function() {
+    console.log('*** CLEAN ***', this.source, this.bounds);
     for (var key in this.tiles) {
       if (!this.tiles[key].isVisible(this.bounds)) {
+        console.log('PURGE')
         this.tiles[key].destroy();
         delete this.tiles[key];
+      } else {
+        console.log('KEEP')
+
       }
     }
   },

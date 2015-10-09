@@ -11,6 +11,10 @@ render.Basemap = {
   },
 
   render: function() {
+    if (!APP._basemapGrid) {
+      return;
+    };
+
     var
       fogColor = render.fogColor,
       shader = this.shader,
@@ -27,12 +31,12 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    var tiles = basemap.Grid.tiles;
+    var tiles = APP._basemapGrid.tiles;
 
     for (var key in tiles) {
       tile = tiles[key];
 
-      if (!tile.isReady || !tile.isVisible(basemap.Grid.bounds)) {
+      if (!tile.isReady || !tile.isVisible(APP._basemapGrid.bounds)) {
         continue;
       }
 

@@ -2397,9 +2397,6 @@ data.Grid = {
   buffer: 1,
 
   init: function(src, options) {
-    if (src === undefined || src === false || src === '') {
-      src = DATA_SRC.replace('{k}', options.dataKey || DATA_KEY);
-    }
     this.source = src;
     this.options = options || {};
 
@@ -2496,7 +2493,9 @@ data.Grid = {
         if (this.tiles[key]) {
           continue;
         }
-        this.tiles[key] = new data.Tile(tileX, tileY, bounds.zoom, this.options);
+
+        this.tiles[key] = this.createTile(tileX, tileY, bounds.zoom, this.options);
+        // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
     }
@@ -2516,6 +2515,10 @@ data.Grid = {
     }
 
     this.purge();
+  },
+
+  createTile: function(x, y, zoom, options) {
+    return new data.Tile(x, y, zoom, options);
   },
 
   purge: function() {
@@ -4357,7 +4360,7 @@ basemap.Grid = {
 
   tiles: {},
   fixedZoom: 16,
-  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
+  buffer: 1,
 
   init: function(src, options) {
     this.source = src;
@@ -4457,7 +4460,8 @@ basemap.Grid = {
         if (this.tiles[key]) {
           continue;
         }
-        this.tiles[key] = new basemap.Tile(tileX, tileY, bounds.zoom);
+
+        this.tiles[key] = this.createTile(tileX, tileY, bounds.zoom, this.options);
         // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }
@@ -4478,6 +4482,10 @@ basemap.Grid = {
     }
 
     this.purge();
+  },
+
+  createTile: function(x, y, zoom, options) {
+    return new basemap.Tile(x, y, zoom, options);
   },
 
   purge: function() {
