@@ -7,8 +7,6 @@ var Grid = function(source, tileClass, options) {
 
   this.fixedBounds = options.bounds;
   this.fixedZoom = options.fixedZoom;
-  this.minZoom = options.minZoom; // not used yet
-  this.maxZoom = options.maxZoom; // not used yet
 
   this.tileOptions = { color:options.color };
 
@@ -126,7 +124,7 @@ Grid.prototype = {
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
 
-    //this.purge();
+    this.purge();
   },
 
   purge: function() {
