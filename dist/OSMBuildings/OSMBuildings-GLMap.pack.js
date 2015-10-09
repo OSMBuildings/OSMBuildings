@@ -2440,7 +2440,7 @@
 
 	  tiles: {},
 	  fixedZoom: 16,
-	  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
+	  buffer: 1,
 
 	  init: function(src, options) {
 	    if (src === undefined || src === false || src === '') {
@@ -2452,6 +2452,8 @@
 	    if (this.options.bounds) {
 	      this.fixedBounds = this.options.bounds;
 	    }
+
+	    this.fixedZoom = options.fixedZoom;
 
 	    MAP.on('change', this._onChange = function() {
 	      this.update(1000);
@@ -4400,6 +4402,7 @@
 	basemap.Grid = {
 
 	  tiles: {},
+	  fixedZoom: 16,
 	  buffer: 1, // TODO: buffer is a bad idea with fixed fixedZoom
 
 	  init: function(src, options) {
@@ -4409,6 +4412,8 @@
 	    if (this.options.bounds) {
 	      this.fixedBounds = this.options.bounds;
 	    }
+
+	    this.fixedZoom = options.fixedZoom;
 
 	    MAP.on('change', this._onChange = function() {
 	      this.update(1000);

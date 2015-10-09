@@ -351,14 +351,6 @@ if (typeof global.define === 'function') {
 }
 
 
-function addListener(target, type, fn) {
-  target.addEventListener(type, fn, false);
-}
-
-function removeListener(target, type, fn) {
-  target.removeEventListener(type, fn, false);
-}
-
 function cancelEvent(e) {
   if (e.preventDefault) {
     e.preventDefault();
@@ -373,21 +365,21 @@ var Interaction = function(map, container) {
   this.map = map;
 
   if ('ontouchstart' in global) {
-    addListener(container, 'touchstart', this.onTouchStart.bind(this));
-    addListener(document, 'touchmove', this.onTouchMove.bind(this));
-    addListener(document, 'touchend', this.onTouchEnd.bind(this));
-    addListener(container, 'gesturechange', this.onGestureChange.bind(this));
+    this._addListener(container, 'touchstart', this.onTouchStart);
+    this._addListener(document, 'touchmove', this.onTouchMove);
+    this._addListener(document, 'touchend', this.onTouchEnd);
+    this._addListener(container, 'gesturechange', this.onGestureChange);
   } else {
-    addListener(container, 'mousedown', this.onMouseDown.bind(this));
-    addListener(document, 'mousemove', this.onMouseMove.bind(this));
-    addListener(document, 'mouseup', this.onMouseUp.bind(this));
-    addListener(container, 'dblclick', this.onDoubleClick.bind(this));
-    addListener(container, 'mousewheel', this.onMouseWheel.bind(this));
-    addListener(container, 'DOMMouseScroll', this.onMouseWheel.bind(this));
+    this._addListener(container, 'mousedown', this.onMouseDown);
+    this._addListener(document, 'mousemove', this.onMouseMove);
+    this._addListener(document, 'mouseup', this.onMouseUp);
+    this._addListener(container, 'dblclick', this.onDoubleClick);
+    this._addListener(container, 'mousewheel', this.onMouseWheel);
+    this._addListener(container, 'DOMMouseScroll', this.onMouseWheel);
   }
 
   var resizeDebounce;
-  addListener(global, 'resize', function() {
+  this._addListener(global, 'resize', function() {
     if (resizeDebounce) {
       return;
     }
@@ -409,6 +401,14 @@ Interaction.prototype = {
   prevTilt: 0,
   disabled: false,
   pointerIsDown: false,
+
+  _listeners: [],
+
+  _addListener: function(target, type, fn) {
+    var boundFn = fn.bind(this);
+    target.addEventListener(type, boundFn, false);
+    this._listeners.push({ target:target, type:type, fn:boundFn });
+  },
 
   onDoubleClick: function(e) {
     if (this.disabled) {
@@ -529,7 +529,7 @@ Interaction.prototype = {
     this.prevRotation = this.map.rotation;
     this.prevTilt = this.map.tilt;
 
-    if (e.touches.length>1) {
+    if (e.touches.length) {
       e = e.touches[0];
     }
 
@@ -544,7 +544,7 @@ Interaction.prototype = {
       return;
     }
 
-    if (e.touches.length>1) {
+    if (e.touches.length) {
       e = e.touches[0];
     }
 
@@ -561,7 +561,7 @@ Interaction.prototype = {
       return;
     }
 
-    if (e.touches.length>1) {
+    if (e.touches.length) {
       e = e.touches[0];
     }
 
@@ -584,6 +584,11 @@ Interaction.prototype = {
 
   destroy: function() {
     this.disabled = true;
+    var listener;
+    for (var i = 0; i < this._listeners.length; i++) {
+      listener = this._listeners[i];
+      listener.target.removeEventListener(listener.type, listener.fn, false);
+    }
   }
 };
 
