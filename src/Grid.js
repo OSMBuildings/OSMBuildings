@@ -1,8 +1,10 @@
 
 var Grid = function(source, tileClass, options) {
+  this.tiles = {};
+  this.buffer = 1;
+
   this.source = source;
   this.tileClass = tileClass;
-
   options = options || {};
 
   this.fixedBounds = options.bounds;
@@ -26,8 +28,6 @@ var Grid = function(source, tileClass, options) {
 };
 
 Grid.prototype = {
-  tiles: {},
-  buffer: 1,
 
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
