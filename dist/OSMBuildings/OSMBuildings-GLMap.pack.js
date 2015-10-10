@@ -1828,14 +1828,17 @@
 	    return new mesh.GeoJSON(url, options);
 	  },
 
+	  // TODO: allow more data layers later on
 	  addGeoJSONTiles: function(url, options) {
 	    options = options || {};
 	    options.fixedZoom = options.fixedZoom || 16;
-	    return data.Grid.init(url, options);
+	    APP._dataGrid = new Grid(url, data.Tile, options);
+	    return APP._dataGrid;
 	  },
 
 	  addMapTiles: function(url, options) {
-	    return basemap.Grid.init(url, options);
+	    APP._basemapGrid = new Grid(url, basemap.Tile, options);
+	    return APP._basemapGrid;
 	  },
 
 	  highlight: function(id, color) {
@@ -1849,8 +1852,8 @@
 
 	  destroy: function() {
 	    render.destroy();
-	    data.Grid.destroy();
-	    basemap.Grid.destroy();
+	    if (APP._basemapGrid) APP._basemapGrid.destroy();
+	    if (APP._dataGrid)    APP._dataGrid.destroy();
 	  }
 	};
 
@@ -2380,93 +2383,38 @@
 	}());
 
 
-	// all commented sections are for collision checks
+	var Grid = function(source, tileClass, options) {
+	  this.tiles = {};
+	  this.buffer = 1;
 
-	// create 2 cylinders and check
-	// function checkCollision(a, b) {
-	// }
+	  this.source = source;
+	  this.tileClass = tileClass;
+	  options = options || {};
 
-	var data = {
-	  Index: {
-	    items: [],
-	//  blockers: [],
+	  this.fixedBounds = options.bounds;
+	  this.fixedZoom = options.fixedZoom;
 
-	    add: function(item) {
-	      this.items.push(item);
-	      //if (item.replace) {
-	        //this.blockers.push(item);
-	//      Events.emit('modify');
-	//      }
-	    },
+	  this.tileOptions = { color:options.color };
 
-	    remove: function(item) {
-	      var items = this.items;
-	      for (var i = 0, il = items.length; i < il; i++) {
-	        if (items[i] === item) {
-	          //if (items[i].replace) {
-	          //  for (var j = 0; j < this.blockers.length; j++) {
-	          //    if (this.blockers[j] === items[i]) {
-	          //      this.blockers.splice(j, 1);
-	          //      break;
-	          //    }
-	          //  }
-	          //Events.emit('modify');
-	          //}
-	          items.splice(i, 1);
-	          return;
-	        }
-	      }
-	    },
-
-	//    // check with other objects
-	//    checkCollisions: function(item) {
-	//      for (var i = 0, il = this.blockers.length; i < il; i++) {
-	  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
-	  //     return true;
-	  //    }
-	//      }
-	//      return false;
-	//    },
-
-	    destroy: function() {
-	      this.items = [];
-	//    this.blockers = [];
-	    }
+	  this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+	  this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+	  if (this.maxZoom < this.minZoom) {
+	    this.maxZoom = this.minZoom;
 	  }
+
+	  MAP.on('change', this._onChange = function() {
+	    this.update(250);
+	  }.bind(this));
+
+	  MAP.on('resize', this._onResize = this.update.bind(this));
+
+	  this.update();
 	};
 
+	Grid.prototype = {
 
-	data.Grid = {
-
-	  tiles: {},
-	  buffer: 1,
-
-	  init: function(src, options) {
-	    this.source = src;
-	    this.options = options || {};
-
-	    if (this.options.bounds) {
-	      this.fixedBounds = this.options.bounds;
-	    }
-
-	    this.fixedZoom = options.fixedZoom;
-
-	    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-	    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
-	    if (this.maxZoom < this.minZoom) {
-	      this.maxZoom = this.minZoom;
-	    }
-
-	    MAP.on('change', this._onChange = function() {
-	    this.update(250);
-	    }.bind(this));
-
-	    MAP.on('resize', this._onResize = this.update.bind(this));
-
-	    this.update();
-	  },
-
-	  // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
+	  // strategy: start loading after {delay}ms, skip any attempts until then
+	  // effectively loads in intervals during movement
 	  update: function(delay) {
 	    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
 	      return;
@@ -2478,7 +2426,7 @@
 	    }
 
 	    if (this.isDelayed) {
-	      clearTimeout(this.isDelayed);
+	      return;
 	    }
 
 	    this.isDelayed = setTimeout(function() {
@@ -2545,7 +2493,8 @@
 	        if (this.tiles[key]) {
 	          continue;
 	        }
-	        this.tiles[key] = new data.Tile(tileX, tileY, bounds.zoom, this.options);
+
+	        this.tiles[key] = new this.tileClass(tileX, tileY, bounds.zoom, this.tileOptions);
 	        // TODO: rotate anchor point
 	        queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
 	      }
@@ -2586,6 +2535,62 @@
 	      this.tiles[key].destroy();
 	    }
 	    this.tiles = [];
+	  }
+	};
+
+
+	// all commented sections are for collision checks
+
+	// create 2 cylinders and check
+	// function checkCollision(a, b) {
+	// }
+
+	var data = {
+	  Index: {
+	    items: [],
+	//  blockers: [],
+
+	    add: function(item) {
+	      this.items.push(item);
+	      //if (item.replace) {
+	        //this.blockers.push(item);
+	//      Events.emit('modify');
+	//      }
+	    },
+
+	    remove: function(item) {
+	      var items = this.items;
+	      for (var i = 0, il = items.length; i < il; i++) {
+	        if (items[i] === item) {
+	          //if (items[i].replace) {
+	          //  for (var j = 0; j < this.blockers.length; j++) {
+	          //    if (this.blockers[j] === items[i]) {
+	          //      this.blockers.splice(j, 1);
+	          //      break;
+	          //    }
+	          //  }
+	          //Events.emit('modify');
+	          //}
+	          items.splice(i, 1);
+	          return;
+	        }
+	      }
+	    },
+
+	//    // check with other objects
+	//    checkCollisions: function(item) {
+	//      for (var i = 0, il = this.blockers.length; i < il; i++) {
+	  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
+	  //     return true;
+	  //    }
+	//      }
+	//      return false;
+	//    },
+
+	    destroy: function() {
+	      this.items = [];
+	//    this.blockers = [];
+	    }
 	  }
 	};
 
@@ -4024,7 +4029,7 @@
 	  },
 
 	  render: function() {
-	    var layer = basemap.Grid;
+	    var layer = APP._basemapGrid;
 
 	    if (!layer) {
 	      return;
@@ -4433,164 +4438,6 @@
 
 
 	var basemap = {};
-
-
-	basemap.Grid = {
-
-	  tiles: {},
-	  buffer: 1,
-
-	  init: function(src, options) {
-	    this.source = src;
-	    this.options = options || {};
-
-	    if (this.options.bounds) {
-	      this.fixedBounds = this.options.bounds;
-	    }
-
-	    this.fixedZoom = options.fixedZoom;
-
-	  this.tileOptions = { color:options.color };
-
-	    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-	    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
-	    if (this.maxZoom < this.minZoom) {
-	      this.maxZoom = this.minZoom;
-	    }
-
-	    MAP.on('change', this._onChange = function() {
-	    this.update(250);
-	    }.bind(this));
-
-	    MAP.on('resize', this._onResize = this.update.bind(this));
-
-	    this.update();
-	  },
-
-	  // strategy: start loading after {delay}ms, skip any attempts until then
-	  // effectively loads in intervals during movement
-	  update: function(delay) {
-	    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
-	      return;
-	    }
-
-	    if (!delay) {
-	      this.loadTiles();
-	      return;
-	    }
-
-	    if (this.isDelayed) {
-	      return;
-	    }
-
-	    this.isDelayed = setTimeout(function() {
-	      this.isDelayed = null;
-	      this.loadTiles();
-	    }.bind(this), delay);
-	  },
-
-	  updateBounds: function() {
-	    var zoom = Math.round(this.fixedZoom || MAP.zoom);
-
-	    if (this.fixedBounds) {
-	      var
-	        min = project(this.fixedBounds.s, this.fixedBounds.w, 1<<zoom),
-	        max = project(this.fixedBounds.n, this.fixedBounds.e, 1<<zoom);
-
-	      this.bounds = {
-	        zoom: zoom,
-	        minX: (min.x <<0) - this.buffer,
-	        minY: (min.y <<0) - this.buffer,
-	        maxX: (max.x <<0) + this.buffer,
-	        maxY: (max.y <<0) + this.buffer
-	      };
-
-	      return;
-	    }
-
-	    // TODO: use visibility trapezoid here
-	    var
-	      radius = 1500,
-	      ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
-	      mapCenter = MAP.center;
-
-	    this.bounds = {
-	      zoom: zoom,
-	      minX: ((mapCenter.x-radius)*ratio <<0) - this.buffer,
-	      minY: ((mapCenter.y-radius)*ratio <<0) - this.buffer,
-	      maxX: Math.ceil((mapCenter.x+radius)*ratio) + this.buffer,
-	      maxY: Math.ceil((mapCenter.y+radius)*ratio) + this.buffer
-	    };
-	  },
-
-	  getURL: function(x, y, z) {
-	    var s = 'abcd'[(x+y) % 4];
-	    return pattern(this.source, { s:s, x:x, y:y, z:z });
-	  },
-
-	  loadTiles: function() {
-	    this.updateBounds();
-
-	    var
-	      tileX, tileY,
-	      key,
-	      queue = [], queueLength,
-	      bounds = this.bounds,
-	      tileAnchor = [
-	        MAP.center.x/TILE_SIZE <<0,
-	        MAP.center.y/TILE_SIZE <<0
-	      ];
-
-	    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-	      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
-	        key = [tileX, tileY, bounds.zoom].join(',');
-	        if (this.tiles[key]) {
-	          continue;
-	        }
-
-	        this.tiles[key] = new basemap.Tile(tileX, tileY, bounds.zoom);
-	        // TODO: rotate anchor point
-	        queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
-	      }
-	    }
-
-	    if (!(queueLength = queue.length)) {
-	      return;
-	    }
-
-	    queue.sort(function(a, b) {
-	      return a.dist-b.dist;
-	    });
-
-	    var tile;
-	    for (var i = 0; i < queueLength; i++) {
-	      tile = queue[i].tile;
-	      tile.load(this.getURL(tile.x, tile.y, tile.zoom));
-	    }
-
-	    this.purge();
-	  },
-
-	  purge: function() {
-	    for (var key in this.tiles) {
-	      if (!this.tiles[key].isVisible(this.bounds)) {
-	        this.tiles[key].destroy();
-	        delete this.tiles[key];
-	      }
-	    }
-	  },
-
-	  destroy: function() {
-	    MAP.off('change', this._onChange);
-	    MAP.off('resize', this._onResize);
-
-	    clearTimeout(this.isDelayed);
-	    for (var key in this.tiles) {
-	      this.tiles[key].destroy();
-	    }
-	    this.tiles = [];
-	  }
-	};
 
 
 	basemap.Tile = function(x, y, zoom) {

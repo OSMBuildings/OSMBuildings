@@ -83,14 +83,17 @@ OSMBuildings.prototype = {
     return new mesh.GeoJSON(url, options);
   },
 
+  // TODO: allow more data layers later on
   addGeoJSONTiles: function(url, options) {
     options = options || {};
     options.fixedZoom = options.fixedZoom || 16;
-    return data.Grid.init(url, options);
+    APP._dataGrid = new Grid(url, data.Tile, options);
+    return APP._dataGrid;
   },
 
   addMapTiles: function(url, options) {
-    return basemap.Grid.init(url, options);
+    APP._basemapGrid = new Grid(url, basemap.Tile, options);
+    return APP._basemapGrid;
   },
 
   highlight: function(id, color) {
@@ -104,8 +107,8 @@ OSMBuildings.prototype = {
 
   destroy: function() {
     render.destroy();
-    data.Grid.destroy();
-    basemap.Grid.destroy();
+    if (APP._basemapGrid) APP._basemapGrid.destroy();
+    if (APP._dataGrid)    APP._dataGrid.destroy();
   }
 };
 

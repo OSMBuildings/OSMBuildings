@@ -1,35 +1,36 @@
 
-data.Grid = {
+var Grid = function(source, tileClass, options) {
+  this.tiles = {};
+  this.buffer = 1;
 
-  tiles: {},
-  buffer: 1,
+  this.source = source;
+  this.tileClass = tileClass;
+  options = options || {};
 
-  init: function(src, options) {
-    this.source = src;
-    this.options = options || {};
+  this.fixedBounds = options.bounds;
+  this.fixedZoom = options.fixedZoom;
 
-    if (this.options.bounds) {
-      this.fixedBounds = this.options.bounds;
-    }
+  this.tileOptions = { color:options.color };
 
-    this.fixedZoom = options.fixedZoom;
+  this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
+  this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+  if (this.maxZoom < this.minZoom) {
+    this.maxZoom = this.minZoom;
+  }
 
-    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
-    if (this.maxZoom < this.minZoom) {
-      this.maxZoom = this.minZoom;
-    }
-
-    MAP.on('change', this._onChange = function() {
+  MAP.on('change', this._onChange = function() {
     this.update(250);
-    }.bind(this));
+  }.bind(this));
 
-    MAP.on('resize', this._onResize = this.update.bind(this));
+  MAP.on('resize', this._onResize = this.update.bind(this));
 
-    this.update();
-  },
+  this.update();
+};
 
-  // strategy: start loading in {delay} ms after movement ends, ignore any attempts until then
+Grid.prototype = {
+
+  // strategy: start loading after {delay}ms, skip any attempts until then
+  // effectively loads in intervals during movement
   update: function(delay) {
     if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
       return;
@@ -41,7 +42,7 @@ data.Grid = {
     }
 
     if (this.isDelayed) {
-      clearTimeout(this.isDelayed);
+      return;
     }
 
     this.isDelayed = setTimeout(function() {
@@ -108,7 +109,8 @@ data.Grid = {
         if (this.tiles[key]) {
           continue;
         }
-        this.tiles[key] = new data.Tile(tileX, tileY, bounds.zoom, this.options);
+
+        this.tiles[key] = new this.tileClass(tileX, tileY, bounds.zoom, this.tileOptions);
         // TODO: rotate anchor point
         queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
       }

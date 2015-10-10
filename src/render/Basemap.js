@@ -11,7 +11,7 @@ render.Basemap = {
   },
 
   render: function() {
-    var layer = basemap.Grid;
+    var layer = APP._basemapGrid;
 
     if (!layer) {
       return;

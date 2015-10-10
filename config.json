@@ -18,8 +18,9 @@
     "src/Shaders.min.js",
     "src/Triangulate.js",
 
+    "src/Grid.js",
+
     "src/data/index.js",
-    "src/data/Grid.js",
     "src/data/Tile.js",
 
     "src/mesh/index.js",
@@ -43,7 +44,6 @@
     "src/render/AmbientMap.js",
 
     "src/basemap/index.js",
-    "src/basemap/Grid.js",
     "src/basemap/Tile.js"
   ]
 }
