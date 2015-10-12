@@ -3590,8 +3590,8 @@ var render = {
           gl.enable(gl.BLEND);
           render.Overlay.render(
             render.AmbientMap.framebuffer.renderTexture.id,
-            1.0 / render.AmbientMap.textureWidth,
-            1.0 / render.AmbientMap.textureHeight,
+            0.5 / render.AmbientMap.textureWidth,
+            0.5 / render.AmbientMap.textureHeight,
             (render.AmbientMap.usedTextureWidth-0.5) / render.AmbientMap.textureWidth,
             (render.AmbientMap.usedTextureHeight-0.5)/ render.AmbientMap.textureHeight);
 
