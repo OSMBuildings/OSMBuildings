@@ -42,6 +42,7 @@
     "src/render/NormalMap.js",
     "src/render/DepthMap.js",
     "src/render/AmbientMap.js",
+    "src/render/Overlay.js",
 
     "src/basemap/index.js",
     "src/basemap/Tile.js"

@@ -1,8 +1,6 @@
 
 render.AmbientMap = {
 
-  viewportSize: 512,
-
   init: function() {
     this.shader = new glx.Shader({
       vertexShader:   Shaders.ambientFromDepth.vertex,
@@ -11,7 +9,7 @@ render.AmbientMap = {
       uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
     });
 
-    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+    this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
     
     // enable texture filtering for framebuffer texture
     gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
@@ -42,7 +40,59 @@ render.AmbientMap = {
       shader = this.shader,
       framebuffer = this.framebuffer;
 
-    gl.viewport(0, 0, this.viewportSize, this.viewportSize);
+    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    var targetWidth = MAP.width  >> 1;
+    var targetHeight= MAP.height >> 1;
+    this.textureWidth = Math.min(glx.util.nextPowerOf2(targetWidth), maxTexSize);
+    this.textureHeight= Math.min(glx.util.nextPowerOf2(targetHeight), maxTexSize);
+    //work-around: the framebuffer class currently forces dimensions to be square
+    //TODO: remove these two lines once no longer necessary
+    this.textureWidth  = Math.max(this.textureWidth, this.textureHeight);
+    this.textureHeight = Math.max(this.textureWidth, this.textureHeight);
+    
+    this.usedTextureWidth = Math.min(targetWidth, this.textureWidth);
+    this.usedTextureHeight= Math.min(targetHeight,this.textureHeight);
+
+    if (framebuffer.width  != this.textureWidth || 
+        framebuffer.height != this.textureHeight  )
+    {
+      /*
+      console.log("[INFO] resizing framebuffer to %sx%s",// (%s, %s)", 
+        this.textureWidth, this.textureHeight
+        usedTextureWidth/requiredTextureWidth, usedTextureHeight/requiredTextureHeight);
+      */
+      framebuffer.setSize( this.textureWidth, this.textureHeight );
+      gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      
+    }
+
+    var tcLeft  = 0.5 / framebuffer.width;
+    var tcTop   = 0.5 / framebuffer.height;
+    var tcRight = (this.usedTextureWidth  - 0.5) / framebuffer.width;
+    var tcBottom= (this.usedTextureHeight - 0.5)/ framebuffer.height;
+//    console.log(tcRight, tcBottom);
+
+    if (tcRight != this.tcRight || tcBottom != this.tcBottom || 
+        tcLeft != this.tcLeft   || tcBottom != this.tcBottom )
+    {
+      this.texCoordBuffer.destroy();
+      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
+        [tcLeft,  tcTop,
+         tcRight, tcTop,
+         tcRight, tcBottom,
+         tcLeft,  tcTop,
+         tcRight, tcBottom,
+         tcLeft,  tcBottom
+        ]));      
+    
+      this.tcRight = tcRight;
+      this.tcBottom= tcBottom;
+      this.tcLeft =  tcLeft;
+      this.tcTop =   tcTop;
+    }
+    gl.viewport(0, 0, this.usedTextureWidth, this.usedTextureHeight);
     shader.enable();
     framebuffer.enable();
 
@@ -53,8 +103,8 @@ render.AmbientMap = {
     var identity = new glx.Matrix();
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
 
-    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/this.viewportSize);
-    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/this.viewportSize);
+    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/this.textureWidth);
+    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/this.textureHeight);
 
     this.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -68,7 +118,6 @@ render.AmbientMap = {
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
-    //render.Basemap.render();
     shader.disable();
     framebuffer.disable();
 

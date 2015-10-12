@@ -17,6 +17,8 @@ var OSMBuildings = function(options) {
 
   render.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
   render.Buildings.showBackfaces = options.showBackfaces;
+  // default to 'true':
+  render.isAmbientOcclusionEnabled = !!((options.renderAmbientOcclusion === undefined) || options.renderAmbientOcclusion);
 
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
