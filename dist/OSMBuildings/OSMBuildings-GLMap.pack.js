@@ -1762,6 +1762,8 @@
 
 	  render.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
 	  render.Buildings.showBackfaces = options.showBackfaces;
+	  // default to 'true':
+	  render.isAmbientOcclusionEnabled = !!((options.renderAmbientOcclusion === undefined) || options.renderAmbientOcclusion);
 
 	  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
@@ -3606,6 +3608,7 @@
 	    render.Buildings.init();
 	    render.Basemap.init();
 	    render.HudRect.init();
+	    render.Overlay.init();
 	    render.NormalMap.init();
 	    render.DepthMap.init();
 	    render.AmbientMap.init();
@@ -3625,15 +3628,24 @@
 
 	        //render.NormalMap.render();
 
-	/*
-	        render.DepthMap.render();
-	        render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
-	        // first=source is ambient map, second=dest is color framebuffer
-	        gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-	        gl.enable(gl.BLEND);
-	        render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
-	        gl.disable(gl.BLEND);
-	*/
+	        if (render.isAmbientOcclusionEnabled) {
+	          render.DepthMap.render();
+	          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
+	          // first=source is ambient map, second=dest is color framebuffer
+	          gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
+	          gl.enable(gl.BLEND);
+	          render.Overlay.render(
+	            render.AmbientMap.framebuffer.renderTexture.id,
+	            1.0 / render.AmbientMap.textureWidth,
+	            1.0 / render.AmbientMap.textureHeight,
+	            (render.AmbientMap.usedTextureWidth-0.5) / render.AmbientMap.textureWidth,
+	            (render.AmbientMap.usedTextureHeight-0.5)/ render.AmbientMap.textureHeight);
+
+	          gl.disable(gl.BLEND);
+	        }
+
+	          //render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
+
 	      }.bind(this));
 	    }.bind(this), 17);
 	  },
@@ -4266,7 +4278,6 @@
 	*/
 	render.DepthMap = {
 
-	  viewportSize: 512,
 
 	  init: function() {
 	    this.shader = new glx.Shader({
@@ -4276,7 +4287,8 @@
 	      uniforms: ['uMatrix']
 	    });
 
-	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+	    this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
+
 	    /* We will be sampling neighboring pixels of the depth texture to create an ambient
 	     * occlusion map. With the default texture wrap mode 'gl.REPEAT', sampling the neighbors
 	     * of edge texels would return texels on the opposite edge of the texture, which is not
@@ -4291,18 +4303,42 @@
 	    this.mapPlane = new mesh.MapPlane();
 	  },
 
-	  // TODO: throttle calls
 	  render: function() {
 
 	    var
 	      shader = this.shader,
 	      framebuffer = this.framebuffer;
 
-	    gl.viewport(0, 0, this.viewportSize, this.viewportSize);
+	    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+	    var targetWidth = MAP.width  >> 1;
+	    var targetHeight= MAP.height >> 1;
+	    this.textureWidth = Math.min(glx.util.nextPowerOf2(targetWidth), maxTexSize);
+	    this.textureHeight= Math.min(glx.util.nextPowerOf2(targetHeight), maxTexSize);
+	    //work-around: the framebuffer class currently forces dimensions to be square
+	    //TODO: remove these two lines once no longer necessary
+	    this.textureWidth  = Math.max(this.textureWidth, this.textureHeight);
+	    this.textureHeight = Math.max(this.textureWidth, this.textureHeight);
+	    
+	    this.usedTextureWidth = Math.min(targetWidth, this.textureWidth);
+	    this.usedTextureHeight= Math.min(targetHeight,this.textureHeight);
+	    //console.log("tex size: %sx%s, used: %sx%s", textureWidth, textureHeight,
+	    //            usedTextureWidth, usedTextureHeight);
+
+	    if (framebuffer.width != this.textureWidth || framebuffer.height != this.textureHeight)
+	    {
+	      /*
+	      console.log("[INFO] resizing framebuffer to %sx%s (%s, %s)", 
+	        this.textureWidth, this.textureHeight, 
+	        this.usedTextureWidth/this.textureWidth, this.usedTextureHeight/this.textureHeight);
+	      */
+	      framebuffer.setSize( this.textureWidth, this.textureHeight );
+	    }
+	      
+	    gl.viewport(0, 0, this.usedTextureWidth, this.usedTextureHeight);
 	    shader.enable();
 	    framebuffer.enable();
 
-	    gl.clearColor(0.0, 0.0, 0, 1);
+	    gl.clearColor(0.0, 0.0, 0.0, 1);
 	    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	    var item, modelMatrix;
@@ -4321,30 +4357,17 @@
 	        continue;
 	      }
 
-	      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
-	      /*gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);*/
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
 	      item.vertexBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-	      /*item.normalBuffer.enable();
-	      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);*/
-
 	      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
 
-	    //render.Basemap.render();
 	    shader.disable();
 	    framebuffer.disable();
 
-	    //gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-	    //gl.generateMipmap(gl.TEXTURE_2D);
-	    
 	    gl.viewport(0, 0, MAP.width, MAP.height);
 
 	  },
@@ -4355,8 +4378,6 @@
 
 	render.AmbientMap = {
 
-	  viewportSize: 512,
-
 	  init: function() {
 	    this.shader = new glx.Shader({
 	      vertexShader:   Shaders.ambientFromDepth.vertex,
@@ -4365,7 +4386,7 @@
 	      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
 	    });
 
-	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+	    this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
 	    
 	    // enable texture filtering for framebuffer texture
 	    gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
@@ -4396,7 +4417,59 @@
 	      shader = this.shader,
 	      framebuffer = this.framebuffer;
 
-	    gl.viewport(0, 0, this.viewportSize, this.viewportSize);
+	    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+	    var targetWidth = MAP.width  >> 1;
+	    var targetHeight= MAP.height >> 1;
+	    this.textureWidth = Math.min(glx.util.nextPowerOf2(targetWidth), maxTexSize);
+	    this.textureHeight= Math.min(glx.util.nextPowerOf2(targetHeight), maxTexSize);
+	    //work-around: the framebuffer class currently forces dimensions to be square
+	    //TODO: remove these two lines once no longer necessary
+	    this.textureWidth  = Math.max(this.textureWidth, this.textureHeight);
+	    this.textureHeight = Math.max(this.textureWidth, this.textureHeight);
+	    
+	    this.usedTextureWidth = Math.min(targetWidth, this.textureWidth);
+	    this.usedTextureHeight= Math.min(targetHeight,this.textureHeight);
+
+	    if (framebuffer.width  != this.textureWidth || 
+	        framebuffer.height != this.textureHeight  )
+	    {
+	      /*
+	      console.log("[INFO] resizing framebuffer to %sx%s",// (%s, %s)", 
+	        this.textureWidth, this.textureHeight
+	        usedTextureWidth/requiredTextureWidth, usedTextureHeight/requiredTextureHeight);
+	      */
+	      framebuffer.setSize( this.textureWidth, this.textureHeight );
+	      gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
+	      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+	      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	      
+	    }
+
+	    var tcLeft  = 0.5 / framebuffer.width;
+	    var tcTop   = 0.5 / framebuffer.height;
+	    var tcRight = (this.usedTextureWidth  - 0.5) / framebuffer.width;
+	    var tcBottom= (this.usedTextureHeight - 0.5)/ framebuffer.height;
+	//    console.log(tcRight, tcBottom);
+
+	    if (tcRight != this.tcRight || tcBottom != this.tcBottom || 
+	        tcLeft != this.tcLeft   || tcBottom != this.tcBottom )
+	    {
+	      this.texCoordBuffer.destroy();
+	      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
+	        [tcLeft,  tcTop,
+	         tcRight, tcTop,
+	         tcRight, tcBottom,
+	         tcLeft,  tcTop,
+	         tcRight, tcBottom,
+	         tcLeft,  tcBottom
+	        ]));      
+	    
+	      this.tcRight = tcRight;
+	      this.tcBottom= tcBottom;
+	      this.tcLeft =  tcLeft;
+	      this.tcTop =   tcTop;
+	    }
+	    gl.viewport(0, 0, this.usedTextureWidth, this.usedTextureHeight);
 	    shader.enable();
 	    framebuffer.enable();
 
@@ -4407,8 +4480,8 @@
 	    var identity = new glx.Matrix();
 	    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
 
-	    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/this.viewportSize);
-	    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/this.viewportSize);
+	    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/this.textureWidth);
+	    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/this.textureHeight);
 
 	    this.vertexBuffer.enable();
 	    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -4422,7 +4495,6 @@
 
 	    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
-	    //render.Basemap.render();
 	    shader.disable();
 	    framebuffer.disable();
 
@@ -4434,6 +4506,106 @@
 	  },
 
 	  destroy: function() {}
+	};
+
+
+	/* 'Overlay' renders part of a texture over the whole viewport.
+	   The intended use is for compositing of screen-space effects.
+	 */
+	render.Overlay = {
+
+	  init: function() {
+	  
+	    var geometry = this.createGeometry();
+	    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
+	    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
+
+	    this.texHorizontalFraction = 1;
+	    this.texVerticalFraction = 1;
+	    this.shader = new glx.Shader({
+	      vertexShader: Shaders.texture.vertex,
+	      fragmentShader: Shaders.texture.fragment,
+	      attributes: ["aPosition", "aTexCoord"],
+	      uniforms: [ "uMatrix", "uTexIndex", "uColor"]
+	    });
+
+	    this.isReady = true;
+	  },
+
+	  createGeometry: function() {
+	    var vertices = [],
+	        texCoords= [];
+	    vertices.push(-1,-1, 1E-5,
+	                   1,-1, 1E-5,
+	                   1, 1, 1E-5);
+	    
+	    vertices.push(-1,-1, 1E-5,
+	                   1, 1, 1E-5,
+	                  -1, 1, 1E-5);
+
+	    texCoords.push(0.0,0.0,
+	                   1.0,0.0,
+	                   1.0,1.0);
+
+	    texCoords.push(0.0,0.0,
+	                   1.0,1.0,
+	                   0.0,1.0);
+
+	    return { vertices: vertices , texCoords: texCoords };
+	  },
+
+	  render: function(texture, tcHorizMin, tcVertMin, tcHorizMax, tcVertMax) {
+	    if (!this.isReady) {
+	      return;
+	    }
+
+	    if (tcHorizMin != this.tcHorizMin ||
+	        tcHorizMax != this.tcHorizMax ||
+	        tcVertMin != this.tcVertMin ||
+	        tcVertMax != this.tcVertMax)
+	    {
+	      console.log("resetting texCoord buffer to", tcHorizMin, tcHorizMax, tcVertMin, tcVertMax);
+	      this.texCoordBuffer.destroy();
+	      this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+	        tcHorizMin, tcVertMin,
+	        tcHorizMax, tcVertMin,
+	        tcHorizMax, tcVertMax,
+
+	        tcHorizMin, tcVertMin,
+	        tcHorizMax, tcVertMax,
+	        tcHorizMin, tcVertMax]));
+	      
+	      this.tcHorizMin = tcHorizMin;
+	      this.tcHorizMax = tcHorizMax;
+	      this.tcVertMin  = tcVertMin;
+	      this.tcVertMax  = tcVertMax;
+	    }
+
+	    var shader = this.shader;
+
+	    shader.enable();
+	    
+	    var identity = new glx.Matrix();
+	    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
+	    this.vertexBuffer.enable();
+
+	    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	    this.texCoordBuffer.enable();
+	    gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	    gl.bindTexture(gl.TEXTURE_2D, texture);
+	    gl.activeTexture(gl.TEXTURE0);
+	    gl.uniform1i(shader.uniforms.uTexIndex, 0);
+
+	    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+
+	    shader.disable();
+	  },
+
+	  destroy: function() {
+	    this.texture.destroy();
+	  }
 	};
 
 

@@ -2,8 +2,6 @@
 module.exports = function(grunt) {
 
   grunt.initConfig({
-    product: 'OSMBuildings-GLMap',
-
     pkg: grunt.file.readJSON('package.json'),
 
     concat: {
@@ -14,35 +12,15 @@ module.exports = function(grunt) {
       },
       dist: {
         src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],
-        dest: 'dist/OSMBuildings/<%=product%>.debug.js'
+        dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
       }
     },
-
-    //'GLMap-concat': {
-    //  options: {
-    //    separator: "\n",
-    //    banner: "(function(global) {",
-    //    footer: "}(this));"
-    //  },
-    //  dist: {
-    //    src: ['src/engines/index.js', 'src/engines/Interaction.js', 'src/engines/Layers.js'],
-    //    dest: 'dist/GLMap/GLMap.debug.js'
-    //  }
-    //},
-    //
-    //'GLMap-uglify': {
-    //  options: {},
-    //  build: {
-    //    src: 'dist/GLMap/GLMap.debug.js',
-    //    dest: 'dist/GLMap/GLMap.js'
-    //  }
-    //},
 
     uglify: {
       options: {},
       build: {
-        src: 'dist/OSMBuildings/<%=product%>.debug.js',
-        dest: 'dist/OSMBuildings/<%=product%>.js'
+        src: 'dist/OSMBuildings/<%=pkg.name%>.debug.js',
+        dest: 'dist/OSMBuildings/<%=pkg.name%>.js'
       }
     },
 
@@ -55,7 +33,7 @@ module.exports = function(grunt) {
     },
 
     clean: {
-      dist: ['./dist/OSMBuildings/<%=product%>.pack.js']
+      dist: ['./dist/OSMBuildings/<%=pkg.name%>.pack.js']
     },
 
     copy: {
@@ -77,10 +55,10 @@ module.exports = function(grunt) {
     // just testing, whether wepack *would* work
     webpack: {
       test: {
-        entry: './dist/OSMBuildings/<%=product%>.debug.js',
+        entry: './dist/OSMBuildings/<%=pkg.name%>.debug.js',
         output: {
             path: './dist/OSMBuildings',
-            filename: '<%=product%>.pack.js',
+            filename: '<%=pkg.name%>.pack.js',
         },
         stats: false, // the stats output
         progress: false, // show progress
@@ -129,7 +107,7 @@ module.exports = function(grunt) {
   grunt.registerMultiTask('clean', 'Clean up', function() {
     var fs = require('fs');
     try {
-      fs.unlinkSync('dist/'+ grunt.config.data.product +'.pack.js');
+      fs.unlinkSync('dist/'+ grunt.config.data.pkg.name +'.pack.js');
     } catch (ex) {}
   });
 

@@ -34,7 +34,6 @@ render.DepthMap = {
     this.mapPlane = new mesh.MapPlane();
   },
 
-  // TODO: throttle calls
   render: function() {
 
     var

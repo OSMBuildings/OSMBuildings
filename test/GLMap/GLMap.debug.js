@@ -151,25 +151,20 @@ GLMap.prototype = {
 
     var listeners = this.listeners[type];
 
-    if (listeners.timer) {
-      return;
-    }
-
-    listeners.timer = setTimeout(function() {
-      for (var i = 0, il = listeners.fn.length; i < il; i++) {
-        listeners.fn[i](payload);
+    requestAnimationFrame(function() {
+      for (var i = 0, il = listeners.length; i < il; i++) {
+        listeners[i](payload);
       }
-      listeners.timer = null;
-    }.bind(this), 17);
+    });
   },
 
   //***************************************************************************
 
   on: function(type, fn) {
     if (!this.listeners[type]) {
-      this.listeners[type] = { fn:[] };
+      this.listeners[type] = [];
     }
-    this.listeners[type].fn.push(fn);
+    this.listeners[type].push(fn);
     return this;
   },
 
@@ -177,10 +172,10 @@ GLMap.prototype = {
     if (!this.listeners[type]) {
       return;
     }
-    var listenerFn = this.listeners[type].fn;
-    for (var i = 0; i < listenerFn.length; i++) {
-      if (listenerFn[i] === fn) {
-        listenerFn.splice(i, 1);
+    var listener = this.listeners[type];
+    for (var i = 0; i < listener.length; i++) {
+      if (listener[i] === fn) {
+        listener.splice(i, 1);
         return;
       }
     }

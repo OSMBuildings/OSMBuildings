@@ -40,7 +40,7 @@ render.AmbientMap = {
       shader = this.shader,
       framebuffer = this.framebuffer;
 
-    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     var targetWidth = MAP.width  >> 1;
     var targetHeight= MAP.height >> 1;
     this.textureWidth = Math.min(glx.util.nextPowerOf2(targetWidth), maxTexSize);

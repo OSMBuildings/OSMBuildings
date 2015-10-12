@@ -41,8 +41,7 @@ var render = {
 
         //render.NormalMap.render();
 
-        if (render.isAmbientOcclusionEnabled)
-        {
+        if (render.isAmbientOcclusionEnabled) {
           render.DepthMap.render();
           render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
           // first=source is ambient map, second=dest is color framebuffer
