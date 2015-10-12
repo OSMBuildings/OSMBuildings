@@ -9,7 +9,6 @@
 */
 render.DepthMap = {
 
-  viewportSize: 512,
 
   init: function() {
     this.shader = new glx.Shader({
@@ -19,7 +18,8 @@ render.DepthMap = {
       uniforms: ['uMatrix']
     });
 
-    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+    this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
+
     /* We will be sampling neighboring pixels of the depth texture to create an ambient
      * occlusion map. With the default texture wrap mode 'gl.REPEAT', sampling the neighbors
      * of edge texels would return texels on the opposite edge of the texture, which is not
@@ -41,11 +41,36 @@ render.DepthMap = {
       shader = this.shader,
       framebuffer = this.framebuffer;
 
-    gl.viewport(0, 0, this.viewportSize, this.viewportSize);
+    var maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    var targetWidth = MAP.width  >> 1;
+    var targetHeight= MAP.height >> 1;
+    this.textureWidth = Math.min(glx.util.nextPowerOf2(targetWidth), maxTexSize);
+    this.textureHeight= Math.min(glx.util.nextPowerOf2(targetHeight), maxTexSize);
+    //work-around: the framebuffer class currently forces dimensions to be square
+    //TODO: remove these two lines once no longer necessary
+    this.textureWidth  = Math.max(this.textureWidth, this.textureHeight);
+    this.textureHeight = Math.max(this.textureWidth, this.textureHeight);
+    
+    this.usedTextureWidth = Math.min(targetWidth, this.textureWidth);
+    this.usedTextureHeight= Math.min(targetHeight,this.textureHeight);
+    //console.log("tex size: %sx%s, used: %sx%s", textureWidth, textureHeight,
+    //            usedTextureWidth, usedTextureHeight);
+
+    if (framebuffer.width != this.textureWidth || framebuffer.height != this.textureHeight)
+    {
+      /*
+      console.log("[INFO] resizing framebuffer to %sx%s (%s, %s)", 
+        this.textureWidth, this.textureHeight, 
+        this.usedTextureWidth/this.textureWidth, this.usedTextureHeight/this.textureHeight);
+      */
+      framebuffer.setSize( this.textureWidth, this.textureHeight );
+    }
+      
+    gl.viewport(0, 0, this.usedTextureWidth, this.usedTextureHeight);
     shader.enable();
     framebuffer.enable();
 
-    gl.clearColor(0.0, 0.0, 0, 1);
+    gl.clearColor(0.0, 0.0, 0.0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var item, modelMatrix;
@@ -64,30 +89,17 @@ render.DepthMap = {
         continue;
       }
 
-      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
-      /*gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);*/
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      /*item.normalBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);*/
-
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    //render.Basemap.render();
     shader.disable();
     framebuffer.disable();
 
-    //gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    //gl.generateMipmap(gl.TEXTURE_2D);
-    
     gl.viewport(0, 0, MAP.width, MAP.height);
 
   },
