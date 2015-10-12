@@ -21,6 +21,7 @@ var render = {
     render.Buildings.init();
     render.Basemap.init();
     render.HudRect.init();
+    render.Overlay.init();
     render.NormalMap.init();
     render.DepthMap.init();
     render.AmbientMap.init();
@@ -40,15 +41,25 @@ var render = {
 
         //render.NormalMap.render();
 
-/*
-        render.DepthMap.render();
-        render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
-        // first=source is ambient map, second=dest is color framebuffer
-        gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-        gl.enable(gl.BLEND);
-        render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
-        gl.disable(gl.BLEND);
-*/
+        if (render.isAmbientOcclusionEnabled)
+        {
+          render.DepthMap.render();
+          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
+          // first=source is ambient map, second=dest is color framebuffer
+          gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
+          gl.enable(gl.BLEND);
+          render.Overlay.render(
+            render.AmbientMap.framebuffer.renderTexture.id,
+            0.5 / render.AmbientMap.textureWidth,
+            0.5 / render.AmbientMap.textureHeight,
+            (render.AmbientMap.usedTextureWidth-0.5) / render.AmbientMap.textureWidth,
+            (render.AmbientMap.usedTextureHeight-0.5)/ render.AmbientMap.textureHeight);
+
+          gl.disable(gl.BLEND);
+        }
+
+          //render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
+
       }.bind(this));
     }.bind(this), 17);
   },
