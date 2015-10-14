@@ -40,8 +40,7 @@ function relax(callback, startIndex, dataLength, chunkSize, delay) {
   }
 }
 
-function getFramebufferConfig(width, height, maxTexSize)
-{
+function getFramebufferConfig(width, height, maxTexSize) {
   var config = {};
   
   config.width = Math.min(glx.util.nextPowerOf2(width),  maxTexSize );
@@ -64,7 +63,3 @@ function getFramebufferConfig(width, height, maxTexSize)
   return config;
 }
 
-function createTextureCoordinateBuffer(framebufferConfig)
-{
-  
-}
