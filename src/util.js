@@ -39,3 +39,32 @@ function relax(callback, startIndex, dataLength, chunkSize, delay) {
     }, delay);
   }
 }
+
+function getFramebufferConfig(width, height, maxTexSize)
+{
+  var config = {};
+  
+  config.width = Math.min(glx.util.nextPowerOf2(width),  maxTexSize );
+  config.height= Math.min(glx.util.nextPowerOf2(height), maxTexSize );
+
+  /*
+  //work-around: the framebuffer class currently forces dimensions to be square
+  //TODO: remove these two lines once no longer necessary
+  this.textureWidth  = Math.max(this.textureWidth, this.textureHeight);
+  this.textureHeight = Math.max(this.textureWidth, this.textureHeight);*/
+  
+  config.usedWidth = Math.min(width, config.width);
+  config.usedHeight= Math.min(height,config.height);
+
+  config.tcLeft  = 0.5 / config.width;
+  config.tcTop   = 0.5 / config.height;
+  config.tcRight = (config.usedWidth  - 0.5) / config.width;
+  config.tcBottom= (config.usedHeight - 0.5) / config.height;
+  
+  return config;
+}
+
+function createTextureCoordinateBuffer(framebufferConfig)
+{
+  
+}

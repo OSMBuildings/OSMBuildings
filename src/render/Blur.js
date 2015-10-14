@@ -1,10 +1,10 @@
 
-render.AmbientMap = {
+render.Blur = {
 
   init: function() {
     this.shader = new glx.Shader({
-      vertexShader:   Shaders.ambientFromDepth.vertex,
-      fragmentShader: Shaders.ambientFromDepth.fragment,
+      vertexShader:   Shaders.blur.vertex,
+      fragmentShader: Shaders.blur.fragment,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
     });
@@ -34,7 +34,7 @@ render.AmbientMap = {
       ]));
   },
 
-  render: function(depthTexture, framebufferConfig) {
+  render: function(inputTexture, framebufferConfig) {
 
     var
       shader = this.shader,
@@ -82,8 +82,8 @@ render.AmbientMap = {
     var identity = new glx.Matrix();
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
 
-    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebufferConfig.width);
-    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebufferConfig.height);
+    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebuffer.width);
+    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebuffer.height);
 
     this.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -91,7 +91,7 @@ render.AmbientMap = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindTexture(gl.TEXTURE_2D, depthTexture);
+    gl.bindTexture(gl.TEXTURE_2D, inputTexture);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
 

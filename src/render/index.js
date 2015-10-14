@@ -25,6 +25,7 @@ var render = {
     render.NormalMap.init();
     render.DepthMap.init();
     render.AmbientMap.init();
+    render.Blur.init();
 
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
@@ -42,22 +43,22 @@ var render = {
         //render.NormalMap.render();
 
         if (render.isAmbientOcclusionEnabled) {
-          render.DepthMap.render();
-          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id);
+          var config = getFramebufferConfig(MAP.width >> 1,
+                                            MAP.height >> 1,
+                                            gl.getParameter(gl.MAX_TEXTURE_SIZE));
+
+          render.DepthMap.render(config);
+          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config);
+          render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
+          
           // first=source is ambient map, second=dest is color framebuffer
           gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
           gl.enable(gl.BLEND);
-          render.Overlay.render(
-            render.AmbientMap.framebuffer.renderTexture.id,
-            0.5 / render.AmbientMap.textureWidth,
-            0.5 / render.AmbientMap.textureHeight,
-            (render.AmbientMap.usedTextureWidth-0.5) / render.AmbientMap.textureWidth,
-            (render.AmbientMap.usedTextureHeight-0.5)/ render.AmbientMap.textureHeight);
-
+          render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
           gl.disable(gl.BLEND);
+          //render.HudRect.render(render.Blur.framebuffer.renderTexture.id);
         }
 
-          //render.HudRect.render(render.AmbientMap.framebuffer.renderTexture.id);
 
       }.bind(this));
     }.bind(this), 17);
@@ -94,7 +95,7 @@ var render = {
 
     this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
 
-    this.fogRadius = Math.sqrt(width*width + height*height) / 1; // 2 would fit fine but camera is too close
+    this.fogRadius = Math.sqrt(width*width + height*height) * 1.1; // 2 would fit fine but camera is too close
   },
 
   destroy: function() {
