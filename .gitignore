@@ -4,7 +4,6 @@ test/data
 .idea
 dist/OSMBuildings.pack.js
 test/mp
-test/7wonders
-_scratch
+
 # backup files
 *~
