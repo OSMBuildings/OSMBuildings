@@ -1,7 +1,4 @@
 
-/*
-*/
-
 mesh.DebugQuad = (function() {
 
   function constructor(options) {

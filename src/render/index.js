@@ -7,7 +7,7 @@ var render = {
    * performed on that vector, yielding a 4D homogenous result vector. That
    * vector is then converted back to a 3D Euler coordinates by dividing 
    * its first three components each by its fourth component */
-  transformVec3: function( m, v) {
+  transformVec3: function(m, v) {
     var x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + 1.0*m[12];
     var y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + 1.0*m[13];
     var z = v[0]*m[2] + v[1]*m[6] + v[2]*m[10] + 1.0*m[14];
@@ -16,7 +16,7 @@ var render = {
   },
   
   /* returns the point (in OSMBuildings' local coordinates) on the XY plane (z==0)
-   * that would be draw at viewport  position (screenNdcX, screenNdcY).
+   * that would be drawn at viewport position (screenNdcX, screenNdcY).
    * That viewport position is given in normalized device coordinates, i.e.
    * x==-1.0 is the left screen edge, x==+1.0 is the right one, y==-1.0 is the lower
    * screen edge and y==+1.0 is the upper one.
@@ -28,7 +28,7 @@ var render = {
     // direction vector from v1 to v2
     var vDir = [ v2[0] - v1[0],
                  v2[1] - v1[1],
-                 v2[2] - v1[2]]
+                 v2[2] - v1[2]];
     
     if (vDir[2] >= 0) // ray would not intersect with the plane
     {
@@ -74,7 +74,7 @@ var render = {
     function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
     function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
     function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
-    function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]};
+    function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
     function dist3(a,b){ return len3(sub3(a,b));}
     
     var inverse = glx.Matrix.invert(viewProjectionMatrix);
@@ -83,17 +83,18 @@ var render = {
     var vBottomRight = this.getIntersectionWithXYPlane( 1, -1, inverse);
     var vTopRight    = this.getIntersectionWithXYPlane( 1,  1, inverse);
     var vTopLeft     = this.getIntersectionWithXYPlane(-1,  1, inverse);
-    
-    
+
     /* If even the lower edge of the screen does not intersect with the map plane,
      * then the map plane is not visible at all.
      * (Or somebody screwed up the projection matrix, putting view upside-down 
      *  or something. But in any case we won't attempt to create a view rectangle).
      */
-    if (!vBottomLeft || !vBottomRight)
-      return undefined;
-    
-    
+    if (!vBottomLeft || !vBottomRight) {
+      return;
+    }
+
+    var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
+
     /* The lower screen edge shows the map layer, but the upper one does not.
      * This usually happens when the camera is close to parallel to the ground
      * so that the upper screen edge lies above the horizon. This is not a bug
@@ -101,8 +102,7 @@ var render = {
      * that the view 'trapezoid' stretches infinitely toward the horizon. Since this
      * is not a practically useful result - though formally correct - we instead
      * manually bound that area.*/
-    if (!vTopLeft || !vTopRight)
-    {
+    if (!vTopLeft || !vTopRight) {
       /* This point is chosen somewhat arbitrarily. It just *has* to lie on the
        * left edge of the screen. And it *should* be located relatively low
        * on that edge to ensure it lies below the horizon, but should not be too
@@ -110,30 +110,28 @@ var render = {
        * the vector between this point and 'vBottomLeft'. The value '-0.9' was 
        * chosen as it fits these criteria quite well, but no effort was made
        * to guarantee an *optimal* fit.  */
-      var vLeftPoint = this.getIntersectionWithXYPlane(-1, -0.9, inverse);
-      var vLeftDir = norm3(sub3( vLeftPoint, vBottomLeft));
+      vLeftPoint = this.getIntersectionWithXYPlane(-1, -0.9, inverse);
+      vLeftDir = norm3(sub3( vLeftPoint, vBottomLeft));
       vTopLeft = add3( vBottomLeft, mul3scalar(vLeftDir, MAX_EDGE_LENGTH));
       
       /* arbitrary point on the right screen edge, subject to the same
        * requirements as 'vLeftPoint' */
-      var vRightPoint = this.getIntersectionWithXYPlane( 1, -0.9, inverse);
-      var vRightDir = norm3(sub3( vRightPoint, vBottomRight));
-      vTopRight = add3( vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
+      vRightPoint = this.getIntersectionWithXYPlane( 1, -0.9, inverse);
+      vRightDir = norm3(sub3(vRightPoint, vBottomRight));
+      vTopRight = add3(vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
     }
     
     /* if vTopLeft is further than MAX_EDGE_LENGTH away from vBottomLeft,
      * move it closer. */
-    if (dist3(vBottomLeft, vTopLeft) > MAX_EDGE_LENGTH)
-    {
-      vLeftDir = norm3( sub3(vTopLeft, vBottomLeft));
-      vTopLeft = add3( vBottomLeft, mul3scalar(vLeftDir, MAX_EDGE_LENGTH));
+    if (dist3(vBottomLeft, vTopLeft) > MAX_EDGE_LENGTH) {
+      vLeftDir = norm3(sub3(vTopLeft, vBottomLeft));
+      vTopLeft = add3(vBottomLeft, mul3scalar(vLeftDir, MAX_EDGE_LENGTH));
     }
     
     /* do the same for the right edge */
-    if (dist3(vBottomRight, vTopRight) > MAX_EDGE_LENGTH)
-    {
-      vRightDir = norm3( sub3(vTopRight, vBottomRight));
-      vTopRight = add3( vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
+    if (dist3(vBottomRight, vTopRight) > MAX_EDGE_LENGTH) {
+      vRightDir = norm3(sub3(vTopRight, vBottomRight));
+      vTopRight = add3(vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
     }
     
     //return [ vBottomLeft, vBottomRight, vTopRight, vTopLeft];
@@ -213,7 +211,6 @@ var render = {
     var minY = Math.floor(Math.min( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
     var maxY = Math.ceil( Math.max( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
     
-    
     var tiles = {};
     tiles [ [Math.floor(quad[0][0]), Math.floor(quad[0][1])] ] = true;
     tiles [ [Math.floor(quad[1][0]), Math.floor(quad[1][1])] ] = true;
@@ -222,21 +219,19 @@ var render = {
     //console.log(tiles);
     //return tiles;
     for (var x = minX; x <= maxX; x++)
-      for (var y = minY; y <= maxY; y++)
-      {
+      for (var y = minY; y <= maxY; y++) {
         if (this.isPointInTriangle( quad[0], quad[1], quad[2], [x+0.5, y+0.5]) ||
-            this.isPointInTriangle( quad[0], quad[2], quad[3], [x+0.5, y+0.5]))
-            { 
-              tiles[[x-1,y-1]] = true;
-              tiles[[x  ,y-1]] = true;
-              tiles[[x+1,y-1]] = true;
-              tiles[[x-1,y  ]] = true;
-              tiles[[x  ,y  ]] = true;
-              tiles[[x+1,y  ]] = true;
-              tiles[[x-1,y+1]] = true;
-              tiles[[x  ,y+1]] = true;
-              tiles[[x+1,y+1]] = true;
-            }
+          this.isPointInTriangle( quad[0], quad[2], quad[3], [x+0.5, y+0.5])) {
+            tiles[[x-1,y-1]] = true;
+            tiles[[x  ,y-1]] = true;
+            tiles[[x+1,y-1]] = true;
+            tiles[[x-1,y  ]] = true;
+            tiles[[x  ,y  ]] = true;
+            tiles[[x+1,y  ]] = true;
+            tiles[[x-1,y+1]] = true;
+            tiles[[x  ,y+1]] = true;
+            tiles[[x+1,y+1]] = true;
+          }
       }
     return tiles;
   },
@@ -267,7 +262,7 @@ var render = {
     render.AmbientMap.init();
     render.Blur.init();
     
-    /*var quad = new mesh.DebugQuad()
+    /*var quad = new mesh.DebugQuad();
     quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
     data.Index.add(quad);*/
 
@@ -294,25 +289,24 @@ var render = {
         render.SkyDome.render();
         render.Buildings.render();
         render.Basemap.render();
-
-        //render.NormalMap.render();
-        if (render.isAmbientOcclusionEnabled) {
-          var config = getFramebufferConfig(MAP.width >> 1,
-                                            MAP.height >> 1,
-                                            gl.getParameter(gl.MAX_TEXTURE_SIZE));
-
-          render.DepthMap.render(config);
-          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config);
-          render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
-          
-          // first=source is ambient map, second=dest is color framebuffer
-          gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-          gl.enable(gl.BLEND);
-          render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
-          gl.disable(gl.BLEND);
-          //render.HudRect.render(render.Blur.framebuffer.renderTexture.id);
-        }
-
+        //
+        ////render.NormalMap.render();
+        //if (render.isAmbientOcclusionEnabled) {
+        //  var config = getFramebufferConfig(MAP.width >> 1,
+        //                                    MAP.height >> 1,
+        //                                    gl.getParameter(gl.MAX_TEXTURE_SIZE));
+        //
+        //  render.DepthMap.render(config);
+        //  render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config);
+        //  render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
+        //
+        //  // first=source is ambient map, second=dest is color framebuffer
+        //  gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
+        //  gl.enable(gl.BLEND);
+        //  render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
+        //  gl.disable(gl.BLEND);
+        //  //render.HudRect.render(render.Blur.framebuffer.renderTexture.id);
+        //}
 
       }.bind(this));
     }.bind(this), 17);
