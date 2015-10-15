@@ -67,8 +67,8 @@ var render = {
    * Note: if the horizon is level (as should usually be the case for 
    * OSMBuildings) then said quad is also a trapezoid. */
   getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
-    //FIXME: determine a reasonable value (2500 was chosen rather arbitrarily)
-    var MAX_EDGE_LENGTH = 2500; 
+    //FIXME: determine a reasonable value (4000 was chosen rather arbitrarily)
+    var MAX_EDGE_LENGTH = 4000; 
   
     function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
     function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
@@ -178,21 +178,65 @@ var render = {
     return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;    
   },
   
+  
+  /* Returns the set of tiles (as dictionary keys) that overlap in any way with
+   * the quadrilateral 'quad'. The returned set may contain false-positives, 
+   * i.e. tiles that are slightly outside the viewing frustum.
+   *
+   * The basic approach is to determine the axis-aligned bounding box of the 
+   * quad, and for each tile in the bounding box determine whether its center
+   * lies inside the quad (or rather in one of the two triangles making up the
+   * quad) via a point-in-triangle test.
+   * This approach however misses some boundary cases:
+   * - for tiles on the edge of the screen, parts of the tile may be visible 
+   *   without its center being visible. Our test misses these cases. We 
+   *   compensate by adding not only the tile itself but also all horizontal, 
+   *   vertical and diagonal neighbors to the result set
+   * - if the quad is small compared to the tile size then no tile center may
+   *   be inside the quad (e.g. when the whole screen is covered by the lower
+   *   third of a single tile) and thus the result set would be empty. We 
+   *   compensate by adding the tiles of all four quad vertices to the result
+   *   set in any case.
+   * Note: while the set of tiles added through those edge cases may seem
+   *       excessive, it is actually rather small: It does add an one tile wide 
+   *       outline to the result set. But other than that, is only caused tiles
+   *       to be added multiple times, and those duplicates are removed
+   *       automatically since the result is a set.
+   *       
+   *
+   */
   getTilesInQuad: function( quad ) {
+    //return {};
     var minX = Math.floor(Math.min( quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
     var maxX = Math.ceil( Math.max( quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
 
     var minY = Math.floor(Math.min( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
     var maxY = Math.ceil( Math.max( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
     
-    var tiles = [];
     
+    var tiles = {};
+    tiles [ [Math.floor(quad[0][0]), Math.floor(quad[0][1])] ] = true;
+    tiles [ [Math.floor(quad[1][0]), Math.floor(quad[1][1])] ] = true;
+    tiles [ [Math.floor(quad[2][0]), Math.floor(quad[2][1])] ] = true;
+    tiles [ [Math.floor(quad[3][0]), Math.floor(quad[3][1])] ] = true;
+    //console.log(tiles);
+    //return tiles;
     for (var x = minX; x <= maxX; x++)
       for (var y = minY; y <= maxY; y++)
       {
-        if (this.isPointInTriangle( quad[0], quad[1], quad[2], [x, y]) ||
-            this.isPointInTriangle( quad[0], quad[2], quad[3], [x, y]))
-            tiles.push( [x,y]);
+        if (this.isPointInTriangle( quad[0], quad[1], quad[2], [x+0.5, y+0.5]) ||
+            this.isPointInTriangle( quad[0], quad[2], quad[3], [x+0.5, y+0.5]))
+            { 
+              tiles[[x-1,y-1]] = true;
+              tiles[[x  ,y-1]] = true;
+              tiles[[x+1,y-1]] = true;
+              tiles[[x-1,y  ]] = true;
+              tiles[[x  ,y  ]] = true;
+              tiles[[x+1,y  ]] = true;
+              tiles[[x-1,y+1]] = true;
+              tiles[[x  ,y+1]] = true;
+              tiles[[x+1,y+1]] = true;
+            }
       }
     return tiles;
   },
@@ -223,9 +267,9 @@ var render = {
     render.AmbientMap.init();
     render.Blur.init();
     
-    //var quad = new mesh.DebugQuad()
-    //quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
-    //data.Index.add(quad);
+    /*var quad = new mesh.DebugQuad()
+    quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
+    data.Index.add(quad);*/
 
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
@@ -236,8 +280,8 @@ var render = {
           return;
         }
         
-        var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
-        //window.tiles = this.getTilesInQuad( viewTrapezoid)
+        //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
+        //console.log( this.getTilesInQuad( viewTrapezoid) );
         //var s = "";
         //for (var i in window.tiles)
         //  s+= window.tiles[i][0] + ", " + window.tiles[i][1] + "\n";
@@ -252,7 +296,6 @@ var render = {
         render.Basemap.render();
 
         //render.NormalMap.render();
-        /*
         if (render.isAmbientOcclusionEnabled) {
           var config = getFramebufferConfig(MAP.width >> 1,
                                             MAP.height >> 1,
@@ -268,7 +311,7 @@ var render = {
           render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
           gl.disable(gl.BLEND);
           //render.HudRect.render(render.Blur.framebuffer.renderTexture.id);
-        }*/
+        }
 
 
       }.bind(this));

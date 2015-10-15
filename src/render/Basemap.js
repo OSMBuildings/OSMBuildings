@@ -40,7 +40,7 @@ render.Basemap = {
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 
-      if (!tile.isReady || !tile.isVisible(layer.bounds)) {
+      if (!tile.isReady || ! ([tile.x, tile.y, tile.zoom].join(",") in layer.visibleTiles) ) {
         continue;
       }
 

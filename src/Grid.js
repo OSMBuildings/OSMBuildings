@@ -102,20 +102,28 @@ Grid.prototype = {
         MAP.center.x/TILE_SIZE <<0,
         MAP.center.y/TILE_SIZE <<0
       ];
+      
+    var viewQuad = render.getViewQuad( render.viewProjMatrix.data, bounds.zoom);
+    var tiles = render.getTilesInQuad(viewQuad);
+    this.visibleTiles = {};
 
-    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
-        key = [tileX, tileY, bounds.zoom].join(',');
-        if (this.tiles[key]) {
-          continue;
-        }
-
-        this.tiles[key] = new this.tileClass(tileX, tileY, bounds.zoom, this.tileOptions);
-        // TODO: rotate anchor point
-        queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
+    for (var i in tiles) {
+      var tile = i.split(",");
+      var tileX = tile[0];
+      var tileY = tile[1];
+      this.visibleTiles[ [tileX, tileY, bounds.zoom].join(",") ] = true;
+      
+      key = [tileX, tileY, bounds.zoom].join(',');
+      if (this.tiles[key]) {
+        continue;
       }
+
+      this.tiles[key] = new this.tileClass(tileX, tileY, bounds.zoom, this.tileOptions);
+      // TODO: rotate anchor point
+      queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
 
+    //console.log(this.visibleTiles);
     if (!(queueLength = queue.length)) {
       return;
     }
@@ -135,7 +143,9 @@ Grid.prototype = {
 
   purge: function() {
     for (var key in this.tiles) {
-      if (!this.tiles[key].isVisible(this.bounds)) {
+      var tile = key.split(",");
+      if (! this.visibleTiles[key]) {
+        //console.log("purging '%s %s'", this.source, key);
         this.tiles[key].destroy();
         delete this.tiles[key];
       }

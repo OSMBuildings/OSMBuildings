@@ -44,10 +44,15 @@ basemap.Tile.prototype = {
     }.bind(this));
   },
 
-  isVisible: function(bounds) {
+/* DEPRECATED!
+ * Since the switch to visibility computation using the view trapezoid, tiles
+ * no longer know whether they are visible. Instead, the layer that contains
+ * them obtains a list of visible tiles directly.
+*/
+/*  isVisible: function(bounds) {
     // TODO: factor in tile origin
     return (this.zoom === bounds.zoom && (this.x >= bounds.minX && this.x <= bounds.maxX && this.y >= bounds.minY && this.y <= bounds.maxY));
-  },
+  },*/
 
   destroy: function() {
     this.vertexBuffer.destroy();
