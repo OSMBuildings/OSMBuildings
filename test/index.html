@@ -114,14 +114,12 @@
   }).addTo(map);
 
   osmb.addGeoJSONTiles(
-//  'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
     fixedZoom: 15
     // color: '#00ff00'
     // bounds
   });
-
-//  osmb.addOSMTiles();
 
   // map.addOBJ('data/Fernsehturm_Berlin.obj', { latitude:52.51941, longitude:13.40445 }, { id:'Fernsehturm', scale:0.095, elevation:8, rotation:51 });
   // map.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { elevation:-3, rotation:97, id:'London Eye' });
@@ -142,60 +140,6 @@
 
   //var obj = osmb.addGeoJSON('data/o2 vor 90.geo.json', { color: '#00ccff' });
   //osmb.addGeoJSON('data/w1-o4.geo.json', { color: '#ff0000' });
-
-//var dir = '../../OBJ2GeoJSON/data/2015-09/';
-
-//var obj = osmb.addGeoJSON(dir + 'w3/w3-nach90.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w3/w3-planung.geo.json', { color: '#00ff00' });
-//var obj = osmb.addGeoJSON(dir + 'w3/w3-vor90.geo.json', { color: '#ff00ff' });
-//var obj = osmb.addGeoJSON(dir + 'w3/w3-vor90-abriss.geo.json', { color: '#ffff00' });
-//var obj = osmb.addGeoJSON(dir + 'w3/w3-vorschlag.geo.json', { color: '#0000ff' });
-
-// -10
-//var obj = osmb.addGeoJSON(dir + 'w2/w2-nach90.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w2/w2-planung.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w2/w2-vor90.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w2/w2-vor90-abriss.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w2/w2-vorschlag.geo.json', { color: '#ff0000' });
-
-// -11
-//var obj = osmb.addGeoJSON(dir + 'w1/w1-nach90.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w1/w1-nach90-abriss.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w1/w1-planung.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w1/w1-vor90.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w1/w1-vor90-abriss.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'w1/w1-vorschlag.geo.json', { color: '#ff0000' });
-
-// -13
-//var obj = osmb.addGeoJSON(dir + 'o1/o1-nach90.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'o1/o1-planung.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'o1/o1-vor90.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'o1/o1-vor90-abriss.geo.json', { color: '#ff0000' });
-//var obj = osmb.addGeoJSON(dir + 'o1/o1-vorschlag.geo.json', { color: '#ff0000' });
-
-  //var obj = osmb.addGeoJSON(dir + 'o2/o2-nach90.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o2/o2-nach90-abriss.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o2/o2-planung.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o2/o2-vor90.geo.json', { color: '#ff00ff' });
-  //var obj = osmb.addGeoJSON(dir + 'o2/o2-vor90-abriss.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o2/o2-vorschlag.geo.json', { color: '#00ff00' });
-
-  //var obj = osmb.addGeoJSON(dir + 'o3/o3-nach90.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o3/o3-nach90-abriss.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o3/o3-planung.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o3/o3-vor90.geo.json', { color: '#00ff00' });
-  //var obj = osmb.addGeoJSON(dir + 'o3/o3-vor90-abriss.geo.json', { color: '#ff00ff' });
-  //var obj = osmb.addGeoJSON(dir + 'o3/o3-vorschlag.geo.json', { color: '#00ffff' });
-
-
-  // -1
-  //var obj = osmb.addGeoJSON(dir + 'o4/o4-nach90.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o4/o4-nach90-abriss.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o4/o4-planung.geo.json', { color: '#ff00ff' });
-  //var obj = osmb.addGeoJSON(dir + 'o4/o4-vor90.geo.json', { color: '#00ffff' });
-  //var obj = osmb.addGeoJSON(dir + 'o4/o4-vor90-abriss.geo.json', { color: '#ff0000' });
-  //var obj = osmb.addGeoJSON(dir + 'o4/o4-vorschlag.geo.json', { color: '#ff0000' });
-
 
   var label = document.getElementById('label');
 
@@ -288,7 +232,7 @@
 
   //*************************************************************************
 
-  if (ty≈åpeof obj !== 'undefined') positionOnMap(obj);
+  if (typeof obj !== 'undefined') positionOnMap(obj);
 
   var controlButtons = document.querySelectorAll('.control button');
 
