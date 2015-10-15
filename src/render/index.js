@@ -6,7 +6,7 @@ var render = {
    * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
    * performed on that vector, yielding a 4D homogenous result vector. That
    * vector is then converted back to a 3D Euler coordinates by dividing 
-   * by its components by its fourth component */
+   * its first three components each by its fourth component */
   transformVec3: function( m, v) {
     var x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + 1.0*m[12];
     var y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + 1.0*m[13];
@@ -67,14 +67,15 @@ var render = {
    * Note: if the horizon is level (as should usually be the case for 
    * OSMBuildings) then said quad is also a trapezoid. */
   getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
-    //FIXME: determine a reasonable value (5000 was chosen rather arbitrarily)
-    var MAX_EDGE_LENGTH = 5000; 
+    //FIXME: determine a reasonable value (2500 was chosen rather arbitrarily)
+    var MAX_EDGE_LENGTH = 2500; 
   
     function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
     function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
     function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
     function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
     function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]};
+    function dist3(a,b){ return len3(sub3(a,b));}
     
     var inverse = glx.Matrix.invert(viewProjectionMatrix);
 
@@ -120,12 +121,80 @@ var render = {
       vTopRight = add3( vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
     }
     
+    /* if vTopLeft is further than MAX_EDGE_LENGTH away from vBottomLeft,
+     * move it closer. */
+    if (dist3(vBottomLeft, vTopLeft) > MAX_EDGE_LENGTH)
+    {
+      vLeftDir = norm3( sub3(vTopLeft, vBottomLeft));
+      vTopLeft = add3( vBottomLeft, mul3scalar(vLeftDir, MAX_EDGE_LENGTH));
+    }
+    
+    /* do the same for the right edge */
+    if (dist3(vBottomRight, vTopRight) > MAX_EDGE_LENGTH)
+    {
+      vRightDir = norm3( sub3(vTopRight, vBottomRight));
+      vTopRight = add3( vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
+    }
+    
     //return [ vBottomLeft, vBottomRight, vTopRight, vTopLeft];
     
     return [this.asTilePosition( vBottomLeft,  tileZoomLevel),
             this.asTilePosition( vBottomRight, tileZoomLevel),
             this.asTilePosition( vTopRight,    tileZoomLevel),
             this.asTilePosition( vTopLeft,     tileZoomLevel)];
+  },
+  
+  /* Returns whether the point 'P' lies either inside the triangle (tA, tB, tC) 
+   * or on its edge.
+   *
+   * Implementation: we follow a barycentric development: The triangle
+   *                 is interpreted as the point tA and two vectors v1 = tB - tA
+   *                 and v2 = tC - tA. Then for any point P inside the triangle
+   *                 holds P = tA + α*v1 + β*v2 subject to α >= 0, β>= 0 and
+   *                 α + β <= 1.0
+  */
+  isPointInTriangle: function( tA, tB, tC, P) {
+    var v1x = tB[0] - tA[0];
+    var v1y = tB[1] - tA[1];
+    
+    var v2x = tC[0] - tA[0];
+    var v2y = tC[1] - tA[1];
+    
+    var qx  = P[0] - tA[0];
+    var qy  = P[1] - tA[1];
+    
+    /* 'denom' is zero iff v1 and v2 have the same direction. In that case,
+     * the triangle has degenerated to a line, and no point can lie inside it */
+    var denom = v2x * v1y - v2y * v1x;
+    if (denom === 0) 
+      return false;
+    
+    var numeratorBeta =  qx*v1y - qy*v1x;
+    var beta = numeratorBeta/denom;
+
+    var numeratorAlpha = qx*v2y - qy*v2x;
+    var alpha = - numeratorAlpha / denom;
+
+    return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;    
+  },
+  
+  getTilesInQuad: function( quad ) {
+    var minX = Math.floor(Math.min( quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
+    var maxX = Math.ceil( Math.max( quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
+
+    var minY = Math.floor(Math.min( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
+    var maxY = Math.ceil( Math.max( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
+    
+    var tiles = [];
+    
+    for (var x = minX; x <= maxX; x++)
+      for (var y = minY; y <= maxY; y++)
+      {
+        if (this.isPointInTriangle( quad[0], quad[1], quad[2], [x, y]) ||
+            this.isPointInTriangle( quad[0], quad[2], quad[3], [x, y]))
+            tiles.push( [x,y]);
+      }
+    return tiles;
   },
   
   start: function() {
@@ -168,7 +237,13 @@ var render = {
         }
         
         var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
-        console.log( viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3] );
+        //window.tiles = this.getTilesInQuad( viewTrapezoid)
+        //var s = "";
+        //for (var i in window.tiles)
+        //  s+= window.tiles[i][0] + ", " + window.tiles[i][1] + "\n";
+        //window.s = s;
+        //console.log(window.tiles.length);
+        //console.log( viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3] );
         //quad.updateGeometry(viewTrapezoid[0], viewTrapezoid[1],
         //                    viewTrapezoid[2], viewTrapezoid[3]);
 
@@ -177,7 +252,7 @@ var render = {
         render.Basemap.render();
 
         //render.NormalMap.render();
-
+        /*
         if (render.isAmbientOcclusionEnabled) {
           var config = getFramebufferConfig(MAP.width >> 1,
                                             MAP.height >> 1,
@@ -193,7 +268,7 @@ var render = {
           render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
           gl.disable(gl.BLEND);
           //render.HudRect.render(render.Blur.framebuffer.renderTexture.id);
-        }
+        }*/
 
 
       }.bind(this));
