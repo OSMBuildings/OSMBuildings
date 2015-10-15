@@ -40,24 +40,24 @@ var render = {
         render.Buildings.render();
         render.Basemap.render();
 
-        //render.NormalMap.render();
-
-        if (render.isAmbientOcclusionEnabled) {
-          var config = getFramebufferConfig(MAP.width >> 1,
-                                            MAP.height >> 1,
-                                            gl.getParameter(gl.MAX_TEXTURE_SIZE));
-
-          render.DepthMap.render(config);
-          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config);
-          render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
-          
-          // first=source is ambient map, second=dest is color framebuffer
-          gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-          gl.enable(gl.BLEND);
-          render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
-          gl.disable(gl.BLEND);
-          //render.HudRect.render(render.Blur.framebuffer.renderTexture.id);
-        }
+        ////render.NormalMap.render();
+        //
+        //if (render.isAmbientOcclusionEnabled) {
+        //  var config = getFramebufferConfig(MAP.width >> 1,
+        //                                    MAP.height >> 1,
+        //                                    gl.getParameter(gl.MAX_TEXTURE_SIZE));
+        //
+        //  render.DepthMap.render(config);
+        //  render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config);
+        //  render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
+        //
+        //  // first=source is ambient map, second=dest is color framebuffer
+        //  gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
+        //  gl.enable(gl.BLEND);
+        //  render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
+        //  gl.disable(gl.BLEND);
+        //  //render.HudRect.render(render.Blur.framebuffer.renderTexture.id);
+        //}
 
 
       }.bind(this));
@@ -83,7 +83,7 @@ var render = {
       refHeight = 1024,
       refVFOV = 45;
 
-      this.projMatrix = new glx.Matrix()
+    this.projMatrix = new glx.Matrix()
       .translate(0, -height/2, -1220) // 0, MAP y offset to neutralize camera y offset, MAP z -1220 scales MAP tiles to ~256px
       .scale(1, -1, 1) // flip Y
       .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 0.1, 5000))
