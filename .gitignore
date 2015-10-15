@@ -1,11 +1,10 @@
-/node_modules/
-/test/data/
-/.DS_Store/
-/.idea/
-/dist/OSMBuildings.pack.js
-/test/mp/
-/test/7wonders/
-/_scratch/
-
+node_modules
+test/data
+.DS_Store
+.idea
+dist/OSMBuildings.pack.js
+test/mp
+test/7wonders
+_scratch
 # backup files
 *~
