@@ -85,49 +85,6 @@
 </div>
 
 <script>
-  /*
-   * ## Key codes for object positioning ##
-   * Cursor keys: move
-   * +/- : scale
-   * w/s : elevate
-   * a/d : rotate
-   *
-   * Pressing Alt the same time accelerates
-   */
-  function positionOnMap(obj) {
-    document.addEventListener('keydown', function(e) {
-      var transInc = e.altKey ? 0.0002 : 0.00002;
-      var scaleInc = e.altKey ? 0.1 : 0.01;
-      var rotaInc = e.altKey ? 10 : 1;
-      var eleInc = e.altKey ? 10 : 1;
-
-      switch (e.which) {
-        case 37: obj.position.longitude -= transInc; break;
-        case 39: obj.position.longitude += transInc; break;
-        case 38: obj.position.latitude += transInc; break;
-        case 40: obj.position.latitude -= transInc; break;
-        case 187: obj.scale += scaleInc; break;
-        case 189: obj.scale -= scaleInc; break;
-        case 65: obj.rotation += rotaInc; break;
-        case 68: obj.rotation -= rotaInc; break;
-        case 87: obj.elevation += eleInc; break;
-        case 83: obj.elevation -= eleInc; break;
-        default: return;
-      }
-      console.log(JSON.stringify({
-        position:{
-          latitude:parseFloat(obj.position.latitude.toFixed(5)),
-          longitude:parseFloat(obj.position.longitude.toFixed(5))
-        },
-        elevation:parseFloat(obj.elevation.toFixed(2)),
-        scale:parseFloat(obj.scale.toFixed(2)),
-        rotation:parseInt(obj.rotation, 10)
-      }));
-    });
-  }
-
-  //*************************************************************************
-
   var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
@@ -157,12 +114,12 @@
   }).addTo(map);
 
   osmb.addGeoJSONTiles(
-    // dataSource: null, // null disables default OSM data,
-    // dataSource: 'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//  'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
-    color: '#00ff00'
-    // buffer: 0, // how many tiles to preload around visible area - not yet!
+    fixedZoom: 15
+    // color: '#00ff00'
+    // bounds
   });
 
 //  osmb.addOSMTiles();
@@ -184,10 +141,62 @@
     }
   ] };
 
-  osmb.addGeoJSON(gj);
+  //var obj = osmb.addGeoJSON('data/o2 vor 90.geo.json', { color: '#00ccff' });
+  //osmb.addGeoJSON('data/w1-o4.geo.json', { color: '#ff0000' });
 
-  //var obj = osmb.addGeoJSON('data/o2 vor 90.geo.json-MERGED.geo.json', { color: '#00ccff' });
-  //osmb.addGeoJSON('data/w1-o4.geo.json');
+//var dir = '../../OBJ2GeoJSON/data/2015-09/';
+
+//var obj = osmb.addGeoJSON(dir + 'w3/w3-nach90.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w3/w3-planung.geo.json', { color: '#00ff00' });
+//var obj = osmb.addGeoJSON(dir + 'w3/w3-vor90.geo.json', { color: '#ff00ff' });
+//var obj = osmb.addGeoJSON(dir + 'w3/w3-vor90-abriss.geo.json', { color: '#ffff00' });
+//var obj = osmb.addGeoJSON(dir + 'w3/w3-vorschlag.geo.json', { color: '#0000ff' });
+
+// -10
+//var obj = osmb.addGeoJSON(dir + 'w2/w2-nach90.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w2/w2-planung.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w2/w2-vor90.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w2/w2-vor90-abriss.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w2/w2-vorschlag.geo.json', { color: '#ff0000' });
+
+// -11
+//var obj = osmb.addGeoJSON(dir + 'w1/w1-nach90.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w1/w1-nach90-abriss.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w1/w1-planung.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w1/w1-vor90.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w1/w1-vor90-abriss.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'w1/w1-vorschlag.geo.json', { color: '#ff0000' });
+
+// -13
+//var obj = osmb.addGeoJSON(dir + 'o1/o1-nach90.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'o1/o1-planung.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'o1/o1-vor90.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'o1/o1-vor90-abriss.geo.json', { color: '#ff0000' });
+//var obj = osmb.addGeoJSON(dir + 'o1/o1-vorschlag.geo.json', { color: '#ff0000' });
+
+  //var obj = osmb.addGeoJSON(dir + 'o2/o2-nach90.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o2/o2-nach90-abriss.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o2/o2-planung.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o2/o2-vor90.geo.json', { color: '#ff00ff' });
+  //var obj = osmb.addGeoJSON(dir + 'o2/o2-vor90-abriss.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o2/o2-vorschlag.geo.json', { color: '#00ff00' });
+
+  //var obj = osmb.addGeoJSON(dir + 'o3/o3-nach90.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o3/o3-nach90-abriss.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o3/o3-planung.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o3/o3-vor90.geo.json', { color: '#00ff00' });
+  //var obj = osmb.addGeoJSON(dir + 'o3/o3-vor90-abriss.geo.json', { color: '#ff00ff' });
+  //var obj = osmb.addGeoJSON(dir + 'o3/o3-vorschlag.geo.json', { color: '#00ffff' });
+
+
+  // -1
+  //var obj = osmb.addGeoJSON(dir + 'o4/o4-nach90.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o4/o4-nach90-abriss.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o4/o4-planung.geo.json', { color: '#ff00ff' });
+  //var obj = osmb.addGeoJSON(dir + 'o4/o4-vor90.geo.json', { color: '#00ffff' });
+  //var obj = osmb.addGeoJSON(dir + 'o4/o4-vor90-abriss.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addGeoJSON(dir + 'o4/o4-vorschlag.geo.json', { color: '#ff0000' });
+
 
   var label = document.getElementById('label');
 
@@ -237,7 +246,50 @@
 
   //*************************************************************************
 
-  if (typeof obj !== 'undefined') positionOnMap(obj);
+  /*
+   * ## Key codes for object positioning ##
+   * Cursor keys: move
+   * +/- : scale
+   * w/s : elevate
+   * a/d : rotate
+   *
+   * Pressing Alt the same time accelerates
+   */
+  function positionOnMap(obj) {
+    document.addEventListener('keydown', function(e) {
+      var transInc = e.altKey ? 0.02 : 0.00002;
+      var scaleInc = e.altKey ? 0.1 : 0.01;
+      var rotaInc = e.altKey ? 10 : 1;
+      var eleInc = e.altKey ? 10 : 1;
+
+      switch (e.which) {
+        case 37: obj.position.longitude -= transInc; break;
+        case 39: obj.position.longitude += transInc; break;
+        case 38: obj.position.latitude += transInc; break;
+        case 40: obj.position.latitude -= transInc; break;
+        case 187: obj.scale += scaleInc; break;
+        case 189: obj.scale -= scaleInc; break;
+        case 65: obj.rotation += rotaInc; break;
+        case 68: obj.rotation -= rotaInc; break;
+        case 87: obj.elevation += eleInc; break;
+        case 83: obj.elevation -= eleInc; break;
+        default: return;
+      }
+      console.log(JSON.stringify({
+        position:{
+          latitude:parseFloat(obj.position.latitude.toFixed(5)),
+          longitude:parseFloat(obj.position.longitude.toFixed(5))
+        },
+        elevation:parseFloat(obj.elevation.toFixed(2)),
+        scale:parseFloat(obj.scale.toFixed(2)),
+        rotation:parseInt(obj.rotation, 10)
+      }));
+    });
+  }
+
+  //*************************************************************************
+
+  if (ty≈åpeof obj !== 'undefined') positionOnMap(obj);
 
   var controlButtons = document.querySelectorAll('.control button');
 
