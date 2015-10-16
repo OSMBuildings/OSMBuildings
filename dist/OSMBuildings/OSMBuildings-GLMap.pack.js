@@ -2461,7 +2461,7 @@
 	  loadTiles: function() {
 	    var zoom = Math.round(this.fixedZoom || MAP.zoom);
 
-	    // TODO: if there are udser defined bounds for this layer, respect these too
+	    // TODO: if there are user defined bounds for this layer, respect these too
 	    //  if (this.fixedBounds) {
 	    //    var
 	    //      min = project(this.bounds.s, this.bounds.w, 1<<zoom),
@@ -2505,7 +2505,6 @@
 	      queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
 	    }
 
-	    //console.log(this.visibleTiles);
 	    if (!(queueLength = queue.length)) {
 	      return;
 	    }
@@ -2989,7 +2988,6 @@
 
 	    this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
 	    this.updateGeometry( [0,0,0], [0,0,0], [0,0,0], [0,0,0]);
-	    
 
 	    this.minZoom = APP.minZoom;
 	    this.maxZoom = APP.maxZoom;
@@ -3017,8 +3015,7 @@
 	      
 	      if (this.vertexBuffer)
 	        this.vertexBuffer.destroy();
-	        
-	        
+
 	      var vertices = [].concat(v1, v2, v3, v1, v3, v4);
 	      this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
 
@@ -3907,23 +3904,22 @@
 	   */
 	  getTilesInQuad: function( quad ) {
 	    //return {};
-	    var minX = Math.floor(Math.min( quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
-	    var maxX = Math.ceil( Math.max( quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
+	    var minX =          (Math.min(quad[0][0], quad[1][0], quad[2][0], quad[3][0])) <<0;
+	    var maxX = Math.ceil(Math.max(quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
 
-	    var minY = Math.floor(Math.min( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
-	    var maxY = Math.ceil( Math.max( quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
+	    var minY =          (Math.min(quad[0][1], quad[1][1], quad[2][1], quad[3][1])) <<0;
+	    var maxY = Math.ceil(Math.max(quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
 	    
 	    var tiles = {};
-	    tiles [ [Math.floor(quad[0][0]), Math.floor(quad[0][1])] ] = true;
-	    tiles [ [Math.floor(quad[1][0]), Math.floor(quad[1][1])] ] = true;
-	    tiles [ [Math.floor(quad[2][0]), Math.floor(quad[2][1])] ] = true;
-	    tiles [ [Math.floor(quad[3][0]), Math.floor(quad[3][1])] ] = true;
-	    //console.log(tiles);
-	    //return tiles;
+	    tiles [ [quad[0][0]<<0, quad[0][1]<<0] ] = true;
+	    tiles [ [quad[1][0]<<0, quad[1][1]<<0] ] = true;
+	    tiles [ [quad[2][0]<<0, quad[2][1]<<0] ] = true;
+	    tiles [ [quad[3][0]<<0, quad[3][1]<<0] ] = true;
+
 	    for (var x = minX; x <= maxX; x++)
 	      for (var y = minY; y <= maxY; y++) {
-	        if (this.isPointInTriangle( quad[0], quad[1], quad[2], [x+0.5, y+0.5]) ||
-	          this.isPointInTriangle( quad[0], quad[2], quad[3], [x+0.5, y+0.5])) {
+	        if (this.isPointInTriangle(quad[0], quad[1], quad[2], [x+0.5, y+0.5]) ||
+	          this.isPointInTriangle(quad[0], quad[2], quad[3], [x+0.5, y+0.5])) {
 	            tiles[[x-1,y-1]] = true;
 	            tiles[[x  ,y-1]] = true;
 	            tiles[[x+1,y-1]] = true;
@@ -3964,9 +3960,9 @@
 	    render.AmbientMap.init();
 	    render.Blur.init();
 	    
-	    /*var quad = new mesh.DebugQuad();
-	    quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
-	    data.Index.add(quad);*/
+	    //var quad = new mesh.DebugQuad();
+	    //quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
+	    //data.Index.add(quad);
 
 	    this.loop = setInterval(function() {
 	      requestAnimationFrame(function() {
@@ -3985,15 +3981,14 @@
 	        //window.s = s;
 	        //console.log(window.tiles.length);
 	        //console.log( viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3] );
-	        //quad.updateGeometry(viewTrapezoid[0], viewTrapezoid[1],
-	        //                    viewTrapezoid[2], viewTrapezoid[3]);
+	        //quad.updateGeometry(viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3]);
 
 	        render.SkyDome.render();
 	        render.Buildings.render();
 	        render.Basemap.render();
 
 	        ////render.NormalMap.render();
-
+	        //
 	        //if (render.isAmbientOcclusionEnabled) {
 	        //  var config = getFramebufferConfig(MAP.width >> 1,
 	        //                                    MAP.height >> 1,

@@ -57,7 +57,7 @@ Grid.prototype = {
   loadTiles: function() {
     var zoom = Math.round(this.fixedZoom || MAP.zoom);
 
-    // TODO: if there are udser defined bounds for this layer, respect these too
+    // TODO: if there are user defined bounds for this layer, respect these too
     //  if (this.fixedBounds) {
     //    var
     //      min = project(this.bounds.s, this.bounds.w, 1<<zoom),
@@ -101,7 +101,6 @@ Grid.prototype = {
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
 
-    //console.log(this.visibleTiles);
     if (!(queueLength = queue.length)) {
       return;
     }

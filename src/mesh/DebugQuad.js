@@ -11,7 +11,6 @@ mesh.DebugQuad = (function() {
 
     this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
     this.updateGeometry( [0,0,0], [0,0,0], [0,0,0], [0,0,0]);
-    
 
     this.minZoom = APP.minZoom;
     this.maxZoom = APP.maxZoom;
@@ -39,8 +38,7 @@ mesh.DebugQuad = (function() {
       
       if (this.vertexBuffer)
         this.vertexBuffer.destroy();
-        
-        
+
       var vertices = [].concat(v1, v2, v3, v1, v3, v4);
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
 
