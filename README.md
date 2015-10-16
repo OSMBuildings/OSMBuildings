@@ -111,6 +111,7 @@ setRotation | float | sets current rotation
 getRotation | | gets current rotation
 setTilt | float | sets current tilt
 getTilt | | gets current tilt
+transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 
 ### OSM Buildings options
 
@@ -133,7 +134,6 @@ addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bou
 addTileLayer | url, options | add a map tile set and specify options {bounds}
 getTarget | x, y | get a building id at position
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
-transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 
 ### OSM Buildings server
 
