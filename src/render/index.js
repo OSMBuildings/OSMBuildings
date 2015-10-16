@@ -1,11 +1,28 @@
 
 var render = {
-  
+
+  getFramebufferConfig: function(width, height, maxTexSize) {
+    var config = {};
+
+    config.width = Math.min(glx.util.nextPowerOf2(width),  maxTexSize );
+    config.height= Math.min(glx.util.nextPowerOf2(height), maxTexSize );
+
+    config.usedWidth = Math.min(width, config.width);
+    config.usedHeight= Math.min(height,config.height);
+
+    config.tcLeft  = 0.5 / config.width;
+    config.tcTop   = 0.5 / config.height;
+    config.tcRight = (config.usedWidth  - 0.5) / config.width;
+    config.tcBottom= (config.usedHeight - 0.5) / config.height;
+
+    return config;
+  },
+
   /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
-   * Internally, the vector 'v' is interpreted as a 4D vector 
+   * Internally, the vector 'v' is interpreted as a 4D vector
    * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
    * performed on that vector, yielding a 4D homogenous result vector. That
-   * vector is then converted back to a 3D Euler coordinates by dividing 
+   * vector is then converted back to a 3D Euler coordinates by dividing
    * its first three components each by its fourth component */
   transformVec3: function(m, v) {
     var x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + 1.0*m[12];
@@ -291,7 +308,7 @@ var render = {
         ////render.NormalMap.render();
         //
         //if (render.isAmbientOcclusionEnabled) {
-        //  var config = getFramebufferConfig(MAP.width >> 1,
+        //  var config = this.getFramebufferConfig(MAP.width >> 1,
         //                                    MAP.height >> 1,
         //                                    gl.getParameter(gl.MAX_TEXTURE_SIZE));
         //
