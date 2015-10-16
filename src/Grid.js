@@ -7,7 +7,7 @@ var Grid = function(source, tileClass, options) {
   this.tileClass = tileClass;
   options = options || {};
 
-  this.fixedBounds = options.bounds;
+  this.bounds = options.bounds;
   this.fixedZoom = options.fixedZoom;
 
   this.tileOptions = { color:options.color };
@@ -41,48 +41,12 @@ Grid.prototype = {
       return;
     }
 
-    if (this.isDelayed) {
-      return;
+    if (!this.debounce) {
+      this.debounce = setTimeout(function() {
+        this.debounce = null;
+        this.loadTiles();
+      }.bind(this), delay);
     }
-
-    this.isDelayed = setTimeout(function() {
-      this.isDelayed = null;
-      this.loadTiles();
-    }.bind(this), delay);
-  },
-
-  updateBounds: function() {
-    var zoom = Math.round(this.fixedZoom || MAP.zoom);
-
-    if (this.fixedBounds) {
-      var
-        min = project(this.fixedBounds.s, this.fixedBounds.w, 1<<zoom),
-        max = project(this.fixedBounds.n, this.fixedBounds.e, 1<<zoom);
-
-      this.bounds = {
-        zoom: zoom,
-        minX: (min.x <<0) - this.buffer,
-        minY: (min.y <<0) - this.buffer,
-        maxX: (max.x <<0) + this.buffer,
-        maxY: (max.y <<0) + this.buffer
-      };
-
-      return;
-    }
-
-    // TODO: use visibility trapezoid here
-    var
-      radius = 1500,
-      ratio = Math.pow(2, zoom-MAP.zoom)/TILE_SIZE,
-      mapCenter = MAP.center;
-
-    this.bounds = {
-      zoom: zoom,
-      minX: ((mapCenter.x-radius)*ratio <<0) - this.buffer,
-      minY: ((mapCenter.y-radius)*ratio <<0) - this.buffer,
-      maxX: Math.ceil((mapCenter.x+radius)*ratio) + this.buffer,
-      maxY: Math.ceil((mapCenter.y+radius)*ratio) + this.buffer
-    };
   },
 
   getURL: function(x, y, z) {
@@ -91,31 +55,53 @@ Grid.prototype = {
   },
 
   loadTiles: function() {
-    this.updateBounds();
+    var zoom = Math.round(this.fixedZoom || MAP.zoom);
+
+    // TODO: if there are udser defined bounds for this layer, respect these too
+    //  if (this.fixedBounds) {
+    //    var
+    //      min = project(this.bounds.s, this.bounds.w, 1<<zoom),
+    //      max = project(this.bounds.n, this.bounds.e, 1<<zoom);
+    //
+    //    var bounds = {
+    //      zoom: zoom,
+    //      minX: (min.x <<0) - this.buffer,
+    //      minY: (min.y <<0) - this.buffer,
+    //      maxX: (max.x <<0) + this.buffer,
+    //      maxY: (max.y <<0) + this.buffer
+    //    };
+    //  }
 
     var
-      tileX, tileY,
+      tile, tileX, tileY,
       key,
       queue = [], queueLength,
-      bounds = this.bounds,
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
         MAP.center.y/TILE_SIZE <<0
       ];
+      
+    var viewQuad = render.getViewQuad(render.viewProjMatrix.data, zoom);
+    var tilesToLoad = render.getTilesInQuad(viewQuad);
 
-    for (tileY = bounds.minY; tileY < bounds.maxY; tileY++) {
-      for (tileX = bounds.minX; tileX < bounds.maxX; tileX++) {
-        key = [tileX, tileY, bounds.zoom].join(',');
-        if (this.tiles[key]) {
-          continue;
-        }
+    this.visibleTiles = {};
+    for (var t in tilesToLoad) {
+      tile = t.split(',');
+      tileX = tile[0];
+      tileY = tile[1];
+      key = [tileX, tileY, zoom].join(',');
+      this.visibleTiles[key] = true;
 
-        this.tiles[key] = new this.tileClass(tileX, tileY, bounds.zoom, this.tileOptions);
-        // TODO: rotate anchor point
-        queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
+      if (this.tiles[key]) {
+        continue;
       }
+
+      this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions);
+      // TODO: rotate anchor point
+      queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
 
+    //console.log(this.visibleTiles);
     if (!(queueLength = queue.length)) {
       return;
     }
@@ -124,7 +110,6 @@ Grid.prototype = {
       return a.dist-b.dist;
     });
 
-    var tile;
     for (var i = 0; i < queueLength; i++) {
       tile = queue[i].tile;
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
@@ -134,8 +119,11 @@ Grid.prototype = {
   },
 
   purge: function() {
+    var tile;
     for (var key in this.tiles) {
-      if (!this.tiles[key].isVisible(this.bounds)) {
+      tile = key.split(',');
+      if (!this.visibleTiles[key]) {
+        //console.log("purging '%s %s'", this.source, key);
         this.tiles[key].destroy();
         delete this.tiles[key];
       }
@@ -146,7 +134,7 @@ Grid.prototype = {
     MAP.off('change', this._onChange);
     MAP.off('resize', this._onResize);
 
-    clearTimeout(this.isDelayed);
+    clearTimeout(this.debounce);
     for (var key in this.tiles) {
       this.tiles[key].destroy();
     }

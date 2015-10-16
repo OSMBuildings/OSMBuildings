@@ -40,19 +40,12 @@ function relax(callback, startIndex, dataLength, chunkSize, delay) {
   }
 }
 
-function getFramebufferConfig(width, height, maxTexSize)
-{
+function getFramebufferConfig(width, height, maxTexSize) {
   var config = {};
   
   config.width = Math.min(glx.util.nextPowerOf2(width),  maxTexSize );
   config.height= Math.min(glx.util.nextPowerOf2(height), maxTexSize );
 
-  /*
-  //work-around: the framebuffer class currently forces dimensions to be square
-  //TODO: remove these two lines once no longer necessary
-  this.textureWidth  = Math.max(this.textureWidth, this.textureHeight);
-  this.textureHeight = Math.max(this.textureWidth, this.textureHeight);*/
-  
   config.usedWidth = Math.min(width, config.width);
   config.usedHeight= Math.min(height,config.height);
 
@@ -64,7 +57,3 @@ function getFramebufferConfig(width, height, maxTexSize)
   return config;
 }
 
-function createTextureCoordinateBuffer(framebufferConfig)
-{
-  
-}

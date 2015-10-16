@@ -3,6 +3,8 @@ basemap.Tile = function(x, y, zoom) {
   this.x = x;
   this.y = y;
   this.zoom = zoom;
+  this.key = [x, y, zoom].join(',');
+
   var numSegments = 4;
 
   var meshStep = 255/numSegments;
@@ -11,6 +13,7 @@ basemap.Tile = function(x, y, zoom) {
   var vertices = [];
   var texCoords = [];
 
+  // TODO: can probably be 1x1 again when better fog is in place
   for (var cols = 0; cols < numSegments; cols++) {
     for (var rows = 0; rows < numSegments; rows++) {
       vertices.push(
@@ -42,11 +45,6 @@ basemap.Tile.prototype = {
         this.isReady = true;
       }
     }.bind(this));
-  },
-
-  isVisible: function(bounds) {
-    // TODO: factor in tile origin
-    return (this.zoom === bounds.zoom && (this.x >= bounds.minX && this.x <= bounds.maxX && this.y >= bounds.minY && this.y <= bounds.maxY));
   },
 
   destroy: function() {
