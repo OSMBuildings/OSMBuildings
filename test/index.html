@@ -57,8 +57,8 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="GLMap/GLMap.css">
-  <script src="GLMap/GLMap.debug.js"></script>
+  <link rel="stylesheet" href="../node_modules/glmap/dist/GLMap/GLMap.css">
+  <script src="../node_modules/glmap/dist/GLMap/GLMap.debug.js"></script>
   <script src="loader.js"></script>
 </head>
 
@@ -118,7 +118,8 @@
   );
 
   osmb.addGeoJSONTiles(
-    'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+  'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//    'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
     fixedZoom: 15
     // bounds
@@ -187,7 +188,7 @@
 //  osmb.on('idle', function() {
 //    console.log('IDLE');
 //  });
-
+//
 //  osmb.on('busy', function() {
 //    console.log('BUSY');
 //  });

@@ -40,6 +40,12 @@ module.exports = function(grunt) {
       dist: [{
         src: 'src/skydome.jpg',
         dest: 'dist/OSMBuildings/skydome.jpg'
+      }, {
+        src: './node_modules/glmap/dist/GLMap/GLMap.js',
+        dest: 'dist/GLMap/GLMap.js'
+      },{
+        src: './node_modules/glmap/dist/GLMap/GLMap.css',
+        dest: 'dist/GLMap/GLMap.css'
       }]
     },
 

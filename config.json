@@ -3,8 +3,8 @@
 
   "lib": [
     "lib/earcut.js",
-    "lib/Color.debug.js",
-    "lib/GLX.debug.js"
+    "node_modules/Color/dist/Color.debug.js",
+    "node_modules/GLX/dist/GLX.debug.js"
   ],
 
   "src": [

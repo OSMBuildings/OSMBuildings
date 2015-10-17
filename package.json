@@ -12,7 +12,12 @@
     "url": "git@github.com:OSMBuildings/OSMBuildings.git"
   },
   "scripts": {},
-  "dependencies": {},
+  "dependencies": {
+    "Color": "git://github.com/kekscom/Color.git",
+    "GLX": "git://github.com/kekscom/glx.git",
+    "glmap": "git://github.com/OSMBuildings/GLMap.git",
+    "earcut": "^2.0.5"
+  },
   "devDependencies": {
     "grunt": "^0.4.4",
     "grunt-webpack": "^1.0.8",
