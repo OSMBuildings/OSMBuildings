@@ -34,6 +34,15 @@ OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">h
 
 OSMBuildings.prototype = {
 
+  on: function(type, fn) {
+    Events.on(type, fn);
+    return this;
+  },
+
+  off: function(type, fn) {
+    Events.off(type, fn);
+  },
+
   addTo: function(map) {
     MAP = map;
     glx = new GLX(MAP.container, MAP.width, MAP.height);
@@ -109,6 +118,7 @@ OSMBuildings.prototype = {
 
   destroy: function() {
     render.destroy();
+    Events.destroy();
     if (APP._basemapGrid) APP._basemapGrid.destroy();
     if (APP._dataGrid)    APP._dataGrid.destroy();
   }

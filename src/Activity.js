@@ -1,20 +1,21 @@
 
 var Activity = {};
 
+// TODO: could turn into a public loading handler
+// OSMB.loader - stop(), start(), isBusy(), events..
+
 (function() {
 
   var count = 0;
-  var timer;
+  var debounce;
 
-  Activity.setBusy = function(msg) {
-    //if (msg) {
-    //  console.log('setBusy', msg, count);
-    //}
+  Activity.setBusy = function() {
+    //console.log('setBusy', count);
 
     if (!count) {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
+      if (debounce) {
+        clearTimeout(debounce);
+        debounce = null;
       } else {
         Events.emit('busy');
       }
@@ -22,22 +23,20 @@ var Activity = {};
     count++;
   };
 
-  Activity.setIdle = function(msg) {
+  Activity.setIdle = function() {
     if (!count) {
       return;
     }
 
     count--;
     if (!count) {
-      timer = setTimeout(function() {
-        timer = null;
+      debounce = setTimeout(function() {
+        debounce = null;
         Events.emit('idle');
       }, 33);
     }
 
-    //if (msg) {
-    //  console.log('setIdle', msg, count);
-    //}
+    //console.log('setIdle', count);
   };
 
   Activity.isBusy = function() {

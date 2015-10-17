@@ -1002,6 +1002,7 @@ glx.Buffer.prototype = {
 
   destroy: function() {
     GL.deleteBuffer(this.id);
+    this.id = null;
   }
 };
 
@@ -1016,19 +1017,26 @@ glx.Framebuffer.prototype = {
     this.frameBuffer = GL.createFramebuffer();
     GL.bindFramebuffer(GL.FRAMEBUFFER, this.frameBuffer);
 
+    width = glx.util.nextPowerOf2(width);
+    height= glx.util.nextPowerOf2(height);
+    
+    // already has the right size
+    if (width === this.width && height === this.height) {
+      return;
+    }
+
     this.width  = width;
     this.height = height;
-    var size = glx.util.nextPowerOf2(Math.max(this.width, this.height));
 
     this.renderBuffer = GL.createRenderbuffer();
     GL.bindRenderbuffer(GL.RENDERBUFFER, this.renderBuffer);
-    GL.renderbufferStorage(GL.RENDERBUFFER, GL.DEPTH_COMPONENT16, size, size);
+    GL.renderbufferStorage(GL.RENDERBUFFER, GL.DEPTH_COMPONENT16, width, height);
 
     if (this.renderTexture) {
       this.renderTexture.destroy();
     }
 
-    this.renderTexture = new glx.texture.Data(size);
+    this.renderTexture = new glx.texture.Data(width, height);
 
     GL.framebufferRenderbuffer(GL.FRAMEBUFFER, GL.DEPTH_ATTACHMENT, GL.RENDERBUFFER, this.renderBuffer);
     GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, this.renderTexture.id, 0);
@@ -1147,7 +1155,10 @@ glx.Shader.prototype = {
     this.uniforms = null;
   },
   
-  destroy: function() {}
+  destroy: function() {
+    this.disable();
+    this.id = null;
+  }
 };
 
 
@@ -1522,14 +1533,14 @@ glx.texture.Image.prototype = {
   },
 
   destroy: function() {
-    GL.bindTexture(GL.TEXTURE_2D, null);
+    this.disable();
     GL.deleteTexture(this.id);
     this.id = null;
   }
 };
 
 
-glx.texture.Data = function(size, data, options) {
+glx.texture.Data = function(width, height, data, options) {
   //options = options || {};
 
   this.id = GL.createTexture();
@@ -1545,12 +1556,12 @@ glx.texture.Data = function(size, data, options) {
   var bytes = null;
 
   if (data) {
-    var length = size*size*4;
+    var length = width*height*4;
     bytes = new Uint8Array(length);
     bytes.set(data.subarray(0, length));
   }
 
-  GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, size, size, 0, GL.RGBA, GL.UNSIGNED_BYTE, bytes);
+  GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, width, height, 0, GL.RGBA, GL.UNSIGNED_BYTE, bytes);
   GL.bindTexture(GL.TEXTURE_2D, null);
 };
 
@@ -1568,6 +1579,7 @@ glx.texture.Data.prototype = {
   destroy: function() {
     GL.bindTexture(GL.TEXTURE_2D, null);
     GL.deleteTexture(this.id);
+    this.id = null;
   }
 };
 
@@ -1733,6 +1745,15 @@ OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">h
 
 OSMBuildings.prototype = {
 
+  on: function(type, fn) {
+    Events.on(type, fn);
+    return this;
+  },
+
+  off: function(type, fn) {
+    Events.off(type, fn);
+  },
+
   addTo: function(map) {
     MAP = map;
     glx = new GLX(MAP.container, MAP.width, MAP.height);
@@ -1808,6 +1829,7 @@ OSMBuildings.prototype = {
 
   destroy: function() {
     render.destroy();
+    Events.destroy();
     if (APP._basemapGrid) APP._basemapGrid.destroy();
     if (APP._dataGrid)    APP._dataGrid.destroy();
   }
@@ -1830,42 +1852,38 @@ var Events = {};
 
   var listeners = {};
 
-  Events.on = function(type, fn) {
-    if (!listeners[type]) {
-      listeners[type] = { fn:[] };
-    }
-
-    listeners[type].fn.push(fn);
-  };
-
-  Events.off = function(type, fn) {
-    if (!listeners[type]) {
-      return;
-    }
-    var listenerFn = listeners[type].fn;
-    for (var i = 0; i < listenerFn.length; i++) {
-      if (listenerFn[i] === fn) {
-        listenerFn.splice(i, 1);
-        return;
-      }
-    }
-  };
-
   Events.emit = function(type, payload) {
     if (!listeners[type]) {
       return;
     }
 
     var l = listeners[type];
-    if (l.timer) {
+
+    requestAnimationFrame(function() {
+      for (var i = 0, il = l.length; i < il; i++) {
+        l[i](payload);
+      }
+    });
+  };
+
+  Events.on = function(type, fn) {
+    if (!listeners[type]) {
+      listeners[type] = [];
+    }
+    listeners[type].push(fn);
+  };
+
+  Events.off = function(type, fn) {
+    if (!listeners[type]) {
       return;
     }
-    l.timer = setTimeout(function() {
-      l.timer = null;
-      for (var i = 0, il = l.fn.length; i < il; i++) {
-        l.fn[i](payload);
+    var l = listeners[type];
+    for (var i = 0; i < l.length; i++) {
+      if (l[i] === fn) {
+        l.splice(i, 1);
+        return;
       }
-    }, 17);
+    }
   };
 
   Events.destroy = function() {
@@ -1877,43 +1895,43 @@ var Events = {};
 
 var Activity = {};
 
+// TODO: could turn into a public loading handler
+// OSMB.loader - stop(), start(), isBusy(), events..
+
 (function() {
 
   var count = 0;
-  var timer;
+  var debounce;
 
-  Activity.setBusy = function(msg) {
-    //if (msg) {
-    //  console.log('setBusy', msg, count);
-    //}
+  Activity.setBusy = function() {
+    //console.log('setBusy', count);
 
     if (!count) {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
+      if (debounce) {
+        clearTimeout(debounce);
+        debounce = null;
       } else {
+        console.log('emit BUSY');
         Events.emit('busy');
       }
     }
     count++;
   };
 
-  Activity.setIdle = function(msg) {
+  Activity.setIdle = function() {
     if (!count) {
       return;
     }
 
     count--;
     if (!count) {
-      timer = setTimeout(function() {
-        timer = null;
+      debounce = setTimeout(function() {
+        debounce = null;
         Events.emit('idle');
       }, 33);
     }
 
-    //if (msg) {
-    //  console.log('setIdle', msg, count);
-    //}
+    //console.log('setIdle', count);
   };
 
   Activity.isBusy = function() {

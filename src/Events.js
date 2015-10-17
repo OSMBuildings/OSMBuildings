@@ -5,42 +5,38 @@ var Events = {};
 
   var listeners = {};
 
-  Events.on = function(type, fn) {
-    if (!listeners[type]) {
-      listeners[type] = { fn:[] };
-    }
-
-    listeners[type].fn.push(fn);
-  };
-
-  Events.off = function(type, fn) {
-    if (!listeners[type]) {
-      return;
-    }
-    var listenerFn = listeners[type].fn;
-    for (var i = 0; i < listenerFn.length; i++) {
-      if (listenerFn[i] === fn) {
-        listenerFn.splice(i, 1);
-        return;
-      }
-    }
-  };
-
   Events.emit = function(type, payload) {
     if (!listeners[type]) {
       return;
     }
 
     var l = listeners[type];
-    if (l.timer) {
+
+    requestAnimationFrame(function() {
+      for (var i = 0, il = l.length; i < il; i++) {
+        l[i](payload);
+      }
+    });
+  };
+
+  Events.on = function(type, fn) {
+    if (!listeners[type]) {
+      listeners[type] = [];
+    }
+    listeners[type].push(fn);
+  };
+
+  Events.off = function(type, fn) {
+    if (!listeners[type]) {
       return;
     }
-    l.timer = setTimeout(function() {
-      l.timer = null;
-      for (var i = 0, il = l.fn.length; i < il; i++) {
-        l.fn[i](payload);
+    var l = listeners[type];
+    for (var i = 0; i < l.length; i++) {
+      if (l[i] === fn) {
+        l.splice(i, 1);
+        return;
       }
-    }, 17);
+    }
   };
 
   Events.destroy = function() {
