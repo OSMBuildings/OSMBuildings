@@ -27,7 +27,7 @@ mesh.OBJ = (function() {
       vertices: [],
       normals: [],
       colors: [],
-      idColors: []
+      ids: []
     };
 
     Activity.setBusy();
@@ -74,7 +74,7 @@ mesh.OBJ = (function() {
         idColor = render.Interaction.idToColor(id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
           this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
       }
     },
@@ -100,10 +100,10 @@ mesh.OBJ = (function() {
     onReady: function() {
       //this.modify();
 
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this.data.idColors));
+      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
 
       this.data = null;
 
@@ -150,7 +150,7 @@ mesh.OBJ = (function() {
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();
-        this.idColorBuffer.destroy();
+        this.idBuffer.destroy();
       }
     }
   };

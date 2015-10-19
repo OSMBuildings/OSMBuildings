@@ -62,8 +62,8 @@ render.Interaction = {
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      item.idColorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.idColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      item.idBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aColor, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       //item.visibilityBuffer.enable();
       //gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);

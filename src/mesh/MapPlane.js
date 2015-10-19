@@ -82,7 +82,7 @@ mesh.MapPlane = (function() {
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         //this.colorBuffer.destroy();
-        //this.idColorBuffer.destroy();
+        //this.idBuffer.destroy();
       }
     }
   };

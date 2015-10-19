@@ -69,7 +69,7 @@ mesh.GeoJSON = (function() {
       vertices: [],
       normals: [],
       colors: [],
-      idColors: []
+      ids: []
     };
 
     Activity.setBusy();
@@ -124,7 +124,7 @@ mesh.GeoJSON = (function() {
 
         id = this.id || item.id;
         idColor = render.Interaction.idToColor(id);
-        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06); // TODO: maybe a shaders task
 
         center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
 
@@ -151,7 +151,7 @@ mesh.GeoJSON = (function() {
         color = this.color || item.wallColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
           this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
         vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
@@ -170,7 +170,7 @@ mesh.GeoJSON = (function() {
         color = this.color || item.roofColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
           this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
       }
     },
@@ -196,10 +196,10 @@ mesh.GeoJSON = (function() {
     onReady: function() {
       //this.modify();
 
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this.data.idColors));
+      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
 
       this.data = null;
 
@@ -246,7 +246,7 @@ mesh.GeoJSON = (function() {
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();
-        this.idColorBuffer.destroy();
+        this.idBuffer.destroy();
       }
     }
   };
