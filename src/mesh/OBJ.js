@@ -59,51 +59,46 @@ mesh.OBJ = (function() {
         id, colorVariance,
         defaultColor = new Color(DEFAULT_COLOR).toArray();
 
-        for (var i = 0, il = items.length; i < il; i++) {
+      for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
-
-//      item.numVertices = item.vertices.length/3;
-//        this.items.push({ id:item.id, min:item.min, max:item.max });
 
         this.data.vertices.push.apply(this.data.vertices, item.vertices);
         this.data.normals.push.apply(this.data.normals, item.normals);
 
         id = this.id || item.id;
+        idColor = render.Interaction.idToColor(id);
+
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
         color = this.color || item.color || defaultColor;
-        idColor = render.Interaction.idToColor(id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2], 1);
         }
+
+        // TODO: clean up vars
+        this.items.push({ id:id, vertexCount:item.vertices.length/3, color:color, colorVariance:colorVariance });
       }
     },
 
-//  modify: function() {
-//    if (!this.items) {
-//      return;
-//    }
-//
-//    var item, hidden, visibilities = [];
-//    for (var i = 0, il = this.items.length; i<il; i++) {
-//      item = this.items[i];
+    setColors: function() {
+      var item, colors = [];
+      for (var i = 0, il = this.items.length; i < il; i++) {
+        item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
-//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-//          visibilities.push(item.hidden ? 1 : 0);
-//        }
-//    }
-//
-//    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
-//    visibilities = null;
-//  },
+        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, 1);
+        }
+      }
+
+      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
+      colors = null;
+    },
 
     onReady: function() {
-      //this.modify();
 
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
+      this.setColors();
 
       this.data = null;
 

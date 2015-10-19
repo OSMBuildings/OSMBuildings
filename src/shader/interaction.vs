@@ -5,7 +5,7 @@
 #define halfPi 1.57079632679
 
 attribute vec4 aPosition;
-attribute vec3 aColor;
+attribute vec4 aColor;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
@@ -46,6 +46,6 @@ void main() {
   if (distance > uFogRadius) {
     vColor = vec4(0.0, 0.0, 0.0, 0.0);
   } else {
-    vColor = vec4(aColor, 1.0);
+    vColor = vec4(aColor.rgb, 1.0);
   }
 }
