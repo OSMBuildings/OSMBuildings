@@ -96,11 +96,11 @@ render.Interaction = {
       this.idMapping.push(id);
       index = this.idMapping.length-1;
     }
-    return {
-      r: ( index        & 0xff) / 255,
-      g: ((index >>  8) & 0xff) / 255,
-      b: ((index >> 16) & 0xff) / 255
-    };
+    return [
+      ( index        & 0xff) / 255,
+      ((index >>  8) & 0xff) / 255,
+      ((index >> 16) & 0xff) / 255
+    ];
   },
 
   destroy: function() {}

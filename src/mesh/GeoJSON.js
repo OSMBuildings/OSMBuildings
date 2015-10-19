@@ -50,7 +50,7 @@ mesh.GeoJSON = (function() {
 
     this.id = options.id;
     if (options.color) {
-      this.color = Color.parse(options.color).toRGBA(true);
+      this.color = new Color(options.color).toArray();
     }
 
     this.replace   = !!options.replace;
@@ -113,6 +113,7 @@ mesh.GeoJSON = (function() {
         item, color, idColor, center, radius,
         vertexCount,
         id, colorVariance,
+        defaultColor = new Color(DEFAULT_COLOR).toArray(),
         j;
 
       for (var i = 0, il = items.length; i < il; i++) {
@@ -147,10 +148,10 @@ mesh.GeoJSON = (function() {
           default:         vertexCount = Triangulate.extrusion(this.data, item.geometry, item.minHeight, item.height);
         }
 
-        color = this.color || item.wallColor || DEFAULT_COLOR;
+        color = this.color || item.wallColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
-          this.data.idColors.push(idColor.r, idColor.g, idColor.b);
+          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
         }
 
         vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
@@ -166,10 +167,10 @@ mesh.GeoJSON = (function() {
             }
         }
 
-        color = this.color || item.roofColor || DEFAULT_COLOR;
+        color = this.color || item.roofColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color.r+colorVariance, color.g+colorVariance, color.b+colorVariance);
-          this.data.idColors.push(idColor.r, idColor.g, idColor.b);
+          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
         }
       }
     },

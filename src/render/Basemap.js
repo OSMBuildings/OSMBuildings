@@ -22,7 +22,6 @@ render.Basemap = {
     }
 
     var
-      fogColor = render.fogColor,
       shader = this.shader,
       tile, modelMatrix,
       tileZoom = Math.round(MAP.zoom),
@@ -32,7 +31,7 @@ render.Basemap = {
     shader.enable();
 
     gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
-    gl.uniform3fv(shader.uniforms.uFogColor, [fogColor.r, fogColor.g, fogColor.b]);
+    gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);

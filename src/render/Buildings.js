@@ -31,20 +31,17 @@ render.Buildings = {
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
     gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
-    gl.uniform3fv(shader.uniforms.uFogColor, [render.fogColor.r, render.fogColor.g, render.fogColor.b]);
+    gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    if (!this.highlightColor) {
-      this.highlightColor = DEFAULT_HIGHLIGHT_COLOR;
-    }
-    gl.uniform3fv(shader.uniforms.uHighlightColor, [this.highlightColor.r, this.highlightColor.g, this.highlightColor.b]);
+    gl.uniform3fv(shader.uniforms.uHighlightColor, render.highlightColor);
 
     if (!this.highlightID) {
-      this.highlightID = { r:0, g:0, b:0 };
+      this.highlightID = [0, 0, 0];
     }
-    gl.uniform3fv(shader.uniforms.uHighlightID, [this.highlightID.r, this.highlightID.g, this.highlightID.b]);
+    gl.uniform3fv(shader.uniforms.uHighlightID, this.highlightID);
 
     var
       dataItems = data.Index.items,

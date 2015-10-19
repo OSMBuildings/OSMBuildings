@@ -117,11 +117,13 @@ transform | latitude, longitude, elevation | transforms a geo coordinate + eleva
 
 option | value | description
 --- | --- | ---
+baseURL | string | for locating assets, this is relative to calling page 
 minZoom | float | minimum allowed zoom
 maxZoom | float | maximum allowed zoom
 attribution | string | attribution, optional
 showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
-baseURL | string | for locating assets, this is relative to calling page 
+fogColor | string | color to be used for sky gradients and distance fog.
+backgroundColor | string | overall background color
 
 ### OSM Buildings methods
 

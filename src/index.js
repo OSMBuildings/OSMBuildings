@@ -15,8 +15,12 @@ var OSMBuildings = function(options) {
   render.bendRadius = 500;
   render.bendDistance = 500;
 
-  render.fogColor = options.fogColor ? Color.parse(options.fogColor).toRGBA(true) : FOG_COLOR;
+  render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
+  render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
+  render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();
+
   render.Buildings.showBackfaces = options.showBackfaces;
+
   // default to 'true':
   render.isAmbientOcclusionEnabled = !!((options.renderAmbientOcclusion === undefined) || options.renderAmbientOcclusion);
 
@@ -62,10 +66,14 @@ OSMBuildings.prototype = {
   },
 
   setStyle: function(style) {
-    var color = style.color || style.wallColor;
-    if (color) {
-      DEFAULT_COLOR = Color.parse(color).toRGBA(true);
-    }
+    //render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
+    //render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
+    //render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();
+
+    DEFAULT_COLOR = style.color || style.wallColor || DEFAULT_COLOR;
+    //if (color.isValid) {
+    //  DEFAULT_COLOR = color.toArray();
+    //}
     return this;
   },
 
@@ -107,8 +115,7 @@ OSMBuildings.prototype = {
     return APP._basemapGrid;
   },
 
-  highlight: function(id, color) {
-    render.Buildings.highlightColor = color ? id && Color.parse(color).toRGBA(true) : null;
+  highlight: function(id) {
     render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 

@@ -66,8 +66,6 @@ var Triangulate = {};
     var vertices, t, tl;
     var vertexCount = 0;
 
-//  { r:255, g:0, b:0 }
-
     if (ringLength <= 4) { // 3: a triangle
       vertexCount += this.addTriangle(
         tris,

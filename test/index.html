@@ -118,8 +118,7 @@
   );
 
   osmb.addGeoJSONTiles(
-  'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-//    'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
   {
     fixedZoom: 15
     // bounds
@@ -177,6 +176,7 @@
     if (id) {
       document.body.style.cursor = 'pointer';
       osmb.highlight(id, '#f08000');
+//    console.log(id);
     } else {
       document.body.style.cursor = 'default';
       osmb.highlight(null);

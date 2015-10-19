@@ -284,7 +284,7 @@ var render = {
 
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
-        gl.clearColor(this.fogColor.r, this.fogColor.g, this.fogColor.b, 1);
+        gl.clearColor(this.backgroundColor[0], this.backgroundColor[1], this.backgroundColor[2], 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {

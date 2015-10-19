@@ -92,7 +92,7 @@ render.SkyDome = {
 
     shader.enable();
 
-    gl.uniform3fv(shader.uniforms.uFogColor, [fogColor.r, fogColor.g, fogColor.b]);
+    gl.uniform3fv(shader.uniforms.uFogColor, fogColor);
 
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);

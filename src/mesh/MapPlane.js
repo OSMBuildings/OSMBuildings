@@ -18,7 +18,7 @@ mesh.MapPlane = (function() {
 
     this.id = options.id;
     /*if (options.color) {
-      this.color = Color.parse(options.color).toRGBA(true);
+      this.color = new Color(options.color).toArray(true);
     }*/
 
     this.radius = options.radius || 500;

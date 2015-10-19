@@ -59,6 +59,9 @@ var GeoJSON = {};
   };
 
   function getMaterialColor(str) {
+    if (typeof str !== 'string') {
+      return null;
+    }
     str = str.toLowerCase();
     if (str[0] === '#') {
       return str;
@@ -75,9 +78,7 @@ var GeoJSON = {};
   function parseFeature(res, feature, origin, worldSize) {
     var
       prop = feature.properties,
-      item = {},
-      color,
-      wallColor, roofColor;
+      item = {};
 
     if (!prop) {
       return;
@@ -86,11 +87,8 @@ var GeoJSON = {};
     item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
     item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
 
-    wallColor = prop.material ? getMaterialColor(prop.material) : (prop.wallColor || prop.color);
-    item.wallColor = (color = Color.parse(wallColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
-
-    roofColor = prop.roofMaterial ? getMaterialColor(prop.roofMaterial) : prop.roofColor;
-    item.roofColor = (color = Color.parse(roofColor)) ? color.toRGBA(true) : DEFAULT_COLOR;
+    item.wallColor = new Color(prop.wallColor || prop.color || getMaterialColor(prop.material) || DEFAULT_COLOR).toArray();
+    item.roofColor = new Color(prop.roofColor || prop.color || getMaterialColor(prop.material) || DEFAULT_COLOR).toArray();
 
     switch (prop.shape) {
       case 'cylinder':
