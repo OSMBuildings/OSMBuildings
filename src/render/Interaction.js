@@ -10,7 +10,7 @@ render.Interaction = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,
-      attributes: ['aPosition', 'aColor'],
+      attributes: ['aPosition', 'aID', 'aColor'],
       uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uFogRadius', 'uBendRadius', 'uBendDistance']
     });
 
@@ -63,7 +63,10 @@ render.Interaction = {
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.idBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.vertexAttribPointer(shader.attributes.aID, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      item.colorBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       //item.visibilityBuffer.enable();
       //gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);

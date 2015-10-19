@@ -14,7 +14,7 @@ render.NormalMap = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.normalmap.vertex,
       fragmentShader: Shaders.normalmap.fragment,
-      attributes: ['aPosition', 'aNormal'],
+      attributes: ['aPosition', 'aNormal', 'aColor'],
       uniforms: [/*'uModelMatrix', 'uViewMatrix', 'uProjMatrix',*/ 'uMatrix']
     });
 
@@ -70,6 +70,9 @@ render.NormalMap = {
 
       item.normalBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      item.colorBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
