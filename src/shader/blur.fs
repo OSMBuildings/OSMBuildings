@@ -1,6 +1,5 @@
 #ifdef GL_ES
-  // we need high precision for the depth values
-  precision highp float;
+  precision mediump float;
 #endif
 
 uniform sampler2D uTexIndex;

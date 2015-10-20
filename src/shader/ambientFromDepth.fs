@@ -1,6 +1,8 @@
-#ifdef GL_ES
+#ifdef GL_FRAGMENT_PRECISION_HIGH
   // we need high precision for the depth values
   precision highp float;
+#else
+  precision mediump float;
 #endif
 
 uniform sampler2D uTexIndex;
