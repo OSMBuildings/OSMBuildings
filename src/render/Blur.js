@@ -11,11 +11,6 @@ render.Blur = {
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
     
-    // enable texture filtering for framebuffer texture
-    gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    
     this.vertexBuffer   = new glx.Buffer(3, new Float32Array(
       [-1, -1, 1E-5,
         1, -1, 1E-5,
@@ -46,8 +41,10 @@ render.Blur = {
     {
       framebuffer.setSize( framebufferConfig.width, framebufferConfig.height );
       gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      // we'll render the blurred image 1:1 to the screen pixels,
+      // so no interpolation is necessary
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     }
 
 
@@ -101,7 +98,7 @@ render.Blur = {
     framebuffer.disable();
 
     gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    //gl.generateMipmap(gl.TEXTURE_2D); //no interpolation --> don't need a mipmap
     
     gl.viewport(0, 0, MAP.width, MAP.height);
 
