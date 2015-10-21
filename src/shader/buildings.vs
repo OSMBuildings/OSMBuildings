@@ -6,7 +6,7 @@
 
 attribute vec4 aPosition;
 attribute vec3 aNormal;
-attribute vec3 aColor;
+attribute vec4 aColor;
 attribute vec3 aID;
 
 uniform mat4 uModelMatrix;
@@ -61,9 +61,9 @@ void main() {
 
   //*** highlight object ******************************************************
 
-  vec3 color = aColor;
+  vec3 color = aColor.rgb;
   if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {
-    color = mix(aColor, uHighlightColor, 0.5);
+    color = mix(aColor.rgb, uHighlightColor, 0.5);
   }
 
   //*** light intensity, defined by light direction on surface ****************

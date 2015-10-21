@@ -70,7 +70,7 @@ mesh.OBJ = (function() {
         color = this.color || item.color || defaultColor;
         idColor = render.Interaction.idToColor(id);
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance, 1);
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
       }
@@ -88,7 +88,7 @@ mesh.OBJ = (function() {
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
 
       this.data = null;
 

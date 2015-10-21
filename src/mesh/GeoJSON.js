@@ -147,7 +147,7 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.wallColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance, 1);
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
@@ -166,7 +166,7 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.roofColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance, 1);
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
       }
@@ -184,7 +184,7 @@ mesh.GeoJSON = (function() {
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
 
       this.data = null;
 
