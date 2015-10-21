@@ -21,7 +21,7 @@ mesh.MapPlane = (function() {
       this.color = new Color(options.color).toArray(true);
     }*/
 
-    this.radius = options.radius || 500;
+    this.radius = options.radius || 1500;
     this.createGlGeometry();
 
     this.minZoom = APP.minZoom;
