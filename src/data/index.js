@@ -76,7 +76,7 @@ var data = {
 
     // applies all existing filters to an item
     // currently only suitable for 'hidden'
-    applyFiltersFor: function(indexItem) {
+    applyFilters: function(indexItem) {
       var filters = this.filters;
       var selector, type;
       var item;

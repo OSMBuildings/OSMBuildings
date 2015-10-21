@@ -52,7 +52,7 @@ void main() {
     if (distance > uFogRadius) {
       vColor = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
-      vColor = vec4(aID.xyz, 1.0);
+      vColor = vec4(aID, 1.0);
     }
   }
 }

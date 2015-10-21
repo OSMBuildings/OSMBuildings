@@ -91,7 +91,7 @@ mesh.OBJ = (function() {
     },
 
     onReady: function() {
-      data.Index.applyFiltersFor(this); // does not require the item to exist in data index
+      data.Index.applyFilters(this); // does not require the item to exist in data index
 
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
