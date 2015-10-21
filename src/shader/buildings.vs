@@ -7,7 +7,7 @@
 attribute vec4 aPosition;
 attribute vec3 aNormal;
 attribute vec3 aColor;
-attribute vec3 aIDColor;
+attribute vec3 aID;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
@@ -62,7 +62,7 @@ void main() {
   //*** highlight object ******************************************************
 
   vec3 color = aColor;
-  if (uHighlightID.r == aIDColor.r && uHighlightID.g == aIDColor.g && uHighlightID.b == aIDColor.b) {
+  if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {
     color = mix(aColor, uHighlightColor, 0.5);
   }
 
@@ -85,5 +85,5 @@ void main() {
 
   //***************************************************************************
 
-  vColor = mix(vec3(color - verticalShading), uFogColor, fogIntensity);
+  vColor = mix(color-verticalShading, uFogColor, fogIntensity);
 }

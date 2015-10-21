@@ -69,7 +69,7 @@ mesh.GeoJSON = (function() {
       vertices: [],
       normals: [],
       colors: [],
-      idColors: []
+      ids: []
     };
 
     Activity.setBusy();
@@ -119,12 +119,9 @@ mesh.GeoJSON = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
-//      item.numVertices = item.vertices.length/3;
-//        this.items.push({ id:item.id, min:item.min, max:item.max });
-
         id = this.id || item.id;
         idColor = render.Interaction.idToColor(id);
-        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06); // TODO: maybe a shaders task
 
         center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
 
@@ -151,7 +148,7 @@ mesh.GeoJSON = (function() {
         color = this.color || item.wallColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
           this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
         vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
@@ -170,41 +167,28 @@ mesh.GeoJSON = (function() {
         color = this.color || item.roofColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
           this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
       }
     },
 
-//  modify: function() {
-//    if (!this.items) {
-//      return;
-//    }
-//
-//    var item, hidden, visibilities = [];
-//    for (var i = 0, il = this.items.length; i<il; i++) {
-//      item = this.items[i];
+    setColors: function() {
+      var item;
+      for (var i = 0, il = this.items.length; i < il; i++) {
+        item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
-//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-//          visibilities.push(item.hidden ? 1 : 0);
-//        }
-//    }
-//
-//    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
-//    visibilities = null;
-//  },
+      }
+    },
 
     onReady: function() {
-      //this.modify();
-
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this.data.idColors));
+      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
+      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
 
       this.data = null;
 
       data.Index.add(this);
-//    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;
       Activity.setIdle();
@@ -235,6 +219,8 @@ mesh.GeoJSON = (function() {
     },
 
     destroy: function() {
+      data.Index.remove(this);
+
       if (this.request) {
         this.request.abort();
       }
@@ -242,11 +228,10 @@ mesh.GeoJSON = (function() {
       this.items = [];
 
       if (this.isReady) {
-        data.Index.remove(this);
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();
-        this.idColorBuffer.destroy();
+        this.idBuffer.destroy();
       }
     }
   };

@@ -7,7 +7,6 @@ attribute vec4 aPosition;
 uniform mat4 uMatrix;
 varying vec4 vPosition;
 
-
 void main() {
 
   gl_Position = uMatrix * aPosition;
