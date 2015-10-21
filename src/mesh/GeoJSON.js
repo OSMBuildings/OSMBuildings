@@ -182,7 +182,7 @@ mesh.GeoJSON = (function() {
         item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, 1);
+          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
 
@@ -194,11 +194,12 @@ mesh.GeoJSON = (function() {
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.setColors();
+this.setColors();
 
       this.data = null;
 
       data.Index.add(this);
+      data.Index.applySelectorsFor(this);
 //    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;

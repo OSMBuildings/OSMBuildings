@@ -10,6 +10,60 @@ var data = {
     items: [],
 //  blockers: [],
 
+    selectors: [],
+
+    addSelector: function(selector) {
+      this.selectors.push(selector);
+    },
+
+    removeSelector: function(selector) {
+      var selectors = this.selectors;
+      for (var i = 0, il = selectors.length; i < il; i++) {
+        if (selectors[i] === selector) {
+          selectors.splice(i, 1);
+          return;
+        }
+      }
+    },
+
+    applyAllSelectors: function() {
+      for (var i = 0, il = this.items.length; i<il; i++) {
+        this.applySelectorsFor(this.items[i]);
+      }
+    },
+
+    applySelectorsFor: function(item) {
+      var selectors = this.selectors;
+      var sel, act;
+      var itemItem;
+      var j, jl;
+
+      if (!item.setColors) {
+        return;
+      }
+
+      for (var s = 0, sl = selectors.length; s < sl; s++) {
+        sel = selectors[s].selector;
+        act = selectors[s].action;
+
+        for (j = 0, jl = item.items.length; j<jl; j++) {
+          itemItem = item.items[j];
+          if (sel(itemItem)) {
+            if (act === 'show') {
+              itemItems.hidden = false;
+              itemItem.color[3] = 1;
+            }
+            if (act === 'hide') {
+              itemItems.hidden = false;
+              itemItem.color[3] = 0;
+            }
+          }
+        }
+
+        item.setColors();
+      }
+    },
+
     add: function(item) {
       this.items.push(item);
       //if (item.replace) {

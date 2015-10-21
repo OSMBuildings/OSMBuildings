@@ -119,6 +119,11 @@ OSMBuildings.prototype = {
     render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 
+  filter: function(selector, action) {
+    data.Index.addSelector({ selector:selector, action:action });
+    data.Index.applyAllSelectors();
+  },
+
   getTarget: function(x, y) {
     return render.Interaction.getTarget(x, y);
   },

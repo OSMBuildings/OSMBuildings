@@ -108,6 +108,17 @@
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
+  function showX() {
+    osmb.filter(function(item) {
+      return item.id % 2 === 0;
+    }, 'show');
+  }
+  function hideX() {
+    osmb.filter(function(item) {
+      return item.id % 2 === 0;
+    }, 'hide');
+  }
+
   osmb.addMapTiles(
     //'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
     //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',

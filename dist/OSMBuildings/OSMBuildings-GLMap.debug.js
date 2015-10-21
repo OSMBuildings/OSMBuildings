@@ -1938,6 +1938,12 @@ OSMBuildings.prototype = {
     render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 
+  filter: function(selector, action) {
+    data.Index.addSelector({ selector:selector, action:action });
+    data.Index.applyAllSelectors();
+//    return { show:function(duration) {}, hide:function(duration) {} };
+  },
+
   getTarget: function(x, y) {
     return render.Interaction.getTarget(x, y);
   },
@@ -2621,6 +2627,89 @@ var data = {
     items: [],
 //  blockers: [],
 
+    selectors: [],
+
+    addSelector: function(selector) {
+      this.selectors.push(selector);
+    },
+
+    removeSelector: function(selector) {
+      var selectors = this.selectors;
+      for (var i = 0, il = selectors.length; i < il; i++) {
+        if (selectors[i] === selector) {
+          selectors.splice(i, 1);
+          return;
+        }
+      }
+    },
+
+    //applySelectors: function() {
+    //  var selectors = this.selectors;
+    //  var sel, act;
+    //  var item, i, il, j, jl;
+    //
+    //  for (var s = 0, sl = selectors.length; s < sl; s++) {
+    //    sel = selectors[s].selector;
+    //    act = selectors[s].action;
+    //
+    //    for (i = 0, il = this.items.length; i<il; i++) {
+    //      if (!this.items[i].setColors) {
+    //        continue;
+    //      }
+    //
+    //      for (j = 0, jl = this.items[i].items.length; j<jl; j++) {
+    //        item = this.items[i].items[j];
+    //        if (sel(item)) {
+    //          if (act === 'show') {
+    //            item.color[3] = 1;
+    //          }
+    //          if (act === 'hide') {
+    //            item.color[3] = 0;
+    //          }
+    //        }
+    //      }
+    //
+    //      this.items[i].setColors();
+    //    }
+    //  }
+    //},
+
+    applyAllSelectors: function() {
+      for (var i = 0, il = this.items.length; i<il; i++) {
+        this.applySelectorsFor(this.items[i]);
+      }
+    },
+
+    applySelectorsFor: function(item) {
+      var selectors = this.selectors;
+      var sel, act;
+      var itemItem;
+      var j, jl;
+
+      if (!item.setColors) {
+        return;
+      }
+
+      for (var s = 0, sl = selectors.length; s < sl; s++) {
+        sel = selectors[s].selector;
+        act = selectors[s].action;
+
+        for (j = 0, jl = item.items.length; j<jl; j++) {
+          itemItem = item.items[j];
+          if (sel(itemItem)) {
+            if (act === 'show') {
+              itemItem.color[3] = 1;
+            }
+            if (act === 'hide') {
+              itemItem.color[3] = 0;
+            }
+          }
+        }
+
+        item.setColors();
+      }
+    },
+
     add: function(item) {
       this.items.push(item);
       //if (item.replace) {
@@ -2696,7 +2785,7 @@ mesh.GeoJSON = (function() {
   var
     zoom = 16,
     worldSize = TILE_SIZE <<zoom,
-    featuresPerChunk = 150,
+    featuresPerChunk = 100,
     delayPerChunk = 66;
 
   //***************************************************************************
@@ -2874,7 +2963,7 @@ mesh.GeoJSON = (function() {
         item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, 1);
+          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
 
@@ -2886,11 +2975,12 @@ mesh.GeoJSON = (function() {
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.setColors();
+this.setColors();
 
       this.data = null;
 
       data.Index.add(this);
+      data.Index.applySelectorsFor(this);
 //    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;
@@ -3233,7 +3323,7 @@ mesh.OBJ = (function() {
         item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, 1);
+          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
 
@@ -3246,11 +3336,12 @@ mesh.OBJ = (function() {
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.setColors();
+this.setColors();
 
       this.data = null;
 
       data.Index.add(this);
+      data.Index.applySelectorsFor(this);
 //    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;
