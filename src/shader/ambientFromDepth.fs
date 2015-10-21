@@ -20,8 +20,7 @@ float getDepth(vec2 pos, int dx, int dy)
   //convert back to depth value
   return codedDepth.x + 
          codedDepth.y/ 256.0 + 
-         codedDepth.z/(256.0*256.0) +
-         codedDepth.w/(256.0*256.0*256.0);
+         codedDepth.z/(256.0*256.0);
 }
 
 
@@ -84,6 +83,8 @@ float getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)
 void main() {
 
   float depthHere = getDepth(vTexCoord.st, 0, 0);
+  float fogIntensity = texture2D(uTexIndex, vTexCoord.st).w;
+
   if (depthHere == 0.0)
   {
 	//there was nothing rendered 'here' --> it can't be occluded
@@ -129,6 +130,8 @@ void main() {
     exponent = 4.0;
   }
 
-  gl_FragColor = vec4( vec3(pow(occlusionFactor, 1.0 *exponent)) , 1.0);
+  occlusionFactor = pow(occlusionFactor, exponent);
+  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));
+  gl_FragColor = vec4( vec3(occlusionFactor) , 1.0);
 }
 
