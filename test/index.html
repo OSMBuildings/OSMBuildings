@@ -108,15 +108,17 @@
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
+
+  var selector = function(item) {
+    return item.id % 2 === 0;
+  };
+
   function showX() {
-    osmb.filter(function(item) {
-      return item.id % 2 === 0;
-    }, 'show');
+    osmb.show(selector);
   }
+
   function hideX() {
-    osmb.filter(function(item) {
-      return item.id % 2 === 0;
-    }, 'hide');
+    osmb.hide(selector);
   }
 
   osmb.addMapTiles(

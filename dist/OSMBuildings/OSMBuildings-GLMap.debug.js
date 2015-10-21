@@ -1938,10 +1938,14 @@ OSMBuildings.prototype = {
     render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 
-  filter: function(selector, action) {
-    data.Index.addSelector({ selector:selector, action:action });
-    data.Index.applyAllSelectors();
-//    return { show:function(duration) {}, hide:function(duration) {} };
+  show: function(selector) {
+    data.Index.removeFilter('hidden', selector);
+    return this;
+  },
+
+  hide: function(selector) {
+    data.Index.addFilter('hidden', selector);
+    return this;
   },
 
   getTarget: function(x, y) {
@@ -2627,94 +2631,101 @@ var data = {
     items: [],
 //  blockers: [],
 
-    selectors: [],
+    filters: [],
 
-    addSelector: function(selector) {
-      this.selectors.push(selector);
-    },
+    addFilter: function(type, selector) {
+      this.filters.push({ type:type, selector:selector });
 
-    removeSelector: function(selector) {
-      var selectors = this.selectors;
-      for (var i = 0, il = selectors.length; i < il; i++) {
-        if (selectors[i] === selector) {
-          selectors.splice(i, 1);
-          return;
-        }
-      }
-    },
-
-    //applySelectors: function() {
-    //  var selectors = this.selectors;
-    //  var sel, act;
-    //  var item, i, il, j, jl;
-    //
-    //  for (var s = 0, sl = selectors.length; s < sl; s++) {
-    //    sel = selectors[s].selector;
-    //    act = selectors[s].action;
-    //
-    //    for (i = 0, il = this.items.length; i<il; i++) {
-    //      if (!this.items[i].setColors) {
-    //        continue;
-    //      }
-    //
-    //      for (j = 0, jl = this.items[i].items.length; j<jl; j++) {
-    //        item = this.items[i].items[j];
-    //        if (sel(item)) {
-    //          if (act === 'show') {
-    //            item.color[3] = 1;
-    //          }
-    //          if (act === 'hide') {
-    //            item.color[3] = 0;
-    //          }
-    //        }
-    //      }
-    //
-    //      this.items[i].setColors();
-    //    }
-    //  }
-    //},
-
-    applyAllSelectors: function() {
-      for (var i = 0, il = this.items.length; i<il; i++) {
-        this.applySelectorsFor(this.items[i]);
-      }
-    },
-
-    applySelectorsFor: function(item) {
-      var selectors = this.selectors;
-      var sel, act;
-      var itemItem;
+      // applies a single filter to all items
+      // currently only suitable for 'hidden'
+      var indexItem;
+      var item;
       var j, jl;
 
-      if (!item.setColors) {
-        return;
-      }
+      for (var i = 0, il = this.items.length; i<il; i++) {
+        indexItem = this.items[i];
 
-      for (var s = 0, sl = selectors.length; s < sl; s++) {
-        sel = selectors[s].selector;
-        act = selectors[s].action;
+        if (!indexItem.setColors) {
+          return;
+        }
 
-        for (j = 0, jl = item.items.length; j<jl; j++) {
-          itemItem = item.items[j];
-          if (sel(itemItem)) {
-            if (act === 'show') {
-              itemItem.color[3] = 1;
-            }
-            if (act === 'hide') {
-              itemItem.color[3] = 0;
-            }
+        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+          item = indexItem.items[j];
+          if (selector(item)) {
+            item.color[3] = 0;
           }
         }
 
-        item.setColors();
+        indexItem.setColors();
       }
+    },
+
+    removeFilter: function(type, selector) {
+      var i, il;
+
+      var filters = this.filters;
+      for (i = 0, il = filters.length; i < il; i++) {
+        if (filters[i].type === type && filters[i].selector === selector) {
+          filters.splice(i, 1);
+          break;
+        }
+      }
+
+      // removes a single filter from all items
+      // currently only suitable for 'hidden'
+      var indexItem;
+      var item;
+      var j, jl;
+
+      for (i = 0, il = this.items.length; i<il; i++) {
+        indexItem = this.items[i];
+
+        if (!indexItem.setColors) {
+          return;
+        }
+
+        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+          item = indexItem.items[j];
+          if (selector(item)) {
+            item.color[3] = 1;
+          }
+        }
+
+        indexItem.setColors();
+      }
+    },
+
+    // applies all existing filters to an item
+    // currently only suitable for 'hidden'
+    applyFiltersFor: function(indexItem) {
+      var filters = this.filters;
+      var selector, type;
+      var item;
+      var j, jl;
+
+      if (!indexItem.setColors) {
+        return;
+      }
+
+      for (var i = 0, il = filters.length; i < il; i++) {
+        type = filters[i].type;
+        selector = filters[i].selector;
+
+        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+          item = indexItem.items[j];
+          if (selector(item)) {
+            item.color[3] = 0;
+          }
+        }
+      }
+
+      indexItem.setColors();
     },
 
     add: function(item) {
       this.items.push(item);
       //if (item.replace) {
         //this.blockers.push(item);
-//      Events.emit('modify');
 //      }
     },
 
@@ -2729,7 +2740,6 @@ var data = {
           //      break;
           //    }
           //  }
-          //Events.emit('modify');
           //}
           items.splice(i, 1);
           return;
@@ -2958,30 +2968,32 @@ mesh.GeoJSON = (function() {
     },
 
     setColors: function() {
-      var item, colors = [];
+      var item;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+          this.data.colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
 
-      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
-      colors = null;
+// TODO: odd error for having totally different no of color items vs vertex items
+// happens after multiple fats moves into pre cached tiles
+// likely a race condition
+//if (this.colorBuffer.numItems !== this.vertexBuffer.numItems) console.log(this.colorBuffer.numItems, this.vertexBuffer.numItems);
     },
 
     onReady: function() {
+      data.Index.applyFiltersFor(this); // does not require the item to exist in data index
+
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-this.setColors();
+      this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
 
       this.data = null;
 
       data.Index.add(this);
-      data.Index.applySelectorsFor(this);
-//    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;
       Activity.setIdle();
@@ -3012,6 +3024,8 @@ this.setColors();
     },
 
     destroy: function() {
+      data.Index.remove(this);
+
       if (this.request) {
         this.request.abort();
       }
@@ -3019,7 +3033,6 @@ this.setColors();
       this.items = [];
 
       if (this.isReady) {
-        data.Index.remove(this);
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();
@@ -3318,31 +3331,27 @@ mesh.OBJ = (function() {
     },
 
     setColors: function() {
-      var item, colors = [];
+      var item;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+          this.data.colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
-
-      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
-      colors = null;
     },
 
     onReady: function() {
+      data.Index.applyFiltersFor(this); // does not require the item to exist in data index
 
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-this.setColors();
+      this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
 
       this.data = null;
 
       data.Index.add(this);
-      data.Index.applySelectorsFor(this);
-//    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;
       Activity.setIdle();
@@ -3373,6 +3382,8 @@ this.setColors();
     },
 
     destroy: function() {
+      data.Index.remove(this);
+
       if (this.request) {
         this.request.abort();
       }
@@ -3380,7 +3391,6 @@ this.setColors();
       this.items = [];
 
       if (this.isReady) {
-        data.Index.remove(this);
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();

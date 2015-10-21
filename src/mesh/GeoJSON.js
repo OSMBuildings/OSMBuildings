@@ -177,30 +177,32 @@ mesh.GeoJSON = (function() {
     },
 
     setColors: function() {
-      var item, colors = [];
+      var item;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+          this.data.colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
 
-      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
-      colors = null;
+// TODO: odd error for having totally different no of color items vs vertex items
+// happens after multiple fats moves into pre cached tiles
+// likely a race condition
+//if (this.colorBuffer.numItems !== this.vertexBuffer.numItems) console.log(this.colorBuffer.numItems, this.vertexBuffer.numItems);
     },
 
     onReady: function() {
+      data.Index.applyFiltersFor(this); // does not require the item to exist in data index
+
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-this.setColors();
+      this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
 
       this.data = null;
 
       data.Index.add(this);
-      data.Index.applySelectorsFor(this);
-//    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;
       Activity.setIdle();
@@ -231,6 +233,8 @@ this.setColors();
     },
 
     destroy: function() {
+      data.Index.remove(this);
+
       if (this.request) {
         this.request.abort();
       }
@@ -238,7 +242,6 @@ this.setColors();
       this.items = [];
 
       if (this.isReady) {
-        data.Index.remove(this);
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();

@@ -10,65 +10,101 @@ var data = {
     items: [],
 //  blockers: [],
 
-    selectors: [],
+    filters: [],
 
-    addSelector: function(selector) {
-      this.selectors.push(selector);
-    },
+    addFilter: function(type, selector) {
+      this.filters.push({ type:type, selector:selector });
 
-    removeSelector: function(selector) {
-      var selectors = this.selectors;
-      for (var i = 0, il = selectors.length; i < il; i++) {
-        if (selectors[i] === selector) {
-          selectors.splice(i, 1);
-          return;
-        }
-      }
-    },
-
-    applyAllSelectors: function() {
-      for (var i = 0, il = this.items.length; i<il; i++) {
-        this.applySelectorsFor(this.items[i]);
-      }
-    },
-
-    applySelectorsFor: function(item) {
-      var selectors = this.selectors;
-      var sel, act;
-      var itemItem;
+      // applies a single filter to all items
+      // currently only suitable for 'hidden'
+      var indexItem;
+      var item;
       var j, jl;
 
-      if (!item.setColors) {
-        return;
-      }
+      for (var i = 0, il = this.items.length; i<il; i++) {
+        indexItem = this.items[i];
 
-      for (var s = 0, sl = selectors.length; s < sl; s++) {
-        sel = selectors[s].selector;
-        act = selectors[s].action;
+        if (!indexItem.setColors) {
+          return;
+        }
 
-        for (j = 0, jl = item.items.length; j<jl; j++) {
-          itemItem = item.items[j];
-          if (sel(itemItem)) {
-            if (act === 'show') {
-              itemItems.hidden = false;
-              itemItem.color[3] = 1;
-            }
-            if (act === 'hide') {
-              itemItems.hidden = false;
-              itemItem.color[3] = 0;
-            }
+        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+          item = indexItem.items[j];
+          if (selector(item)) {
+            item.color[3] = 0;
           }
         }
 
-        item.setColors();
+        indexItem.setColors();
       }
+    },
+
+    removeFilter: function(type, selector) {
+      var i, il;
+
+      var filters = this.filters;
+      for (i = 0, il = filters.length; i < il; i++) {
+        if (filters[i].type === type && filters[i].selector === selector) {
+          filters.splice(i, 1);
+          break;
+        }
+      }
+
+      // removes a single filter from all items
+      // currently only suitable for 'hidden'
+      var indexItem;
+      var item;
+      var j, jl;
+
+      for (i = 0, il = this.items.length; i<il; i++) {
+        indexItem = this.items[i];
+
+        if (!indexItem.setColors) {
+          return;
+        }
+
+        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+          item = indexItem.items[j];
+          if (selector(item)) {
+            item.color[3] = 1;
+          }
+        }
+
+        indexItem.setColors();
+      }
+    },
+
+    // applies all existing filters to an item
+    // currently only suitable for 'hidden'
+    applyFiltersFor: function(indexItem) {
+      var filters = this.filters;
+      var selector, type;
+      var item;
+      var j, jl;
+
+      if (!indexItem.setColors) {
+        return;
+      }
+
+      for (var i = 0, il = filters.length; i < il; i++) {
+        type = filters[i].type;
+        selector = filters[i].selector;
+
+        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+          item = indexItem.items[j];
+          if (selector(item)) {
+            item.color[3] = 0;
+          }
+        }
+      }
+
+      indexItem.setColors();
     },
 
     add: function(item) {
       this.items.push(item);
       //if (item.replace) {
         //this.blockers.push(item);
-//      Events.emit('modify');
 //      }
     },
 
@@ -83,7 +119,6 @@ var data = {
           //      break;
           //    }
           //  }
-          //Events.emit('modify');
           //}
           items.splice(i, 1);
           return;
