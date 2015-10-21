@@ -185,11 +185,6 @@ mesh.GeoJSON = (function() {
           this.data.colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
-
-// TODO: odd error for having totally different no of color items vs vertex items
-// happens after multiple fats moves into pre cached tiles
-// likely a race condition
-//if (this.colorBuffer.numItems !== this.vertexBuffer.numItems) console.log(this.colorBuffer.numItems, this.vertexBuffer.numItems);
     },
 
     onReady: function() {
@@ -199,6 +194,11 @@ mesh.GeoJSON = (function() {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
       this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
+
+// TODO: odd error for having totally different no of color items vs vertex items
+// happens after multiple moves into pre cached tiles
+// likely a race condition
+// if (this.data.colors.length/4 !== this.vertexBuffer.numItems) console.log(this.data.colors.length/4, this.vertexBuffer.numItems);
 
       this.data = null;
 
