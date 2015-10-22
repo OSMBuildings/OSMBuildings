@@ -6,7 +6,10 @@
 
 attribute vec4 aPosition;
 attribute vec3 aID;
+<<<<<<< HEAD
 attribute vec4 aColor;
+=======
+>>>>>>> develop
 
 uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
@@ -26,6 +29,7 @@ void main() {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vColor = vec4(0.0, 0.0, 0.0, 0.0);
   } else {
+<<<<<<< HEAD
 
     //*** bending ***************************************************************
 
@@ -54,5 +58,8 @@ void main() {
     } else {
       vColor = vec4(aID, 1.0);
     }
+=======
+    vColor = vec4(aID, 1.0);
+>>>>>>> develop
   }
 }
