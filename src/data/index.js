@@ -137,7 +137,7 @@ var data = {
 //    },
 
     destroy: function() {
-      // items are destroyed be grid
+      // items are destroyed by grid
       this.items = [];
 //    this.blockers = [];
     }
