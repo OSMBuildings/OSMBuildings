@@ -160,28 +160,10 @@
   //osmb.addGeoJSON('data/w1-o4.geo.json', { color: '#ff0000' });
 
   var label = document.getElementById('label');
-
-  var nw = label.cloneNode(true);
-  var se = label.cloneNode(true);
-  document.body.appendChild(nw);
-  document.body.appendChild(se);
-  nw.style.borderColor = 'blue';
-  se.style.borderColor = 'green';
-
   map.on('change', function() {
 //    var pos = map.transform(52.52, 13.37, 50);
 //    label.style.left = Math.round(pos.x) + 'px';
 //    label.style.top = Math.round(pos.y) + 'px';
-
-//    var b = map.getBounds();
-//
-//    var pos = map.transform(b.n, b.w, 0);
-//    nw.style.left = Math.round(pos.x+15) + 'px';
-//    nw.style.top  = Math.round(pos.y+15) + 'px';
-//
-//    var pos = map.transform(b.s, b.e, 0);
-//    se.style.left = Math.round(pos.x-15) + 'px';
-//    se.style.top  = Math.round(pos.y-15) + 'px';
   });
 
   map.on('pointermove', function(e) {
