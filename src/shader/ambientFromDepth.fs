@@ -8,6 +8,7 @@
 uniform sampler2D uTexIndex;
 uniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide
 uniform float uInverseTexHeight;  //in 1/pixels
+uniform float uEffectStrength;
 
 varying vec2 vTexCoord;
 
@@ -131,6 +132,8 @@ void main() {
   }
 
   occlusionFactor = pow(occlusionFactor, exponent);
+  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength);
+  
   occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));
   gl_FragColor = vec4( vec3(occlusionFactor) , 1.0);
 }

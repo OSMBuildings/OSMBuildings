@@ -6,7 +6,8 @@ render.AmbientMap = {
       vertexShader:   Shaders.ambientFromDepth.vertex,
       fragmentShader: Shaders.ambientFromDepth.fragment,
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
+      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 
+                 'uTexIndex', 'uEffectStrength']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
@@ -29,11 +30,14 @@ render.AmbientMap = {
       ]));
   },
 
-  render: function(depthTexture, framebufferConfig) {
+  render: function(depthTexture, framebufferConfig, effectStrength) {
 
     var
       shader = this.shader,
       framebuffer = this.framebuffer;
+
+    if (effectStrength === undefined)
+      effectStrength = 1.0;
 
 
     if (framebuffer.width != framebufferConfig.width || 
@@ -81,6 +85,7 @@ render.AmbientMap = {
 
     gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebufferConfig.width);
     gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebufferConfig.height);
+    gl.uniform1f(shader.uniforms.uEffectStrength,  effectStrength);
 
     this.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

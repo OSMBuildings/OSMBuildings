@@ -65,7 +65,8 @@ render.DepthMap = {
     var item, modelMatrix;
     
     // render all actual data items, but also a dummy map plane
-    var dataItems = data.Index.items.concat([this.mapPlane]);
+    // Note: SSAO on the map plane has been disabled temporarily
+    var dataItems = data.Index.items;//.concat([this.mapPlane]);
 
     for (var i = 0; i < dataItems.length; i++) {
       item = dataItems[i];

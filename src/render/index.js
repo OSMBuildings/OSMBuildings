@@ -313,7 +313,7 @@ var render = {
                                                  gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
           render.DepthMap.render(config);
-          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config);
+          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config, 0.5);
           render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
         
           gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
