@@ -68,7 +68,6 @@ mesh.GeoJSON = (function() {
     this.data = {
       vertices: [],
       normals: [],
-      colors: [],
       ids: []
     };
 
@@ -189,14 +188,15 @@ mesh.GeoJSON = (function() {
     },
 
     setColors: function() {
-      var item;
+      var item, colors = [];
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          this.data.colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
         }
       }
+      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
     },
 
     onReady: function() {
@@ -205,7 +205,6 @@ mesh.GeoJSON = (function() {
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
 
       this.data = null;
 
@@ -215,7 +214,7 @@ mesh.GeoJSON = (function() {
       Activity.setIdle();
     },
 
-    // TODO: switch to mesh.transform
+    // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       var matrix = new glx.Matrix();
 

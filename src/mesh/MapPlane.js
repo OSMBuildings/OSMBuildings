@@ -65,7 +65,7 @@ mesh.MapPlane = (function() {
       this.isReady = true;
     },
 
-    // TODO: switch to mesh.transform
+    // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       var scale = render.fogRadius/this.radius;
       var modelMatrix = new glx.Matrix();
