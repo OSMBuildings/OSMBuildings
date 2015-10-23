@@ -30,7 +30,7 @@ var data = {
 
         for (j = 0, jl = indexItem.items.length; j < jl; j++) {
           item = indexItem.items[j];
-          if (selector(item)) {
+          if (selector(item.id, item.data)) {
             item.color[3] = 0;
           }
         }
@@ -65,7 +65,7 @@ var data = {
 
         for (j = 0, jl = indexItem.items.length; j < jl; j++) {
           item = indexItem.items[j];
-          if (selector(item)) {
+          if (selector(item.id, item.data)) {
             item.color[3] = 1;
           }
         }
@@ -92,7 +92,7 @@ var data = {
 
         for (j = 0, jl = indexItem.items.length; j < jl; j++) {
           item = indexItem.items[j];
-          if (selector(item)) {
+          if (selector(item.id, item.data)) {
             item.color[3] = 0;
           }
         }

@@ -162,7 +162,7 @@ mesh.GeoJSON = (function() {
         }
 
         // TODO: clean up vars
-        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance });
+        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
 
         vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.roofShape) {
@@ -183,7 +183,7 @@ mesh.GeoJSON = (function() {
         }
 
         // TODO: clean up vars
-        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance });
+        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
       }
     },
 
