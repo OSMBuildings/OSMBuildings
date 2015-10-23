@@ -5,7 +5,7 @@ render.Buildings = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
-      attributes: ['aPosition', 'aColor', 'aNormal', 'aIDColor'],
+      attributes: ['aPosition', 'aColor', 'aNormal', 'aID'],
       uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uNormalTransform', 'uAlpha', 'uLightColor', 'uLightDirection', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uHighlightColor', 'uHighlightID']
     });
   },
@@ -73,8 +73,8 @@ render.Buildings = {
       item.colorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      item.idColorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aIDColor, item.idColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      item.idBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aID, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 //    item.visibilityBuffer.enable();
 //    gl.vertexAttribPointer(shader.attributes.aHidden, item.visibilityBuffer.itemSize, gl.FLOAT, false, 0, 0);

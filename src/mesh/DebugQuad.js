@@ -72,10 +72,10 @@ mesh.DebugQuad = (function() {
         [].concat(color, color, color, color, color, color)));
 
 
-      if (this.idColorBuffer)
-        this.idColorBuffer.destroy();
+      if (this.idBuffer)
+        this.idBuffer.destroy();
 
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(
+      this.idBuffer = new glx.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
         
       //this.numDummyVertices = 6;
@@ -83,7 +83,7 @@ mesh.DebugQuad = (function() {
       this.isReady = true;
     },
 
-    // TODO: switch to mesh.transform
+    // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       //var scale = render.fogRadius/this.radius;
       var modelMatrix = new glx.Matrix();
@@ -100,7 +100,7 @@ mesh.DebugQuad = (function() {
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         //this.colorBuffer.destroy();
-        //this.idColorBuffer.destroy();
+        //this.idBuffer.destroy();
       }
     }
   };

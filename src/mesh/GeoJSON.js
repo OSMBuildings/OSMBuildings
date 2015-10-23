@@ -4,7 +4,7 @@ mesh.GeoJSON = (function() {
   var
     zoom = 16,
     worldSize = TILE_SIZE <<zoom,
-    featuresPerChunk = 150,
+    featuresPerChunk = 100,
     delayPerChunk = 66;
 
   //***************************************************************************
@@ -68,8 +68,7 @@ mesh.GeoJSON = (function() {
     this.data = {
       vertices: [],
       normals: [],
-      colors: [],
-      idColors: []
+      ids: []
     };
 
     Activity.setBusy();
@@ -95,17 +94,29 @@ mesh.GeoJSON = (function() {
       this.position = { latitude: coordinates0[1], longitude: coordinates0[0] };
       this.items = [];
 
-      relax(function(startIndex, endIndex) {
+      var
+        startIndex = 0,
+        dataLength = json.features.length,
+        endIndex = startIndex + Math.min(dataLength, featuresPerChunk);
+
+      var process = function() {
         var features = json.features.slice(startIndex, endIndex);
         var geojson = { type: 'FeatureCollection', features: features };
         var data = GeoJSON.parse(this.position, worldSize, geojson);
-
         this.addItems(data);
 
-        if (endIndex === json.features.length) {
+        if (endIndex === dataLength) {
           this.onReady();
+          return;
         }
-      }.bind(this), 0, json.features.length, featuresPerChunk, delayPerChunk);
+
+        startIndex = endIndex;
+        endIndex = startIndex + Math.min((dataLength-startIndex), featuresPerChunk);
+
+        this.relaxedProcessing = setTimeout(process, delayPerChunk);
+      }.bind(this);
+
+      process();
     },
 
     addItems: function(items) {
@@ -119,12 +130,9 @@ mesh.GeoJSON = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
-//      item.numVertices = item.vertices.length/3;
-//        this.items.push({ id:item.id, min:item.min, max:item.max });
-
         id = this.id || item.id;
         idColor = render.Interaction.idToColor(id);
-        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06); // TODO: maybe a shaders task
 
         center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
 
@@ -150,9 +158,11 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.wallColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
+
+        // TODO: clean up vars
+        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
 
         vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.roofShape) {
@@ -169,48 +179,42 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.roofColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.idColors.push(idColor[0], idColor[1], idColor[2]);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
+
+        // TODO: clean up vars
+        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
       }
     },
 
-//  modify: function() {
-//    if (!this.items) {
-//      return;
-//    }
-//
-//    var item, hidden, visibilities = [];
-//    for (var i = 0, il = this.items.length; i<il; i++) {
-//      item = this.items[i];
+    setColors: function() {
+      var item, colors = [];
+      for (var i = 0, il = this.items.length; i < il; i++) {
+        item = this.items[i];
         //hidden = data.Index.checkCollisions(item);
-//        for (var j = 0, jl = item.numVertices; j<jl; j++) {
-//          visibilities.push(item.hidden ? 1 : 0);
-//        }
-//    }
-//
-//    this.visibilityBuffer = new glx.Buffer(1, new Float32Array(visibilities));
-//    visibilities = null;
-//  },
+        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+        }
+      }
+      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
+    },
 
     onReady: function() {
-      //this.modify();
+      data.Index.applyFilters(this); // does not require the item to exist in data index
 
-      this.vertexBuffer  = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer  = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer   = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idColorBuffer = new glx.Buffer(3, new Float32Array(this.data.idColors));
+      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
 
       this.data = null;
 
       data.Index.add(this);
-//    Events.on('modify', this.modify.bind(this));
 
       this.isReady = true;
       Activity.setIdle();
     },
 
-    // TODO: switch to mesh.transform
+    // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       var matrix = new glx.Matrix();
 
@@ -235,6 +239,12 @@ mesh.GeoJSON = (function() {
     },
 
     destroy: function() {
+      this.isReady = false;
+
+      clearTimeout(this.relaxedProcessing);
+
+      data.Index.remove(this);
+
       if (this.request) {
         this.request.abort();
       }
@@ -242,11 +252,10 @@ mesh.GeoJSON = (function() {
       this.items = [];
 
       if (this.isReady) {
-        data.Index.remove(this);
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();
-        this.idColorBuffer.destroy();
+        this.idBuffer.destroy();
       }
     }
   };

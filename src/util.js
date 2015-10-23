@@ -20,22 +20,3 @@ function pattern(str, param) {
     return param[key] || tag;
   });
 }
-
-function relax(callback, startIndex, dataLength, chunkSize, delay) {
-  chunkSize = chunkSize || 1000;
-  delay = delay || 1;
-
-  var endIndex = startIndex + Math.min((dataLength-startIndex), chunkSize);
-
-  if (startIndex === endIndex) {
-    return;
-  }
-
-  callback(startIndex, endIndex);
-
-  if (startIndex < dataLength) {
-    setTimeout(function() {
-      relax(callback, endIndex, dataLength, chunkSize, delay);
-    }, delay);
-  }
-}
