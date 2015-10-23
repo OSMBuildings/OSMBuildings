@@ -308,9 +308,7 @@ var render = {
         //render.NormalMap.render();
 
         if (render.isAmbientOcclusionEnabled) {
-          var config = this.getFramebufferConfig(MAP.width,
-                                                 MAP.height,
-                                                 gl.getParameter(gl.MAX_TEXTURE_SIZE));
+          var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
           render.DepthMap.render(config);
           render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config, 0.5);
@@ -321,7 +319,6 @@ var render = {
           render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
           gl.disable(gl.BLEND);
         }
-
 
       }.bind(this));
     }.bind(this), 17);

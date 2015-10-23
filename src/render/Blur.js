@@ -11,22 +11,23 @@ render.Blur = {
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
     
-    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(
-      [-1, -1, 1E-5,
-        1, -1, 1E-5,
-        1,  1, 1E-5, 
-       -1, -1, 1E-5,
-        1,  1, 1E-5,
-       -1,  1, 1E-5]));
+    this.vertexBuffer = new glx.Buffer(3, new Float32Array([
+      -1, -1, 1E-5,
+       1, -1, 1E-5,
+       1,  1, 1E-5,
+      -1, -1, 1E-5,
+       1,  1, 1E-5,
+      -1,  1, 1E-5
+    ]));
        
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
-      [0,0,
-       1,0,
-       1,1,
-       0,0,
-       1,1,
-       0,1
-      ]));
+    this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+      0,0,
+      1,0,
+      1,1,
+      0,0,
+      1,1,
+      0,1
+    ]));
   },
 
   render: function(inputTexture, framebufferConfig) {
@@ -68,6 +69,7 @@ render.Blur = {
       this.tcLeft =  framebufferConfig.tcLeft;
       this.tcTop =   framebufferConfig.tcTop;
     }
+
     gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
     shader.enable();
     framebuffer.enable();

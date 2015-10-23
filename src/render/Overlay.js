@@ -10,8 +10,6 @@ render.Overlay = {
     this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
     this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
 
-    this.texHorizontalFraction = 1;
-    this.texVerticalFraction = 1;
     this.shader = new glx.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,

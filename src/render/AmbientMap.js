@@ -6,28 +6,28 @@ render.AmbientMap = {
       vertexShader:   Shaders.ambientFromDepth.vertex,
       fragmentShader: Shaders.ambientFromDepth.fragment,
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 
-                 'uTexIndex', 'uEffectStrength']
+      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex', 'uEffectStrength']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
     
-    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(
-      [-1, -1, 1E-5,
-        1, -1, 1E-5,
-        1,  1, 1E-5, 
-       -1, -1, 1E-5,
-        1,  1, 1E-5,
-       -1,  1, 1E-5]));
+    this.vertexBuffer = new glx.Buffer(3, new Float32Array([
+      -1, -1, 1E-5,
+       1, -1, 1E-5,
+       1,  1, 1E-5,
+      -1, -1, 1E-5,
+       1,  1, 1E-5,
+      -1,  1, 1E-5
+    ]));
        
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
-      [0,0,
-       1,0,
-       1,1,
-       0,0,
-       1,1,
-       0,1
-      ]));
+    this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+      0,0,
+      1,0,
+      1,1,
+      0,0,
+      1,1,
+      0,1
+    ]));
   },
 
   render: function(depthTexture, framebufferConfig, effectStrength) {
@@ -36,9 +36,9 @@ render.AmbientMap = {
       shader = this.shader,
       framebuffer = this.framebuffer;
 
-    if (effectStrength === undefined)
+    if (effectStrength === undefined) {
       effectStrength = 1.0;
-
+    }
 
     if (framebuffer.width != framebufferConfig.width || 
         framebuffer.height!= framebufferConfig.height)
