@@ -2669,7 +2669,14 @@
 	    filters: [],
 
 	    addFilter: function(type, selector) {
-	      this.filters.push({ type:type, selector:selector });
+	      var filters = this.filters;
+	      for (i = 0, il = filters.length; i < il; i++) {
+	        if (filters[i].type === type && filters[i].selector === selector) {
+	          return;
+	        }
+	      }
+
+	      filters.push({ type:type, selector:selector });
 
 	      // applies a single filter to all items
 	      // currently only suitable for 'hidden'
@@ -2686,7 +2693,7 @@
 
 	        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
 	          item = indexItem.items[j];
-	          if (selector(item)) {
+	          if (selector(item.id, item.data)) {
 	            item.color[3] = 0;
 	          }
 	        }
@@ -2721,7 +2728,7 @@
 
 	        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
 	          item = indexItem.items[j];
-	          if (selector(item)) {
+	          if (selector(item.id, item.data)) {
 	            item.color[3] = 1;
 	          }
 	        }
@@ -2748,7 +2755,7 @@
 
 	        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
 	          item = indexItem.items[j];
-	          if (selector(item)) {
+	          if (selector(item.id, item.data)) {
 	            item.color[3] = 0;
 	          }
 	        }
@@ -2989,7 +2996,7 @@
 	        }
 
 	        // TODO: clean up vars
-	        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance });
+	        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
 
 	        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
 	        switch (item.roofShape) {
@@ -3010,7 +3017,7 @@
 	        }
 
 	        // TODO: clean up vars
-	        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance });
+	        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
 	      }
 	    },
 
@@ -3533,6 +3540,8 @@
 	    if (!prop) {
 	      return;
 	    }
+
+	    item.data = prop.data;
 
 	    item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
 	    item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);

@@ -109,8 +109,8 @@
   }).addTo(map);
 
 
-  var selector = function(item) {
-    return item.id % 2 === 0;
+  var selector = function(id, data) {
+    return id % 2 === 0;
   };
 
   function showX() {

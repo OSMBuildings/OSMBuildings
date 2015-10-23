@@ -13,7 +13,14 @@ var data = {
     filters: [],
 
     addFilter: function(type, selector) {
-      this.filters.push({ type:type, selector:selector });
+      var filters = this.filters;
+      for (i = 0, il = filters.length; i < il; i++) {
+        if (filters[i].type === type && filters[i].selector === selector) {
+          return;
+        }
+      }
+
+      filters.push({ type:type, selector:selector });
 
       // applies a single filter to all items
       // currently only suitable for 'hidden'
