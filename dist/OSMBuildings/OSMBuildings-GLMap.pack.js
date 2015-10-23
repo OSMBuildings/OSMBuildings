@@ -1894,8 +1894,8 @@
 
 	  render.Buildings.showBackfaces = options.showBackfaces;
 
-	  // default to 'true':
-	  render.isAmbientOcclusionEnabled = !!((options.renderAmbientOcclusion === undefined) || options.renderAmbientOcclusion);
+	  // can be: 'quality', 'performance'
+	  render.optimize = options.optimize || 'quality';
 
 	  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
@@ -4215,7 +4215,7 @@
 
 	        //render.NormalMap.render();
 
-	        if (render.isAmbientOcclusionEnabled) {
+	        if (render.optimize === 'quality') {
 	          var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
 	          render.DepthMap.render(config);
@@ -5186,7 +5186,7 @@
 
 	    this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
 	    
-	    this.vertexBuffer   = new glx.Buffer(3, new Float32Array([
+	    this.vertexBuffer = new glx.Buffer(3, new Float32Array([
 	      -1, -1, 1E-5,
 	       1, -1, 1E-5,
 	       1,  1, 1E-5,

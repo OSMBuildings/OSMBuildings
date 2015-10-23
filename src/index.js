@@ -21,8 +21,8 @@ var OSMBuildings = function(options) {
 
   render.Buildings.showBackfaces = options.showBackfaces;
 
-  // default to 'true':
-  render.isAmbientOcclusionEnabled = !!((options.renderAmbientOcclusion === undefined) || options.renderAmbientOcclusion);
+  // can be: 'quality', 'performance'
+  render.optimize = options.optimize || 'quality';
 
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 

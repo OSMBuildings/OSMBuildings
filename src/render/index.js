@@ -307,7 +307,7 @@ var render = {
 
         //render.NormalMap.render();
 
-        if (render.isAmbientOcclusionEnabled) {
+        if (render.optimize === 'quality') {
           var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
           render.DepthMap.render(config);
