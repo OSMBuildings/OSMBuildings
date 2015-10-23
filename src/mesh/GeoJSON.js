@@ -95,17 +95,29 @@ mesh.GeoJSON = (function() {
       this.position = { latitude: coordinates0[1], longitude: coordinates0[0] };
       this.items = [];
 
-      relax(function(startIndex, endIndex) {
+      var
+        startIndex = 0,
+        dataLength = json.features.length,
+        endIndex = startIndex + Math.min(dataLength, featuresPerChunk);
+
+      var process = function() {
         var features = json.features.slice(startIndex, endIndex);
         var geojson = { type: 'FeatureCollection', features: features };
         var data = GeoJSON.parse(this.position, worldSize, geojson);
-
         this.addItems(data);
 
-        if (endIndex === json.features.length) {
+        if (endIndex === dataLength) {
           this.onReady();
+          return;
         }
-      }.bind(this), 0, json.features.length, featuresPerChunk, delayPerChunk);
+
+        startIndex = endIndex;
+        endIndex = startIndex + Math.min((dataLength-startIndex), featuresPerChunk);
+
+        this.relaxedProcessing = setTimeout(process, delayPerChunk);
+      }.bind(this);
+
+      process();
     },
 
     addItems: function(items) {
@@ -195,11 +207,6 @@ mesh.GeoJSON = (function() {
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
       this.colorBuffer  = new glx.Buffer(4, new Float32Array(this.data.colors));
 
-// TODO: odd error for having totally different no of color items vs vertex items
-// happens after multiple moves into pre cached tiles
-// likely a race condition
-// if (this.data.colors.length/4 !== this.vertexBuffer.numItems) console.log(this.data.colors.length/4, this.vertexBuffer.numItems);
-
       this.data = null;
 
       data.Index.add(this);
@@ -233,6 +240,10 @@ mesh.GeoJSON = (function() {
     },
 
     destroy: function() {
+      this.isReady = false;
+
+      clearTimeout(this.relaxedProcessing);
+
       data.Index.remove(this);
 
       if (this.request) {
