@@ -220,8 +220,7 @@ var render = {
    *       
    *
    */
-  getTilesInQuad: function( quad ) {
-    //return {};
+  getTilesInQuad: function(quad, zoom) {
     var minX =          (Math.min(quad[0][0], quad[1][0], quad[2][0], quad[3][0])) <<0;
     var maxX = Math.ceil(Math.max(quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
 
@@ -229,26 +228,27 @@ var render = {
     var maxY = Math.ceil(Math.max(quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
     
     var tiles = {};
-    tiles [ [quad[0][0]<<0, quad[0][1]<<0] ] = true;
-    tiles [ [quad[1][0]<<0, quad[1][1]<<0] ] = true;
-    tiles [ [quad[2][0]<<0, quad[2][1]<<0] ] = true;
-    tiles [ [quad[3][0]<<0, quad[3][1]<<0] ] = true;
+    tiles[[quad[0][0]<<0, quad[0][1]<<0, zoom]] = true;
+    tiles[[quad[1][0]<<0, quad[1][1]<<0, zoom]] = true;
+    tiles[[quad[2][0]<<0, quad[2][1]<<0, zoom]] = true;
+    tiles[[quad[3][0]<<0, quad[3][1]<<0, zoom]] = true;
 
-    for (var x = minX; x <= maxX; x++)
+    for (var x = minX; x <= maxX; x++) {
       for (var y = minY; y <= maxY; y++) {
-        if (this.isPointInTriangle(quad[0], quad[1], quad[2], [x+0.5, y+0.5]) ||
-          this.isPointInTriangle(quad[0], quad[2], quad[3], [x+0.5, y+0.5])) {
-            tiles[[x-1,y-1]] = true;
-            tiles[[x  ,y-1]] = true;
-            tiles[[x+1,y-1]] = true;
-            tiles[[x-1,y  ]] = true;
-            tiles[[x  ,y  ]] = true;
-            tiles[[x+1,y  ]] = true;
-            tiles[[x-1,y+1]] = true;
-            tiles[[x  ,y+1]] = true;
-            tiles[[x+1,y+1]] = true;
-          }
+        if (this.isPointInTriangle(quad[0], quad[1], quad[2], [x + 0.5, y + 0.5]) ||
+          this.isPointInTriangle(quad[0], quad[2], quad[3], [x + 0.5, y + 0.5])) {
+          tiles[[x - 1, y - 1, zoom]] = true;
+          tiles[[x,     y - 1, zoom]] = true;
+          tiles[[x + 1, y - 1, zoom]] = true;
+          tiles[[x - 1, y,     zoom]] = true;
+          tiles[[x,     y,     zoom]] = true;
+          tiles[[x + 1, y,     zoom]] = true;
+          tiles[[x - 1, y + 1, zoom]] = true;
+          tiles[[x,     y + 1, zoom]] = true;
+          tiles[[x + 1, y + 1, zoom]] = true;
+        }
       }
+    }
     return tiles;
   },
   
@@ -367,5 +367,12 @@ var render = {
     render.SkyDome.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
+
+    render.HudRect.destroy();
+    render.Overlay.destroy();
+    render.NormalMap.destroy();
+    render.DepthMap.destroy();
+    render.AmbientMap.destroy();
+    render.Blur.destroy();
   }
 };

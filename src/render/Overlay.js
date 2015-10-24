@@ -16,8 +16,6 @@ render.Overlay = {
       attributes: ["aPosition", "aTexCoord"],
       uniforms: [ "uMatrix", "uTexIndex", "uColor"]
     });
-
-    this.isReady = true;
   },
 
   createGeometry: function() {
@@ -43,10 +41,6 @@ render.Overlay = {
   },
 
   render: function(texture, framebufferConfig) {
-    if (!this.isReady) {
-      return;
-    }
-
     var tcHorizMin, tcVertMin, tcHorizMax, tcVertMax;
     
     if (framebufferConfig !== undefined)

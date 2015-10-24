@@ -74,7 +74,6 @@ Grid.prototype = {
 
     var
       tile, tileX, tileY,
-      key,
       queue = [], queueLength,
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
@@ -82,15 +81,12 @@ Grid.prototype = {
       ];
       
     var viewQuad = render.getViewQuad(render.viewProjMatrix.data, zoom);
-    var tilesToLoad = render.getTilesInQuad(viewQuad);
+    this.visibleTiles = render.getTilesInQuad(viewQuad, zoom);
 
-    this.visibleTiles = {};
-    for (var t in tilesToLoad) {
-      tile = t.split(',');
+    for (var key in this.visibleTiles) {
+      tile = key.split(',');
       tileX = tile[0];
       tileY = tile[1];
-      key = [tileX, tileY, zoom].join(',');
-      this.visibleTiles[key] = true;
 
       if (this.tiles[key]) {
         continue;

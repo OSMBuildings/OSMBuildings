@@ -39,7 +39,7 @@ render.Basemap = {
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 
-      if (!tile.isReady || !(tile.key in layer.visibleTiles) ) {
+      if (!(tile.key in layer.visibleTiles)) {
         continue;
       }
 
@@ -58,8 +58,9 @@ render.Basemap = {
       tile.texCoordBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      tile.texture.enable(0);
       gl.uniform1i(shader.uniforms.uTexIndex, 0);
+
+      tile.texture.enable(0);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     }

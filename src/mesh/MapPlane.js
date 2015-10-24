@@ -62,7 +62,6 @@ mesh.MapPlane = (function() {
 
       //this.numDummyVertices = 6;
 
-      this.isReady = true;
     },
 
     // TODO: switch to a notation like mesh.transform
@@ -75,15 +74,10 @@ mesh.MapPlane = (function() {
     },
 
     destroy: function() {
-
-      this.items = null;
-
-      if (this.isReady) {
-        this.vertexBuffer.destroy();
-        this.normalBuffer.destroy();
-        //this.colorBuffer.destroy();
-        //this.idBuffer.destroy();
-      }
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idBuffer.destroy();
     }
   };
 

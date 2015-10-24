@@ -15,12 +15,9 @@ render.SkyDome = {
 
     Activity.setBusy();
     var url = APP.baseURL + '/skydome.jpg';
-    this.texture = new glx.texture.Image(url, function(image) {
+    this.texture = new glx.texture.Image().color(render.fogColor).load(url, function(image) {
       Activity.setIdle();
-      if (image) {
-        this.isReady = true;
-      }
-    }.bind(this));
+    });
   },
 
   baseRadius: 500,
@@ -82,10 +79,6 @@ render.SkyDome = {
   },
 
   render: function() {
-    if (!this.isReady) {
-      return;
-    }
-
     var
       fogColor = render.fogColor,
       shader = this.shader;
@@ -112,8 +105,9 @@ render.SkyDome = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    this.texture.enable(0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
+
+    this.texture.enable(0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 

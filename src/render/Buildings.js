@@ -49,6 +49,7 @@ render.Buildings = {
       modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
+      // TODO: if an item is referenced via data tile, add a visibility check
       item = dataItems[i];
 
       if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {

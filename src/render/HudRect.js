@@ -16,8 +16,6 @@ render.HudRect = {
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [ 'uMatrix', 'uTexIndex', 'uColor']
     });
-
-    this.isReady = true;
   },
 
   createGeometry: function() {
@@ -43,12 +41,7 @@ render.HudRect = {
   },
 
   render: function(texture) {
-    if (!this.isReady) {
-      return;
-    }
-
-    var
-      shader = this.shader;
+    var shader = this.shader;
 
     shader.enable();
     

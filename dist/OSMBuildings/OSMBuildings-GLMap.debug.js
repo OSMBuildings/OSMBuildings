@@ -1564,92 +1564,104 @@ glx.Matrix = function(data) {
 glx.texture = {};
 
 
-glx.texture.Image = function(src, callback) {
+glx.texture.Image = function() {
   this.id = GL.createTexture();
   GL.bindTexture(GL.TEXTURE_2D, this.id);
 
-  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
-  GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
+  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+
 //GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 //GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
 
-  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
   GL.bindTexture(GL.TEXTURE_2D, null);
-
-  var image = new Image();
-
-  image.crossOrigin = '*';
-
-  image.onload = function() {
-    // TODO: do this only once
-    var maxTexSize = GL.getParameter(GL.MAX_TEXTURE_SIZE);
-    if (image.width > maxTexSize || image.height > maxTexSize) {
-      var w = maxTexSize, h = maxTexSize;
-      var ratio = image.width/image.height;
-      // TODO: if other dimension doesn't fit to POT after resize, there is still trouble
-      if (ratio < 1) {
-        w = Math.round(h*ratio);
-      } else {
-        h = Math.round(w/ratio);
-      }
-
-      var canvas = document.createElement('CANVAS');
-      canvas.width  = w;
-      canvas.height = h;
-
-      var context = canvas.getContext('2d');
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      image = canvas;
-    }
-
-    if (!this.id) {
-      image = null;
-    } else {
-      GL.bindTexture(GL.TEXTURE_2D, this.id);
-      GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
-      GL.generateMipmap(GL.TEXTURE_2D);
-    
-      if (GL.anisotropyExtension) {
-        GL.texParameterf(
-          GL.TEXTURE_2D,
-          GL.anisotropyExtension.TEXTURE_MAX_ANISOTROPY_EXT,
-          GL.anisotropyExtension.maxAnisotropyLevel
-        );
-      }
-      GL.bindTexture(GL.TEXTURE_2D, null);
-    }
-
-    if (callback) {
-      callback(image);
-    }
-
-  }.bind(this);
-
-  image.onerror = function() {
-    if (callback) {
-      callback();
-    }
-  };
-
-  image.src = src;
 };
 
 glx.texture.Image.prototype = {
+
+  clamp: function(image, maxSize) {
+    if (image.width <= maxSize && image.height <= maxSize) {
+      return image;
+    }
+
+    var w = maxSize, h = maxSize;
+    var ratio = image.width/image.height;
+    // TODO: if other dimension doesn't fit to POT after resize, there is still trouble
+    if (ratio < 1) {
+      w = Math.round(h*ratio);
+    } else {
+      h = Math.round(w/ratio);
+    }
+
+    var canvas = document.createElement('CANVAS');
+    canvas.width  = w;
+    canvas.height = h;
+
+    var context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  },
+
+  load: function(url, callback) {
+    var image = new Image();
+    image.crossOrigin = '*';
+    image.onload = function() {
+      this.set(image);
+      if (callback) {
+        callback(image);
+      }
+    }.bind(this);
+    image.onerror = function() {
+      if (callback) {
+        callback();
+      }
+    };
+    image.src = url;
+    return this;
+  },
+
+  color: function(color) {
+    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
+    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, 1, 1, 0, GL.RGBA, GL.UNSIGNED_BYTE, new Uint8Array([color[0]*255, color[1]*255, color[2]*255, (color[3] === undefined ? 1 : color[3])*255]));
+    GL.bindTexture(GL.TEXTURE_2D, null);
+    return this;
+  },
+
+  set: function(image) {
+    if (!this.id) {
+      // texture has been destroyed
+      return;
+    }
+
+    image = this.clamp(image, GL.getParameter(GL.MAX_TEXTURE_SIZE));
+
+    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
+
+    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
+    GL.generateMipmap(GL.TEXTURE_2D);
+
+    if (GL.anisotropyExtension) {
+      GL.texParameterf(GL.TEXTURE_2D, GL.anisotropyExtension.TEXTURE_MAX_ANISOTROPY_EXT, GL.anisotropyExtension.maxAnisotropyLevel);
+    }
+
+    GL.bindTexture(GL.TEXTURE_2D, null);
+    return this;
+  },
 
   enable: function(index) {
     if (!this.id) {
       return;
     }
-    GL.bindTexture(GL.TEXTURE_2D, this.id);
     GL.activeTexture(GL.TEXTURE0 + (index || 0));
-  },
-
-  disable: function() {
-    GL.bindTexture(GL.TEXTURE_2D, null);
+    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    return this;
   },
 
   destroy: function() {
-    this.disable();
+    GL.bindTexture(GL.TEXTURE_2D, null);
     GL.deleteTexture(this.id);
     this.id = null;
   }
@@ -1684,12 +1696,9 @@ glx.texture.Data = function(width, height, data, options) {
 glx.texture.Data.prototype = {
 
   enable: function(index) {
-    GL.bindTexture(GL.TEXTURE_2D, this.id);
     GL.activeTexture(GL.TEXTURE0 + (index || 0));
-  },
-
-  disable: function() {
-    GL.bindTexture(GL.TEXTURE_2D, null);
+    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    return this;
   },
 
   destroy: function() {
@@ -3116,7 +3125,6 @@ mesh.MapPlane = (function() {
 
       //this.numDummyVertices = 6;
 
-      this.isReady = true;
     },
 
     // TODO: switch to a notation like mesh.transform
@@ -3129,15 +3137,10 @@ mesh.MapPlane = (function() {
     },
 
     destroy: function() {
-
-      this.items = null;
-
-      if (this.isReady) {
-        this.vertexBuffer.destroy();
-        this.normalBuffer.destroy();
-        //this.colorBuffer.destroy();
-        //this.idBuffer.destroy();
-      }
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idBuffer.destroy();
     }
   };
 
@@ -3226,8 +3229,6 @@ mesh.DebugQuad = (function() {
         [].concat(color, color, color, color, color, color)));
         
       //this.numDummyVertices = 6;
-
-      this.isReady = true;
     },
 
     // TODO: switch to a notation like mesh.transform
@@ -3240,15 +3241,10 @@ mesh.DebugQuad = (function() {
     },
 
     destroy: function() {
-
-      this.items = null;
-
-      if (this.isReady) {
-        this.vertexBuffer.destroy();
-        this.normalBuffer.destroy();
-        //this.colorBuffer.destroy();
-        //this.idBuffer.destroy();
-      }
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.idBuffer.destroy();
     }
   };
 
@@ -4229,6 +4225,13 @@ var render = {
     render.SkyDome.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
+
+    render.HudRect.destroy();
+    render.Overlay.destroy();
+    render.NormalMap.destroy();
+    render.DepthMap.destroy();
+    render.AmbientMap.destroy();
+    render.Blur.destroy();
   }
 };
 
@@ -4357,12 +4360,9 @@ render.SkyDome = {
 
     Activity.setBusy();
     var url = APP.baseURL + '/skydome.jpg';
-    this.texture = new glx.texture.Image(url, function(image) {
+    this.texture = new glx.texture.Image().color([1,0,0]).load(url, function(image) {
       Activity.setIdle();
-      if (image) {
-        this.isReady = true;
-      }
-    }.bind(this));
+    });
   },
 
   baseRadius: 500,
@@ -4424,10 +4424,6 @@ render.SkyDome = {
   },
 
   render: function() {
-    if (!this.isReady) {
-      return;
-    }
-
     var
       fogColor = render.fogColor,
       shader = this.shader;
@@ -4454,8 +4450,9 @@ render.SkyDome = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    this.texture.enable(0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
+
+    this.texture.enable(0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
@@ -4599,7 +4596,7 @@ render.Basemap = {
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 
-      if (!tile.isReady || !(tile.key in layer.visibleTiles) ) {
+      if (tile.key in layer.visibleTiles) {
         continue;
       }
 
@@ -4618,8 +4615,9 @@ render.Basemap = {
       tile.texCoordBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      tile.texture.enable(0);
       gl.uniform1i(shader.uniforms.uTexIndex, 0);
+
+      tile.texture.enable(0);
 
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     }
@@ -4648,8 +4646,6 @@ render.HudRect = {
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [ 'uMatrix', 'uTexIndex', 'uColor']
     });
-
-    this.isReady = true;
   },
 
   createGeometry: function() {
@@ -4675,12 +4671,7 @@ render.HudRect = {
   },
 
   render: function(texture) {
-    if (!this.isReady) {
-      return;
-    }
-
-    var
-      shader = this.shader;
+    var shader = this.shader;
 
     shader.enable();
     
@@ -5033,8 +5024,6 @@ render.Overlay = {
       attributes: ["aPosition", "aTexCoord"],
       uniforms: [ "uMatrix", "uTexIndex", "uColor"]
     });
-
-    this.isReady = true;
   },
 
   createGeometry: function() {
@@ -5060,10 +5049,6 @@ render.Overlay = {
   },
 
   render: function(texture, framebufferConfig) {
-    if (!this.isReady) {
-      return;
-    }
-
     var tcHorizMin, tcVertMin, tcHorizMax, tcVertMax;
     
     if (framebufferConfig !== undefined)
@@ -5242,7 +5227,7 @@ render.Blur = {
 var basemap = {};
 
 
-basemap.Tile = function(x, y, zoom) {
+basemap.Tile = function(x, y, zoom, options) {
   this.x = x;
   this.y = y;
   this.zoom = zoom;
@@ -5277,17 +5262,26 @@ basemap.Tile = function(x, y, zoom) {
 
   this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
+
+  //if (options && options.altImage) {
+//var canvas = document.createElement('CANVAS');
+//var size = 256;
+//canvas.width  = size;
+//canvas.height = size;
+//var context = canvas.getContext('2d');
+//context.fillStyle = '#00cc00';
+//context.fillRect(0, 0, size, size);
+////canvas.toDataURL();
+//this.altTexture = new glx.texture.Image().set(canvas);
+  //}
 };
 
 basemap.Tile.prototype = {
   load: function(url) {
     Activity.setBusy();
-    this.texture = new glx.texture.Image(url, function(image) {
+    this.texture = new glx.texture.Image().color([0, 1, 1]).load(url, function(image) {
       Activity.setIdle();
-      if (image) {
-        this.isReady = true;
-      }
-    }.bind(this));
+    });
   },
 
   destroy: function() {
