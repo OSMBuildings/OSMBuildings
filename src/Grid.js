@@ -166,14 +166,17 @@ Grid.prototype = {
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
 
-    this.purge();
+    // this.purge();
   },
 
   purge: function() {
-    var tile;
     for (var key in this.tiles) {
-      tile = key.split(',');
       if (!this.visibleTiles[key]) {
+        // no match:
+        // if same zoom: destroy
+        // else if lower zoom: quad up: re-check
+        // else if higher zoom: quad down: re-check
+
         //console.log("purging '%s %s'", this.source, key);
         this.tiles[key].destroy();
         delete this.tiles[key];

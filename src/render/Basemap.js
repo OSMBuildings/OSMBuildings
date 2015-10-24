@@ -24,8 +24,6 @@ render.Basemap = {
     var
       shader = this.shader,
       tile, modelMatrix,
-      tileZoom = Math.round(MAP.zoom),
-      ratio = 1 / Math.pow(2, tileZoom - MAP.zoom),
       mapCenter = MAP.center;
 
     shader.enable();
@@ -36,12 +34,16 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
+    // reminder: tiles can be of various zoom levels
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 
-      if (!tile.isReady || !(tile.key in layer.visibleTiles) ) {
+      // no visibility check needed, Grid.purge() is taking care
+      if (!tile.isReady) {
         continue;
       }
+
+      ratio = 1 / Math.pow(2, tile.zoom - MAP.zoom),
 
       modelMatrix = new glx.Matrix();
       modelMatrix.scale(ratio * 1.005, ratio * 1.005, 1);

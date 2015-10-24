@@ -2692,10 +2692,13 @@
 	  },
 
 	  purge: function() {
-	    var tile;
 	    for (var key in this.tiles) {
-	      tile = key.split(',');
 	      if (!this.visibleTiles[key]) {
+	        // no match:
+	        // if same zoom: destroy
+	        // else if lower zoom: quad up: re-check
+	        // else if higher zoom: quad down: re-check
+
 	        //console.log("purging '%s %s'", this.source, key);
 	        this.tiles[key].destroy();
 	        delete this.tiles[key];
@@ -4554,7 +4557,8 @@
 	      modelMatrix;
 
 	    for (var i = 0, il = dataItems.length; i < il; i++) {
-	      // TODO: if an item is referenced via data tile, add a visibility check
+	      // no visibility check here. Grid.purge() is taking care
+
 	      item = dataItems[i];
 
 	      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
@@ -4636,7 +4640,8 @@
 	    for (var key in layer.tiles) {
 	      tile = layer.tiles[key];
 
-	      if (!tile.isReady || !(tile.key in layer.visibleTiles) ) {
+	      // no visibility check here. Grid.purge() is taking care
+	      if (!tile.isReady) {
 	        continue;
 	      }
 
