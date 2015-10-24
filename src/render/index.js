@@ -131,7 +131,9 @@ var render = {
         if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
           return;
         }
-        
+
+        this.time = Date.now();
+
         //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
         //console.log( this.getTilesInQuad( viewTrapezoid) );
         //var s = "";

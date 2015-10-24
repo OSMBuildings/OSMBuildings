@@ -15,7 +15,7 @@ render.NormalMap = {
       vertexShader: Shaders.normalmap.vertex,
       fragmentShader: Shaders.normalmap.fragment,
       attributes: ['aPosition', 'aNormal', 'aFilter'],
-      uniforms: [/*'uModelMatrix', 'uViewMatrix', 'uProjMatrix',*/ 'uMatrix']
+      uniforms: ['uMatrix', 'uTime']
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -41,6 +41,8 @@ render.NormalMap = {
     gl.clearColor(0.5, 0.5, 1, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    gl.uniform1f(shader.uniforms.uTime, render.time);
+
     var
       dataItems = data.Index.items.concat([this.mapPlane]),
       item,
@@ -57,12 +59,6 @@ render.NormalMap = {
         continue;
       }
 
-      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
-      /*gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);*/
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();

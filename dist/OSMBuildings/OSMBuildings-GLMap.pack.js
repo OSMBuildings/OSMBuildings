@@ -2727,7 +2727,6 @@
 	    filters: [],
 
 	    addFilter: function(type, selector, duration) {
-	duration = 2000;
 	      duration = duration || 0;
 
 	      var filters = this.filters;
@@ -2767,7 +2766,6 @@
 	    },
 
 	    removeFilter: function(type, selector, duration) {
-	duration = 2000;
 	      duration = duration || 0;
 
 	      var i, il;
@@ -4192,7 +4190,9 @@
 	        if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
 	          return;
 	        }
-	        
+
+	        this.time = Date.now();
+
 	        //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
 	        //console.log( this.getTilesInQuad( viewTrapezoid) );
 	        //var s = "";
@@ -4292,7 +4292,16 @@
 	      vertexShader: Shaders.interaction.vertex,
 	      fragmentShader: Shaders.interaction.fragment,
 	      attributes: ['aPosition', 'aID', 'aFilter'],
-	      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uFogRadius', 'uBendRadius', 'uBendDistance']
+	      uniforms: [
+	        'uModelMatrix',
+	        'uViewMatrix',
+	        'uProjMatrix',
+	        'uMatrix',
+	        'uFogRadius',
+	        'uBendRadius',
+	        'uBendDistance',
+	        'uTime'
+	      ]
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -4316,6 +4325,11 @@
 	    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
 	    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
+	    gl.uniform1f(shader.uniforms.uTime, render.time);
+
+	    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+	    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+
 	    var
 	      dataItems = data.Index.items,
 	      item,
@@ -4332,12 +4346,7 @@
 	        continue;
 	      }
 
-	      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
 	      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
 	      item.vertexBuffer.enable();
@@ -4523,7 +4532,23 @@
 	      vertexShader: Shaders.buildings.vertex,
 	      fragmentShader: Shaders.buildings.fragment,
 	      attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
-	      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uNormalTransform', 'uAlpha', 'uLightColor', 'uLightDirection', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uHighlightColor', 'uHighlightID']
+	      uniforms: [
+	        'uModelMatrix',
+	        'uViewMatrix',
+	        'uProjMatrix',
+	        'uMatrix',
+	        'uNormalTransform',
+	        'uAlpha',
+	        'uLightColor',
+	        'uLightDirection',
+	        'uFogRadius',
+	        'uFogColor',
+	        'uBendRadius',
+	        'uBendDistance',
+	        'uHighlightColor',
+	        'uHighlightID',
+	        'uTime'
+	      ]
 	    });
 	  },
 
@@ -4555,10 +4580,15 @@
 
 	    gl.uniform3fv(shader.uniforms.uHighlightColor, render.highlightColor);
 
+	    gl.uniform1f(shader.uniforms.uTime, render.time);
+
 	    if (!this.highlightID) {
 	      this.highlightID = [0, 0, 0];
 	    }
 	    gl.uniform3fv(shader.uniforms.uHighlightID, this.highlightID);
+
+	    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+	    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 
 	    var
 	      dataItems = data.Index.items,
@@ -4579,8 +4609,6 @@
 	      }
 
 	      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
 	      item.vertexBuffer.enable();
@@ -4772,7 +4800,7 @@
 	      vertexShader: Shaders.normalmap.vertex,
 	      fragmentShader: Shaders.normalmap.fragment,
 	      attributes: ['aPosition', 'aNormal', 'aFilter'],
-	      uniforms: [/*'uModelMatrix', 'uViewMatrix', 'uProjMatrix',*/ 'uMatrix']
+	      uniforms: ['uMatrix', 'uTime']
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -4798,6 +4826,8 @@
 	    gl.clearColor(0.5, 0.5, 1, 1);
 	    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+	    gl.uniform1f(shader.uniforms.uTime, render.time);
+
 	    var
 	      dataItems = data.Index.items.concat([this.mapPlane]),
 	      item,
@@ -4814,12 +4844,6 @@
 	        continue;
 	      }
 
-	      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
-	      /*gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);*/
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
 	      item.vertexBuffer.enable();
@@ -4864,7 +4888,7 @@
 	      vertexShader: Shaders.depth.vertex,
 	      fragmentShader: Shaders.depth.fragment,
 	      attributes: ['aPosition', 'aFilter'],
-	      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius']
+	      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius', 'uTime']
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -4910,7 +4934,10 @@
 	    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	    var item, modelMatrix;
-	    
+
+	    gl.uniform1f(shader.uniforms.uTime, render.time);
+	    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+
 	    // render all actual data items, but also a dummy map plane
 	    // Note: SSAO on the map plane has been disabled temporarily
 	    var dataItems = data.Index.items;//.concat([this.mapPlane]);
@@ -4927,10 +4954,8 @@
 	      }
 
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
 	      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
-	      
+
 	      item.vertexBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 

@@ -11,7 +11,16 @@ render.Interaction = {
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,
       attributes: ['aPosition', 'aID', 'aFilter'],
-      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uFogRadius', 'uBendRadius', 'uBendDistance']
+      uniforms: [
+        'uModelMatrix',
+        'uViewMatrix',
+        'uProjMatrix',
+        'uMatrix',
+        'uFogRadius',
+        'uBendRadius',
+        'uBendDistance',
+        'uTime'
+      ]
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -35,6 +44,11 @@ render.Interaction = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
+    gl.uniform1f(shader.uniforms.uTime, render.time);
+
+    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+
     var
       dataItems = data.Index.items,
       item,
@@ -51,12 +65,7 @@ render.Interaction = {
         continue;
       }
 
-      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();

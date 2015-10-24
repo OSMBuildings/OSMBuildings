@@ -15,7 +15,7 @@ render.DepthMap = {
       vertexShader: Shaders.depth.vertex,
       fragmentShader: Shaders.depth.fragment,
       attributes: ['aPosition', 'aFilter'],
-      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius']
+      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius', 'uTime']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -61,7 +61,10 @@ render.DepthMap = {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var item, modelMatrix;
-    
+
+    gl.uniform1f(shader.uniforms.uTime, render.time);
+    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+
     // render all actual data items, but also a dummy map plane
     // Note: SSAO on the map plane has been disabled temporarily
     var dataItems = data.Index.items;//.concat([this.mapPlane]);
@@ -78,10 +81,8 @@ render.DepthMap = {
       }
 
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
-      
+
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
