@@ -15,9 +15,12 @@ render.SkyDome = {
 
     Activity.setBusy();
     var url = APP.baseURL + '/skydome.jpg';
-    this.texture = new glx.texture.Image().color(render.fogColor).load(url, function(image) {
+    this.texture = new glx.texture.Image().load(url, function(image) {
       Activity.setIdle();
-    });
+      if (image) {
+        this.isReady = true;
+      }
+    }.bind(this));
   },
 
   baseRadius: 500,
@@ -79,6 +82,10 @@ render.SkyDome = {
   },
 
   render: function() {
+    if (!this.isReady) {
+      return;
+    }
+
     var
       fogColor = render.fogColor,
       shader = this.shader;

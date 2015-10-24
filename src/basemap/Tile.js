@@ -34,16 +34,17 @@ basemap.Tile = function(x, y, zoom) {
 
   this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
-
-  this.texture = new glx.texture.Image().color(render.backgroundColor);
 };
 
 basemap.Tile.prototype = {
   load: function(url) {
     Activity.setBusy();
-    this.texture.load(url, function(image) {
+    this.texture = new glx.texture.Image().load(url, function(image) {
       Activity.setIdle();
-    });
+      if (image) {
+        this.isReady = true;
+      }
+    }.bind(this));
   },
 
   destroy: function() {

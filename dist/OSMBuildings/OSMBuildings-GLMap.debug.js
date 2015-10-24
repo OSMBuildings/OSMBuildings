@@ -1568,7 +1568,6 @@ glx.texture.Image = function() {
   this.id = GL.createTexture();
   GL.bindTexture(GL.TEXTURE_2D, this.id);
 
-  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
 
 //GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 //GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
@@ -1623,6 +1622,7 @@ glx.texture.Image.prototype = {
     GL.bindTexture(GL.TEXTURE_2D, this.id);
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
+    GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
     GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, 1, 1, 0, GL.RGBA, GL.UNSIGNED_BYTE, new Uint8Array([color[0]*255, color[1]*255, color[2]*255, (color[3] === undefined ? 1 : color[3])*255]));
     GL.bindTexture(GL.TEXTURE_2D, null);
     return this;
@@ -1639,7 +1639,7 @@ glx.texture.Image.prototype = {
     GL.bindTexture(GL.TEXTURE_2D, this.id);
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-
+    GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
     GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
     GL.generateMipmap(GL.TEXTURE_2D);
 
@@ -2495,7 +2495,7 @@ var Grid = function(source, tileClass, options) {
   }
 
   MAP.on('change', this._onChange = function() {
-    this.update(250);
+    this.update(500);
   }.bind(this));
 
   MAP.on('resize', this._onResize = this.update.bind(this));
@@ -2504,6 +2504,62 @@ var Grid = function(source, tileClass, options) {
 };
 
 Grid.prototype = {
+
+  /* Returns the set of tiles (as dictionary keys) that overlap in any way with
+   * the quadrilateral 'quad'. The returned set may contain false-positives,
+   * i.e. tiles that are slightly outside the viewing frustum.
+   *
+   * The basic approach is to determine the axis-aligned bounding box of the
+   * quad, and for each tile in the bounding box determine whether its center
+   * lies inside the quad (or rather in one of the two triangles making up the
+   * quad) via a point-in-triangle test.
+   * This approach however misses some boundary cases:
+   * - for tiles on the edge of the screen, parts of the tile may be visible
+   *   without its center being visible. Our test misses these cases. We
+   *   compensate by adding not only the tile itself but also all horizontal,
+   *   vertical and diagonal neighbors to the result set
+   * - if the quad is small compared to the tile size then no tile center may
+   *   be inside the quad (e.g. when the whole screen is covered by the lower
+   *   third of a single tile) and thus the result set would be empty. We
+   *   compensate by adding the tiles of all four quad vertices to the result
+   *   set in any case.
+   * Note: while the set of tiles added through those edge cases may seem
+   *       excessive, it is actually rather small: It does add an one tile wide
+   *       outline to the result set. But other than that, is only caused tiles
+   *       to be added multiple times, and those duplicates are removed
+   *       automatically since the result is a set.
+   */
+  getTilesInQuad: function(quad, zoom) {
+    var minX =          (Math.min(quad[0][0], quad[1][0], quad[2][0], quad[3][0])) <<0;
+    var maxX = Math.ceil(Math.max(quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
+
+    var minY =          (Math.min(quad[0][1], quad[1][1], quad[2][1], quad[3][1])) <<0;
+    var maxY = Math.ceil(Math.max(quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
+
+    var tiles = {};
+    tiles[[quad[0][0]<<0, quad[0][1]<<0, zoom]] = true;
+    tiles[[quad[1][0]<<0, quad[1][1]<<0, zoom]] = true;
+    tiles[[quad[2][0]<<0, quad[2][1]<<0, zoom]] = true;
+    tiles[[quad[3][0]<<0, quad[3][1]<<0, zoom]] = true;
+
+    for (var x = minX; x <= maxX; x++) {
+      for (var y = minY; y <= maxY; y++) {
+        if (isPointInTriangle(quad[0], quad[1], quad[2], [x + 0.5, y + 0.5]) ||
+          isPointInTriangle(quad[0], quad[2], quad[3], [x + 0.5, y + 0.5])) {
+          tiles[[x - 1, y - 1, zoom]] = true;
+          tiles[[x,     y - 1, zoom]] = true;
+          tiles[[x + 1, y - 1, zoom]] = true;
+          tiles[[x - 1, y,     zoom]] = true;
+          tiles[[x,     y,     zoom]] = true;
+          tiles[[x + 1, y,     zoom]] = true;
+          tiles[[x - 1, y + 1, zoom]] = true;
+          tiles[[x,     y + 1, zoom]] = true;
+          tiles[[x + 1, y + 1, zoom]] = true;
+        }
+      }
+    }
+    return tiles;
+  },
 
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
@@ -2550,7 +2606,6 @@ Grid.prototype = {
 
     var
       tile, tileX, tileY,
-      key,
       queue = [], queueLength,
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
@@ -2558,15 +2613,12 @@ Grid.prototype = {
       ];
       
     var viewQuad = render.getViewQuad(render.viewProjMatrix.data, zoom);
-    var tilesToLoad = render.getTilesInQuad(viewQuad);
+    this.visibleTiles = this.getTilesInQuad(viewQuad, zoom);
 
-    this.visibleTiles = {};
-    for (var t in tilesToLoad) {
-      tile = t.split(',');
+    for (var key in this.visibleTiles) {
+      tile = key.split(',');
       tileX = tile[0];
       tileY = tile[1];
-      key = [tileX, tileY, zoom].join(',');
-      this.visibleTiles[key] = true;
 
       if (this.tiles[key]) {
         continue;
@@ -3849,12 +3901,105 @@ function unit(x, y, z) {
   return [x/m, y/m, z/m];
 }
 
-function rotatePoint(x, y, angle) {
-  return {
-    x: Math.cos(angle)*x - Math.sin(angle)*y,
-    y: Math.sin(angle)*x + Math.cos(angle)*y
-  };
+/* Returns whether the point 'P' lies either inside the triangle (tA, tB, tC)
+ * or on its edge.
+ *
+ * Implementation: we follow a barycentric development: The triangle
+ *                 is interpreted as the point tA and two vectors v1 = tB - tA
+ *                 and v2 = tC - tA. Then for any point P inside the triangle
+ *                 holds P = tA + α*v1 + β*v2 subject to α >= 0, β>= 0 and
+ *                 α + β <= 1.0
+ */
+function isPointInTriangle(tA, tB, tC, P) {
+  var v1x = tB[0] - tA[0];
+  var v1y = tB[1] - tA[1];
+
+  var v2x = tC[0] - tA[0];
+  var v2y = tC[1] - tA[1];
+
+  var qx  = P[0] - tA[0];
+  var qy  = P[1] - tA[1];
+
+  /* 'denom' is zero iff v1 and v2 have the same direction. In that case,
+   * the triangle has degenerated to a line, and no point can lie inside it */
+  var denom = v2x * v1y - v2y * v1x;
+  if (denom === 0)
+    return false;
+
+  var numeratorBeta = qx*v1y - qy*v1x;
+  var beta = numeratorBeta/denom;
+
+  var numeratorAlpha = qx*v2y - qy*v2x;
+  var alpha = - numeratorAlpha / denom;
+
+  return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;
 }
+
+/* transforms the 3D vector 'v' according to the transformation matrix 'm'.
+ * Internally, the vector 'v' is interpreted as a 4D vector
+ * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
+ * performed on that vector, yielding a 4D homogenous result vector. That
+ * vector is then converted back to a 3D Euler coordinates by dividing
+ * its first three components each by its fourth component */
+function transformVec3(m, v) {
+  var x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + m[12];
+  var y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + m[13];
+  var z = v[0]*m[2] + v[1]*m[6] + v[2]*m[10] + m[14];
+  var w = v[0]*m[3] + v[1]*m[7] + v[2]*m[11] + m[15];
+  return [x/w, y/w, z/w]; //convert homogenous to Euler coordinates
+}
+
+/* returns the point (in OSMBuildings' local coordinates) on the XY plane (z==0)
+ * that would be drawn at viewport position (screenNdcX, screenNdcY).
+ * That viewport position is given in normalized device coordinates, i.e.
+ * x==-1.0 is the left screen edge, x==+1.0 is the right one, y==-1.0 is the lower
+ * screen edge and y==+1.0 is the upper one.
+ */
+function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
+  var v1 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 0]);
+  var v2 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
+
+  // direction vector from v1 to v2
+  var vDir = [ v2[0] - v1[0],
+    v2[1] - v1[1],
+    v2[2] - v1[2]];
+
+  if (vDir[2] >= 0) // ray would not intersect with the plane
+  {
+    return undefined;
+  }
+  /* ray equation for all world-space points 'p' lying on the screen-space NDC position
+   * (screenNdcX, screenNdcY) is:  p = v1 + λ*vDirNorm
+   * For the intersection with the xy-plane (-> z=0) holds: v1[2] + λ*vDirNorm[2] = p[2] = 0.0.
+   * Rearranged, this reads:   */
+  var lambda = -v1[2]/vDir[2];
+
+  return [ v1[0] + lambda * vDir[0],
+    v1[1] + lambda * vDir[1],
+    v1[2] + lambda * vDir[2] +1.0]; //FIXME: remove debug z-offset "+1.0"
+}
+
+/* converts a 2D position from OSMBuildings' local coordinate system to slippy tile
+ * coordinates for zoom level 'tileZoom'. The results are not integers, but have a
+ * fractional component. Math.floor(tileX) gives the actual horizontal tile number,
+ * while (tileX - Math.floor(tileX)) gives the relative position *inside* the tile. */
+function asTilePosition(localXY, tileZoom) {
+  var worldX = localXY[0] + MAP.center.x;
+  var worldY = localXY[1] + MAP.center.y;
+  var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
+
+  var tileX = worldX / worldSize * Math.pow(2, tileZoom);
+  var tileY = worldY / worldSize * Math.pow(2, tileZoom);
+
+  return [tileX, tileY];
+}
+
+function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
+function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
+function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
+function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
+function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
+function dist3(a,b){ return len3(sub3(a,b));}
 
 
 var render = {
@@ -3876,88 +4021,22 @@ var render = {
     return config;
   },
 
-  /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
-   * Internally, the vector 'v' is interpreted as a 4D vector
-   * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
-   * performed on that vector, yielding a 4D homogenous result vector. That
-   * vector is then converted back to a 3D Euler coordinates by dividing
-   * its first three components each by its fourth component */
-  transformVec3: function(m, v) {
-    var x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + 1.0*m[12];
-    var y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + 1.0*m[13];
-    var z = v[0]*m[2] + v[1]*m[6] + v[2]*m[10] + 1.0*m[14];
-    var w = v[0]*m[3] + v[1]*m[7] + v[2]*m[11] + 1.0*m[15];
-    return [x/w, y/w, z/w]; //convert homogenous to Euler coordinates
-  },
-  
-  /* returns the point (in OSMBuildings' local coordinates) on the XY plane (z==0)
-   * that would be drawn at viewport position (screenNdcX, screenNdcY).
-   * That viewport position is given in normalized device coordinates, i.e.
-   * x==-1.0 is the left screen edge, x==+1.0 is the right one, y==-1.0 is the lower
-   * screen edge and y==+1.0 is the upper one.
-   */
-  getIntersectionWithXYPlane: function( screenNdcX, screenNdcY, inverseTransform) {
-    var v1 = this.transformVec3(inverseTransform, [screenNdcX, screenNdcY, 0]);
-    var v2 = this.transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
-    
-    // direction vector from v1 to v2
-    var vDir = [ v2[0] - v1[0],
-                 v2[1] - v1[1],
-                 v2[2] - v1[2]];
-    
-    if (vDir[2] >= 0) // ray would not intersect with the plane
-    {
-      return undefined;
-    }
-    /* ray equation for all world-space points 'p' lying on the screen-space NDC position 
-     * (screenNdcX, screenNdcY) is:  p = v1 + λ*vDirNorm 
-     * For the intersection with the xy-plane (-> z=0) holds: v1[2] + λ*vDirNorm[2] = p[2] = 0.0.
-     * Rearranged, this reads:   */
-    var lambda = -v1[2]/vDir[2];
-    
-    return [ v1[0] + lambda * vDir[0],
-             v1[1] + lambda * vDir[1],
-             v1[2] + lambda * vDir[2] +1.0]; //FIXME: remove debug z-offset "+1.0"
-  },
-  
-  /* converts a 2D position from OSMBuildings' local coordinate system to OSM slippy tile
-   * coordinates for zoom level 'tileZoom'. The results are not integers, but have a 
-   * fractional component. Math.floor(tileX) gives the actual horizontal tile number, 
-   * while (tileX - Math.floor(tileX)) gives the relative position *inside* the tile. */
-  asTilePosition: function( localXY, tileZoom) {
-    var worldX = localXY[0] + MAP.center.x;
-    var worldY = localXY[1] + MAP.center.y;
-    var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
-    
-    var tileX = worldX / worldSize * Math.pow(2,tileZoom);
-    var tileY = worldY / worldSize * Math.pow(2,tileZoom);
-    
-    return [ tileX, tileY];
-  },
-
   /* returns the quadrilateral part of the XY plane that is currently visible on
-   * screen. The quad is returned in OSM tile coordinates for tile zoom level 
-   * 'tileZoomLevel', and thus can directly be used to determine which basemap 
+   * screen. The quad is returned in tile coordinates for tile zoom level
+   * 'tileZoomLevel', and thus can directly be used to determine which basemap
    * and geometry tiles need to be loaded.
    * Note: if the horizon is level (as should usually be the case for 
    * OSMBuildings) then said quad is also a trapezoid. */
   getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
     //FIXME: determine a reasonable value (4000 was chosen rather arbitrarily)
     var MAX_EDGE_LENGTH = 4000; 
-  
-    function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
-    function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
-    function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
-    function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
-    function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
-    function dist3(a,b){ return len3(sub3(a,b));}
-    
+
     var inverse = glx.Matrix.invert(viewProjectionMatrix);
 
-    var vBottomLeft  = this.getIntersectionWithXYPlane(-1, -1, inverse);
-    var vBottomRight = this.getIntersectionWithXYPlane( 1, -1, inverse);
-    var vTopRight    = this.getIntersectionWithXYPlane( 1,  1, inverse);
-    var vTopLeft     = this.getIntersectionWithXYPlane(-1,  1, inverse);
+    var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
+    var vBottomRight = getIntersectionWithXYPlane( 1, -1, inverse);
+    var vTopRight    = getIntersectionWithXYPlane( 1,  1, inverse);
+    var vTopLeft     = getIntersectionWithXYPlane(-1,  1, inverse);
 
     /* If even the lower edge of the screen does not intersect with the map plane,
      * then the map plane is not visible at all.
@@ -3985,13 +4064,13 @@ var render = {
        * the vector between this point and 'vBottomLeft'. The value '-0.9' was 
        * chosen as it fits these criteria quite well, but no effort was made
        * to guarantee an *optimal* fit.  */
-      vLeftPoint = this.getIntersectionWithXYPlane(-1, -0.9, inverse);
+      vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
       vLeftDir = norm3(sub3( vLeftPoint, vBottomLeft));
       vTopLeft = add3( vBottomLeft, mul3scalar(vLeftDir, MAX_EDGE_LENGTH));
       
       /* arbitrary point on the right screen edge, subject to the same
        * requirements as 'vLeftPoint' */
-      vRightPoint = this.getIntersectionWithXYPlane( 1, -0.9, inverse);
+      vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
       vRightDir = norm3(sub3(vRightPoint, vBottomRight));
       vTopRight = add3(vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
     }
@@ -4011,105 +4090,12 @@ var render = {
     
     //return [ vBottomLeft, vBottomRight, vTopRight, vTopLeft];
     
-    return [this.asTilePosition( vBottomLeft,  tileZoomLevel),
-            this.asTilePosition( vBottomRight, tileZoomLevel),
-            this.asTilePosition( vTopRight,    tileZoomLevel),
-            this.asTilePosition( vTopLeft,     tileZoomLevel)];
+    return [asTilePosition(vBottomLeft,  tileZoomLevel),
+            asTilePosition(vBottomRight, tileZoomLevel),
+            asTilePosition(vTopRight,    tileZoomLevel),
+            asTilePosition(vTopLeft,     tileZoomLevel)];
   },
-  
-  /* Returns whether the point 'P' lies either inside the triangle (tA, tB, tC) 
-   * or on its edge.
-   *
-   * Implementation: we follow a barycentric development: The triangle
-   *                 is interpreted as the point tA and two vectors v1 = tB - tA
-   *                 and v2 = tC - tA. Then for any point P inside the triangle
-   *                 holds P = tA + α*v1 + β*v2 subject to α >= 0, β>= 0 and
-   *                 α + β <= 1.0
-  */
-  isPointInTriangle: function( tA, tB, tC, P) {
-    var v1x = tB[0] - tA[0];
-    var v1y = tB[1] - tA[1];
-    
-    var v2x = tC[0] - tA[0];
-    var v2y = tC[1] - tA[1];
-    
-    var qx  = P[0] - tA[0];
-    var qy  = P[1] - tA[1];
-    
-    /* 'denom' is zero iff v1 and v2 have the same direction. In that case,
-     * the triangle has degenerated to a line, and no point can lie inside it */
-    var denom = v2x * v1y - v2y * v1x;
-    if (denom === 0) 
-      return false;
-    
-    var numeratorBeta =  qx*v1y - qy*v1x;
-    var beta = numeratorBeta/denom;
 
-    var numeratorAlpha = qx*v2y - qy*v2x;
-    var alpha = - numeratorAlpha / denom;
-
-    return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;    
-  },
-  
-  
-  /* Returns the set of tiles (as dictionary keys) that overlap in any way with
-   * the quadrilateral 'quad'. The returned set may contain false-positives, 
-   * i.e. tiles that are slightly outside the viewing frustum.
-   *
-   * The basic approach is to determine the axis-aligned bounding box of the 
-   * quad, and for each tile in the bounding box determine whether its center
-   * lies inside the quad (or rather in one of the two triangles making up the
-   * quad) via a point-in-triangle test.
-   * This approach however misses some boundary cases:
-   * - for tiles on the edge of the screen, parts of the tile may be visible 
-   *   without its center being visible. Our test misses these cases. We 
-   *   compensate by adding not only the tile itself but also all horizontal, 
-   *   vertical and diagonal neighbors to the result set
-   * - if the quad is small compared to the tile size then no tile center may
-   *   be inside the quad (e.g. when the whole screen is covered by the lower
-   *   third of a single tile) and thus the result set would be empty. We 
-   *   compensate by adding the tiles of all four quad vertices to the result
-   *   set in any case.
-   * Note: while the set of tiles added through those edge cases may seem
-   *       excessive, it is actually rather small: It does add an one tile wide 
-   *       outline to the result set. But other than that, is only caused tiles
-   *       to be added multiple times, and those duplicates are removed
-   *       automatically since the result is a set.
-   *       
-   *
-   */
-  getTilesInQuad: function( quad ) {
-    //return {};
-    var minX =          (Math.min(quad[0][0], quad[1][0], quad[2][0], quad[3][0])) <<0;
-    var maxX = Math.ceil(Math.max(quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
-
-    var minY =          (Math.min(quad[0][1], quad[1][1], quad[2][1], quad[3][1])) <<0;
-    var maxY = Math.ceil(Math.max(quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
-    
-    var tiles = {};
-    tiles [ [quad[0][0]<<0, quad[0][1]<<0] ] = true;
-    tiles [ [quad[1][0]<<0, quad[1][1]<<0] ] = true;
-    tiles [ [quad[2][0]<<0, quad[2][1]<<0] ] = true;
-    tiles [ [quad[3][0]<<0, quad[3][1]<<0] ] = true;
-
-    for (var x = minX; x <= maxX; x++)
-      for (var y = minY; y <= maxY; y++) {
-        if (this.isPointInTriangle(quad[0], quad[1], quad[2], [x+0.5, y+0.5]) ||
-          this.isPointInTriangle(quad[0], quad[2], quad[3], [x+0.5, y+0.5])) {
-            tiles[[x-1,y-1]] = true;
-            tiles[[x  ,y-1]] = true;
-            tiles[[x+1,y-1]] = true;
-            tiles[[x-1,y  ]] = true;
-            tiles[[x  ,y  ]] = true;
-            tiles[[x+1,y  ]] = true;
-            tiles[[x-1,y+1]] = true;
-            tiles[[x  ,y+1]] = true;
-            tiles[[x+1,y+1]] = true;
-          }
-      }
-    return tiles;
-  },
-  
   start: function() {
     this.viewMatrix = new glx.Matrix();
     this.projMatrix = new glx.Matrix();
@@ -4360,9 +4346,12 @@ render.SkyDome = {
 
     Activity.setBusy();
     var url = APP.baseURL + '/skydome.jpg';
-    this.texture = new glx.texture.Image().color([1,0,0]).load(url, function(image) {
+    this.texture = new glx.texture.Image().load(url, function(image) {
       Activity.setIdle();
-    });
+      if (image) {
+        this.isReady = true;
+      }
+    }.bind(this));
   },
 
   baseRadius: 500,
@@ -4424,6 +4413,10 @@ render.SkyDome = {
   },
 
   render: function() {
+    if (!this.isReady) {
+      return;
+    }
+
     var
       fogColor = render.fogColor,
       shader = this.shader;
@@ -4515,6 +4508,7 @@ render.Buildings = {
       modelMatrix;
 
     for (var i = 0, il = dataItems.length; i < il; i++) {
+      // TODO: if an item is referenced via data tile, add a visibility check
       item = dataItems[i];
 
       if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
@@ -4596,7 +4590,7 @@ render.Basemap = {
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 
-      if (tile.key in layer.visibleTiles) {
+      if (!tile.isReady || !(tile.key in layer.visibleTiles) ) {
         continue;
       }
 
@@ -5227,7 +5221,7 @@ render.Blur = {
 var basemap = {};
 
 
-basemap.Tile = function(x, y, zoom, options) {
+basemap.Tile = function(x, y, zoom) {
   this.x = x;
   this.y = y;
   this.zoom = zoom;
@@ -5262,26 +5256,17 @@ basemap.Tile = function(x, y, zoom, options) {
 
   this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
-
-  //if (options && options.altImage) {
-//var canvas = document.createElement('CANVAS');
-//var size = 256;
-//canvas.width  = size;
-//canvas.height = size;
-//var context = canvas.getContext('2d');
-//context.fillStyle = '#00cc00';
-//context.fillRect(0, 0, size, size);
-////canvas.toDataURL();
-//this.altTexture = new glx.texture.Image().set(canvas);
-  //}
 };
 
 basemap.Tile.prototype = {
   load: function(url) {
     Activity.setBusy();
-    this.texture = new glx.texture.Image().color([0, 1, 1]).load(url, function(image) {
+    this.texture = new glx.texture.Image().load(url, function(image) {
       Activity.setIdle();
-    });
+      if (image) {
+        this.isReady = true;
+      }
+    }.bind(this));
   },
 
   destroy: function() {
