@@ -68,6 +68,7 @@ mesh.GeoJSON = (function() {
     this.data = {
       vertices: [],
       normals: [],
+      colors: [],
       ids: []
     };
 
@@ -158,11 +159,11 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.wallColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
+          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
-        // TODO: clean up vars
-        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
+        this.items.push({ id:id, vertexCount:vertexCount });
 
         vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.roofShape) {
@@ -179,36 +180,34 @@ mesh.GeoJSON = (function() {
 
         color = this.color || item.roofColor || defaultColor;
         for (j = 0; j < vertexCount; j++) {
+          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
-        // TODO: clean up vars
-        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
+        this.items.push({ id:id, vertexCount:vertexCount });
       }
     },
 
-    setColors: function() {
-      var item, colors = [];
+    setFilter: function() {
+      var item, filters = [];
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
-        //hidden = data.Index.checkCollisions(item);
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+          filters.push.apply(filters, item.filter || [0, 0, 1, 1]);
         }
       }
-      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
+      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
     },
 
     onReady: function() {
-      data.Index.applyFilters(this); // does not require the item to exist in data index
-
       this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-
       this.data = null;
 
       data.Index.add(this);
+      data.Index.applyFilters(this); // does not require the item to exist in data index
 
       this.isReady = true;
       Activity.setIdle();

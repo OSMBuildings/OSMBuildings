@@ -14,7 +14,7 @@ render.DepthMap = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.depth.vertex,
       fragmentShader: Shaders.depth.fragment,
-      attributes: ['aPosition', 'aColor'],
+      attributes: ['aPosition', 'aFilter'],
       uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius']
     });
 
@@ -85,8 +85,8 @@ render.DepthMap = {
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      item.colorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      item.filterBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

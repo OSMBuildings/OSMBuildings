@@ -3,7 +3,7 @@
 #endif
 
 attribute vec4 aPosition;
-attribute vec4 aColor;
+attribute vec4 aFilter;
 
 uniform mat4 uMatrix;
 uniform mat4 uModelMatrix;
@@ -12,7 +12,7 @@ varying vec3 vWorldPosition;
 
 void main() {
 
-  if (aColor.a == 0.0) {
+  if (aFilter.a == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vWorldPosition = vec3(0.0, 0.0, 0.0);
   } else {

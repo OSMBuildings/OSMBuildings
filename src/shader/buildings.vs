@@ -6,7 +6,8 @@
 
 attribute vec4 aPosition;
 attribute vec3 aNormal;
-attribute vec4 aColor;
+attribute vec3 aColor;
+attribute vec4 aFilter;
 attribute vec3 aID;
 
 uniform mat4 uModelMatrix;
@@ -40,7 +41,7 @@ uniform float uBendDistance;
 
 void main() {
 
-  if (aColor.a == 0.0) {
+  if (aFilter.a == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vColor = vec3(0.0, 0.0, 0.0);
   } else {
@@ -66,9 +67,9 @@ void main() {
 
     //*** highlight object ******************************************************
 
-    vec3 color = aColor.rgb;
+    vec3 color = aColor;
     if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {
-      color = mix(aColor.rgb, uHighlightColor, 0.5);
+      color = mix(aColor, uHighlightColor, 0.5);
     }
 
     //*** light intensity, defined by light direction on surface ****************

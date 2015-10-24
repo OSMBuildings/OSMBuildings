@@ -12,7 +12,9 @@ var data = {
 
     filters: [],
 
-    addFilter: function(type, selector) {
+    addFilter: function(type, selector, duration) {
+      duration = duration || 0;
+
       var filters = this.filters;
       for (i = 0, il = filters.length; i < il; i++) {
         if (filters[i].type === type && filters[i].selector === selector) {
@@ -20,7 +22,7 @@ var data = {
         }
       }
 
-      filters.push({ type:type, selector:selector });
+      filters.push({ type:type, selector:selector, duration:duration });
 
       // applies a single filter to all items
       // currently only suitable for 'hidden'
@@ -28,25 +30,30 @@ var data = {
       var item;
       var j, jl;
 
+      var start = Date.now();
+      var end = start+duration;
+
       for (var i = 0, il = this.items.length; i<il; i++) {
         indexItem = this.items[i];
 
-        if (!indexItem.setColors) {
+        if (!indexItem.setFilter) {
           return;
         }
 
         for (j = 0, jl = indexItem.items.length; j < jl; j++) {
           item = indexItem.items[j];
           if (selector(item.id, item.data)) {
-            item.color[3] = 0;
+            item.filter = [start, end, 1, 0];
           }
         }
 
-        indexItem.setColors();
+        indexItem.setFilter();
       }
     },
 
-    removeFilter: function(type, selector) {
+    removeFilter: function(type, selector, duration) {
+      duration = duration || 0;
+
       var i, il;
 
       var filters = this.filters;
@@ -63,21 +70,24 @@ var data = {
       var item;
       var j, jl;
 
+      var start = Date.now();
+      var end = start+duration;
+
       for (i = 0, il = this.items.length; i<il; i++) {
         indexItem = this.items[i];
 
-        if (!indexItem.setColors) {
+        if (!indexItem.setFilter) {
           return;
         }
 
         for (j = 0, jl = indexItem.items.length; j < jl; j++) {
           item = indexItem.items[j];
           if (selector(item.id, item.data)) {
-            item.color[3] = 1;
+            item.filter = [start, end, 0, 1];
           }
         }
 
-        indexItem.setColors();
+        indexItem.setFilter();
       }
     },
 
@@ -85,27 +95,31 @@ var data = {
     // currently only suitable for 'hidden'
     applyFilters: function(indexItem) {
       var filters = this.filters;
-      var selector, type;
+      var type, selector;
       var item;
       var j, jl;
 
-      if (!indexItem.setColors) {
+      if (!indexItem.setFilter) {
         return;
       }
+
+      var start = Date.now();
+      var end;
 
       for (var i = 0, il = filters.length; i < il; i++) {
         type = filters[i].type;
         selector = filters[i].selector;
+        end = start+filters[i].duration;
 
         for (j = 0, jl = indexItem.items.length; j < jl; j++) {
           item = indexItem.items[j];
           if (selector(item.id, item.data)) {
-            item.color[3] = 0;
+            item.filter = [start, end, 1, 0];
           }
         }
       }
 
-      indexItem.setColors();
+      indexItem.setFilter();
     },
 
     add: function(item) {

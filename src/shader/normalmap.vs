@@ -4,7 +4,7 @@
 
 attribute vec4 aPosition;
 attribute vec3 aNormal;
-attribute vec4 aColor;
+attribute vec4 aFilter;
 
 uniform mat4 uMatrix;
 
@@ -12,7 +12,7 @@ varying vec3 vNormal;
 
 void main() {
 
-  if (aColor.a == 0.0) {
+  if (aFilter.a == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vNormal = vec3(0.0, 0.0, 0.0);
   } else {
