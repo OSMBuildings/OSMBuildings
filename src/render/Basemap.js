@@ -39,7 +39,8 @@ render.Basemap = {
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 
-      if (!tile.isReady || !(tile.key in layer.visibleTiles) ) {
+      // no visibility check needed, Grid.purge() is taking care
+      if (!tile.isReady) {
         continue;
       }
 

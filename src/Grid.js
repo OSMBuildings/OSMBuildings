@@ -170,11 +170,8 @@ Grid.prototype = {
   },
 
   purge: function() {
-    var tile;
     for (var key in this.tiles) {
-      tile = key.split(',');
       if (!this.visibleTiles[key]) {
-        //console.log("purging '%s %s'", this.source, key);
         this.tiles[key].destroy();
         delete this.tiles[key];
       }
