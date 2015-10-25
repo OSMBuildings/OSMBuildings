@@ -19,6 +19,8 @@
     "src/Triangulate.js",
 
     "src/Grid.js",
+    "src/Filter.js",
+
 
     "src/data/index.js",
     "src/data/Tile.js",

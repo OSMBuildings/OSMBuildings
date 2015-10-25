@@ -8,6 +8,8 @@ attribute vec4 aFilter;
 uniform mat4 uMatrix;
 uniform mat4 uModelMatrix;
 
+uniform float uTime;
+
 varying vec3 vWorldPosition;
 
 void main() {

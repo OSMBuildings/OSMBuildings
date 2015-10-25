@@ -120,12 +120,12 @@ OSMBuildings.prototype = {
   },
 
   show: function(selector, duration) {
-    data.Index.removeFilter('hidden', selector, duration);
+    Filter.remove('hidden', selector, duration);
     return this;
   },
 
   hide: function(selector, duration) {
-    data.Index.addFilter('hidden', selector, duration);
+    Filter.add('hidden', selector, duration);
     return this;
   },
 

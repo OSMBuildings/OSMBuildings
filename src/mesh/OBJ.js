@@ -79,7 +79,7 @@ mesh.OBJ = (function() {
       }
     },
 
-    setFilter: function() {
+    applyFilter: function() {
       var item, filters = [];
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
@@ -98,8 +98,8 @@ mesh.OBJ = (function() {
 
       this.data = null;
 
+      Filter.apply(this);
       data.Index.add(this);
-      data.Index.applyFilters(this); // does not require the item to exist in data index
 
       this.isReady = true;
       Activity.setIdle();

@@ -132,8 +132,6 @@ var render = {
           return;
         }
 
-        this.time = Date.now();
-
         //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
         //console.log( this.getTilesInQuad( viewTrapezoid) );
         //var s = "";

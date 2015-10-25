@@ -15,6 +15,8 @@ uniform mat4 uMatrix;
 
 uniform float uFogRadius;
 
+uniform float uTime;
+
 varying vec4 vColor;
 
 uniform float uBendRadius;

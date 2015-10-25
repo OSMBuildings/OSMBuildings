@@ -8,6 +8,8 @@ attribute vec4 aFilter;
 
 uniform mat4 uMatrix;
 
+uniform float uTime;
+
 varying vec3 vNormal;
 
 void main() {
