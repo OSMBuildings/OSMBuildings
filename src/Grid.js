@@ -178,6 +178,7 @@ Grid.prototype = {
         // else if higher zoom: quad down: re-check
 
         //console.log("purging '%s %s'", this.source, key);
+
         this.tiles[key].destroy();
         delete this.tiles[key];
       }

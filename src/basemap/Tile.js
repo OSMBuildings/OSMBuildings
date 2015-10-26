@@ -7,7 +7,7 @@ basemap.Tile = function(x, y, zoom) {
 
   var numSegments = 4;
 
-  var meshStep = 255/numSegments;
+  var meshStep = 256/numSegments;
   var textureStep = 1/numSegments;
 
   var vertices = [];
@@ -43,6 +43,12 @@ basemap.Tile.prototype = {
       Activity.setIdle();
       if (image) {
         this.isReady = true;
+        /* The whole texture will be mapped to fit the whole tile exactly. So
+         * don't attempt to wrap around the texture coordinates. */
+        gl.bindTexture(gl.TEXTURE_2D, this.texture.id);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
       }
     }.bind(this));
   },

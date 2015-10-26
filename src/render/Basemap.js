@@ -24,6 +24,7 @@ render.Basemap = {
     var
       shader = this.shader,
       tile, modelMatrix,
+      ratio,
       mapCenter = MAP.center;
 
     shader.enable();
@@ -43,10 +44,10 @@ render.Basemap = {
         continue;
       }
 
-      ratio = 1 / Math.pow(2, tile.zoom - MAP.zoom),
+      ratio = 1 / Math.pow(2, tile.zoom - MAP.zoom);
 
       modelMatrix = new glx.Matrix();
-      modelMatrix.scale(ratio * 1.005, ratio * 1.005, 1);
+      modelMatrix.scale(ratio, ratio, 1);
       modelMatrix.translate(tile.x * TILE_SIZE * ratio - mapCenter.x, tile.y * TILE_SIZE * ratio - mapCenter.y, 0);
 
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
