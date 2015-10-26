@@ -25,6 +25,8 @@ uniform float uFogRadius;
 uniform vec3 uHighlightColor;
 uniform vec3 uHighlightID;
 
+uniform float uTime;
+
 varying vec3 vColor;
 
 float fogBlur = 200.0;
@@ -32,19 +34,21 @@ float fogBlur = 200.0;
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 
-// helsinki has small buildings :-)
-//float gradientHeight = 30.0;
-//float gradientStrength = 0.3;
-
 uniform float uBendRadius;
 uniform float uBendDistance;
 
 void main() {
 
-  if (aFilter.a == 0.0) {
+  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
+  //float f = aFilter.b + (aFilter.a-aFilter.b) * t;
+  float f = t;
+
+  if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vColor = vec3(0.0, 0.0, 0.0);
   } else {
+
+    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
 
     //*** bending ***************************************************************
 
@@ -63,7 +67,7 @@ void main() {
   //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
   //  gl_Position = uProjMatrix * newPosition;
 
-    gl_Position = uMatrix * aPosition;
+    gl_Position = uMatrix * pos;
 
     //*** highlight object ******************************************************
 
@@ -80,11 +84,11 @@ void main() {
 
     //*** vertical shading ******************************************************
 
-    float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);
+    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);
 
     //*** fog *******************************************************************
 
-    vec4 mPosition = uModelMatrix * aPosition;
+    vec4 mPosition = uModelMatrix * pos;
     float distance = length(mPosition);
     float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
     fogIntensity = clamp(fogIntensity, 0.0, 1.0);
