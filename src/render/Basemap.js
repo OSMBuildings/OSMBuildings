@@ -45,7 +45,7 @@ render.Basemap = {
       }
 
       modelMatrix = new glx.Matrix();
-      modelMatrix.scale(ratio * 1.005, ratio * 1.005, 1);
+      modelMatrix.scale(ratio, ratio, 1);
       modelMatrix.translate(tile.x * TILE_SIZE * ratio - mapCenter.x, tile.y * TILE_SIZE * ratio - mapCenter.y, 0);
 
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
