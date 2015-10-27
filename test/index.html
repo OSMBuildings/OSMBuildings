@@ -114,12 +114,12 @@
     return id % 2 === 0;
   };
 
-  function showX() {
-    osmb.show(selector, 2000);
+  function showX(duration) {
+    osmb.show(selector, duration || 1000);
   }
 
-  function hideX() {
-    osmb.hide(selector, 4000);
+  function hideX(duration) {
+    osmb.hide(selector, duration || 1000);
   }
 
   osmb.addMapTiles(

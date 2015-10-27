@@ -14,11 +14,15 @@ varying vec3 vNormal;
 
 void main() {
 
-  if (aFilter.a == 0.0) {
+  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
+  float te = t*(2.0-t); // quadratic ease out
+  float f = aFilter.b + (aFilter.a-aFilter.b) * te;
+
+  if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vNormal = vec3(0.0, 0.0, 0.0);
   } else {
-    gl_Position = uMatrix * aPosition;
+    gl_Position = uMatrix * vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
     vNormal = aNormal;
   }
 }

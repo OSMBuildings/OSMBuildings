@@ -24,10 +24,15 @@ uniform float uBendDistance;
 
 void main() {
 
-  if (aFilter.a == 0.0) {
+  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
+  float te = t*(2.0-t); // quadratic ease out
+  float f = aFilter.b + (aFilter.a-aFilter.b) * te;
+
+  if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vColor = vec4(0.0, 0.0, 0.0, 0.0);
   } else {
+    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
 
     //*** bending ***************************************************************
 
@@ -46,9 +51,9 @@ void main() {
   //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
   //  gl_Position = uProjMatrix * newPosition;
 
-    gl_Position = uMatrix * aPosition;
+    gl_Position = uMatrix * pos;
 
-    vec4 mPosition = vec4(uModelMatrix * aPosition);
+    vec4 mPosition = vec4(uModelMatrix * pos);
     float distance = length(mPosition);
 
     if (distance > uFogRadius) {

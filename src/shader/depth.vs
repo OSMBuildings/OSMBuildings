@@ -14,11 +14,17 @@ varying vec3 vWorldPosition;
 
 void main() {
 
-  if (aFilter.a == 0.0) {
+  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
+  float te = t*(2.0-t); // quadratic ease out
+  float f = aFilter.b + (aFilter.a-aFilter.b) * te;
+
+  if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vWorldPosition = vec3(0.0, 0.0, 0.0);
   } else {
-    gl_Position = uMatrix * aPosition;
+    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
+
+    gl_Position = uMatrix * pos;
 
     /* in order for the SSAO (which is based on this depth shader) to work
      * correctly in conjunction with the fog shading, we need to replicate
@@ -39,7 +45,7 @@ void main() {
      * - correctly - get interpolated by the rasterizing stage, and then
      * compute the correct fog intensities per pixel in the fragment shader */
 
-    vec4 worldPos = uModelMatrix * aPosition;
+    vec4 worldPos = uModelMatrix * pos;
     vWorldPosition = worldPos.xyz / worldPos.w;
   }
 }

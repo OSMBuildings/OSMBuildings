@@ -79,12 +79,25 @@ mesh.OBJ = (function() {
       }
     },
 
+    initFilter: function() {
+      var item, filters = [];
+      var start = Filter.time(), end = start + 500;
+      for (var i = 0, il = this.items.length; i < il; i++) {
+        item = this.items[i];
+        item.filter = [start, end, 0, 1];
+        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+          filters.push.apply(filters, item.filter);
+        }
+      }
+      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+    },
+
     applyFilter: function() {
       var item, filters = [];
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-          filters.push.apply(filters, item.filter || [0, 0, 1, 1]);
+          filters.push.apply(filters, item.filter);
         }
       }
       this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
@@ -95,7 +108,7 @@ mesh.OBJ = (function() {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-
+      this.initFilter();
       this.data = null;
 
       Filter.apply(this);

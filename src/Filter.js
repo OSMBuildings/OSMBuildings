@@ -24,17 +24,17 @@ var Filter = {
     var start = this.time();
     var end = start+duration;
 
-    for (var i = 0, il = this.items.length; i<il; i++) {
-      indexItem = this.items[i];
+    for (var i = 0, il = data.Index.items.length; i<il; i++) {
+      indexItem = data.Index.items[i];
 
       if (!indexItem.applyFilter) {
-        return;
+        continue;
       }
 
       for (j = 0, jl = indexItem.items.length; j < jl; j++) {
         item = indexItem.items[j];
         if (selector(item.id, item.data)) {
-          item.filter = [start, end, 1, 0];
+          item.filter = [start, end, item.filter ? item.filter[3] : 1, 0];
         }
       }
 
@@ -64,17 +64,17 @@ var Filter = {
     var start = this.time();
     var end = start+duration;
 
-    for (i = 0, il = this.items.length; i<il; i++) {
-      indexItem = this.items[i];
+    for (i = 0, il = data.Index.items.length; i<il; i++) {
+      indexItem = data.Index.items[i];
 
       if (!indexItem.applyFilter) {
-        return;
+        continue;
       }
 
       for (j = 0, jl = indexItem.items.length; j < jl; j++) {
         item = indexItem.items[j];
         if (selector(item.id, item.data)) {
-          item.filter = [start, end, 0, 1];
+          item.filter = [start, end, item.filter ? item.filter[3] : 0, 1];
         }
       }
 
@@ -94,18 +94,14 @@ var Filter = {
       return;
     }
 
-    var start = this.time();
-    var end;
-
     for (var i = 0, il = filters.length; i < il; i++) {
       type = filters[i].type;
       selector = filters[i].selector;
-      end = start+filters[i].duration;
 
       for (j = 0, jl = indexItem.items.length; j < jl; j++) {
         item = indexItem.items[j];
         if (selector(item.id, item.data)) {
-          item.filter = [start, end, 1, 0];
+          item.filter = [0, 0, 0, 0];
         }
       }
     }
