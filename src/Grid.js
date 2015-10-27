@@ -148,7 +148,8 @@ Grid.prototype = {
         continue;
       }
 
-      this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions);
+      tile = this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
+
       // TODO: rotate anchor point
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
@@ -170,11 +171,45 @@ Grid.prototype = {
   },
 
   purge: function() {
+    var
+      zoom = Math.round(MAP.zoom),
+      tile, parent, children;
+
     for (var key in this.tiles) {
-      if (!this.visibleTiles[key]) {
+      tile = this.tiles[key];
+      // tile is visible: keep
+      if (this.visibleTiles[key]) {
+        continue;
+      }
+
+      // tile is not visible and due to fixedZoom there are no alternate zoom levels: drop
+      if (this.fixedZoom) {
         this.tiles[key].destroy();
         delete this.tiles[key];
+        continue;
       }
+
+      // tile's parent would be visible: keep
+      if (tile.zoom === zoom+1) {
+        parent = [tile.x/2<<0, tile.y/2<<0, zoom].join(',');
+        if (this.visibleTiles[parent]) {
+          continue;
+        }
+      }
+
+      // any of tile's children would be visible: keep
+      if (tile.zoom === zoom-1) {
+        if (this.visibleTiles[[tile.x*2, tile.y*2, zoom].join(',')] ||
+          this.visibleTiles[[tile.x*2 + 1, tile.y*2, zoom].join(',')] ||
+          this.visibleTiles[[tile.x*2, tile.y*2 + 1, zoom].join(',')] ||
+          this.visibleTiles[[tile.x*2 + 1, tile.y*2 + 1, zoom].join(',')]) {
+          continue;
+        }
+      }
+
+      // drop anything else
+      delete this.tiles[key];
+      continue;
     }
   },
 

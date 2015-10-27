@@ -24,9 +24,7 @@ render.Basemap = {
     var
       shader = this.shader,
       tile, modelMatrix,
-      tileZoom = Math.round(MAP.zoom),
-      ratio = 1 / Math.pow(2, tileZoom - MAP.zoom),
-      mapCenter = MAP.center;
+      zoom = Math.round(MAP.zoom);
 
     shader.enable();
 
@@ -36,37 +34,62 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    for (var key in layer.tiles) {
+    for (var key in layer.visibleTiles) {
       tile = layer.tiles[key];
 
-      // no visibility check needed, Grid.purge() is taking care
-      if (!tile.isReady) {
+      if (tile && tile.isReady) {
+        this.renderTile(tile, shader);
         continue;
       }
 
-      modelMatrix = new glx.Matrix();
-      modelMatrix.scale(ratio, ratio, 1);
-      modelMatrix.translate(tile.x * TILE_SIZE * ratio - mapCenter.x, tile.y * TILE_SIZE * ratio - mapCenter.y, 0);
+      var parent = [tile.x/2<<0, tile.y/2<<0, zoom-1].join(',');
+      if (layer.tiles[parent] && layer.tiles[parent].isReady) {
+        // TODO: there will be overlap with adjacent tiles or parents of adjacent tiles!
+        this.renderTile(layer.tiles[ parent ], shader);
+        continue;
+      }
 
-      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+      var children = [
+        [tile.x*2,   tile.y*2,   tile.zoom+1].join(','),
+        [tile.x*2+1, tile.y*2,   tile.zoom+1].join(','),
+        [tile.x*2,   tile.y*2+1, tile.zoom+1].join(','),
+        [tile.x*2+1, tile.y*2+1, tile.zoom+1].join(',')
+      ];
 
-      tile.vertexBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      tile.texCoordBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      gl.uniform1i(shader.uniforms.uTexIndex, 0);
-
-      tile.texture.enable(0);
-
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+      for (var i = 0; i < 4; i++) {
+        if (layer.tiles[ children[i] ] && layer.tiles[ children[i] ].isReady) {
+          this.renderTile(layer.tiles[ children[i] ], shader);
+        }
+      }
     }
 
     shader.disable();
+  },
+
+  renderTile: function(tile, shader) {
+    var mapCenter = MAP.center;
+    var ratio = 1/Math.pow(2, tile.zoom - MAP.zoom);
+
+    var modelMatrix = new glx.Matrix();
+    modelMatrix.scale(ratio, ratio, 1);
+    modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
+
+    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix, false, render.viewMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix, false, render.projMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+
+    tile.vertexBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    tile.texCoordBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    gl.uniform1i(shader.uniforms.uTexIndex, 0);
+
+    tile.texture.enable(0);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
   },
 
   destroy: function() {}
