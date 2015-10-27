@@ -4591,7 +4591,7 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    // reminder: tiles can be of various zoom levels
+    // note: tiles can be of various zoom levels
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 

@@ -35,13 +35,30 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    // reminder: tiles can be of various zoom levels
+    // note: tiles can be of various zoom levels
     for (var key in layer.tiles) {
       tile = layer.tiles[key];
 
-      // no visibility check needed, Grid.purge() is taking care
       if (!tile.isReady) {
         continue;
+      }
+
+      if (tile.zoom < Math.round(MAP.zoom)) {
+        // are there all 4 (zoom) matching children? then skip this
+        if (layer.tiles[ [tile.x*2,   tile.y*2,   tile.zoom+1].join(',') ] && layer.tiles[ [tile.x*2,   tile.y*2,   tile.zoom+1].join(',') ].isReady
+        &&  layer.tiles[ [tile.x*2+1, tile.y*2,   tile.zoom+1].join(',') ] && layer.tiles[ [tile.x*2+1, tile.y*2,   tile.zoom+1].join(',') ].isReady
+        &&  layer.tiles[ [tile.x*2,   tile.y*2+1, tile.zoom+1].join(',') ] && layer.tiles[ [tile.x*2,   tile.y*2+1, tile.zoom+1].join(',') ].isReady
+        &&  layer.tiles[ [tile.x*2+1, tile.y*2+1, tile.zoom+1].join(',') ] && layer.tiles[ [tile.x*2+1, tile.y*2+1, tile.zoom+1].join(',') ].isReady
+        ) {
+          continue;
+        }
+      }
+
+      if (tile.zoom > Math.round(MAP.zoom)) {
+        // is there a (zoom) matching parent? then skip this
+        if (layer.tiles[ [tile.x/2<<0, tile.y/2<<0, tile.zoom-1].join(',') ] && layer.tiles[ [tile.x/2<<0, tile.y/2<<0, tile.zoom-1].join(',')].isReady) {
+          continue;
+        }
       }
 
       ratio = 1 / Math.pow(2, tile.zoom - MAP.zoom);

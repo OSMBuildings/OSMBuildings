@@ -134,7 +134,8 @@ Grid.prototype = {
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
         MAP.center.y/TILE_SIZE <<0
-      ];
+      ],
+      tile, parent, child;
       
     var viewQuad = render.getViewQuad(render.viewProjMatrix.data, zoom);
     this.visibleTiles = this.getTilesInQuad(viewQuad, zoom);
@@ -148,7 +149,31 @@ Grid.prototype = {
         continue;
       }
 
-      this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions);
+      tile = this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
+
+
+      if (!this.fixedZoom) {
+        parent = [tileX/2<<0, tileY/2<<0, zoom-1].join(',');
+        if (this.tiles[parent]) {
+          this.tiles[parent].children[key] = 1;
+          tile.parent = parent;
+        }
+
+        tile.children = {};
+
+        tile.children[ [tileX*2,   tileY*2,   zoom+1].join(',') ] = 0;
+        tile.children[ [tileX*2+1, tileY*2,   zoom+1].join(',') ] = 0;
+        tile.children[ [tileX*2,   tileY*2+1, zoom+1].join(',') ] = 0;
+        tile.children[ [tileX*2+1, tileY*2+1, zoom+1].join(',') ] = 0;
+
+        for (child in tile.children) {
+          if (this.tiles[child]) {
+            tile.children[child] = 1;
+            this.tiles[child].parent = key;
+          }
+        }
+      }
+
       // TODO: rotate anchor point
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
@@ -166,21 +191,42 @@ Grid.prototype = {
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
 
-    // this.purge();
+    this.purge();
   },
 
   purge: function() {
+    var zoom = Math.round(MAP.zoom);
+    // make sure adjacent zoom levels are not purged aggressively
     for (var key in this.tiles) {
       if (!this.visibleTiles[key]) {
-        // no match:
-        // if same zoom: destroy
-        // else if lower zoom: quad up: re-check
-        // else if higher zoom: quad down: re-check
 
-        //console.log("purging '%s %s'", this.source, key);
+        // fixed tile zoom: doesn't generate parents/children
+        if (this.fixedZoom) {
+          this.tiles[key].destroy();
+          delete this.tiles[key];
+          continue;
+        }
 
-        this.tiles[key].destroy();
-        delete this.tiles[key];
+        // from same zoom level:
+        // also remove children/parent from other levels
+        // TODO: can perhaps be moved to Tile.destroy()
+        if (this.tiles[key].zoom === zoom) {
+          if (this.tiles[ this.tiles[key].parent ]) {
+            this.tiles[ this.tiles[key].parent ].destroy();
+          }
+
+          for (var child in this.tiles[key].children) {
+            if (this.tiles[child]) {
+              this.tiles[child].destroy();
+            }
+          }
+
+          this.tiles[key].destroy();
+          delete this.tiles[key];
+        }
+
+        // from other zoom level:
+        // don't remove. will be cleaned by condition above
       }
     }
   },
