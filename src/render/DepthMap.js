@@ -15,7 +15,7 @@ render.DepthMap = {
       vertexShader: Shaders.depth.vertex,
       fragmentShader: Shaders.depth.fragment,
       attributes: ['aPosition', 'aColor'],
-      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius']
+      uniforms: ['uMatrix', 'uModelMatrix', 'uFogDistance', 'uFogBlurDistance']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -80,7 +80,8 @@ render.DepthMap = {
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+      gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
+      gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
       
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

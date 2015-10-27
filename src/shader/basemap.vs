@@ -12,12 +12,7 @@ uniform mat4 uViewMatrix;
 uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
 
-uniform float uFogRadius;
-
 varying vec2 vTexCoord;
-varying float vFogIntensity;
-
-float fogBlur = 200.0;
 
 uniform float uBendRadius;
 uniform float uBendDistance;
@@ -41,19 +36,6 @@ void main() {
 //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
 //  vec4 glPosition = uProjMatrix * newPosition;
 
-  vec4 glPosition = uMatrix * aPosition;
-
-  gl_Position = glPosition;
-
+  gl_Position = uMatrix * aPosition;
   vTexCoord = aTexCoord;
-
-  //*** fog *******************************************************************
-
-  vec4 mPosition = uModelMatrix * aPosition;
-  float distance = length(mPosition);
-  // => (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));
-  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
-
-  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);
-  //vFogIntensity = 0.0;
 }

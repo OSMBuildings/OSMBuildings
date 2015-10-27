@@ -6,7 +6,7 @@ render.Basemap = {
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance']
+      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uFogColor', 'uBendRadius', 'uBendDistance']
     });
   },
 
@@ -28,7 +28,8 @@ render.Basemap = {
 
     shader.enable();
 
-    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
+    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
     gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);

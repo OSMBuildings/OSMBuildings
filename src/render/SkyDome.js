@@ -23,7 +23,7 @@ render.SkyDome = {
     }.bind(this));
   },
 
-  baseRadius: 500,
+  baseRadius: 3000,
 
   createGeometry: function(radius) {
     var
@@ -98,7 +98,7 @@ render.SkyDome = {
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
     var modelMatrix = new glx.Matrix();
-    var scale = render.fogRadius/this.baseRadius;
+    var scale = Math.pow(2, MAP.zoom - 16);
     modelMatrix.scale(scale, scale, scale);
 
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);

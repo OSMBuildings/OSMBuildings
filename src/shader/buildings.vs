@@ -19,14 +19,14 @@ uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 
 uniform vec3 uFogColor;
-uniform float uFogRadius;
+uniform float uFogDistance;
+uniform float uFogBlurDistance;
 
 uniform vec3 uHighlightColor;
 uniform vec3 uHighlightID;
 
 varying vec3 vColor;
 
-float fogBlur = 200.0;
 
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
@@ -83,9 +83,8 @@ void main() {
 
     //*** fog *******************************************************************
 
-    vec4 mPosition = uModelMatrix * aPosition;
-    float distance = length(mPosition);
-    float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out
+    float dist = gl_Position.z;
+    float fogIntensity = (dist - uFogDistance) / uFogBlurDistance;
     fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
     //***************************************************************************

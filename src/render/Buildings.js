@@ -6,7 +6,7 @@ render.Buildings = {
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
       attributes: ['aPosition', 'aColor', 'aNormal', 'aID'],
-      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uNormalTransform', 'uAlpha', 'uLightColor', 'uLightDirection', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uHighlightColor', 'uHighlightID']
+      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uNormalTransform', 'uAlpha', 'uLightColor', 'uLightDirection', 'uFogDistance', 'uFogBlurDistance', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uHighlightColor', 'uHighlightID']
     });
   },
 
@@ -30,7 +30,8 @@ render.Buildings = {
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
+    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
     gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);

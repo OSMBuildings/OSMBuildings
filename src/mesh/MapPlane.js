@@ -21,7 +21,7 @@ mesh.MapPlane = (function() {
       this.color = new Color(options.color).toArray(true);
     }*/
 
-    this.radius = options.radius || 1500;
+    this.radius = options.radius || 3000;
     this.createGlGeometry();
 
     this.minZoom = APP.minZoom;
@@ -66,7 +66,8 @@ mesh.MapPlane = (function() {
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      var scale = render.fogRadius/this.radius;
+      var scale = Math.pow(2, MAP.zoom - 16);
+
       var modelMatrix = new glx.Matrix();
       modelMatrix.scale(scale, scale, scale);
     

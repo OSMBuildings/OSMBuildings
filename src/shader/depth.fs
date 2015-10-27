@@ -3,8 +3,8 @@
   precision mediump float;
 #endif
 
-uniform float uFogRadius;
-const float fogBlur = 200.0;
+uniform float uFogDistance;
+uniform float uFogBlurDistance;
 
 varying vec3 vWorldPosition;
 
@@ -26,8 +26,8 @@ varying vec3 vWorldPosition;
  */
 
 void main() {
-  // 5000.0 is an empirically-determined factor specific to OSMBuildings
-  float depth = (gl_FragCoord.z / gl_FragCoord.w)/5000.0;
+  // 7500.0 is an empirically-determined factor specific to OSMBuildings
+  float depth = (gl_FragCoord.z / gl_FragCoord.w)/7500.0;
   if (depth > 1.0)
     depth = 1.0;
     
@@ -37,8 +37,8 @@ void main() {
   depth = (depth - z) * 256.0;
   float z2 = floor(depth*256.0)/256.0;
 
-  float dist = length(vWorldPosition);
-  float fogIntensity = (dist - uFogRadius) / fogBlur + 1.1;
+  float dist = gl_FragCoord.z / gl_FragCoord.w;
+  float fogIntensity = (dist - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
   // option 1: this line outputs high-precision (24bit) depth values
