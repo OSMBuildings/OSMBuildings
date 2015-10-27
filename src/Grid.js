@@ -134,8 +134,7 @@ Grid.prototype = {
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
         MAP.center.y/TILE_SIZE <<0
-      ],
-      tile, parent, child;
+      ];
       
     var viewQuad = render.getViewQuad(render.viewProjMatrix.data, zoom);
     this.visibleTiles = this.getTilesInQuad(viewQuad, zoom);
@@ -150,29 +149,6 @@ Grid.prototype = {
       }
 
       tile = this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
-
-
-      if (!this.fixedZoom) {
-        parent = [tileX/2<<0, tileY/2<<0, zoom-1].join(',');
-        if (this.tiles[parent]) {
-          this.tiles[parent].children[key] = 1;
-          tile.parent = parent;
-        }
-
-        tile.children = {};
-
-        tile.children[ [tileX*2,   tileY*2,   zoom+1].join(',') ] = 0;
-        tile.children[ [tileX*2+1, tileY*2,   zoom+1].join(',') ] = 0;
-        tile.children[ [tileX*2,   tileY*2+1, zoom+1].join(',') ] = 0;
-        tile.children[ [tileX*2+1, tileY*2+1, zoom+1].join(',') ] = 0;
-
-        for (child in tile.children) {
-          if (this.tiles[child]) {
-            tile.children[child] = 1;
-            this.tiles[child].parent = key;
-          }
-        }
-      }
 
       // TODO: rotate anchor point
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
@@ -195,39 +171,45 @@ Grid.prototype = {
   },
 
   purge: function() {
-    var zoom = Math.round(MAP.zoom);
-    // make sure adjacent zoom levels are not purged aggressively
-    for (var key in this.tiles) {
-      if (!this.visibleTiles[key]) {
+    var
+      zoom = Math.round(MAP.zoom),
+      tile, parent, children;
 
-        // fixed tile zoom: doesn't generate parents/children
-        if (this.fixedZoom) {
-          this.tiles[key].destroy();
-          delete this.tiles[key];
+    for (var key in this.tiles) {
+      tile = this.tiles[key];
+      // tile is visible: keep
+      if (this.visibleTiles[key]) {
+        continue;
+      }
+
+      // tile is not visible and due to fixedZoom there are no alternate zoom levels: drop
+      if (this.fixedZoom) {
+        this.tiles[key].destroy();
+        delete this.tiles[key];
+        continue;
+      }
+
+      // tile's parent would be visible: keep
+      if (tile.zoom === zoom+1) {
+        parent = [tile.x/2<<0, tile.y/2<<0, zoom].join(',');
+        if (this.visibleTiles[parent]) {
           continue;
         }
-
-        // from same zoom level:
-        // also remove children/parent from other levels
-        // TODO: can perhaps be moved to Tile.destroy()
-        if (this.tiles[key].zoom === zoom) {
-          if (this.tiles[ this.tiles[key].parent ]) {
-            this.tiles[ this.tiles[key].parent ].destroy();
-          }
-
-          for (var child in this.tiles[key].children) {
-            if (this.tiles[child]) {
-              this.tiles[child].destroy();
-            }
-          }
-
-          this.tiles[key].destroy();
-          delete this.tiles[key];
-        }
-
-        // from other zoom level:
-        // don't remove. will be cleaned by condition above
       }
+
+      // any of tile's children would be visible: keep
+      if (tile.zoom === zoom-1) {
+        if (this.visibleTiles[[tile.x*2, tile.y*2, zoom].join(',')] ||
+          this.visibleTiles[[tile.x*2 + 1, tile.y*2, zoom].join(',')] ||
+          this.visibleTiles[[tile.x*2, tile.y*2 + 1, zoom].join(',')] ||
+          this.visibleTiles[[tile.x*2 + 1, tile.y*2 + 1, zoom].join(',')]) {
+          continue;
+        }
+      }
+
+      // drop anything else
+      delete this.tiles[key];
+      continue;
     }
   },
 
