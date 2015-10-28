@@ -4823,9 +4823,7 @@ render.HudRect = {
     shader.disable();
   },
 
-  destroy: function() {
-    this.texture.destroy();
-  }
+  destroy: function() {}
 };
 
 
@@ -5234,9 +5232,7 @@ render.Overlay = {
     shader.disable();
   },
 
-  destroy: function() {
-    this.texture.destroy();
-  }
+  destroy: function() {}
 };
 
 

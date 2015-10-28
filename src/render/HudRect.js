@@ -63,7 +63,5 @@ render.HudRect = {
     shader.disable();
   },
 
-  destroy: function() {
-    this.texture.destroy();
-  }
+  destroy: function() {}
 };

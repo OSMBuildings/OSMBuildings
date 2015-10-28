@@ -99,7 +99,5 @@ render.Overlay = {
     shader.disable();
   },
 
-  destroy: function() {
-    this.texture.destroy();
-  }
+  destroy: function() {}
 };

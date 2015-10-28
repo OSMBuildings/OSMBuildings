@@ -4869,9 +4869,7 @@
 	    shader.disable();
 	  },
 
-	  destroy: function() {
-	    this.texture.destroy();
-	  }
+	  destroy: function() {}
 	};
 
 
@@ -5280,9 +5278,7 @@
 	    shader.disable();
 	  },
 
-	  destroy: function() {
-	    this.texture.destroy();
-	  }
+	  destroy: function() {}
 	};
 
 
