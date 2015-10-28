@@ -124,6 +124,7 @@ attribution | string | attribution, optional
 showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
 fogColor | string | color to be used for sky gradients and distance fog.
 backgroundColor | string | overall background color
+optimize | string | sets rendering precedence for 'quality' or 'performance' (default)
 
 ### OSM Buildings methods
 
@@ -136,6 +137,8 @@ addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bou
 addTileLayer | url, options | add a map tile set and specify options {bounds}
 getTarget | x, y | get a building id at position
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
+show | function, duration | shows buildings according to a selector function. That function receives parameters id, data of an item
+hide | function, duration | hides buildings according to a selector function. That function receives parameters id, data of an item
 
 ### OSM Buildings server
 
