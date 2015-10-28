@@ -91,9 +91,7 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
   var v2 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
 
   // direction vector from v1 to v2
-  var vDir = [ v2[0] - v1[0],
-    v2[1] - v1[1],
-    v2[2] - v1[2]];
+  var vDir = sub3(v2, v1);
 
   if (vDir[2] >= 0) // ray would not intersect with the plane
   {
@@ -105,9 +103,71 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
    * Rearranged, this reads:   */
   var lambda = -v1[2]/vDir[2];
 
-  return [ v1[0] + lambda * vDir[0],
-    v1[1] + lambda * vDir[1],
-    v1[2] + lambda * vDir[2] +1.0]; //FIXME: remove debug z-offset "+1.0"
+  return add3( v1, mul3scalar(vDir, lambda));
+
+}
+
+/* returns the camera position in world coordinates based on an inverse 
+   view-projection matrix */
+function getCameraPosition( inverseTransform)
+{
+  var p1BottomLeft = transformVec3(inverseTransform, [-1, -1, 0]);
+  var p2BottomLeft = transformVec3(inverseTransform, [-1, -1, 1]);
+  
+  var vBottomLeft = sub3( p2BottomLeft, p1BottomLeft);
+  
+  var p1BottomRight = transformVec3(inverseTransform, [ 1, -1, 0]);
+  var p2BottomRight = transformVec3(inverseTransform, [ 1, -1, 1]);
+  var vBottomRight = sub3( p2BottomRight, p1BottomRight);
+  
+  return getPseudoIntersection(p1BottomLeft, vBottomLeft, 
+                               p1BottomRight,vBottomRight);
+}
+
+/*
+ * 
+ * Given two lines, each by a point on the line (p1/p2) and the line's direction
+ * (d1/d2), this function returns a point P that is as close as possible to
+ * both lines at the same time.
+ * This function's intented use is as a robust line intersection algorithm that 
+ * works even when the two lines do not quite intersect due to numerical 
+ * limitations.
+ * Note: the code was taken and modified from 
+ *       http://gamedev.stackexchange.com/questions/9738
+ */
+function getPseudoIntersection(p1, d1, p2, d2)
+{
+  if (len3(d1) === 0 || len3(d2) === 0) {
+    // at least one of the direction vectors has no length and thus no direction
+    return undefined;
+  }
+
+  d1 = norm3(d1);
+  d2 = norm3(d2);
+
+  var a = 1; // was dot3(d1, d1)
+  var b = dot3(d1, d2)
+  var e = 1; // was dot3(d2, d2)
+  
+  var d = 1-b*b; // was a*e - b*b
+  
+  if (d === 0) {
+    /* if the lines are parellel  */
+    return undefined;
+  }
+  
+  var r = sub3(p1, p2);
+  var c = dot3(d1, r);
+  var f = dot3(d2, r);
+  
+  var s = (b*f - c*e) / d;
+  var t = (a*f - b*c) / d;
+  
+  var pClosest1 = add3(p1, mul3scalar(d1, s));
+  var pClosest2 = add3(p2, mul3scalar(d2, t));
+  var midPoint =  mul3scalar( add3(pClosest1, pClosest2), 0.5);
+  
+  return midPoint;
 }
 
 /* converts a 2D position from OSMBuildings' local coordinate system to slippy tile
@@ -125,9 +185,11 @@ function asTilePosition(localXY, tileZoom) {
   return [tileX, tileY];
 }
 
+function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]+b[2];}
 function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
 function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
 function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
 function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
+function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}
 function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
 function dist3(a,b){ return len3(sub3(a,b));}
