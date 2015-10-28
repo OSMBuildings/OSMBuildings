@@ -163,7 +163,7 @@ mesh.GeoJSON = (function() {
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
-        this.items.push({ id:id, vertexCount:vertexCount });
+        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
 
         vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
         switch (item.roofShape) {
@@ -184,7 +184,7 @@ mesh.GeoJSON = (function() {
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
-        this.items.push({ id:id, vertexCount:vertexCount });
+        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
       }
     },
 

@@ -75,7 +75,7 @@ mesh.OBJ = (function() {
           this.data.ids.push(idColor[0], idColor[1], idColor[2], 1);
         }
 
-        this.items.push({ id:id, vertexCount:item.vertices.length/3 });
+        this.items.push({ id:id, vertexCount:item.vertices.length/3, data:item.data });
       }
     },
 

@@ -1102,9 +1102,9 @@
 	      clearInterval(loop);
 	    };
 
-	    glx.destroy = function(GL) {
-	      GL.canvas.parentNode.removeChild(GL.canvas);
-	      GL.canvas = null;
+	    glx.destroy = function() {
+	      context.canvas.parentNode.removeChild(context.canvas);
+	      context = null;
 	    };
 
 
@@ -2020,6 +2020,9 @@
 	    Events.destroy();
 	    if (APP._basemapGrid) APP._basemapGrid.destroy();
 	    if (APP._dataGrid)    APP._dataGrid.destroy();
+
+	    // TODO: when taking over an existing canvas, don't destroy it here
+	    glx.destroy();
 	  }
 	};
 
@@ -3112,7 +3115,7 @@
 	          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
 	        }
 
-	        this.items.push({ id:id, vertexCount:vertexCount });
+	        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
 
 	        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
 	        switch (item.roofShape) {
@@ -3133,7 +3136,7 @@
 	          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
 	        }
 
-	        this.items.push({ id:id, vertexCount:vertexCount });
+	        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
 	      }
 	    },
 
@@ -3494,7 +3497,7 @@
 	          this.data.ids.push(idColor[0], idColor[1], idColor[2], 1);
 	        }
 
-	        this.items.push({ id:id, vertexCount:item.vertices.length/3 });
+	        this.items.push({ id:id, vertexCount:item.vertices.length/3, data:item.data });
 	      }
 	    },
 
