@@ -130,7 +130,7 @@ Grid.prototype = {
 
     var
       tile, tileX, tileY,
-      queue = [], queueLength,
+      queue = [],
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
         MAP.center.y/TILE_SIZE <<0
@@ -154,20 +154,17 @@ Grid.prototype = {
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
 
-    if (!(queueLength = queue.length)) {
-      return;
-    }
+    this.purge();
 
     queue.sort(function(a, b) {
       return a.dist-b.dist;
     });
 
-    for (var i = 0; i < queueLength; i++) {
+    for (var i = 0; i < queue.length; i++) {
       tile = queue[i].tile;
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
 
-    this.purge();
   },
 
   purge: function() {
