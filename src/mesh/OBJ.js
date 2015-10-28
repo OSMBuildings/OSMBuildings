@@ -62,8 +62,8 @@ mesh.OBJ = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
-        this.data.vertices.push.apply(this.data.vertices, item.vertices);
-        this.data.normals.push.apply(this.data.normals, item.normals);
+        this.data.vertices = this.data.vertices.concat(item.vertices);
+        this.data.normals  = this.data.normals.concat(item.normals);
 
         id = this.id || item.id;
         idColor = render.Interaction.idToColor(id);
