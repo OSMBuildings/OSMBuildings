@@ -40,8 +40,7 @@ uniform float uBendDistance;
 void main() {
 
   float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
-  float te = t*(2.0-t); // quadratic ease out
-  float f = aFilter.b + (aFilter.a-aFilter.b) * te;
+  float f = aFilter.b + (aFilter.a-aFilter.b) * t;
 
   if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
