@@ -66,6 +66,76 @@ function isPointInTriangle(tA, tB, tC, P) {
   return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;
 }
 
+// FIXME: make this more robust so that it also works in non-monotonous situations
+
+/* Determines a position on the ray starting at 'pStart' with direction 'pDir'
+ * that is about 'distance' away from the plane through point 'pos' with normal
+ * 'lookDir'. Since we currently have no way of computing this value directly,
+ * we instead resort to an iterative approximation technique.
+ * 
+ * This method only works correctly of the computed distance is monotonously
+ * increasing along 'pDir'.
+ *
+ * Implementation: the actual iterative approximation occurs in two phases
+ *   1. iteratively find a position along the ray that is further than 
+ *      'distance' away from the plane. To find that position, we simply
+ *      go 1, 2, 4, 8, ... units away from pStart in direction pDir until
+ *      the distance is large enough.
+ *   2. with the original point 'pStart' being too close, and the point
+ *      'pFarther' computed in step 1 being too far away, the sought point
+ *      has to lie between the two. To find it, we use a binary search: 
+ *      we iteratively compute the center between the two points to determine 
+ *      in which half of the interval (pStart to center, or center to 
+ *      pFarther) the sought point has to lie, and then adjust either pStart 
+ *      or pFarther to match that interval. Once the center point has a 
+ *      distance to the plane that matches 'distance' (within a certain 
+ *      level of tolerance to allow for numerical inaccuracies), we return it.
+ */
+function getRayPointAtDistanceToPlane (pos, lookDir, pStart, pDir, distance) {
+  
+  if (len3(lookDir) == 0 || len3(pDir) == 0)
+    return undefined;
+    
+  pDir = norm3(pDir);
+  lookDir = norm3(lookDir);
+  
+  pCloser = pStart;
+  pCloserDistToPlane = dot3( sub3( pStart, pos), lookDir);
+  var distMultiplier = 1;
+  var pNext;
+  if (pCloserDistToPlane > distance)
+    return pCloser;
+    
+  while (true) {
+    pNext = add3( pStart, mul3scalar(pDir, distMultiplier));
+    var pNextDistToPlane = dot3( sub3(pNext, pos), lookDir);
+    
+    if (pNextDistToPlane > distance) // is too far away
+      break;
+      
+    distMultiplier *= 2;
+  }
+  
+  var pFarther = pNext;
+  
+  while (true)
+  {
+    var pMid = mul3scalar( add3(pCloser, pFarther), 0.5);
+    var pMidDistToPlane = dot3( sub3(pMid, pos), lookDir);
+    
+    // if the relative difference is small enough, we found the result;
+    if ( Math.abs( pMidDistToPlane/distance - 1) < 1E-5)
+      return pMid;
+      
+    if (pMidDistToPlane > distance) // too far away
+      pFarther = pMid;
+    else
+      pCloser = pMid;
+  }
+  
+  
+}
+
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
  * Internally, the vector 'v' is interpreted as a 4D vector
  * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
@@ -168,6 +238,22 @@ function getPseudoIntersection(p1, d1, p2, d2)
   var midPoint =  mul3scalar( add3(pClosest1, pClosest2), 0.5);
   
   return midPoint;
+}
+
+function inMeters(localDistance)
+{
+  var EARTH_CIRCUMFERENCE = 6371 * 2*3.141592; // [km]
+
+  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * 
+                                     Math.cos(MAP.position.latitude/ 180 * Math.PI)
+  return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
+}
+
+function vec3InMeters(localVec)
+{
+  return [ inMeters(localVec[0]),
+           inMeters(localVec[1]),
+           inMeters(localVec[2])];
 }
 
 /* converts a 2D position from OSMBuildings' local coordinate system to slippy tile

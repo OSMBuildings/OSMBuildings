@@ -136,7 +136,11 @@ Grid.prototype = {
         MAP.center.y/TILE_SIZE <<0
       ];
       
-    var viewQuad = render.getViewQuad(render.viewProjMatrix.data, zoom);
+    var viewQuad = render.getViewQuad(render.viewProjMatrix.data);
+    for (var i = 0; i < 4; i++)
+      viewQuad[i] = asTilePosition(viewQuad[i], zoom);
+    
+    
     this.visibleTiles = this.getTilesInQuad(viewQuad, zoom);
 
     for (var key in this.visibleTiles) {

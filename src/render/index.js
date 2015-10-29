@@ -25,6 +25,8 @@ var render = {
    * Note: if the horizon is level (as should usually be the case for 
    * OSMBuildings) then said quad is also a trapezoid. */
   getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
+    /* maximum distance from the camera *plane* (not camera position!) at which
+     * geometry is still visible */
     var MAX_FAR_EDGE_DISTANCE = (this.fogDistance + this.fogBlurDistance);
     var inverse = glx.Matrix.invert(viewProjectionMatrix);
 
@@ -41,6 +43,10 @@ var render = {
     if (!vBottomLeft || !vBottomRight) {
       return;
     }
+
+    var camPos = getCameraPosition( inverse );
+    var camLookDir = norm3(sub3( transformVec3(inverse, [0, 0, 1]),
+                                 transformVec3(inverse, [0, 0, 0.5])));
 
     var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
 
@@ -61,36 +67,40 @@ var render = {
        * to guarantee an *optimal* fit.  */
       vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
       vLeftDir = norm3(sub3( vLeftPoint, vBottomLeft));
-      vTopLeft = add3( vBottomLeft, mul3scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE));
+      vTopLeft = getRayPointAtDistanceToPlane( camPos, camLookDir, 
+                                               vBottomLeft, vLeftDir, 
+                                               MAX_FAR_EDGE_DISTANCE);
       
       /* arbitrary point on the right screen edge, subject to the same
        * requirements as 'vLeftPoint' */
       vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
       vRightDir = norm3(sub3(vRightPoint, vBottomRight));
-      vTopRight = add3(vBottomRight, mul3scalar(vRightDir, MAX_FAR_EDGE_DISTANCE));
+      vTopRight = getRayPointAtDistanceToPlane( camPos, camLookDir, 
+                                                vBottomRight, vRightDir, 
+                                                MAX_FAR_EDGE_DISTANCE);
     }
 
-    var camPos = getCameraPosition( inverse );
-    
-    /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away from the camera,
+   
+    /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away from the camera plane,
      * move it closer. */
-    if (dist3(camPos, vTopLeft) > MAX_FAR_EDGE_DISTANCE) {
-      vLeftDir = norm3(sub3(vTopLeft, camPos));
-      vTopLeft = add3(vBottomLeft, mul3scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE));
+    if ( dot3( sub3( vTopLeft, camPos), camLookDir) > MAX_FAR_EDGE_DISTANCE) {
+    
+      vLeftDir = norm3(sub3(vTopLeft, vBottomLeft));
+      vTopLeft = getRayPointAtDistanceToPlane( camPos, camLookDir, 
+                                                    vBottomLeft, vLeftDir, 
+                                                    MAX_FAR_EDGE_DISTANCE);
     }
     
     /* do the same for the right edge */
-    if (dist3(camPos, vTopRight) > MAX_FAR_EDGE_DISTANCE) {
-      vRightDir = norm3(sub3(vTopRight, camPos));
-      vTopRight = add3(vBottomRight, mul3scalar(vRightDir, MAX_FAR_EDGE_DISTANCE));
+    if ( dot3( sub3( vTopRight, camPos), camLookDir) > MAX_FAR_EDGE_DISTANCE) {
+    
+      vRightDir = norm3(sub3(vTopRight, vBottomRight));
+      vTopRight = getRayPointAtDistanceToPlane( camPos, camLookDir, 
+                                                vBottomRight, vRightDir, 
+                                                 MAX_FAR_EDGE_DISTANCE);
     }
     
-    //return [ vBottomLeft, vBottomRight, vTopRight, vTopLeft];
-    
-    return [asTilePosition(vBottomLeft,  tileZoomLevel),
-            asTilePosition(vBottomRight, tileZoomLevel),
-            asTilePosition(vTopRight,    tileZoomLevel),
-            asTilePosition(vTopLeft,     tileZoomLevel)];
+    return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
   },
 
   start: function() {
@@ -134,14 +144,7 @@ var render = {
           return;
         }
         
-        //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
-        //console.log( this.getTilesInQuad( viewTrapezoid).length );
-        //var s = "";
-        //for (var i in window.tiles)
-        //  s+= window.tiles[i][0] + ", " + window.tiles[i][1] + "\n";
-        //window.s = s;
-        //console.log(window.tiles.length);
-        //console.log( viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3] );
+        //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
         //quad.updateGeometry(viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3]);
 
         render.SkyDome.render();
@@ -178,10 +181,10 @@ var render = {
     var cameraDistanceFromMapCenter = len3( getCameraPosition( inverse ));
     /* fogDistance: closest distance at which the fog affects the geometry */
 
-    this.fogDistance = 1000 * Math.pow(2, MAP.zoom - 16 ) + cameraDistanceFromMapCenter;
+    this.fogDistance = 1200 * Math.pow(2, MAP.zoom - 16 ) + cameraDistanceFromMapCenter;
     /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
      *                  completely enclosed in fog. */
-    this.fogBlurDistance = 500 * Math.pow(2, MAP.zoom - 16 );
+    this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16 );
     //console.log( "FD: %s, zoom: %s, CDFC: %s", this.fogDistance, MAP.zoom, cameraDistanceFromMapCenter);
   },
 
