@@ -1,54 +1,47 @@
 {
-  "shaders": ["interaction", "buildings", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur"],
+  "shaders": ["interaction", "depth", "skydome", "buildings", "basemap"],
 
   "lib": [
     "lib/earcut.js",
-    "node_modules/Color/dist/Color.debug.js",
-    "node_modules/GLX/dist/GLX.debug.js"
+    "lib/Color.debug.js",
+    "lib/glx/glx.debug.js"
   ],
 
   "src": [
     "src/index.js",
+    "src/Map.js",
     "src/Events.js",
     "src/Activity.js",
+
+    "src/State.js",
 
     "src/variables.js",
     "src/Request.js",
     "src/util.js",
-    "src/Shaders.min.js",
+    "src/shaders.js",
     "src/Triangulate.js",
 
-    "src/Grid.js",
-    "src/Filter.js",
-
-
     "src/data/index.js",
-    "src/data/Tile.js",
+    "src/data/DataGrid.js",
+    "src/data/DataTile.js",
+    "src/data/TileGrid.js",
+    "src/data/MapTile.js",
 
     "src/mesh/index.js",
     "src/mesh/GeoJSON.js",
-    "src/mesh/MapPlane.js",
-    "src/mesh/DebugQuad.js",
     "src/mesh/OBJ.js",
 
-    "src/format/GeoJSON.js",
-    "src/format/OBJ.js",
+    "src/formats/GeoJSON.js",
+    "src/formats/OBJ.js",
 
     "src/geometry.js",
 
-    "src/render/index.js",
-    "src/render/Interaction.js",
-    "src/render/SkyDome.js",
-    "src/render/Buildings.js",
-    "src/render/Basemap.js",
-    "src/render/HudRect.js",
-    "src/render/NormalMap.js",
-    "src/render/DepthMap.js",
-    "src/render/AmbientMap.js",
-    "src/render/Overlay.js",
-    "src/render/Blur.js",
+    "src/Renderer.js",
 
-    "src/basemap/index.js",
-    "src/basemap/Tile.js"
+    "src/layers/Depth.js",
+    "src/layers/Interaction.js",
+    "src/layers/SkyDome.js",
+    "src/layers/Basemap.js",
+    "src/layers/Buildings.js"
   ]
 }

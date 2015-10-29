@@ -1,12 +1,5 @@
 
-OSM Buildings
-https://github.com/OSMBuildings/OSMBuildings
-Copyright (c) 2015, Jan Marsch, OSM Buildings
-
-Color.js
-https://github.com/kekscom/Color.js
-Copyright (c) 2015, Jan Marsch, keks.com
-
+Copyright (c) 2015, OSM Buildings, Jan Marsch <mail@osmbuildings.org>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are
@@ -31,11 +24,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ===============================================================================
 
-Earcut
-https://github.com/mapbox/earcut
-Copyright (c) 2015, Vladimir Agafonkin, Mapbox
+Created and used under same license as above, identical author:
 
-(ISC License)
+Color.js (https://github.com/kekscom/Color.js)
+
+===============================================================================
+
+Earcut library
+https://github.com/mapbox/earcut
+Vladimir Agafonkin, Mapbox
+
+Copyright (c) 2015, Mapbox (ISC License)
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -93,4 +92,3 @@ and is used under the license conditions stated there:
 "There are no restrictions on using these textures, you can use these for 
 commercial work, and you don't have to name me if you don't want to. the only
 restriction is that you can't sell them. that's all."
-

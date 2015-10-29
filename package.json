@@ -1,23 +1,18 @@
 {
-  "name": "OSMBuildings-GLMap",
+  "name": "osmbuildings-gl",
   "private": false,
   "description": "OSM Buildings GL",
-  "version": "2.0.3",
+  "version": "0.2.0",
   "homepage": "http://osmbuildings.org",
   "author": "@kekscom",
-  "contributors": ["@rbuch703"],
+  "contributors": [],
   "maintainers": [],
   "repository": {
     "type": "git",
     "url": "git@github.com:OSMBuildings/OSMBuildings.git"
   },
   "scripts": {},
-  "dependencies": {
-    "Color": "git://github.com/kekscom/Color.git",
-    "GLX": "git://github.com/kekscom/glx.git",
-    "glmap": "git://github.com/OSMBuildings/GLMap.git",
-    "earcut": "^2.0.5"
-  },
+  "dependencies": {},
   "devDependencies": {
     "grunt": "^0.4.4",
     "grunt-webpack": "^1.0.8",
