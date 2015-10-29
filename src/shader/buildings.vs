@@ -18,10 +18,6 @@ uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 
-uniform vec3 uFogColor;
-uniform float uFogDistance;
-uniform float uFogBlurDistance;
-
 uniform vec3 uHighlightColor;
 uniform vec3 uHighlightID;
 
@@ -81,14 +77,9 @@ void main() {
 
     float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);
 
-    //*** fog *******************************************************************
-
-    float dist = gl_Position.z;
-    float fogIntensity = (dist - uFogDistance) / uFogBlurDistance;
-    fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
     //***************************************************************************
 
-    vColor = mix(color-verticalShading, uFogColor, fogIntensity);
+    vColor = color-verticalShading;
   }
 }
