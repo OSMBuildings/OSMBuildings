@@ -2839,7 +2839,7 @@ var data = {
     add: function(item) {
       this.items.push(item);
       //if (item.replace) {
-        //this.blockers.push(item);
+      //this.blockers.push(item);
 //      }
     },
 
@@ -2864,9 +2864,9 @@ var data = {
 //    // check with other objects
 //    checkCollisions: function(item) {
 //      for (var i = 0, il = this.blockers.length; i < il; i++) {
-  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
-  //     return true;
-  //    }
+    //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
+    //     return true;
+    //    }
 //      }
 //      return false;
 //    },
@@ -5181,10 +5181,10 @@ render.Overlay = {
     
     if (framebufferConfig !== undefined)
     {
-      tcHorizMin = 0.5                                  / framebufferConfig.width;
-      tcHorizMax = (framebufferConfig.usedWidth  - 0.5) / framebufferConfig.width;
-      tcVertMin  = 0.5                                  / framebufferConfig.height;
-      tcVertMax  = (framebufferConfig.usedHeight - 0.5) / framebufferConfig.height;
+      tcHorizMin = 0                                  / framebufferConfig.width;
+      tcHorizMax = (framebufferConfig.usedWidth  - 1) / framebufferConfig.width;
+      tcVertMin  = 0                                  / framebufferConfig.height;
+      tcVertMax  = (framebufferConfig.usedHeight - 1) / framebufferConfig.height;
     } else
     {
       tcHorizMin = tcVertMin = 0.0;
