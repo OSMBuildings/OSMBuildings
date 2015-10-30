@@ -78,17 +78,18 @@ Grid.prototype = {
       tileAnchor = [
         MAP.center.x/TILE_SIZE <<0,
         MAP.center.y/TILE_SIZE <<0
-      ];
-      
-    var viewQuad = render.getViewQuad(render.viewProjMatrix.data);
-    for (var i = 0; i < 4; i++)
+      ],
+      i,
+      viewQuad = render.getViewQuad(render.viewProjMatrix.data);
+
+    for (i = 0; i < 4; i++) {
       viewQuad[i] = asTilePosition(viewQuad[i], zoom);
-    
+    }
 
     var tmp = rasterConvexQuad(viewQuad);
 
     this.visibleTiles = {};
-    for (var i = 0; i < tmp.length; i++)
+    for (i = 0; i < tmp.length; i++)
       this.visibleTiles[ [tmp[i][0], tmp[i][1], zoom] ] = true;
 
     /*var s = "";
@@ -115,7 +116,6 @@ Grid.prototype = {
 
       tile = this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
 
-      // TODO: rotate anchor point
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
 
@@ -125,11 +125,10 @@ Grid.prototype = {
       return a.dist-b.dist;
     });
 
-    for (var i = 0; i < queue.length; i++) {
+    for (i = 0; i < queue.length; i++) {
       tile = queue[i].tile;
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
     }
-
   },
 
   purge: function() {

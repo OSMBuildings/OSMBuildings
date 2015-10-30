@@ -59,8 +59,10 @@ function getNextPixel(segmentStart, segmentEnd, currentPixel) {
  * to be removed.
  */
 function rasterTriangle(p1, p2, p3) {
-  var points = [p1,p2,p3];
-  points.sort( function(p, q) { return p[1] < q[1];})
+  var points = [p1, p2, p3];
+  points.sort(function(p, q) {
+    return p[1] < q[1];
+  });
   p1 = points[0];
   p2 = points[1];
   p3 = points[2];
@@ -123,28 +125,27 @@ function rasterFlatTriangle( flat0, flat1, other ) {
   var yDir = other[1] < flat0[1] ? +1 : -1;
   var yStart = Math.floor(other[1]) + yDir;
   var yBeyond= Math.floor(flat0[1]) + yDir;
-  
-  for (var y = yStart; (y*yDir) < (yBeyond*yDir); y+= yDir)
-  {
+  var prevLeftRasterPos;
+  var prevRightRasterPos;
+
+  for (var y = yStart; (y*yDir) < (yBeyond*yDir); y+= yDir) {
     do {
       points.push( leftRasterPos.slice(0));
-      var prevLeftRasterPos = leftRasterPos;
+      prevLeftRasterPos = leftRasterPos;
       leftRasterPos = getNextPixel(other, flat0, leftRasterPos);
-    }
-    while (leftRasterPos[1]*yDir <= y*yDir)
+    } while (leftRasterPos[1]*yDir <= y*yDir);
     leftRasterPos = prevLeftRasterPos;
     
     do {
       points.push( rightRasterPos.slice(0));
-      var prevRightRasterPos = rightRasterPos;
+      prevRightRasterPos = rightRasterPos;
       rightRasterPos = getNextPixel(other, flat1, rightRasterPos);
-    } 
-    
-    while (rightRasterPos[1]*yDir <= y*yDir)
+    } while (rightRasterPos[1]*yDir <= y*yDir);
     rightRasterPos = prevRightRasterPos;
     
-    for (var x = leftRasterPos[0]; x <= rightRasterPos[0]; x++)
+    for (var x = leftRasterPos[0]; x <= rightRasterPos[0]; x++) {
       points.push( [x,y] );
+    }
   }
   
   return points;
@@ -252,9 +253,10 @@ function isPointInTriangle(tA, tB, tC, P) {
  */
 function getRayPointAtDistanceToPlane (pos, lookDir, pStart, pDir, distance) {
   
-  if (len3(lookDir) == 0 || len3(pDir) == 0)
-    return undefined;
-    
+  if (len3(lookDir) === 0 || len3(pDir) === 0) {
+    return;
+  }
+
   pDir = norm3(pDir);
   lookDir = norm3(lookDir);
   
@@ -291,8 +293,6 @@ function getRayPointAtDistanceToPlane (pos, lookDir, pStart, pDir, distance) {
     else
       pCloser = pMid;
   }
-  
-  
 }
 
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
@@ -368,21 +368,21 @@ function getPseudoIntersection(p1, d1, p2, d2)
 {
   if (len3(d1) === 0 || len3(d2) === 0) {
     // at least one of the direction vectors has no length and thus no direction
-    return undefined;
+    return;
   }
 
   d1 = norm3(d1);
   d2 = norm3(d2);
 
   var a = 1; // was dot3(d1, d1)
-  var b = dot3(d1, d2)
+  var b = dot3(d1, d2);
   var e = 1; // was dot3(d2, d2)
   
   var d = 1-b*b; // was a*e - b*b
   
   if (d === 0) {
     /* if the lines are parellel  */
-    return undefined;
+    return;
   }
   
   var r = sub3(p1, p2);
@@ -399,17 +399,13 @@ function getPseudoIntersection(p1, d1, p2, d2)
   return midPoint;
 }
 
-function inMeters(localDistance)
-{
+function inMeters(localDistance) {
   var EARTH_CIRCUMFERENCE = 6371 * 2*3.141592; // [km]
-
-  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * 
-                                     Math.cos(MAP.position.latitude/ 180 * Math.PI)
+  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE *  Math.cos(MAP.position.latitude/ 180 * Math.PI);
   return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
 }
 
-function vec3InMeters(localVec)
-{
+function vec3InMeters(localVec) {
   return [ inMeters(localVec[0]),
            inMeters(localVec[1]),
            inMeters(localVec[2])];
