@@ -24,7 +24,7 @@ var render = {
    * and geometry tiles need to be loaded.
    * Note: if the horizon is level (as should usually be the case for 
    * OSMBuildings) then said quad is also a trapezoid. */
-  getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
+  getViewQuad: function(viewProjectionMatrix) {
     //FIXME: determine a reasonable value (4000 was chosen rather arbitrarily)
     var MAX_EDGE_LENGTH = 4000; 
 
@@ -87,10 +87,7 @@ var render = {
     
     //return [ vBottomLeft, vBottomRight, vTopRight, vTopLeft];
     
-    return [asTilePosition(vBottomLeft,  tileZoomLevel),
-            asTilePosition(vBottomRight, tileZoomLevel),
-            asTilePosition(vTopRight,    tileZoomLevel),
-            asTilePosition(vTopLeft,     tileZoomLevel)];
+    return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
   },
 
   start: function() {
