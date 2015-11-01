@@ -188,9 +188,9 @@ mesh.GeoJSON = (function() {
       }
     },
 
-    initFilter: function() {
+    fadeIn: function() {
       var item, filters = [];
-      var start = Filter.time(), end = start + 500;
+      var start = Filter.time() + 250, end = start + 500;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];
@@ -217,7 +217,7 @@ mesh.GeoJSON = (function() {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.initFilter();
+      this.fadeIn();
       this.data = null;
 
       Filter.apply(this);
