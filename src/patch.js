@@ -73,46 +73,32 @@ var patch = {};
 
   //***************************************************************************
 
-  patch.GeoJSON = function(prop) {
-    prop.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
-    prop.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
+  patch.GeoJSON = function(properties) {
+    properties.height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
+    properties.minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
 
-    prop.wallColor = prop.wallColor || prop.color || getMaterialColor(prop.material);
-    prop.roofColor = prop.roofColor || prop.color || getMaterialColor(prop.roofMaterial);
+    properties.wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material);
+    properties.roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial);
 
-    switch (prop.shape) {
-      case 'cylinder':
-      case 'cone':
-      case 'dome':
-      case 'sphere':
-        prop.isCircular = true;
-        break;
-
-      case 'pyramid':
-        break;
+    if (properties.shape === 'pyramidal') {
+      properties.shape = 'pyramid';
     }
 
-    switch (prop.roofShape) {
-      case 'cone':
-      case 'dome':
-        prop.isCircular = true;
-        break;
-
-      case 'pyramid':
-        break;
+    if (properties.roofShape === 'pyramidal') {
+      properties.roofShape = 'pyramid';
     }
 
-    if (prop.roofShape && prop.roofHeight) {
-      prop.height = Math.max(0, prop.height-prop.roofHeight);
+    if (properties.roofShape && properties.roofHeight) {
+      properties.height = Math.max(0, properties.height-properties.roofHeight);
     } else {
-      prop.roofHeight = 0;
+      properties.roofHeight = 0;
     }
 
-    //if (prop.height+prop.roofHeight <= prop.minHeight) {
+    //if (properties.height+properties.roofHeight <= properties.minHeight) {
     //  return;
     //}
 
-    return prop;
+    return properties;
   };
 
 }());
