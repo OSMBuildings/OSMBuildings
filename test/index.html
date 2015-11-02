@@ -175,11 +175,15 @@
     if (id) {
       document.body.style.cursor = 'pointer';
       osmb.highlight(id, '#f08000');
-//    console.log(id);
     } else {
       document.body.style.cursor = 'default';
       osmb.highlight(null);
     }
+  });
+
+  map.on('pointerdown', function(e) {
+    var id = osmb.getTarget(e.x, e.y);
+    console.log(id);
   });
 
   //*************************************************************************

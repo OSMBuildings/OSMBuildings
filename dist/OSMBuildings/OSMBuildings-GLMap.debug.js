@@ -3231,27 +3231,31 @@ mesh.GeoJSON = (function() {
         break;
 
         case 'pyramid':
-          vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+          if (properties.shape === 'cylinder') {
+            vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+          } else {
+            vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+          }
           break;
 
-        case 'skillion':
-          // TODO: skillion
-          vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
-        break;
+        //case 'skillion':
+        //  // TODO: skillion
+        //  vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+        //break;
+        //
+        //case 'gabled':
+        //case 'hipped':
+        //case 'half-hipped':
+        //case 'gambrel':
+        //case 'mansard':
+        //case 'round':
+        //case 'saltbox':
+        //  // TODO: gabled
+        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+        //break;
 
-        case 'gabled':
-        case 'hipped':
-        case 'half-hipped':
-        case 'gambrel':
-        case 'mansard':
-        case 'round':
-        case 'saltbox':
-          // TODO: gabled
-          vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
-        break;
-
+//      case 'flat':
         default:
-        case 'flat':
           if (properties.shape === 'cylinder') {
             vertexCount = Triangulate.circle(this.data, center, radius, properties.height);
           } else {

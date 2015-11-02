@@ -157,37 +157,49 @@ mesh.GeoJSON = (function() {
         radius = (bbox.maxX - bbox.minX)/2,
         center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
 
-      //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isCircular(geometry[0], bbox, center)) {
+      // flat roofs or roofs we can't handle should not affect building's height
+      switch (properties.roofShape) {
+        case 'cone':
+        case 'dome':
+        case 'onion':
+        case 'pyramid':
+        case 'pyramidal':
+          properties.height = Math.max(0, properties.height-(properties.roofHeight || 3));
+        break;
+        default:
+          properties.roofHeight = 0;
+      }
 
       //****** walls ******
 
       vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
       switch (properties.shape) {
         case 'cylinder':
-          vertexCount = Triangulate.cylinder( this.data, center, radius, radius, properties.minHeight, properties.height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
         break;
 
         case 'cone':
-          vertexCount = Triangulate.cylinder( this.data, center, radius, 0, properties.minHeight, properties.height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.minHeight, properties.height);
           skipRoof = true;
         break;
 
         case 'dome':
-          vertexCount = Triangulate.dome(     this.data, center, radius, properties.minHeight, properties.height);
+          vertexCount = Triangulate.dome(this.data, center, radius, properties.minHeight, properties.height);
         break;
 
         case 'sphere':
-          vertexCount = Triangulate.cylinder( this.data, center, radius, radius, properties.minHeight, properties.height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
         break;
 
         case 'pyramid':
-          vertexCount = Triangulate.cylinder( this.data, center, radius, radius, properties.minHeight, properties.height);
+        case 'pyramidal':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
           skipRoof = true;
         break;
 
         default:
           if (isCircular(geometry[0], bbox, center)) {
-            vertexCount = Triangulate.cylinder( this.data, center, radius, radius, properties.minHeight, properties.height);
+            vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
           } else {
             vertexCount = Triangulate.extrusion(this.data, geometry, properties.minHeight, properties.height);
           }
@@ -220,6 +232,7 @@ mesh.GeoJSON = (function() {
         break;
 
         case 'pyramid':
+        case 'pyramidal':
           if (properties.shape === 'cylinder') {
             vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
           } else {
@@ -227,21 +240,21 @@ mesh.GeoJSON = (function() {
           }
           break;
 
-        case 'skillion':
-          // TODO: skillion
-          vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
-        break;
-
-        case 'gabled':
-        case 'hipped':
-        case 'half-hipped':
-        case 'gambrel':
-        case 'mansard':
-        case 'round':
-        case 'saltbox':
-          // TODO: gabled
-          vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
-        break;
+        //case 'skillion':
+        //  // TODO: skillion
+        //  vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+        //break;
+        //
+        //case 'gabled':
+        //case 'hipped':
+        //case 'half-hipped':
+        //case 'gambrel':
+        //case 'mansard':
+        //case 'round':
+        //case 'saltbox':
+        //  // TODO: gabled
+        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+        //break;
 
 //      case 'flat':
         default:

@@ -80,24 +80,6 @@ var patch = {};
     properties.wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material);
     properties.roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial);
 
-    if (properties.shape === 'pyramidal') {
-      properties.shape = 'pyramid';
-    }
-
-    if (properties.roofShape === 'pyramidal') {
-      properties.roofShape = 'pyramid';
-    }
-
-    if (properties.roofShape && properties.roofHeight) {
-      properties.height = Math.max(0, properties.height-properties.roofHeight);
-    } else {
-      properties.roofHeight = 0;
-    }
-
-    //if (properties.height+properties.roofHeight <= properties.minHeight) {
-    //  return;
-    //}
-
     return properties;
   };
 
