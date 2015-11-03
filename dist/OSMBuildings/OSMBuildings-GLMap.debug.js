@@ -2101,6 +2101,93 @@ var EARTH_RADIUS = 6378137;
 var EARTH_CIRCUMFERENCE = EARTH_RADIUS*Math.PI*2;
 
 
+// add functionality/fixes that needs to be applied to somewhere externally
+
+var patch = {};
+
+(function() {
+
+  var METERS_PER_LEVEL = 3;
+
+  var materialColors = {
+    brick:'#cc7755',
+    bronze:'#ffeecc',
+    canvas:'#fff8f0',
+    concrete:'#999999',
+    copper:'#a0e0d0',
+    glass:'#e8f8f8',
+    gold:'#ffcc00',
+    plants:'#009933',
+    metal:'#aaaaaa',
+    panel:'#fff8f0',
+    plaster:'#999999',
+    roof_tiles:'#f08060',
+    silver:'#cccccc',
+    slate:'#666666',
+    stone:'#996666',
+    tar_paper:'#333333',
+    wood:'#deb887'
+  };
+
+  var baseMaterials = {
+    asphalt:'tar_paper',
+    bitumen:'tar_paper',
+    block:'stone',
+    bricks:'brick',
+    glas:'glass',
+    glassfront:'glass',
+    grass:'plants',
+    masonry:'stone',
+    granite:'stone',
+    panels:'panel',
+    paving_stones:'stone',
+    plastered:'plaster',
+    rooftiles:'roof_tiles',
+    roofingfelt:'tar_paper',
+    sandstone:'stone',
+    sheet:'canvas',
+    sheets:'canvas',
+    shingle:'tar_paper',
+    shingles:'tar_paper',
+    slates:'slate',
+    steel:'metal',
+    tar:'tar_paper',
+    tent:'canvas',
+    thatch:'plants',
+    tile:'roof_tiles',
+    tiles:'roof_tiles'
+    // cardboard
+    // eternit
+    // limestone
+    // straw
+  };
+
+  function getMaterialColor(str) {
+    if (typeof str !== 'string') {
+      return null;
+    }
+    str = str.toLowerCase();
+    if (str[0] === '#') {
+      return str;
+    }
+    return materialColors[baseMaterials[str] || str] || null;
+  }
+
+  //***************************************************************************
+
+  patch.GeoJSON = function(properties) {
+    properties.height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
+    properties.minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
+
+    properties.wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material);
+    properties.roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial);
+
+    return properties;
+  };
+
+}());
+
+
 var Request = {};
 
 (function() {
@@ -2613,7 +2700,7 @@ Grid.prototype = {
   purge: function() {
     var
       zoom = Math.round(MAP.zoom),
-      tile, parent, children;
+      tile, parent;
 
     for (var key in this.tiles) {
       tile = this.tiles[key];
@@ -2800,7 +2887,7 @@ var data = {
     add: function(item) {
       this.items.push(item);
       //if (item.replace) {
-        //this.blockers.push(item);
+      //this.blockers.push(item);
 //      }
     },
 
@@ -2825,9 +2912,9 @@ var data = {
 //    // check with other objects
 //    checkCollisions: function(item) {
 //      for (var i = 0, il = this.blockers.length; i < il; i++) {
-  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
-  //     return true;
-  //    }
+    //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
+    //     return true;
+    //    }
 //      }
 //      return false;
 //    },
@@ -2876,38 +2963,58 @@ mesh.GeoJSON = (function() {
 
   //***************************************************************************
 
-  function isRotational(item, center) {
-    var
-      ring = item.geometry[0],
-      length = ring.length;
+  function getGeometries(geometry, origin) {
+    var i, il, polygonRings, sub;
+    switch (geometry.type) {
+      case 'GeometryCollection':
+        var geometries = [];
+        for (i = 0, il = geometry.geometries.length; i < il; i++) {
+          if ((sub = getGeometries(geometry.geometries[i]))) {
+            geometries.push.apply(geometries, sub);
+          }
+        }
+        return geometries;
 
-    if (length < 16) {
-      return false;
+      case 'MultiPolygon':
+        var polygons = [];
+        for (i = 0, il = geometry.coordinates.length; i < il; i++) {
+          if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
+            polygons.push.apply(geometries, sub);
+          }
+        }
+        return polygons;
+
+      case 'Polygon':
+        polygonRings = geometry.coordinates;
+        break;
+
+      default: return [];
     }
 
-    var
-      width = item.max.x-item.min.x,
-      height = item.max.y-item.min.y,
-      ratio = width/height;
+    var ring;
+    var res = [];
 
-    if (ratio < 0.85 || ratio > 1.15) {
-      return false;
-    }
-
-    var
-      radius = (width+height)/4,
-      sqRadius = radius*radius,
-      dist;
-
-
-    for (var i = 0; i < length; i++) {
-      dist = distance2(ring[i], center);
-      if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
-        return false;
+    for (i = 0, il = polygonRings.length; i < il; i++) {
+      if (!i) {
+        ring = isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
+      } else {
+        ring = !isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
       }
+
+      res[i] = transform(ring, origin);
     }
 
-    return true;
+    return [res];
+  }
+
+  function transform(ring, origin) {
+    var p, res = [];
+    for (var i = 0, len = ring.length; i < len; i++) {
+      p = project(ring[i][1], ring[i][0], worldSize);
+      res[i] = [p.x-origin.x, p.y-origin.y];
+    }
+
+    return res;
   }
 
   //***************************************************************************
@@ -2916,9 +3023,7 @@ mesh.GeoJSON = (function() {
     options = options || {};
 
     this.id = options.id;
-    if (options.color) {
-      this.color = new Color(options.color).toArray();
-    }
+    this.color = options.color;
 
     this.replace   = !!options.replace;
     this.scale     = options.scale     || 1;
@@ -2963,15 +3068,21 @@ mesh.GeoJSON = (function() {
       this.items = [];
 
       var
+        origin = project(this.position.latitude, this.position.longitude, worldSize),
         startIndex = 0,
         dataLength = json.features.length,
         endIndex = startIndex + Math.min(dataLength, featuresPerChunk);
 
       var process = function() {
-        var features = json.features.slice(startIndex, endIndex);
-        var geojson = { type: 'FeatureCollection', features: features };
-        var data = GeoJSON.parse(this.position, worldSize, geojson);
-        this.addItems(data);
+        var feature, geometries;
+        for (var i = startIndex; i < endIndex; i++) {
+          feature = json.features[i];
+          geometries = getGeometries(feature.geometry, origin);
+
+          for (var j = 0, jl = geometries.length; j < jl; j++) {
+            this.addItem(feature.id, patch.GeoJSON(feature.properties), geometries[j]);
+          }
+        }
 
         if (endIndex === dataLength) {
           this.onReady();
@@ -2987,77 +3098,139 @@ mesh.GeoJSON = (function() {
       process();
     },
 
-    addItems: function(items) {
+    addItem: function(id, properties, geometry) {
+      id = this.id || properties.relationId || id || properties.id;
+
       var
-        item, color, idColor, center, radius,
-        vertexCount,
-        id, colorVariance,
-        defaultColor = new Color(DEFAULT_COLOR).toArray(),
-        j;
+        i,
+        skipRoof,
+        vertexCount, color,
+        idColor = render.Interaction.idToColor(id),
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
+        bbox = getBBox(geometry[0]),
+        radius = (bbox.maxX - bbox.minX)/2,
+        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
 
-      for (var i = 0, il = items.length; i < il; i++) {
-        item = items[i];
-
-        id = this.id || item.id;
-        idColor = render.Interaction.idToColor(id);
-        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06); // TODO: maybe a shaders task
-
-        center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
-
-        //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item, center)) {
-        if (!item.shape && isRotational(item, center)) {
-          item.shape = 'cylinder';
-          item.isRotational = true;
-        }
-
-        if (item.isRotational) {
-          radius = (item.max.x - item.min.x)/2;
-        }
-
-        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
-        switch (item.shape) {
-          case 'cylinder': vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
-          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.minHeight, item.height); break;
-          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.minHeight, item.height); break;
-          case 'sphere':   vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
-          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.minHeight, item.height); break;
-          default:         vertexCount = Triangulate.extrusion(this.data, item.geometry, item.minHeight, item.height);
-        }
-
-        color = this.color || item.wallColor || defaultColor;
-        for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
-        }
-
-        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
-
-        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
-        switch (item.roofShape) {
-          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.height, item.height+item.roofHeight); break;
-          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
-          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.height, item.height+item.roofHeight); break;
-          default:
-            if (item.shape === 'cylinder') {
-              vertexCount = Triangulate.circle(this.data, center, radius, item.height);
-            } else if (item.shape === undefined) {
-              vertexCount = Triangulate.polygon(this.data, item.geometry, item.height);
-            }
-        }
-
-        color = this.color || item.roofColor || defaultColor;
-        for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
-        }
-
-        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
+      // flat roofs or roofs we can't handle should not affect building's height
+      switch (properties.roofShape) {
+        case 'cone':
+        case 'dome':
+        case 'onion':
+        case 'pyramid':
+        case 'pyramidal':
+          properties.height = Math.max(0, properties.height-(properties.roofHeight || 3));
+        break;
+        default:
+          properties.roofHeight = 0;
       }
+
+      //****** walls ******
+
+      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+      switch (properties.shape) {
+        case 'cylinder':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+        break;
+
+        case 'cone':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.minHeight, properties.height);
+          skipRoof = true;
+        break;
+
+        case 'dome':
+          vertexCount = Triangulate.dome(this.data, center, radius, properties.minHeight, properties.height);
+        break;
+
+        case 'sphere':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+        break;
+
+        case 'pyramid':
+        case 'pyramidal':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+          skipRoof = true;
+        break;
+
+        default:
+          if (isCircular(geometry[0], bbox, center)) {
+            vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+          } else {
+            vertexCount = Triangulate.extrusion(this.data, geometry, properties.minHeight, properties.height);
+          }
+      }
+
+      color = new Color(this.color || properties.wallColor || DEFAULT_COLOR).toArray();
+      for (i = 0; i < vertexCount; i++) {
+        this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+      }
+
+      this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
+
+      //****** roof ******
+
+      if (skipRoof) {
+        return;
+      }
+
+      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+
+      switch (properties.roofShape) {
+        case 'cone':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+        break;
+
+        case 'dome':
+        case 'onion':
+          vertexCount = Triangulate.dome(this.data, center, radius, properties.height, properties.height + (properties.roofHeight || radius));
+        break;
+
+        case 'pyramid':
+        case 'pyramidal':
+          if (properties.shape === 'cylinder') {
+            vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+          } else {
+            vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+          }
+          break;
+
+        //case 'skillion':
+        //  // TODO: skillion
+        //  vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+        //break;
+        //
+        //case 'gabled':
+        //case 'hipped':
+        //case 'half-hipped':
+        //case 'gambrel':
+        //case 'mansard':
+        //case 'round':
+        //case 'saltbox':
+        //  // TODO: gabled
+        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+        //break;
+
+//      case 'flat':
+        default:
+          if (properties.shape === 'cylinder') {
+            vertexCount = Triangulate.circle(this.data, center, radius, properties.height);
+          } else {
+            vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+          }
+        }
+
+      color = new Color(this.color || properties.roofColor || DEFAULT_COLOR).toArray();
+      for (i = 0; i<vertexCount; i++) {
+        this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);
+        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+      }
+
+      this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
     },
 
-    initFilter: function() {
+    fadeIn: function() {
       var item, filters = [];
-      var start = Filter.time(), end = start + 500;
+      var start = Filter.time() + 250, end = start + 500;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];
@@ -3084,7 +3257,7 @@ mesh.GeoJSON = (function() {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.initFilter();
+      this.fadeIn();
       this.data = null;
 
       Filter.apply(this);
@@ -3338,6 +3511,145 @@ mesh.DebugQuad = (function() {
 
 mesh.OBJ = (function() {
 
+  var vertexIndex = [];
+
+  function parseMTL(str) {
+    var
+      lines = str.split(/[\r\n]/g),
+      cols,
+      materials = {},
+      data = null;
+
+    for (var i = 0, il = lines.length; i < il; i++) {
+      cols = lines[i].trim().split(/\s+/);
+
+      switch (cols[0]) {
+        case 'newmtl':
+          storeMaterial(materials, data);
+          data = { id:cols[1], color:{} };
+          break;
+
+        case 'Kd':
+          data.color = [
+            parseFloat(cols[1]),
+            parseFloat(cols[2]),
+            parseFloat(cols[3])
+          ];
+          break;
+
+        case 'd':
+          data.color[3] = parseFloat(cols[1]);
+          break;
+      }
+    }
+
+    storeMaterial(materials, data);
+    str = null;
+
+    return materials;
+  }
+
+  function storeMaterial(materials, data) {
+    if (data !== null) {
+      materials[ data.id ] = data.color;
+    }
+  }
+
+  function parseOBJ(str, materials) {
+    var
+      lines = str.split(/[\r\n]/g), cols,
+      meshes = [],
+      id,
+      color,
+      faces = [];
+
+    for (var i = 0, il = lines.length; i < il; i++) {
+      cols = lines[i].trim().split(/\s+/);
+
+      switch (cols[0]) {
+        case 'g':
+        case 'o':
+          storeOBJ(meshes, id, color, faces);
+          id = cols[1];
+          faces = [];
+          break;
+
+        case 'usemtl':
+          storeOBJ(meshes, id, color, faces);
+          if (materials[ cols[1] ]) {
+            color = materials[ cols[1] ];
+          }
+          faces = [];
+          break;
+
+        case 'v':
+          vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
+          break;
+
+        case 'f':
+          faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
+          break;
+      }
+    }
+
+    storeOBJ(meshes, id, color, faces);
+    str = null;
+
+    return meshes;
+  }
+
+  function storeOBJ(meshes, id, color, faces) {
+    if (faces.length) {
+      var geometry = createGeometry(faces);
+      meshes.push({
+        id: id,
+        color: color,
+        vertices: geometry.vertices,
+        normals: geometry.normals
+      });
+    }
+  }
+
+  function createGeometry(faces) {
+    var
+      v0, v1, v2,
+      e1, e2,
+      nor, len,
+      geometry = { vertices:[], normals:[] };
+
+    for (var i = 0, il = faces.length; i < il; i++) {
+      v0 = vertexIndex[ faces[i][0] ];
+      v1 = vertexIndex[ faces[i][1] ];
+      v2 = vertexIndex[ faces[i][2] ];
+
+      e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
+      e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
+
+      nor = [ e1[1]*e2[2] - e1[2]*e2[1], e1[2]*e2[0] - e1[0]*e2[2], e1[0]*e2[1] - e1[1]*e2[0] ];
+      len = Math.sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
+
+      nor[0] /= len;
+      nor[1] /= len;
+      nor[2] /= len;
+
+      geometry.vertices.push(
+        v0[0], v0[2], v0[1],
+        v1[0], v1[2], v1[1],
+        v2[0], v2[2], v2[1]
+      );
+
+      geometry.normals.push(
+        nor[0], nor[1], nor[2],
+        nor[0], nor[1], nor[2],
+        nor[0], nor[1], nor[2]
+      );
+    }
+
+    return geometry;
+  }
+
+  //***************************************************************************
+
   function constructor(url, position, options) {
     options = options || {};
 
@@ -3374,7 +3686,7 @@ mesh.OBJ = (function() {
       if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
         this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
           this.request = null;
-          this.onLoad(obj, mtl);
+          this.onLoad(obj, parseMTL(mtl));
         }.bind(this));
       } else {
         this.onLoad(obj, null);
@@ -3384,9 +3696,9 @@ mesh.OBJ = (function() {
 
   constructor.prototype = {
     onLoad: function(obj, mtl) {
-      var data = new OBJ.parse(obj, mtl);
       this.items = [];
-      this.addItems(data);
+      // TODO: add single parsed items directly and save intermediate data storage
+      this.addItems(parseOBJ(obj, mtl));
       this.onReady();
     },
 
@@ -3416,9 +3728,9 @@ mesh.OBJ = (function() {
       }
     },
 
-    initFilter: function() {
+    fadeIn: function() {
       var item, filters = [];
-      var start = Filter.time(), end = start + 500;
+      var start = Filter.time() + 250, end = start + 500;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];
@@ -3445,7 +3757,7 @@ mesh.OBJ = (function() {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.initFilter();
+      this.fadeIn();
       this.data = null;
 
       Filter.apply(this);
@@ -3502,416 +3814,6 @@ mesh.OBJ = (function() {
 }());
 
 
-var GeoJSON = {};
-
-(function() {
-
-  var METERS_PER_LEVEL = 3;
-
-  var materialColors = {
-    brick:'#cc7755',
-    bronze:'#ffeecc',
-    canvas:'#fff8f0',
-    concrete:'#999999',
-    copper:'#a0e0d0',
-    glass:'#e8f8f8',
-    gold:'#ffcc00',
-    plants:'#009933',
-    metal:'#aaaaaa',
-    panel:'#fff8f0',
-    plaster:'#999999',
-    roof_tiles:'#f08060',
-    silver:'#cccccc',
-    slate:'#666666',
-    stone:'#996666',
-    tar_paper:'#333333',
-    wood:'#deb887'
-  };
-
-  var baseMaterials = {
-    asphalt:'tar_paper',
-    bitumen:'tar_paper',
-    block:'stone',
-    bricks:'brick',
-    glas:'glass',
-    glassfront:'glass',
-    grass:'plants',
-    masonry:'stone',
-    granite:'stone',
-    panels:'panel',
-    paving_stones:'stone',
-    plastered:'plaster',
-    rooftiles:'roof_tiles',
-    roofingfelt:'tar_paper',
-    sandstone:'stone',
-    sheet:'canvas',
-    sheets:'canvas',
-    shingle:'tar_paper',
-    shingles:'tar_paper',
-    slates:'slate',
-    steel:'metal',
-    tar:'tar_paper',
-    tent:'canvas',
-    thatch:'plants',
-    tile:'roof_tiles',
-    tiles:'roof_tiles'
-    // cardboard
-    // eternit
-    // limestone
-    // straw
-  };
-
-  function getMaterialColor(str) {
-    if (typeof str !== 'string') {
-      return null;
-    }
-    str = str.toLowerCase();
-    if (str[0] === '#') {
-      return str;
-    }
-    return materialColors[baseMaterials[str] || str] || null;
-  }
-
-  function isClockWise(latlngs) {
-    return 0 < latlngs.reduce(function(a, b, c, d) {
-      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-    }, 0);
-  }
-
-  function parseFeature(res, feature, origin, worldSize) {
-    var
-      prop = feature.properties,
-      item = {};
-
-    if (!prop) {
-      return;
-    }
-
-    item.data = prop.data;
-
-    item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
-    item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
-
-    item.wallColor = new Color(prop.wallColor || prop.color || getMaterialColor(prop.material) || DEFAULT_COLOR).toArray();
-    item.roofColor = new Color(prop.roofColor || prop.color || getMaterialColor(prop.material) || DEFAULT_COLOR).toArray();
-
-    switch (prop.shape) {
-      case 'cylinder':
-      case 'cone':
-      case 'dome':
-      case 'sphere':
-        item.shape = prop.shape;
-        item.isRotational = true;
-        break;
-
-      case 'pyramid':
-        item.shape = prop.shape;
-        break;
-    }
-
-    switch (prop.roofShape) {
-      case 'cone':
-      case 'dome':
-        item.roofShape = prop.roofShape;
-        item.isRotational = true;
-        break;
-
-      case 'pyramid':
-        item.roofShape = prop.roofShape;
-        break;
-    }
-
-    if (item.roofShape && prop.roofHeight) {
-      item.roofHeight = prop.roofHeight;
-      item.height = Math.max(0, item.height-item.roofHeight);
-    } else {
-      item.roofHeight = 0;
-    }
-
-    //if (item.height+item.roofHeight <= item.minHeight) {
-    //  return;
-    //}
-
-    item.id = prop.relationId || feature.id || prop.id;
-
-    var geometries = getGeometries(feature.geometry, origin, worldSize);
-    var clonedItem = Object.create(item);
-    var bbox;
-
-    for (var i = 0, il = geometries.length; i < il; i++) {
-      clonedItem.geometry = geometries[i];
-      bbox = getBBox(geometries[i][0]);
-      clonedItem.min = bbox.min;
-      clonedItem.max = bbox.max;
-      res.push(clonedItem);
-    }
-  }
-
-  function getGeometries(geometry, origin, worldSize) {
-    var i, il, polygonRings, sub;
-    switch (geometry.type) {
-      case 'GeometryCollection':
-        var geometries = [];
-        for (i = 0, il = geometry.geometries.length; i < il; i++) {
-          if ((sub = getGeometries(geometry.geometries[i]))) {
-            geometries.push.apply(geometries, sub);
-          }
-        }
-        return geometries;
-
-      case 'MultiPolygon':
-        var polygons = [];
-        for (i = 0, il = geometry.coordinates.length; i < il; i++) {
-          if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
-            polygons.push.apply(geometries, sub);
-          }
-        }
-        return polygons;
-
-      case 'Polygon':
-        polygonRings = geometry.coordinates;
-        break;
-
-      default: return [];
-    }
-
-    var ring;
-    var res = [];
-
-    for (i = 0, il = polygonRings.length; i < il; i++) {
-      if (!i) {
-        ring = isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
-      } else {
-        ring = !isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
-      }
-
-      res[i] = transform(ring, origin, worldSize);
-    }
-
-    return [res];
-  }
-
-  function transform(ring, origin, worldSize) {
-    var p, res = [];
-    for (var i = 0, len = ring.length; i < len; i++) {
-      p = project(ring[i][1], ring[i][0], worldSize);
-      res[i] = [p.x-origin.x, p.y-origin.y];
-    }
-
-    return res;
-  }
-
-  function getBBox(ring) {
-    var
-      x =  Infinity, y =  Infinity,
-      X = -Infinity, Y = -Infinity;
-
-    for (var i = 0; i < ring.length; i++) {
-      x = Math.min(x, ring[i][0]);
-      y = Math.min(y, ring[i][1]);
-
-      X = Math.max(X, ring[i][0]);
-      Y = Math.max(Y, ring[i][1]);
-    }
-
-    return {
-      min: { x:x, y:y },
-      max: { x:X, y:Y }
-    };
-  }
-
-  //***************************************************************************
-
-  GeoJSON.parse = function(position, worldSize, geojson) {
-    var res = [];
-
-    if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
-
-      var
-        collection = geojson.features,
-        origin = project(position.latitude, position.longitude, worldSize);
-
-      for (var i = 0, il = collection.length; i<il; i++) {
-        parseFeature(res, collection[i], origin, worldSize);
-      }
-    }
-
-    return res;
-  };
-
-}());
-
-
-var OBJ = function() {
-  this.vertexIndex = [];
-};
-
-if (typeof module !== 'undefined') {
-  module.exports = OBJ;
-}
-
-OBJ.prototype = {
-
-  parseMaterials: function(str) {
-    var lines = str.split(/[\r\n]/g), cols;
-    var i, il;
-
-    var materials = {};
-    var data = null;
-
-    for (i = 0, il = lines.length; i < il; i++) {
-  	  cols = lines[i].trim().split(/\s+/);
-
-      switch (cols[0]) {
-  	    case 'newmtl':
-          this.storeMaterial(materials, data);
-          data = { id:cols[1], color:{} };
-        break;
-
-  	    case 'Kd':
-  	      data.color.r = parseFloat(cols[1]);
-  	      data.color.g = parseFloat(cols[2]);
-  	      data.color.b = parseFloat(cols[3]);
-  	    break;
-
-  	    case 'd':
-          data.color.a = parseFloat(cols[1]);
-        break;
-  	  }
-    }
-
-    this.storeMaterial(materials, data);
-
-    str = null;
-
-    return materials;
-  },
-
-  storeMaterial: function(materials, data) {
-    if (data !== null) {
-      materials[ data.id ] = data.color;
-    }
-  },
-
-  parseModel: function(str, materials) {
-    var lines = str.split(/[\r\n]/g), cols;
-    var i, il;
-
-    var meshes = [];
-    var id;
-    var color;
-    var faces = [];
-
-    for (i = 0, il = lines.length; i < il; i++) {
-  	  cols = lines[i].trim().split(/\s+/);
-
-      switch (cols[0]) {
-        case 'g':
-        case 'o':
-          this.storeMesh(meshes, id, color, faces);
-          id = cols[1];
-          faces = [];
-        break;
-
-        case 'usemtl':
-          this.storeMesh(meshes, id, color, faces);
-          if (materials[ cols[1] ]) {
-            color = materials[ cols[1] ];
-          }
-          faces = [];
-        break;
-
-        case 'v':
-          this.vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
-        break;
-
-  	    case 'f':
-  	      faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
-  	    break;
-	    }
-    }
-
-    this.storeMesh(meshes, id, color, faces);
-
-    str = null;
-
-    return meshes;
-  },
-
-  storeMesh: function(meshes, id, color, faces) {
-    if (faces.length) {
-      var geometry = this.createGeometry(faces);
-      meshes.push({
-        id: id,
-        color: color,
-        vertices: geometry.vertices,
-        normals: geometry.normals,
-        min: geometry.min,
-        max: geometry.max
-      });
-    }
-  },
-
-  createGeometry: function(faces) {
-  	var v0, v1, v2;
-  	var e1, e2;
-  	var nor, len;
-    var
-      x =  Infinity, y =  Infinity, z =  Infinity,
-      X = -Infinity, Y = -Infinity, Z = -Infinity;
-
-    var geometry = { vertices:[], normals:[] };
-
-    for (var i = 0, il = faces.length; i < il; i++) {
-  		v0 = this.vertexIndex[ faces[i][0] ];
-  		v1 = this.vertexIndex[ faces[i][1] ];
-  		v2 = this.vertexIndex[ faces[i][2] ];
-
-      x = Math.min(x, v0[0], v1[0], v2[0]);
-      y = Math.min(x, v0[2], v1[2], v2[2]);
-      z = Math.min(x, v0[1], v1[1], v2[1]);
-
-      X = Math.max(X, v0[0], v1[0], v2[0]);
-      Y = Math.max(Y, v0[2], v1[2], v2[2]);
-      Z = Math.max(Z, v0[1], v1[1], v2[1]);
-
-      e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
-  		e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
-
-  		nor = [ e1[1]*e2[2] - e1[2]*e2[1], e1[2]*e2[0] - e1[0]*e2[2], e1[0]*e2[1] - e1[1]*e2[0] ];
-  		len = Math.sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
-
-  		nor[0] /= len;
-      nor[1] /= len;
-      nor[2] /= len;
-
-  		geometry.vertices.push(
-        v0[0], v0[2], v0[1],
-        v1[0], v1[2], v1[1],
-        v2[0], v2[2], v2[1]
-      );
-
-  		geometry.normals.push(
-        nor[0], nor[1], nor[2],
-        nor[0], nor[1], nor[2],
-        nor[0], nor[1], nor[2]
-      );
-    }
-
-    geometry.min = { x:x, y:y, z:z };
-    geometry.max = { x:X, y:Y, z:Z };
-    return geometry;
-  }
-};
-
-OBJ.parse = function(obj, mtl) {
-  var
-    parser = new OBJ(),
-    materials = mtl ? parser.parseMaterials(mtl) : {};
-  return parser.parseModel(obj, materials);
-};
-
-
 function distance2(a, b) {
   var
     dx = a[0]-b[0],
@@ -3919,9 +3821,64 @@ function distance2(a, b) {
   return dx*dx + dy*dy;
 }
 
+function isCircular(polygon, bbox, center) {
+  var length = polygon.length;
+
+  if (length < 16) {
+    return false;
+  }
+
+  var
+    width = bbox.maxX-bbox.minX,
+    height = bbox.maxY-bbox.minY,
+    sizeRatio = width/height;
+
+  if (sizeRatio < 0.85 || sizeRatio > 1.15) {
+    return false;
+  }
+
+  var
+    radius = (width+height)/4,
+    sqRadius = radius*radius,
+    dist;
+
+
+  for (var i = 0; i < length; i++) {
+    dist = distance2(polygon[i], center);
+    if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function isClockWise(polygon) {
+  return 0 < polygon.reduce(function(a, b, c, d) {
+      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
+    }, 0);
+}
+
+function getBBox(polygon) {
+  var
+    x =  Infinity, y =  Infinity,
+    X = -Infinity, Y = -Infinity;
+
+  for (var i = 0; i < polygon.length; i++) {
+    x = Math.min(x, polygon[i][0]);
+    y = Math.min(y, polygon[i][1]);
+
+    X = Math.max(X, polygon[i][0]);
+    Y = Math.max(Y, polygon[i][1]);
+  }
+
+  return { minX:x, minY:y, maxX:X, maxY:Y };
+}
+
 function assert(condition, message) {
-  if (!condition)
+  if (!condition) {
     throw message;
+  }
 }
 
 /* Returns the distance of point 'p' from line 'line1'->'line2'.
@@ -4075,7 +4032,6 @@ function rasterConvexQuad (quad) {
   
   return res1.concat(res2);
 }
-  
 
 function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
   var d1x = ax-bx;

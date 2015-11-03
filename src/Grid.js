@@ -134,7 +134,7 @@ Grid.prototype = {
   purge: function() {
     var
       zoom = Math.round(MAP.zoom),
-      tile, parent, children;
+      tile, parent;
 
     for (var key in this.tiles) {
       tile = this.tiles[key];

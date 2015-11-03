@@ -9,38 +9,58 @@ mesh.GeoJSON = (function() {
 
   //***************************************************************************
 
-  function isRotational(item, center) {
-    var
-      ring = item.geometry[0],
-      length = ring.length;
+  function getGeometries(geometry, origin) {
+    var i, il, polygonRings, sub;
+    switch (geometry.type) {
+      case 'GeometryCollection':
+        var geometries = [];
+        for (i = 0, il = geometry.geometries.length; i < il; i++) {
+          if ((sub = getGeometries(geometry.geometries[i]))) {
+            geometries.push.apply(geometries, sub);
+          }
+        }
+        return geometries;
 
-    if (length < 16) {
-      return false;
+      case 'MultiPolygon':
+        var polygons = [];
+        for (i = 0, il = geometry.coordinates.length; i < il; i++) {
+          if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
+            polygons.push.apply(geometries, sub);
+          }
+        }
+        return polygons;
+
+      case 'Polygon':
+        polygonRings = geometry.coordinates;
+        break;
+
+      default: return [];
     }
 
-    var
-      width = item.max.x-item.min.x,
-      height = item.max.y-item.min.y,
-      ratio = width/height;
+    var ring;
+    var res = [];
 
-    if (ratio < 0.85 || ratio > 1.15) {
-      return false;
-    }
-
-    var
-      radius = (width+height)/4,
-      sqRadius = radius*radius,
-      dist;
-
-
-    for (var i = 0; i < length; i++) {
-      dist = distance2(ring[i], center);
-      if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
-        return false;
+    for (i = 0, il = polygonRings.length; i < il; i++) {
+      if (!i) {
+        ring = isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
+      } else {
+        ring = !isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
       }
+
+      res[i] = transform(ring, origin);
     }
 
-    return true;
+    return [res];
+  }
+
+  function transform(ring, origin) {
+    var p, res = [];
+    for (var i = 0, len = ring.length; i < len; i++) {
+      p = project(ring[i][1], ring[i][0], worldSize);
+      res[i] = [p.x-origin.x, p.y-origin.y];
+    }
+
+    return res;
   }
 
   //***************************************************************************
@@ -49,9 +69,7 @@ mesh.GeoJSON = (function() {
     options = options || {};
 
     this.id = options.id;
-    if (options.color) {
-      this.color = new Color(options.color).toArray();
-    }
+    this.color = options.color;
 
     this.replace   = !!options.replace;
     this.scale     = options.scale     || 1;
@@ -96,15 +114,21 @@ mesh.GeoJSON = (function() {
       this.items = [];
 
       var
+        origin = project(this.position.latitude, this.position.longitude, worldSize),
         startIndex = 0,
         dataLength = json.features.length,
         endIndex = startIndex + Math.min(dataLength, featuresPerChunk);
 
       var process = function() {
-        var features = json.features.slice(startIndex, endIndex);
-        var geojson = { type: 'FeatureCollection', features: features };
-        var data = GeoJSON.parse(this.position, worldSize, geojson);
-        this.addItems(data);
+        var feature, geometries;
+        for (var i = startIndex; i < endIndex; i++) {
+          feature = json.features[i];
+          geometries = getGeometries(feature.geometry, origin);
+
+          for (var j = 0, jl = geometries.length; j < jl; j++) {
+            this.addItem(feature.id, patch.GeoJSON(feature.properties), geometries[j]);
+          }
+        }
 
         if (endIndex === dataLength) {
           this.onReady();
@@ -120,77 +144,139 @@ mesh.GeoJSON = (function() {
       process();
     },
 
-    addItems: function(items) {
+    addItem: function(id, properties, geometry) {
+      id = this.id || properties.relationId || id || properties.id;
+
       var
-        item, color, idColor, center, radius,
-        vertexCount,
-        id, colorVariance,
-        defaultColor = new Color(DEFAULT_COLOR).toArray(),
-        j;
+        i,
+        skipRoof,
+        vertexCount, color,
+        idColor = render.Interaction.idToColor(id),
+        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
+        bbox = getBBox(geometry[0]),
+        radius = (bbox.maxX - bbox.minX)/2,
+        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
 
-      for (var i = 0, il = items.length; i < il; i++) {
-        item = items[i];
-
-        id = this.id || item.id;
-        idColor = render.Interaction.idToColor(id);
-        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06); // TODO: maybe a shaders task
-
-        center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
-
-        //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item, center)) {
-        if (!item.shape && isRotational(item, center)) {
-          item.shape = 'cylinder';
-          item.isRotational = true;
-        }
-
-        if (item.isRotational) {
-          radius = (item.max.x - item.min.x)/2;
-        }
-
-        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
-        switch (item.shape) {
-          case 'cylinder': vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
-          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.minHeight, item.height); break;
-          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.minHeight, item.height); break;
-          case 'sphere':   vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
-          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.minHeight, item.height); break;
-          default:         vertexCount = Triangulate.extrusion(this.data, item.geometry, item.minHeight, item.height);
-        }
-
-        color = this.color || item.wallColor || defaultColor;
-        for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
-        }
-
-        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
-
-        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
-        switch (item.roofShape) {
-          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.height, item.height+item.roofHeight); break;
-          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
-          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.height, item.height+item.roofHeight); break;
-          default:
-            if (item.shape === 'cylinder') {
-              vertexCount = Triangulate.circle(this.data, center, radius, item.height);
-            } else if (item.shape === undefined) {
-              vertexCount = Triangulate.polygon(this.data, item.geometry, item.height);
-            }
-        }
-
-        color = this.color || item.roofColor || defaultColor;
-        for (j = 0; j < vertexCount; j++) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
-        }
-
-        this.items.push({ id:id, vertexCount:vertexCount, data:item.data });
+      // flat roofs or roofs we can't handle should not affect building's height
+      switch (properties.roofShape) {
+        case 'cone':
+        case 'dome':
+        case 'onion':
+        case 'pyramid':
+        case 'pyramidal':
+          properties.height = Math.max(0, properties.height-(properties.roofHeight || 3));
+        break;
+        default:
+          properties.roofHeight = 0;
       }
+
+      //****** walls ******
+
+      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+      switch (properties.shape) {
+        case 'cylinder':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+        break;
+
+        case 'cone':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.minHeight, properties.height);
+          skipRoof = true;
+        break;
+
+        case 'dome':
+          vertexCount = Triangulate.dome(this.data, center, radius, properties.minHeight, properties.height);
+        break;
+
+        case 'sphere':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+        break;
+
+        case 'pyramid':
+        case 'pyramidal':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+          skipRoof = true;
+        break;
+
+        default:
+          if (isCircular(geometry[0], bbox, center)) {
+            vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+          } else {
+            vertexCount = Triangulate.extrusion(this.data, geometry, properties.minHeight, properties.height);
+          }
+      }
+
+      color = new Color(this.color || properties.wallColor || DEFAULT_COLOR).toArray();
+      for (i = 0; i < vertexCount; i++) {
+        this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+      }
+
+      this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
+
+      //****** roof ******
+
+      if (skipRoof) {
+        return;
+      }
+
+      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+
+      switch (properties.roofShape) {
+        case 'cone':
+          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+        break;
+
+        case 'dome':
+        case 'onion':
+          vertexCount = Triangulate.dome(this.data, center, radius, properties.height, properties.height + (properties.roofHeight || radius));
+        break;
+
+        case 'pyramid':
+        case 'pyramidal':
+          if (properties.shape === 'cylinder') {
+            vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+          } else {
+            vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+          }
+          break;
+
+        //case 'skillion':
+        //  // TODO: skillion
+        //  vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+        //break;
+        //
+        //case 'gabled':
+        //case 'hipped':
+        //case 'half-hipped':
+        //case 'gambrel':
+        //case 'mansard':
+        //case 'round':
+        //case 'saltbox':
+        //  // TODO: gabled
+        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+        //break;
+
+//      case 'flat':
+        default:
+          if (properties.shape === 'cylinder') {
+            vertexCount = Triangulate.circle(this.data, center, radius, properties.height);
+          } else {
+            vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+          }
+        }
+
+      color = new Color(this.color || properties.roofColor || DEFAULT_COLOR).toArray();
+      for (i = 0; i<vertexCount; i++) {
+        this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);
+        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+      }
+
+      this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
     },
 
-    initFilter: function() {
+    fadeIn: function() {
       var item, filters = [];
-      var start = Filter.time(), end = start + 500;
+      var start = Filter.time() + 250, end = start + 500;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];
@@ -217,7 +303,7 @@ mesh.GeoJSON = (function() {
       this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
       this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-      this.initFilter();
+      this.fadeIn();
       this.data = null;
 
       Filter.apply(this);

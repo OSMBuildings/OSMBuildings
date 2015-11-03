@@ -13,6 +13,7 @@
     "src/Activity.js",
 
     "src/variables.js",
+    "src/patch.js",
     "src/Request.js",
     "src/util.js",
     "src/Shaders.min.js",
@@ -20,7 +21,6 @@
 
     "src/Grid.js",
     "src/Filter.js",
-
 
     "src/data/index.js",
     "src/data/Tile.js",
@@ -30,9 +30,6 @@
     "src/mesh/MapPlane.js",
     "src/mesh/DebugQuad.js",
     "src/mesh/OBJ.js",
-
-    "src/format/GeoJSON.js",
-    "src/format/OBJ.js",
 
     "src/geometry.js",
 
