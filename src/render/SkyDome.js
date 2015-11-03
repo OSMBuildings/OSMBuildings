@@ -23,7 +23,7 @@ render.SkyDome = {
     }.bind(this));
   },
 
-  baseRadius: 3000,
+  baseRadius: 100,
 
   createGeometry: function(radius) {
     var
@@ -98,7 +98,14 @@ render.SkyDome = {
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
     var modelMatrix = new glx.Matrix();
-    var scale = Math.pow(2, MAP.zoom - 16);
+    /* Make the skydome start right after the fog limit, but ensure that 
+     * it is not pushed farther away than the camera's far plane.
+     * (scale 73 with baseRadius 100 --> distance of 7400 units; far plane is at
+     * 7500;
+     */
+    var scale = Math.min((render.fogDistance + render.fogBlurDistance)/100.0, 73);
+    console.log("Skydome scale:", scale);
+    //;
     modelMatrix.scale(scale, scale, scale);
 
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);

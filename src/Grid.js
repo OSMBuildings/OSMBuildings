@@ -109,6 +109,31 @@ Grid.prototype = {
     var s = 'abcd'[(x+y) % 4];
     return pattern(this.source, { s:s, x:x, y:y, z:z });
   },
+  
+  /* Modifies this.visibleTiles to contain at most 'maxNumTiles' tiles by only
+   * keeping up to 'maxNumTiles' tiles that are closest to 'referencePoint'. */
+  reduceTileSet: function(referencePoint, maxNumTiles) {
+    var tiles = [];
+    for (var tile in this.visibleTiles)
+      tiles.push(tile.split(","));
+    
+    tiles.sort( function(a, b) {
+      // tile coordinates correspond to the tile's upper left corner, but for 
+      // the distance computation we should rather use their center; hence the 0.5 offsets
+      var distA = Math.sqrt(Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
+                            Math.pow(a[1] + 0.5 - referencePoint[1], 2.0));
+
+      var distB = Math.sqrt(Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) +
+                            Math.pow(b[1] + 0.5 - referencePoint[1], 2.0));
+      
+      return distA < distB;
+    });
+    
+    this.visibleTiles = {};
+    for (var i = 0; i < tiles.length && i < maxNumTiles; i++)
+      this.visibleTiles[ tiles[i]] = true;
+
+  },
 
   loadTiles: function() {
     var zoom = Math.round(this.fixedZoom || MAP.zoom);
@@ -140,8 +165,16 @@ Grid.prototype = {
     for (var i = 0; i < 4; i++)
       viewQuad[i] = asTilePosition(viewQuad[i], zoom);
     
-    
+    var referencePoint = [ MAP.center.x * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE,
+                           MAP.center.y * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE];
+
     this.visibleTiles = this.getTilesInQuad(viewQuad, zoom);
+    this.reduceTileSet( referencePoint, MAX_TILES_PER_GRID);
+
+    //console.log(tiles[0], referencePoint);
+    //console.log("%s/%s tiles at level %s", tiles.length, 
+    //            Math.min(tiles.length, MAX_TILES_PER_GRID), zoom);
+                        
     var numTiles = 0;
 
     for (var key in this.visibleTiles) {
@@ -159,7 +192,6 @@ Grid.prototype = {
       // TODO: rotate anchor point
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
-    //console.log("%s tiles at level %s", numTiles, zoom);
 
     this.purge();
 

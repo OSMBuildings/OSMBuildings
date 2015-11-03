@@ -1,5 +1,6 @@
 
 var TILE_SIZE = 256;
+var MAX_TILES_PER_GRID = 100;
 
 var DEFAULT_HEIGHT = 10;
 var HEIGHT_SCALE = 0.7;
