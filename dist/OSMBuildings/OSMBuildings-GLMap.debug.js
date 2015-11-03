@@ -4911,7 +4911,7 @@ render.Basemap = {
 
     var
       shader = this.shader,
-      tile, modelMatrix,
+      tile,
       zoom = Math.round(MAP.zoom);
 
     shader.enable();

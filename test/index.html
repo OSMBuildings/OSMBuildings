@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>OSM Buildings GL</title>
+  <title>OSM Buildings</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
@@ -114,11 +114,11 @@
     return id % 2 === 0;
   };
 
-  function showX(duration) {
+  function showEven(duration) {
     osmb.show(selector, duration || 1000);
   }
 
-  function hideX(duration) {
+  function hideEven(duration) {
     osmb.hide(selector, duration || 1000);
   }
 
