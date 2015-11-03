@@ -8,3 +8,6 @@ _scratch
 
 # backup files
 *~
+
+# JavaScript source maps
+*.js.map 

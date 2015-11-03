@@ -11,8 +11,10 @@ uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
+uniform vec2 uViewDirOnMap;
 
 varying vec2 vTexCoord;
+varying float verticalDistanceToMapCenter;
 
 uniform float uBendRadius;
 uniform float uBendDistance;
@@ -38,4 +40,7 @@ void main() {
 
   gl_Position = uMatrix * aPosition;
   vTexCoord = aTexCoord;
+
+  vec4 worldPos = uModelMatrix * aPosition;
+  verticalDistanceToMapCenter = dot(worldPos.xy / worldPos.w, uViewDirOnMap);
 }

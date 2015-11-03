@@ -142,9 +142,11 @@ Grid.prototype = {
     
     
     this.visibleTiles = this.getTilesInQuad(viewQuad, zoom);
+    var numTiles = 0;
 
     for (var key in this.visibleTiles) {
       tile = key.split(',');
+      numTiles += 1;
       tileX = tile[0];
       tileY = tile[1];
 
@@ -157,6 +159,7 @@ Grid.prototype = {
       // TODO: rotate anchor point
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
     }
+    //console.log("%s tiles at level %s", numTiles, zoom);
 
     this.purge();
 

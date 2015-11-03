@@ -6,7 +6,7 @@
 uniform float uFogDistance;
 uniform float uFogBlurDistance;
 
-varying vec3 vWorldPosition;
+varying float verticalDistanceToMapCenter;
 
 /* Note: the depth shader needs to not only store depth information, but
  *       also the fog intensity as well.
@@ -26,7 +26,7 @@ varying vec3 vWorldPosition;
  */
 
 void main() {
-  // 7500.0 is an empirically-determined factor specific to OSMBuildings
+  // 7500.0 is the position of the far plane in OSMBuildings
   float depth = (gl_FragCoord.z / gl_FragCoord.w)/7500.0;
   if (depth > 1.0)
     depth = 1.0;
@@ -37,8 +37,7 @@ void main() {
   depth = (depth - z) * 256.0;
   float z2 = floor(depth*256.0)/256.0;
 
-  float dist = gl_FragCoord.z / gl_FragCoord.w;
-  float fogIntensity = (dist - uFogDistance) / uFogBlurDistance;
+  float fogIntensity = (verticalDistanceToMapCenter - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
   // option 1: this line outputs high-precision (24bit) depth values

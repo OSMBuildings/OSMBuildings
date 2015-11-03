@@ -25,9 +25,10 @@ var render = {
    * Note: if the horizon is level (as should usually be the case for 
    * OSMBuildings) then said quad is also a trapezoid. */
   getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
-    /* maximum distance from the camera *plane* (not camera position!) at which
+    /* maximum distance from the map center at which
      * geometry is still visible */
     var MAX_FAR_EDGE_DISTANCE = (this.fogDistance + this.fogBlurDistance);
+    //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
     var inverse = glx.Matrix.invert(viewProjectionMatrix);
 
     var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
@@ -58,48 +59,37 @@ var render = {
      * is not a practically useful result - though formally correct - we instead
      * manually bound that area.*/
     if (!vTopLeft || !vTopRight) {
-      /* This point is chosen somewhat arbitrarily. It just *has* to lie on the
-       * left edge of the screen. And it *should* be located relatively low
-       * on that edge to ensure it lies below the horizon, but should not be too
-       * close to 'vBottomLeft' to not cause numerical accuracy issues when computing
-       * the vector between this point and 'vBottomLeft'. The value '-0.9' was 
-       * chosen as it fits these criteria quite well, but no effort was made
-       * to guarantee an *optimal* fit.  */
-      vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
-      vLeftDir = norm3(sub3( vLeftPoint, vBottomLeft));
-      vTopLeft = getRayPointAtDistanceToPlane( camPos, camLookDir, 
-                                               vBottomLeft, vLeftDir, 
-                                               MAX_FAR_EDGE_DISTANCE);
+      /* point on the left screen edge with the same y-value as the map center*/
+      vLeftMid = getIntersectionWithXYPlane(-1, 0, inverse);
+      vLeftDir = norm2(sub2( vLeftMid, vBottomLeft));
+      var f = dot2(vLeftDir, this.viewDirOnMap);
+      vTopLeft = add2( vLeftMid, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
       
-      /* arbitrary point on the right screen edge, subject to the same
-       * requirements as 'vLeftPoint' */
-      vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
-      vRightDir = norm3(sub3(vRightPoint, vBottomRight));
-      vTopRight = getRayPointAtDistanceToPlane( camPos, camLookDir, 
-                                                vBottomRight, vRightDir, 
-                                                MAX_FAR_EDGE_DISTANCE);
+      vRightMid = getIntersectionWithXYPlane( 1, 0, inverse);
+      vRightDir = norm2(sub2(vRightMid, vBottomRight));
+      var f = dot2(vRightDir, this.viewDirOnMap);
+      vTopRight = add2( vRightMid, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
     }
 
-   
-    /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away from the camera plane,
+    /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away vertically from the map center,
      * move it closer. */
-    if ( dot3( sub3( vTopLeft, camPos), camLookDir) > MAX_FAR_EDGE_DISTANCE) {
-    
-      vLeftDir = norm3(sub3(vTopLeft, vBottomLeft));
-      vTopLeft = getRayPointAtDistanceToPlane( camPos, camLookDir, 
-                                                    vBottomLeft, vLeftDir, 
-                                                    MAX_FAR_EDGE_DISTANCE);
-    }
-    
-    /* do the same for the right edge */
-    if ( dot3( sub3( vTopRight, camPos), camLookDir) > MAX_FAR_EDGE_DISTANCE) {
-    
-      vRightDir = norm3(sub3(vTopRight, vBottomRight));
-      vTopRight = getRayPointAtDistanceToPlane( camPos, camLookDir, 
-                                                vBottomRight, vRightDir, 
-                                                 MAX_FAR_EDGE_DISTANCE);
-    }
-    
+   if (dot2( this.viewDirOnMap, vTopLeft) > MAX_FAR_EDGE_DISTANCE)
+   {
+      vLeftMid = getIntersectionWithXYPlane(-1, 0, inverse);
+      vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
+      var f = dot2(vLeftDir, this.viewDirOnMap);
+      vTopLeft = add2( vLeftMid, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
+   }
+
+   /* dito for vTopRight*/
+   if (dot2( this.viewDirOnMap, vTopRight) > MAX_FAR_EDGE_DISTANCE)
+   {
+      vRightMid = getIntersectionWithXYPlane(1, 0, inverse);
+      vRightDir = norm2(sub2( vTopRight, vBottomRight));
+      var f = dot2(vRightDir, this.viewDirOnMap);
+      vTopRight = add2( vRightMid, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
+   }
+   
     return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
   },
 
@@ -107,6 +97,7 @@ var render = {
     this.viewMatrix = new glx.Matrix();
     this.projMatrix = new glx.Matrix();
     this.viewProjMatrix = new glx.Matrix();
+    this.viewDirOnMap = [0.0, -1.0];
 
     MAP.on('change', this._onChange = this.onChange.bind(this));
     this.onChange();
@@ -178,10 +169,17 @@ var render = {
 
   updateFogDistance: function() {
     var inverse = glx.Matrix.invert(this.viewProjMatrix.data);
+    
+    var lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
+    if (lowerLeftOnMap === undefined)
+        return;
+        
+    var lowerLeftDistanceToCenter = len2(lowerLeftOnMap);
     var cameraDistanceFromMapCenter = len3( getCameraPosition( inverse ));
-    /* fogDistance: closest distance at which the fog affects the geometry */
 
-    this.fogDistance = 1200 * Math.pow(2, MAP.zoom - 16 ) + cameraDistanceFromMapCenter;
+    /* fogDistance: closest distance at which the fog affects the geometry */
+    this.fogDistance = Math.max(1200* Math.pow(2, MAP.zoom - 16 ),
+                                lowerLeftDistanceToCenter);
     /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
      *                  completely enclosed in fog. */
     this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16 );
@@ -192,6 +190,9 @@ var render = {
     this.viewMatrix = new glx.Matrix()
       .rotateZ(MAP.rotation)
       .rotateX(MAP.tilt);
+
+    this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
+                         -Math.cos(MAP.rotation / 180* Math.PI)];
 
     this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
     this.updateFogDistance()

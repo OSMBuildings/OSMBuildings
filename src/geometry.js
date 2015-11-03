@@ -172,8 +172,9 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
    * For the intersection with the xy-plane (-> z=0) holds: v1[2] + λ*vDirNorm[2] = p[2] = 0.0.
    * Rearranged, this reads:   */
   var lambda = -v1[2]/vDir[2];
+  var pos = add3( v1, mul3scalar(vDir, lambda));
 
-  return add3( v1, mul3scalar(vDir, lambda));
+  return [pos[0], pos[1]];  // z==0 
 
 }
 
@@ -270,6 +271,14 @@ function asTilePosition(localXY, tileZoom) {
 
   return [tileX, tileY];
 }
+
+function len2(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1]);}
+function dot2(a,b) { return a[0]*b[0] + a[1]*b[1];}
+function sub2(a,b) { return [a[0]-b[0], a[1]-b[1]];}
+function add2(a,b) { return [a[0]+b[0], a[1]+b[1]];}
+function mul2scalar(a,f) { return [a[0]*f, a[1]*f];}
+function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l]; }
+
 
 function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]+b[2];}
 function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
