@@ -24,7 +24,7 @@ var render = {
    * and geometry tiles need to be loaded.
    * Note: if the horizon is level (as should usually be the case for 
    * OSMBuildings) then said quad is also a trapezoid. */
-  getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
+  getViewQuad: function(viewProjectionMatrix) {
     /* maximum distance from the map center at which
      * geometry is still visible */
     var MAX_FAR_EDGE_DISTANCE = (this.fogDistance + this.fogBlurDistance);
@@ -60,15 +60,15 @@ var render = {
      * manually bound that area.*/
     if (!vTopLeft || !vTopRight) {
       /* point on the left screen edge with the same y-value as the map center*/
-      vLeftMid = getIntersectionWithXYPlane(-1, 0, inverse);
-      vLeftDir = norm2(sub2( vLeftMid, vBottomLeft));
+      vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
+      vLeftDir = norm2(sub2( vLeftPoint, vBottomLeft));
       var f = dot2(vLeftDir, this.viewDirOnMap);
-      vTopLeft = add2( vLeftMid, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
+      vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
       
-      vRightMid = getIntersectionWithXYPlane( 1, 0, inverse);
-      vRightDir = norm2(sub2(vRightMid, vBottomRight));
+      vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
+      vRightDir = norm2(sub2(vRightPoint, vBottomRight));
       var f = dot2(vRightDir, this.viewDirOnMap);
-      vTopRight = add2( vRightMid, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
+      vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
     }
 
     /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away vertically from the map center,
@@ -78,7 +78,7 @@ var render = {
       vLeftMid = getIntersectionWithXYPlane(-1, 0, inverse);
       vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
       var f = dot2(vLeftDir, this.viewDirOnMap);
-      vTopLeft = add2( vLeftMid, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
+      vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
    }
 
    /* dito for vTopRight*/
@@ -87,7 +87,7 @@ var render = {
       vRightMid = getIntersectionWithXYPlane(1, 0, inverse);
       vRightDir = norm2(sub2( vTopRight, vBottomRight));
       var f = dot2(vRightDir, this.viewDirOnMap);
-      vTopRight = add2( vRightMid, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
+      vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
    }
    
     return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
@@ -134,9 +134,12 @@ var render = {
         if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
           return;
         }
-        
-        //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
-        //quad.updateGeometry(viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3]);
+        /*
+        var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
+        quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
+                            [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
+                            [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
+                            [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
         render.SkyDome.render();
         gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
@@ -170,15 +173,16 @@ var render = {
   updateFogDistance: function() {
     var inverse = glx.Matrix.invert(this.viewProjMatrix.data);
     
-    var lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
-    if (lowerLeftOnMap === undefined)
+    //need to store this as a reference point to determine fog distance
+    this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
+    if (this.lowerLeftOnMap === undefined)
         return;
         
-    var lowerLeftDistanceToCenter = len2(lowerLeftOnMap);
+    var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
     var cameraDistanceFromMapCenter = len3( getCameraPosition( inverse ));
 
     /* fogDistance: closest distance at which the fog affects the geometry */
-    this.fogDistance = Math.max(1200* Math.pow(2, MAP.zoom - 16 ),
+    this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16 ),
                                 lowerLeftDistanceToCenter);
     /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
      *                  completely enclosed in fog. */

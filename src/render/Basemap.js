@@ -6,7 +6,7 @@ render.Basemap = {
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uViewDirOnMap']
+      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uFogColor', 'uLowerEdgePoint', 'uBendRadius', 'uBendDistance', 'uViewDirOnMap']
     });
   },
 
@@ -75,7 +75,8 @@ render.Basemap = {
     modelMatrix.scale(ratio, ratio, 1);
     modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
 
-    gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
+    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
+    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
     gl.uniformMatrix4fv(shader.uniforms.uViewMatrix, false, render.viewMatrix.data);
     gl.uniformMatrix4fv(shader.uniforms.uProjMatrix, false, render.projMatrix.data);

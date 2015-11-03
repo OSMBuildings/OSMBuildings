@@ -21,9 +21,10 @@ uniform vec3 uLightColor;
 uniform vec3 uHighlightColor;
 uniform vec3 uHighlightID;
 uniform vec2 uViewDirOnMap;
+uniform vec2 uLowerEdgePoint;
 
 varying vec3 vColor;
-varying float verticalDistanceToMapCenter;
+varying float verticalDistanceToLowerEdge;
 
 
 float gradientHeight = 90.0;
@@ -84,6 +85,7 @@ void main() {
 
     vColor = color-verticalShading;
     vec4 worldPos = uModelMatrix * aPosition;
-    verticalDistanceToMapCenter = dot(worldPos.xy / worldPos.w, uViewDirOnMap);
+    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
+    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
   }
 }

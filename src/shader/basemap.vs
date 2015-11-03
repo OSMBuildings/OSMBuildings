@@ -12,9 +12,10 @@ uniform mat4 uViewMatrix;
 uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
 uniform vec2 uViewDirOnMap;
+uniform vec2 uLowerEdgePoint;
 
 varying vec2 vTexCoord;
-varying float verticalDistanceToMapCenter;
+varying float verticalDistanceToLowerEdge;
 
 uniform float uBendRadius;
 uniform float uBendDistance;
@@ -42,5 +43,6 @@ void main() {
   vTexCoord = aTexCoord;
 
   vec4 worldPos = uModelMatrix * aPosition;
-  verticalDistanceToMapCenter = dot(worldPos.xy / worldPos.w, uViewDirOnMap);
+  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
+  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
 }

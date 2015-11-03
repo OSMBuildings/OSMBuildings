@@ -6,7 +6,7 @@
 uniform float uFogDistance;
 uniform float uFogBlurDistance;
 
-varying float verticalDistanceToMapCenter;
+varying float verticalDistanceToLowerEdge;
 
 /* Note: the depth shader needs to not only store depth information, but
  *       also the fog intensity as well.
@@ -37,7 +37,7 @@ void main() {
   depth = (depth - z) * 256.0;
   float z2 = floor(depth*256.0)/256.0;
 
-  float fogIntensity = (verticalDistanceToMapCenter - uFogDistance) / uFogBlurDistance;
+  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
   // option 1: this line outputs high-precision (24bit) depth values
