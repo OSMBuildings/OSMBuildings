@@ -46,11 +46,8 @@ var render = {
       return;
     }
 
-    var camPos = getCameraPosition( inverse );
-    var camLookDir = norm3(sub3( transformVec3(inverse, [0, 0, 1]),
-                                 transformVec3(inverse, [0, 0, 0.5])));
-
     var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
+    var f;
 
     /* The lower screen edge shows the map layer, but the upper one does not.
      * This usually happens when the camera is close to parallel to the ground
@@ -63,31 +60,27 @@ var render = {
       /* point on the left screen edge with the same y-value as the map center*/
       vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
       vLeftDir = norm2(sub2( vLeftPoint, vBottomLeft));
-      var f = dot2(vLeftDir, this.viewDirOnMap);
+      f = dot2(vLeftDir, this.viewDirOnMap);
       vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
       
       vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
       vRightDir = norm2(sub2(vRightPoint, vBottomRight));
-      var f = dot2(vRightDir, this.viewDirOnMap);
+      f = dot2(vRightDir, this.viewDirOnMap);
       vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
     }
 
     /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away vertically from the map center,
      * move it closer. */
-   if (dot2( this.viewDirOnMap, vTopLeft) > MAX_FAR_EDGE_DISTANCE)
-   {
-      vLeftMid = getIntersectionWithXYPlane(-1, 0, inverse);
+   if (dot2( this.viewDirOnMap, vTopLeft) > MAX_FAR_EDGE_DISTANCE) {
       vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
-      var f = dot2(vLeftDir, this.viewDirOnMap);
+      f = dot2(vLeftDir, this.viewDirOnMap);
       vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
    }
 
    /* dito for vTopRight*/
-   if (dot2( this.viewDirOnMap, vTopRight) > MAX_FAR_EDGE_DISTANCE)
-   {
-      vRightMid = getIntersectionWithXYPlane(1, 0, inverse);
+   if (dot2( this.viewDirOnMap, vTopRight) > MAX_FAR_EDGE_DISTANCE) {
       vRightDir = norm2(sub2( vTopRight, vBottomRight));
-      var f = dot2(vRightDir, this.viewDirOnMap);
+      f = dot2(vRightDir, this.viewDirOnMap);
       vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
    }
    
@@ -200,7 +193,7 @@ var render = {
                          -Math.cos(MAP.rotation / 180* Math.PI)];
 
     this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
-    this.updateFogDistance()
+    this.updateFogDistance();
   },
 
   onResize: function() {

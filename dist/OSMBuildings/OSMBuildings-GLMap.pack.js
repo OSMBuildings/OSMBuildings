@@ -2132,6 +2132,7 @@
 
 
 	var TILE_SIZE = 256;
+	var MAX_TILES_PER_GRID = 100;
 
 	var DEFAULT_HEIGHT = 10;
 	var HEIGHT_SCALE = 0.7;
@@ -2343,7 +2344,7 @@
 	  });
 	}
 
-	var Shaders = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aID;\nattribute vec4 aFilter;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nuniform float uTime;\nvarying vec4 vColor;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * pos;\n    vec4 mPosition = vec4(uModelMatrix * pos);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aID, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec4 aFilter;\nattribute vec3 aID;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nuniform float uTime;\nvarying vec3 vColor;\nfloat fogBlur = 200.0;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //*** fog *******************************************************************\n    vec4 mPosition = uModelMatrix * pos;\n    float distance = length(mPosition);\n    float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n    fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n    //***************************************************************************\n    vColor = mix(color-verticalShading, uFogColor, fogIntensity);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  gl_Position = uProjMatrix * newPosition;\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = 200.0;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  vec4 glPosition = uProjMatrix * newPosition;\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  vTexCoord = aTexCoord;\n  //*** fog *******************************************************************\n  vec4 mPosition = uModelMatrix * aPosition;\n  float distance = length(mPosition);\n  // => (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //vFogIntensity = 0.0;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"texture":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"normalmap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec4 aFilter;\nuniform mat4 uMatrix;\nuniform float uTime;\nvarying vec3 vNormal;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vNormal = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    vNormal = aNormal;\n  }\n}","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\n//uniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvoid main() {\n  gl_FragColor = vec4( (vNormal + 1.0)/2.0, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec4 aFilter;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform float uTime;\nvarying vec3 vWorldPosition;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vWorldPosition = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    /* in order for the SSAO (which is based on this depth shader) to work\n     * correctly in conjunction with the fog shading, we need to replicate\n     * the fog computation here. This way, the ambient occlusion shader can\n     * later attenuate the ambient occlusion effect in the foggy areas.\n     * However, we cannot simply replicate the vertex shader-based fog\n     * computation here, because it won't work with the dummy map plane:\n     * The map plane is centered directly below the camera, so all four\n     * of its vertices have the same distance from the camera. With the\n     * current fog model, this means that they also are all equally foggy.\n     * Computing the fog intensity in the vertex shader would therefor\n     * interpolate this identical fog intensity over the whole quad, meaning\n     * that all its pixels would incorrectly appear equally foggy (The normal\n     * fogging for map tiles and buildings has the same issue, but can get away\n     * with it, because it shades rather small objects where each face indeed\n     * has an almost constant fog intensity).\n     * Instead, we only compute the world-space vertex positions here, let them\n     * - correctly - get interpolated by the rasterizing stage, and then\n     * compute the correct fog intensities per pixel in the fragment shader */\n    vec4 worldPos = uModelMatrix * pos;\n    vWorldPosition = worldPos.xyz / worldPos.w;\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogRadius;\nconst float fogBlur = 200.0;\nvarying vec3 vWorldPosition;\n/* Note: the depth shader needs to not only store depth information, but\n *       also the fog intensity as well.\n * Rationale: In the current infrastructure, ambient occlusion does not \n * directly affect the building and map shading, but rather is later blended \n * onto the whole scene as a screen-space effect. This, however, is not\n * compatible with fogging: buildings in the fog gradually blend into the \n * background, but the ambient occlusion applied in screen space does not.\n * In the foggy area, this yields barely visible buildings with fully visible\n * ambient occlusion - an irritating effect.\n * To fix this, the depth shader stores not only depth values per pixel, but\n * also computes the fog intensity and stores it in the depth texture along\n * with the color-encoded depth values.\n * This way, the ambient occlusion shader can later not only compute the\n * actual ambient occlusion based on the depth values, but can attenuate\n * the effect in the foggy areas based on the fog intensity.\n */\nvoid main() {\n  // 5000.0 is an empirically-determined factor specific to OSMBuildings\n  float depth = (gl_FragCoord.z / gl_FragCoord.w)/5000.0;\n  if (depth > 1.0)\n    depth = 1.0;\n    \n  float z = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z1 = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z2 = floor(depth*256.0)/256.0;\n  float dist = length(vWorldPosition);\n  float fogIntensity = (dist - uFogRadius) / fogBlur + 1.1;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  // option 1: this line outputs high-precision (24bit) depth values\n  gl_FragColor = vec4(z, z1, z2, fogIntensity);\n  \n  // option 2: this line outputs human-interpretable depth values, but with low precision\n  //gl_FragColor = vec4(z, z, z, 1.0); \n}\n"},"ambientFromDepth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nuniform float uEffectStrength;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nfloat getDepth(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  vec4 codedDepth = texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                              pos.t + float(dy) * uInverseTexHeight));\n  //convert back to depth value\n  return codedDepth.x + \n         codedDepth.y/ 256.0 + \n         codedDepth.z/(256.0*256.0);\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)\n{\n    float depthThere = getDepth(pos, dx, dy);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return relDepthDiff > 0.95 ? relDepthDiff : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we employ the following \n * tricks:\n * 1. We do not consider all texels in the sampling area, but only a select few \n *    (at most 16). This causes some sampling artifacts, which are later\n *    removed by blurring the ambient occlusion texture (this is done in a\n *    separate shader).\n * 2. The further away an object is the fewer samples are considered and the\n *    closer are these samples to the texel for which the ambient occlusion is\n *    being computed. The rationale is that ambient occlusion attempts to de-\n *    determine occlusion by *nearby* other objects. Due to the perspective \n *    projection, the further away objects are, the smaller they become. \n *    So the further away objects are, the closer are those nearby other objects\n *    in screen-space, and thus texels further away no longer need to be \n *    considered.\n *    As a positive side-effect, this also reduces the total number of texels \n *    that need to be sampled.\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord.st, 0, 0);\n  float fogIntensity = texture2D(uTexIndex, vTexCoord.st).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4( vec3(1.0), 1.0);\n    return;\n  }\n  \n  float occlusionFactor = 1.0;\n  \n  //always consider the direct horizontal and vertical neighbors for the ambient map \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -1);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +1);\n  /* note: exponents are hand-tuned to give about the same brightness no matter\n   *       how many samples are considered (4, 8 or 16) */\n  float exponent = 60.0;  \n  \n  if (depthHere < 0.4)\n  {\n    /* for closer objects, also consider the texels that are two pixels \n     * away diagonally. */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  +2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  +2);\n    exponent = 12.0;\n  }\n    \n  if (depthHere < 0.3)\n  {\n    /* for the closest objects, also consider the texels that are four pixels \n     * away horizontally, vertically and diagonally */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  +4);\n    exponent = 4.0;\n  }\n  occlusionFactor = pow(occlusionFactor, exponent);\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength);\n  \n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4( vec3(occlusionFactor) , 1.0);\n}\n"},"blur":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nvarying vec2 vTexCoord;\n/* Retrieves the texel color at (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  return texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                   pos.t + float(dy) * uInverseTexHeight));\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, -1, 0) +\n                              getTexel(vTexCoord, +1, 0) +\n                              getTexel(vTexCoord,  0,-1) +\n                              getTexel(vTexCoord,  0,+1);\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, -1,-1) +\n                              getTexel(vTexCoord, +1,+1) +\n                              getTexel(vTexCoord, -1,+1) +\n                              getTexel(vTexCoord, +1,-1);  \n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"}};
+	var Shaders = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aID;\nattribute vec4 aFilter;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nuniform float uTime;\nvarying vec4 vColor;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * pos;\n    vec4 mPosition = vec4(uModelMatrix * pos);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aID, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec4 aFilter;\nattribute vec3 aID;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\n    \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4( mix(vColor, uFogColor, fogIntensity), 1.0);\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  gl_Position = uProjMatrix * newPosition;\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  vec4 glPosition = uProjMatrix * newPosition;\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vec4 worldPos = uModelMatrix * aPosition;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, fogIntensity), 1.0);\n}\n"},"texture":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"normalmap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec4 aFilter;\nuniform mat4 uMatrix;\nuniform float uTime;\nvarying vec3 vNormal;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vNormal = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    vNormal = aNormal;\n  }\n}","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\n//uniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvoid main() {\n  gl_FragColor = vec4( (vNormal + 1.0)/2.0, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec4 aFilter;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying float verticalDistanceToLowerEdge;\nuniform float uTime;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    verticalDistanceToLowerEdge = 0.0;\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    /* in order for the SSAO (which is based on this depth shader) to work\n     * correctly in conjunction with the fog shading, we need to replicate\n     * the fog computation here. This way, the ambient occlusion shader can\n     * later attenuate the ambient occlusion effect in the foggy areas.*/\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\n/* Note: the depth shader needs to not only store depth information, but\n *       also the fog intensity as well.\n * Rationale: In the current infrastructure, ambient occlusion does not \n * directly affect the building and map shading, but rather is later blended \n * onto the whole scene as a screen-space effect. This, however, is not\n * compatible with fogging: buildings in the fog gradually blend into the \n * background, but the ambient occlusion applied in screen space does not.\n * In the foggy area, this yields barely visible buildings with fully visible\n * ambient occlusion - an irritating effect.\n * To fix this, the depth shader stores not only depth values per pixel, but\n * also computes the fog intensity and stores it in the depth texture along\n * with the color-encoded depth values.\n * This way, the ambient occlusion shader can later not only compute the\n * actual ambient occlusion based on the depth values, but can attenuate\n * the effect in the foggy areas based on the fog intensity.\n */\nvoid main() {\n  // 7500.0 is the position of the far plane in OSMBuildings\n  float depth = (gl_FragCoord.z / gl_FragCoord.w)/7500.0;\n  if (depth > 1.0)\n    depth = 1.0;\n    \n  float z = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z1 = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z2 = floor(depth*256.0)/256.0;\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  // option 1: this line outputs high-precision (24bit) depth values\n  gl_FragColor = vec4(z, z1, z2, fogIntensity);\n  \n  // option 2: this line outputs human-interpretable depth values, but with low precision\n  //gl_FragColor = vec4(z, z, z, 1.0); \n}\n"},"ambientFromDepth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nuniform float uEffectStrength;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nfloat getDepth(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  vec4 codedDepth = texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                              pos.t + float(dy) * uInverseTexHeight));\n  //convert back to depth value\n  return codedDepth.x + \n         codedDepth.y/ 256.0 + \n         codedDepth.z/(256.0*256.0);\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)\n{\n    float depthThere = getDepth(pos, dx, dy);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return relDepthDiff > 0.95 ? relDepthDiff : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we employ the following \n * tricks:\n * 1. We do not consider all texels in the sampling area, but only a select few \n *    (at most 16). This causes some sampling artifacts, which are later\n *    removed by blurring the ambient occlusion texture (this is done in a\n *    separate shader).\n * 2. The further away an object is the fewer samples are considered and the\n *    closer are these samples to the texel for which the ambient occlusion is\n *    being computed. The rationale is that ambient occlusion attempts to de-\n *    determine occlusion by *nearby* other objects. Due to the perspective \n *    projection, the further away objects are, the smaller they become. \n *    So the further away objects are, the closer are those nearby other objects\n *    in screen-space, and thus texels further away no longer need to be \n *    considered.\n *    As a positive side-effect, this also reduces the total number of texels \n *    that need to be sampled.\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord.st, 0, 0);\n  float fogIntensity = texture2D(uTexIndex, vTexCoord.st).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4( vec3(1.0), 1.0);\n    return;\n  }\n  \n  float occlusionFactor = 1.0;\n  \n  //always consider the direct horizontal and vertical neighbors for the ambient map \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -1);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +1);\n  /* note: exponents are hand-tuned to give about the same brightness no matter\n   *       how many samples are considered (4, 8 or 16) */\n  float exponent = 60.0;  \n  \n  if (depthHere < 0.4)\n  {\n    /* for closer objects, also consider the texels that are two pixels \n     * away diagonally. */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  +2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  +2);\n    exponent = 12.0;\n  }\n    \n  if (depthHere < 0.3)\n  {\n    /* for the closest objects, also consider the texels that are four pixels \n     * away horizontally, vertically and diagonally */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  +4);\n    exponent = 4.0;\n  }\n  occlusionFactor = pow(occlusionFactor, exponent);\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength);\n  \n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4( vec3(occlusionFactor) , 1.0);\n}\n"},"blur":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nvarying vec2 vTexCoord;\n/* Retrieves the texel color at (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  return texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                   pos.t + float(dy) * uInverseTexHeight));\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, -1, 0) +\n                              getTexel(vTexCoord, +1, 0) +\n                              getTexel(vTexCoord,  0,-1) +\n                              getTexel(vTexCoord,  0,+1);\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, -1,-1) +\n                              getTexel(vTexCoord, +1,+1) +\n                              getTexel(vTexCoord, -1,+1) +\n                              getTexel(vTexCoord, +1,-1);  \n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"}};
 
 
 
@@ -2665,6 +2666,31 @@
 	    var s = 'abcd'[(x+y) % 4];
 	    return pattern(this.source, { s:s, x:x, y:y, z:z });
 	  },
+	  
+	  /* Modifies this.visibleTiles to contain at most 'maxNumTiles' tiles by only
+	   * keeping up to 'maxNumTiles' tiles that are closest to 'referencePoint'. */
+	  reduceTileSet: function(referencePoint, maxNumTiles) {
+	    var tiles = [];
+	    for (var tile in this.visibleTiles)
+	      tiles.push(tile.split(","));
+	    
+	    tiles.sort( function(a, b) {
+	      // tile coordinates correspond to the tile's upper left corner, but for 
+	      // the distance computation we should rather use their center; hence the 0.5 offsets
+	      var distA = Math.sqrt(Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
+	                            Math.pow(a[1] + 0.5 - referencePoint[1], 2.0));
+
+	      var distB = Math.sqrt(Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) +
+	                            Math.pow(b[1] + 0.5 - referencePoint[1], 2.0));
+	      
+	      return distA < distB;
+	    });
+	    
+	    this.visibleTiles = {};
+	    for (var i = 0; i < tiles.length && i < maxNumTiles; i++)
+	      this.visibleTiles[ tiles[i]] = true;
+
+	  },
 
 	  loadTiles: function() {
 	    var zoom = Math.round(this.fixedZoom || MAP.zoom);
@@ -2701,24 +2727,14 @@
 	    var tmp = rasterConvexQuad(viewQuad);
 
 	    this.visibleTiles = {};
-	    for (i = 0; i < tmp.length; i++)
-	      this.visibleTiles[ [tmp[i][0], tmp[i][1], zoom] ] = true;
-
-	    /*var s = "";
-
-	    var numTiles = 0;
-	    for (var i in this.visibleTiles) {
-	      numTiles += 1;
-	      s += i + "\n";
+	    for (i = 0; i < tmp.length; i++) {
+	      this.visibleTiles[[tmp[i][0], tmp[i][1], zoom]] = true;
 	    }
-	    
-	    if (zoom == 15) {
-	      console.log( "%s tiles for zoom %s: ", numTiles, zoom);
-	      //console.log( s);
-	    }*/
-	    
+
+
 	    for (var key in this.visibleTiles) {
 	      tile = key.split(',');
+	      numTiles += 1;
 	      tileX = tile[0];
 	      tileY = tile[1];
 
@@ -3386,7 +3402,7 @@
 	      this.color = new Color(options.color).toArray(true);
 	    }*/
 
-	    this.radius = options.radius || 1500;
+	    this.radius = options.radius || 3000;
 	    this.createGlGeometry();
 
 	    this.minZoom = APP.minZoom;
@@ -3431,7 +3447,8 @@
 
 	    // TODO: switch to a notation like mesh.transform
 	    getMatrix: function() {
-	      var scale = render.fogRadius/this.radius;
+	      var scale = Math.pow(2, MAP.zoom - 16);
+
 	      var modelMatrix = new glx.Matrix();
 	      modelMatrix.scale(scale, scale, scale);
 	    
@@ -4210,6 +4227,75 @@
 	  }
 	}
 
+	// FIXME: make this more robust so that it also works in non-monotonous situations
+
+	/* Determines a position on the ray starting at 'pStart' with direction 'pDir'
+	 * that is about 'distance' away from the plane through point 'pos' with normal
+	 * 'lookDir'. Since we currently have no way of computing this value directly,
+	 * we instead resort to an iterative approximation technique.
+	 * 
+	 * This method only works correctly of the computed distance is monotonously
+	 * increasing along 'pDir'.
+	 *
+	 * Implementation: the actual iterative approximation occurs in two phases
+	 *   1. iteratively find a position along the ray that is further than 
+	 *      'distance' away from the plane. To find that position, we simply
+	 *      go 1, 2, 4, 8, ... units away from pStart in direction pDir until
+	 *      the distance is large enough.
+	 *   2. with the original point 'pStart' being too close, and the point
+	 *      'pFarther' computed in step 1 being too far away, the sought point
+	 *      has to lie between the two. To find it, we use a binary search: 
+	 *      we iteratively compute the center between the two points to determine 
+	 *      in which half of the interval (pStart to center, or center to 
+	 *      pFarther) the sought point has to lie, and then adjust either pStart 
+	 *      or pFarther to match that interval. Once the center point has a 
+	 *      distance to the plane that matches 'distance' (within a certain 
+	 *      level of tolerance to allow for numerical inaccuracies), we return it.
+	 */
+	function getRayPointAtDistanceToPlane (pos, lookDir, pStart, pDir, distance) {
+	  
+	  if (len3(lookDir) === 0 || len3(pDir) === 0) {
+	    return;
+	  }
+
+	  pDir = norm3(pDir);
+	  lookDir = norm3(lookDir);
+	  
+	  pCloser = pStart;
+	  pCloserDistToPlane = dot3( sub3( pStart, pos), lookDir);
+	  var distMultiplier = 1;
+	  var pNext;
+	  if (pCloserDistToPlane > distance)
+	    return pCloser;
+	    
+	  while (true) {
+	    pNext = add3( pStart, mul3scalar(pDir, distMultiplier));
+	    var pNextDistToPlane = dot3( sub3(pNext, pos), lookDir);
+	    
+	    if (pNextDistToPlane > distance) // is too far away
+	      break;
+	      
+	    distMultiplier *= 2;
+	  }
+	  
+	  var pFarther = pNext;
+	  
+	  while (true)
+	  {
+	    var pMid = mul3scalar( add3(pCloser, pFarther), 0.5);
+	    var pMidDistToPlane = dot3( sub3(pMid, pos), lookDir);
+	    
+	    // if the relative difference is small enough, we found the result;
+	    if ( Math.abs( pMidDistToPlane/distance - 1) < 1E-5)
+	      return pMid;
+	      
+	    if (pMidDistToPlane > distance) // too far away
+	      pFarther = pMid;
+	    else
+	      pCloser = pMid;
+	  }
+	}
+
 	/* transforms the 3D vector 'v' according to the transformation matrix 'm'.
 	 * Internally, the vector 'v' is interpreted as a 4D vector
 	 * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
@@ -4239,15 +4325,16 @@
 
 	  if (vDir[2] >= 0) // ray would not intersect with the plane
 	  {
-	    return undefined;
+	    return;
 	  }
 	  /* ray equation for all world-space points 'p' lying on the screen-space NDC position
 	   * (screenNdcX, screenNdcY) is:  p = v1 + λ*vDirNorm
 	   * For the intersection with the xy-plane (-> z=0) holds: v1[2] + λ*vDirNorm[2] = p[2] = 0.0.
 	   * Rearranged, this reads:   */
 	  var lambda = -v1[2]/vDir[2];
+	  var pos = add3( v1, mul3scalar(vDir, lambda));
 
-	  return add3( v1, mul3scalar(vDir, lambda));
+	  return [pos[0], pos[1]];  // z==0 
 
 	}
 
@@ -4279,8 +4366,7 @@
 	 * Note: the code was taken and modified from 
 	 *       http://gamedev.stackexchange.com/questions/9738
 	 */
-	function getPseudoIntersection(p1, d1, p2, d2)
-	{
+	function getPseudoIntersection(p1, d1, p2, d2) {
 	  if (len3(d1) === 0 || len3(d2) === 0) {
 	    // at least one of the direction vectors has no length and thus no direction
 	    return;
@@ -4316,7 +4402,7 @@
 
 	function inMeters(localDistance) {
 	  var EARTH_CIRCUMFERENCE = 6371 * 2*3.141592; // [km]
-	  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE *  Math.cos(MAP.position.latitude/ 180 * Math.PI);
+	  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * Math.cos(MAP.position.latitude/ 180 * Math.PI);
 	  return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
 	}
 
@@ -4341,10 +4427,12 @@
 	  return [tileX, tileY];
 	}
 
-	function dot2(a,b) { return a[0]*b[0] + a[1]*b[1]; }
-	function sub2(a,b) { return [a[0]-b[0], a[1]-b[1]]; }
 	function len2(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1]);}
-	function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l];}
+	function dot2(a,b) { return a[0]*b[0] + a[1]*b[1];}
+	function sub2(a,b) { return [a[0]-b[0], a[1]-b[1]];}
+	function add2(a,b) { return [a[0]+b[0], a[1]+b[1]];}
+	function mul2scalar(a,f) { return [a[0]*f, a[1]*f];}
+	function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l]; }
 
 	function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]+b[2];}
 	function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
@@ -4382,8 +4470,10 @@
 	   * Note: if the horizon is level (as should usually be the case for 
 	   * OSMBuildings) then said quad is also a trapezoid. */
 	  getViewQuad: function(viewProjectionMatrix) {
-	    //FIXME: determine a reasonable value (4000 was chosen rather arbitrarily)
-	    var MAX_EDGE_LENGTH = 4000; 
+	    /* maximum distance from the map center at which
+	     * geometry is still visible */
+	    var MAX_FAR_EDGE_DISTANCE = (this.fogDistance + this.fogBlurDistance);
+	    //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
 
 	    var inverse = glx.Matrix.invert(viewProjectionMatrix);
 
@@ -4394,7 +4484,7 @@
 
 	    /* If even the lower edge of the screen does not intersect with the map plane,
 	     * then the map plane is not visible at all.
-	     * (Or somebody screwed up the projection matrix, putting view upside-down 
+	     * (Or somebody screwed up the projection matrix, putting the view upside-down 
 	     *  or something. But in any case we won't attempt to create a view rectangle).
 	     */
 	    if (!vBottomLeft || !vBottomRight) {
@@ -4402,6 +4492,7 @@
 	    }
 
 	    var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
+	    var f;
 
 	    /* The lower screen edge shows the map layer, but the upper one does not.
 	     * This usually happens when the camera is close to parallel to the ground
@@ -4411,39 +4502,33 @@
 	     * is not a practically useful result - though formally correct - we instead
 	     * manually bound that area.*/
 	    if (!vTopLeft || !vTopRight) {
-	      /* This point is chosen somewhat arbitrarily. It just *has* to lie on the
-	       * left edge of the screen. And it *should* be located relatively low
-	       * on that edge to ensure it lies below the horizon, but should not be too
-	       * close to 'vBottomLeft' to not cause numerical accuracy issues when computing
-	       * the vector between this point and 'vBottomLeft'. The value '-0.9' was 
-	       * chosen as it fits these criteria quite well, but no effort was made
-	       * to guarantee an *optimal* fit.  */
+	      /* point on the left screen edge with the same y-value as the map center*/
 	      vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
-	      vLeftDir = norm3(sub3( vLeftPoint, vBottomLeft));
-	      vTopLeft = add3( vBottomLeft, mul3scalar(vLeftDir, MAX_EDGE_LENGTH));
+	      vLeftDir = norm2(sub2( vLeftPoint, vBottomLeft));
+	      f = dot2(vLeftDir, this.viewDirOnMap);
+	      vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
 	      
-	      /* arbitrary point on the right screen edge, subject to the same
-	       * requirements as 'vLeftPoint' */
 	      vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
-	      vRightDir = norm3(sub3(vRightPoint, vBottomRight));
-	      vTopRight = add3(vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
+	      vRightDir = norm2(sub2(vRightPoint, vBottomRight));
+	      f = dot2(vRightDir, this.viewDirOnMap);
+	      vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
 	    }
-	    
-	    /* if vTopLeft is further than MAX_EDGE_LENGTH away from vBottomLeft,
+
+	    /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away vertically from the map center,
 	     * move it closer. */
-	    if (dist3(vBottomLeft, vTopLeft) > MAX_EDGE_LENGTH) {
-	      vLeftDir = norm3(sub3(vTopLeft, vBottomLeft));
-	      vTopLeft = add3(vBottomLeft, mul3scalar(vLeftDir, MAX_EDGE_LENGTH));
-	    }
-	    
-	    /* do the same for the right edge */
-	    if (dist3(vBottomRight, vTopRight) > MAX_EDGE_LENGTH) {
-	      vRightDir = norm3(sub3(vTopRight, vBottomRight));
-	      vTopRight = add3(vBottomRight, mul3scalar(vRightDir, MAX_EDGE_LENGTH));
-	    }
-	    
-	    //return [ vBottomLeft, vBottomRight, vTopRight, vTopLeft];
-	    
+	   if (dot2( this.viewDirOnMap, vTopLeft) > MAX_FAR_EDGE_DISTANCE) {
+	      vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
+	      f = dot2(vLeftDir, this.viewDirOnMap);
+	      vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
+	   }
+
+	   /* dito for vTopRight*/
+	   if (dot2( this.viewDirOnMap, vTopRight) > MAX_FAR_EDGE_DISTANCE) {
+	      vRightDir = norm2(sub2( vTopRight, vBottomRight));
+	      f = dot2(vRightDir, this.viewDirOnMap);
+	      vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
+	   }
+	   
 	    return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
 	  },
 
@@ -4451,12 +4536,14 @@
 	    this.viewMatrix = new glx.Matrix();
 	    this.projMatrix = new glx.Matrix();
 	    this.viewProjMatrix = new glx.Matrix();
+	    this.viewDirOnMap = [0.0, -1.0];
 
 	    MAP.on('change', this._onChange = this.onChange.bind(this));
 	    this.onChange();
 
 	    MAP.on('resize', this._onResize = this.onResize.bind(this));
-	    this.onResize();
+	    this.onResize();  //initialize projection matrix
+	    this.onChange();  //initialize view matrix
 
 	    gl.cullFace(gl.BACK);
 	    gl.enable(gl.CULL_FACE);
@@ -4466,9 +4553,9 @@
 	    render.SkyDome.init();
 	    render.Buildings.init();
 	    render.Basemap.init();
-	    render.HudRect.init();
+	    //render.HudRect.init();
 	    render.Overlay.init();
-	    render.NormalMap.init();
+	    //render.NormalMap.init();
 	    render.DepthMap.init();
 	    render.AmbientMap.init();
 	    render.Blur.init();
@@ -4479,24 +4566,23 @@
 
 	    this.loop = setInterval(function() {
 	      requestAnimationFrame(function() {
-	        gl.clearColor(this.backgroundColor[0], this.backgroundColor[1], this.backgroundColor[2], 1);
+
+	        gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 1);
 	        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	        if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
 	          return;
 	        }
-
-	        //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
-	        //console.log( this.getTilesInQuad( viewTrapezoid) );
-	        //var s = "";
-	        //for (var i in window.tiles)
-	        //  s+= window.tiles[i][0] + ", " + window.tiles[i][1] + "\n";
-	        //window.s = s;
-	        //console.log(window.tiles.length);
-	        //console.log( viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3] );
-	        //quad.updateGeometry(viewTrapezoid[0], viewTrapezoid[1], viewTrapezoid[2], viewTrapezoid[3]);
+	        /*
+	        var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
+	        quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
+	                            [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
+	                            [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
+	                            [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
 	        render.SkyDome.render();
+	        gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
+
 	        render.Buildings.render();
 	        render.Basemap.render();
 
@@ -4523,12 +4609,36 @@
 	    clearInterval(this.loop);
 	  },
 
+	  updateFogDistance: function() {
+	    var inverse = glx.Matrix.invert(this.viewProjMatrix.data);
+	    
+	    //need to store this as a reference point to determine fog distance
+	    this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
+	    if (this.lowerLeftOnMap === undefined)
+	        return;
+	        
+	    var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
+	    var cameraDistanceFromMapCenter = len3( getCameraPosition( inverse ));
+
+	    /* fogDistance: closest distance at which the fog affects the geometry */
+	    this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16 ),
+	                                lowerLeftDistanceToCenter);
+	    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
+	     *                  completely enclosed in fog. */
+	    this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16 );
+	    //console.log( "FD: %s, zoom: %s, CDFC: %s", this.fogDistance, MAP.zoom, cameraDistanceFromMapCenter);
+	  },
+
 	  onChange: function() {
 	    this.viewMatrix = new glx.Matrix()
 	      .rotateZ(MAP.rotation)
 	      .rotateX(MAP.tilt);
 
+	    this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
+	                         -Math.cos(MAP.rotation / 180* Math.PI)];
+
 	    this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
+	    this.updateFogDistance();
 	  },
 
 	  onResize: function() {
@@ -4538,10 +4648,10 @@
 	      refHeight = 1024,
 	      refVFOV = 45;
 
-	      this.projMatrix = new glx.Matrix()
+	    this.projMatrix = new glx.Matrix()
 	      .translate(0, -height/2, -1220) // 0, MAP y offset to neutralize camera y offset, MAP z -1220 scales MAP tiles to ~256px
 	      .scale(1, -1, 1) // flip Y
-	      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 0.1, 5000))
+	      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 0.1, 7500))
 	      .translate(0, -1, 0); // camera y offset
 
 	    glx.context.canvas.width  = width;
@@ -4549,8 +4659,7 @@
 	    glx.context.viewport(0, 0, width, height);
 
 	    this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
-
-	    this.fogRadius = Math.sqrt(width*width + height*height) * 1.1; // 2 would fit fine but camera is too close
+	    this.updateFogDistance();
 	  },
 
 	  destroy: function() {
@@ -4563,8 +4672,6 @@
 	    render.Buildings.destroy();
 	    render.Basemap.destroy();
 
-	    render.HudRect.destroy();
-	    render.Overlay.destroy();
 	    render.NormalMap.destroy();
 	    render.DepthMap.destroy();
 	    render.AmbientMap.destroy();
@@ -4714,7 +4821,7 @@
 	    }.bind(this));
 	  },
 
-	  baseRadius: 500,
+	  baseRadius: 100,
 
 	  createGeometry: function(radius) {
 	    var
@@ -4789,7 +4896,14 @@
 	    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
 	    var modelMatrix = new glx.Matrix();
-	    var scale = render.fogRadius/this.baseRadius;
+	    /* Make the skydome start right after the fog limit, but ensure that 
+	     * it is not pushed farther away than the camera's far plane.
+	     * (scale 73 with baseRadius 100 --> distance of 7400 units; far plane is at
+	     * 7500;
+	     */
+	    var scale = Math.min((render.fogDistance + render.fogBlurDistance)/100.0, 73);
+	    console.log("Skydome scale:", scale);
+	    //;
 	    modelMatrix.scale(scale, scale, scale);
 
 	    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
@@ -4829,12 +4943,15 @@
 	        'uModelMatrix',
 	        'uViewMatrix',
 	        'uProjMatrix',
+	        'uViewDirOnMap',
 	        'uMatrix',
 	        'uNormalTransform',
 	        'uAlpha',
 	        'uLightColor',
 	        'uLightDirection',
-	        'uFogRadius',
+	        'uLowerEdgePoint',
+	        'uFogDistance',
+	        'uFogBlurDistance',
 	        'uFogColor',
 	        'uBendRadius',
 	        'uBendDistance',
@@ -4865,7 +4982,11 @@
 	    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
 	    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
 
-	    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+	    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
+	    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
+
+	    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
+	    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
 	    gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
 	    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
@@ -4940,7 +5061,7 @@
 	      vertexShader: Shaders.basemap.vertex,
 	      fragmentShader: Shaders.basemap.fragment,
 	      attributes: ['aPosition', 'aTexCoord'],
-	      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance']
+	      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uFogColor', 'uLowerEdgePoint', 'uBendRadius', 'uBendDistance', 'uViewDirOnMap']
 	    });
 	  },
 
@@ -4962,7 +5083,8 @@
 
 	    shader.enable();
 
-	    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+	    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
+	    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
 	    gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
 	    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
@@ -5008,6 +5130,8 @@
 	    modelMatrix.scale(ratio, ratio, 1);
 	    modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
 
+	    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
+	    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
 	    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
 	    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix, false, render.viewMatrix.data);
 	    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix, false, render.projMatrix.data);
@@ -5202,7 +5326,7 @@
 	      vertexShader: Shaders.depth.vertex,
 	      fragmentShader: Shaders.depth.fragment,
 	      attributes: ['aPosition', 'aFilter'],
-	      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius', 'uTime']
+	      uniforms: ['uMatrix', 'uModelMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -5218,8 +5342,7 @@
 
 
 	    if (framebuffer.width != framebufferConfig.width || 
-	        framebuffer.height!= framebufferConfig.height)
-	    {
+	        framebuffer.height!= framebufferConfig.height) {
 	      framebuffer.setSize( framebufferConfig.width, framebufferConfig.height );
 
 	      /* We will be sampling neighboring pixels of the depth texture to create an ambient
@@ -5267,9 +5390,13 @@
 	        continue;
 	      }
 
+	      gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
+	      gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 	      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-
+	      gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
+	      gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
+	      
 	      item.vertexBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 

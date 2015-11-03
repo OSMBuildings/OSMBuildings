@@ -376,7 +376,7 @@ function getRayPointAtDistanceToPlane (pos, lookDir, pStart, pDir, distance) {
  */
 function getRayPointAtDistanceToPlane (pos, lookDir, pStart, pDir, distance) {
   
-  if (len3(lookDir) == 0 || len3(pDir) == 0) {
+  if (len3(lookDir) === 0 || len3(pDir) === 0) {
     return;
   }
 
@@ -524,7 +524,7 @@ function getPseudoIntersection(p1, d1, p2, d2) {
 
 function inMeters(localDistance) {
   var EARTH_CIRCUMFERENCE = 6371 * 2*3.141592; // [km]
-  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * Math.cos(MAP.position.latitude/ 180 * Math.PI)
+  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * Math.cos(MAP.position.latitude/ 180 * Math.PI);
   return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
 }
 
