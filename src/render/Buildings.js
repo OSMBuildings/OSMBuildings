@@ -5,8 +5,27 @@ render.Buildings = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.buildings.vertex,
       fragmentShader: Shaders.buildings.fragment,
-      attributes: ['aPosition', 'aColor', 'aNormal', 'aID'],
-      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', "uViewDirOnMap", 'uMatrix', 'uNormalTransform', 'uAlpha', 'uLightColor', 'uLightDirection', 'uLowerEdgePoint', 'uFogDistance', 'uFogBlurDistance', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uHighlightColor', 'uHighlightID']
+      attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
+      uniforms: [
+        'uModelMatrix',
+        'uViewMatrix',
+        'uProjMatrix',
+        'uViewDirOnMap',
+        'uMatrix',
+        'uNormalTransform',
+        'uAlpha',
+        'uLightColor',
+        'uLightDirection',
+        'uLowerEdgePoint',
+        'uFogDistance',
+        'uFogBlurDistance',
+        'uFogColor',
+        'uBendRadius',
+        'uBendDistance',
+        'uHighlightColor',
+        'uHighlightID',
+        'uTime'
+      ]
     });
   },
 
@@ -42,10 +61,15 @@ render.Buildings = {
 
     gl.uniform3fv(shader.uniforms.uHighlightColor, render.highlightColor);
 
+    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+
     if (!this.highlightID) {
       this.highlightID = [0, 0, 0];
     }
     gl.uniform3fv(shader.uniforms.uHighlightID, this.highlightID);
+
+    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 
     var
       dataItems = data.Index.items,
@@ -66,8 +90,6 @@ render.Buildings = {
       }
 
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();
@@ -78,6 +100,9 @@ render.Buildings = {
 
       item.colorBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+      item.filterBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       item.idBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aID, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);

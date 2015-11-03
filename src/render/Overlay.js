@@ -45,10 +45,10 @@ render.Overlay = {
     
     if (framebufferConfig !== undefined)
     {
-      tcHorizMin = 0.5                                  / framebufferConfig.width;
-      tcHorizMax = (framebufferConfig.usedWidth  - 0.5) / framebufferConfig.width;
-      tcVertMin  = 0.5                                  / framebufferConfig.height;
-      tcVertMax  = (framebufferConfig.usedHeight - 0.5) / framebufferConfig.height;
+      tcHorizMin = 0                                  / framebufferConfig.width;
+      tcHorizMax = (framebufferConfig.usedWidth  - 1) / framebufferConfig.width;
+      tcVertMin  = 0                                  / framebufferConfig.height;
+      tcVertMax  = (framebufferConfig.usedHeight - 1) / framebufferConfig.height;
     } else
     {
       tcHorizMin = tcVertMin = 0.0;
@@ -99,7 +99,5 @@ render.Overlay = {
     shader.disable();
   },
 
-  destroy: function() {
-    this.texture.destroy();
-  }
+  destroy: function() {}
 };

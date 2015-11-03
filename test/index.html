@@ -114,12 +114,12 @@
     return id % 2 === 0;
   };
 
-  function showX() {
-    osmb.show(selector);
+  function showEven(duration) {
+    osmb.show(selector, duration || 1000);
   }
 
-  function hideX() {
-    osmb.hide(selector);
+  function hideEven(duration) {
+    osmb.hide(selector, duration || 1000);
   }
 
   osmb.addMapTiles(
@@ -134,11 +134,12 @@
   );
 
   osmb.addGeoJSONTiles(
-    'http://{s}.data.qa.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-  {
-    fixedZoom: 15
-    // bounds
-  });
+    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//  'https://localhost:8010/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    {
+      fixedZoom: 15
+      // bounds
+    });
 
   // map.addOBJ('data/Fernsehturm_Berlin.obj', { latitude:52.51941, longitude:13.40445 }, { id:'Fernsehturm', scale:0.095, elevation:8, rotation:51 });
   // map.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { elevation:-3, rotation:97, id:'London Eye' });
@@ -159,8 +160,8 @@
 
   osmb.addGeoJSON(gj);
 
-  //var obj = osmb.addGeoJSON('data/o2 vor 90.geo.json', { color: '#00ccff' });
-  //osmb.addGeoJSON('data/w1-o4.geo.json', { color: '#ff0000' });
+  //var obj = osmb.addOBJ('../../OBJ2GeoJSON/data/2015-09/o4/o4-nach90.obj', { latitude:52.51941, longitude:13.50445 }, { color: '#00ccff' });
+  //osmb.addGeoJSON('../../OBJ2GeoJSON/data/geojson C/o2-nach90.geo.json', { color: '#00ccff' });
 
   var label = document.getElementById('label');
   map.on('change', function() {
@@ -174,22 +175,26 @@
     if (id) {
       document.body.style.cursor = 'pointer';
       osmb.highlight(id, '#f08000');
-//    console.log(id);
     } else {
       document.body.style.cursor = 'default';
       osmb.highlight(null);
     }
   });
 
+  map.on('pointerdown', function(e) {
+    var id = osmb.getTarget(e.x, e.y);
+    console.log(id);
+  });
+
   //*************************************************************************
 
-//  osmb.on('idle', function() {
-//    console.log('IDLE');
-//  });
-//
-//  osmb.on('busy', function() {
-//    console.log('BUSY');
-//  });
+  //  osmb.on('idle', function() {
+  //    console.log('IDLE');
+  //  });
+  //
+  //  osmb.on('busy', function() {
+  //    console.log('BUSY');
+  //  });
 
   //*************************************************************************
 

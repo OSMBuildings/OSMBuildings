@@ -14,8 +14,8 @@ render.DepthMap = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.depth.vertex,
       fragmentShader: Shaders.depth.fragment,
-      attributes: ['aPosition', 'aColor'],
-      uniforms: ['uMatrix', 'uModelMatrix', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
+      attributes: ['aPosition', 'aFilter'],
+      uniforms: ['uMatrix', 'uModelMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -31,8 +31,7 @@ render.DepthMap = {
 
 
     if (framebuffer.width != framebufferConfig.width || 
-        framebuffer.height!= framebufferConfig.height)
-    {
+        framebuffer.height!= framebufferConfig.height) {
       framebuffer.setSize( framebufferConfig.width, framebufferConfig.height );
 
       /* We will be sampling neighboring pixels of the depth texture to create an ambient
@@ -61,7 +60,10 @@ render.DepthMap = {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var item, modelMatrix;
-    
+
+    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+
     // render all actual data items, but also a dummy map plane
     // Note: SSAO on the map plane has been disabled temporarily
     var dataItems = data.Index.items;//.concat([this.mapPlane]);
@@ -80,7 +82,6 @@ render.DepthMap = {
       gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
       gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
       gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
       gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
@@ -88,8 +89,8 @@ render.DepthMap = {
       item.vertexBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      item.colorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      item.filterBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

@@ -10,8 +10,17 @@ render.Interaction = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.interaction.vertex,
       fragmentShader: Shaders.interaction.fragment,
-      attributes: ['aPosition', 'aID', 'aColor'],
-      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uFogRadius', 'uBendRadius', 'uBendDistance']
+      attributes: ['aPosition', 'aID', 'aFilter'],
+      uniforms: [
+        'uModelMatrix',
+        'uViewMatrix',
+        'uProjMatrix',
+        'uMatrix',
+        'uFogRadius',
+        'uBendRadius',
+        'uBendDistance',
+        'uTime'
+      ]
     });
 
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -35,6 +44,11 @@ render.Interaction = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
+    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+
+    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+
     var
       dataItems = data.Index.items,
       item,
@@ -51,12 +65,7 @@ render.Interaction = {
         continue;
       }
 
-      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
       item.vertexBuffer.enable();
@@ -65,8 +74,8 @@ render.Interaction = {
       item.idBuffer.enable();
       gl.vertexAttribPointer(shader.attributes.aID, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-      item.colorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      item.filterBuffer.enable();
+      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

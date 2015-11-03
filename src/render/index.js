@@ -29,6 +29,7 @@ var render = {
      * geometry is still visible */
     var MAX_FAR_EDGE_DISTANCE = (this.fogDistance + this.fogBlurDistance);
     //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
+
     var inverse = glx.Matrix.invert(viewProjectionMatrix);
 
     var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
@@ -233,8 +234,6 @@ var render = {
     render.Buildings.destroy();
     render.Basemap.destroy();
 
-    render.HudRect.destroy();
-    render.Overlay.destroy();
     render.NormalMap.destroy();
     render.DepthMap.destroy();
     render.AmbientMap.destroy();

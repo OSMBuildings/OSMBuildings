@@ -119,13 +119,13 @@ OSMBuildings.prototype = {
     render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 
-  show: function(selector) {
-    data.Index.removeFilter('hidden', selector);
+  show: function(selector, duration) {
+    Filter.remove('hidden', selector, duration);
     return this;
   },
 
-  hide: function(selector) {
-    data.Index.addFilter('hidden', selector);
+  hide: function(selector, duration) {
+    Filter.add('hidden', selector, duration);
     return this;
   },
 
@@ -138,6 +138,9 @@ OSMBuildings.prototype = {
     Events.destroy();
     if (APP._basemapGrid) APP._basemapGrid.destroy();
     if (APP._dataGrid)    APP._dataGrid.destroy();
+
+    // TODO: when taking over an existing canvas, don't destroy it here
+    glx.destroy();
   }
 };
 

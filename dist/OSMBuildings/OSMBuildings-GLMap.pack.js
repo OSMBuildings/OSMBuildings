@@ -1102,9 +1102,9 @@
 	      clearInterval(loop);
 	    };
 
-	    glx.destroy = function(GL) {
-	      GL.canvas.parentNode.removeChild(GL.canvas);
-	      GL.canvas = null;
+	    glx.destroy = function() {
+	      context.canvas.parentNode.removeChild(context.canvas);
+	      context = null;
 	    };
 
 
@@ -1614,6 +1614,7 @@
 	  this.id = GL.createTexture();
 	  GL.bindTexture(GL.TEXTURE_2D, this.id);
 
+	  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
 
 	//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
 	//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
@@ -1668,7 +1669,6 @@
 	    GL.bindTexture(GL.TEXTURE_2D, this.id);
 	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
 	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-	    GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
 	    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, 1, 1, 0, GL.RGBA, GL.UNSIGNED_BYTE, new Uint8Array([color[0]*255, color[1]*255, color[2]*255, (color[3] === undefined ? 1 : color[3])*255]));
 	    GL.bindTexture(GL.TEXTURE_2D, null);
 	    return this;
@@ -1685,7 +1685,7 @@
 	    GL.bindTexture(GL.TEXTURE_2D, this.id);
 	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
 	    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-	    GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
+
 	    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
 	    GL.generateMipmap(GL.TEXTURE_2D);
 
@@ -2001,13 +2001,13 @@
 	    render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
 	  },
 
-	  show: function(selector) {
-	    data.Index.removeFilter('hidden', selector);
+	  show: function(selector, duration) {
+	    Filter.remove('hidden', selector, duration);
 	    return this;
 	  },
 
-	  hide: function(selector) {
-	    data.Index.addFilter('hidden', selector);
+	  hide: function(selector, duration) {
+	    Filter.add('hidden', selector, duration);
 	    return this;
 	  },
 
@@ -2020,6 +2020,9 @@
 	    Events.destroy();
 	    if (APP._basemapGrid) APP._basemapGrid.destroy();
 	    if (APP._dataGrid)    APP._dataGrid.destroy();
+
+	    // TODO: when taking over an existing canvas, don't destroy it here
+	    glx.destroy();
 	  }
 	};
 
@@ -2144,6 +2147,93 @@
 	var EARTH_CIRCUMFERENCE = EARTH_RADIUS*Math.PI*2;
 
 
+	// add functionality/fixes that needs to be applied to somewhere externally
+
+	var patch = {};
+
+	(function() {
+
+	  var METERS_PER_LEVEL = 3;
+
+	  var materialColors = {
+	    brick:'#cc7755',
+	    bronze:'#ffeecc',
+	    canvas:'#fff8f0',
+	    concrete:'#999999',
+	    copper:'#a0e0d0',
+	    glass:'#e8f8f8',
+	    gold:'#ffcc00',
+	    plants:'#009933',
+	    metal:'#aaaaaa',
+	    panel:'#fff8f0',
+	    plaster:'#999999',
+	    roof_tiles:'#f08060',
+	    silver:'#cccccc',
+	    slate:'#666666',
+	    stone:'#996666',
+	    tar_paper:'#333333',
+	    wood:'#deb887'
+	  };
+
+	  var baseMaterials = {
+	    asphalt:'tar_paper',
+	    bitumen:'tar_paper',
+	    block:'stone',
+	    bricks:'brick',
+	    glas:'glass',
+	    glassfront:'glass',
+	    grass:'plants',
+	    masonry:'stone',
+	    granite:'stone',
+	    panels:'panel',
+	    paving_stones:'stone',
+	    plastered:'plaster',
+	    rooftiles:'roof_tiles',
+	    roofingfelt:'tar_paper',
+	    sandstone:'stone',
+	    sheet:'canvas',
+	    sheets:'canvas',
+	    shingle:'tar_paper',
+	    shingles:'tar_paper',
+	    slates:'slate',
+	    steel:'metal',
+	    tar:'tar_paper',
+	    tent:'canvas',
+	    thatch:'plants',
+	    tile:'roof_tiles',
+	    tiles:'roof_tiles'
+	    // cardboard
+	    // eternit
+	    // limestone
+	    // straw
+	  };
+
+	  function getMaterialColor(str) {
+	    if (typeof str !== 'string') {
+	      return null;
+	    }
+	    str = str.toLowerCase();
+	    if (str[0] === '#') {
+	      return str;
+	    }
+	    return materialColors[baseMaterials[str] || str] || null;
+	  }
+
+	  //***************************************************************************
+
+	  patch.GeoJSON = function(properties) {
+	    properties.height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
+	    properties.minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
+
+	    properties.wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material);
+	    properties.roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial);
+
+	    return properties;
+	  };
+
+	}());
+
+
 	var Request = {};
 
 	(function() {
@@ -2253,7 +2343,7 @@
 	  });
 	}
 
-	var Shaders = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aID;\nattribute vec4 aColor;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec4 vColor;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  if (aColor.a == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * aPosition;\n    vec4 mPosition = vec4(uModelMatrix * aPosition);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aID, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec4 aColor;\nattribute vec3 aID;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nvarying vec3 vColor;\nfloat fogBlur = 200.0;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\n// helsinki has small buildings :-)\n//float gradientHeight = 30.0;\n//float gradientStrength = 0.3;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  if (aColor.a == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * aPosition;\n    //*** highlight object ******************************************************\n    vec3 color = aColor.rgb;\n    if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {\n      color = mix(aColor.rgb, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //*** fog *******************************************************************\n    vec4 mPosition = uModelMatrix * aPosition;\n    float distance = length(mPosition);\n    float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n    fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n    //***************************************************************************\n    vColor = mix(color-verticalShading, uFogColor, fogIntensity);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  gl_Position = uProjMatrix * newPosition;\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = 200.0;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  vec4 glPosition = uProjMatrix * newPosition;\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  vTexCoord = aTexCoord;\n  //*** fog *******************************************************************\n  vec4 mPosition = uModelMatrix * aPosition;\n  float distance = length(mPosition);\n  // => (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //vFogIntensity = 0.0;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"texture":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"normalmap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec4 aColor;\nuniform mat4 uMatrix;\nvarying vec3 vNormal;\nvoid main() {\n  if (aColor.a == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vNormal = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    vNormal = aNormal;\n  }\n}","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\n//uniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvoid main() {\n  gl_FragColor = vec4( (vNormal + 1.0)/2.0, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec4 aColor;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nvarying vec3 vWorldPosition;\nvoid main() {\n  if (aColor.a == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vWorldPosition = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * aPosition;\n    /* in order for the SSAO (which is based on this depth shader) to work\n     * correctly in conjunction with the fog shading, we need to replicate\n     * the fog computation here. This way, the ambient occlusion shader can\n     * later attenuate the ambient occlusion effect in the foggy areas.\n     * However, we cannot simply replicate the vertex shader-based fog\n     * computation here, because it won't work with the dummy map plane:\n     * The map plane is centered directly below the camera, so all four\n     * of its vertices have the same distance from the camera. With the\n     * current fog model, this means that they also are all equally foggy.\n     * Computing the fog intensity in the vertex shader would therefor\n     * interpolate this identical fog intensity over the whole quad, meaning\n     * that all its pixels would incorrectly appear equally foggy (The normal\n     * fogging for map tiles and buildings has the same issue, but can get away\n     * with it, because it shades rather small objects where each face indeed\n     * has an almost constant fog intensity).\n     * Instead, we only compute the world-space vertex positions here, let them\n     * - correctly - get interpolated by the rasterizing stage, and then\n     * compute the correct fog intensities per pixel in the fragment shader */\n    vec4 worldPos = uModelMatrix * aPosition;\n    vWorldPosition = worldPos.xyz / worldPos.w;\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogRadius;\nconst float fogBlur = 200.0;\nvarying vec3 vWorldPosition;\n/* Note: the depth shader needs to not only store depth information, but\n *       also the fog intensity as well.\n * Rationale: In the current infrastructure, ambient occlusion does not \n * directly affect the building and map shading, but rather is later blended \n * onto the whole scene as a screen-space effect. This, however, is not\n * compatible with fogging: buildings in the fog gradually blend into the \n * background, but the ambient occlusion applied in screen space does not.\n * In the foggy area, this yields barely visible buildings with fully visible\n * ambient occlusion - an irritating effect.\n * To fix this, the depth shader stores not only depth values per pixel, but\n * also computes the fog intensity and stores it in the depth texture along\n * with the color-encoded depth values.\n * This way, the ambient occlusion shader can later not only compute the\n * actual ambient occlusion based on the depth values, but can attenuate\n * the effect in the foggy areas based on the fog intensity.\n */\nvoid main() {\n  // 5000.0 is an empirically-determined factor specific to OSMBuildings\n  float depth = (gl_FragCoord.z / gl_FragCoord.w)/5000.0;\n  if (depth > 1.0)\n    depth = 1.0;\n    \n  float z = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z1 = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z2 = floor(depth*256.0)/256.0;\n  float dist = length(vWorldPosition);\n  float fogIntensity = (dist - uFogRadius) / fogBlur + 1.1;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  // option 1: this line outputs high-precision (24bit) depth values\n  gl_FragColor = vec4(z, z1, z2, fogIntensity);\n  \n  // option 2: this line outputs human-interpretable depth values, but with low precision\n  //gl_FragColor = vec4(z, z, z, 1.0); \n}\n"},"ambientFromDepth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nuniform float uEffectStrength;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nfloat getDepth(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  vec4 codedDepth = texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                              pos.t + float(dy) * uInverseTexHeight));\n  //convert back to depth value\n  return codedDepth.x + \n         codedDepth.y/ 256.0 + \n         codedDepth.z/(256.0*256.0);\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)\n{\n    float depthThere = getDepth(pos, dx, dy);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return relDepthDiff > 0.95 ? relDepthDiff : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we employ the following \n * tricks:\n * 1. We do not consider all texels in the sampling area, but only a select few \n *    (at most 16). This causes some sampling artifacts, which are later\n *    removed by blurring the ambient occlusion texture (this is done in a\n *    separate shader).\n * 2. The further away an object is the fewer samples are considered and the\n *    closer are these samples to the texel for which the ambient occlusion is\n *    being computed. The rationale is that ambient occlusion attempts to de-\n *    determine occlusion by *nearby* other objects. Due to the perspective \n *    projection, the further away objects are, the smaller they become. \n *    So the further away objects are, the closer are those nearby other objects\n *    in screen-space, and thus texels further away no longer need to be \n *    considered.\n *    As a positive side-effect, this also reduces the total number of texels \n *    that need to be sampled.\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord.st, 0, 0);\n  float fogIntensity = texture2D(uTexIndex, vTexCoord.st).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4( vec3(1.0), 1.0);\n    return;\n  }\n  \n  float occlusionFactor = 1.0;\n  \n  //always consider the direct horizontal and vertical neighbors for the ambient map \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -1);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +1);\n  /* note: exponents are hand-tuned to give about the same brightness no matter\n   *       how many samples are considered (4, 8 or 16) */\n  float exponent = 60.0;  \n  \n  if (depthHere < 0.4)\n  {\n    /* for closer objects, also consider the texels that are two pixels \n     * away diagonally. */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  +2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  +2);\n    exponent = 12.0;\n  }\n    \n  if (depthHere < 0.3)\n  {\n    /* for the closest objects, also consider the texels that are four pixels \n     * away horizontally, vertically and diagonally */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  +4);\n    exponent = 4.0;\n  }\n  occlusionFactor = pow(occlusionFactor, exponent);\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength);\n  \n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4( vec3(occlusionFactor) , 1.0);\n}\n"},"blur":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nvarying vec2 vTexCoord;\n/* Retrieves the texel color at (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  return texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                   pos.t + float(dy) * uInverseTexHeight));\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, -1, 0) +\n                              getTexel(vTexCoord, +1, 0) +\n                              getTexel(vTexCoord,  0,-1) +\n                              getTexel(vTexCoord,  0,+1);\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, -1,-1) +\n                              getTexel(vTexCoord, +1,+1) +\n                              getTexel(vTexCoord, -1,+1) +\n                              getTexel(vTexCoord, +1,-1);  \n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"}};
+	var Shaders = {"interaction":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aID;\nattribute vec4 aFilter;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nuniform float uTime;\nvarying vec4 vColor;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * pos;\n    vec4 mPosition = vec4(uModelMatrix * pos);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aID, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec4 aFilter;\nattribute vec3 aID;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uFogColor;\nuniform float uFogRadius;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nuniform float uTime;\nvarying vec3 vColor;\nfloat fogBlur = 200.0;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    //*** bending ***************************************************************\n  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n  //\n  //  float innerRadius = uBendRadius + mwPosition.y;\n  //  float depth = abs(mwPosition.z);\n  //  float s = depth-uBendDistance;\n  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n  //\n  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n  //  // travels the full uBendRadius path\n  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n  //\n  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n  //  gl_Position = uProjMatrix * newPosition;\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //*** fog *******************************************************************\n    vec4 mPosition = uModelMatrix * pos;\n    float distance = length(mPosition);\n    float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n    fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n    //***************************************************************************\n    vColor = mix(color-verticalShading, uFogColor, fogIntensity);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\n  gl_FragColor = vec4(vColor, 1.0);\n}\n"},"skydome":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat gradientHeight = 10.0;\nfloat gradientStrength = 1.0;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  gl_Position = uProjMatrix * newPosition;\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, -vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"basemap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nfloat fogBlur = 200.0;\nuniform float uBendRadius;\nuniform float uBendDistance;\nvoid main() {\n  //*** bending ***************************************************************\n//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;\n//\n//  float innerRadius = uBendRadius + mwPosition.y;\n//  float depth = abs(mwPosition.z);\n//  float s = depth-uBendDistance;\n//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);\n//\n//  // halfPi*uBendRadius, not halfPi*innerRadius, because the \"base\" of a building\n//  // travels the full uBendRadius path\n//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);\n//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);\n//\n//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);\n//  vec4 glPosition = uProjMatrix * newPosition;\n  vec4 glPosition = uMatrix * aPosition;\n  gl_Position = glPosition;\n  vTexCoord = aTexCoord;\n  //*** fog *******************************************************************\n  vec4 mPosition = uModelMatrix * aPosition;\n  float distance = length(mPosition);\n  // => (distance - (uFogRadius - fogBlur)) / (uFogRadius - (uFogRadius - fogBlur));\n  float fogIntensity = (distance - uFogRadius) / fogBlur + 1.1; // <- shifts blur in/out\n  vFogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //vFogIntensity = 0.0;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vFogIntensity;\nvoid main() {\n  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)));\n  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);\n}\n"},"texture":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"normalmap":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec4 aFilter;\nuniform mat4 uMatrix;\nuniform float uTime;\nvarying vec3 vNormal;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vNormal = vec3(0.0, 0.0, 0.0);\n  } else {\n    gl_Position = uMatrix * vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    vNormal = aNormal;\n  }\n}","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\n//uniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvoid main() {\n  gl_FragColor = vec4( (vNormal + 1.0)/2.0, 1.0);\n}\n"},"depth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec4 aFilter;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform float uTime;\nvarying vec3 vWorldPosition;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vWorldPosition = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    /* in order for the SSAO (which is based on this depth shader) to work\n     * correctly in conjunction with the fog shading, we need to replicate\n     * the fog computation here. This way, the ambient occlusion shader can\n     * later attenuate the ambient occlusion effect in the foggy areas.\n     * However, we cannot simply replicate the vertex shader-based fog\n     * computation here, because it won't work with the dummy map plane:\n     * The map plane is centered directly below the camera, so all four\n     * of its vertices have the same distance from the camera. With the\n     * current fog model, this means that they also are all equally foggy.\n     * Computing the fog intensity in the vertex shader would therefor\n     * interpolate this identical fog intensity over the whole quad, meaning\n     * that all its pixels would incorrectly appear equally foggy (The normal\n     * fogging for map tiles and buildings has the same issue, but can get away\n     * with it, because it shades rather small objects where each face indeed\n     * has an almost constant fog intensity).\n     * Instead, we only compute the world-space vertex positions here, let them\n     * - correctly - get interpolated by the rasterizing stage, and then\n     * compute the correct fog intensities per pixel in the fragment shader */\n    vec4 worldPos = uModelMatrix * pos;\n    vWorldPosition = worldPos.xyz / worldPos.w;\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogRadius;\nconst float fogBlur = 200.0;\nvarying vec3 vWorldPosition;\n/* Note: the depth shader needs to not only store depth information, but\n *       also the fog intensity as well.\n * Rationale: In the current infrastructure, ambient occlusion does not \n * directly affect the building and map shading, but rather is later blended \n * onto the whole scene as a screen-space effect. This, however, is not\n * compatible with fogging: buildings in the fog gradually blend into the \n * background, but the ambient occlusion applied in screen space does not.\n * In the foggy area, this yields barely visible buildings with fully visible\n * ambient occlusion - an irritating effect.\n * To fix this, the depth shader stores not only depth values per pixel, but\n * also computes the fog intensity and stores it in the depth texture along\n * with the color-encoded depth values.\n * This way, the ambient occlusion shader can later not only compute the\n * actual ambient occlusion based on the depth values, but can attenuate\n * the effect in the foggy areas based on the fog intensity.\n */\nvoid main() {\n  // 5000.0 is an empirically-determined factor specific to OSMBuildings\n  float depth = (gl_FragCoord.z / gl_FragCoord.w)/5000.0;\n  if (depth > 1.0)\n    depth = 1.0;\n    \n  float z = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z1 = floor(depth*256.0)/256.0;\n  depth = (depth - z) * 256.0;\n  float z2 = floor(depth*256.0)/256.0;\n  float dist = length(vWorldPosition);\n  float fogIntensity = (dist - uFogRadius) / fogBlur + 1.1;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  // option 1: this line outputs high-precision (24bit) depth values\n  gl_FragColor = vec4(z, z1, z2, fogIntensity);\n  \n  // option 2: this line outputs human-interpretable depth values, but with low precision\n  //gl_FragColor = vec4(z, z, z, 1.0); \n}\n"},"ambientFromDepth":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nuniform float uEffectStrength;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nfloat getDepth(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  vec4 codedDepth = texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                              pos.t + float(dy) * uInverseTexHeight));\n  //convert back to depth value\n  return codedDepth.x + \n         codedDepth.y/ 256.0 + \n         codedDepth.z/(256.0*256.0);\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)\n{\n    float depthThere = getDepth(pos, dx, dy);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return relDepthDiff > 0.95 ? relDepthDiff : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we employ the following \n * tricks:\n * 1. We do not consider all texels in the sampling area, but only a select few \n *    (at most 16). This causes some sampling artifacts, which are later\n *    removed by blurring the ambient occlusion texture (this is done in a\n *    separate shader).\n * 2. The further away an object is the fewer samples are considered and the\n *    closer are these samples to the texel for which the ambient occlusion is\n *    being computed. The rationale is that ambient occlusion attempts to de-\n *    determine occlusion by *nearby* other objects. Due to the perspective \n *    projection, the further away objects are, the smaller they become. \n *    So the further away objects are, the closer are those nearby other objects\n *    in screen-space, and thus texels further away no longer need to be \n *    considered.\n *    As a positive side-effect, this also reduces the total number of texels \n *    that need to be sampled.\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord.st, 0, 0);\n  float fogIntensity = texture2D(uTexIndex, vTexCoord.st).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4( vec3(1.0), 1.0);\n    return;\n  }\n  \n  float occlusionFactor = 1.0;\n  \n  //always consider the direct horizontal and vertical neighbors for the ambient map \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +1,   0);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -1);\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +1);\n  /* note: exponents are hand-tuned to give about the same brightness no matter\n   *       how many samples are considered (4, 8 or 16) */\n  float exponent = 60.0;  \n  \n  if (depthHere < 0.4)\n  {\n    /* for closer objects, also consider the texels that are two pixels \n     * away diagonally. */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  +2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  -2);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  +2);\n    exponent = 12.0;\n  }\n    \n  if (depthHere < 0.3)\n  {\n    /* for the closest objects, also consider the texels that are four pixels \n     * away horizontally, vertically and diagonally */\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,   0);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  +4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  -4);\n    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  +4);\n    exponent = 4.0;\n  }\n  occlusionFactor = pow(occlusionFactor, exponent);\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength);\n  \n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4( vec3(occlusionFactor) , 1.0);\n}\n"},"blur":{"vertex":"#ifdef GL_ES\n  precision mediump float;\n#endif\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uInverseTexHeight;  //in 1/pixels\nvarying vec2 vTexCoord;\n/* Retrieves the texel color at (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, int dx, int dy)\n{\n  //retrieve the color-coded depth\n  return texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, \n                                   pos.t + float(dy) * uInverseTexHeight));\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, -1, 0) +\n                              getTexel(vTexCoord, +1, 0) +\n                              getTexel(vTexCoord,  0,-1) +\n                              getTexel(vTexCoord,  0,+1);\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, -1,-1) +\n                              getTexel(vTexCoord, +1,+1) +\n                              getTexel(vTexCoord, -1,+1) +\n                              getTexel(vTexCoord, +1,-1);  \n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"}};
 
 
 
@@ -2551,62 +2641,6 @@
 
 	Grid.prototype = {
 
-	  /* Returns the set of tiles (as dictionary keys) that overlap in any way with
-	   * the quadrilateral 'quad'. The returned set may contain false-positives,
-	   * i.e. tiles that are slightly outside the viewing frustum.
-	   *
-	   * The basic approach is to determine the axis-aligned bounding box of the
-	   * quad, and for each tile in the bounding box determine whether its center
-	   * lies inside the quad (or rather in one of the two triangles making up the
-	   * quad) via a point-in-triangle test.
-	   * This approach however misses some boundary cases:
-	   * - for tiles on the edge of the screen, parts of the tile may be visible
-	   *   without its center being visible. Our test misses these cases. We
-	   *   compensate by adding not only the tile itself but also all horizontal,
-	   *   vertical and diagonal neighbors to the result set
-	   * - if the quad is small compared to the tile size then no tile center may
-	   *   be inside the quad (e.g. when the whole screen is covered by the lower
-	   *   third of a single tile) and thus the result set would be empty. We
-	   *   compensate by adding the tiles of all four quad vertices to the result
-	   *   set in any case.
-	   * Note: while the set of tiles added through those edge cases may seem
-	   *       excessive, it is actually rather small: It does add an one tile wide
-	   *       outline to the result set. But other than that, is only caused tiles
-	   *       to be added multiple times, and those duplicates are removed
-	   *       automatically since the result is a set.
-	   */
-	  getTilesInQuad: function(quad, zoom) {
-	    var minX =          (Math.min(quad[0][0], quad[1][0], quad[2][0], quad[3][0])) <<0;
-	    var maxX = Math.ceil(Math.max(quad[0][0], quad[1][0], quad[2][0], quad[3][0]));
-
-	    var minY =          (Math.min(quad[0][1], quad[1][1], quad[2][1], quad[3][1])) <<0;
-	    var maxY = Math.ceil(Math.max(quad[0][1], quad[1][1], quad[2][1], quad[3][1]));
-
-	    var tiles = {};
-	    tiles[[quad[0][0]<<0, quad[0][1]<<0, zoom]] = true;
-	    tiles[[quad[1][0]<<0, quad[1][1]<<0, zoom]] = true;
-	    tiles[[quad[2][0]<<0, quad[2][1]<<0, zoom]] = true;
-	    tiles[[quad[3][0]<<0, quad[3][1]<<0, zoom]] = true;
-
-	    for (var x = minX; x <= maxX; x++) {
-	      for (var y = minY; y <= maxY; y++) {
-	        if (isPointInTriangle(quad[0], quad[1], quad[2], [x + 0.5, y + 0.5]) ||
-	          isPointInTriangle(quad[0], quad[2], quad[3], [x + 0.5, y + 0.5])) {
-	          tiles[[x - 1, y - 1, zoom]] = true;
-	          tiles[[x,     y - 1, zoom]] = true;
-	          tiles[[x + 1, y - 1, zoom]] = true;
-	          tiles[[x - 1, y,     zoom]] = true;
-	          tiles[[x,     y,     zoom]] = true;
-	          tiles[[x + 1, y,     zoom]] = true;
-	          tiles[[x - 1, y + 1, zoom]] = true;
-	          tiles[[x,     y + 1, zoom]] = true;
-	          tiles[[x + 1, y + 1, zoom]] = true;
-	        }
-	      }
-	    }
-	    return tiles;
-	  },
-
 	  // strategy: start loading after {delay}ms, skip any attempts until then
 	  // effectively loads in intervals during movement
 	  update: function(delay) {
@@ -2652,15 +2686,37 @@
 
 	    var
 	      tile, tileX, tileY,
-	      queue = [], queueLength,
+	      queue = [],
 	      tileAnchor = [
 	        MAP.center.x/TILE_SIZE <<0,
 	        MAP.center.y/TILE_SIZE <<0
-	      ];
-	      
-	    var viewQuad = render.getViewQuad(render.viewProjMatrix.data, zoom);
-	    this.visibleTiles = this.getTilesInQuad(viewQuad, zoom);
+	      ],
+	      i,
+	      viewQuad = render.getViewQuad(render.viewProjMatrix.data);
 
+	    for (i = 0; i < 4; i++) {
+	      viewQuad[i] = asTilePosition(viewQuad[i], zoom);
+	    }
+
+	    var tmp = rasterConvexQuad(viewQuad);
+
+	    this.visibleTiles = {};
+	    for (i = 0; i < tmp.length; i++)
+	      this.visibleTiles[ [tmp[i][0], tmp[i][1], zoom] ] = true;
+
+	    /*var s = "";
+
+	    var numTiles = 0;
+	    for (var i in this.visibleTiles) {
+	      numTiles += 1;
+	      s += i + "\n";
+	    }
+	    
+	    if (zoom == 15) {
+	      console.log( "%s tiles for zoom %s: ", numTiles, zoom);
+	      //console.log( s);
+	    }*/
+	    
 	    for (var key in this.visibleTiles) {
 	      tile = key.split(',');
 	      tileX = tile[0];
@@ -2672,30 +2728,25 @@
 
 	      tile = this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
 
-	      // TODO: rotate anchor point
 	      queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
 	    }
 
-	    if (!(queueLength = queue.length)) {
-	      return;
-	    }
+	    this.purge();
 
 	    queue.sort(function(a, b) {
 	      return a.dist-b.dist;
 	    });
 
-	    for (var i = 0; i < queueLength; i++) {
+	    for (i = 0; i < queue.length; i++) {
 	      tile = queue[i].tile;
 	      tile.load(this.getURL(tile.x, tile.y, tile.zoom));
 	    }
-
-	    this.purge();
 	  },
 
 	  purge: function() {
 	    var
 	      zoom = Math.round(MAP.zoom),
-	      tile, parent, children;
+	      tile, parent;
 
 	    for (var key in this.tiles) {
 	      tile = this.tiles[key];
@@ -2748,6 +2799,126 @@
 	};
 
 
+	var Filter = {
+	  start: Date.now(),
+	  items: [],
+
+	  add: function(type, selector, duration) {
+	    duration = duration || 0;
+
+	    var filters = this.items;
+	    for (i = 0, il = filters.length; i < il; i++) {
+	      if (filters[i].type === type && filters[i].selector === selector) {
+	        return;
+	      }
+	    }
+
+	    filters.push({ type:type, selector:selector, duration:duration });
+
+	    // applies a single filter to all items
+	    // currently only suitable for 'hidden'
+	    var indexItem;
+	    var item;
+	    var j, jl;
+
+	    var start = this.time();
+	    var end = start+duration;
+
+	    for (var i = 0, il = data.Index.items.length; i<il; i++) {
+	      indexItem = data.Index.items[i];
+
+	      if (!indexItem.applyFilter) {
+	        continue;
+	      }
+
+	      for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+	        item = indexItem.items[j];
+	        if (selector(item.id, item.data)) {
+	          item.filter = [start, end, item.filter ? item.filter[3] : 1, 0];
+	        }
+	      }
+
+	      indexItem.applyFilter();
+	    }
+	  },
+
+	  remove: function(type, selector, duration) {
+	    duration = duration || 0;
+
+	    var i, il;
+
+	    var filters = this.items;
+	    for (i = 0, il = filters.length; i < il; i++) {
+	      if (filters[i].type === type && filters[i].selector === selector) {
+	        filters.splice(i, 1);
+	        break;
+	      }
+	    }
+
+	    // removes a single filter from all items
+	    // currently only suitable for 'hidden'
+	    var indexItem;
+	    var item;
+	    var j, jl;
+
+	    var start = this.time();
+	    var end = start+duration;
+
+	    for (i = 0, il = data.Index.items.length; i<il; i++) {
+	      indexItem = data.Index.items[i];
+
+	      if (!indexItem.applyFilter) {
+	        continue;
+	      }
+
+	      for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+	        item = indexItem.items[j];
+	        if (selector(item.id, item.data)) {
+	          item.filter = [start, end, item.filter ? item.filter[3] : 0, 1];
+	        }
+	      }
+
+	      indexItem.applyFilter();
+	    }
+	  },
+
+	  // applies all existing filters to an item
+	  // currently only suitable for 'hidden'
+	  apply: function(indexItem) {
+	    var filters = this.items;
+	    var type, selector;
+	    var item;
+	    var j, jl;
+
+	    if (!indexItem.applyFilter) {
+	      return;
+	    }
+
+	    for (var i = 0, il = filters.length; i < il; i++) {
+	      type = filters[i].type;
+	      selector = filters[i].selector;
+
+	      for (j = 0, jl = indexItem.items.length; j < jl; j++) {
+	        item = indexItem.items[j];
+	        if (selector(item.id, item.data)) {
+	          item.filter = [0, 0, 0, 0];
+	        }
+	      }
+	    }
+
+	    indexItem.applyFilter();
+	  },
+
+	  time: function() {
+	    return Date.now()-this.start;
+	  },
+
+	  destroy: function() {
+	    this.items = [];
+	  }
+	};
+
+
 	// all commented sections are for collision checks
 
 	// create 2 cylinders and check
@@ -2759,108 +2930,10 @@
 	    items: [],
 	//  blockers: [],
 
-	    filters: [],
-
-	    addFilter: function(type, selector) {
-	      var filters = this.filters;
-	      for (i = 0, il = filters.length; i < il; i++) {
-	        if (filters[i].type === type && filters[i].selector === selector) {
-	          return;
-	        }
-	      }
-
-	      filters.push({ type:type, selector:selector });
-
-	      // applies a single filter to all items
-	      // currently only suitable for 'hidden'
-	      var indexItem;
-	      var item;
-	      var j, jl;
-
-	      for (var i = 0, il = this.items.length; i<il; i++) {
-	        indexItem = this.items[i];
-
-	        if (!indexItem.setColors) {
-	          return;
-	        }
-
-	        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
-	          item = indexItem.items[j];
-	          if (selector(item.id, item.data)) {
-	            item.color[3] = 0;
-	          }
-	        }
-
-	        indexItem.setColors();
-	      }
-	    },
-
-	    removeFilter: function(type, selector) {
-	      var i, il;
-
-	      var filters = this.filters;
-	      for (i = 0, il = filters.length; i < il; i++) {
-	        if (filters[i].type === type && filters[i].selector === selector) {
-	          filters.splice(i, 1);
-	          break;
-	        }
-	      }
-
-	      // removes a single filter from all items
-	      // currently only suitable for 'hidden'
-	      var indexItem;
-	      var item;
-	      var j, jl;
-
-	      for (i = 0, il = this.items.length; i<il; i++) {
-	        indexItem = this.items[i];
-
-	        if (!indexItem.setColors) {
-	          return;
-	        }
-
-	        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
-	          item = indexItem.items[j];
-	          if (selector(item.id, item.data)) {
-	            item.color[3] = 1;
-	          }
-	        }
-
-	        indexItem.setColors();
-	      }
-	    },
-
-	    // applies all existing filters to an item
-	    // currently only suitable for 'hidden'
-	    applyFilters: function(indexItem) {
-	      var filters = this.filters;
-	      var selector, type;
-	      var item;
-	      var j, jl;
-
-	      if (!indexItem.setColors) {
-	        return;
-	      }
-
-	      for (var i = 0, il = filters.length; i < il; i++) {
-	        type = filters[i].type;
-	        selector = filters[i].selector;
-
-	        for (j = 0, jl = indexItem.items.length; j < jl; j++) {
-	          item = indexItem.items[j];
-	          if (selector(item.id, item.data)) {
-	            item.color[3] = 0;
-	          }
-	        }
-	      }
-
-	      indexItem.setColors();
-	    },
-
 	    add: function(item) {
 	      this.items.push(item);
 	      //if (item.replace) {
-	        //this.blockers.push(item);
+	      //this.blockers.push(item);
 	//      }
 	    },
 
@@ -2885,9 +2958,9 @@
 	//    // check with other objects
 	//    checkCollisions: function(item) {
 	//      for (var i = 0, il = this.blockers.length; i < il; i++) {
-	  //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
-	  //     return true;
-	  //    }
+	    //    if (this.blockers.indexOf(item.id) >= 0) { // real collision check
+	    //     return true;
+	    //    }
 	//      }
 	//      return false;
 	//    },
@@ -2936,38 +3009,58 @@
 
 	  //***************************************************************************
 
-	  function isRotational(item, center) {
-	    var
-	      ring = item.geometry[0],
-	      length = ring.length;
+	  function getGeometries(geometry, origin) {
+	    var i, il, polygonRings, sub;
+	    switch (geometry.type) {
+	      case 'GeometryCollection':
+	        var geometries = [];
+	        for (i = 0, il = geometry.geometries.length; i < il; i++) {
+	          if ((sub = getGeometries(geometry.geometries[i]))) {
+	            geometries.push.apply(geometries, sub);
+	          }
+	        }
+	        return geometries;
 
-	    if (length < 16) {
-	      return false;
+	      case 'MultiPolygon':
+	        var polygons = [];
+	        for (i = 0, il = geometry.coordinates.length; i < il; i++) {
+	          if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
+	            polygons.push.apply(geometries, sub);
+	          }
+	        }
+	        return polygons;
+
+	      case 'Polygon':
+	        polygonRings = geometry.coordinates;
+	        break;
+
+	      default: return [];
 	    }
 
-	    var
-	      width = item.max.x-item.min.x,
-	      height = item.max.y-item.min.y,
-	      ratio = width/height;
+	    var ring;
+	    var res = [];
 
-	    if (ratio < 0.85 || ratio > 1.15) {
-	      return false;
-	    }
-
-	    var
-	      radius = (width+height)/4,
-	      sqRadius = radius*radius,
-	      dist;
-
-
-	    for (var i = 0; i < length; i++) {
-	      dist = distance2(ring[i], center);
-	      if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
-	        return false;
+	    for (i = 0, il = polygonRings.length; i < il; i++) {
+	      if (!i) {
+	        ring = isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
+	      } else {
+	        ring = !isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
 	      }
+
+	      res[i] = transform(ring, origin);
 	    }
 
-	    return true;
+	    return [res];
+	  }
+
+	  function transform(ring, origin) {
+	    var p, res = [];
+	    for (var i = 0, len = ring.length; i < len; i++) {
+	      p = project(ring[i][1], ring[i][0], worldSize);
+	      res[i] = [p.x-origin.x, p.y-origin.y];
+	    }
+
+	    return res;
 	  }
 
 	  //***************************************************************************
@@ -2976,9 +3069,7 @@
 	    options = options || {};
 
 	    this.id = options.id;
-	    if (options.color) {
-	      this.color = new Color(options.color).toArray();
-	    }
+	    this.color = options.color;
 
 	    this.replace   = !!options.replace;
 	    this.scale     = options.scale     || 1;
@@ -2995,6 +3086,7 @@
 	    this.data = {
 	      vertices: [],
 	      normals: [],
+	      colors: [],
 	      ids: []
 	    };
 
@@ -3022,15 +3114,21 @@
 	      this.items = [];
 
 	      var
+	        origin = project(this.position.latitude, this.position.longitude, worldSize),
 	        startIndex = 0,
 	        dataLength = json.features.length,
 	        endIndex = startIndex + Math.min(dataLength, featuresPerChunk);
 
 	      var process = function() {
-	        var features = json.features.slice(startIndex, endIndex);
-	        var geojson = { type: 'FeatureCollection', features: features };
-	        var data = GeoJSON.parse(this.position, worldSize, geojson);
-	        this.addItems(data);
+	        var feature, geometries;
+	        for (var i = startIndex; i < endIndex; i++) {
+	          feature = json.features[i];
+	          geometries = getGeometries(feature.geometry, origin);
+
+	          for (var j = 0, jl = geometries.length; j < jl; j++) {
+	            this.addItem(feature.id, patch.GeoJSON(feature.properties), geometries[j]);
+	          }
+	        }
 
 	        if (endIndex === dataLength) {
 	          this.onReady();
@@ -3046,95 +3144,169 @@
 	      process();
 	    },
 
-	    addItems: function(items) {
+	    addItem: function(id, properties, geometry) {
+	      id = this.id || properties.relationId || id || properties.id;
+
 	      var
-	        item, color, idColor, center, radius,
-	        vertexCount,
-	        id, colorVariance,
-	        defaultColor = new Color(DEFAULT_COLOR).toArray(),
-	        j;
+	        i,
+	        skipRoof,
+	        vertexCount, color,
+	        idColor = render.Interaction.idToColor(id),
+	        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
+	        bbox = getBBox(geometry[0]),
+	        radius = (bbox.maxX - bbox.minX)/2,
+	        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
 
-	      for (var i = 0, il = items.length; i < il; i++) {
-	        item = items[i];
-
-	        id = this.id || item.id;
-	        idColor = render.Interaction.idToColor(id);
-	        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06); // TODO: maybe a shaders task
-
-	        center = [item.min.x + (item.max.x - item.min.x)/2, item.min.y + (item.max.y - item.min.y)/2];
-
-	        //if ((item.roofShape === 'cone' || item.roofShape === 'dome') && !item.shape && isRotational(item, center)) {
-	        if (!item.shape && isRotational(item, center)) {
-	          item.shape = 'cylinder';
-	          item.isRotational = true;
-	        }
-
-	        if (item.isRotational) {
-	          radius = (item.max.x - item.min.x)/2;
-	        }
-
-	        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
-	        switch (item.shape) {
-	          case 'cylinder': vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
-	          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.minHeight, item.height); break;
-	          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.minHeight, item.height); break;
-	          case 'sphere':   vertexCount = Triangulate.cylinder(this.data, center, radius, radius, item.minHeight, item.height); break;
-	          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.minHeight, item.height); break;
-	          default:         vertexCount = Triangulate.extrusion(this.data, item.geometry, item.minHeight, item.height);
-	        }
-
-	        color = this.color || item.wallColor || defaultColor;
-	        for (j = 0; j < vertexCount; j++) {
-	          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
-	        }
-
-	        // TODO: clean up vars
-	        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
-
-	        vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
-	        switch (item.roofShape) {
-	          case 'cone':     vertexCount = Triangulate.cylinder(this.data, center, radius, 0, item.height, item.height+item.roofHeight); break;
-	          case 'dome':     vertexCount = Triangulate.dome(this.data, center, radius, item.height, item.height + (item.roofHeight || radius)); break;
-	          case 'pyramid':  vertexCount = Triangulate.pyramid(this.data, item.geometry, center, item.height, item.height+item.roofHeight); break;
-	          default:
-	            if (item.shape === 'cylinder') {
-	              vertexCount = Triangulate.circle(this.data, center, radius, item.height);
-	            } else if (item.shape === undefined) {
-	              vertexCount = Triangulate.polygon(this.data, item.geometry, item.height);
-	            }
-	        }
-
-	        color = this.color || item.roofColor || defaultColor;
-	        for (j = 0; j < vertexCount; j++) {
-	          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
-	        }
-
-	        // TODO: clean up vars
-	        this.items.push({ id:id, vertexCount:vertexCount, color:color, colorVariance:colorVariance, data:item.data });
+	      // flat roofs or roofs we can't handle should not affect building's height
+	      switch (properties.roofShape) {
+	        case 'cone':
+	        case 'dome':
+	        case 'onion':
+	        case 'pyramid':
+	        case 'pyramidal':
+	          properties.height = Math.max(0, properties.height-(properties.roofHeight || 3));
+	        break;
+	        default:
+	          properties.roofHeight = 0;
 	      }
+
+	      //****** walls ******
+
+	      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+	      switch (properties.shape) {
+	        case 'cylinder':
+	          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+	        break;
+
+	        case 'cone':
+	          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.minHeight, properties.height);
+	          skipRoof = true;
+	        break;
+
+	        case 'dome':
+	          vertexCount = Triangulate.dome(this.data, center, radius, properties.minHeight, properties.height);
+	        break;
+
+	        case 'sphere':
+	          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+	        break;
+
+	        case 'pyramid':
+	        case 'pyramidal':
+	          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+	          skipRoof = true;
+	        break;
+
+	        default:
+	          if (isCircular(geometry[0], bbox, center)) {
+	            vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+	          } else {
+	            vertexCount = Triangulate.extrusion(this.data, geometry, properties.minHeight, properties.height);
+	          }
+	      }
+
+	      color = new Color(this.color || properties.wallColor || DEFAULT_COLOR).toArray();
+	      for (i = 0; i < vertexCount; i++) {
+	        this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
+	        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+	      }
+
+	      this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
+
+	      //****** roof ******
+
+	      if (skipRoof) {
+	        return;
+	      }
+
+	      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+
+	      switch (properties.roofShape) {
+	        case 'cone':
+	          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+	        break;
+
+	        case 'dome':
+	        case 'onion':
+	          vertexCount = Triangulate.dome(this.data, center, radius, properties.height, properties.height + (properties.roofHeight || radius));
+	        break;
+
+	        case 'pyramid':
+	        case 'pyramidal':
+	          if (properties.shape === 'cylinder') {
+	            vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+	          } else {
+	            vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+	          }
+	          break;
+
+	        //case 'skillion':
+	        //  // TODO: skillion
+	        //  vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+	        //break;
+	        //
+	        //case 'gabled':
+	        //case 'hipped':
+	        //case 'half-hipped':
+	        //case 'gambrel':
+	        //case 'mansard':
+	        //case 'round':
+	        //case 'saltbox':
+	        //  // TODO: gabled
+	        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+	        //break;
+
+	//      case 'flat':
+	        default:
+	          if (properties.shape === 'cylinder') {
+	            vertexCount = Triangulate.circle(this.data, center, radius, properties.height);
+	          } else {
+	            vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+	          }
+	        }
+
+	      color = new Color(this.color || properties.roofColor || DEFAULT_COLOR).toArray();
+	      for (i = 0; i<vertexCount; i++) {
+	        this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);
+	        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+	      }
+
+	      this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
 	    },
 
-	    setColors: function() {
-	      var item, colors = [];
+	    fadeIn: function() {
+	      var item, filters = [];
+	      var start = Filter.time() + 250, end = start + 500;
 	      for (var i = 0, il = this.items.length; i < il; i++) {
 	        item = this.items[i];
-	        //hidden = data.Index.checkCollisions(item);
+	        item.filter = [start, end, 0, 1];
 	        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-	          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+	          filters.push.apply(filters, item.filter);
 	        }
 	      }
-	      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
+	      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+	    },
+
+	    applyFilter: function() {
+	      var item, filters = [];
+	      for (var i = 0, il = this.items.length; i < il; i++) {
+	        item = this.items[i];
+	        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+	          filters.push.apply(filters, item.filter);
+	        }
+	      }
+	      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
 	    },
 
 	    onReady: function() {
-	      data.Index.applyFilters(this); // does not require the item to exist in data index
-
 	      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
 	      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
+	      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
 	      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-
+	      this.fadeIn();
 	      this.data = null;
 
+	      Filter.apply(this);
 	      data.Index.add(this);
 
 	      this.isReady = true;
@@ -3385,6 +3557,145 @@
 
 	mesh.OBJ = (function() {
 
+	  var vertexIndex = [];
+
+	  function parseMTL(str) {
+	    var
+	      lines = str.split(/[\r\n]/g),
+	      cols,
+	      materials = {},
+	      data = null;
+
+	    for (var i = 0, il = lines.length; i < il; i++) {
+	      cols = lines[i].trim().split(/\s+/);
+
+	      switch (cols[0]) {
+	        case 'newmtl':
+	          storeMaterial(materials, data);
+	          data = { id:cols[1], color:{} };
+	          break;
+
+	        case 'Kd':
+	          data.color = [
+	            parseFloat(cols[1]),
+	            parseFloat(cols[2]),
+	            parseFloat(cols[3])
+	          ];
+	          break;
+
+	        case 'd':
+	          data.color[3] = parseFloat(cols[1]);
+	          break;
+	      }
+	    }
+
+	    storeMaterial(materials, data);
+	    str = null;
+
+	    return materials;
+	  }
+
+	  function storeMaterial(materials, data) {
+	    if (data !== null) {
+	      materials[ data.id ] = data.color;
+	    }
+	  }
+
+	  function parseOBJ(str, materials) {
+	    var
+	      lines = str.split(/[\r\n]/g), cols,
+	      meshes = [],
+	      id,
+	      color,
+	      faces = [];
+
+	    for (var i = 0, il = lines.length; i < il; i++) {
+	      cols = lines[i].trim().split(/\s+/);
+
+	      switch (cols[0]) {
+	        case 'g':
+	        case 'o':
+	          storeOBJ(meshes, id, color, faces);
+	          id = cols[1];
+	          faces = [];
+	          break;
+
+	        case 'usemtl':
+	          storeOBJ(meshes, id, color, faces);
+	          if (materials[ cols[1] ]) {
+	            color = materials[ cols[1] ];
+	          }
+	          faces = [];
+	          break;
+
+	        case 'v':
+	          vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
+	          break;
+
+	        case 'f':
+	          faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
+	          break;
+	      }
+	    }
+
+	    storeOBJ(meshes, id, color, faces);
+	    str = null;
+
+	    return meshes;
+	  }
+
+	  function storeOBJ(meshes, id, color, faces) {
+	    if (faces.length) {
+	      var geometry = createGeometry(faces);
+	      meshes.push({
+	        id: id,
+	        color: color,
+	        vertices: geometry.vertices,
+	        normals: geometry.normals
+	      });
+	    }
+	  }
+
+	  function createGeometry(faces) {
+	    var
+	      v0, v1, v2,
+	      e1, e2,
+	      nor, len,
+	      geometry = { vertices:[], normals:[] };
+
+	    for (var i = 0, il = faces.length; i < il; i++) {
+	      v0 = vertexIndex[ faces[i][0] ];
+	      v1 = vertexIndex[ faces[i][1] ];
+	      v2 = vertexIndex[ faces[i][2] ];
+
+	      e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
+	      e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
+
+	      nor = [ e1[1]*e2[2] - e1[2]*e2[1], e1[2]*e2[0] - e1[0]*e2[2], e1[0]*e2[1] - e1[1]*e2[0] ];
+	      len = Math.sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
+
+	      nor[0] /= len;
+	      nor[1] /= len;
+	      nor[2] /= len;
+
+	      geometry.vertices.push(
+	        v0[0], v0[2], v0[1],
+	        v1[0], v1[2], v1[1],
+	        v2[0], v2[2], v2[1]
+	      );
+
+	      geometry.normals.push(
+	        nor[0], nor[1], nor[2],
+	        nor[0], nor[1], nor[2],
+	        nor[0], nor[1], nor[2]
+	      );
+	    }
+
+	    return geometry;
+	  }
+
+	  //***************************************************************************
+
 	  function constructor(url, position, options) {
 	    options = options || {};
 
@@ -3410,6 +3721,7 @@
 	    this.data = {
 	      vertices: [],
 	      normals: [],
+	      colors: [],
 	      ids: []
 	    };
 
@@ -3420,7 +3732,7 @@
 	      if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
 	        this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
 	          this.request = null;
-	          this.onLoad(obj, mtl);
+	          this.onLoad(obj, parseMTL(mtl));
 	        }.bind(this));
 	      } else {
 	        this.onLoad(obj, null);
@@ -3430,9 +3742,9 @@
 
 	  constructor.prototype = {
 	    onLoad: function(obj, mtl) {
-	      var data = new OBJ.parse(obj, mtl);
 	      this.items = [];
-	      this.addItems(data);
+	      // TODO: add single parsed items directly and save intermediate data storage
+	      this.addItems(parseOBJ(obj, mtl));
 	      this.onReady();
 	    },
 
@@ -3445,8 +3757,8 @@
 	      for (var i = 0, il = items.length; i < il; i++) {
 	        item = items[i];
 
-	        this.data.vertices.push.apply(this.data.vertices, item.vertices);
-	        this.data.normals.push.apply(this.data.normals, item.normals);
+	        this.data.vertices = this.data.vertices.concat(item.vertices);
+	        this.data.normals  = this.data.normals.concat(item.normals);
 
 	        id = this.id || item.id;
 	        idColor = render.Interaction.idToColor(id);
@@ -3454,35 +3766,47 @@
 	        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
 	        color = this.color || item.color || defaultColor;
 	        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+	          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
 	          this.data.ids.push(idColor[0], idColor[1], idColor[2], 1);
 	        }
 
-	        // TODO: clean up vars
-	        this.items.push({ id:id, vertexCount:item.vertices.length/3, color:color, colorVariance:colorVariance });
+	        this.items.push({ id:id, vertexCount:item.vertices.length/3, data:item.data });
 	      }
 	    },
 
-	    setColors: function() {
-	      var item, colors = [];
+	    fadeIn: function() {
+	      var item, filters = [];
+	      var start = Filter.time() + 250, end = start + 500;
 	      for (var i = 0, il = this.items.length; i < il; i++) {
 	        item = this.items[i];
-	        //hidden = data.Index.checkCollisions(item);
+	        item.filter = [start, end, 0, 1];
 	        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
-	          colors.push(item.color[0]+item.colorVariance, item.color[1]+item.colorVariance, item.color[2]+item.colorVariance, item.color[3] !== undefined ? item.color[3] : 1);
+	          filters.push.apply(filters, item.filter);
 	        }
 	      }
-	      this.colorBuffer = new glx.Buffer(4, new Float32Array(colors));
+	      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+	    },
+
+	    applyFilter: function() {
+	      var item, filters = [];
+	      for (var i = 0, il = this.items.length; i < il; i++) {
+	        item = this.items[i];
+	        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+	          filters.push.apply(filters, item.filter);
+	        }
+	      }
+	      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
 	    },
 
 	    onReady: function() {
-	      data.Index.applyFilters(this); // does not require the item to exist in data index
-
 	      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
 	      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
+	      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
 	      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
-
+	      this.fadeIn();
 	      this.data = null;
 
+	      Filter.apply(this);
 	      data.Index.add(this);
 
 	      this.isReady = true;
@@ -3536,421 +3860,223 @@
 	}());
 
 
-	var GeoJSON = {};
-
-	(function() {
-
-	  var METERS_PER_LEVEL = 3;
-
-	  var materialColors = {
-	    brick:'#cc7755',
-	    bronze:'#ffeecc',
-	    canvas:'#fff8f0',
-	    concrete:'#999999',
-	    copper:'#a0e0d0',
-	    glass:'#e8f8f8',
-	    gold:'#ffcc00',
-	    plants:'#009933',
-	    metal:'#aaaaaa',
-	    panel:'#fff8f0',
-	    plaster:'#999999',
-	    roof_tiles:'#f08060',
-	    silver:'#cccccc',
-	    slate:'#666666',
-	    stone:'#996666',
-	    tar_paper:'#333333',
-	    wood:'#deb887'
-	  };
-
-	  var baseMaterials = {
-	    asphalt:'tar_paper',
-	    bitumen:'tar_paper',
-	    block:'stone',
-	    bricks:'brick',
-	    glas:'glass',
-	    glassfront:'glass',
-	    grass:'plants',
-	    masonry:'stone',
-	    granite:'stone',
-	    panels:'panel',
-	    paving_stones:'stone',
-	    plastered:'plaster',
-	    rooftiles:'roof_tiles',
-	    roofingfelt:'tar_paper',
-	    sandstone:'stone',
-	    sheet:'canvas',
-	    sheets:'canvas',
-	    shingle:'tar_paper',
-	    shingles:'tar_paper',
-	    slates:'slate',
-	    steel:'metal',
-	    tar:'tar_paper',
-	    tent:'canvas',
-	    thatch:'plants',
-	    tile:'roof_tiles',
-	    tiles:'roof_tiles'
-	    // cardboard
-	    // eternit
-	    // limestone
-	    // straw
-	  };
-
-	  function getMaterialColor(str) {
-	    if (typeof str !== 'string') {
-	      return null;
-	    }
-	    str = str.toLowerCase();
-	    if (str[0] === '#') {
-	      return str;
-	    }
-	    return materialColors[baseMaterials[str] || str] || null;
-	  }
-
-	  function isClockWise(latlngs) {
-	    return 0 < latlngs.reduce(function(a, b, c, d) {
-	      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-	    }, 0);
-	  }
-
-	  function parseFeature(res, feature, origin, worldSize) {
-	    var
-	      prop = feature.properties,
-	      item = {};
-
-	    if (!prop) {
-	      return;
-	    }
-
-	    item.data = prop.data;
-
-	    item.height    = prop.height    || (prop.levels   ? prop.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT);
-	    item.minHeight = prop.minHeight || (prop.minLevel ? prop.minLevel*METERS_PER_LEVEL : 0);
-
-	    item.wallColor = new Color(prop.wallColor || prop.color || getMaterialColor(prop.material) || DEFAULT_COLOR).toArray();
-	    item.roofColor = new Color(prop.roofColor || prop.color || getMaterialColor(prop.material) || DEFAULT_COLOR).toArray();
-
-	    switch (prop.shape) {
-	      case 'cylinder':
-	      case 'cone':
-	      case 'dome':
-	      case 'sphere':
-	        item.shape = prop.shape;
-	        item.isRotational = true;
-	        break;
-
-	      case 'pyramid':
-	        item.shape = prop.shape;
-	        break;
-	    }
-
-	    switch (prop.roofShape) {
-	      case 'cone':
-	      case 'dome':
-	        item.roofShape = prop.roofShape;
-	        item.isRotational = true;
-	        break;
-
-	      case 'pyramid':
-	        item.roofShape = prop.roofShape;
-	        break;
-	    }
-
-	    if (item.roofShape && prop.roofHeight) {
-	      item.roofHeight = prop.roofHeight;
-	      item.height = Math.max(0, item.height-item.roofHeight);
-	    } else {
-	      item.roofHeight = 0;
-	    }
-
-	    //if (item.height+item.roofHeight <= item.minHeight) {
-	    //  return;
-	    //}
-
-	    item.id = prop.relationId || feature.id || prop.id;
-
-	    var geometries = getGeometries(feature.geometry, origin, worldSize);
-	    var clonedItem = Object.create(item);
-	    var bbox;
-
-	    for (var i = 0, il = geometries.length; i < il; i++) {
-	      clonedItem.geometry = geometries[i];
-	      bbox = getBBox(geometries[i][0]);
-	      clonedItem.min = bbox.min;
-	      clonedItem.max = bbox.max;
-	      res.push(clonedItem);
-	    }
-	  }
-
-	  function getGeometries(geometry, origin, worldSize) {
-	    var i, il, polygonRings, sub;
-	    switch (geometry.type) {
-	      case 'GeometryCollection':
-	        var geometries = [];
-	        for (i = 0, il = geometry.geometries.length; i < il; i++) {
-	          if ((sub = getGeometries(geometry.geometries[i]))) {
-	            geometries.push.apply(geometries, sub);
-	          }
-	        }
-	        return geometries;
-
-	      case 'MultiPolygon':
-	        var polygons = [];
-	        for (i = 0, il = geometry.coordinates.length; i < il; i++) {
-	          if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
-	            polygons.push.apply(geometries, sub);
-	          }
-	        }
-	        return polygons;
-
-	      case 'Polygon':
-	        polygonRings = geometry.coordinates;
-	        break;
-
-	      default: return [];
-	    }
-
-	    var ring;
-	    var res = [];
-
-	    for (i = 0, il = polygonRings.length; i < il; i++) {
-	      if (!i) {
-	        ring = isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
-	      } else {
-	        ring = !isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
-	      }
-
-	      res[i] = transform(ring, origin, worldSize);
-	    }
-
-	    return [res];
-	  }
-
-	  function transform(ring, origin, worldSize) {
-	    var p, res = [];
-	    for (var i = 0, len = ring.length; i < len; i++) {
-	      p = project(ring[i][1], ring[i][0], worldSize);
-	      res[i] = [p.x-origin.x, p.y-origin.y];
-	    }
-
-	    return res;
-	  }
-
-	  function getBBox(ring) {
-	    var
-	      x =  Infinity, y =  Infinity,
-	      X = -Infinity, Y = -Infinity;
-
-	    for (var i = 0; i < ring.length; i++) {
-	      x = Math.min(x, ring[i][0]);
-	      y = Math.min(y, ring[i][1]);
-
-	      X = Math.max(X, ring[i][0]);
-	      Y = Math.max(Y, ring[i][1]);
-	    }
-
-	    return {
-	      min: { x:x, y:y },
-	      max: { x:X, y:Y }
-	    };
-	  }
-
-	  //***************************************************************************
-
-	  GeoJSON.parse = function(position, worldSize, geojson) {
-	    var res = [];
-
-	    if (geojson && geojson.type === 'FeatureCollection' && geojson.features.length) {
-
-	      var
-	        collection = geojson.features,
-	        origin = project(position.latitude, position.longitude, worldSize);
-
-	      for (var i = 0, il = collection.length; i<il; i++) {
-	        parseFeature(res, collection[i], origin, worldSize);
-	      }
-	    }
-
-	    return res;
-	  };
-
-	}());
-
-
-	var OBJ = function() {
-	  this.vertexIndex = [];
-	};
-
-	if (true) {
-	  module.exports = OBJ;
-	}
-
-	OBJ.prototype = {
-
-	  parseMaterials: function(str) {
-	    var lines = str.split(/[\r\n]/g), cols;
-	    var i, il;
-
-	    var materials = {};
-	    var data = null;
-
-	    for (i = 0, il = lines.length; i < il; i++) {
-	  	  cols = lines[i].trim().split(/\s+/);
-
-	      switch (cols[0]) {
-	  	    case 'newmtl':
-	          this.storeMaterial(materials, data);
-	          data = { id:cols[1], color:{} };
-	        break;
-
-	  	    case 'Kd':
-	  	      data.color.r = parseFloat(cols[1]);
-	  	      data.color.g = parseFloat(cols[2]);
-	  	      data.color.b = parseFloat(cols[3]);
-	  	    break;
-
-	  	    case 'd':
-	          data.color.a = parseFloat(cols[1]);
-	        break;
-	  	  }
-	    }
-
-	    this.storeMaterial(materials, data);
-
-	    str = null;
-
-	    return materials;
-	  },
-
-	  storeMaterial: function(materials, data) {
-	    if (data !== null) {
-	      materials[ data.id ] = data.color;
-	    }
-	  },
-
-	  parseModel: function(str, materials) {
-	    var lines = str.split(/[\r\n]/g), cols;
-	    var i, il;
-
-	    var meshes = [];
-	    var id;
-	    var color;
-	    var faces = [];
-
-	    for (i = 0, il = lines.length; i < il; i++) {
-	  	  cols = lines[i].trim().split(/\s+/);
-
-	      switch (cols[0]) {
-	        case 'g':
-	        case 'o':
-	          this.storeMesh(meshes, id, color, faces);
-	          id = cols[1];
-	          faces = [];
-	        break;
-
-	        case 'usemtl':
-	          this.storeMesh(meshes, id, color, faces);
-	          if (materials[ cols[1] ]) {
-	            color = materials[ cols[1] ];
-	          }
-	          faces = [];
-	        break;
-
-	        case 'v':
-	          this.vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
-	        break;
-
-	  	    case 'f':
-	  	      faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
-	  	    break;
-		    }
-	    }
-
-	    this.storeMesh(meshes, id, color, faces);
-
-	    str = null;
-
-	    return meshes;
-	  },
-
-	  storeMesh: function(meshes, id, color, faces) {
-	    if (faces.length) {
-	      var geometry = this.createGeometry(faces);
-	      meshes.push({
-	        id: id,
-	        color: color,
-	        vertices: geometry.vertices,
-	        normals: geometry.normals,
-	        min: geometry.min,
-	        max: geometry.max
-	      });
-	    }
-	  },
-
-	  createGeometry: function(faces) {
-	  	var v0, v1, v2;
-	  	var e1, e2;
-	  	var nor, len;
-	    var
-	      x =  Infinity, y =  Infinity, z =  Infinity,
-	      X = -Infinity, Y = -Infinity, Z = -Infinity;
-
-	    var geometry = { vertices:[], normals:[] };
-
-	    for (var i = 0, il = faces.length; i < il; i++) {
-	  		v0 = this.vertexIndex[ faces[i][0] ];
-	  		v1 = this.vertexIndex[ faces[i][1] ];
-	  		v2 = this.vertexIndex[ faces[i][2] ];
-
-	      x = Math.min(x, v0[0], v1[0], v2[0]);
-	      y = Math.min(x, v0[2], v1[2], v2[2]);
-	      z = Math.min(x, v0[1], v1[1], v2[1]);
-
-	      X = Math.max(X, v0[0], v1[0], v2[0]);
-	      Y = Math.max(Y, v0[2], v1[2], v2[2]);
-	      Z = Math.max(Z, v0[1], v1[1], v2[1]);
-
-	      e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
-	  		e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
-
-	  		nor = [ e1[1]*e2[2] - e1[2]*e2[1], e1[2]*e2[0] - e1[0]*e2[2], e1[0]*e2[1] - e1[1]*e2[0] ];
-	  		len = Math.sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
-
-	  		nor[0] /= len;
-	      nor[1] /= len;
-	      nor[2] /= len;
-
-	  		geometry.vertices.push(
-	        v0[0], v0[2], v0[1],
-	        v1[0], v1[2], v1[1],
-	        v2[0], v2[2], v2[1]
-	      );
-
-	  		geometry.normals.push(
-	        nor[0], nor[1], nor[2],
-	        nor[0], nor[1], nor[2],
-	        nor[0], nor[1], nor[2]
-	      );
-	    }
-
-	    geometry.min = { x:x, y:y, z:z };
-	    geometry.max = { x:X, y:Y, z:Z };
-	    return geometry;
-	  }
-	};
-
-	OBJ.parse = function(obj, mtl) {
-	  var
-	    parser = new OBJ(),
-	    materials = mtl ? parser.parseMaterials(mtl) : {};
-	  return parser.parseModel(obj, materials);
-	};
-
-
 	function distance2(a, b) {
 	  var
 	    dx = a[0]-b[0],
 	    dy = a[1]-b[1];
 	  return dx*dx + dy*dy;
+	}
+
+	function isCircular(polygon, bbox, center) {
+	  var length = polygon.length;
+
+	  if (length < 16) {
+	    return false;
+	  }
+
+	  var
+	    width = bbox.maxX-bbox.minX,
+	    height = bbox.maxY-bbox.minY,
+	    sizeRatio = width/height;
+
+	  if (sizeRatio < 0.85 || sizeRatio > 1.15) {
+	    return false;
+	  }
+
+	  var
+	    radius = (width+height)/4,
+	    sqRadius = radius*radius,
+	    dist;
+
+
+	  for (var i = 0; i < length; i++) {
+	    dist = distance2(polygon[i], center);
+	    if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
+	      return false;
+	    }
+	  }
+
+	  return true;
+	}
+
+	function isClockWise(polygon) {
+	  return 0 < polygon.reduce(function(a, b, c, d) {
+	      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
+	    }, 0);
+	}
+
+	function getBBox(polygon) {
+	  var
+	    x =  Infinity, y =  Infinity,
+	    X = -Infinity, Y = -Infinity;
+
+	  for (var i = 0; i < polygon.length; i++) {
+	    x = Math.min(x, polygon[i][0]);
+	    y = Math.min(y, polygon[i][1]);
+
+	    X = Math.max(X, polygon[i][0]);
+	    Y = Math.max(Y, polygon[i][1]);
+	  }
+
+	  return { minX:x, minY:y, maxX:X, maxY:Y };
+	}
+
+	function assert(condition, message) {
+	  if (!condition) {
+	    throw message;
+	  }
+	}
+
+	/* Returns the distance of point 'p' from line 'line1'->'line2'.
+	 * based on http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+	 */
+	 /*
+	function getDistancePointLine2( line1, line2, p) {
+
+	  //v: a unit-length vector perpendicular to the line;
+	  var v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
+	  var r = sub2( line1, p);
+	  return Math.abs(dot2(v, r));
+	} */
+
+	/*  given a pixel's (integer) position through which the line 'segmentStart' ->
+	 *  'segmentEnd' passes, this method returns the one neighboring pixel of 
+	 *  'currentPixel' that would be traversed next if the line is followed in 
+	 *  the direction from 'segmentStart' to 'segmentEnd' (even if the next point
+	 *  would lie beyond 'segmentEnd'. )
+	 */
+	function getNextPixel(segmentStart, segmentEnd, currentPixel) {
+
+	  var vInc = [segmentStart[0] < segmentEnd[0] ? 1 : -1, 
+	              segmentStart[1] < segmentEnd[1] ? 1 : -1];
+	         
+	  var nextX = currentPixel[0] + (segmentStart[0] < segmentEnd[0] ?  +1 : 0);
+	  var nextY = currentPixel[1] + (segmentStart[1] < segmentEnd[1] ?  +1 : 0);
+	  
+	  // position of the edge to the next pixel on the line 'segmentStart'->'segmentEnd'
+	  var alphaX = (nextX - segmentStart[0])/ (segmentEnd[0] - segmentStart[0]);
+	  var alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
+	  
+	  if (alphaX < 0.0 || alphaX > 1.0 || alphaY < 0.0 || alphaY > 1.0)
+	    return [undefined, undefined];
+	  
+	  if (alphaX == -Infinity) alphaX = Infinity;
+	  if (alphaY == -Infinity) alphaY = Infinity;
+
+	  assert(alphaX >= 0 && alphaY >= 0, "Invalid movement direction");
+	  
+	  return alphaX < alphaY ? [currentPixel[0]+vInc[0], currentPixel[1]] :
+	                           [currentPixel[0],         currentPixel[1] + vInc[1]];
+	}
+
+	/* returns all pixels that are at least partially covered by the triangle
+	 * p1-p2-p3. 
+	 * Note: the returned array of pixels *will* contain duplicates that may need 
+	 * to be removed.
+	 */
+	function rasterTriangle(p1, p2, p3) {
+	  var points = [p1, p2, p3];
+	  points.sort(function(p, q) {
+	    return p[1] < q[1];
+	  });
+	  p1 = points[0];
+	  p2 = points[1];
+	  p3 = points[2];
+	  
+	  if (p1[1] == p2[1])
+	    return rasterFlatTriangle( p1, p2, p3);
+	    
+	  if (p2[1] == p3[1])
+	    return rasterFlatTriangle( p2, p3, p1);
+	    
+	    
+	  var alpha = (p2[1] - p1[1]) / (p3[1] - p1[1]);
+	  //point on the line p1->p3 with the same y-value as p2
+	  var p4 = [p1[0] + alpha*(p3[0]-p1[0]), p2[1]];
+	  
+	  /*  P3
+	   *   |\
+	   *   | \
+	   *  P4--P2
+	   *   | /
+	   *   |/
+	   *   P1
+	   * */
+	  return rasterFlatTriangle(p4, p2, p1).concat(
+	         rasterFlatTriangle(p4, p2, p3));
+	}
+
+
+	/* Returns all pixels that are at least partially covered by the triangle
+	 * flat0-flat1-other, where the points flat0 and flat1 need to have the
+	 * same y-value. This method is used internally for rasterTriangle(), which
+	 * splits a general triangle into two flat triangles, and calls this method
+	 * for both parts.
+	 * Note: the returned array of pixels will contain duplicates.
+	 *
+	 * other
+	 *  | \_
+	 *  |   \_
+	 *  |     \_
+	 * f0/f1--f1/f0  
+	 */
+	function rasterFlatTriangle( flat0, flat1, other ) {
+
+	  //console.log("RFT:\n%s\n%s\n%s", String(flat0), String(flat1), String(other));
+	  var points = [];
+	  assert( flat0[1] === flat1[1], "not a flat triangle");
+	  assert( other[1] !== flat0[1], "not a triangle");
+	  assert( flat0[0] !== flat1[0], "not a triangle");
+
+	  if (flat0[0] > flat1[0]) //guarantees that flat0 is always left of flat1
+	  {
+	    var tmp = flat0;
+	    flat0 = flat1;
+	    flat1 = tmp;
+	  }
+	  
+	  var leftRasterPos = [Math.floor(other[0]), Math.floor(other[1])];
+	  var rightRasterPos = leftRasterPos.slice(0);
+	  points.push(leftRasterPos.slice(0));
+	  var yDir = other[1] < flat0[1] ? +1 : -1;
+	  var yStart = Math.floor(other[1]) + yDir;
+	  var yBeyond= Math.floor(flat0[1]) + yDir;
+	  var prevLeftRasterPos;
+	  var prevRightRasterPos;
+
+	  for (var y = yStart; (y*yDir) < (yBeyond*yDir); y+= yDir) {
+	    do {
+	      points.push( leftRasterPos.slice(0));
+	      prevLeftRasterPos = leftRasterPos;
+	      leftRasterPos = getNextPixel(other, flat0, leftRasterPos);
+	    } while (leftRasterPos[1]*yDir <= y*yDir);
+	    leftRasterPos = prevLeftRasterPos;
+	    
+	    do {
+	      points.push( rightRasterPos.slice(0));
+	      prevRightRasterPos = rightRasterPos;
+	      rightRasterPos = getNextPixel(other, flat1, rightRasterPos);
+	    } while (rightRasterPos[1]*yDir <= y*yDir);
+	    rightRasterPos = prevRightRasterPos;
+	    
+	    for (var x = leftRasterPos[0]; x <= rightRasterPos[0]; x++) {
+	      points.push( [x,y] );
+	    }
+	  }
+	  
+	  return points;
+	}
+
+	/* Returns an array of all pixels that are at least partially covered by the
+	 * convex quadrilateral 'quad'. If the passed quadrilateral is not convex,
+	 * then the return value of this method is undefined.
+	 */
+	function rasterConvexQuad (quad) {
+	  assert(quad.length == 4, "Error: Quadrilateral with more or less than four vertices");
+	  var res1  = rasterTriangle( quad[0], quad[1], quad[2]);
+	  var res2 =  rasterTriangle( quad[0], quad[2], quad[3]);
+	  
+	  return res1.concat(res2);
 	}
 
 	function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
@@ -3988,6 +4114,7 @@
 	 *                 holds P = tA + α*v1 + β*v2 subject to α >= 0, β>= 0 and
 	 *                 α + β <= 1.0
 	 */
+	/*
 	function isPointInTriangle(tA, tB, tC, P) {
 	  var v1x = tB[0] - tA[0];
 	  var v1y = tB[1] - tA[1];
@@ -3998,8 +4125,8 @@
 	  var qx  = P[0] - tA[0];
 	  var qy  = P[1] - tA[1];
 
-	  /* 'denom' is zero iff v1 and v2 have the same direction. In that case,
-	   * the triangle has degenerated to a line, and no point can lie inside it */
+	  // 'denom' is zero iff v1 and v2 have the same direction. In that case,
+	  // the triangle has degenerated to a line, and no point can lie inside it
 	  var denom = v2x * v1y - v2y * v1x;
 	  if (denom === 0)
 	    return false;
@@ -4011,6 +4138,76 @@
 	  var alpha = - numeratorAlpha / denom;
 
 	  return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;
+	}
+	*/
+
+	// FIXME: make this more robust so that it also works in non-monotonous situations
+
+	/* Determines a position on the ray starting at 'pStart' with direction 'pDir'
+	 * that is about 'distance' away from the plane through point 'pos' with normal
+	 * 'lookDir'. Since we currently have no way of computing this value directly,
+	 * we instead resort to an iterative approximation technique.
+	 * 
+	 * This method only works correctly of the computed distance is monotonously
+	 * increasing along 'pDir'.
+	 *
+	 * Implementation: the actual iterative approximation occurs in two phases
+	 *   1. iteratively find a position along the ray that is further than 
+	 *      'distance' away from the plane. To find that position, we simply
+	 *      go 1, 2, 4, 8, ... units away from pStart in direction pDir until
+	 *      the distance is large enough.
+	 *   2. with the original point 'pStart' being too close, and the point
+	 *      'pFarther' computed in step 1 being too far away, the sought point
+	 *      has to lie between the two. To find it, we use a binary search: 
+	 *      we iteratively compute the center between the two points to determine 
+	 *      in which half of the interval (pStart to center, or center to 
+	 *      pFarther) the sought point has to lie, and then adjust either pStart 
+	 *      or pFarther to match that interval. Once the center point has a 
+	 *      distance to the plane that matches 'distance' (within a certain 
+	 *      level of tolerance to allow for numerical inaccuracies), we return it.
+	 */
+	function getRayPointAtDistanceToPlane (pos, lookDir, pStart, pDir, distance) {
+	  
+	  if (len3(lookDir) === 0 || len3(pDir) === 0) {
+	    return;
+	  }
+
+	  pDir = norm3(pDir);
+	  lookDir = norm3(lookDir);
+	  
+	  pCloser = pStart;
+	  pCloserDistToPlane = dot3( sub3( pStart, pos), lookDir);
+	  var distMultiplier = 1;
+	  var pNext;
+	  if (pCloserDistToPlane > distance)
+	    return pCloser;
+	    
+	  while (true) {
+	    pNext = add3( pStart, mul3scalar(pDir, distMultiplier));
+	    var pNextDistToPlane = dot3( sub3(pNext, pos), lookDir);
+	    
+	    if (pNextDistToPlane > distance) // is too far away
+	      break;
+	      
+	    distMultiplier *= 2;
+	  }
+	  
+	  var pFarther = pNext;
+	  
+	  while (true)
+	  {
+	    var pMid = mul3scalar( add3(pCloser, pFarther), 0.5);
+	    var pMidDistToPlane = dot3( sub3(pMid, pos), lookDir);
+	    
+	    // if the relative difference is small enough, we found the result;
+	    if ( Math.abs( pMidDistToPlane/distance - 1) < 1E-5)
+	      return pMid;
+	      
+	    if (pMidDistToPlane > distance) // too far away
+	      pFarther = pMid;
+	    else
+	      pCloser = pMid;
+	  }
 	}
 
 	/* transforms the 3D vector 'v' according to the transformation matrix 'm'.
@@ -4038,9 +4235,7 @@
 	  var v2 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
 
 	  // direction vector from v1 to v2
-	  var vDir = [ v2[0] - v1[0],
-	    v2[1] - v1[1],
-	    v2[2] - v1[2]];
+	  var vDir = sub3(v2, v1);
 
 	  if (vDir[2] >= 0) // ray would not intersect with the plane
 	  {
@@ -4052,9 +4247,83 @@
 	   * Rearranged, this reads:   */
 	  var lambda = -v1[2]/vDir[2];
 
-	  return [ v1[0] + lambda * vDir[0],
-	    v1[1] + lambda * vDir[1],
-	    v1[2] + lambda * vDir[2] +1.0]; //FIXME: remove debug z-offset "+1.0"
+	  return add3( v1, mul3scalar(vDir, lambda));
+
+	}
+
+	/* returns the camera position in world coordinates based on an inverse 
+	   view-projection matrix */
+	function getCameraPosition( inverseTransform)
+	{
+	  var p1BottomLeft = transformVec3(inverseTransform, [-1, -1, 0]);
+	  var p2BottomLeft = transformVec3(inverseTransform, [-1, -1, 1]);
+	  
+	  var vBottomLeft = sub3( p2BottomLeft, p1BottomLeft);
+	  
+	  var p1BottomRight = transformVec3(inverseTransform, [ 1, -1, 0]);
+	  var p2BottomRight = transformVec3(inverseTransform, [ 1, -1, 1]);
+	  var vBottomRight = sub3( p2BottomRight, p1BottomRight);
+	  
+	  return getPseudoIntersection(p1BottomLeft, vBottomLeft, 
+	                               p1BottomRight,vBottomRight);
+	}
+
+	/*
+	 * 
+	 * Given two lines, each by a point on the line (p1/p2) and the line's direction
+	 * (d1/d2), this function returns a point P that is as close as possible to
+	 * both lines at the same time.
+	 * This function's intented use is as a robust line intersection algorithm that 
+	 * works even when the two lines do not quite intersect due to numerical 
+	 * limitations.
+	 * Note: the code was taken and modified from 
+	 *       http://gamedev.stackexchange.com/questions/9738
+	 */
+	function getPseudoIntersection(p1, d1, p2, d2)
+	{
+	  if (len3(d1) === 0 || len3(d2) === 0) {
+	    // at least one of the direction vectors has no length and thus no direction
+	    return;
+	  }
+
+	  d1 = norm3(d1);
+	  d2 = norm3(d2);
+
+	  var a = 1; // was dot3(d1, d1)
+	  var b = dot3(d1, d2);
+	  var e = 1; // was dot3(d2, d2)
+	  
+	  var d = 1-b*b; // was a*e - b*b
+	  
+	  if (d === 0) {
+	    /* if the lines are parellel  */
+	    return;
+	  }
+	  
+	  var r = sub3(p1, p2);
+	  var c = dot3(d1, r);
+	  var f = dot3(d2, r);
+	  
+	  var s = (b*f - c*e) / d;
+	  var t = (a*f - b*c) / d;
+	  
+	  var pClosest1 = add3(p1, mul3scalar(d1, s));
+	  var pClosest2 = add3(p2, mul3scalar(d2, t));
+	  var midPoint =  mul3scalar( add3(pClosest1, pClosest2), 0.5);
+	  
+	  return midPoint;
+	}
+
+	function inMeters(localDistance) {
+	  var EARTH_CIRCUMFERENCE = 6371 * 2*3.141592; // [km]
+	  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE *  Math.cos(MAP.position.latitude/ 180 * Math.PI);
+	  return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
+	}
+
+	function vec3InMeters(localVec) {
+	  return [ inMeters(localVec[0]),
+	           inMeters(localVec[1]),
+	           inMeters(localVec[2])];
 	}
 
 	/* converts a 2D position from OSMBuildings' local coordinate system to slippy tile
@@ -4072,10 +4341,17 @@
 	  return [tileX, tileY];
 	}
 
+	function dot2(a,b) { return a[0]*b[0] + a[1]*b[1]; }
+	function sub2(a,b) { return [a[0]-b[0], a[1]-b[1]]; }
+	function len2(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1]);}
+	function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l];}
+
+	function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]+b[2];}
 	function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
 	function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
 	function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
 	function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
+	function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}
 	function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
 	function dist3(a,b){ return len3(sub3(a,b));}
 
@@ -4105,7 +4381,7 @@
 	   * and geometry tiles need to be loaded.
 	   * Note: if the horizon is level (as should usually be the case for 
 	   * OSMBuildings) then said quad is also a trapezoid. */
-	  getViewQuad: function(viewProjectionMatrix, tileZoomLevel) {
+	  getViewQuad: function(viewProjectionMatrix) {
 	    //FIXME: determine a reasonable value (4000 was chosen rather arbitrarily)
 	    var MAX_EDGE_LENGTH = 4000; 
 
@@ -4168,10 +4444,7 @@
 	    
 	    //return [ vBottomLeft, vBottomRight, vTopRight, vTopLeft];
 	    
-	    return [asTilePosition(vBottomLeft,  tileZoomLevel),
-	            asTilePosition(vBottomRight, tileZoomLevel),
-	            asTilePosition(vTopRight,    tileZoomLevel),
-	            asTilePosition(vTopLeft,     tileZoomLevel)];
+	    return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
 	  },
 
 	  start: function() {
@@ -4212,7 +4485,7 @@
 	        if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
 	          return;
 	        }
-	        
+
 	        //var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data, 16);
 	        //console.log( this.getTilesInQuad( viewTrapezoid) );
 	        //var s = "";
@@ -4311,8 +4584,17 @@
 	    this.shader = new glx.Shader({
 	      vertexShader: Shaders.interaction.vertex,
 	      fragmentShader: Shaders.interaction.fragment,
-	      attributes: ['aPosition', 'aID', 'aColor'],
-	      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uFogRadius', 'uBendRadius', 'uBendDistance']
+	      attributes: ['aPosition', 'aID', 'aFilter'],
+	      uniforms: [
+	        'uModelMatrix',
+	        'uViewMatrix',
+	        'uProjMatrix',
+	        'uMatrix',
+	        'uFogRadius',
+	        'uBendRadius',
+	        'uBendDistance',
+	        'uTime'
+	      ]
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -4336,6 +4618,11 @@
 	    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
 	    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
+	    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+
+	    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+	    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+
 	    var
 	      dataItems = data.Index.items,
 	      item,
@@ -4352,12 +4639,7 @@
 	        continue;
 	      }
 
-	      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
 	      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
 	      item.vertexBuffer.enable();
@@ -4366,8 +4648,8 @@
 	      item.idBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aID, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-	      item.colorBuffer.enable();
-	      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	      item.filterBuffer.enable();
+	      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
@@ -4542,8 +4824,24 @@
 	    this.shader = new glx.Shader({
 	      vertexShader: Shaders.buildings.vertex,
 	      fragmentShader: Shaders.buildings.fragment,
-	      attributes: ['aPosition', 'aColor', 'aNormal', 'aID'],
-	      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uNormalTransform', 'uAlpha', 'uLightColor', 'uLightDirection', 'uFogRadius', 'uFogColor', 'uBendRadius', 'uBendDistance', 'uHighlightColor', 'uHighlightID']
+	      attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
+	      uniforms: [
+	        'uModelMatrix',
+	        'uViewMatrix',
+	        'uProjMatrix',
+	        'uMatrix',
+	        'uNormalTransform',
+	        'uAlpha',
+	        'uLightColor',
+	        'uLightDirection',
+	        'uFogRadius',
+	        'uFogColor',
+	        'uBendRadius',
+	        'uBendDistance',
+	        'uHighlightColor',
+	        'uHighlightID',
+	        'uTime'
+	      ]
 	    });
 	  },
 
@@ -4575,10 +4873,15 @@
 
 	    gl.uniform3fv(shader.uniforms.uHighlightColor, render.highlightColor);
 
+	    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+
 	    if (!this.highlightID) {
 	      this.highlightID = [0, 0, 0];
 	    }
 	    gl.uniform3fv(shader.uniforms.uHighlightID, this.highlightID);
+
+	    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
+	    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 
 	    var
 	      dataItems = data.Index.items,
@@ -4599,8 +4902,6 @@
 	      }
 
 	      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
 	      item.vertexBuffer.enable();
@@ -4611,6 +4912,9 @@
 
 	      item.colorBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+	      item.filterBuffer.enable();
+	      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	      item.idBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aID, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -4653,7 +4957,7 @@
 
 	    var
 	      shader = this.shader,
-	      tile, modelMatrix,
+	      tile,
 	      zoom = Math.round(MAP.zoom);
 
 	    shader.enable();
@@ -4790,9 +5094,7 @@
 	    shader.disable();
 	  },
 
-	  destroy: function() {
-	    this.texture.destroy();
-	  }
+	  destroy: function() {}
 	};
 
 
@@ -4811,8 +5113,8 @@
 	    this.shader = new glx.Shader({
 	      vertexShader: Shaders.normalmap.vertex,
 	      fragmentShader: Shaders.normalmap.fragment,
-	      attributes: ['aPosition', 'aNormal', 'aColor'],
-	      uniforms: [/*'uModelMatrix', 'uViewMatrix', 'uProjMatrix',*/ 'uMatrix']
+	      attributes: ['aPosition', 'aNormal', 'aFilter'],
+	      uniforms: ['uMatrix', 'uTime']
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
@@ -4838,6 +5140,8 @@
 	    gl.clearColor(0.5, 0.5, 1, 1);
 	    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+	    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+
 	    var
 	      dataItems = data.Index.items.concat([this.mapPlane]),
 	      item,
@@ -4854,12 +5158,6 @@
 	        continue;
 	      }
 
-	      //gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      //gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
-	      /*gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-	      gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);*/
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
 	      item.vertexBuffer.enable();
@@ -4868,8 +5166,8 @@
 	      item.normalBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-	      item.colorBuffer.enable();
-	      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	      item.filterBuffer.enable();
+	      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
@@ -4903,8 +5201,8 @@
 	    this.shader = new glx.Shader({
 	      vertexShader: Shaders.depth.vertex,
 	      fragmentShader: Shaders.depth.fragment,
-	      attributes: ['aPosition', 'aColor'],
-	      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius']
+	      attributes: ['aPosition', 'aFilter'],
+	      uniforms: ['uMatrix', 'uModelMatrix', 'uFogRadius', 'uTime']
 	    });
 
 	    this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -4950,7 +5248,10 @@
 	    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	    var item, modelMatrix;
-	    
+
+	    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+	    gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+
 	    // render all actual data items, but also a dummy map plane
 	    // Note: SSAO on the map plane has been disabled temporarily
 	    var dataItems = data.Index.items;//.concat([this.mapPlane]);
@@ -4967,15 +5268,13 @@
 	      }
 
 	      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
 	      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-	      gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
-	      
+
 	      item.vertexBuffer.enable();
 	      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-	      item.colorBuffer.enable();
-	      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	      item.filterBuffer.enable();
+	      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
 	      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
@@ -5150,10 +5449,10 @@
 	    
 	    if (framebufferConfig !== undefined)
 	    {
-	      tcHorizMin = 0.5                                  / framebufferConfig.width;
-	      tcHorizMax = (framebufferConfig.usedWidth  - 0.5) / framebufferConfig.width;
-	      tcVertMin  = 0.5                                  / framebufferConfig.height;
-	      tcVertMax  = (framebufferConfig.usedHeight - 0.5) / framebufferConfig.height;
+	      tcHorizMin = 0                                  / framebufferConfig.width;
+	      tcHorizMax = (framebufferConfig.usedWidth  - 1) / framebufferConfig.width;
+	      tcVertMin  = 0                                  / framebufferConfig.height;
+	      tcVertMax  = (framebufferConfig.usedHeight - 1) / framebufferConfig.height;
 	    } else
 	    {
 	      tcHorizMin = tcVertMin = 0.0;
@@ -5204,9 +5503,7 @@
 	    shader.disable();
 	  },
 
-	  destroy: function() {
-	    this.texture.destroy();
-	  }
+	  destroy: function() {}
 	};
 
 

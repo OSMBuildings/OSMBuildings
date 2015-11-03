@@ -11,8 +11,8 @@ uniform float uFogBlurDistance;
 
 void main() {
     
-    float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
-    fogIntensity = clamp(fogIntensity, 0.0, 1.0);
+  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
+  fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
-    gl_FragColor = vec4( mix(vColor, uFogColor, fogIntensity), 1.0);
+  gl_FragColor = vec4( mix(vColor, uFogColor, fogIntensity), 1.0);
 }

@@ -6,7 +6,8 @@
 
 attribute vec4 aPosition;
 attribute vec3 aNormal;
-attribute vec4 aColor;
+attribute vec3 aColor;
+attribute vec4 aFilter;
 attribute vec3 aID;
 
 uniform mat4 uModelMatrix;
@@ -23,6 +24,8 @@ uniform vec3 uHighlightID;
 uniform vec2 uViewDirOnMap;
 uniform vec2 uLowerEdgePoint;
 
+uniform float uTime;
+
 varying vec3 vColor;
 varying float verticalDistanceToLowerEdge;
 
@@ -30,19 +33,20 @@ varying float verticalDistanceToLowerEdge;
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 
-// helsinki has small buildings :-)
-//float gradientHeight = 30.0;
-//float gradientStrength = 0.3;
-
 uniform float uBendRadius;
 uniform float uBendDistance;
 
 void main() {
 
-  if (aColor.a == 0.0) {
+  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
+  float f = aFilter.b + (aFilter.a-aFilter.b) * t;
+
+  if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
     vColor = vec3(0.0, 0.0, 0.0);
   } else {
+
+    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
 
     //*** bending ***************************************************************
 
@@ -61,13 +65,13 @@ void main() {
   //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
   //  gl_Position = uProjMatrix * newPosition;
 
-    gl_Position = uMatrix * aPosition;
+    gl_Position = uMatrix * pos;
 
     //*** highlight object ******************************************************
 
-    vec3 color = aColor.rgb;
+    vec3 color = aColor;
     if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {
-      color = mix(aColor.rgb, uHighlightColor, 0.5);
+      color = mix(aColor, uHighlightColor, 0.5);
     }
 
     //*** light intensity, defined by light direction on surface ****************
@@ -78,13 +82,12 @@ void main() {
 
     //*** vertical shading ******************************************************
 
-    float verticalShading = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);
-
+    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);
 
     //***************************************************************************
 
     vColor = color-verticalShading;
-    vec4 worldPos = uModelMatrix * aPosition;
+    vec4 worldPos = uModelMatrix * pos;
     vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
     verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
   }
