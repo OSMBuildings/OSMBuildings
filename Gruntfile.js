@@ -8,7 +8,8 @@ module.exports = function(grunt) {
       options: {
         separator: "\n",
         banner: "(function(global) {",
-        footer: "}(this));"
+        footer: "}(this));",
+        sourceMap: true,
       },
       dist: {
         src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],
@@ -17,7 +18,9 @@ module.exports = function(grunt) {
     },
 
     uglify: {
-      options: {},
+      options: {
+        sourceMap: true,
+      },
       build: {
         src: 'dist/OSMBuildings/<%=pkg.name%>.debug.js',
         dest: 'dist/OSMBuildings/<%=pkg.name%>.js'
