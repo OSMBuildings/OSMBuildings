@@ -133,6 +133,12 @@ OSMBuildings.prototype = {
     return render.Interaction.getTarget(x, y);
   },
 
+  screenshot: function(callback) {
+    // TODO: use promises here
+    render.screenshotCallback = callback;
+    return this;
+  },
+
   destroy: function() {
     render.destroy();
     Events.destroy();

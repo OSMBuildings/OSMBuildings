@@ -128,6 +128,7 @@ var render = {
         if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
           return;
         }
+
         /*
         var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
         quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
@@ -156,6 +157,11 @@ var render = {
           gl.disable(gl.BLEND);
         }
 
+        if (this.screenshotCallback) {
+          this.screenshotCallback(gl.canvas.toDataURL());
+          this.screenshotCallback = null;
+        }
+
       }.bind(this));
     }.bind(this), 17);
   },
@@ -169,17 +175,16 @@ var render = {
     
     //need to store this as a reference point to determine fog distance
     this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
-    if (this.lowerLeftOnMap === undefined)
-        return;
-        
+    if (this.lowerLeftOnMap === undefined) {
+      return;
+    }
+
     var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     /* fogDistance: closest distance at which the fog affects the geometry */
-    this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16 ),
-                                lowerLeftDistanceToCenter);
-    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
-     *                  completely enclosed in fog. */
-    this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16 );
+    this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16), lowerLeftDistanceToCenter);
+    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog. */
+    this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16);
     //console.log( "FD: %s, zoom: %s, CDFC: %s", this.fogDistance, MAP.zoom, cameraDistanceFromMapCenter);
   },
 
