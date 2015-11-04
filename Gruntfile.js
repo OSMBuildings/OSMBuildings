@@ -11,6 +11,27 @@ module.exports = function(grunt) {
         footer: "}(this));",
         sourceMap: true,
       },
+      glx: {
+        src: [
+          "src/glx/index.js",
+          "src/glx/prefix.js",
+          "src/glx/util.js",
+          "src/glx/Buffer.js",
+          "src/glx/Framebuffer.js",
+          "src/glx/Shader.js",
+          "src/glx/Matrix.js",
+          "src/glx/Texture.js",
+          "src/glx/texture/index.js",
+          "src/glx/texture/Image.js",
+          "src/glx/texture/Data.js",
+          "src/glx/mesh/index.js",
+          "src/glx/mesh/Triangle.js",
+          "src/glx/mesh/Plane.js",
+          "src/glx/mesh/Cube.js",
+          "src/glx/suffix.js"
+        ],
+        dest: 'lib/GLX.debug.js'
+      },
       core: {
         src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],
         dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
@@ -131,6 +152,7 @@ module.exports = function(grunt) {
   grunt.registerTask('release', 'Release', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
 
+    grunt.task.run('concat:glx');
     grunt.task.run('basemap');
 
     grunt.task.run('copy:core-assets');

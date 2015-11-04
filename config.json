@@ -4,7 +4,7 @@
   "lib": [
     "lib/earcut.js",
     "node_modules/Color/dist/Color.debug.js",
-    "node_modules/GLX/dist/GLX.debug.js"
+    "lib/GLX.debug.js"
   ],
 
   "src": [

@@ -1029,7 +1029,7 @@
 	  }
 	};
 	return Color; }(this));
-
+	(function(global) {
 	//var ext = GL.getExtension('WEBGL_lose_context');
 	//ext.loseContext();
 
@@ -1879,7 +1879,7 @@
 	} else {
 	  global.GLX = GLX;
 	}
-
+	}(this));
 	var APP;
 	var MAP, glx, gl;
 

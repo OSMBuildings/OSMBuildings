@@ -1,0 +1,2 @@
+
+glx.texture = {};
