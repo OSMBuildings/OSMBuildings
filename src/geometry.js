@@ -244,41 +244,6 @@ function unit(x, y, z) {
   return [x/m, y/m, z/m];
 }
 
-/* Returns whether the point 'P' lies either inside the triangle (tA, tB, tC)
- * or on its edge.
- *
- * Implementation: we follow a barycentric development: The triangle
- *                 is interpreted as the point tA and two vectors v1 = tB - tA
- *                 and v2 = tC - tA. Then for any point P inside the triangle
- *                 holds P = tA + α*v1 + β*v2 subject to α >= 0, β>= 0 and
- *                 α + β <= 1.0
- */
-/*
-function isPointInTriangle(tA, tB, tC, P) {
-  var v1x = tB[0] - tA[0];
-  var v1y = tB[1] - tA[1];
-
-  var v2x = tC[0] - tA[0];
-  var v2y = tC[1] - tA[1];
-
-  var qx  = P[0] - tA[0];
-  var qy  = P[1] - tA[1];
-
-  // 'denom' is zero iff v1 and v2 have the same direction. In that case,
-  // the triangle has degenerated to a line, and no point can lie inside it
-  var denom = v2x * v1y - v2y * v1x;
-  if (denom === 0)
-    return false;
-
-  var numeratorBeta = qx*v1y - qy*v1x;
-  var beta = numeratorBeta/denom;
-
-  var numeratorAlpha = qx*v2y - qy*v2x;
-  var alpha = - numeratorAlpha / denom;
-
-  return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;
-}
-*/
 
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
  * Internally, the vector 'v' is interpreted as a 4D vector
@@ -322,31 +287,29 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
 
 }
 
-
-function inMeters(localDistance) {
-  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * Math.cos(MAP.position.latitude/ 180 * Math.PI);
-  return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
+function getTileSizeInMeters( latitude, zoom) {
+  return EARTH_CIRCUMFERENCE_IN_METERS * Math.cos(latitude / 180 * Math.PI) / 
+         Math.pow(2, zoom);
 }
 
-function vec3InMeters(localVec) {
-  return [ inMeters(localVec[0]),
-           inMeters(localVec[1]),
-           inMeters(localVec[2])];
+function getTilePositionFromLocal(localXY, zoom) {
+  
+  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                 Math.cos(MAP.center.latitude / 180 * Math.PI);
+
+  var longitude= MAP.center.longitude + localXY[0] / metersPerDegreeLongitude;
+  var latitude = MAP.center.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
+  
+  return [long2tile(longitude, zoom), lat2tile(latitude, zoom)];
 }
 
-/* converts a 2D position from OSMBuildings' local coordinate system to slippy tile
- * coordinates for zoom level 'tileZoom'. The results are not integers, but have a
- * fractional component. Math.floor(tileX) gives the actual horizontal tile number,
- * while (tileX - Math.floor(tileX)) gives the relative position *inside* the tile. */
-function asTilePosition(localXY, tileZoom) {
-  var worldX = localXY[0] + MAP.center.x;
-  var worldY = localXY[1] + MAP.center.y;
-  var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
-
-  var tileX = worldX / worldSize * Math.pow(2, tileZoom);
-  var tileY = worldY / worldSize * Math.pow(2, tileZoom);
-
-  return [tileX, tileY];
+//all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+function long2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
+function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
+function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
+function tile2lat(y,z) { 
+  var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+  return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 
 function len2(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1]);}

@@ -175,11 +175,10 @@ var render = {
     var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     /* fogDistance: closest distance at which the fog affects the geometry */
-    this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16 ),
-                                lowerLeftDistanceToCenter);
+    this.fogDistance = Math.max(1500, lowerLeftDistanceToCenter);
     /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
      *                  completely enclosed in fog. */
-    this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16 );
+    this.fogBlurDistance = 300;
     //console.log( "FD: %s, zoom: %s, CDFC: %s", this.fogDistance, MAP.zoom, cameraDistanceFromMapCenter);
   },
 

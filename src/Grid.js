@@ -54,28 +54,38 @@ Grid.prototype = {
     return pattern(this.source, { s:s, x:x, y:y, z:z });
   },
   
-  /* Modifies this.visibleTiles to contain at most 'maxNumTiles' tiles by only
-   * keeping up to 'maxNumTiles' tiles that are closest to 'referencePoint'. */
-  reduceTileSet: function(referencePoint, maxNumTiles) {
-    var tiles = [];
-    for (var tile in this.visibleTiles)
-      tiles.push(tile.split(","));
+  getClosestTiles: function(tileList, referencePoint, maxNumTiles) {
+    var tilesOut = [];
+
+    tileList.sort( function(a, b) {
     
-    tiles.sort( function(a, b) {
       // tile coordinates correspond to the tile's upper left corner, but for 
       // the distance computation we should rather use their center; hence the 0.5 offsets
-      var distA = Math.sqrt(Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
-                            Math.pow(a[1] + 0.5 - referencePoint[1], 2.0));
+      var distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
+                  Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
 
-      var distB = Math.sqrt(Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) +
-                            Math.pow(b[1] + 0.5 - referencePoint[1], 2.0));
+      var distB = Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) +
+                  Math.pow(b[1] + 0.5 - referencePoint[1], 2.0);
       
-      return distA < distB;
+      return distA > distB;
     });
     
-    this.visibleTiles = {};
-    for (var i = 0; i < tiles.length && i < maxNumTiles; i++)
-      this.visibleTiles[ tiles[i]] = true;
+    var prevX = -1;
+    var prevY = -1;
+    var numTiles = 0;
+    
+    for (var i = 0; i < tileList.length && numTiles < maxNumTiles; i++)
+    {
+      var tile = tileList[i];
+      if (tile[0] == prevX && tile[1] == prevY) //remove duplicates
+        continue;
+      
+      tilesOut.push(tile);
+      numTiles += 1;
+      prevX = tile[0];
+      prevY = tile[1];
+    }
+    return tilesOut;
 
   },
 
@@ -100,43 +110,47 @@ Grid.prototype = {
     var
       tile, tileX, tileY,
       queue = [],
-      tileAnchor = [
-        MAP.center.x/TILE_SIZE <<0,
-        MAP.center.y/TILE_SIZE <<0
-      ],
       i,
-      numTiles = 0,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      referencePoint = [ MAP.center.x * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE,
-                         MAP.center.y * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE];
+      mapCenterTile = [ long2tile(MAP.center.longitude, zoom),
+                        lat2tile (MAP.center.latitude,  zoom)];
 
     for (i = 0; i < 4; i++) {
-      viewQuad[i] = asTilePosition(viewQuad[i], zoom);
+      viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
     }
 
+    /*
+    tiles = [];
+    var centerX = mapCenterTile[0] | 0;
+    var centerY = mapCenterTile[1] | 0;
+    
+    for (var x = centerX - 3; x < centerX + 3; x++)
+      for (var y = centerY - 3; y < centerY + 3; y++)
+        tiles.push( [x, y] );*/
 
+    var tiles = this.getClosestTiles(rasterConvexQuad(viewQuad), 
+                                     mapCenterTile, 
+                                     MAX_TILES_PER_GRID);
+                                       
     this.visibleTiles = {};
-    var visibleTiles = rasterConvexQuad(viewQuad);
-    for (i = 0; i < visibleTiles.length; i++) {
-      numTiles += 1;
-      this.visibleTiles[ visibleTiles[i] ] = true;
+    for (i = 0; i < tiles.length; i++) {
+      this.visibleTiles[ tiles[i] ] = true;
     }
-
-    this.reduceTileSet( referencePoint, MAX_TILES_PER_GRID);
-
+    
     for (var key in this.visibleTiles) {
       tile = key.split(',');
-      tileX = tile[0];
-      tileY = tile[1];
-
+      tileX = parseInt(tile[0]);
+      tileY = parseInt(tile[1]);
       if (this.tiles[key]) {
         continue;
       }
 
-      tile = this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
+      this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
 
-      queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], tileAnchor) });
+      queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], mapCenterTile) });
     }
+    
+    //console.log("%s tiles at zoom level %s", tiles.length, zoom);
 
     this.purge();
 

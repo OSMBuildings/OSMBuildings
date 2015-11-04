@@ -77,23 +77,6 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  transform: function(latitude, longitude, elevation) {
-    var
-      pos = MAP.project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-      x = pos.x-MAP.center.x,
-      y = pos.y-MAP.center.y;
-
-    var scale = 1/Math.pow(2, 16 - MAP.zoom);
-    var modelMatrix = new glx.Matrix()
-      .translate(0, 0, elevation)
-      .scale(scale, scale, scale*HEIGHT_SCALE)
-      .translate(x, y, 0);
-
-    var mvp = glx.Matrix.multiply(modelMatrix, render.viewProjMatrix);
-    var t = glx.Matrix.transform(mvp);
-    return { x: t.x*MAP.width, y: MAP.height - t.y*MAP.height, z: t.z }; // takes current cam pos into account.
-  },
-
   addOBJ: function(url, position, options) {
     return new mesh.OBJ(url, position, options);
   },
