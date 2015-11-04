@@ -104,8 +104,7 @@ render.SkyDome = {
      * 7500;
      */
     var scale = Math.min((render.fogDistance + render.fogBlurDistance)/100.0, 73);
-    console.log("Skydome scale:", scale);
-    //;
+
     modelMatrix.scale(scale, scale, scale);
 
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);

@@ -105,23 +105,27 @@ Grid.prototype = {
         MAP.center.y/TILE_SIZE <<0
       ],
       i,
-      viewQuad = render.getViewQuad(render.viewProjMatrix.data);
+      numTiles = 0,
+      viewQuad = render.getViewQuad(render.viewProjMatrix.data),
+      referencePoint = [ MAP.center.x * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE,
+                         MAP.center.y * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE];
 
     for (i = 0; i < 4; i++) {
       viewQuad[i] = asTilePosition(viewQuad[i], zoom);
     }
 
-    var tmp = rasterConvexQuad(viewQuad);
 
     this.visibleTiles = {};
-    for (i = 0; i < tmp.length; i++) {
-      this.visibleTiles[[tmp[i][0], tmp[i][1], zoom]] = true;
+    var visibleTiles = rasterConvexQuad(viewQuad);
+    for (i = 0; i < visibleTiles.length; i++) {
+      numTiles += 1;
+      this.visibleTiles[ visibleTiles[i] ] = true;
     }
 
+    this.reduceTileSet( referencePoint, MAX_TILES_PER_GRID);
 
     for (var key in this.visibleTiles) {
       tile = key.split(',');
-      numTiles += 1;
       tileX = tile[0];
       tileY = tile[1];
 

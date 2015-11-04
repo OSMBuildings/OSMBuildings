@@ -173,7 +173,6 @@ var render = {
         return;
         
     var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
-    var cameraDistanceFromMapCenter = len3( getCameraPosition( inverse ));
 
     /* fogDistance: closest distance at which the fog affects the geometry */
     this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16 ),
