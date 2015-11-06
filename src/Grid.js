@@ -188,7 +188,7 @@ Grid.prototype = {
     var tiles = rasterConvexQuad(viewQuad);
     tiles = ( this.fixedZoom ) ?
       this.getClosestTiles( tiles, mapCenterTile, MAX_TILES_PER_GRID) :
-      this.mergeTiles(tiles, zoom, TILE_SIZE * TILE_SIZE);
+      this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
     
     this.visibleTiles = {};
     for (i = 0; i < tiles.length; i++) {

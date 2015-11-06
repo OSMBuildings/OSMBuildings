@@ -339,9 +339,10 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
   var bl = transformVec3(mvpMatrix, [0        , TILE_SIZE,0]);
   var br = transformVec3(mvpMatrix, [TILE_SIZE, TILE_SIZE,0]);
   var verts = [tl, tr, bl, br];
-  for (var i in verts) { // transformation from NDC to viewport coordinates
-    verts[i][0] *= map.width;
-    verts[i][1] *= map.height;
+  for (var i in verts) { 
+    // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
+    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * map.width;
+    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * map.height;
   }
   
   return getConvexQuadArea( [tl, tr, br, bl]);
