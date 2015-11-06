@@ -96,14 +96,16 @@ function getNextPixel(segmentStart, segmentEnd, currentPixel) {
   var alphaX = (nextX - segmentStart[0])/ (segmentEnd[0] - segmentStart[0]);
   var alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
   
-  if (alphaX < 0.0 || alphaX > 1.0 || alphaY < 0.0 || alphaY > 1.0)
+  // neither value is valid
+  if ((alphaX <= 0.0 || alphaX > 1.0) && (alphaY <= 0.0 || alphaY > 1.0))
     return [undefined, undefined];
-  
-  if (alphaX == -Infinity) alphaX = Infinity;
-  if (alphaY == -Infinity) alphaY = Infinity;
+    
+  if (alphaX <= 0.0 || alphaX > 1.0)  // only alphaY is valid
+    return [currentPixel[0],           currentPixel[1] + vInc[1]];
 
-  assert(alphaX >= 0 && alphaY >= 0, "Invalid movement direction");
-  
+  if (alphaY <= 0.0 || alphaY > 1.0)  // only alphaX is valid
+    return [currentPixel[0] + vInc[0], currentPixel[1]          ];
+    
   return alphaX < alphaY ? [currentPixel[0]+vInc[0], currentPixel[1]] :
                            [currentPixel[0],         currentPixel[1] + vInc[1]];
 }
@@ -178,7 +180,7 @@ function rasterFlatTriangle( flat0, flat1, other ) {
   var rightRasterPos = leftRasterPos.slice(0);
   points.push(leftRasterPos.slice(0));
   var yDir = other[1] < flat0[1] ? +1 : -1;
-  var yStart = Math.floor(other[1]) + yDir;
+  var yStart = leftRasterPos[1];
   var yBeyond= Math.floor(flat0[1]) + yDir;
   var prevLeftRasterPos;
   var prevRightRasterPos;
