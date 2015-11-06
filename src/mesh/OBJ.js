@@ -1,4 +1,3 @@
-
 mesh.OBJ = (function() {
 
   var vertexIndex = [];
@@ -160,8 +159,6 @@ mesh.OBJ = (function() {
       this.maxZoom = this.minZoom;
     }
 
-    this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-
     this.data = {
       vertices: [],
       normals: [],
@@ -265,19 +262,21 @@ mesh.OBJ = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      var scale = Math.pow(2, MAP.zoom) * this.inMeters * this.scale;
-      matrix.scale(scale, scale, scale);
+      matrix.scale(this.scale, this.scale, this.scale);
 
       if (this.rotation) {
         matrix.rotateZ(-this.rotation);
       }
 
-      var
-        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-        mapCenter = MAP.center;
+      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
 
-      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
+      var dLat = this.position.latitude - MAP.center.latitude;
+      var dLon = this.position.longitude- MAP.center.longitude;
+      
+      matrix.translate( dLon * metersPerDegreeLongitude,
+                       -dLat * METERS_PER_DEGREE_LATITUDE, 0);
+      
       return matrix;
     },
 

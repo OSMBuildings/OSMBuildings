@@ -183,9 +183,13 @@ var render = {
   },
 
   onChange: function() {
+    var scale = 1.38*Math.pow(2, MAP.zoom-17);
+
     this.viewMatrix = new glx.Matrix()
       .rotateZ(MAP.rotation)
-      .rotateX(MAP.tilt);
+      .rotateX(MAP.tilt)
+      .scale(scale, scale, scale);
+
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];

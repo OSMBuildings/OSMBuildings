@@ -51,6 +51,8 @@ mesh.GeoJSON = (function() {
     return [res];
   }
 
+  /* Convert all coordinates from lat/lng to 'meters from reference point'
+   */
   function transform(ring, origin) {
     var metersPerDegreeLatitude =  EARTH_CIRCUMFERENCE_IN_METERS / 360;
     var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
