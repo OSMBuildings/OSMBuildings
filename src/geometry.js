@@ -324,6 +324,28 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
 
 }
 
+function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
+  
+  var ratio = 1/Math.pow(2, tileZoom - map.zoom);
+
+  var modelMatrix = new glx.Matrix();
+  modelMatrix.scale(ratio, ratio, 1);
+  modelMatrix.translate(tileX * TILE_SIZE * ratio - map.center.x, 
+                        tileY * TILE_SIZE * ratio - map.center.y, 0);
+  
+  var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
+  var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
+  var tr = transformVec3(mvpMatrix, [TILE_SIZE, 0        ,0]);
+  var bl = transformVec3(mvpMatrix, [0        , TILE_SIZE,0]);
+  var br = transformVec3(mvpMatrix, [TILE_SIZE, TILE_SIZE,0]);
+  var verts = [tl, tr, bl, br];
+  for (var i in verts) { // transformation from NDC to viewport coordinates
+    verts[i][0] *= map.width;
+    verts[i][1] *= map.height;
+  }
+  
+  return getConvexQuadArea( [tl, tr, br, bl]);
+}
 
 function inMeters(localDistance) {
   var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * Math.cos(MAP.position.latitude/ 180 * Math.PI);
@@ -349,6 +371,23 @@ function asTilePosition(localXY, tileZoom) {
   var tileY = worldY / worldSize * Math.pow(2, tileZoom);
 
   return [tileX, tileY];
+}
+
+function getTriangleArea(p1, p2, p3) {
+  //triangle edge lengths
+  var a = len2(sub2( p1, p2));
+  var b = len2(sub2( p1, p3));
+  var c = len2(sub2( p2, p3));
+  
+  //Heron's formula
+  var s = 0.5 * (a+b+c);
+  return Math.sqrt( s * (s-a) * (s-b) * (s-c));
+}
+
+function getConvexQuadArea(quad) {
+  return getTriangleArea( quad[0], quad[1], quad[2]) + 
+         getTriangleArea( quad[0], quad[2], quad[3]);
+  
 }
 
 function len2(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1]);}
