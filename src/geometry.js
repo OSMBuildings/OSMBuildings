@@ -60,24 +60,6 @@ function getBBox(polygon) {
   return { minX:x, minY:y, maxX:X, maxY:Y };
 }
 
-function assert(condition, message) {
-  if (!condition) {
-    throw message;
-  }
-}
-
-/* Returns the distance of point 'p' from line 'line1'->'line2'.
- * based on http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
- */
- /*
-function getDistancePointLine2( line1, line2, p) {
-
-  //v: a unit-length vector perpendicular to the line;
-  var v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
-  var r = sub2( line1, p);
-  return Math.abs(dot2(v, r));
-} */
-
 /*  given a pixel's (integer) position through which the line 'segmentStart' ->
  *  'segmentEnd' passes, this method returns the one neighboring pixel of 
  *  'currentPixel' that would be traversed next if the line is followed in 
@@ -97,14 +79,17 @@ function getNextPixel(segmentStart, segmentEnd, currentPixel) {
   var alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
   
   // neither value is valid
-  if ((alphaX <= 0.0 || alphaX > 1.0) && (alphaY <= 0.0 || alphaY > 1.0))
+  if ((alphaX <= 0.0 || alphaX > 1.0) && (alphaY <= 0.0 || alphaY > 1.0)) {
     return [undefined, undefined];
+  }
     
-  if (alphaX <= 0.0 || alphaX > 1.0)  // only alphaY is valid
-    return [currentPixel[0],           currentPixel[1] + vInc[1]];
+  if (alphaX <= 0.0 || alphaX > 1.0) { // only alphaY is valid
+    return [currentPixel[0], currentPixel[1] + vInc[1]];
+  }
 
-  if (alphaY <= 0.0 || alphaY > 1.0)  // only alphaX is valid
-    return [currentPixel[0] + vInc[0], currentPixel[1]          ];
+  if (alphaY <= 0.0 || alphaY > 1.0) { // only alphaX is valid
+    return [currentPixel[0] + vInc[0], currentPixel[1]];
+  }
     
   return alphaX < alphaY ? [currentPixel[0]+vInc[0], currentPixel[1]] :
                            [currentPixel[0],         currentPixel[1] + vInc[1]];
@@ -143,10 +128,8 @@ function rasterTriangle(p1, p2, p3) {
    *   |/
    *   P1
    * */
-  return rasterFlatTriangle(p4, p2, p1).concat(
-         rasterFlatTriangle(p4, p2, p3));
+  return rasterFlatTriangle(p4, p2, p1).concat(rasterFlatTriangle(p4, p2, p3));
 }
-
 
 /* Returns all pixels that are at least partially covered by the triangle
  * flat0-flat1-other, where the points flat0 and flat1 need to have the
@@ -176,12 +159,12 @@ function rasterFlatTriangle( flat0, flat1, other ) {
     flat1 = tmp;
   }
   
-  var leftRasterPos = [Math.floor(other[0]), Math.floor(other[1])];
+  var leftRasterPos = [other[0] <<0, other[1] <<0];
   var rightRasterPos = leftRasterPos.slice(0);
   points.push(leftRasterPos.slice(0));
   var yDir = other[1] < flat0[1] ? +1 : -1;
   var yStart = leftRasterPos[1];
-  var yBeyond= Math.floor(flat0[1]) + yDir;
+  var yBeyond= (flat0[1] <<0) + yDir;
   var prevLeftRasterPos;
   var prevRightRasterPos;
 
@@ -246,42 +229,6 @@ function unit(x, y, z) {
   return [x/m, y/m, z/m];
 }
 
-/* Returns whether the point 'P' lies either inside the triangle (tA, tB, tC)
- * or on its edge.
- *
- * Implementation: we follow a barycentric development: The triangle
- *                 is interpreted as the point tA and two vectors v1 = tB - tA
- *                 and v2 = tC - tA. Then for any point P inside the triangle
- *                 holds P = tA + α*v1 + β*v2 subject to α >= 0, β>= 0 and
- *                 α + β <= 1.0
- */
-/*
-function isPointInTriangle(tA, tB, tC, P) {
-  var v1x = tB[0] - tA[0];
-  var v1y = tB[1] - tA[1];
-
-  var v2x = tC[0] - tA[0];
-  var v2y = tC[1] - tA[1];
-
-  var qx  = P[0] - tA[0];
-  var qy  = P[1] - tA[1];
-
-  // 'denom' is zero iff v1 and v2 have the same direction. In that case,
-  // the triangle has degenerated to a line, and no point can lie inside it
-  var denom = v2x * v1y - v2y * v1x;
-  if (denom === 0)
-    return false;
-
-  var numeratorBeta = qx*v1y - qy*v1x;
-  var beta = numeratorBeta/denom;
-
-  var numeratorAlpha = qx*v2y - qy*v2x;
-  var alpha = - numeratorAlpha / denom;
-
-  return alpha >= 0.0 && beta >= 0.0 && (alpha + beta) <= 1.0;
-}
-*/
-
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
  * Internally, the vector 'v' is interpreted as a 4D vector
  * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
@@ -325,7 +272,6 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
 }
 
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
-  
   var ratio = 1/Math.pow(2, tileZoom - map.zoom);
 
   var modelMatrix = new glx.Matrix();

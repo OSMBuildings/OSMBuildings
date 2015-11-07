@@ -74,8 +74,7 @@ Grid.prototype = {
     var prevY = -1;
     var numTiles = 0;
     
-    for (var i = 0; i < tileList.length && numTiles < maxNumTiles; i++)
-    {
+    for (var i = 0; i < tileList.length && numTiles < maxNumTiles; i++) {
       var tile = tileList[i];
       if (tile[0] == prevX && tile[1] == prevY) //remove duplicates
         continue;
@@ -89,7 +88,7 @@ Grid.prototype = {
 
   },
   
-  /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'), but 
+  /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
    * but with those tiles recursively replaced by their respective parent tile
    * (tile from zoom level 'zoom'-1 that contains 'tile') for which said parent
    * tile covers less than 'pixelAreaThreshold' pixels on screen based on the 
@@ -102,20 +101,21 @@ Grid.prototype = {
     var parentTiles = {};
     var tileSet = {};
     var tileList = [];
+    var key;
     
     //if there is no parent zoom level
     if (zoom === 0 || zoom <= this.minZoom) {
-      for (var i in tiles) {
-        tiles[i][2] = zoom;
+      for (key in tiles) {
+        tiles[key][2] = zoom;
       }
       return tiles;
     }
     
-    for (var i in tiles) {
-      var tile = tiles[i];
+    for (key in tiles) {
+      var tile = tiles[key];
 
-      var parentX = Math.floor(tile[0] / 2);
-      var parentY = Math.floor(tile[1] / 2);
+      var parentX = (tile[0] <<0) / 2;
+      var parentY = (tile[1] <<0) / 2;
       
       if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
         var numParentScreenPixels = getTileSizeOnScreen( parentX, parentY, zoom-1,
@@ -133,15 +133,16 @@ Grid.prototype = {
     
     var parentTileList = [];
     
-    for (var i in parentTiles) {
-      if (parentTiles[i]) {
-        var parentTile = i.split(",");
+    for (key in parentTiles) {
+      if (parentTiles[key]) {
+        var parentTile = key.split(',');
         parentTileList.push( [parseInt(parentTile[0]), parseInt(parentTile[1]), zoom-1]);
       }
     }
     
-    if (parentTileList.length > 0)
-      parentTileList = this.mergeTiles( parentTileList, zoom-1, pixelAreaThreshold);
+    if (parentTileList.length > 0) {
+      parentTileList = this.mergeTiles(parentTileList, zoom - 1, pixelAreaThreshold);
+    }
       
     return tileList.concat(parentTileList);
   },
@@ -165,7 +166,7 @@ Grid.prototype = {
     //  }
 
     var
-      tile, tileX, tileY,
+      tile, tileX, tileY, tileZoom,
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
@@ -187,7 +188,7 @@ Grid.prototype = {
 
     var tiles = rasterConvexQuad(viewQuad);
     tiles = ( this.fixedZoom ) ?
-      this.getClosestTiles( tiles, mapCenterTile, MAX_TILES_PER_GRID) :
+      this.getClosestTiles(tiles, mapCenterTile, MAX_TILES_PER_GRID) :
       this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
     
     this.visibleTiles = {};
@@ -199,7 +200,7 @@ Grid.prototype = {
       this.visibleTiles[ tiles[i] ] = true;
     }
 
-    console.log("%s tiles at zoom %s", tiles.length, zoom);
+    //console.log("%s tiles at zoom %s", tiles.length, zoom);
     
     for (var key in this.visibleTiles) {
       tile = key.split(',');
@@ -212,9 +213,9 @@ Grid.prototype = {
       }
 
       this.tiles[key] = new this.tileClass(tileX, tileY, tileZoom, this.tileOptions, this.tiles);
+
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], mapCenterTile) });
     }
-    
 
     this.purge();
 
