@@ -58,8 +58,7 @@ Grid.prototype = {
     var tilesOut = [];
 
     tileList.sort( function(a, b) {
-    
-      // tile coordinates correspond to the tile's upper left corner, but for 
+      // tile coordinates correspond to the tile's upper left corner, but for
       // the distance computation we should rather use their center; hence the 0.5 offsets
       var distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
                   Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
