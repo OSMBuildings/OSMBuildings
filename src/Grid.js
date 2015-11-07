@@ -5,6 +5,7 @@ var Grid = function(source, tileClass, options) {
 
   this.source = source;
   this.tileClass = tileClass;
+
   options = options || {};
 
   this.bounds = options.bounds;
@@ -54,10 +55,10 @@ Grid.prototype = {
     return pattern(this.source, { s:s, x:x, y:y, z:z });
   },
   
-  getClosestTiles: function(tileList, referencePoint, maxNumTiles) {
+  getClosestTiles: function(tileList, referencePoint) {
     var tilesOut = [];
 
-    tileList.sort( function(a, b) {
+    tileList.sort(function(a, b) {
       // tile coordinates correspond to the tile's upper left corner, but for
       // the distance computation we should rather use their center; hence the 0.5 offsets
       var distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
@@ -68,23 +69,20 @@ Grid.prototype = {
       
       return distA > distB;
     });
-    
-    var prevX = -1;
-    var prevY = -1;
-    var numTiles = 0;
-    
-    for (var i = 0; i < tileList.length && numTiles < maxNumTiles; i++) {
-      var tile = tileList[i];
-      if (tile[0] == prevX && tile[1] == prevY) //remove duplicates
+
+    var tile, prevX, prevY;
+
+    for (var i = 0, il = tileList.length; i < il; i++) {
+      tile = tileList[i];
+      if (tile[0] === prevX && tile[1] === prevY) { //remove duplicates
         continue;
-      
+      }
       tilesOut.push(tile);
-      numTiles += 1;
       prevX = tile[0];
       prevY = tile[1];
     }
-    return tilesOut;
 
+    return tilesOut;
   },
   
   /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
@@ -96,7 +94,7 @@ Grid.prototype = {
    * The returned tile set is duplicate-free even if there were duplicates in
    * 'tiles' and even if multiple tiles from 'tiles' got replaced by the same parent.
    */
-  mergeTiles: function( tiles, zoom, pixelAreaThreshold) {
+  mergeTiles: function(tiles, zoom, pixelAreaThreshold) {
     var parentTiles = {};
     var tileSet = {};
     var tileList = [];
@@ -117,8 +115,7 @@ Grid.prototype = {
       var parentY = (tile[1] <<0) / 2;
       
       if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
-        var numParentScreenPixels = getTileSizeOnScreen( parentX, parentY, zoom-1,
-                                                         render.viewProjMatrix, MAP);
+        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix, MAP);
         parentTiles[ [parentX, parentY] ] = (numParentScreenPixels < pixelAreaThreshold);
       }
       
@@ -187,7 +184,7 @@ Grid.prototype = {
 
     var tiles = rasterConvexQuad(viewQuad);
     tiles = ( this.fixedZoom ) ?
-      this.getClosestTiles(tiles, mapCenterTile, MAX_TILES_PER_GRID) :
+      this.getClosestTiles(tiles, mapCenterTile) :
       this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
     
     this.visibleTiles = {};
