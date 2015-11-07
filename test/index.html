@@ -135,7 +135,7 @@
 
   osmb.addGeoJSONTiles(
     'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-//  'https://localhost:8010/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
       // bounds
@@ -147,7 +147,7 @@
   // map.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
   var gj = { type: 'FeatureCollection', features: [
-    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 50, minHeight: 0 }, geometry:
+    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 10, minHeight: 0 }, geometry:
     { type: 'Polygon', coordinates: [[
       [ 13.37000, 52.52000 ],
       [ 13.37010, 52.52000 ],
@@ -158,7 +158,7 @@
     }
   ] };
 
-  osmb.addGeoJSON(gj);
+  var obj = osmb.addGeoJSON(gj, { scale: 5 });
 
   //var obj = osmb.addOBJ('../../OBJ2GeoJSON/data/2015-09/o4/o4-nach90.obj', { latitude:52.51941, longitude:13.50445 }, { color: '#00ccff' });
   //osmb.addGeoJSON('../../OBJ2GeoJSON/data/geojson C/o2-nach90.geo.json', { color: '#00ccff' });
@@ -170,15 +170,19 @@
 //    label.style.top = Math.round(pos.y) + 'px';
   });
 
+//  map.on('pointermove', function(e) {
+//    var id = osmb.getTarget(e.x, e.y);
+//    if (id) {
+//      document.body.style.cursor = 'pointer';
+//      osmb.highlight(id, '#f08000');
+//    } else {
+//      document.body.style.cursor = 'default';
+//      osmb.highlight(null);
+//    }
+//  });
+
   map.on('pointermove', function(e) {
-    var id = osmb.getTarget(e.x, e.y);
-    if (id) {
-      document.body.style.cursor = 'pointer';
-      osmb.highlight(id, '#f08000');
-    } else {
-      document.body.style.cursor = 'default';
-      osmb.highlight(null);
-    }
+    obj.position = osmb.untransform(e.x, e.y);
   });
 
   map.on('pointerdown', function(e) {

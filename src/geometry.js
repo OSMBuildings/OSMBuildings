@@ -268,16 +268,15 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
   var pos = add3( v1, mul3scalar(vDir, lambda));
 
   return [pos[0], pos[1]];  // z==0 
-
 }
 
-function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
-  var ratio = 1/Math.pow(2, tileZoom - map.zoom);
+function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
+  var ratio = 1/Math.pow(2, tileZoom - MAP.zoom);
 
   var modelMatrix = new glx.Matrix();
   modelMatrix.scale(ratio, ratio, 1);
-  modelMatrix.translate(tileX * TILE_SIZE * ratio - map.center.x, 
-                        tileY * TILE_SIZE * ratio - map.center.y, 0);
+  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.center.x,
+                        tileY * TILE_SIZE * ratio - MAP.center.y, 0);
   
   var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
@@ -287,8 +286,8 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
   var verts = [tl, tr, bl, br];
   for (var i in verts) { 
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * map.width;
-    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * map.height;
+    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * MAP.width;
+    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * MAP.height;
   }
   
   return getConvexQuadArea( [tl, tr, br, bl]);
