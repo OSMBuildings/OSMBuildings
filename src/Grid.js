@@ -58,9 +58,10 @@ Grid.prototype = {
    * keeping up to 'maxNumTiles' tiles that are closest to 'referencePoint'. */
   reduceTileSet: function(referencePoint, maxNumTiles) {
     var tiles = [];
-    for (var tile in this.visibleTiles)
-      tiles.push(tile.split(","));
-    
+    for (var tile in this.visibleTiles) {
+      tiles.push(tile.split(','));
+    }
+
     tiles.sort( function(a, b) {
       // tile coordinates correspond to the tile's upper left corner, but for 
       // the distance computation we should rather use their center; hence the 0.5 offsets
