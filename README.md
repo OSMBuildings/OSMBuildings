@@ -69,8 +69,19 @@ In a script section initialize the map and add a map tile layer.
 
 // add OSM Buildings to the map and let it load data tiles.
 
-  var osmb = new OSMBuildings().addTo(map);
-  osmb.addTileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png');
+  var osmb = new OSMBuildings({
+    minZoom: 15,
+    maxZoom: 22,
+    attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+  }).addTo(map);
+
+  osmb.addMapTiles(
+    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    {
+      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">MapBox</a>'
+    }
+  );
+
   osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
 ~~~
 
