@@ -2,45 +2,21 @@
 var Events = {};
 
 (function() {
-
-  var listeners = {};
-
   Events.emit = function(type, payload) {
-    if (!listeners[type]) {
-      return;
-    }
-
-    var l = listeners[type];
-
-    requestAnimationFrame(function() {
-      for (var i = 0, il = l.length; i < il; i++) {
-        l[i](payload);
-      }
-    });
+  
+    var event = new CustomEvent( type, {detail:payload});
+    gl.canvas.dispatchEvent(event);
   };
 
   Events.on = function(type, fn) {
-    if (!listeners[type]) {
-      listeners[type] = [];
-    }
-    listeners[type].push(fn);
+    gl.canvas.addEventListener(type, fn);
   };
 
   Events.off = function(type, fn) {
-    if (!listeners[type]) {
-      return;
-    }
-    var l = listeners[type];
-    for (var i = 0; i < l.length; i++) {
-      if (l[i] === fn) {
-        l.splice(i, 1);
-        return;
-      }
-    }
+    gl.canvas.removeEventListener(type, fn);
   };
 
   Events.destroy = function() {
-    listeners = {};
   };
 
 }());
