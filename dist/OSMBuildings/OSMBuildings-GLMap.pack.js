@@ -1223,6 +1223,12 @@
 	    GL.bindRenderbuffer(GL.RENDERBUFFER, null);
 	  },
 
+	  getPixel: function(x, y) {
+	    var imageData = new Uint8Array(4);
+	    GL.readPixels(x,y,1,1,GL.RGBA, GL.UNSIGNED_BYTE, imageData);
+	    return imageData;
+	  },
+
 	  getData: function() {
 	    var imageData = new Uint8Array(this.width*this.height*4);
 	    GL.readPixels(0, 0, this.width, this.height, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
@@ -2164,6 +2170,7 @@
 	var DEFAULT_HEIGHT = 10;
 	var HEIGHT_SCALE = 0.7;
 
+	var MAX_USED_ZOOM_LEVEL = 25;
 	var DEFAULT_COLOR = 'rgb(220, 210, 200)';
 	var HIGHLIGHT_COLOR = '#f08000';
 	var FOG_COLOR = '#f0f8ff';
@@ -4664,21 +4671,14 @@
 	      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
 
-	    var imageData = framebuffer.getData();
-
-	    // DEBUG
-	    // // disable framebuffer
-	    // var imageData = new Uint8Array(MAP.width*MAP.height*4);
-	    shader.disable();
-	    framebuffer.disable();
-
-	    gl.viewport(0, 0, MAP.width, MAP.height);
-
-	    //var index = ((MAP.height-y/)*MAP.width + x) * 4;
 	    x = x/MAP.width*this.viewportSize <<0;
 	    y = y/MAP.height*this.viewportSize <<0;
-	    var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
-	    var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+	    var imageData = framebuffer.getPixel(x, this.viewportSize - y);
+	    var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
+
+	    shader.disable();
+	    framebuffer.disable();
+	    gl.viewport(0, 0, MAP.width, MAP.height);
 
 	    return this.idMapping[color];
 	  },
@@ -5032,6 +5032,9 @@
 	    modelMatrix.scale(ratio, ratio, 1);
 	    modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
 
+	    gl.enable(gl.POLYGON_OFFSET_FILL);
+	    gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
+	                     MAX_USED_ZOOM_LEVEL - tile.zoom);
 	    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
 	    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
 	    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
@@ -5050,6 +5053,7 @@
 	    tile.texture.enable(0);
 
 	    gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+	    gl.disable(gl.POLYGON_OFFSET_FILL);
 	  },
 
 	  destroy: function() {}
