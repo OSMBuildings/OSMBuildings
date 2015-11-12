@@ -10,7 +10,7 @@ var GLX = function(container, width, height, optimize) {
   container.appendChild(canvas);
 
   var options = {
-    antialias: (optimize === 'quality'),
+    antialias: true, //(optimize === 'quality'),
     depth: true,
     premultipliedAlpha: false
   };

@@ -1041,7 +1041,7 @@
 	  container.appendChild(canvas);
 
 	  var options = {
-	    antialias: (optimize === 'quality'),
+	    antialias: true, //(optimize === 'quality'),
 	    depth: true,
 	    premultipliedAlpha: false
 	  };
@@ -1221,6 +1221,12 @@
 	  disable: function() {
 	    GL.bindFramebuffer(GL.FRAMEBUFFER, null);
 	    GL.bindRenderbuffer(GL.RENDERBUFFER, null);
+	  },
+
+	  getPixel: function(x, y) {
+	    var imageData = new Uint8Array(4);
+	    GL.readPixels(x,y,1,1,GL.RGBA, GL.UNSIGNED_BYTE, imageData);
+	    return imageData;
 	  },
 
 	  getData: function() {
@@ -1961,6 +1967,7 @@
 	    return this;
 	  },
 
+	  // TODO: this should be part of the underlying map engine
 	  transform: function(latitude, longitude, elevation) {
 	    var
 	      pos = MAP.project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
@@ -1977,6 +1984,23 @@
 	    var t = glx.Matrix.transform(mvp);
 	    return { x: t.x*MAP.width, y: MAP.height - t.y*MAP.height, z: t.z }; // takes current cam pos into account.
 	  },
+
+	  // TODO: this should be part of the underlying map engine
+	  untransform: function(x, y) {
+	    var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
+	    var v;
+	    do {
+	      v = getIntersectionWithXYPlane(x/MAP.width*2-1, -(y++/MAP.height*2-1), inverse);
+	    } while (!v);
+
+	    var worldX = v[0] + MAP.center.x;
+	    var worldY = v[1] + MAP.center.y;
+	    var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
+	    return unproject(worldX, worldY, worldSize);
+	  },
+
+	  //// TODO: this should be part of the underlying map engine
+	  //getBounds: function(latitude, longitude, elevation) {},
 
 	  addOBJ: function(url, position, options) {
 	    return new mesh.OBJ(url, position, options);
@@ -2003,11 +2027,13 @@
 	    render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
 	  },
 
+	  // TODO: check naming. show() suggests it affects the layer rather than objects on it
 	  show: function(selector, duration) {
 	    Filter.remove('hidden', selector, duration);
 	    return this;
 	  },
 
+	  // TODO: check naming. hide() suggests it affects the layer rather than objects on it
 	  hide: function(selector, duration) {
 	    Filter.add('hidden', selector, duration);
 	    return this;
@@ -2144,6 +2170,7 @@
 	var DEFAULT_HEIGHT = 10;
 	var HEIGHT_SCALE = 0.7;
 
+	var MAX_USED_ZOOM_LEVEL = 25;
 	var DEFAULT_COLOR = 'rgb(220, 210, 200)';
 	var HIGHLIGHT_COLOR = '#f08000';
 	var FOG_COLOR = '#f0f8ff';
@@ -2741,7 +2768,7 @@
 	      var parentY = (tile[1] <<0) / 2;
 	      
 	      if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
-	        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix, MAP);
+	        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix);
 	        parentTiles[ [parentX, parentY] ] = (numParentScreenPixels < pixelAreaThreshold);
 	      }
 	      
@@ -4238,16 +4265,15 @@
 	  var pos = add3( v1, mul3scalar(vDir, lambda));
 
 	  return [pos[0], pos[1]];  // z==0 
-
 	}
 
-	function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
-	  var ratio = 1/Math.pow(2, tileZoom - map.zoom);
+	function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
+	  var ratio = 1/Math.pow(2, tileZoom - MAP.zoom);
 
 	  var modelMatrix = new glx.Matrix();
 	  modelMatrix.scale(ratio, ratio, 1);
-	  modelMatrix.translate(tileX * TILE_SIZE * ratio - map.center.x, 
-	                        tileY * TILE_SIZE * ratio - map.center.y, 0);
+	  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.center.x,
+	                        tileY * TILE_SIZE * ratio - MAP.center.y, 0);
 	  
 	  var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
 	  var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
@@ -4257,8 +4283,8 @@
 	  var verts = [tl, tr, bl, br];
 	  for (var i in verts) { 
 	    // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-	    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * map.width;
-	    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * map.height;
+	    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * MAP.width;
+	    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * MAP.height;
 	  }
 	  
 	  return getConvexQuadArea( [tl, tr, br, bl]);
@@ -4645,21 +4671,14 @@
 	      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
 	    }
 
-	    var imageData = framebuffer.getData();
-
-	    // DEBUG
-	    // // disable framebuffer
-	    // var imageData = new Uint8Array(MAP.width*MAP.height*4);
-	    shader.disable();
-	    framebuffer.disable();
-
-	    gl.viewport(0, 0, MAP.width, MAP.height);
-
-	    //var index = ((MAP.height-y/)*MAP.width + x) * 4;
 	    x = x/MAP.width*this.viewportSize <<0;
 	    y = y/MAP.height*this.viewportSize <<0;
-	    var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
-	    var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+	    var imageData = framebuffer.getPixel(x, this.viewportSize - y);
+	    var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
+
+	    shader.disable();
+	    framebuffer.disable();
+	    gl.viewport(0, 0, MAP.width, MAP.height);
 
 	    return this.idMapping[color];
 	  },
@@ -5013,6 +5032,9 @@
 	    modelMatrix.scale(ratio, ratio, 1);
 	    modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
 
+	    gl.enable(gl.POLYGON_OFFSET_FILL);
+	    gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
+	                     MAX_USED_ZOOM_LEVEL - tile.zoom);
 	    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
 	    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
 	    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
@@ -5031,6 +5053,7 @@
 	    tile.texture.enable(0);
 
 	    gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+	    gl.disable(gl.POLYGON_OFFSET_FILL);
 	  },
 
 	  destroy: function() {}

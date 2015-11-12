@@ -77,6 +77,41 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  // TODO: this should be part of the underlying map engine
+  transform: function(latitude, longitude, elevation) {
+    var
+      pos = MAP.project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
+      x = pos.x-MAP.center.x,
+      y = pos.y-MAP.center.y;
+
+    var scale = 1/Math.pow(2, 16 - MAP.zoom);
+    var modelMatrix = new glx.Matrix()
+      .translate(0, 0, elevation)
+      .scale(scale, scale, scale*HEIGHT_SCALE)
+      .translate(x, y, 0);
+
+    var mvp = glx.Matrix.multiply(modelMatrix, render.viewProjMatrix);
+    var t = glx.Matrix.transform(mvp);
+    return { x: t.x*MAP.width, y: MAP.height - t.y*MAP.height, z: t.z }; // takes current cam pos into account.
+  },
+
+  // TODO: this should be part of the underlying map engine
+  untransform: function(x, y) {
+    var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
+    var v;
+    do {
+      v = getIntersectionWithXYPlane(x/MAP.width*2-1, -(y++/MAP.height*2-1), inverse);
+    } while (!v);
+
+    var worldX = v[0] + MAP.center.x;
+    var worldY = v[1] + MAP.center.y;
+    var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
+    return unproject(worldX, worldY, worldSize);
+  },
+
+  //// TODO: this should be part of the underlying map engine
+  //getBounds: function(latitude, longitude, elevation) {},
+
   addOBJ: function(url, position, options) {
     return new mesh.OBJ(url, position, options);
   },
@@ -102,11 +137,13 @@ OSMBuildings.prototype = {
     render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 
+  // TODO: check naming. show() suggests it affects the layer rather than objects on it
   show: function(selector, duration) {
     Filter.remove('hidden', selector, duration);
     return this;
   },
 
+  // TODO: check naming. hide() suggests it affects the layer rather than objects on it
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
     return this;

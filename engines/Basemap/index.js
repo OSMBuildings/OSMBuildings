@@ -36,8 +36,8 @@ var Basemap = function(container, options) {
     }.bind(this));
   }
 
-  this.interaction = new Interaction(this, this.container);
-  this.layers      = new Layers(this);
+  this.pointer = new Pointer(this, this.container);
+  this.layers  = new Layers(this);
 
   if (options.disabled) {
     this.setDisabled(true);
@@ -165,12 +165,12 @@ Basemap.prototype = {
   },
 
   setDisabled: function(flag) {
-    this.interaction.disabled = !!flag;
+    this.pointer.disabled = !!flag;
     return this;
   },
 
   isDisabled: function() {
-    return !!this.interaction.disabled;
+    return !!this.pointer.disabled;
   },
 
   getBounds: function() {
@@ -308,7 +308,7 @@ Basemap.prototype = {
 
   destroy: function() {
     this.listeners = [];
-    this.interaction.destroy();
+    this.pointer.destroy();
     this.layers.destroy();
     this.container.innerHTML = '';
   }

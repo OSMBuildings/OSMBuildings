@@ -9,7 +9,7 @@ function cancelEvent(e) {
   e.returnValue = false;
 }
 
-var Interaction = function(map, container) {
+var Pointer = function(map, container) {
   this.map = map;
 
   if ('ontouchstart' in global) {
@@ -38,7 +38,7 @@ var Interaction = function(map, container) {
   });
 };
 
-Interaction.prototype = {
+Pointer.prototype = {
 
   prevX: 0,
   prevY: 0,
@@ -59,15 +59,15 @@ Interaction.prototype = {
   },
 
   onDoubleClick: function(e) {
-    if (this.disabled) {
-      return;
-    }
     cancelEvent(e);
-    this.map.setZoom(this.map.zoom + 1, e);
+    if (!this.disabled) {
+      this.map.setZoom(this.map.zoom + 1, e);
+    }
+    this.map.emit('doubleclick', { x: e.clientX, y: e.clientY });
   },
 
   onMouseDown: function(e) {
-    if (this.disabled || e.button>1) {
+    if (e.button>1) {
       return;
     }
 
@@ -86,10 +86,6 @@ Interaction.prototype = {
   },
 
   onMouseMove: function(e) {
-    if (this.disabled) {
-      return;
-    }
-
     if (this.pointerIsDown) {
       if (e.button === 0 && !e.altKey) {
         this.moveMap(e);
@@ -105,10 +101,6 @@ Interaction.prototype = {
   },
 
   onMouseUp: function(e) {
-    if (this.disabled) {
-      return;
-    }
-
     // prevents clicks on other page elements
     if (!this.pointerIsDown) {
       return;
@@ -128,9 +120,6 @@ Interaction.prototype = {
   },
 
   onMouseWheel: function(e) {
-    if (this.disabled) {
-      return;
-    }
     cancelEvent(e);
     var delta = 0;
     if (e.wheelDeltaY) {
@@ -141,11 +130,19 @@ Interaction.prototype = {
       delta = -e.detail;
     }
 
-    var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
-    this.map.setZoom(this.map.zoom + adjust, e);
+    if (!this.disabled) {
+      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+      this.map.setZoom(this.map.zoom + adjust, e);
+    }
+
+    this.map.emit('mousewheel', { delta: delta });
   },
 
   moveMap: function(e) {
+    if (this.disabled) {
+      return;
+    }
+
     //FIXME: make movement velocity independent of latitude
     /*FIXME: (alternative) make movement exact, i.e. make the position that 
      *       appeared at (this.prevX, this.prevY) before appear at 
@@ -166,6 +163,9 @@ Interaction.prototype = {
   },
 
   rotateMap: function(e) {
+    if (this.disabled) {
+      return;
+    }
     this.prevRotation += (e.clientX - this.prevX)*(360/innerWidth);
     this.prevTilt -= (e.clientY - this.prevY)*(360/innerHeight);
     this.map.setRotation(this.prevRotation);
@@ -175,10 +175,6 @@ Interaction.prototype = {
   //***************************************************************************
 
   onTouchStart: function(e) {
-    if (this.disabled) {
-      return;
-    }
-
     cancelEvent(e);
 
     this.startZoom = this.map.zoom;
@@ -196,10 +192,6 @@ Interaction.prototype = {
   },
 
   onTouchMove: function(e) {
-    if (this.disabled) {
-      return;
-    }
-
     if (e.touches.length) {
       e = e.touches[0];
     }
@@ -213,10 +205,6 @@ Interaction.prototype = {
   },
 
   onTouchEnd: function(e) {
-    if (this.disabled) {
-      return;
-    }
-
     if (e.touches.length) {
       e = e.touches[0];
     }
@@ -229,13 +217,13 @@ Interaction.prototype = {
   },
 
   onGestureChange: function(e) {
-    if (this.disabled) {
-      return;
-    }
     cancelEvent(e);
-    this.map.setZoom(this.startZoom + (e.scale - 1));
-    this.map.setRotation(this.prevRotation - e.rotation);
-//  this.map.setTilt(prevTilt ...);
+    if (!this.disabled) {
+      this.map.setZoom(this.startZoom + (e.scale - 1));
+      this.map.setRotation(this.prevRotation - e.rotation);
+  //  this.map.setTilt(prevTilt ...);
+    }
+    this.map.emit('gesture', e.touches);
   },
 
   destroy: function() {
