@@ -139,6 +139,8 @@ getTarget | x, y | get a building id at position
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
 show | function, duration | shows buildings according to a selector function. That function receives parameters id, data of an item
 hide | function, duration | hides buildings according to a selector function. That function receives parameters id, data of an item
+screenshot | function | creates a screenshot from current view and returns it as data url. You need to provide a callback function do receive the data.
+
 
 ### OSM Buildings server
 

@@ -156,6 +156,11 @@ var render = {
           gl.disable(gl.BLEND);
         }
 
+        if (this.screenshotCallback) {
+          this.screenshotCallback(gl.canvas.toDataURL());
+          this.screenshotCallback = null;
+        }
+
       }.bind(this));
     }.bind(this), 17);
   },
@@ -169,9 +174,10 @@ var render = {
     
     //need to store this as a reference point to determine fog distance
     this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
-    if (this.lowerLeftOnMap === undefined)
-        return;
-        
+    if (this.lowerLeftOnMap === undefined) {
+      return;
+    }
+
     var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     /* fogDistance: closest distance at which the fog affects the geometry */

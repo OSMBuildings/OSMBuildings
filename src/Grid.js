@@ -54,12 +54,11 @@ Grid.prototype = {
     return pattern(this.source, { s:s, x:x, y:y, z:z });
   },
   
-  getClosestTiles: function(tileList, referencePoint, maxNumTiles) {
+  getClosestTiles: function(tileList, referencePoint) {
     var tilesOut = [];
 
-    tileList.sort( function(a, b) {
-    
-      // tile coordinates correspond to the tile's upper left corner, but for 
+    tileList.sort(function(a, b) {
+      // tile coordinates correspond to the tile's upper left corner, but for
       // the distance computation we should rather use their center; hence the 0.5 offsets
       var distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
                   Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
@@ -69,24 +68,78 @@ Grid.prototype = {
       
       return distA > distB;
     });
-    
-    var prevX = -1;
-    var prevY = -1;
-    var numTiles = 0;
-    
-    for (var i = 0; i < tileList.length && numTiles < maxNumTiles; i++)
-    {
-      var tile = tileList[i];
-      if (tile[0] == prevX && tile[1] == prevY) //remove duplicates
+
+    var tile, prevX, prevY;
+
+    for (var i = 0, il = tileList.length; i < il; i++) {
+      tile = tileList[i];
+      if (tile[0] === prevX && tile[1] === prevY) { //remove duplicates
         continue;
-      
+      }
       tilesOut.push(tile);
-      numTiles += 1;
       prevX = tile[0];
       prevY = tile[1];
     }
-    return tilesOut;
 
+    return tilesOut;
+  },
+  
+  /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
+   * but with those tiles recursively replaced by their respective parent tile
+   * (tile from zoom level 'zoom'-1 that contains 'tile') for which said parent
+   * tile covers less than 'pixelAreaThreshold' pixels on screen based on the 
+   * current view-projection matrix.
+   *
+   * The returned tile set is duplicate-free even if there were duplicates in
+   * 'tiles' and even if multiple tiles from 'tiles' got replaced by the same parent.
+   */
+  mergeTiles: function(tiles, zoom, pixelAreaThreshold) {
+    var parentTiles = {};
+    var tileSet = {};
+    var tileList = [];
+    var key;
+    
+    //if there is no parent zoom level
+    if (zoom === 0 || zoom <= this.minZoom) {
+      for (key in tiles) {
+        tiles[key][2] = zoom;
+      }
+      return tiles;
+    }
+    
+    for (key in tiles) {
+      var tile = tiles[key];
+
+      var parentX = (tile[0] <<0) / 2;
+      var parentY = (tile[1] <<0) / 2;
+      
+      if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
+        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix, MAP);
+        parentTiles[ [parentX, parentY] ] = (numParentScreenPixels < pixelAreaThreshold);
+      }
+      
+      if (! parentTiles[ [parentX, parentY] ]) { //won't be replaced by a parent tile -->keep
+        if (tileSet[ [tile[0], tile[1]] ] === undefined) {  //remove duplicates
+          tileSet[ [tile[0], tile[1]]] = true;
+          tileList.push( [tile[0], tile[1], zoom]);
+        }
+      }
+    }
+    
+    var parentTileList = [];
+    
+    for (key in parentTiles) {
+      if (parentTiles[key]) {
+        var parentTile = key.split(',');
+        parentTileList.push( [parseInt(parentTile[0]), parseInt(parentTile[1]), zoom-1]);
+      }
+    }
+    
+    if (parentTileList.length > 0) {
+      parentTileList = this.mergeTiles(parentTileList, zoom - 1, pixelAreaThreshold);
+    }
+      
+    return tileList.concat(parentTileList);
   },
 
   loadTiles: function() {
@@ -108,49 +161,45 @@ Grid.prototype = {
     //  }
 
     var
-      tile, tileX, tileY,
+      tile, tileX, tileY, tileZoom,
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      mapCenterTile = [ long2tile(MAP.center.longitude, zoom),
-                        lat2tile (MAP.center.latitude,  zoom)];
+      referencePoint = [ MAP.center.x * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE,
+                         MAP.center.y * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE];
 
     for (i = 0; i < 4; i++) {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
     }
 
-    /*
-    tiles = [];
-    var centerX = mapCenterTile[0] | 0;
-    var centerY = mapCenterTile[1] | 0;
-    
-    for (var x = centerX - 3; x < centerX + 3; x++)
-      for (var y = centerY - 3; y < centerY + 3; y++)
-        tiles.push( [x, y] );*/
 
-    var tiles = this.getClosestTiles(rasterConvexQuad(viewQuad), 
-                                     mapCenterTile, 
-                                     MAX_TILES_PER_GRID);
-                                       
+    var tiles = rasterConvexQuad(viewQuad);
+    tiles = ( this.fixedZoom ) ?
+      this.getClosestTiles(tiles, mapCenterTile) :
+      this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
+    
     this.visibleTiles = {};
     for (i = 0; i < tiles.length; i++) {
+      if ( tiles[i][2] === undefined) {
+        tiles[i][2] = zoom;
+      }
+        
       this.visibleTiles[ tiles[i] ] = true;
     }
-    
     for (var key in this.visibleTiles) {
       tile = key.split(',');
       tileX = parseInt(tile[0]);
       tileY = parseInt(tile[1]);
+      tileZoom = parseInt(tile[2]);
+
       if (this.tiles[key]) {
         continue;
       }
 
-      this.tiles[key] = new this.tileClass(tileX, tileY, zoom, this.tileOptions, this.tiles);
+      this.tiles[key] = new this.tileClass(tileX, tileY, tileZoom, this.tileOptions, this.tiles);
 
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], mapCenterTile) });
     }
-    
-    //console.log("%s tiles at zoom level %s", tiles.length, zoom);
 
     this.purge();
 

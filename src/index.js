@@ -49,7 +49,7 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    glx = new GLX(MAP.container, MAP.width, MAP.height);
+    glx = new GLX(MAP.container, MAP.width, MAP.height, render.optimize);
     gl = glx.context;
 
     MAP.addLayer(this);
@@ -114,6 +114,12 @@ OSMBuildings.prototype = {
 
   getTarget: function(x, y) {
     return render.Interaction.getTarget(x, y);
+  },
+
+  screenshot: function(callback) {
+    // TODO: use promises here
+    render.screenshotCallback = callback;
+    return this;
   },
 
   destroy: function() {

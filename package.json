@@ -15,13 +15,13 @@
   "dependencies": {
     "Color": "git://github.com/kekscom/Color.git",
     "GLX": "git://github.com/kekscom/glx.git",
-    "glmap": "git://github.com/OSMBuildings/GLMap.git",
     "earcut": "^2.0.5"
   },
   "devDependencies": {
     "grunt": "^0.4.4",
     "grunt-webpack": "^1.0.8",
     "grunt-contrib-concat": "~0.5.1",
+    "grunt-contrib-copy": "~0.8.2",
     "grunt-contrib-uglify": "~0.9.2",
     "grunt-contrib-jshint": "^0.11.0"
   },

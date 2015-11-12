@@ -1,10 +1,10 @@
 
 var TILE_SIZE = 256;
-var MAX_TILES_PER_GRID = 100;
 
 var DEFAULT_HEIGHT = 10;
 var HEIGHT_SCALE = 1.0;
 
+var MAX_USED_ZOOM_LEVEL = 25;
 var DEFAULT_COLOR = 'rgb(220, 210, 200)';
 var HIGHLIGHT_COLOR = '#f08000';
 var FOG_COLOR = '#f0f8ff';

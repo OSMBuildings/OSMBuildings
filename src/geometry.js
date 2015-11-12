@@ -96,14 +96,19 @@ function getNextPixel(segmentStart, segmentEnd, currentPixel) {
   var alphaX = (nextX - segmentStart[0])/ (segmentEnd[0] - segmentStart[0]);
   var alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
   
-  if (alphaX < 0.0 || alphaX > 1.0 || alphaY < 0.0 || alphaY > 1.0)
+  // neither value is valid
+  if ((alphaX <= 0.0 || alphaX > 1.0) && (alphaY <= 0.0 || alphaY > 1.0)) {
     return [undefined, undefined];
-  
-  if (alphaX == -Infinity) alphaX = Infinity;
-  if (alphaY == -Infinity) alphaY = Infinity;
+  }
+    
+  if (alphaX <= 0.0 || alphaX > 1.0) { // only alphaY is valid
+    return [currentPixel[0], currentPixel[1] + vInc[1]];
+  }
 
-  assert(alphaX >= 0 && alphaY >= 0, "Invalid movement direction");
-  
+  if (alphaY <= 0.0 || alphaY > 1.0) { // only alphaX is valid
+    return [currentPixel[0] + vInc[0], currentPixel[1]];
+  }
+    
   return alphaX < alphaY ? [currentPixel[0]+vInc[0], currentPixel[1]] :
                            [currentPixel[0],         currentPixel[1] + vInc[1]];
 }
@@ -141,10 +146,8 @@ function rasterTriangle(p1, p2, p3) {
    *   |/
    *   P1
    * */
-  return rasterFlatTriangle(p4, p2, p1).concat(
-         rasterFlatTriangle(p4, p2, p3));
+  return rasterFlatTriangle(p4, p2, p1).concat(rasterFlatTriangle(p4, p2, p3));
 }
-
 
 /* Returns all pixels that are at least partially covered by the triangle
  * flat0-flat1-other, where the points flat0 and flat1 need to have the
@@ -174,12 +177,12 @@ function rasterFlatTriangle( flat0, flat1, other ) {
     flat1 = tmp;
   }
   
-  var leftRasterPos = [Math.floor(other[0]), Math.floor(other[1])];
+  var leftRasterPos = [other[0] <<0, other[1] <<0];
   var rightRasterPos = leftRasterPos.slice(0);
   points.push(leftRasterPos.slice(0));
   var yDir = other[1] < flat0[1] ? +1 : -1;
-  var yStart = Math.floor(other[1]) + yDir;
-  var yBeyond= Math.floor(flat0[1]) + yDir;
+  var yStart = leftRasterPos[1];
+  var yBeyond= (flat0[1] <<0) + yDir;
   var prevLeftRasterPos;
   var prevRightRasterPos;
 
@@ -244,7 +247,6 @@ function unit(x, y, z) {
   return [x/m, y/m, z/m];
 }
 
-
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
  * Internally, the vector 'v' is interpreted as a 4D vector
  * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
@@ -287,9 +289,44 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
 
 }
 
-function getTileSizeInMeters( latitude, zoom) {
-  return EARTH_CIRCUMFERENCE_IN_METERS * Math.cos(latitude / 180 * Math.PI) / 
-         Math.pow(2, zoom);
+function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
+  var ratio = 1/Math.pow(2, tileZoom - map.zoom);
+
+  var modelMatrix = new glx.Matrix();
+  modelMatrix.scale(ratio, ratio, 1);
+  modelMatrix.translate(tileX * TILE_SIZE * ratio - map.center.x, 
+                        tileY * TILE_SIZE * ratio - map.center.y, 0);
+  
+  var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
+  var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
+  var tr = transformVec3(mvpMatrix, [TILE_SIZE, 0        ,0]);
+  var bl = transformVec3(mvpMatrix, [0        , TILE_SIZE,0]);
+  var br = transformVec3(mvpMatrix, [TILE_SIZE, TILE_SIZE,0]);
+  var verts = [tl, tr, bl, br];
+  for (var i in verts) { 
+    // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
+    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * map.width;
+    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * map.height;
+  }
+  
+  return getConvexQuadArea( [tl, tr, br, bl]);
+}
+
+function getTriangleArea(p1, p2, p3) {
+  //triangle edge lengths
+  var a = len2(sub2( p1, p2));
+  var b = len2(sub2( p1, p3));
+  var c = len2(sub2( p2, p3));
+  
+  //Heron's formula
+  var s = 0.5 * (a+b+c);
+  return Math.sqrt( s * (s-a) * (s-b) * (s-c));
+}
+
+function getConvexQuadArea(quad) {
+  return getTriangleArea( quad[0], quad[1], quad[2]) + 
+         getTriangleArea( quad[0], quad[2], quad[3]);
+  
 }
 
 function getTilePositionFromLocal(localXY, zoom) {

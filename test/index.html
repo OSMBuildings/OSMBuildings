@@ -57,9 +57,10 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="../node_modules/glmap/dist/GLMap/GLMap.css">
-  <script src="../node_modules/glmap/dist/GLMap/GLMap.debug.js"></script>
-  <script src="loader.js"></script>
+  <link rel="stylesheet" href="../dist/GLMap/GLMap.css">
+  <script src="../dist/GLMap/GLMap.debug.js"></script>
+  <script src="../dist/OSMBuildings/OSMBuildings-GLMap.debug.js"></script>
+  <!--<script src="loader.js"></script> -->
 </head>
 
 <body>
@@ -105,7 +106,7 @@
     minZoom: 15,
     maxZoom: 22,
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    optimize: 'performance', // default: 'quality'
+    optimize: 'quality', // default: 'quality'
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
@@ -134,7 +135,8 @@
   );
 
   osmb.addGeoJSONTiles(
-    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    '../tiles/{z}/{x}/{y}.json',
 //  'https://localhost:8010/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
