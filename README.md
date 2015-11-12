@@ -69,8 +69,19 @@ In a script section initialize the map and add a map tile layer.
 
 // add OSM Buildings to the map and let it load data tiles.
 
-  var osmb = new OSMBuildings().addTo(map);
-  osmb.addTileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png');
+  var osmb = new OSMBuildings({
+    minZoom: 15,
+    maxZoom: 22,
+    attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+  }).addTo(map);
+
+  osmb.addMapTiles(
+    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    {
+      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">MapBox</a>'
+    }
+  );
+
   osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
 ~~~
 
@@ -100,7 +111,7 @@ setDisabled | boolean | disables any user input
 isDisabled | | check wheether user input is disabled
 project | latitude, longitude, worldSize | transforms geo coordinates to world pixel coordinates (tile size << zoom)
 unproject | x, y, worldSize | transforms world (tile size << zoom) pixel coordinates to geo coordinates (EPSG:4326)
-getBounds | | returns geocordinates of current map view, respects tilt and rotation but ignores perspective
+getBounds | | returns coordinates of current map view, respects tilt and rotation but ignores perspective
 setZoom | float | sets current zoom
 getZoom | | gets current zoom
 setPosition | object | sets current geo position of map center
