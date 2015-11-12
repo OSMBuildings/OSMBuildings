@@ -75,6 +75,9 @@ render.Basemap = {
     modelMatrix.scale(ratio, ratio, 1);
     modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
 
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
+                     MAX_USED_ZOOM_LEVEL - tile.zoom);
     gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
     gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
@@ -93,6 +96,7 @@ render.Basemap = {
     tile.texture.enable(0);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
   },
 
   destroy: function() {}
