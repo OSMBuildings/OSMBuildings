@@ -9,7 +9,7 @@ module.exports = function(grunt) {
         separator: "\n",
         banner: "(function(global) {",
         footer: "}(this));",
-        sourceMap: true,
+        sourceMap: true
       },
       glx: {
         src: [
@@ -37,7 +37,7 @@ module.exports = function(grunt) {
         dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
       },
       basemap: {
-        src: ['engines/Basemap/index.js', 'engines/Basemap/Interaction.js', 'engines/Basemap/Layers.js'],
+        src: ['engines/Basemap/index.js', 'engines/Basemap/Pointer.js', 'engines/Basemap/Layers.js'],
         dest: 'dist/GLMap/GLMap.debug.js'
       }
     },
@@ -55,7 +55,7 @@ module.exports = function(grunt) {
 
     uglify: {
       options: {
-        sourceMap: true,
+        sourceMap: true
       },
       core: {
         src: 'dist/OSMBuildings/<%=pkg.name%>.debug.js',

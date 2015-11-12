@@ -115,7 +115,7 @@ Grid.prototype = {
       var parentY = (tile[1] <<0) / 2;
       
       if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
-        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix, MAP);
+        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix);
         parentTiles[ [parentX, parentY] ] = (numParentScreenPixels < pixelAreaThreshold);
       }
       
