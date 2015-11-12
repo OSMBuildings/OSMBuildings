@@ -165,8 +165,8 @@ Grid.prototype = {
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      referencePoint = [ MAP.center.x * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE,
-                         MAP.center.y * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE];
+      mapCenterTile = [ long2tile(MAP.center.longitude, zoom),
+                        lat2tile (MAP.center.latitude,  zoom)];
 
     for (i = 0; i < 4; i++) {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);

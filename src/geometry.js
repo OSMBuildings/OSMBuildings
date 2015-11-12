@@ -329,6 +329,11 @@ function getConvexQuadArea(quad) {
   
 }
 
+function getTileSizeInMeters( latitude, zoom) {
+  return EARTH_CIRCUMFERENCE_IN_METERS * Math.cos(latitude / 180 * Math.PI) / 
+         Math.pow(2, zoom);
+}
+
 function getTilePositionFromLocal(localXY, zoom) {
   
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
