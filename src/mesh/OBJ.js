@@ -269,10 +269,10 @@ mesh.OBJ = (function() {
       }
 
       var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
+                                     Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-      var dLat = this.position.latitude - MAP.center.latitude;
-      var dLon = this.position.longitude- MAP.center.longitude;
+      var dLat = this.position.latitude - MAP.position.latitude;
+      var dLon = this.position.longitude- MAP.position.longitude;
       
       matrix.translate( dLon * metersPerDegreeLongitude,
                        -dLat * METERS_PER_DEGREE_LATITUDE, 0);

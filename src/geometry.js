@@ -293,8 +293,8 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
 
   var modelMatrix = new glx.Matrix();
   modelMatrix.scale(ratio, ratio, 1);
-  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.center.x,
-                        tileY * TILE_SIZE * ratio - MAP.center.y, 0);
+  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.position.x,
+                        tileY * TILE_SIZE * ratio - MAP.position.y, 0);
   
   var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
@@ -336,10 +336,10 @@ function getTileSizeInMeters( latitude, zoom) {
 function getTilePositionFromLocal(localXY, zoom) {
   
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                 Math.cos(MAP.center.latitude / 180 * Math.PI);
+                                 Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-  var longitude= MAP.center.longitude + localXY[0] / metersPerDegreeLongitude;
-  var latitude = MAP.center.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
+  var longitude= MAP.position.longitude + localXY[0] / metersPerDegreeLongitude;
+  var latitude = MAP.position.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
   
   return [long2tile(longitude, zoom), lat2tile(latitude, zoom)];
 }

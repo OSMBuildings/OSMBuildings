@@ -22,7 +22,7 @@ var Basemap = function(container, options) {
 
   this.bounds = options.bounds;
 
-  this.center = { x:0, y:0 };
+  this.position = {};
   this.zoom = 0;
 
   this.listeners = {};
@@ -182,10 +182,10 @@ Basemap.prototype = {
       angle = this.rotation*Math.PI/180,
       x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
       y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
-      center = this.center,
+      position = this.position,
       worldSize = Basemap.TILE_SIZE*Math.pow(2, this.zoom),
-      nw = this.unproject(center.x - x, center.y - y, worldSize),
-      se = this.unproject(center.x + x, center.y + y, worldSize);
+      nw = this.unproject(position.x - x, position.y - y, worldSize),
+      se = this.unproject(position.x + x, position.y + y, worldSize);
     return {
       n: nw.latitude,
       w: nw.longitude,
@@ -228,13 +228,10 @@ Basemap.prototype = {
   },
 
   setPosition: function(pos) {
-    var
-      latitude  = clamp(parseFloat(pos.latitude), -90, 90),
-      longitude = clamp(parseFloat(pos.longitude), -180, 180);
-
-    this.position = { latitude:  latitude, longitude:  longitude };
-    this.center = this.position;
-
+    this.position = {
+      latitude:  clamp(parseFloat(pos.latitude), -90, 90),
+      longitude: clamp(parseFloat(pos.longitude), -180, 180)
+    };
     this.emit('change');
     return this;
   },
@@ -393,7 +390,7 @@ Pointer.prototype = {
   },
 
   onMouseDown: function(e) {
-    if (e.button>1) {
+    if (e.button > 1) {
       return;
     }
 

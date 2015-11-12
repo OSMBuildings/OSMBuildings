@@ -80,9 +80,9 @@ OSMBuildings.prototype = {
   // TODO: this should be part of the underlying map engine
   transform: function(latitude, longitude, elevation) {
     var
-      pos = MAP.project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-      x = pos.x-MAP.center.x,
-      y = pos.y-MAP.center.y;
+      pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
+      x = pos.x-MAP.position.x,
+      y = pos.y-MAP.position.y;
 
     var scale = 1/Math.pow(2, 16 - MAP.zoom);
     var modelMatrix = new glx.Matrix()
@@ -103,8 +103,8 @@ OSMBuildings.prototype = {
       v = getIntersectionWithXYPlane(x/MAP.width*2-1, -(y++/MAP.height*2-1), inverse);
     } while (!v);
 
-    var worldX = v[0] + MAP.center.x;
-    var worldY = v[1] + MAP.center.y;
+    var worldX = v[0] + MAP.position.x;
+    var worldY = v[1] + MAP.position.y;
     var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
     return unproject(worldX, worldY, worldSize);
   },

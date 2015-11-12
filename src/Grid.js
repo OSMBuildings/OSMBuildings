@@ -165,8 +165,8 @@ Grid.prototype = {
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      mapCenterTile = [ long2tile(MAP.center.longitude, zoom),
-                        lat2tile (MAP.center.latitude,  zoom)];
+      mapCenterTile = [ long2tile(MAP.position.longitude, zoom),
+                        lat2tile (MAP.position.latitude,  zoom)];
 
     for (i = 0; i < 4; i++) {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);

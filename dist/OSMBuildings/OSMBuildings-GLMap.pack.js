@@ -1970,9 +1970,9 @@
 	  // TODO: this should be part of the underlying map engine
 	  transform: function(latitude, longitude, elevation) {
 	    var
-	      pos = MAP.project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-	      x = pos.x-MAP.center.x,
-	      y = pos.y-MAP.center.y;
+	      pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
+	      x = pos.x-MAP.position.x,
+	      y = pos.y-MAP.position.y;
 
 	    var scale = 1/Math.pow(2, 16 - MAP.zoom);
 	    var modelMatrix = new glx.Matrix()
@@ -1993,8 +1993,8 @@
 	      v = getIntersectionWithXYPlane(x/MAP.width*2-1, -(y++/MAP.height*2-1), inverse);
 	    } while (!v);
 
-	    var worldX = v[0] + MAP.center.x;
-	    var worldY = v[1] + MAP.center.y;
+	    var worldX = v[0] + MAP.position.x;
+	    var worldY = v[1] + MAP.position.y;
 	    var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
 	    return unproject(worldX, worldY, worldSize);
 	  },
@@ -2820,8 +2820,8 @@
 	      queue = [],
 	      i,
 	      viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-	      mapCenterTile = [ long2tile(MAP.center.longitude, zoom),
-	                        lat2tile (MAP.center.latitude,  zoom)];
+	      mapCenterTile = [ long2tile(MAP.position.longitude, zoom),
+	                        lat2tile (MAP.position.latitude,  zoom)];
 
 	    for (i = 0; i < 4; i++) {
 	      viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
@@ -3455,12 +3455,12 @@
 	        matrix.rotateZ(-this.rotation);
 	      }
 
-	      var dLat = this.position.latitude - MAP.center.latitude;
-	      var dLon = this.position.longitude - MAP.center.longitude;
+	      var dLat = this.position.latitude - MAP.position.latitude;
+	      var dLon = this.position.longitude - MAP.position.longitude;
 	      
 	      var metersPerDegreeLatitude = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 	      var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
-	                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
+	                                     Math.cos(MAP.position.latitude / 180 * Math.PI);
 
 	      matrix.translate( dLon*metersPerDegreeLongitude, -dLat*metersPerDegreeLatitude, 0);
 	      
@@ -3956,10 +3956,10 @@
 	      }
 
 	      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-	                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
+	                                     Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-	      var dLat = this.position.latitude - MAP.center.latitude;
-	      var dLon = this.position.longitude- MAP.center.longitude;
+	      var dLat = this.position.latitude - MAP.position.latitude;
+	      var dLon = this.position.longitude- MAP.position.longitude;
 	      
 	      matrix.translate( dLon * metersPerDegreeLongitude,
 	                       -dLat * METERS_PER_DEGREE_LATITUDE, 0);
@@ -4284,8 +4284,8 @@
 
 	  var modelMatrix = new glx.Matrix();
 	  modelMatrix.scale(ratio, ratio, 1);
-	  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.center.x,
-	                        tileY * TILE_SIZE * ratio - MAP.center.y, 0);
+	  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.position.x,
+	                        tileY * TILE_SIZE * ratio - MAP.position.y, 0);
 	  
 	  var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
 	  var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
@@ -4327,10 +4327,10 @@
 	function getTilePositionFromLocal(localXY, zoom) {
 	  
 	  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-	                                 Math.cos(MAP.center.latitude / 180 * Math.PI);
+	                                 Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-	  var longitude= MAP.center.longitude + localXY[0] / metersPerDegreeLongitude;
-	  var latitude = MAP.center.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
+	  var longitude= MAP.position.longitude + localXY[0] / metersPerDegreeLongitude;
+	  var latitude = MAP.position.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
 	  
 	  return [long2tile(longitude, zoom), lat2tile(latitude, zoom)];
 	}
@@ -5044,11 +5044,11 @@
 
 	  renderTile: function(tile, shader) {
 	    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-	                                   Math.cos(MAP.center.latitude / 180 * Math.PI);
+	                                   Math.cos(MAP.position.latitude / 180 * Math.PI);
 
 	    var modelMatrix = new glx.Matrix();
-	    modelMatrix.translate( (tile.longitude- MAP.center.longitude)* metersPerDegreeLongitude,
-	                          -(tile.latitude - MAP.center.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+	    modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
+	                          -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
 	    gl.enable(gl.POLYGON_OFFSET_FILL);
 	    gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
@@ -5684,32 +5684,19 @@
 	  //       to the tile height in meters.
 	  var size = getTileSizeInMeters( this.latitude, zoom);
 	  
-	  var numSegments = 4;
+	  var vertices = [
+	    size, size, 0,
+	    size,    0, 0,
+	       0, size, 0,
+	       0,    0, 0
+	  ];
 
-	  var meshStep = size/numSegments;
-	  var textureStep = 1/numSegments;
-
-	  var vertices = [];
-	  var texCoords = [];
-
-	  // TODO: can probably be 1x1 again when better fog is in place
-	  for (var cols = 0; cols < numSegments; cols++) {
-	    for (var rows = 0; rows < numSegments; rows++) {
-	      vertices.push(
-	        (cols+1)*meshStep, (rows+1)*meshStep, 0,
-	        (cols+1)*meshStep, (rows+0)*meshStep, 0,
-	        (cols+0)*meshStep, (rows+1)*meshStep, 0,
-	        (cols+0)*meshStep, (rows+0)*meshStep, 0
-	      );
-
-	      texCoords.push(
-	        (cols+1)*textureStep, (rows+1)*textureStep,
-	        (cols+1)*textureStep, (rows+0)*textureStep,
-	        (cols+0)*textureStep, (rows+1)*textureStep,
-	        (cols+0)*textureStep, (rows+0)*textureStep
-	      );
-	    }
-	  }
+	  var texCoords = [
+	    1, 1,
+	    1, 0,
+	    0, 1,
+	    0, 0
+	  ];
 
 	  this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
 	  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
@@ -5727,7 +5714,6 @@
 	        gl.bindTexture(gl.TEXTURE_2D, this.texture.id);
 	        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
 	      }
 	    }.bind(this));
 	  },

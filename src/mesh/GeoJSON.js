@@ -330,12 +330,12 @@ mesh.GeoJSON = (function() {
         matrix.rotateZ(-this.rotation);
       }
 
-      var dLat = this.position.latitude - MAP.center.latitude;
-      var dLon = this.position.longitude - MAP.center.longitude;
+      var dLat = this.position.latitude - MAP.position.latitude;
+      var dLon = this.position.longitude - MAP.position.longitude;
       
       var metersPerDegreeLatitude = EARTH_CIRCUMFERENCE_IN_METERS / 360;
       var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
-                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
+                                     Math.cos(MAP.position.latitude / 180 * Math.PI);
 
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*metersPerDegreeLatitude, 0);
       

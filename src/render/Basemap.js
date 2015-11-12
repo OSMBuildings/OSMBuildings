@@ -72,11 +72,11 @@ render.Basemap = {
 
   renderTile: function(tile, shader) {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                   Math.cos(MAP.center.latitude / 180 * Math.PI);
+                                   Math.cos(MAP.position.latitude / 180 * Math.PI);
 
     var modelMatrix = new glx.Matrix();
-    modelMatrix.translate( (tile.longitude- MAP.center.longitude)* metersPerDegreeLongitude,
-                          -(tile.latitude - MAP.center.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+    modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
+                          -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
