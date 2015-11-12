@@ -80,21 +80,14 @@ render.Interaction = {
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    var imageData = framebuffer.getData();
-
-    // DEBUG
-    // // disable framebuffer
-    // var imageData = new Uint8Array(MAP.width*MAP.height*4);
-    shader.disable();
-    framebuffer.disable();
-
-    gl.viewport(0, 0, MAP.width, MAP.height);
-
-    //var index = ((MAP.height-y/)*MAP.width + x) * 4;
     x = x/MAP.width*this.viewportSize <<0;
     y = y/MAP.height*this.viewportSize <<0;
-    var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
-    var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+    var imageData = framebuffer.getPixel(x, this.viewportSize - y);
+    var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
+
+    shader.disable();
+    framebuffer.disable();
+    gl.viewport(0, 0, MAP.width, MAP.height);
 
     return this.idMapping[color];
   },
