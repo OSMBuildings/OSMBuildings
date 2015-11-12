@@ -36,8 +36,8 @@ var Basemap = function(container, options) {
     }.bind(this));
   }
 
-  this.interaction = new Interaction(this, this.container);
-  this.layers      = new Layers(this);
+  this.pointer = new Pointer(this, this.container);
+  this.layers  = new Layers(this);
 
   if (options.disabled) {
     this.setDisabled(true);
@@ -127,23 +127,6 @@ Basemap.prototype = {
     }.bind(this), 1000);
   },
 
-  setCenter: function(center) {
-    var worldSize = Basemap.TILE_SIZE*Math.pow(2, this.zoom);
-    if (this.bounds) {
-      var
-        min = this.project(this.bounds.s, this.bounds.w, worldSize),
-        max = this.project(this.bounds.n, this.bounds.e, worldSize);
-      center.x = clamp(center.x, min.x, max.x);
-      center.y = clamp(center.y, min.y, max.y);
-    }
-
-    if (this.center.x !== center.x || this.center.y !== center.y) {
-      this.center = center;
-      this.position = this.unproject(center.x, center.y, worldSize);
-      this.emit('change');
-    }
-  },
-
   emit: function(type, payload) {
     if (!this.listeners[type]) {
       return;
@@ -182,31 +165,18 @@ Basemap.prototype = {
   },
 
   setDisabled: function(flag) {
-    this.interaction.disabled = !!flag;
+    this.pointer.disabled = !!flag;
     return this;
   },
 
   isDisabled: function() {
-    return !!this.interaction.disabled;
-  },
-
-  project: function(latitude, longitude, worldSize) {
-    var
-      x = longitude/360 + 0.5,
-      y = Math.min(1, Math.max(0, 0.5 - (Math.log(Math.tan((Math.PI/4) + (Math.PI/2)*latitude/180)) / Math.PI) / 2));
-    return { x: x*worldSize, y: y*worldSize };
-  },
-
-  unproject: function(x, y, worldSize) {
-    x /= worldSize;
-    y /= worldSize;
-    return {
-      latitude: (2 * Math.atan(Math.exp(Math.PI * (1 - 2*y))) - Math.PI/2) * (180/Math.PI),
-      longitude: x*360 - 180
-    };
+    return !!this.pointer.disabled;
   },
 
   getBounds: function() {
+    //FIXME: update method; the old code did only work for straight top-down
+    //       views, not for other cameras.
+    /*
     var
       W2 = this.width/2, H2 = this.height/2,
       angle = this.rotation*Math.PI/180,
@@ -221,19 +191,24 @@ Basemap.prototype = {
       w: nw.longitude,
       s: se.latitude,
       e: se.longitude
-    };
+    };*/
+    return null;
   },
 
   setZoom: function(zoom, e) {
     zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
     if (this.zoom !== zoom) {
-      var ratio = Math.pow(2, zoom-this.zoom);
       this.zoom = zoom;
-      if (!e) {
-        this.center.x *= ratio;
-        this.center.y *= ratio;
-      } else {
+
+      /* if a screen position was given for which the geographic position displayed
+       * should not change under the zoom */
+      if (e) {  
+        //FIXME: add code; this needs to take the current camera (rotation and 
+        //       perspective) into account
+        //NOTE:  the old code (comment out below) only works for north-up 
+        //       non-perspective views
+        /*
         var dx = this.container.offsetWidth/2  - e.clientX;
         var dy = this.container.offsetHeight/2 - e.clientY;
         this.center.x -= dx;
@@ -241,7 +216,7 @@ Basemap.prototype = {
         this.center.x *= ratio;
         this.center.y *= ratio;
         this.center.x += dx;
-        this.center.y += dy;
+        this.center.y += dy;*/
       }
       this.emit('change');
     }
@@ -255,9 +230,12 @@ Basemap.prototype = {
   setPosition: function(pos) {
     var
       latitude  = clamp(parseFloat(pos.latitude), -90, 90),
-      longitude = clamp(parseFloat(pos.longitude), -180, 180),
-      center = this.project(latitude, longitude, Basemap.TILE_SIZE*Math.pow(2, this.zoom));
-    this.setCenter(center);
+      longitude = clamp(parseFloat(pos.longitude), -180, 180);
+
+    this.position = { latitude:  latitude, longitude:  longitude };
+    this.center = this.position;
+
+    this.emit('change');
     return this;
   },
 
@@ -330,7 +308,7 @@ Basemap.prototype = {
 
   destroy: function() {
     this.listeners = [];
-    this.interaction.destroy();
+    this.pointer.destroy();
     this.layers.destroy();
     this.container.innerHTML = '';
   }

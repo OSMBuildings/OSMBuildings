@@ -3,7 +3,6 @@ test/data
 .DS_Store
 .idea
 dist/OSMBuildings.pack.js
-test/mp
 _scratch
 
 # backup files

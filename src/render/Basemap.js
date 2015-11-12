@@ -32,8 +32,11 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
     gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
-    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
-    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
+//    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
+//    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
+
+    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
+    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
 
     for (var key in layer.visibleTiles) {
       tile = layer.tiles[key];
@@ -68,12 +71,12 @@ render.Basemap = {
   },
 
   renderTile: function(tile, shader) {
-    var mapCenter = MAP.center;
-    var ratio = 1/Math.pow(2, tile.zoom - MAP.zoom);
+    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                   Math.cos(MAP.center.latitude / 180 * Math.PI);
 
     var modelMatrix = new glx.Matrix();
-    modelMatrix.scale(ratio, ratio, 1);
-    modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
+    modelMatrix.translate( (tile.longitude- MAP.center.longitude)* metersPerDegreeLongitude,
+                          -(tile.latitude - MAP.center.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 

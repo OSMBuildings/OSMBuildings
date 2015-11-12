@@ -59,7 +59,8 @@
   </style>
   <link rel="stylesheet" href="../dist/GLMap/GLMap.css">
   <script src="../dist/GLMap/GLMap.debug.js"></script>
-  <script src="loader.js"></script>
+  <script src="../dist/OSMBuildings/OSMBuildings-GLMap.debug.js"></script>
+  <!--<script src="loader.js"></script> -->
 </head>
 
 <body>
@@ -135,7 +136,8 @@
 
   osmb.addGeoJSONTiles(
     'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-//  'https://localhost:8010/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//  '../tiles/{z}/{x}/{y}.json',
+//  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
       // bounds
@@ -170,21 +172,21 @@
 //    label.style.top = Math.round(pos.y) + 'px';
   });
 
-  map.on('pointermove', function(e) {
-    var id = osmb.getTarget(e.x, e.y);
-    if (id) {
-      document.body.style.cursor = 'pointer';
-      osmb.highlight(id, '#f08000');
-    } else {
-      document.body.style.cursor = 'default';
-      osmb.highlight(null);
-    }
-  });
+//  map.on('pointermove', function(e) {
+//    var id = osmb.getTarget(e.x, e.y);
+//    if (id) {
+//      document.body.style.cursor = 'pointer';
+//      osmb.highlight(id, '#f08000');
+//    } else {
+//      document.body.style.cursor = 'default';
+//      osmb.highlight(null);
+//    }
+//  });
 
-  map.on('pointerdown', function(e) {
-    var id = osmb.getTarget(e.x, e.y);
-    console.log(id);
-  });
+//  map.on('pointerdown', function(e) {
+//    var id = osmb.getTarget(e.x, e.y);
+//    console.log(id);
+//  });
 
   //*************************************************************************
 

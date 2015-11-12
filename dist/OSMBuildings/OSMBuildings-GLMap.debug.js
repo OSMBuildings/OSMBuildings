@@ -995,7 +995,7 @@ var GLX = function(container, width, height, optimize) {
   container.appendChild(canvas);
 
   var options = {
-    antialias: (optimize === 'quality'),
+    antialias: true, //(optimize === 'quality'),
     depth: true,
     premultipliedAlpha: false
   };
@@ -1175,6 +1175,12 @@ glx.Framebuffer.prototype = {
   disable: function() {
     GL.bindFramebuffer(GL.FRAMEBUFFER, null);
     GL.bindRenderbuffer(GL.RENDERBUFFER, null);
+  },
+
+  getPixel: function(x, y) {
+    var imageData = new Uint8Array(4);
+    GL.readPixels(x,y,1,1,GL.RGBA, GL.UNSIGNED_BYTE, imageData);
+    return imageData;
   },
 
   getData: function() {
@@ -1915,6 +1921,7 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  // TODO: this should be part of the underlying map engine
   transform: function(latitude, longitude, elevation) {
     var
       pos = MAP.project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
@@ -1931,6 +1938,23 @@ OSMBuildings.prototype = {
     var t = glx.Matrix.transform(mvp);
     return { x: t.x*MAP.width, y: MAP.height - t.y*MAP.height, z: t.z }; // takes current cam pos into account.
   },
+
+  // TODO: this should be part of the underlying map engine
+  untransform: function(x, y) {
+    var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
+    var v;
+    do {
+      v = getIntersectionWithXYPlane(x/MAP.width*2-1, -(y++/MAP.height*2-1), inverse);
+    } while (!v);
+
+    var worldX = v[0] + MAP.center.x;
+    var worldY = v[1] + MAP.center.y;
+    var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
+    return unproject(worldX, worldY, worldSize);
+  },
+
+  //// TODO: this should be part of the underlying map engine
+  //getBounds: function(latitude, longitude, elevation) {},
 
   addOBJ: function(url, position, options) {
     return new mesh.OBJ(url, position, options);
@@ -1957,11 +1981,13 @@ OSMBuildings.prototype = {
     render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
   },
 
+  // TODO: check naming. show() suggests it affects the layer rather than objects on it
   show: function(selector, duration) {
     Filter.remove('hidden', selector, duration);
     return this;
   },
 
+  // TODO: check naming. hide() suggests it affects the layer rather than objects on it
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
     return this;
@@ -2096,8 +2122,9 @@ var Activity = {};
 var TILE_SIZE = 256;
 
 var DEFAULT_HEIGHT = 10;
-var HEIGHT_SCALE = 0.7;
+var HEIGHT_SCALE = 1.0;
 
+var MAX_USED_ZOOM_LEVEL = 25;
 var DEFAULT_COLOR = 'rgb(220, 210, 200)';
 var HIGHLIGHT_COLOR = '#f08000';
 var FOG_COLOR = '#f0f8ff';
@@ -2105,8 +2132,10 @@ var BACKGROUND_COLOR = '#efe8e0';
 
 var document = global.document;
 
-var EARTH_RADIUS = 6378137;
-var EARTH_CIRCUMFERENCE = EARTH_RADIUS*Math.PI*2;
+var EARTH_RADIUS_IN_METERS = 6378137;
+var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
+
+var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 
 
 // add functionality/fixes that needs to be applied to somewhere externally
@@ -2585,7 +2614,6 @@ var Grid = function(source, tileClass, options) {
 
   this.source = source;
   this.tileClass = tileClass;
-
   options = options || {};
 
   this.bounds = options.bounds;
@@ -2695,7 +2723,7 @@ Grid.prototype = {
       var parentY = (tile[1] <<0) / 2;
       
       if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
-        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix, MAP);
+        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix);
         parentTiles[ [parentX, parentY] ] = (numParentScreenPixels < pixelAreaThreshold);
       }
       
@@ -2746,21 +2774,13 @@ Grid.prototype = {
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      mapCenterTile = [ MAP.center.x * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE,
-                        MAP.center.y * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE];
+      mapCenterTile = [ long2tile(MAP.center.longitude, zoom),
+                        lat2tile (MAP.center.latitude,  zoom)];
 
     for (i = 0; i < 4; i++) {
-      viewQuad[i] = asTilePosition(viewQuad[i], zoom);
+      viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
     }
 
-    /*
-    tiles = [];
-    var centerX = mapCenterTile[0] | 0;
-    var centerY = mapCenterTile[1] | 0;
-    
-    for (var x = centerX - 3; x < centerX + 3; x++)
-      for (var y = centerY - 3; y < centerY + 3; y++)
-        tiles.push( [x, y] );*/
 
     var tiles = rasterConvexQuad(viewQuad);
     tiles = ( this.fixedZoom ) ?
@@ -2775,9 +2795,6 @@ Grid.prototype = {
         
       this.visibleTiles[ tiles[i] ] = true;
     }
-
-    //console.log("%s tiles at zoom %s", tiles.length, zoom);
-    
     for (var key in this.visibleTiles) {
       tile = key.split(',');
       tileX = parseInt(tile[0]);
@@ -3064,8 +3081,6 @@ var mesh = {};
 mesh.GeoJSON = (function() {
 
   var
-    zoom = 16,
-    worldSize = TILE_SIZE <<zoom,
     featuresPerChunk = 100,
     delayPerChunk = 66;
 
@@ -3115,11 +3130,17 @@ mesh.GeoJSON = (function() {
     return [res];
   }
 
+  /* Convert all coordinates from lat/lng to 'meters from reference point'
+   */
   function transform(ring, origin) {
+    var metersPerDegreeLatitude =  EARTH_CIRCUMFERENCE_IN_METERS / 360;
+    var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
+                                   Math.cos(origin.latitude / 180 * Math.PI);
+
     var p, res = [];
     for (var i = 0, len = ring.length; i < len; i++) {
-      p = project(ring[i][1], ring[i][0], worldSize);
-      res[i] = [p.x-origin.x, p.y-origin.y];
+      res[i] = [ (ring[i][0] - origin.longitude) * metersPerDegreeLongitude,
+                -(ring[i][1] - origin.latitude) * metersPerDegreeLatitude];
     }
 
     return res;
@@ -3176,7 +3197,6 @@ mesh.GeoJSON = (function() {
       this.items = [];
 
       var
-        origin = project(this.position.latitude, this.position.longitude, worldSize),
         startIndex = 0,
         dataLength = json.features.length,
         endIndex = startIndex + Math.min(dataLength, featuresPerChunk);
@@ -3185,7 +3205,7 @@ mesh.GeoJSON = (function() {
         var feature, geometries;
         for (var i = startIndex; i < endIndex; i++) {
           feature = json.features[i];
-          geometries = getGeometries(feature.geometry, origin);
+          geometries = getGeometries(feature.geometry, this.position);
 
           for (var j = 0, jl = geometries.length; j < jl; j++) {
             this.addItem(feature.id, patch.GeoJSON(feature.properties), geometries[j]);
@@ -3383,19 +3403,21 @@ mesh.GeoJSON = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      var scale = 1 / Math.pow(2, zoom - MAP.zoom) * this.scale;
-      matrix.scale(scale, scale, scale*HEIGHT_SCALE);
+      matrix.scale(1, 1, HEIGHT_SCALE);
 
       if (this.rotation) {
         matrix.rotateZ(-this.rotation);
       }
 
-      var
-        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-        mapCenter = MAP.center;
+      var dLat = this.position.latitude - MAP.center.latitude;
+      var dLon = this.position.longitude - MAP.center.longitude;
+      
+      var metersPerDegreeLatitude = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+      var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
+                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
 
-      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
+      matrix.translate( dLon*metersPerDegreeLongitude, -dLat*metersPerDegreeLatitude, 0);
+      
       return matrix;
     },
 
@@ -3617,7 +3639,6 @@ mesh.DebugQuad = (function() {
 
 }());
 
-
 mesh.OBJ = (function() {
 
   var vertexIndex = [];
@@ -3779,8 +3800,6 @@ mesh.OBJ = (function() {
       this.maxZoom = this.minZoom;
     }
 
-    this.inMeters = TILE_SIZE / (Math.cos(this.position.latitude*Math.PI/180) * EARTH_CIRCUMFERENCE);
-
     this.data = {
       vertices: [],
       normals: [],
@@ -3884,19 +3903,21 @@ mesh.OBJ = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      var scale = Math.pow(2, MAP.zoom) * this.inMeters * this.scale;
-      matrix.scale(scale, scale, scale);
+      matrix.scale(this.scale, this.scale, this.scale);
 
       if (this.rotation) {
         matrix.rotateZ(-this.rotation);
       }
 
-      var
-        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-        mapCenter = MAP.center;
+      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
 
-      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
+      var dLat = this.position.latitude - MAP.center.latitude;
+      var dLon = this.position.longitude- MAP.center.longitude;
+      
+      matrix.translate( dLon * metersPerDegreeLongitude,
+                       -dLat * METERS_PER_DEGREE_LATITUDE, 0);
+      
       return matrix;
     },
 
@@ -3983,6 +4004,24 @@ function getBBox(polygon) {
 
   return { minX:x, minY:y, maxX:X, maxY:Y };
 }
+
+function assert(condition, message) {
+  if (!condition) {
+    throw message;
+  }
+}
+
+/* Returns the distance of point 'p' from line 'line1'->'line2'.
+ * based on http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+ */
+ /*
+function getDistancePointLine2( line1, line2, p) {
+
+  //v: a unit-length vector perpendicular to the line;
+  var v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
+  var r = sub2( line1, p);
+  return Math.abs(dot2(v, r));
+} */
 
 /*  given a pixel's (integer) position through which the line 'segmentStart' ->
  *  'segmentEnd' passes, this method returns the one neighboring pixel of 
@@ -4192,16 +4231,15 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
   var pos = add3( v1, mul3scalar(vDir, lambda));
 
   return [pos[0], pos[1]];  // z==0 
-
 }
 
-function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
-  var ratio = 1/Math.pow(2, tileZoom - map.zoom);
+function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
+  var ratio = 1/Math.pow(2, tileZoom - MAP.zoom);
 
   var modelMatrix = new glx.Matrix();
   modelMatrix.scale(ratio, ratio, 1);
-  modelMatrix.translate(tileX * TILE_SIZE * ratio - map.center.x, 
-                        tileY * TILE_SIZE * ratio - map.center.y, 0);
+  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.center.x,
+                        tileY * TILE_SIZE * ratio - MAP.center.y, 0);
   
   var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
@@ -4211,37 +4249,11 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
   var verts = [tl, tr, bl, br];
   for (var i in verts) { 
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * map.width;
-    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * map.height;
+    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * MAP.width;
+    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * MAP.height;
   }
   
   return getConvexQuadArea( [tl, tr, br, bl]);
-}
-
-function inMeters(localDistance) {
-  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * Math.cos(MAP.position.latitude/ 180 * Math.PI);
-  return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
-}
-
-function vec3InMeters(localVec) {
-  return [ inMeters(localVec[0]),
-           inMeters(localVec[1]),
-           inMeters(localVec[2])];
-}
-
-/* converts a 2D position from OSMBuildings' local coordinate system to slippy tile
- * coordinates for zoom level 'tileZoom'. The results are not integers, but have a
- * fractional component. Math.floor(tileX) gives the actual horizontal tile number,
- * while (tileX - Math.floor(tileX)) gives the relative position *inside* the tile. */
-function asTilePosition(localXY, tileZoom) {
-  var worldX = localXY[0] + MAP.center.x;
-  var worldY = localXY[1] + MAP.center.y;
-  var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
-
-  var tileX = worldX / worldSize * Math.pow(2, tileZoom);
-  var tileY = worldY / worldSize * Math.pow(2, tileZoom);
-
-  return [tileX, tileY];
 }
 
 function getTriangleArea(p1, p2, p3) {
@@ -4259,6 +4271,31 @@ function getConvexQuadArea(quad) {
   return getTriangleArea( quad[0], quad[1], quad[2]) + 
          getTriangleArea( quad[0], quad[2], quad[3]);
   
+}
+
+function getTileSizeInMeters( latitude, zoom) {
+  return EARTH_CIRCUMFERENCE_IN_METERS * Math.cos(latitude / 180 * Math.PI) / 
+         Math.pow(2, zoom);
+}
+
+function getTilePositionFromLocal(localXY, zoom) {
+  
+  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                 Math.cos(MAP.center.latitude / 180 * Math.PI);
+
+  var longitude= MAP.center.longitude + localXY[0] / metersPerDegreeLongitude;
+  var latitude = MAP.center.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
+  
+  return [long2tile(longitude, zoom), lat2tile(latitude, zoom)];
+}
+
+//all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+function long2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
+function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
+function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
+function tile2lat(y,z) { 
+  var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+  return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 
 function len2(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1]);}
@@ -4407,7 +4444,6 @@ var render = {
         if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
           return;
         }
-
         /*
         var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
         quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
@@ -4461,16 +4497,21 @@ var render = {
     var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     /* fogDistance: closest distance at which the fog affects the geometry */
-    this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16), lowerLeftDistanceToCenter);
-    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog. */
-    this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16);
+    this.fogDistance = Math.max(1500, lowerLeftDistanceToCenter);
+    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
+     *                  completely enclosed in fog. */
+    this.fogBlurDistance = 300;
     //console.log( "FD: %s, zoom: %s, CDFC: %s", this.fogDistance, MAP.zoom, cameraDistanceFromMapCenter);
   },
 
   onChange: function() {
+    var scale = 1.38*Math.pow(2, MAP.zoom-17);
+
     this.viewMatrix = new glx.Matrix()
       .rotateZ(MAP.rotation)
-      .rotateX(MAP.tilt);
+      .rotateX(MAP.tilt)
+      .scale(scale, scale, scale);
+
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];
@@ -4599,21 +4640,14 @@ render.Interaction = {
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
-    var imageData = framebuffer.getData();
-
-    // DEBUG
-    // // disable framebuffer
-    // var imageData = new Uint8Array(MAP.width*MAP.height*4);
-    shader.disable();
-    framebuffer.disable();
-
-    gl.viewport(0, 0, MAP.width, MAP.height);
-
-    //var index = ((MAP.height-y/)*MAP.width + x) * 4;
     x = x/MAP.width*this.viewportSize <<0;
     y = y/MAP.height*this.viewportSize <<0;
-    var index = ((this.viewportSize-y)*this.viewportSize + x) * 4;
-    var color = imageData[index] | (imageData[index + 1]<<8) | (imageData[index + 2]<<16);
+    var imageData = framebuffer.getPixel(x, this.viewportSize - y);
+    var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
+
+    shader.disable();
+    framebuffer.disable();
+    gl.viewport(0, 0, MAP.width, MAP.height);
 
     return this.idMapping[color];
   },
@@ -4924,8 +4958,11 @@ render.Basemap = {
     gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
     gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
-    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
-    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
+//    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
+//    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
+
+    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
+    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
 
     for (var key in layer.visibleTiles) {
       tile = layer.tiles[key];
@@ -4960,13 +4997,16 @@ render.Basemap = {
   },
 
   renderTile: function(tile, shader) {
-    var mapCenter = MAP.center;
-    var ratio = 1/Math.pow(2, tile.zoom - MAP.zoom);
+    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                   Math.cos(MAP.center.latitude / 180 * Math.PI);
 
     var modelMatrix = new glx.Matrix();
-    modelMatrix.scale(ratio, ratio, 1);
-    modelMatrix.translate(tile.x*TILE_SIZE*ratio - mapCenter.x, tile.y*TILE_SIZE*ratio - mapCenter.y, 0);
+    modelMatrix.translate( (tile.longitude- MAP.center.longitude)* metersPerDegreeLongitude,
+                          -(tile.latitude - MAP.center.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
+                     MAX_USED_ZOOM_LEVEL - tile.zoom);
     gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
     gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
@@ -4985,6 +5025,7 @@ render.Basemap = {
     tile.texture.enable(0);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
   },
 
   destroy: function() {}
@@ -5588,12 +5629,18 @@ var basemap = {};
 basemap.Tile = function(x, y, zoom) {
   this.x = x;
   this.y = y;
+  this.latitude = tile2lat(y, zoom);
+  this.longitude= tile2lon(x, zoom);
   this.zoom = zoom;
   this.key = [x, y, zoom].join(',');
 
+  // note: due to the Mercator projection the tile width in meters is equal
+  //       to the tile height in meters.
+  var size = getTileSizeInMeters( this.latitude, zoom);
+  
   var numSegments = 4;
 
-  var meshStep = 256/numSegments;
+  var meshStep = size/numSegments;
   var textureStep = 1/numSegments;
 
   var vertices = [];

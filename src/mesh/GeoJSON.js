@@ -2,8 +2,6 @@
 mesh.GeoJSON = (function() {
 
   var
-    zoom = 16,
-    worldSize = TILE_SIZE <<zoom,
     featuresPerChunk = 100,
     delayPerChunk = 66;
 
@@ -53,11 +51,17 @@ mesh.GeoJSON = (function() {
     return [res];
   }
 
+  /* Convert all coordinates from lat/lng to 'meters from reference point'
+   */
   function transform(ring, origin) {
+    var metersPerDegreeLatitude =  EARTH_CIRCUMFERENCE_IN_METERS / 360;
+    var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
+                                   Math.cos(origin.latitude / 180 * Math.PI);
+
     var p, res = [];
     for (var i = 0, len = ring.length; i < len; i++) {
-      p = project(ring[i][1], ring[i][0], worldSize);
-      res[i] = [p.x-origin.x, p.y-origin.y];
+      res[i] = [ (ring[i][0] - origin.longitude) * metersPerDegreeLongitude,
+                -(ring[i][1] - origin.latitude) * metersPerDegreeLatitude];
     }
 
     return res;
@@ -114,7 +118,6 @@ mesh.GeoJSON = (function() {
       this.items = [];
 
       var
-        origin = project(this.position.latitude, this.position.longitude, worldSize),
         startIndex = 0,
         dataLength = json.features.length,
         endIndex = startIndex + Math.min(dataLength, featuresPerChunk);
@@ -123,7 +126,7 @@ mesh.GeoJSON = (function() {
         var feature, geometries;
         for (var i = startIndex; i < endIndex; i++) {
           feature = json.features[i];
-          geometries = getGeometries(feature.geometry, origin);
+          geometries = getGeometries(feature.geometry, this.position);
 
           for (var j = 0, jl = geometries.length; j < jl; j++) {
             this.addItem(feature.id, patch.GeoJSON(feature.properties), geometries[j]);
@@ -321,19 +324,21 @@ mesh.GeoJSON = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      var scale = 1 / Math.pow(2, zoom - MAP.zoom) * this.scale;
-      matrix.scale(scale, scale, scale*HEIGHT_SCALE);
+      matrix.scale(1, 1, HEIGHT_SCALE);
 
       if (this.rotation) {
         matrix.rotateZ(-this.rotation);
       }
 
-      var
-        position = project(this.position.latitude, this.position.longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-        mapCenter = MAP.center;
+      var dLat = this.position.latitude - MAP.center.latitude;
+      var dLon = this.position.longitude - MAP.center.longitude;
+      
+      var metersPerDegreeLatitude = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+      var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
+                                     Math.cos(MAP.center.latitude / 180 * Math.PI);
 
-      matrix.translate(position.x-mapCenter.x, position.y-mapCenter.y, 0);
-
+      matrix.translate( dLon*metersPerDegreeLongitude, -dLat*metersPerDegreeLatitude, 0);
+      
       return matrix;
     },
 

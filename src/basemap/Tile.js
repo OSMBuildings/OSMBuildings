@@ -2,12 +2,18 @@
 basemap.Tile = function(x, y, zoom) {
   this.x = x;
   this.y = y;
+  this.latitude = tile2lat(y, zoom);
+  this.longitude= tile2lon(x, zoom);
   this.zoom = zoom;
   this.key = [x, y, zoom].join(',');
 
+  // note: due to the Mercator projection the tile width in meters is equal
+  //       to the tile height in meters.
+  var size = getTileSizeInMeters( this.latitude, zoom);
+  
   var numSegments = 4;
 
-  var meshStep = 256/numSegments;
+  var meshStep = size/numSegments;
   var textureStep = 1/numSegments;
 
   var vertices = [];

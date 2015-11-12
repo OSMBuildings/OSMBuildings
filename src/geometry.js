@@ -60,6 +60,24 @@ function getBBox(polygon) {
   return { minX:x, minY:y, maxX:X, maxY:Y };
 }
 
+function assert(condition, message) {
+  if (!condition) {
+    throw message;
+  }
+}
+
+/* Returns the distance of point 'p' from line 'line1'->'line2'.
+ * based on http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+ */
+ /*
+function getDistancePointLine2( line1, line2, p) {
+
+  //v: a unit-length vector perpendicular to the line;
+  var v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
+  var r = sub2( line1, p);
+  return Math.abs(dot2(v, r));
+} */
+
 /*  given a pixel's (integer) position through which the line 'segmentStart' ->
  *  'segmentEnd' passes, this method returns the one neighboring pixel of 
  *  'currentPixel' that would be traversed next if the line is followed in 
@@ -268,16 +286,15 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
   var pos = add3( v1, mul3scalar(vDir, lambda));
 
   return [pos[0], pos[1]];  // z==0 
-
 }
 
-function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
-  var ratio = 1/Math.pow(2, tileZoom - map.zoom);
+function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
+  var ratio = 1/Math.pow(2, tileZoom - MAP.zoom);
 
   var modelMatrix = new glx.Matrix();
   modelMatrix.scale(ratio, ratio, 1);
-  modelMatrix.translate(tileX * TILE_SIZE * ratio - map.center.x, 
-                        tileY * TILE_SIZE * ratio - map.center.y, 0);
+  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.center.x,
+                        tileY * TILE_SIZE * ratio - MAP.center.y, 0);
   
   var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
@@ -287,37 +304,11 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix, map) {
   var verts = [tl, tr, bl, br];
   for (var i in verts) { 
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * map.width;
-    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * map.height;
+    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * MAP.width;
+    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * MAP.height;
   }
   
   return getConvexQuadArea( [tl, tr, br, bl]);
-}
-
-function inMeters(localDistance) {
-  var earthCircumferenceAtLatitude = EARTH_CIRCUMFERENCE * Math.cos(MAP.position.latitude/ 180 * Math.PI);
-  return earthCircumferenceAtLatitude * localDistance / (TILE_SIZE *Math.pow(2, MAP.zoom));
-}
-
-function vec3InMeters(localVec) {
-  return [ inMeters(localVec[0]),
-           inMeters(localVec[1]),
-           inMeters(localVec[2])];
-}
-
-/* converts a 2D position from OSMBuildings' local coordinate system to slippy tile
- * coordinates for zoom level 'tileZoom'. The results are not integers, but have a
- * fractional component. Math.floor(tileX) gives the actual horizontal tile number,
- * while (tileX - Math.floor(tileX)) gives the relative position *inside* the tile. */
-function asTilePosition(localXY, tileZoom) {
-  var worldX = localXY[0] + MAP.center.x;
-  var worldY = localXY[1] + MAP.center.y;
-  var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
-
-  var tileX = worldX / worldSize * Math.pow(2, tileZoom);
-  var tileY = worldY / worldSize * Math.pow(2, tileZoom);
-
-  return [tileX, tileY];
 }
 
 function getTriangleArea(p1, p2, p3) {
@@ -335,6 +326,31 @@ function getConvexQuadArea(quad) {
   return getTriangleArea( quad[0], quad[1], quad[2]) + 
          getTriangleArea( quad[0], quad[2], quad[3]);
   
+}
+
+function getTileSizeInMeters( latitude, zoom) {
+  return EARTH_CIRCUMFERENCE_IN_METERS * Math.cos(latitude / 180 * Math.PI) / 
+         Math.pow(2, zoom);
+}
+
+function getTilePositionFromLocal(localXY, zoom) {
+  
+  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                 Math.cos(MAP.center.latitude / 180 * Math.PI);
+
+  var longitude= MAP.center.longitude + localXY[0] / metersPerDegreeLongitude;
+  var latitude = MAP.center.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
+  
+  return [long2tile(longitude, zoom), lat2tile(latitude, zoom)];
+}
+
+//all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+function long2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
+function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
+function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
+function tile2lat(y,z) { 
+  var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+  return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 
 function len2(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1]);}
