@@ -67,7 +67,7 @@ Pointer.prototype = {
   },
 
   onMouseDown: function(e) {
-    if (e.button>1) {
+    if (e.button > 1) {
       return;
     }
 

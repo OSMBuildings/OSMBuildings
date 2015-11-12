@@ -465,7 +465,10 @@ Pointer.prototype = {
   },
 
   moveMap: function(e) {
-<<<<<<< HEAD
+    if (this.disabled) {
+      return;
+    }
+
     //FIXME: make movement velocity independent of latitude
     /*FIXME: (alternative) make movement exact, i.e. make the position that 
      *       appeared at (this.prevX, this.prevY) before appear at 
@@ -473,11 +476,6 @@ Pointer.prototype = {
      */
 
     var scale = Math.pow( 2, -this.map.zoom);    
-=======
-    if (this.disabled) {
-      return;
-    }
->>>>>>> develop
     var dx = e.clientX - this.prevX;
     var dy = e.clientY - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
@@ -601,4 +599,3 @@ Layers.prototype = {
   }
 };
 }(this));
-//# sourceMappingURL=GLMap.debug.js.map

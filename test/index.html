@@ -106,7 +106,7 @@
     minZoom: 15,
     maxZoom: 22,
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    optimize: 'quality', // default: 'quality'
+    optimize: 'performance', // default: 'quality'
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
@@ -136,6 +136,7 @@
 
   osmb.addGeoJSONTiles(
     'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//  '../tiles/{z}/{x}/{y}.json',
 //  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
@@ -148,7 +149,7 @@
   // map.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
   var gj = { type: 'FeatureCollection', features: [
-    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 10, minHeight: 0 }, geometry:
+    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 50, minHeight: 0 }, geometry:
     { type: 'Polygon', coordinates: [[
       [ 13.37000, 52.52000 ],
       [ 13.37010, 52.52000 ],
@@ -159,7 +160,7 @@
     }
   ] };
 
-  var obj = osmb.addGeoJSON(gj, { scale: 5 });
+  osmb.addGeoJSON(gj);
 
   //var obj = osmb.addOBJ('../../OBJ2GeoJSON/data/2015-09/o4/o4-nach90.obj', { latitude:52.51941, longitude:13.50445 }, { color: '#00ccff' });
   //osmb.addGeoJSON('../../OBJ2GeoJSON/data/geojson C/o2-nach90.geo.json', { color: '#00ccff' });
@@ -182,14 +183,10 @@
 //    }
 //  });
 
-  map.on('pointermove', function(e) {
-    obj.position = osmb.untransform(e.x, e.y);
-  });
-
-  map.on('pointerdown', function(e) {
-    var id = osmb.getTarget(e.x, e.y);
+//  map.on('pointerdown', function(e) {
+//    var id = osmb.getTarget(e.x, e.y);
 //    console.log(id);
-  });
+//  });
 
   //*************************************************************************
 
