@@ -49,9 +49,8 @@ Link all required libraries in your HTML head section. Files are provided in fol
 
 ~~~ html
 <head>
-  <link rel="stylesheet" href="GLMap/GLMap.css">
-  <script src="GLMap/GLMap.js"></script>
-  <script src="OSMBuildings/OSMBuildings-GLMap.js"></script>
+  <link rel="stylesheet" href="OSMBuildings/OSMBuildings.css">
+  <script src="OSMBuildings/OSMBuildings.js"></script>
 </head>
 
 <body>
@@ -101,6 +100,7 @@ bounds | object | n, e, s, w coordinates of bounds where the map can be moved wi
 attribution | string | attribution, optional
 state | boolean | stores map position/rotation in url, default false
 
+
 ### GLMap methods
 
 method | parameters | description
@@ -109,8 +109,6 @@ on | type, function | add an event listener, types are: change, resize, pointerd
 off | type, fn | remove event listener
 setDisabled | boolean | disables any user input
 isDisabled | | check wheether user input is disabled
-project | latitude, longitude, worldSize | transforms geo coordinates to world pixel coordinates (tile size << zoom)
-unproject | x, y, worldSize | transforms world (tile size << zoom) pixel coordinates to geo coordinates (EPSG:4326)
 getBounds | | returns coordinates of current map view, respects tilt and rotation but ignores perspective
 setZoom | float | sets current zoom
 getZoom | | gets current zoom
@@ -122,7 +120,7 @@ setRotation | float | sets current rotation
 getRotation | | gets current rotation
 setTilt | float | sets current tilt
 getTilt | | gets current tilt
-transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
+
 
 ### OSM Buildings options
 
@@ -136,6 +134,9 @@ showBackfaces | boolean | render front and backsides of polygons. false increase
 fogColor | string | color to be used for sky gradients and distance fog.
 backgroundColor | string | overall background color
 optimize | string | sets rendering precedence for 'quality' or 'performance' (default)
+transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
+untransform | x, y | transforms a screen position into a geo coordinate with elevation 0
+
 
 ### OSM Buildings methods
 

@@ -9,7 +9,7 @@ var Basemap = function(container, options) {
   this.container = typeof container === 'string' ? document.getElementById(container) : container;
   options = options || {};
 
-  this.container.classList.add('glmap-container');
+  this.container.classList.add('osmb-container');
   this.width = this.container.offsetWidth;
   this.height = this.container.offsetHeight;
 
@@ -45,7 +45,7 @@ var Basemap = function(container, options) {
 
   this.attribution = options.attribution;
   this.attributionDiv = document.createElement('DIV');
-  this.attributionDiv.className = 'glmap-attribution';
+  this.attributionDiv.className = 'osmb-attribution';
   this.container.appendChild(this.attributionDiv);
   this.updateAttribution();
 };
@@ -313,10 +313,4 @@ Basemap.prototype = {
 
 //*****************************************************************************
 
-if (typeof global.define === 'function') {
-  global.define([], Basemap);
-} else if (typeof global.exports === 'object') {
-  global.module.exports = Basemap;
-} else {
-  global.GLMap = Basemap;
-}
+global.GLMap = Basemap;

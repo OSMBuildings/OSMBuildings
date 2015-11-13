@@ -123,14 +123,14 @@ OSMBuildings.prototype = {
   // TODO: allow more data layers later on
   addGeoJSONTiles: function(url, options) {
     options = options || {};
-    options.fixedZoom = options.fixedZoom || 16;
-    APP._dataGrid = new Grid(url, data.Tile, options);
-    return APP._dataGrid;
+    options.fixedZoom = options.fixedZoom || 15;
+    APP.dataGrid = new Grid(url, data.Tile, options);
+    return APP.dataGrid;
   },
 
   addMapTiles: function(url, options) {
-    APP._basemapGrid = new Grid(url, basemap.Tile, options);
-    return APP._basemapGrid;
+    APP.basemapGrid = new Grid(url, basemap.Tile, options);
+    return APP.basemapGrid;
   },
 
   highlight: function(id) {
@@ -162,8 +162,8 @@ OSMBuildings.prototype = {
   destroy: function() {
     render.destroy();
     Events.destroy();
-    if (APP._basemapGrid) APP._basemapGrid.destroy();
-    if (APP._dataGrid)    APP._dataGrid.destroy();
+    if (APP.basemapGrid) APP.basemapGrid.destroy();
+    if (APP.dataGrid)    APP.dataGrid.destroy();
 
     // TODO: when taking over an existing canvas, don't destroy it here
     glx.destroy();
