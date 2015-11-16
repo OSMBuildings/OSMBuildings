@@ -110,8 +110,24 @@ var render = {
     render.Basemap.init();
     //render.HudRect.init();
     render.Overlay.init();
+    render.NearShadowMap = new render.ShadowMap();
     //render.NormalMap.init();
-    render.DepthMap.init();
+    render.CameraViewDepthMap = new render.DepthMap();
+    render.SunViewDepthMap    = new render.DepthMap();
+    
+    var shadowFbSize = 1024;
+    render.SunViewDepthMap.framebufferConfig = {
+      width: shadowFbSize,
+      height: shadowFbSize,
+      usedWidth: shadowFbSize,
+      usedHeight: shadowFbSize,
+      tcLeft: 0.0 / shadowFbSize,
+      tcTop:  0.0 / shadowFbSize,
+      tcRight: (shadowFbSize  - 0.0) / shadowFbSize,
+      tcBottom: (shadowFbSize - 0.0) / shadowFbSize 
+    };
+
+    //render.DepthMap.init();
     render.AmbientMap.init();
     render.Blur.init();
     
@@ -119,50 +135,74 @@ var render = {
     //quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
     //data.Index.add(quad);
 
-    this.loop = setInterval(function() {
-      requestAnimationFrame(function() {
+    requestAnimationFrame( this.renderFrame.bind(this));
+  },
+  
+  renderFrame: function() {
+    requestAnimationFrame( this.renderFrame.bind(this));
+    
+    gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
+      return;
+    }
+    /*
+    var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
+    quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
+                        [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
+                        [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
+                        [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
-        if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
-          return;
-        }
-        /*
-        var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
-        quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
-                            [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
-                            [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
-                            [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
+    render.SkyDome.render();
+    gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
-        render.SkyDome.render();
-        gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
-        render.Buildings.render();
-        render.Basemap.render();
+    //render.NormalMap.render();
 
-        //render.NormalMap.render();
+    if (render.optimize !== 'quality') {
+      render.Buildings.render();
+      render.Basemap.render();
+    } else {
+      var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
-        if (render.optimize === 'quality') {
-          var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+      var scale = 1.38*Math.pow(2, MAP.zoom-17);
 
-          render.DepthMap.render(config);
-          render.AmbientMap.render(render.DepthMap.framebuffer.renderTexture.id, config, 0.5);
-          render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
+      var sunViewMatrix = new glx.Matrix()
+        .rotateZ(-90) //sun comes straight from east
+        .rotateX(30) //
+        .translate(0, 0, -5000)
+        .scale(1, -1, 1); // flip Y
+
+      var sunProjMatrix = new glx.Matrix.Perspective(10, 1.0, 100, 7500); //FoV, aspect, near, far
         
-          gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
-          gl.enable(gl.BLEND);
-          render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
-          gl.disable(gl.BLEND);
-        }
+      var sunViewProjMatrix = new glx.Matrix(glx.Matrix.multiply(sunViewMatrix, sunProjMatrix));
+      
+      render.CameraViewDepthMap.render(config, this.viewProjMatrix);
+      render.SunViewDepthMap.render(render.SunViewDepthMap.framebufferConfig, sunViewProjMatrix);
+      render.AmbientMap.render(render.CameraViewDepthMap.framebuffer.renderTexture.id, config, 0.5);
+      render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
 
-        if (this.screenshotCallback) {
-          this.screenshotCallback(gl.canvas.toDataURL());
-          this.screenshotCallback = null;
-        }
+      render.Buildings.render();
+      render.Basemap.render( sunViewProjMatrix, render.SunViewDepthMap.framebuffer);
 
-      }.bind(this));
-    }.bind(this), 17);
+      render.NearShadowMap.render(config, this.viewProjMatrix, sunViewProjMatrix, render.SunViewDepthMap.framebuffer);
+
+    
+      gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
+      gl.enable(gl.BLEND);
+      render.Overlay.render( render.NearShadowMap.framebuffer.renderTexture.id, config);
+      gl.disable(gl.BLEND);
+
+      render.HudRect.render( render.NearShadowMap.framebuffer.renderTexture.id, config );
+
+
+    }
+
+    if (this.screenshotCallback) {
+      this.screenshotCallback(gl.canvas.toDataURL());
+      this.screenshotCallback = null;
+    }  
   },
 
   stop: function() {
@@ -236,7 +276,8 @@ var render = {
     render.Basemap.destroy();
 
     render.NormalMap.destroy();
-    render.DepthMap.destroy();
+    render.CameraViewDepthMap.destroy();
+    render.SunViewDepthMap.destroy();
     render.AmbientMap.destroy();
     render.Blur.destroy();
   }

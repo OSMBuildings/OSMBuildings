@@ -26,16 +26,14 @@ varying float verticalDistanceToLowerEdge;
  */
 
 void main() {
-  // 7500.0 is the position of the far plane in OSMBuildings
-  float depth = (gl_FragCoord.z / gl_FragCoord.w)/7500.0;
-  if (depth > 1.0)
-    depth = 1.0;
-    
-  float z = floor(depth*256.0)/256.0;
-  depth = (depth - z) * 256.0;
-  float z1 = floor(depth*256.0)/256.0;
-  depth = (depth - z) * 256.0;
-  float z2 = floor(depth*256.0)/256.0;
+  float z = gl_FragCoord.z;
+  float z1 = fract(z*255.0);
+  float z2 = fract(z1*255.0);
+  //this biasing is necessary for shadow mapping to work correctly
+  //source: http://forum.devmaster.net/t/shader-effects-shadow-mapping/3002
+  // this might be due to the GPU *rounding* the float values to the nearest uint8_t instead of the expeected *truncating*
+  z  -= 1.0/255.0*z1;
+  z1 -= 1.0/255.0*z2;
 
   float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);

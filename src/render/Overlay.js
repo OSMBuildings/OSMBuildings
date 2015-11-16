@@ -46,9 +46,9 @@ render.Overlay = {
     if (framebufferConfig !== undefined)
     {
       tcHorizMin = 0                                  / framebufferConfig.width;
-      tcHorizMax = (framebufferConfig.usedWidth  - 1) / framebufferConfig.width;
+      tcHorizMax = (framebufferConfig.usedWidth  - 0) / framebufferConfig.width;
       tcVertMin  = 0                                  / framebufferConfig.height;
-      tcVertMax  = (framebufferConfig.usedHeight - 1) / framebufferConfig.height;
+      tcVertMax  = (framebufferConfig.usedHeight - 0) / framebufferConfig.height;
     } else
     {
       tcHorizMin = tcVertMin = 0.0;

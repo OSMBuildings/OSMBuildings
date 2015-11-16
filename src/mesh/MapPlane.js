@@ -21,7 +21,7 @@ mesh.MapPlane = (function() {
       this.color = new Color(options.color).toArray(true);
     }*/
 
-    this.radius = options.radius || 3000;
+    this.radius = options.radius || 2000;
     this.createGlGeometry();
 
     this.minZoom = APP.minZoom;
@@ -32,44 +32,58 @@ mesh.MapPlane = (function() {
 
     createGlGeometry: function() {
 
-      this.vertexBuffer = new glx.Buffer(3, new Float32Array([
-        -this.radius, -this.radius, 0,
-         this.radius,  this.radius, 0,
-         this.radius, -this.radius, 0,
-        
-         this.radius,  this.radius, 0,
-        -this.radius, -this.radius, 0,
-        -this.radius,  this.radius, 0]));
+      var NUM_SEGMENTS = 50;
+      var segmentSize = 2*this.radius / NUM_SEGMENTS;
+      this.vertexBuffer = [];
+      this.normalBuffer = [];
+      this.filterBuffer = [];
+      
+      for (var x = 0; x < NUM_SEGMENTS; x++)
+        for (var y = 0; y < NUM_SEGMENTS; y++) {
+          
+          
+          var baseX = -this.radius + x*segmentSize;
+          var baseY = -this.radius + y*segmentSize;
+          this.vertexBuffer.push( baseX,               baseY, 0,
+                                  baseX + segmentSize, baseY + segmentSize, 0,
+                                  baseX + segmentSize, baseY, 0,
+                                  
+                                  baseX,               baseY, 0,
+                                  baseX,               baseY + segmentSize, 0,
+                                  baseX + segmentSize, baseY + segmentSize, 0);
 
-      /*
-      this.dummyMapPlaneTexCoords = new glx.Buffer(2, new Float32Array([
-        0.0, 0.0,
-          1, 0.0,
-          1,   1,
-        
-        0.0, 0.0,
-          1,   1,
-        0.0,   1]));*/
+          /*
+          this.dummyMapPlaneTexCoords = new glx.Buffer(2, new Float32Array([
+            0.0, 0.0,
+              1, 0.0,
+              1,   1,
+            
+            0.0, 0.0,
+              1,   1,
+            0.0,   1]));*/
 
-      this.normalBuffer = new glx.Buffer(3, new Float32Array([
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-        
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1]));
+          var normal = [0,0,1];
+          var normals = [].concat(normal, normal, normal, normal, normal, normal);
+          [].push.apply(this.normalBuffer, normals);
 
-      //this.numDummyVertices = 6;
-
+          var filterEntry = [0, 1, 1, 1];
+          var filterEntries = [].concat(filterEntry, filterEntry, filterEntry,
+                                        filterEntry, filterEntry, filterEntry);
+          [].push.apply(this.filterBuffer, filterEntries);
+      }
+       
+      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.vertexBuffer));
+      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.normalBuffer));
+      this.filterBuffer = new glx.Buffer(4, new Float32Array(this.filterBuffer));
+       
     },
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      var scale = Math.pow(2, MAP.zoom - 16);
+      //var scale = Math.pow(2, MAP.zoom - 16);
 
       var modelMatrix = new glx.Matrix();
-      modelMatrix.scale(scale, scale, scale);
+      //modelMatrix.scale(scale, scale, scale);
     
       return modelMatrix;
     },
