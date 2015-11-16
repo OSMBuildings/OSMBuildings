@@ -2,35 +2,28 @@
 basemap.Tile = function(x, y, zoom) {
   this.x = x;
   this.y = y;
+  this.latitude = tile2lat(y, zoom);
+  this.longitude= tile2lon(x, zoom);
   this.zoom = zoom;
   this.key = [x, y, zoom].join(',');
 
-  var numSegments = 4;
+  // note: due to the Mercator projection the tile width in meters is equal
+  //       to the tile height in meters.
+  var size = getTileSizeInMeters( this.latitude, zoom);
+  
+  var vertices = [
+    size, size, 0,
+    size,    0, 0,
+       0, size, 0,
+       0,    0, 0
+  ];
 
-  var meshStep = 256/numSegments;
-  var textureStep = 1/numSegments;
-
-  var vertices = [];
-  var texCoords = [];
-
-  // TODO: can probably be 1x1 again when better fog is in place
-  for (var cols = 0; cols < numSegments; cols++) {
-    for (var rows = 0; rows < numSegments; rows++) {
-      vertices.push(
-        (cols+1)*meshStep, (rows+1)*meshStep, 0,
-        (cols+1)*meshStep, (rows+0)*meshStep, 0,
-        (cols+0)*meshStep, (rows+1)*meshStep, 0,
-        (cols+0)*meshStep, (rows+0)*meshStep, 0
-      );
-
-      texCoords.push(
-        (cols+1)*textureStep, (rows+1)*textureStep,
-        (cols+1)*textureStep, (rows+0)*textureStep,
-        (cols+0)*textureStep, (rows+1)*textureStep,
-        (cols+0)*textureStep, (rows+0)*textureStep
-      );
-    }
-  }
+  var texCoords = [
+    1, 1,
+    1, 0,
+    0, 1,
+    0, 0
+  ];
 
   this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
@@ -48,7 +41,6 @@ basemap.Tile.prototype = {
         gl.bindTexture(gl.TEXTURE_2D, this.texture.id);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
       }
     }.bind(this));
   },

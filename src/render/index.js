@@ -128,7 +128,6 @@ var render = {
         if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
           return;
         }
-
         /*
         var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
         quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
@@ -182,16 +181,21 @@ var render = {
     var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     /* fogDistance: closest distance at which the fog affects the geometry */
-    this.fogDistance = Math.max(2000* Math.pow(2, MAP.zoom - 16), lowerLeftDistanceToCenter);
-    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog. */
-    this.fogBlurDistance = 300 * Math.pow(2, MAP.zoom - 16);
+    this.fogDistance = Math.max(1500, lowerLeftDistanceToCenter);
+    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
+     *                  completely enclosed in fog. */
+    this.fogBlurDistance = 300;
     //console.log( "FD: %s, zoom: %s, CDFC: %s", this.fogDistance, MAP.zoom, cameraDistanceFromMapCenter);
   },
 
   onChange: function() {
+    var scale = 1.38*Math.pow(2, MAP.zoom-17);
+
     this.viewMatrix = new glx.Matrix()
       .rotateZ(MAP.rotation)
-      .rotateX(MAP.tilt);
+      .rotateX(MAP.tilt)
+      .scale(scale, scale, scale);
+
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];

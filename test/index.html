@@ -57,9 +57,11 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="../dist/GLMap/GLMap.css">
-  <script src="../dist/GLMap/GLMap.debug.js"></script>
+  <link rel="stylesheet" href="../dist/OSMBuildings/OSMBuildings.css">
   <script src="loader.js"></script>
+  <script src="../src/engines/Basemap/index.js"></script>
+  <script src="../src/engines/Basemap/Pointer.js"></script>
+  <script src="../src/engines/Basemap/Layers.js"></script>
 </head>
 
 <body>
@@ -85,6 +87,35 @@
 </div>
 
 <script>
+// desired init should be like that
+//  var osmb = new OSMBuildings('map', {
+//    position: { latitude:52.52000, longitude:13.41000 },
+//    zoom: 17,
+//    state: true, // stores map position, zoom etc. in url
+//    minZoom: 12,
+//    maxZoom: 20,
+//    baseURL: './OSMBuildings',
+//    // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+//    optimize: 'performance', // default: 'quality'
+//    attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+//  });
+//
+//  osmb.addMapTiles(
+//    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+//    {
+//      attribution: '© Map <a href="http://mapbox.com">MapBox</a>'
+//    }
+//  );
+//
+//  osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//    {
+//      attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a>'
+//    }
+//  );
+//
+
+
+
   var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
 //  position: { latitude:40.69924, longitude:-74.01692 },
@@ -95,7 +126,7 @@
     // disabled: true, // disables user input
     minZoom: 12,
     maxZoom: 20,
-    state: true // stores map position/rotation in url
+    state: true // stores map position, zoom etc. in url
   });
 
   //***************************************************************************
@@ -108,7 +139,6 @@
     optimize: 'performance', // default: 'quality'
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
-
 
   var selector = function(id, data) {
     return id % 2 === 0;
@@ -135,6 +165,7 @@
 
   osmb.addGeoJSONTiles(
     'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//  '../tiles/{z}/{x}/{y}.json',
 //  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
@@ -147,7 +178,7 @@
   // map.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
   var gj = { type: 'FeatureCollection', features: [
-    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 10, minHeight: 0 }, geometry:
+    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 50, minHeight: 0 }, geometry:
     { type: 'Polygon', coordinates: [[
       [ 13.37000, 52.52000 ],
       [ 13.37010, 52.52000 ],
@@ -158,7 +189,7 @@
     }
   ] };
 
-  var obj = osmb.addGeoJSON(gj, { scale: 5 });
+  osmb.addGeoJSON(gj);
 
   //var obj = osmb.addOBJ('../../OBJ2GeoJSON/data/2015-09/o4/o4-nach90.obj', { latitude:52.51941, longitude:13.50445 }, { color: '#00ccff' });
   //osmb.addGeoJSON('../../OBJ2GeoJSON/data/geojson C/o2-nach90.geo.json', { color: '#00ccff' });
@@ -185,6 +216,7 @@
 //    obj.position = osmb.untransform(e.x, e.y);
 //  });
 //
+
 //  map.on('pointerdown', function(e) {
 //    var id = osmb.getTarget(e.x, e.y);
 //    console.log(id);

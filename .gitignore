@@ -1,9 +1,10 @@
-node_modules
-test/data
 .DS_Store
 .idea
-dist/OSMBuildings.pack.js
 _scratch
+node_modules
+test/data
+dist/OSMBuildings
+src/Shaders.min.js
 
 # backup files
 *~

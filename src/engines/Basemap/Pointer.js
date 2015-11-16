@@ -67,7 +67,7 @@ Pointer.prototype = {
   },
 
   onMouseDown: function(e) {
-    if (e.button>1) {
+    if (e.button > 1) {
       return;
     }
 
@@ -142,15 +142,24 @@ Pointer.prototype = {
     if (this.disabled) {
       return;
     }
+
+    //FIXME: make movement velocity independent of latitude
+    /*FIXME: (alternative) make movement exact, i.e. make the position that 
+     *       appeared at (this.prevX, this.prevY) before appear at 
+     *       (e.clientX, e.clientY) now.
+     */
+
+    var scale = Math.pow( 2, -this.map.zoom);    
     var dx = e.clientX - this.prevX;
     var dy = e.clientY - this.prevY;
-    //this.map.setCenter({ x: this.map.center.x - dx, y: this.map.center.y - dy });
     var angle = this.map.rotation * Math.PI/180;
     var r = {
       x: Math.cos(angle)*dx - Math.sin(angle)*dy,
       y: Math.sin(angle)*dx + Math.cos(angle)*dy
     };
-    this.map.setCenter({ x: this.map.center.x - r.x, y: this.map.center.y - r.y });
+    
+    this.map.setPosition({ longitude: this.map.position.longitude - r.x*scale, 
+                           latitude:  this.map.position.latitude  + r.y*scale });
   },
 
   rotateMap: function(e) {

@@ -5,13 +5,13 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
 
     concat: {
-      options: {
-        separator: "\n",
-        banner: "(function(global) {",
-        footer: "}(this));",
-        sourceMap: true
-      },
       glx: {
+        options: {
+          separator: "\n",
+          banner: "(function(global) {",
+          footer: "}(this));",
+          sourceMap: true
+        },
         src: [
           "src/glx/index.js",
           "src/glx/prefix.js",
@@ -32,38 +32,43 @@ module.exports = function(grunt) {
         ],
         dest: 'lib/GLX.debug.js'
       },
-      core: {
-        src: [grunt.file.readJSON('config.json').lib, grunt.file.readJSON('config.json').src],
-        dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
-      },
+
       basemap: {
-        src: ['engines/Basemap/index.js', 'engines/Basemap/Pointer.js', 'engines/Basemap/Layers.js'],
-        dest: 'dist/GLMap/GLMap.debug.js'
+        options: {
+          separator: "\n",
+          banner: "(function(global) {",
+          footer: "}(this));",
+          sourceMap: true
+        },
+        src: [
+          'src/engines/Basemap/index.js',
+          'src/engines/Basemap/Pointer.js',
+          'src/engines/Basemap/Layers.js',
+          grunt.file.readJSON('config.json').lib,
+          grunt.file.readJSON('config.json').src
+        ],
+        dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
       }
     },
 
     copy: {
-      'core-assets': {
+      'assets': {
         src: 'src/skydome.jpg',
         dest: 'dist/OSMBuildings/skydome.jpg'
       },
-      'basemap-css': {
-        src: ['engines/Basemap/style.css'],
-        dest: 'dist/GLMap/GLMap.css'
+      'css': {
+        src: 'src/engines/Basemap/style.css',
+        dest: 'dist/OSMBuildings/<%=pkg.name%>.css'
       }
     },
 
     uglify: {
-      options: {
-        sourceMap: true
-      },
-      core: {
+      basemap: {
+        options: {
+          sourceMap: true
+        },
         src: 'dist/OSMBuildings/<%=pkg.name%>.debug.js',
         dest: 'dist/OSMBuildings/<%=pkg.name%>.js'
-      },
-      basemap: {
-        src: 'dist/GLMap/GLMap.debug.js',
-        dest: 'dist/GLMap/GLMap.js'
       }
     },
 
@@ -81,9 +86,7 @@ module.exports = function(grunt) {
 
     jshint: {
       options: {
-         globals: {
-           Map: true
-         }
+         globals: {}
        },
       all: grunt.file.readJSON('config.json').src
     },
@@ -103,7 +106,6 @@ module.exports = function(grunt) {
         keepalive: true // don't finish the grunt task
       }
     }
-        
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -133,32 +135,25 @@ module.exports = function(grunt) {
     fs.writeFileSync(config.dest, 'var Shaders = '+ JSON.stringify(Shaders) +';\n');
   });
 
-  grunt.registerMultiTask('clean', 'Clean up', function() {
-    var fs = require('fs');
-    try {
-      fs.unlinkSync('dist/'+ grunt.config.data.pkg.name +'.pack.js');
-    } catch (ex) {}
-  });
-
-  grunt.registerTask('basemap', ['concat:basemap', 'copy:basemap-css', 'uglify:basemap']);
-
   grunt.registerTask('default', 'Development build', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
     grunt.task.run('shaders');
-    grunt.task.run('concat:core');
-    grunt.task.run('uglify:core');
+    grunt.task.run('concat:basemap');
   });
 
   grunt.registerTask('release', 'Release', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
 
-    grunt.task.run('concat:glx');
-    grunt.task.run('basemap');
-
-    grunt.task.run('copy:core-assets');
     grunt.task.run('jshint');
-    grunt.task.run('default');
+
+    grunt.task.run('concat:glx');
+    grunt.task.run('shaders');
+    grunt.task.run('concat:basemap');
+    grunt.task.run('uglify:basemap');
+
+    grunt.task.run('copy:assets');
+    grunt.task.run('copy:css');
+
     grunt.task.run('webpack');
-    grunt.task.run('clean');
   });
 };

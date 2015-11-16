@@ -5,7 +5,6 @@ var Grid = function(source, tileClass, options) {
 
   this.source = source;
   this.tileClass = tileClass;
-
   options = options || {};
 
   this.bounds = options.bounds;
@@ -166,21 +165,13 @@ Grid.prototype = {
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      mapCenterTile = [ MAP.center.x * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE,
-                        MAP.center.y * Math.pow(2, zoom - MAP.zoom) / TILE_SIZE];
+      mapCenterTile = [ long2tile(MAP.position.longitude, zoom),
+                        lat2tile (MAP.position.latitude,  zoom)];
 
     for (i = 0; i < 4; i++) {
-      viewQuad[i] = asTilePosition(viewQuad[i], zoom);
+      viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
     }
 
-    /*
-    tiles = [];
-    var centerX = mapCenterTile[0] | 0;
-    var centerY = mapCenterTile[1] | 0;
-    
-    for (var x = centerX - 3; x < centerX + 3; x++)
-      for (var y = centerY - 3; y < centerY + 3; y++)
-        tiles.push( [x, y] );*/
 
     var tiles = rasterConvexQuad(viewQuad);
     tiles = ( this.fixedZoom ) ?
@@ -195,9 +186,6 @@ Grid.prototype = {
         
       this.visibleTiles[ tiles[i] ] = true;
     }
-
-    //console.log("%s tiles at zoom %s", tiles.length, zoom);
-    
     for (var key in this.visibleTiles) {
       tile = key.split(',');
       tileX = parseInt(tile[0]);

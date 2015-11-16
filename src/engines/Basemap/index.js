@@ -9,7 +9,7 @@ var Basemap = function(container, options) {
   this.container = typeof container === 'string' ? document.getElementById(container) : container;
   options = options || {};
 
-  this.container.classList.add('glmap-container');
+  this.container.classList.add('osmb-container');
   this.width = this.container.offsetWidth;
   this.height = this.container.offsetHeight;
 
@@ -22,7 +22,7 @@ var Basemap = function(container, options) {
 
   this.bounds = options.bounds;
 
-  this.center = { x:0, y:0 };
+  this.position = {};
   this.zoom = 0;
 
   this.listeners = {};
@@ -45,7 +45,7 @@ var Basemap = function(container, options) {
 
   this.attribution = options.attribution;
   this.attributionDiv = document.createElement('DIV');
-  this.attributionDiv.className = 'glmap-attribution';
+  this.attributionDiv.className = 'osmb-attribution';
   this.container.appendChild(this.attributionDiv);
   this.updateAttribution();
 };
@@ -127,23 +127,6 @@ Basemap.prototype = {
     }.bind(this), 1000);
   },
 
-  setCenter: function(center) {
-    var worldSize = Basemap.TILE_SIZE*Math.pow(2, this.zoom);
-    if (this.bounds) {
-      var
-        min = this.project(this.bounds.s, this.bounds.w, worldSize),
-        max = this.project(this.bounds.n, this.bounds.e, worldSize);
-      center.x = clamp(center.x, min.x, max.x);
-      center.y = clamp(center.y, min.y, max.y);
-    }
-
-    if (this.center.x !== center.x || this.center.y !== center.y) {
-      this.center = center;
-      this.position = this.unproject(center.x, center.y, worldSize);
-      this.emit('change');
-    }
-  },
-
   emit: function(type, payload) {
     if (!this.listeners[type]) {
       return;
@@ -190,50 +173,42 @@ Basemap.prototype = {
     return !!this.pointer.disabled;
   },
 
-  project: function(latitude, longitude, worldSize) {
-    var
-      x = longitude/360 + 0.5,
-      y = Math.min(1, Math.max(0, 0.5 - (Math.log(Math.tan((Math.PI/4) + (Math.PI/2)*latitude/180)) / Math.PI) / 2));
-    return { x: x*worldSize, y: y*worldSize };
-  },
-
-  unproject: function(x, y, worldSize) {
-    x /= worldSize;
-    y /= worldSize;
-    return {
-      latitude: (2 * Math.atan(Math.exp(Math.PI * (1 - 2*y))) - Math.PI/2) * (180/Math.PI),
-      longitude: x*360 - 180
-    };
-  },
-
   getBounds: function() {
+    //FIXME: update method; the old code did only work for straight top-down
+    //       views, not for other cameras.
+    /*
     var
       W2 = this.width/2, H2 = this.height/2,
       angle = this.rotation*Math.PI/180,
       x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
       y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
-      center = this.center,
+      position = this.position,
       worldSize = Basemap.TILE_SIZE*Math.pow(2, this.zoom),
-      nw = this.unproject(center.x - x, center.y - y, worldSize),
-      se = this.unproject(center.x + x, center.y + y, worldSize);
+      nw = this.unproject(position.x - x, position.y - y, worldSize),
+      se = this.unproject(position.x + x, position.y + y, worldSize);
     return {
       n: nw.latitude,
       w: nw.longitude,
       s: se.latitude,
       e: se.longitude
-    };
+    };*/
+    return null;
   },
 
   setZoom: function(zoom, e) {
     zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
     if (this.zoom !== zoom) {
-      var ratio = Math.pow(2, zoom-this.zoom);
       this.zoom = zoom;
-      if (!e) {
-        this.center.x *= ratio;
-        this.center.y *= ratio;
-      } else {
+
+      /* if a screen position was given for which the geographic position displayed
+       * should not change under the zoom */
+      if (e) {  
+        //FIXME: add code; this needs to take the current camera (rotation and 
+        //       perspective) into account
+        //NOTE:  the old code (comment out below) only works for north-up 
+        //       non-perspective views
+        /*
         var dx = this.container.offsetWidth/2  - e.clientX;
         var dy = this.container.offsetHeight/2 - e.clientY;
         this.center.x -= dx;
@@ -241,7 +216,7 @@ Basemap.prototype = {
         this.center.x *= ratio;
         this.center.y *= ratio;
         this.center.x += dx;
-        this.center.y += dy;
+        this.center.y += dy;*/
       }
       this.emit('change');
     }
@@ -253,11 +228,11 @@ Basemap.prototype = {
   },
 
   setPosition: function(pos) {
-    var
-      latitude  = clamp(parseFloat(pos.latitude), -90, 90),
-      longitude = clamp(parseFloat(pos.longitude), -180, 180),
-      center = this.project(latitude, longitude, Basemap.TILE_SIZE*Math.pow(2, this.zoom));
-    this.setCenter(center);
+    this.position = {
+      latitude:  clamp(parseFloat(pos.latitude), -90, 90),
+      longitude: clamp(parseFloat(pos.longitude), -180, 180)
+    };
+    this.emit('change');
     return this;
   },
 
@@ -338,10 +313,4 @@ Basemap.prototype = {
 
 //*****************************************************************************
 
-if (typeof global.define === 'function') {
-  global.define([], Basemap);
-} else if (typeof global.exports === 'object') {
-  global.module.exports = Basemap;
-} else {
-  global.GLMap = Basemap;
-}
+global.GLMap = Basemap;
