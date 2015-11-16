@@ -1,5 +1,7 @@
 
 glx.Shader = function(config) {
+  var i;
+
   this.id = GL.createProgram();
 
   this.attach(GL.VERTEX_SHADER,   config.vertexShader);
@@ -11,8 +13,19 @@ glx.Shader = function(config) {
     throw new Error(GL.getProgramParameter(this.id, GL.VALIDATE_STATUS) +'\n'+ GL.getError());
   }
 
-  this.attributeNames = config.attributes;
-  this.uniformNames   = config.uniforms;
+  this.attributeNames = config.attributes || [];
+  this.uniformNames   = config.uniforms || [];
+  GL.useProgram(this.id);
+
+  this.attributes = {};
+  for (i = 0; i < this.attributeNames.length; i++) {
+    this.locateAttribute(this.attributeNames[i]);
+  }
+  
+  this.uniforms = {};
+  for (i = 0; i < this.uniformNames.length; i++) {
+    this.locateUniform(this.uniformNames[i]);
+  }
 };
 
 glx.Shader.prototype = {
@@ -23,7 +36,6 @@ glx.Shader.prototype = {
       console.error('unable to locate attribute "'+ name +'" in shader');
       return;
     }
-    GL.enableVertexAttribArray(loc);
     this.attributes[name] = loc;
   },
 
@@ -51,22 +63,10 @@ glx.Shader.prototype = {
   enable: function() {
     GL.useProgram(this.id);
 
-    var i;
-
-    if (this.attributeNames) {
-      this.attributes = {};
-      for (i = 0; i < this.attributeNames.length; i++) {
-        this.locateAttribute(this.attributeNames[i]);
-      }
+    for (var name in this.attributes) {
+      GL.enableVertexAttribArray(this.attributes[name]);
     }
-
-    if (this.uniformNames) {
-      this.uniforms = {};
-      for (i = 0; i < this.uniformNames.length; i++) {
-        this.locateUniform(this.uniformNames[i]);
-      }
-    }
-
+    
     return this;
   },
 
@@ -76,9 +76,6 @@ glx.Shader.prototype = {
         GL.disableVertexAttribArray(this.attributes[name]);
       }
     }
-
-    this.attributes = null;
-    this.uniforms = null;
   },
   
   destroy: function() {
