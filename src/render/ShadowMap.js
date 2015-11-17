@@ -5,7 +5,7 @@ render.ShadowMap = function() {
   this.shader = new glx.Shader({
     vertexShader: Shaders.shadow.vertex,
     fragmentShader: Shaders.shadow.fragment,
-    attributes: ['aPosition', 'aFilter'],
+    attributes: ['aPosition'/*, 'aFilter'*/],
     uniforms: ['uMatrix', 'uModelMatrix', 'uSunMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uInverseTexWidth', 'uInverseTexHeight', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
 
