@@ -5,8 +5,8 @@ render.ShadowMap = function() {
   this.shader = new glx.Shader({
     vertexShader: Shaders.shadow.vertex,
     fragmentShader: Shaders.shadow.fragment,
-    attributes: ['aPosition'/*, 'aFilter'*/],
-    uniforms: ['uMatrix', 'uModelMatrix', 'uSunMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uInverseTexWidth', 'uInverseTexHeight', 'uViewDirOnMap', 'uLowerEdgePoint']
+    attributes: ['aPosition', 'aFilter', 'aNormal'],
+    uniforms: ['uMatrix', 'uModelMatrix', 'uDirToSun', 'uSunMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uInverseTexWidth', 'uInverseTexHeight', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
 
   this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -14,7 +14,7 @@ render.ShadowMap = function() {
   this.mapPlane = new mesh.MapPlane();
 };
 
-render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, sunViewProjMatrix, depthFramebuffer) {
+render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, sunViewProjMatrix, depthFramebuffer, sunDirection) {
 
   var
     shader = this.shader,
@@ -49,7 +49,6 @@ render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, 
   gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
 
   gl.uniform1f(shader.uniforms.uTime, Filter.time());
-  //gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
   gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
   gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
   gl.uniform1f(shader.uniforms.uInverseTexWidth,  depthFramebuffer.width);
@@ -57,6 +56,7 @@ render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, 
 
   gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
   gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
+  gl.uniform3fv(shader.uniforms.uDirToSun, sunDirection);
 
   var dataItems = data.Index.items.concat([this.mapPlane]);
 
@@ -79,15 +79,17 @@ render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, 
     item.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    //item.filterBuffer.enable();
-    //gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    item.normalBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aNormal, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    item.filterBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
   }
 
   shader.disable();
   framebuffer.disable();
-
   gl.viewport(0, 0, MAP.width, MAP.height);
 };
 

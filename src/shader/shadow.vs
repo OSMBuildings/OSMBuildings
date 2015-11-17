@@ -5,6 +5,8 @@
 #define halfPi 1.57079632679
 
 attribute vec3 aPosition;
+attribute vec4 aFilter;
+attribute vec3 aNormal;
 //attribute vec2 aTexCoord;
 
 uniform mat4 uModelMatrix;
@@ -15,41 +17,36 @@ uniform mat4 uSunMatrix;
 
 uniform vec2 uViewDirOnMap;
 uniform vec2 uLowerEdgePoint;
+uniform float uTime;
 
 //varying vec2 vTexCoord;
 varying vec3 vSunRelPosition;
+varying vec3 vNormal;
 varying float verticalDistanceToLowerEdge;
 
-uniform float uBendRadius;
-uniform float uBendDistance;
 
 void main() {
 
-  //*** bending ***************************************************************
+  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
+  float f = aFilter.b + (aFilter.a-aFilter.b) * t;
 
-//  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
-//
-//  float innerRadius = uBendRadius + mwPosition.y;
-//  float depth = abs(mwPosition.z);
-//  float s = depth-uBendDistance;
-//  float theta = min(max(s, 0.0)/uBendRadius, halfPi);
-//
-//  // halfPi*uBendRadius, not halfPi*innerRadius, because the "base" of a building
-//  // travels the full uBendRadius path
-//  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);
-//  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);
-//
-//  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
-//  vec4 glPosition = uProjMatrix * newPosition;
+  if (f == 0.0) {
+    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
+    vSunRelPosition = vec3(0.0, 0.0, 0.0);
+    vNormal = vec3(0.0, 0.0, 1.0);
+    verticalDistanceToLowerEdge = 0.0;
+  } else {
+    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, 1.0);
+    gl_Position = uMatrix * pos;
+    vec4 sunRelPosition = uSunMatrix * pos;
+    vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;
+    //vSunRelPosition.xy = (vSunRelPosition.xy + 1.0)/2.0;
+    
+  //  vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
+    vNormal = aNormal;
 
-  gl_Position = uMatrix * vec4(aPosition, 1.0);
-  vec4 sunRelPosition = uSunMatrix * vec4(aPosition, 1.0);
-  vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;
-  //vSunRelPosition.xy = (vSunRelPosition.xy + 1.0)/2.0;
-  
-//  vTexCoord = vec2(aTexCoord.x, 1.0 - aTexCoord.y);
-
-  vec4 worldPos = uModelMatrix * vec4(aPosition, 1.0);
-  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
-  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
+    vec4 worldPos = uModelMatrix * pos;
+    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
+    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
+  }
 }

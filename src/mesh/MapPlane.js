@@ -31,12 +31,20 @@ mesh.MapPlane = (function() {
   constructor.prototype = {
 
     createGlGeometry: function() {
-
+      /* This method creates front and back faces, in case rendering 
+       * effect requires both. */
       var NUM_SEGMENTS = 50;
       var segmentSize = 2*this.radius / NUM_SEGMENTS;
       this.vertexBuffer = [];
       this.normalBuffer = [];
       this.filterBuffer = [];
+
+      var normal = [0,0,1];
+      var normals = [].concat(normal, normal, normal, normal, normal, normal);
+
+      var filterEntry = [0, 1, 1, 1];
+      var filterEntries = [].concat(filterEntry, filterEntry, filterEntry,
+                                    filterEntry, filterEntry, filterEntry);
       
       for (var x = 0; x < NUM_SEGMENTS; x++)
         for (var y = 0; y < NUM_SEGMENTS; y++) {
@@ -52,23 +60,18 @@ mesh.MapPlane = (function() {
                                   baseX,               baseY + segmentSize, 0,
                                   baseX + segmentSize, baseY + segmentSize, 0);
 
-          /*
-          this.dummyMapPlaneTexCoords = new glx.Buffer(2, new Float32Array([
-            0.0, 0.0,
-              1, 0.0,
-              1,   1,
-            
-            0.0, 0.0,
-              1,   1,
-            0.0,   1]));*/
+          this.vertexBuffer.push( baseX,               baseY, 0,
+                                  baseX + segmentSize, baseY, 0,
+                                  baseX + segmentSize, baseY + segmentSize, 0,
 
-          var normal = [0,0,1];
-          var normals = [].concat(normal, normal, normal, normal, normal, normal);
+                                  baseX,               baseY, 0,
+                                  baseX + segmentSize, baseY + segmentSize, 0,
+                                  baseX,               baseY + segmentSize, 0);
+
+          [].push.apply(this.normalBuffer, normals);
           [].push.apply(this.normalBuffer, normals);
 
-          var filterEntry = [0, 1, 1, 1];
-          var filterEntries = [].concat(filterEntry, filterEntry, filterEntry,
-                                        filterEntry, filterEntry, filterEntry);
+          [].push.apply(this.filterBuffer, filterEntries);
           [].push.apply(this.filterBuffer, filterEntries);
       }
        

@@ -237,6 +237,20 @@ function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
   return unit(nx, ny, nz);
 }
 
+/* returns a unit-length vector pointing in (not away from!) the
+ * direction given by rotationInDeg and tiltInDeg. */
+function getDirection(rotationInDeg, tiltInDeg)
+{
+  var azimuth = rotationInDeg / 180 * Math.PI;
+  var inclination= (90 - tiltInDeg) / 180 * Math.PI;
+  
+  var x = -Math.sin(azimuth) * Math.cos(inclination);
+  var y =  Math.cos(azimuth) * Math.cos(inclination);
+  var z =                      Math.sin(inclination);
+  return [x,y,z];
+  
+}
+
 function unit(x, y, z) {
   var m = Math.sqrt(x*x + y*y + z*z);
 

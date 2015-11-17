@@ -150,12 +150,23 @@ glx.Matrix = function(data) {
   glx.Matrix.Perspective = function(fov, aspect, near, far) {
     var f = 1/Math.tan(fov*(Math.PI/180)/2), nf = 1/(near - far);
     return new glx.Matrix([
-      f/aspect, 0, 0, 0,
-      0, f, 0, 0,
-      0, 0, (far + near)*nf, -1,
-      0, 0, (2*far*near)*nf, 0
+      f/aspect, 0,               0, 0,
+      0,        f,               0, 0,
+      0,        0, (far + near)*nf,-1,
+      0,        0, (2*far*near)*nf, 0
     ]);
   };
+  
+  // based on http://www.songho.ca/opengl/gl_projectionmatrix.html
+  glx.Matrix.Ortho = function(left, right, top, bottom, near, far) {
+    return new glx.Matrix([
+                   2/(right-left),                          0,                       0, 0,
+                                0,           2/(top - bottom),                       0, 0,
+                                0,                          0,         -2/(far - near), 0,
+      - (right+left)/(right-left), -(top+bottom)/(top-bottom), - (far+near)/(far-near), 1
+    ]);
+  }
+
 
   glx.Matrix.invert3 = function(a) {
     var
