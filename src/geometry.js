@@ -302,19 +302,31 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
   return [pos[0], pos[1]];  // z==0 
 }
 
+/* Returns: the number of screen pixels that would be covered by the tile 
+ *          tileZoom/tileX/tileY *if* the screen would not end at the viewport
+ *          edges. The intended use of this method is to return a measure of 
+ *          how detailed the tile should be rendered.
+ * Note: This method does not clip the tile to the viewport. So the number
+ *       returned will be larger than the number of screen pixels covered iff.
+ *       the tile intersects with a viewport edge. 
+ */
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
-  var ratio = 1/Math.pow(2, tileZoom - MAP.zoom);
-
+  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                 Math.cos(MAP.position.latitude / 180 * Math.PI);
+  var tileLon = tile2lon(tileX, tileZoom);
+  var tileLat = tile2lat(tileY, tileZoom);
+  
   var modelMatrix = new glx.Matrix();
-  modelMatrix.scale(ratio, ratio, 1);
-  modelMatrix.translate(tileX * TILE_SIZE * ratio - MAP.position.x,
-                        tileY * TILE_SIZE * ratio - MAP.position.y, 0);
+  modelMatrix.translate( (tileLon - MAP.position.longitude)* metersPerDegreeLongitude,
+                        -(tileLat - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+
+  var size = getTileSizeInMeters( MAP.position.latitude, tileZoom);
   
   var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
-  var tl = transformVec3(mvpMatrix, [0        , 0        ,0]);
-  var tr = transformVec3(mvpMatrix, [TILE_SIZE, 0        ,0]);
-  var bl = transformVec3(mvpMatrix, [0        , TILE_SIZE,0]);
-  var br = transformVec3(mvpMatrix, [TILE_SIZE, TILE_SIZE,0]);
+  var tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
+  var tr = transformVec3(mvpMatrix, [size, 0   , 0]);
+  var bl = transformVec3(mvpMatrix, [0   , size, 0]);
+  var br = transformVec3(mvpMatrix, [size, size, 0]);
   var verts = [tl, tr, bl, br];
   for (var i in verts) { 
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates

@@ -1,5 +1,18 @@
 var APP;
 var MAP, glx, gl;
+/*
+ * Note: OSMBuildings cannot use a single global world coordinate system.
+ *       The numerical accuracy required for such a system would be about
+ *       32bits to represent world-wide geometry faithfully within a few 
+ *       centimeters of accuracy. Most computations in OSMBuildings, however, 
+ *       are performed on a GPU where only IEEE floats with 23bits of accuracy
+ *       (plus 8 bits of range) are available.
+ *       Instead, OSMBuildings' coordinate system has a reference point
+ *       (MAP.position) at the viewport center, and all world positions are
+ *       expressed as distances in meters from that reference point. The 
+ *       reference point itself shifts with map panning so that all world 
+ *       positions relevant to the part of the world curently rendered on-screen 
+ *       can accurately be represented within the limited accuracy of IEEE floats.*/
 
 var OSMBuildings = function(options) {
   APP = this; // references to this. Should make other globals obsolete.
@@ -83,35 +96,47 @@ OSMBuildings.prototype = {
   },
 
   // TODO: this should be part of the underlying map engine
+  
+  /* Returns the screen position of the point at 'latitude'/'longitude' with 
+    'elevation'.
+   */
   transform: function(latitude, longitude, elevation) {
     var
-      pos = project(latitude, longitude, TILE_SIZE*Math.pow(2, MAP.zoom)),
-      x = pos.x-MAP.position.x,
-      y = pos.y-MAP.position.y;
+      metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                                 Math.cos(MAP.position.latitude / 180 * Math.PI),
+      worldPos = [ (longitude- MAP.position.longitude) * metersPerDegreeLongitude,
+                   (latitude - MAP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
+                    elevation                          * HEIGHT_SCALE ];
 
-    var scale = 1/Math.pow(2, 16 - MAP.zoom);
-    var modelMatrix = new glx.Matrix()
-      .translate(0, 0, elevation)
-      .scale(scale, scale, scale*HEIGHT_SCALE)
-      .translate(x, y, 0);
-
-    var mvp = glx.Matrix.multiply(modelMatrix, render.viewProjMatrix);
-    var t = glx.Matrix.transform(mvp);
-    return { x: t.x*MAP.width, y: MAP.height - t.y*MAP.height, z: t.z }; // takes current cam pos into account.
+    // takes current cam pos into account.
+    var posNDC = transformVec3( render.viewProjMatrix.data, worldPos);
+    posNDC = mul3scalar( add3(posNDC, [1,1,1]), 1/2); // from [-1..1] to [0..1]
+    
+    return { x:      posNDC[0]  * MAP.width, 
+             y: (1 - posNDC[1]) * MAP.height,
+             z:      posNDC[2] }; //TODO: is returning the normalized depth useful?
   },
 
   // TODO: this should be part of the underlying map engine
+  /* returns the geographic position (latitude/longitude) of the map layer 
+   * (elevation==0) at viewport position (x,y), or 'undefined' if no part of the
+   * map plane would be rendered at (x,y) - e.g. if (x,y) lies above the horizon.
+   */
   untransform: function(x, y) {
     var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
-    var v;
-    do {
-      v = getIntersectionWithXYPlane(x/MAP.width*2-1, -(y++/MAP.height*2-1), inverse);
-    } while (!v);
-
-    var worldX = v[0] + MAP.position.x;
-    var worldY = v[1] + MAP.position.y;
-    var worldSize = TILE_SIZE*Math.pow(2, MAP.zoom);
-    return unproject(worldX, worldY, worldSize);
+    var posNDC = [x/MAP.width,1-(y/MAP.height)]; //viewport coordinates to [0..1];
+    posNDC = add2( mul2scalar(posNDC, 2.0), [-1,-1,-1]); // [0..1] to [-1..1];
+    
+    var worldPos = getIntersectionWithXYPlane(posNDC[0], posNDC[1], inverse);
+    if (worldPos === undefined)
+      return undefined;
+    metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+                               Math.cos(MAP.position.latitude / 180 * Math.PI);
+    
+    return {
+      latitude: MAP.position.latitude + worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
+      longitude:MAP.position.longitude+ worldPos[0]/ metersPerDegreeLongitude 
+    };
   },
 
   //// TODO: this should be part of the underlying map engine
