@@ -109,7 +109,10 @@ var render = {
       var verts = this.getViewQuad();
 
       var sunDirection = getDirection( -120, 60);
-      var sunProjMatrix = getCoveringOrthoProjection(verts, sunViewMatrix, 1000, 7500)
+      var sunProjMatrix = 
+        getCoveringOrthoProjection( substituteZCoordinate(verts, 0.0).concat(
+                                    substituteZCoordinate(verts,SHADOW_MAP_MAX_BUILDING_HEIGHT)),
+                                    sunViewMatrix, 1000, 7500);
       //new glx.Matrix.Ortho(-800, 800, 800, -800, 1000, 7500);
         
       var sunViewProjMatrix = new glx.Matrix(glx.Matrix.multiply(sunViewMatrix, sunProjMatrix));

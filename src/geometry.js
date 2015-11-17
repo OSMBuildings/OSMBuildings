@@ -331,21 +331,26 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
 
 
 /* Returns an orthographic projection matrix whose view rectangle contains all
- * points of viewQuad when watched from the position given by targetViewMatrix.
+ * points of 'points' when watched from the position given by targetViewMatrix.
  * The depth range of the returned matrix is [near, far].
+ * The 'points' are given as euclidean coordinates in [m] distance to the 
+ * current reference point (MAP.position). 
  */
-function getCoveringOrthoProjection(viewQuad, targetViewMatrix, near, far) {
+function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height) {
+  var p0 = transformVec3(targetViewMatrix.data, points[0]);
+  var left = p0[0];
+  var right= p0[0];
+  var top  = p0[1];
+  var bottom=p0[1];
 
-  for (var i = 0; i < viewQuad.length; i++)
-    viewQuad[i] = transformVec3(targetViewMatrix.data, 
-                                [viewQuad[i][0], viewQuad[i][1], 0.0]);
+  for (var i = 0; i < points.length; i++) {
+    var p =  transformVec3(targetViewMatrix.data, points[i]);
+    left = Math.min( left,  p[0]);
+    right= Math.max( right, p[0]);
+    top  = Math.max( top,   p[1]);
+    bottom=Math.min( bottom,p[1]);
+  }
   
-  var left = Math.min( viewQuad[0][0], viewQuad[1][0], viewQuad[2][0], viewQuad[3][0]);
-  var right= Math.max( viewQuad[0][0], viewQuad[1][0], viewQuad[2][0], viewQuad[3][0]);
- 
-  var top =   Math.max( viewQuad[0][1], viewQuad[1][1], viewQuad[2][1], viewQuad[3][1]);
-  var bottom= Math.min( viewQuad[0][1], viewQuad[1][1], viewQuad[2][1], viewQuad[3][1]);
- 
   return new glx.Matrix.Ortho(left, right, top, bottom, near, far);
   
 }
