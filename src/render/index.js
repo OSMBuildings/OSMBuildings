@@ -18,73 +18,10 @@ var render = {
     return config;
   },
 
-  /* returns the quadrilateral part of the XY plane that is currently visible on
-   * screen. The quad is returned in tile coordinates for tile zoom level
-   * 'tileZoomLevel', and thus can directly be used to determine which basemap
-   * and geometry tiles need to be loaded.
-   * Note: if the horizon is level (as should usually be the case for 
-   * OSMBuildings) then said quad is also a trapezoid. */
-  getViewQuad: function(viewProjectionMatrix) {
-    /* maximum distance from the map center at which
-     * geometry is still visible */
-    var MAX_FAR_EDGE_DISTANCE = (this.fogDistance + this.fogBlurDistance);
-    //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
-
-    var inverse = glx.Matrix.invert(viewProjectionMatrix);
-
-    var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
-    var vBottomRight = getIntersectionWithXYPlane( 1, -1, inverse);
-    var vTopRight    = getIntersectionWithXYPlane( 1,  1, inverse);
-    var vTopLeft     = getIntersectionWithXYPlane(-1,  1, inverse);
-
-    /* If even the lower edge of the screen does not intersect with the map plane,
-     * then the map plane is not visible at all.
-     * (Or somebody screwed up the projection matrix, putting the view upside-down 
-     *  or something. But in any case we won't attempt to create a view rectangle).
-     */
-    if (!vBottomLeft || !vBottomRight) {
-      return;
-    }
-
-    var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
-    var f;
-
-    /* The lower screen edge shows the map layer, but the upper one does not.
-     * This usually happens when the camera is close to parallel to the ground
-     * so that the upper screen edge lies above the horizon. This is not a bug
-     * and can legitimately happen. But from a theoretical standpoint, this means 
-     * that the view 'trapezoid' stretches infinitely toward the horizon. Since this
-     * is not a practically useful result - though formally correct - we instead
-     * manually bound that area.*/
-    if (!vTopLeft || !vTopRight) {
-      /* point on the left screen edge with the same y-value as the map center*/
-      vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
-      vLeftDir = norm2(sub2( vLeftPoint, vBottomLeft));
-      f = dot2(vLeftDir, this.viewDirOnMap);
-      vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
-      
-      vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
-      vRightDir = norm2(sub2(vRightPoint, vBottomRight));
-      f = dot2(vRightDir, this.viewDirOnMap);
-      vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
-    }
-
-    /* if vTopLeft is further than MAX_FAR_EDGE_DISTANCE away vertically from the map center,
-     * move it closer. */
-   if (dot2( this.viewDirOnMap, vTopLeft) > MAX_FAR_EDGE_DISTANCE) {
-      vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
-      f = dot2(vLeftDir, this.viewDirOnMap);
-      vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, MAX_FAR_EDGE_DISTANCE/f));
-   }
-
-   /* dito for vTopRight*/
-   if (dot2( this.viewDirOnMap, vTopRight) > MAX_FAR_EDGE_DISTANCE) {
-      vRightDir = norm2(sub2( vTopRight, vBottomRight));
-      f = dot2(vRightDir, this.viewDirOnMap);
-      vTopRight = add2( vBottomRight, mul2scalar(vRightDir, MAX_FAR_EDGE_DISTANCE/f));
-   }
-   
-    return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
+  getViewQuad: function() {
+    return getViewQuad( this.viewProjMatrix.data,
+                       (this.fogDistance + this.fogBlurDistance),
+                        this.viewDirOnMap);
   },
 
   start: function() {
@@ -108,14 +45,16 @@ var render = {
     render.SkyDome.init();
     render.Buildings.init();
     render.Basemap.init();
-    //render.HudRect.init();
     render.Overlay.init();
-    render.NearShadowMap = new render.ShadowMap();
+    render.AmbientMap.init();
+    render.Blur.init();
+    //render.HudRect.init();
     //render.NormalMap.init();
+    render.NearShadowMap = new render.ShadowMap();
     render.CameraViewDepthMap = new render.DepthMap();
     render.SunViewDepthMap    = new render.DepthMap();
     
-    var shadowFbSize = 1024;
+    var shadowFbSize = 1024*2;
     render.SunViewDepthMap.framebufferConfig = {
       width: shadowFbSize,
       height: shadowFbSize,
@@ -127,10 +66,6 @@ var render = {
       tcBottom: (shadowFbSize - 0.0) / shadowFbSize 
     };
 
-    //render.DepthMap.init();
-    render.AmbientMap.init();
-    render.Blur.init();
-    
     //var quad = new mesh.DebugQuad();
     //quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
     //data.Index.add(quad);
@@ -157,9 +92,6 @@ var render = {
     render.SkyDome.render();
     gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
-
-    //render.NormalMap.render();
-
     if (render.optimize !== 'quality') {
       render.Buildings.render();
       render.Basemap.render();
@@ -169,15 +101,19 @@ var render = {
       var scale = 1.38*Math.pow(2, MAP.zoom-17);
 
       var sunViewMatrix = new glx.Matrix()
-        .rotateZ(-90) //sun comes straight from east
-        .rotateX(30) //
+        .rotateZ(-120)
+        .rotateX(60) //
         .translate(0, 0, -5000)
         .scale(1, -1, 1); // flip Y
 
-      var sunProjMatrix = new glx.Matrix.Perspective(10, 1.0, 100, 7500); //FoV, aspect, near, far
+      var verts = this.getViewQuad();
+
+      var sunDirection = getDirection( -120, 60);
+      var sunProjMatrix = getCoveringOrthoProjection(verts, sunViewMatrix, 1000, 7500)
+      //new glx.Matrix.Ortho(-800, 800, 800, -800, 1000, 7500);
         
       var sunViewProjMatrix = new glx.Matrix(glx.Matrix.multiply(sunViewMatrix, sunProjMatrix));
-      
+     
       render.CameraViewDepthMap.render(config, this.viewProjMatrix);
       render.SunViewDepthMap.render(render.SunViewDepthMap.framebufferConfig, sunViewProjMatrix);
       render.AmbientMap.render(render.CameraViewDepthMap.framebuffer.renderTexture.id, config, 0.5);
@@ -186,7 +122,7 @@ var render = {
       render.Buildings.render();
       render.Basemap.render( sunViewProjMatrix, render.SunViewDepthMap.framebuffer);
 
-      render.NearShadowMap.render(config, this.viewProjMatrix, sunViewProjMatrix, render.SunViewDepthMap.framebuffer);
+      render.NearShadowMap.render(config, this.viewProjMatrix, sunViewProjMatrix, render.SunViewDepthMap.framebuffer, sunDirection);
 
     
       gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
@@ -194,9 +130,7 @@ var render = {
       render.Overlay.render( render.NearShadowMap.framebuffer.renderTexture.id, config);
       gl.disable(gl.BLEND);
 
-      render.HudRect.render( render.NearShadowMap.framebuffer.renderTexture.id, config );
-
-
+      //render.HudRect.render( render.SunViewDepthMap.framebuffer.renderTexture.id, config );
     }
 
     if (this.screenshotCallback) {
@@ -225,7 +159,6 @@ var render = {
     /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
      *                  completely enclosed in fog. */
     this.fogBlurDistance = 300;
-    //console.log( "FD: %s, zoom: %s, CDFC: %s", this.fogDistance, MAP.zoom, cameraDistanceFromMapCenter);
   },
 
   onChange: function() {
@@ -254,7 +187,7 @@ var render = {
     this.projMatrix = new glx.Matrix()
       .translate(0, -height/2, -1220) // 0, MAP y offset to neutralize camera y offset, MAP z -1220 scales MAP tiles to ~256px
       .scale(1, -1, 1) // flip Y
-      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 0.1, 7500))
+      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 10, 7500))
       .translate(0, -1, 0); // camera y offset
 
     glx.context.canvas.width  = width;

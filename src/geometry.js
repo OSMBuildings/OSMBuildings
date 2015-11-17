@@ -261,6 +261,95 @@ function unit(x, y, z) {
   return [x/m, y/m, z/m];
 }
 
+/* returns the quadrilateral part of the XY plane that is currently visible on
+ * screen. The quad is returned in tile coordinates for tile zoom level
+ * 'tileZoomLevel', and thus can directly be used to determine which basemap
+ * and geometry tiles need to be loaded.
+ * Note: if the horizon is level (as should usually be the case for 
+ * OSMBuildings) then said quad is also a trapezoid. */
+function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
+  /* maximum distance from the map center at which
+   * geometry is still visible */
+  //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
+
+  var inverse = glx.Matrix.invert(viewProjectionMatrix);
+
+  var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
+  var vBottomRight = getIntersectionWithXYPlane( 1, -1, inverse);
+  var vTopRight    = getIntersectionWithXYPlane( 1,  1, inverse);
+  var vTopLeft     = getIntersectionWithXYPlane(-1,  1, inverse);
+
+  /* If even the lower edge of the screen does not intersect with the map plane,
+   * then the map plane is not visible at all.
+   * (Or somebody screwed up the projection matrix, putting the view upside-down 
+   *  or something. But in any case we won't attempt to create a view rectangle).
+   */
+  if (!vBottomLeft || !vBottomRight) {
+    return;
+  }
+
+  var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
+  var f;
+
+  /* The lower screen edge shows the map layer, but the upper one does not.
+   * This usually happens when the camera is close to parallel to the ground
+   * so that the upper screen edge lies above the horizon. This is not a bug
+   * and can legitimately happen. But from a theoretical standpoint, this means 
+   * that the view 'trapezoid' stretches infinitely toward the horizon. Since this
+   * is not a practically useful result - though formally correct - we instead
+   * manually bound that area.*/
+  if (!vTopLeft || !vTopRight) {
+    /* point on the left screen edge with the same y-value as the map center*/
+    vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
+    vLeftDir = norm2(sub2( vLeftPoint, vBottomLeft));
+    f = dot2(vLeftDir, viewDirOnMap);
+    vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
+    
+    vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
+    vRightDir = norm2(sub2(vRightPoint, vBottomRight));
+    f = dot2(vRightDir, viewDirOnMap);
+    vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
+  }
+
+  /* if vTopLeft is further than maxFarEdgeDistance away vertically from the map center,
+   * move it closer. */
+ if (dot2( viewDirOnMap, vTopLeft) > maxFarEdgeDistance) {
+    vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
+    f = dot2(vLeftDir, viewDirOnMap);
+    vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
+ }
+
+ /* dito for vTopRight*/
+ if (dot2( viewDirOnMap, vTopRight) > maxFarEdgeDistance) {
+    vRightDir = norm2(sub2( vTopRight, vBottomRight));
+    f = dot2(vRightDir, viewDirOnMap);
+    vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
+ }
+ 
+  return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
+}
+
+
+/* Returns an orthographic projection matrix whose view rectangle contains all
+ * points of viewQuad when watched from the position given by targetViewMatrix.
+ * The depth range of the returned matrix is [near, far].
+ */
+function getCoveringOrthoProjection(viewQuad, targetViewMatrix, near, far) {
+
+  for (var i = 0; i < viewQuad.length; i++)
+    viewQuad[i] = transformVec3(targetViewMatrix.data, 
+                                [viewQuad[i][0], viewQuad[i][1], 0.0]);
+  
+  var left = Math.min( viewQuad[0][0], viewQuad[1][0], viewQuad[2][0], viewQuad[3][0]);
+  var right= Math.max( viewQuad[0][0], viewQuad[1][0], viewQuad[2][0], viewQuad[3][0]);
+ 
+  var top =   Math.max( viewQuad[0][1], viewQuad[1][1], viewQuad[2][1], viewQuad[3][1]);
+  var bottom= Math.min( viewQuad[0][1], viewQuad[1][1], viewQuad[2][1], viewQuad[3][1]);
+ 
+  return new glx.Matrix.Ortho(left, right, top, bottom, near, far);
+  
+}
+
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
  * Internally, the vector 'v' is interpreted as a 4D vector
  * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is
