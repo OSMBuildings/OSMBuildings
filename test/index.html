@@ -116,24 +116,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
 //  position: { latitude:40.69924, longitude:-74.01692 },
@@ -229,6 +211,11 @@
 //      osmb.highlight(null);
 //    }
 //  });
+
+//  map.on('pointermove', function(e) {
+//    obj.position = osmb.untransform(e.x, e.y);
+//  });
+//
 
 //  map.on('pointerdown', function(e) {
 //    var id = osmb.getTarget(e.x, e.y);

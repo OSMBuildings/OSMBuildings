@@ -17,7 +17,7 @@ var Activity = {};
         clearTimeout(debounce);
         debounce = null;
       } else {
-        Events.emit('busy');
+        APP.emit('busy');
       }
     }
     count++;
@@ -32,7 +32,7 @@ var Activity = {};
     if (!count) {
       debounce = setTimeout(function() {
         debounce = null;
-        Events.emit('idle');
+        APP.emit('idle');
       }, 33);
     }
 

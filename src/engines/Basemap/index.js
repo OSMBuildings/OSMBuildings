@@ -27,7 +27,7 @@ var Basemap = function(container, options) {
 
   this.listeners = {};
 
-  this.restoreState(options);
+  this.initState(options);
 
   if (options.state) {
     this.persistState();
@@ -62,7 +62,7 @@ Basemap.prototype = {
     this.attributionDiv.innerHTML = attribution.join(' · ');
   },
 
-  restoreState: function(options) {
+  initState: function(options) {
     var
       query = location.search,
       state = {};
@@ -78,47 +78,34 @@ Basemap.prototype = {
     if (state.lat !== undefined && state.lon !== undefined) {
       position = { latitude:parseFloat(state.lat), longitude:parseFloat(state.lon) };
     }
-    this.setPosition(position || options.position || { latitude: 52.52000, longitude: 13.41000 });
-
-    var zoom;
-    if (state.zoom !== undefined) {
-      zoom = (state.zoom !== undefined) ? parseFloat(state.zoom) : null;
+    if (!position && state.latitude !== undefined && state.longitude !== undefined) {
+      position = { latitude:state.latitude, longitude:state.longitude };
     }
-    this.setZoom(zoom || options.zoom || this.minZoom);
 
-    var rotation;
-    if (state.rotation !== undefined) {
-      rotation = parseFloat(state.rotation);
-    }
-    this.setRotation(rotation || options.rotation || 0);
+    var zoom     = (state.zoom     !== undefined) ? state.zoom     : options.zoom;
+    var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
+    var tilt     = (state.tilt     !== undefined) ? state.tilt     : options.tilt;
+    var bend     = (state.bend     !== undefined) ? state.bend     : options.bend;
 
-    var tilt;
-    if (state.tilt !== undefined) {
-      tilt = parseFloat(state.tilt);
-    }
-    this.setTilt(tilt || options.tilt || 0);
-
-    var bend;
-    if (state.bend !== undefined) {
-      bend = parseFloat(state.bend);
-    }
-    this.setBend(bend || options.bend || 0);
+    this.setState({
+      position: position || options.position || { latitude:52.520000, longitude:13.410000 },
+      zoom: zoom || this.minZoom,
+      rotation: rotation || 0,
+      tilt: tilt || 0,
+      bend: bend || 0
+    });
   },
 
   persistState: function() {
-    if (!history.replaceState) {
-      return;
-    }
-
-    if (this.stateDebounce) {
+    if (!history.replaceState || this.stateDebounce) {
       return;
     }
 
     this.stateDebounce = setTimeout(function() {
       this.stateDebounce = null;
       var params = [];
-      params.push('lat=' + this.position.latitude.toFixed(5));
-      params.push('lon=' + this.position.longitude.toFixed(5));
+      params.push('lat=' + this.position.latitude.toFixed(6));
+      params.push('lon=' + this.position.longitude.toFixed(6));
       params.push('zoom=' + this.zoom.toFixed(1));
       params.push('tilt=' + this.tilt.toFixed(1));
       params.push('bend=' + this.bend.toFixed(1));
@@ -127,6 +114,7 @@ Basemap.prototype = {
     }.bind(this), 1000);
   },
 
+  // TODO: switch to native events
   emit: function(type, payload) {
     if (!this.listeners[type]) {
       return;
@@ -143,6 +131,7 @@ Basemap.prototype = {
 
   //***************************************************************************
 
+  // TODO: switch to native events
   on: function(type, fn) {
     if (!this.listeners[type]) {
       this.listeners[type] = [];
@@ -151,6 +140,7 @@ Basemap.prototype = {
     return this;
   },
 
+  // TODO: switch to native events
   off: function(type, fn) {
     if (!this.listeners[type]) {
       return;
@@ -193,6 +183,30 @@ Basemap.prototype = {
       e: se.longitude
     };*/
     return null;
+  },
+
+  setState: function(state) {
+    if (state.position !== undefined) {
+      this.setPosition(state.position);
+    }
+
+    if (state.zoom !== undefined) {
+      this.setZoom(state.zoom);
+    }
+
+    if (state.rotation !== undefined) {
+      this.setRotation(state.rotation);
+    }
+
+    if (state.tilt !== undefined) {
+      this.setTilt(state.tilt);
+    }
+
+    if (state.bend !== undefined) {
+      this.setBend(state.bend);
+    }
+
+    return this;
   },
 
   setZoom: function(zoom, e) {

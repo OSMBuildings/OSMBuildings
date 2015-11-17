@@ -39,12 +39,17 @@ OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">h
 OSMBuildings.prototype = {
 
   on: function(type, fn) {
-    Events.on(type, fn);
+    gl.canvas.addEventListener(type, fn);
     return this;
   },
 
   off: function(type, fn) {
-    Events.off(type, fn);
+    gl.canvas.removeEventListener(type, fn);
+  },
+
+  emit: function(type, detail) {
+    var event = new CustomEvent(type, { detail:detail });
+    gl.canvas.dispatchEvent(event);
   },
 
   addTo: function(map) {
@@ -161,7 +166,6 @@ OSMBuildings.prototype = {
 
   destroy: function() {
     render.destroy();
-    Events.destroy();
     if (APP.basemapGrid) APP.basemapGrid.destroy();
     if (APP.dataGrid)    APP.dataGrid.destroy();
 
