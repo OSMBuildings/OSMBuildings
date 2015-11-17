@@ -120,6 +120,7 @@ setRotation | float | sets current rotation
 getRotation | | gets current rotation
 setTilt | float | sets current tilt
 getTilt | | gets current tilt
+setState | object | sets position, zoom, rotation, tilt etc. all at once
 
 
 ### OSM Buildings options

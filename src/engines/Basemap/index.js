@@ -186,8 +186,8 @@ Basemap.prototype = {
   },
 
   setState: function(state) {
-    if (state.latitude !== undefined && state.longitude !== undefined) {
-      this.setPosition({ latitude:state.latitude, longitude:state.longitude });
+    if (state.position !== undefined) {
+      this.setPosition(state.position);
     }
 
     if (state.zoom !== undefined) {
