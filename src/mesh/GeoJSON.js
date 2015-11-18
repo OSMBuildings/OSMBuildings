@@ -324,7 +324,7 @@ mesh.GeoJSON = (function() {
         matrix.translate(0, 0, this.elevation);
       }
 
-      matrix.scale(1, 1, HEIGHT_SCALE);
+      matrix.scale(this.scale, this.scale, this.scale*HEIGHT_SCALE);
 
       if (this.rotation) {
         matrix.rotateZ(-this.rotation);

@@ -143,23 +143,27 @@ Pointer.prototype = {
       return;
     }
 
-    //FIXME: make movement velocity independent of latitude
-    /*FIXME: (alternative) make movement exact, i.e. make the position that 
+    /*FIXME: make movement exact, i.e. make the position that 
      *       appeared at (this.prevX, this.prevY) before appear at 
      *       (e.clientX, e.clientY) now.
      */
-
-    var scale = Math.pow( 2, -this.map.zoom);    
+    // the constant 0.86 was chosen experimentally for the map movement to be 
+    // "pinned" to the cursor movement when the map is shown top-down
+    var scale = 0.86 * Math.pow( 2, -this.map.zoom);    
+    var lngScale = 1/Math.cos( this.map.position.latitude/ 180 * Math.PI);
     var dx = e.clientX - this.prevX;
     var dy = e.clientY - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
-    var r = {
-      x: Math.cos(angle)*dx - Math.sin(angle)*dy,
-      y: Math.sin(angle)*dx + Math.cos(angle)*dy
-    };
     
-    this.map.setPosition({ longitude: this.map.position.longitude - r.x*scale, 
-                           latitude:  this.map.position.latitude  + r.y*scale });
+    var vRight = [ Math.cos(angle),             Math.sin(angle)];
+    var vForward=[ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)]
+    
+    var dir = add2(  mul2scalar(vRight,    dx), 
+                     mul2scalar(vForward, -dy));
+
+    this.map.setPosition({ 
+      longitude: this.map.position.longitude - dir[0] * scale*lngScale, 
+      latitude:  this.map.position.latitude  + dir[1] * scale });
   },
 
   rotateMap: function(e) {

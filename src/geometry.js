@@ -40,8 +40,8 @@ function isCircular(polygon, bbox, center) {
 
 function isClockWise(polygon) {
   return 0 < polygon.reduce(function(a, b, c, d) {
-      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-    }, 0);
+    return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
+  }, 0);
 }
 
 function getBBox(polygon) {
@@ -132,8 +132,7 @@ function rasterTriangle(p1, p2, p3) {
     
   if (p2[1] == p3[1])
     return rasterFlatTriangle( p2, p3, p1);
-    
-    
+
   var alpha = (p2[1] - p1[1]) / (p3[1] - p1[1]);
   //point on the line p1->p3 with the same y-value as p2
   var p4 = [p1[0] + alpha*(p3[0]-p1[0]), p2[1]];
@@ -445,7 +444,6 @@ function getTriangleArea(p1, p2, p3) {
 function getConvexQuadArea(quad) {
   return getTriangleArea( quad[0], quad[1], quad[2]) + 
          getTriangleArea( quad[0], quad[2], quad[3]);
-  
 }
 
 function getTileSizeInMeters( latitude, zoom) {
@@ -469,7 +467,7 @@ function long2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
 function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
 function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
 function tile2lat(y,z) { 
-  var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+  var n = Math.PI-2*Math.PI*y/Math.pow(2,z);
   return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 

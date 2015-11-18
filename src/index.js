@@ -96,8 +96,7 @@ OSMBuildings.prototype = {
   },
 
   // TODO: this should be part of the underlying map engine
-  
-  /* Returns the screen position of the point at 'latitude'/'longitude' with 
+  /* Returns the screen position of the point at 'latitude'/'longitude' with
     'elevation'.
    */
   transform: function(latitude, longitude, elevation) {
@@ -105,16 +104,16 @@ OSMBuildings.prototype = {
       metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
                                  Math.cos(MAP.position.latitude / 180 * Math.PI),
       worldPos = [ (longitude- MAP.position.longitude) * metersPerDegreeLongitude,
-                   (latitude - MAP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
+                  -(latitude - MAP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
                     elevation                          * HEIGHT_SCALE ];
-
     // takes current cam pos into account.
     var posNDC = transformVec3( render.viewProjMatrix.data, worldPos);
-    posNDC = mul3scalar( add3(posNDC, [1,1,1]), 1/2); // from [-1..1] to [0..1]
+    posNDC = mul3scalar( add3(posNDC, [1, 1, 1]), 1/2); // from [-1..1] to [0..1]
     
-    return { x:      posNDC[0]  * MAP.width, 
-             y: (1 - posNDC[1]) * MAP.height,
-             z:      posNDC[2] }; //TODO: is returning the normalized depth useful?
+    return { x:    posNDC[0]  * MAP.width,
+             y: (1-posNDC[1]) * MAP.height,
+             z:    posNDC[2]
+    };
   },
 
   // TODO: this should be part of the underlying map engine
@@ -124,18 +123,21 @@ OSMBuildings.prototype = {
    */
   untransform: function(x, y) {
     var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
-    var posNDC = [x/MAP.width,1-(y/MAP.height)]; //viewport coordinates to [0..1];
-    posNDC = add2( mul2scalar(posNDC, 2.0), [-1,-1,-1]); // [0..1] to [-1..1];
-    
+    /* convert window/viewport coordinates to NDC [0..1]. Note that the browser 
+     * screen coordinates are y-down, while the WebGL NDC coordinates are y-up, 
+     * so we have to invert the y value here */
+    var posNDC = [x/MAP.width, 1-y/MAP.height]; 
+    posNDC = add2( mul2scalar(posNDC, 2.0), [-1, -1, -1]); // [0..1] to [-1..1];
     var worldPos = getIntersectionWithXYPlane(posNDC[0], posNDC[1], inverse);
-    if (worldPos === undefined)
-      return undefined;
-    metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+    if (worldPos === undefined) {
+      return;
+    }
+    metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
                                Math.cos(MAP.position.latitude / 180 * Math.PI);
-    
+
     return {
-      latitude: MAP.position.latitude + worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
-      longitude:MAP.position.longitude+ worldPos[0]/ metersPerDegreeLongitude 
+      latitude:  MAP.position.latitude - worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
+      longitude: MAP.position.longitude+ worldPos[0]/ metersPerDegreeLongitude
     };
   },
 
