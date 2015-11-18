@@ -51,17 +51,16 @@ mesh.GeoJSON = (function() {
     return [res];
   }
 
-  /* Convert all coordinates from lat/lng to 'meters from reference point'
-   */
+  // Convert all coordinates from lat/lng to 'meters from reference point'
   function transform(ring, origin) {
-    var metersPerDegreeLatitude =  EARTH_CIRCUMFERENCE_IN_METERS / 360;
-    var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
-                                   Math.cos(origin.latitude / 180 * Math.PI);
+    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(origin.latitude / 180 * Math.PI);
 
     var p, res = [];
     for (var i = 0, len = ring.length; i < len; i++) {
-      res[i] = [ (ring[i][0] - origin.longitude) * metersPerDegreeLongitude,
-                -(ring[i][1] - origin.latitude) * metersPerDegreeLatitude];
+      res[i] = [
+         (ring[i][0]-origin.longitude) * metersPerDegreeLongitude,
+        -(ring[i][1]-origin.latitude)  * METERS_PER_DEGREE_LATITUDE
+      ];
     }
 
     return res;
@@ -333,11 +332,9 @@ mesh.GeoJSON = (function() {
       var dLat = this.position.latitude - MAP.position.latitude;
       var dLon = this.position.longitude - MAP.position.longitude;
       
-      var metersPerDegreeLatitude = EARTH_CIRCUMFERENCE_IN_METERS / 360;
-      var metersPerDegreeLongitude = EARTH_CIRCUMFERENCE_IN_METERS / 360 * 
-                                     Math.cos(MAP.position.latitude / 180 * Math.PI);
+      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-      matrix.translate( dLon*metersPerDegreeLongitude, -dLat*metersPerDegreeLatitude, 0);
+      matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
       
       return matrix;
     },
