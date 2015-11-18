@@ -111,9 +111,9 @@ OSMBuildings.prototype = {
     var posNDC = transformVec3( render.viewProjMatrix.data, worldPos);
     posNDC = mul3scalar( add3(posNDC, [1, 1, 1]), 1/2); // from [-1..1] to [0..1]
     
-    return { x:    posNDC[0]  * MAP.width,
-             y: (1-posNDC[1]) * MAP.height,
-             z:    posNDC[2]
+    return { x: posNDC[0] * MAP.width,
+             y: posNDC[1] * MAP.height,
+             z: posNDC[2]
     };
   },
 
@@ -124,9 +124,8 @@ OSMBuildings.prototype = {
    */
   untransform: function(x, y) {
     var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
-    var posNDC = [x/MAP.width,1-(y/MAP.height)]; //viewport coordinates to [0..1];
-    posNDC = add2( mul2scalar(posNDC, 2.0), [-1,-1,-1]); // [0..1] to [-1..1];
-    
+    var posNDC = [x/MAP.width, y/MAP.height]; //viewport coordinates to [0..1];
+    posNDC = add2( mul2scalar(posNDC, 2.0), [-1, -1, -1]); // [0..1] to [-1..1];
     var worldPos = getIntersectionWithXYPlane(posNDC[0], posNDC[1], inverse);
     if (worldPos === undefined) {
       return;
@@ -134,7 +133,7 @@ OSMBuildings.prototype = {
 
     metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
                                Math.cos(MAP.position.latitude / 180 * Math.PI);
-    
+
     return {
       latitude:  MAP.position.latitude + worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
       longitude: MAP.position.longitude+ worldPos[0]/ metersPerDegreeLongitude
