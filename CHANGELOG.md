@@ -1,6 +1,31 @@
 
 # Changelog
 
+## 2.2.1 @ 2015-11-18
+
+### New
+
+- map.setState() for setting position, zoom, rotation etc. all at once
+- configuration option 'optimize' in order to switch anistrophic filtering and SSAO
+- methods for 3d projection/unprojection: transforms a point on 2d screen into 3d space and vice versa
+- screenshot() method
+
+### Changed
+
+- internal coordinate system now based on meters instead of pixel+zoom representation
+- events using much less abstraction code
+- JS files of GLMap and OSM Buildings are combined into one
+- default data tile zoom set to 15
+- whole rewrite of backend from PHP to NodeJS
+- improved object picking performance
+- distance based model for combining map tiles, increases performance
+
+### Fixed
+
+- not re-retrieving uniform and attribute locations on shader switch
+- mouse events are now passed through, even if map is disabled
+
+
 ## 2.1.0 @ 2015-11-03
 
 - roofHeight for unsupported shapes fixed
@@ -16,6 +41,7 @@
 - more optimization to detect visible tiles
 - artifacts at basemap tile edges fixed
 - better basemap tile blending on zoom level switch 
+
 
 ## 2.0.0 @ 2015-10-16
 
