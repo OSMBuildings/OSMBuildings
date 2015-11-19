@@ -29,7 +29,7 @@ render.Buildings = {
     });
   },
 
-  render: function(radius, distance) {
+  render: function(sunDirection) {
 //  gl.enable(gl.BLEND);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 //  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -42,9 +42,8 @@ render.Buildings = {
       gl.disable(gl.CULL_FACE);
     }
 
-    // TODO: suncalc
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
+    gl.uniform3fv(shader.uniforms.uLightDirection, sunDirection);
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));

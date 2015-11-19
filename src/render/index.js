@@ -120,7 +120,7 @@ var render = {
       render.AmbientMap.render(render.CameraViewDepthMap.framebuffer.renderTexture.id, config, 0.5);
       render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
 
-      render.Buildings.render();
+      render.Buildings.render(sunDirection);
       render.Basemap.render( sunViewProjMatrix, render.SunViewDepthMap.framebuffer);
 
       render.ShadowMap.render(config, this.viewProjMatrix, sunViewProjMatrix, render.SunViewDepthMap.framebuffer, sunDirection, 0.2);
