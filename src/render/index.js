@@ -50,20 +50,19 @@ var render = {
     render.Blur.init();
     //render.HudRect.init();
     //render.NormalMap.init();
-    render.NearShadowMap = new render.ShadowMap();
+    render.ShadowMap = new render.ShadowMap();
     render.CameraViewDepthMap = new render.DepthMap();
     render.SunViewDepthMap    = new render.DepthMap();
     
-    var shadowFbSize = 1024*2;
     render.SunViewDepthMap.framebufferConfig = {
-      width: shadowFbSize,
-      height: shadowFbSize,
-      usedWidth: shadowFbSize,
-      usedHeight: shadowFbSize,
-      tcLeft: 0.0 / shadowFbSize,
-      tcTop:  0.0 / shadowFbSize,
-      tcRight: (shadowFbSize  - 0.0) / shadowFbSize,
-      tcBottom: (shadowFbSize - 0.0) / shadowFbSize 
+      width:      SHADOW_DEPTH_MAP_SIZE,
+      height:     SHADOW_DEPTH_MAP_SIZE,
+      usedWidth:  SHADOW_DEPTH_MAP_SIZE,
+      usedHeight: SHADOW_DEPTH_MAP_SIZE,
+      tcLeft:     0.0,
+      tcTop:      0.0,
+      tcRight:    1.0,
+      tcBottom:   1.0 
     };
 
     //var quad = new mesh.DebugQuad();
@@ -113,11 +112,10 @@ var render = {
         getCoveringOrthoProjection( substituteZCoordinate(verts, 0.0).concat(
                                     substituteZCoordinate(verts,SHADOW_MAP_MAX_BUILDING_HEIGHT)),
                                     sunViewMatrix, 1000, 7500);
-      //new glx.Matrix.Ortho(-800, 800, 800, -800, 1000, 7500);
         
       var sunViewProjMatrix = new glx.Matrix(glx.Matrix.multiply(sunViewMatrix, sunProjMatrix));
      
-      render.CameraViewDepthMap.render(config, this.viewProjMatrix);
+      render.CameraViewDepthMap.render(config, this.viewProjMatrix, true);
       render.SunViewDepthMap.render(render.SunViewDepthMap.framebufferConfig, sunViewProjMatrix);
       render.AmbientMap.render(render.CameraViewDepthMap.framebuffer.renderTexture.id, config, 0.5);
       render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
@@ -125,15 +123,16 @@ var render = {
       render.Buildings.render();
       render.Basemap.render( sunViewProjMatrix, render.SunViewDepthMap.framebuffer);
 
-      render.NearShadowMap.render(config, this.viewProjMatrix, sunViewProjMatrix, render.SunViewDepthMap.framebuffer, sunDirection);
+      render.ShadowMap.render(config, this.viewProjMatrix, sunViewProjMatrix, render.SunViewDepthMap.framebuffer, sunDirection, 0.2);
 
     
       gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
       gl.enable(gl.BLEND);
-      render.Overlay.render( render.NearShadowMap.framebuffer.renderTexture.id, config);
+      render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
+      render.Overlay.render( render.ShadowMap.framebuffer.renderTexture.id, config);
       gl.disable(gl.BLEND);
 
-      //render.HudRect.render( render.SunViewDepthMap.framebuffer.renderTexture.id, config );
+      //render.HudRect.render( render.ShadowMap.framebuffer.renderTexture.id, config );
     }
 
     if (this.screenshotCallback) {
@@ -190,7 +189,7 @@ var render = {
     this.projMatrix = new glx.Matrix()
       .translate(0, -height/2, -1220) // 0, MAP y offset to neutralize camera y offset, MAP z -1220 scales MAP tiles to ~256px
       .scale(1, -1, 1) // flip Y
-      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 10, 7500))
+      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
 
     glx.context.canvas.width  = width;

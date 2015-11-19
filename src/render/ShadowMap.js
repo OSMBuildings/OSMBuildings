@@ -6,7 +6,7 @@ render.ShadowMap = function() {
     vertexShader: Shaders.shadow.vertex,
     fragmentShader: Shaders.shadow.fragment,
     attributes: ['aPosition', 'aFilter', 'aNormal'],
-    uniforms: ['uMatrix', 'uModelMatrix', 'uDirToSun', 'uSunMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uInverseTexWidth', 'uInverseTexHeight', 'uViewDirOnMap', 'uLowerEdgePoint']
+    uniforms: ['uMatrix', 'uModelMatrix', 'uDirToSun', 'uSunMatrix', 'uTime', 'uEffectStrength', 'uFogDistance', 'uFogBlurDistance', 'uInverseTexWidth', 'uInverseTexHeight', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
 
   this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
@@ -14,7 +14,7 @@ render.ShadowMap = function() {
   this.mapPlane = new mesh.MapPlane();
 };
 
-render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, sunViewProjMatrix, depthFramebuffer, sunDirection) {
+render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, sunViewProjMatrix, depthFramebuffer, sunDirection, effectStrength) {
 
   var
     shader = this.shader,
@@ -53,6 +53,7 @@ render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, 
   gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
   gl.uniform1f(shader.uniforms.uInverseTexWidth,  depthFramebuffer.width);
   gl.uniform1f(shader.uniforms.uInverseTexHeight, depthFramebuffer.height);
+  gl.uniform1f(shader.uniforms.uEffectStrength,  effectStrength);
 
   gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
   gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);

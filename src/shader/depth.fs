@@ -5,6 +5,7 @@
 
 uniform float uFogDistance;
 uniform float uFogBlurDistance;
+uniform int   uIsPerspectiveProjection;
 
 varying float verticalDistanceToLowerEdge;
 
@@ -26,7 +27,17 @@ varying float verticalDistanceToLowerEdge;
  */
 
 void main() {
-  float z = gl_FragCoord.z;
+  /* for an orthographic projection, the value in gl_FragCoord.z is proportional 
+   * to the fragment's 'physical' depth value. It's just scaled down so that the
+   * whole depth range can be compressed into [0..1]. This is quite suitable for
+   * processing in subsequent shaders.
+   * For perspective projections, however, the relationship between 'physical'
+   * depth values and gl_FragCoord.z is distorted by the perspective division.
+   * So we attempt correct that distortion when the fragment was created
+   * through a perspective projection.
+   **/
+  float z = uIsPerspectiveProjection == 0 ?  gl_FragCoord.z : 
+                                            (gl_FragCoord.z / gl_FragCoord.w)/7500.0;
   float z1 = fract(z*255.0);
   float z2 = fract(z1*255.0);
   //this biasing is necessary for shadow mapping to work correctly

@@ -19,9 +19,9 @@ float getDepth(vec2 pos, int dx, int dy)
   vec4 codedDepth = texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, 
                                               pos.t + float(dy) * uInverseTexHeight));
   //convert back to depth value
-  return codedDepth.x + 
-         codedDepth.y/ 256.0 + 
-         codedDepth.z/(256.0*256.0);
+  return (codedDepth.x + 
+         codedDepth.y/ 255.0 + 
+         codedDepth.z/(255.0*255.0)) / 256.0 * 255.0;
 }
 
 
@@ -89,7 +89,7 @@ void main() {
   if (depthHere == 0.0)
   {
 	//there was nothing rendered 'here' --> it can't be occluded
-    gl_FragColor = vec4( vec3(1.0), 1.0);
+    gl_FragColor = vec4(1.0);
     return;
   }
   

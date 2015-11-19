@@ -80,6 +80,9 @@ render.Overlay = {
     var shader = this.shader;
 
     shader.enable();
+    /* we are rendering an *overlay* that is supposed to be rendered on top of the
+     * scene no matter what its actual depth is. */
+    gl.disable(gl.DEPTH_TEST);    
     
     var identity = new glx.Matrix();
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
@@ -96,6 +99,7 @@ render.Overlay = {
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
+    gl.enable(gl.DEPTH_TEST);
     shader.disable();
   },
 

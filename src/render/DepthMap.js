@@ -12,15 +12,15 @@ render.DepthMap = function() {
     vertexShader: Shaders.depth.vertex,
     fragmentShader: Shaders.depth.fragment,
     attributes: ['aPosition', 'aFilter'],
-    uniforms: ['uMatrix', 'uModelMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
+    uniforms: ['uMatrix', 'uModelMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint', 'uIsPerspectiveProjection']
   });
-
+  
   this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
 
   this.mapPlane = new mesh.MapPlane();
 };
 
-render.DepthMap.prototype.render = function(framebufferConfig, viewProjMatrix) {
+render.DepthMap.prototype.render = function(framebufferConfig, viewProjMatrix, isPerspective) {
 
   var
     shader = this.shader,
@@ -61,6 +61,7 @@ render.DepthMap.prototype.render = function(framebufferConfig, viewProjMatrix) {
 
   gl.uniform1f(shader.uniforms.uTime, Filter.time());
   gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
+  gl.uniform1i(shader.uniforms.uIsPerspectiveProjection, isPerspective ? 1 : 0);
 
   // render all actual data items, but also a dummy map plane
   // Note: SSAO on the map plane has been disabled temporarily

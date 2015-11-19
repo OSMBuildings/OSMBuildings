@@ -26,3 +26,11 @@ var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
  * value will lead to an unnecessarily large view area and thus to poor shadow
  * resolution. */
 var SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
+
+/* for shadow mapping, the scene needs to be rendered into a depth map as seen
+ * by the light source. This rendering can have arbitrary dimensions -
+ * they need not be related to the visible viewport size in any way. The higher
+ * the resolution (width and height) for this depth map the smaller are
+ * the visual artifacts introduced by shadow mapping. But increasing the
+ * shadow depth map size impacts rendering performance */
+var SHADOW_DEPTH_MAP_SIZE = 2048;
