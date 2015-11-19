@@ -1,11 +1,75 @@
 
 mesh.GeoJSON = (function() {
 
+  var METERS_PER_LEVEL = 3;
+
+  var materialColors = {
+    brick:'#cc7755',
+    bronze:'#ffeecc',
+    canvas:'#fff8f0',
+    concrete:'#999999',
+    copper:'#a0e0d0',
+    glass:'#e8f8f8',
+    gold:'#ffcc00',
+    plants:'#009933',
+    metal:'#aaaaaa',
+    panel:'#fff8f0',
+    plaster:'#999999',
+    roof_tiles:'#f08060',
+    silver:'#cccccc',
+    slate:'#666666',
+    stone:'#996666',
+    tar_paper:'#333333',
+    wood:'#deb887'
+  };
+
+  var baseMaterials = {
+    asphalt:'tar_paper',
+    bitumen:'tar_paper',
+    block:'stone',
+    bricks:'brick',
+    glas:'glass',
+    glassfront:'glass',
+    grass:'plants',
+    masonry:'stone',
+    granite:'stone',
+    panels:'panel',
+    paving_stones:'stone',
+    plastered:'plaster',
+    rooftiles:'roof_tiles',
+    roofingfelt:'tar_paper',
+    sandstone:'stone',
+    sheet:'canvas',
+    sheets:'canvas',
+    shingle:'tar_paper',
+    shingles:'tar_paper',
+    slates:'slate',
+    steel:'metal',
+    tar:'tar_paper',
+    tent:'canvas',
+    thatch:'plants',
+    tile:'roof_tiles',
+    tiles:'roof_tiles'
+    // cardboard
+    // eternit
+    // limestone
+    // straw
+  };
+
   var
     featuresPerChunk = 100,
     delayPerChunk = 66;
 
-  //***************************************************************************
+  function getMaterialColor(str) {
+    if (typeof str !== 'string') {
+      return null;
+    }
+    str = str.toLowerCase();
+    if (str[0] === '#') {
+      return str;
+    }
+    return materialColors[baseMaterials[str] || str] || null;
+  }
 
   function getGeometries(geometry, origin) {
     var i, il, polygonRings, sub;
@@ -128,7 +192,7 @@ mesh.GeoJSON = (function() {
           geometries = getGeometries(feature.geometry, this.position);
 
           for (var j = 0, jl = geometries.length; j < jl; j++) {
-            this.addItem(feature.id, patch.GeoJSON(feature.properties), geometries[j]);
+            this.addItem(feature.id, feature.properties, geometries[j]);
           }
         }
 
@@ -150,6 +214,13 @@ mesh.GeoJSON = (function() {
       id = this.id || properties.relationId || id || properties.id;
 
       var
+        height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT),
+        minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0),
+        roofHeight = properties.roofHeight ||  3,
+
+        wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material),
+        roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial),
+
         i,
         skipRoof,
         vertexCount, color,
@@ -166,10 +237,10 @@ mesh.GeoJSON = (function() {
         case 'onion':
         case 'pyramid':
         case 'pyramidal':
-          properties.height = Math.max(0, properties.height-(properties.roofHeight || 3));
+          height = Math.max(0, height-roofHeight);
         break;
         default:
-          properties.roofHeight = 0;
+          roofHeight = 0;
       }
 
       //****** walls ******
@@ -177,37 +248,37 @@ mesh.GeoJSON = (function() {
       vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
       switch (properties.shape) {
         case 'cylinder':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
         break;
 
         case 'cone':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.minHeight, properties.height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, minHeight, height);
           skipRoof = true;
         break;
 
         case 'dome':
-          vertexCount = Triangulate.dome(this.data, center, radius, properties.minHeight, properties.height);
+          vertexCount = Triangulate.dome(this.data, center, radius, minHeight, height);
         break;
 
         case 'sphere':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
         break;
 
         case 'pyramid':
         case 'pyramidal':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
           skipRoof = true;
         break;
 
         default:
           if (isCircular(geometry[0], bbox, center)) {
-            vertexCount = Triangulate.cylinder(this.data, center, radius, radius, properties.minHeight, properties.height);
+            vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
           } else {
-            vertexCount = Triangulate.extrusion(this.data, geometry, properties.minHeight, properties.height);
+            vertexCount = Triangulate.extrusion(this.data, geometry, minHeight, height);
           }
       }
 
-      color = new Color(this.color || properties.wallColor || DEFAULT_COLOR).toArray();
+      color = new Color(this.color || wallColor || DEFAULT_COLOR).toArray();
       for (i = 0; i < vertexCount; i++) {
         this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
         this.data.ids.push(idColor[0], idColor[1], idColor[2]);
@@ -225,26 +296,26 @@ mesh.GeoJSON = (function() {
 
       switch (properties.roofShape) {
         case 'cone':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, height, height + roofHeight);
         break;
 
         case 'dome':
         case 'onion':
-          vertexCount = Triangulate.dome(this.data, center, radius, properties.height, properties.height + (properties.roofHeight || radius));
+          vertexCount = Triangulate.dome(this.data, center, radius, height, height + (roofHeight || radius));
         break;
 
         case 'pyramid':
         case 'pyramidal':
           if (properties.shape === 'cylinder') {
-            vertexCount = Triangulate.cylinder(this.data, center, radius, 0, properties.height, properties.height + properties.roofHeight);
+            vertexCount = Triangulate.cylinder(this.data, center, radius, 0, height, height + roofHeight);
           } else {
-            vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+            vertexCount = Triangulate.pyramid(this.data, geometry, center, height, height + roofHeight);
           }
           break;
 
         //case 'skillion':
         //  // TODO: skillion
-        //  vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+        //  vertexCount = Triangulate.polygon(this.data, geometry, height);
         //break;
         //
         //case 'gabled':
@@ -255,19 +326,19 @@ mesh.GeoJSON = (function() {
         //case 'round':
         //case 'saltbox':
         //  // TODO: gabled
-        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, properties.height, properties.height + properties.roofHeight);
+        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, height, height + roofHeight);
         //break;
 
 //      case 'flat':
         default:
           if (properties.shape === 'cylinder') {
-            vertexCount = Triangulate.circle(this.data, center, radius, properties.height);
+            vertexCount = Triangulate.circle(this.data, center, radius, height);
           } else {
-            vertexCount = Triangulate.polygon(this.data, geometry, properties.height);
+            vertexCount = Triangulate.polygon(this.data, geometry, height);
           }
         }
 
-      color = new Color(this.color || properties.roofColor || DEFAULT_COLOR).toArray();
+      color = new Color(this.color || roofColor || DEFAULT_COLOR).toArray();
       for (i = 0; i<vertexCount; i++) {
         this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);
         this.data.ids.push(idColor[0], idColor[1], idColor[2]);

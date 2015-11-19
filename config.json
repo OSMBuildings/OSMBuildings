@@ -2,7 +2,7 @@
   "shaders": ["interaction", "buildings", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur"],
 
   "lib": [
-    "lib/earcut.js",
+    "lib/earcut.dev.js",
     "node_modules/Color/dist/Color.debug.js",
     "lib/GLX.debug.js"
   ],
@@ -12,7 +12,6 @@
     "src/Activity.js",
 
     "src/variables.js",
-    "src/patch.js",
     "src/Request.js",
     "src/util.js",
     "src/Shaders.min.js",
