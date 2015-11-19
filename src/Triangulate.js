@@ -46,34 +46,31 @@ var Triangulate = {};
     return vertexCount;
   };
 
-  function flattenData(data) {
-    var dim = data[0][0].length,
-      result = {vertices: [], holes: [], dimensions: dim},
-      holeIndex = 0;
-
-    for (var i = 0; i < data.length; i++) {
-      for (var j = 0; j < data[i].length; j++) {
-        for (var d = 0; d < dim; d++) result.vertices.push(data[i][j][d]);
+  Triangulate.polygon = function(tris, polygon, z) {
+    // flatten data
+    var
+      inVertices = [], inHoleIndex = [],
+      index = 0,
+      i, il;
+    for (i = 0, il = polygon.length; i < il; i++) {
+      for (var j = 0; j < polygon[i].length; j++) {
+        inVertices.push(polygon[i][j][0], polygon[i][j][1]);
       }
-      if (i > 0) {
-        holeIndex += data[i - 1].length;
-        result.holes.push(holeIndex);
+      if (i) {
+        index += polygon[i - 1].length;
+        inHoleIndex.push(index);
       }
     }
 
-    return result;
-  }
+    var vertices = earcut(inVertices, inHoleIndex, 2);
 
-  Triangulate.polygon = function(tris, polygon, z) {
-    var d = flattenData(polygon);
-    var vertices = earcut(d.vertices, d.holes, d.dimensions);
     var vertexCount = 0;
-    for (var i = 0, il = vertices.length-2; i < il; i+=3) {
+    for (i = 0, il = vertices.length-2; i < il; i+=3) {
       vertexCount += this.addTriangle(
         tris,
-        [ d.vertices[ vertices[i  ]*2 ], d.vertices[ vertices[i  ]*2+1 ], z ],
-        [ d.vertices[ vertices[i+1]*2 ], d.vertices[ vertices[i+1]*2+1 ], z ],
-        [ d.vertices[ vertices[i+2]*2 ], d.vertices[ vertices[i+2]*2+1 ], z ]
+        [ inVertices[ vertices[i  ]*2 ], inVertices[ vertices[i  ]*2+1 ], z ],
+        [ inVertices[ vertices[i+1]*2 ], inVertices[ vertices[i+1]*2+1 ], z ],
+        [ inVertices[ vertices[i+2]*2 ], inVertices[ vertices[i+2]*2+1 ], z ]
       );
     }
     return vertexCount;
