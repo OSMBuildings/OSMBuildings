@@ -47,14 +47,30 @@ var Triangulate = {};
   };
 
   Triangulate.polygon = function(tris, polygon, z) {
-    var vertices = earcut(polygon);
+    // flatten data
+    var
+      inVertices = [], inHoleIndex = [],
+      index = 0,
+      i, il;
+    for (i = 0, il = polygon.length; i < il; i++) {
+      for (var j = 0; j < polygon[i].length; j++) {
+        inVertices.push(polygon[i][j][0], polygon[i][j][1]);
+      }
+      if (i) {
+        index += polygon[i - 1].length;
+        inHoleIndex.push(index);
+      }
+    }
+
+    var vertices = earcut(inVertices, inHoleIndex, 2);
+
     var vertexCount = 0;
-    for (var i = 0, il = vertices.length-2; i < il; i+=3) {
+    for (i = 0, il = vertices.length-2; i < il; i+=3) {
       vertexCount += this.addTriangle(
         tris,
-        [ vertices[i  ][0], vertices[i  ][1], z ],
-        [ vertices[i+1][0], vertices[i+1][1], z ],
-        [ vertices[i+2][0], vertices[i+2][1], z ]
+        [ inVertices[ vertices[i  ]*2 ], inVertices[ vertices[i  ]*2+1 ], z ],
+        [ inVertices[ vertices[i+1]*2 ], inVertices[ vertices[i+1]*2+1 ], z ],
+        [ inVertices[ vertices[i+2]*2 ], inVertices[ vertices[i+2]*2+1 ], z ]
       );
     }
     return vertexCount;

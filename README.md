@@ -135,8 +135,8 @@ showBackfaces | boolean | render front and backsides of polygons. false increase
 fogColor | string | color to be used for sky gradients and distance fog.
 backgroundColor | string | overall background color
 optimize | string | sets rendering precedence for 'quality' or 'performance' (default)
-transform | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
-untransform | x, y | transforms a screen position into a geo coordinate with elevation 0
+project | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
+unproject | x, y | transforms a screen position into a geo coordinate with elevation 0
 
 
 ### OSM Buildings methods
@@ -173,7 +173,7 @@ This label moves virtually in space.
 ~~~ javascript
 var label = document.getElementById('label');
 map.on('change', function() {
-  var pos = osmb.transform(52.52, 13.37, 50);
+  var pos = osmb.project(52.52, 13.37, 50);
   label.style.left = Math.round(pos.x) + 'px';
   label.stye.top = Math.round(pos.y) + 'px';
 });

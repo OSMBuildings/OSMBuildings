@@ -46,7 +46,7 @@ var OSMBuildings = function(options) {
   }
 };
 
-OSMBuildings.VERSION = '1.0.1';
+OSMBuildings.VERSION = '2.2.1';
 OSMBuildings.ATTRIBUTION = '© OSM Buildings <a href="http://osmbuildings.org">http://osmbuildings.org</a>';
 
 OSMBuildings.prototype = {
@@ -99,7 +99,7 @@ OSMBuildings.prototype = {
   /* Returns the screen position of the point at 'latitude'/'longitude' with
     'elevation'.
    */
-  transform: function(latitude, longitude, elevation) {
+  project: function(latitude, longitude, elevation) {
     var
       metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
                                  Math.cos(MAP.position.latitude / 180 * Math.PI),
@@ -121,7 +121,7 @@ OSMBuildings.prototype = {
    * (elevation==0) at viewport position (x,y), or 'undefined' if no part of the
    * map plane would be rendered at (x,y) - e.g. if (x,y) lies above the horizon.
    */
-  untransform: function(x, y) {
+  unproject: function(x, y) {
     var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
     /* convert window/viewport coordinates to NDC [0..1]. Note that the browser 
      * screen coordinates are y-down, while the WebGL NDC coordinates are y-up, 

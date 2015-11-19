@@ -14,7 +14,6 @@ var document = global.document;
 
 var EARTH_RADIUS_IN_METERS = 6378137;
 var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
-
 var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
