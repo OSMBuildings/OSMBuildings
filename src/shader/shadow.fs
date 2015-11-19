@@ -44,7 +44,7 @@ void main() {
   {
     /* note: the diffuse term is also the cosine between the surface normal and the
      * light direction */
-    float bias = clamp(0.0006*tan(acos(diffuse)), 0.0, 0.01);
+    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);
     
     vec2 tl = floor(vSunRelPosition.xy * texDim) / texDim;
     float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);

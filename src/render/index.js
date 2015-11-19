@@ -88,44 +88,25 @@ var render = {
                         [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
                         [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
+    var sun = getSunConfiguration(120, 60, this.getViewQuad());
     render.SkyDome.render();
     gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
     if (render.optimize !== 'quality') {
-      render.Buildings.render();
+      render.Buildings.render(sun.direction);
       render.Basemap.render();
     } else {
       var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
-      var scale = 1.38*Math.pow(2, MAP.zoom-17);
+      render.CameraViewDepthMap.render(this.viewProjMatrix, config, true);
+      render.SunViewDepthMap.render(    sun.viewProjMatrix);
+      render.AmbientMap.render(render.CameraViewDepthMap, config, 0.5);
+      render.Blur.render(render.AmbientMap.framebuffer, config);
+      render.ShadowMap.render(config, this.viewProjMatrix, sun, render.SunViewDepthMap.framebuffer, 0.2);
+ 
+      render.Buildings.render(sun.direction);
+      render.Basemap.render();
 
-      var sunViewMatrix = new glx.Matrix()
-        .rotateZ(-120)
-        .rotateX(60) //
-        .translate(0, 0, -5000)
-        .scale(1, -1, 1); // flip Y
-
-      var verts = this.getViewQuad();
-
-      var sunDirection = getDirection( -120, 60);
-      var sunProjMatrix = 
-        getCoveringOrthoProjection( substituteZCoordinate(verts, 0.0).concat(
-                                    substituteZCoordinate(verts,SHADOW_MAP_MAX_BUILDING_HEIGHT)),
-                                    sunViewMatrix, 1000, 7500);
-        
-      var sunViewProjMatrix = new glx.Matrix(glx.Matrix.multiply(sunViewMatrix, sunProjMatrix));
-     
-      render.CameraViewDepthMap.render(config, this.viewProjMatrix, true);
-      render.SunViewDepthMap.render(render.SunViewDepthMap.framebufferConfig, sunViewProjMatrix);
-      render.AmbientMap.render(render.CameraViewDepthMap.framebuffer.renderTexture.id, config, 0.5);
-      render.Blur.render(render.AmbientMap.framebuffer.renderTexture.id, config);
-
-      render.Buildings.render(sunDirection);
-      render.Basemap.render( sunViewProjMatrix, render.SunViewDepthMap.framebuffer);
-
-      render.ShadowMap.render(config, this.viewProjMatrix, sunViewProjMatrix, render.SunViewDepthMap.framebuffer, sunDirection, 0.2);
-
-    
       gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
       gl.enable(gl.BLEND);
       render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);

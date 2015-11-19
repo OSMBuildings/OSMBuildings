@@ -14,12 +14,11 @@ render.ShadowMap = function() {
   this.mapPlane = new mesh.MapPlane();
 };
 
-render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, sunViewProjMatrix, depthFramebuffer, sunDirection, effectStrength) {
+render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, sunConfiguration, depthFramebuffer, effectStrength) {
 
   var
     shader = this.shader,
     framebuffer = this.framebuffer;
-
 
   if (framebuffer.width != framebufferConfig.width || 
       framebuffer.height!= framebufferConfig.height) {
@@ -36,9 +35,9 @@ render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   }
     
-  gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
   shader.enable();
   framebuffer.enable();
+  gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
 
   gl.clearColor(1.0, 1.0, 1.0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -57,7 +56,7 @@ render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, 
 
   gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
   gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
-  gl.uniform3fv(shader.uniforms.uDirToSun, sunDirection);
+  gl.uniform3fv(shader.uniforms.uDirToSun, sunConfiguration.direction);
 
   var dataItems = data.Index.items.concat([this.mapPlane]);
 
@@ -75,7 +74,7 @@ render.ShadowMap.prototype.render = function(framebufferConfig, viewProjMatrix, 
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, viewProjMatrix));
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
 
-    gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, sunViewProjMatrix));
+    gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, sunConfiguration.viewProjMatrix));
     
     item.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

@@ -30,7 +30,7 @@ render.AmbientMap = {
     ]));
   },
 
-  render: function(depthTexture, framebufferConfig, effectStrength) {
+  render: function(depthMap, framebufferConfig, effectStrength) {
 
     var
       shader = this.shader,
@@ -93,7 +93,7 @@ render.AmbientMap = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindTexture(gl.TEXTURE_2D, depthTexture);
+    gl.bindTexture(gl.TEXTURE_2D, depthMap.framebuffer.renderTexture.id);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
 

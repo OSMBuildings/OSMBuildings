@@ -30,7 +30,7 @@ render.Blur = {
     ]));
   },
 
-  render: function(inputTexture, framebufferConfig) {
+  render: function(inputFramebuffer, framebufferConfig) {
 
     var
       shader = this.shader,
@@ -90,7 +90,7 @@ render.Blur = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindTexture(gl.TEXTURE_2D, inputTexture);
+    gl.bindTexture(gl.TEXTURE_2D, inputFramebuffer.renderTexture.id);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
 

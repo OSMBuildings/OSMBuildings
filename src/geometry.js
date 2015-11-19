@@ -354,6 +354,27 @@ function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height)
   
 }
 
+function getSunConfiguration(azimuth, elevation, coveredGroundVertices) {
+  var sun = {};
+  
+  sun.viewMatrix = new glx.Matrix()
+    .rotateZ(-120)
+    .rotateX(60) //
+    .translate(0, 0, -5000)
+    .scale(1, -1, 1); // flip Y
+
+  
+  sun.direction = getDirection( -120, 60);
+  sun.projMatrix = getCoveringOrthoProjection( 
+      substituteZCoordinate(coveredGroundVertices, 0.0).concat(
+      substituteZCoordinate(coveredGroundVertices,SHADOW_MAP_MAX_BUILDING_HEIGHT)),
+      sun.viewMatrix, 1000, 7500);
+
+  sun.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(sun.viewMatrix, sun.projMatrix));
+ 
+  return sun;
+}
+
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
  * Internally, the vector 'v' is interpreted as a 4D vector
  * (v[0], v[1], v[2], 1.0) in homogenous coordinates. The transformation is

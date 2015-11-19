@@ -20,11 +20,14 @@ render.DepthMap = function() {
   this.mapPlane = new mesh.MapPlane();
 };
 
-render.DepthMap.prototype.render = function(framebufferConfig, viewProjMatrix, isPerspective) {
+render.DepthMap.prototype.render = function(viewProjMatrix, framebufferConfig, isPerspective) {
 
   var
     shader = this.shader,
     framebuffer = this.framebuffer;
+
+  if (!framebufferConfig && this.framebufferConfig)
+    framebufferConfig = this.framebufferConfig;
 
 
   if (framebuffer.width != framebufferConfig.width || 
@@ -50,9 +53,9 @@ render.DepthMap.prototype.render = function(framebufferConfig, viewProjMatrix, i
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   }
     
-  gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
   shader.enable();
   framebuffer.enable();
+  gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
 
   gl.clearColor(0.0, 0.0, 0.0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
