@@ -257,11 +257,11 @@ mesh.GeoJSON = (function() {
         break;
 
         case 'dome':
-          vertexCount = Triangulate.dome(this.data, center, radius, minHeight, height);
+          vertexCount = Triangulate.dome(this.data, center, radius, minHeight, (height || (radius+minHeight)));
         break;
 
         case 'sphere':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
+          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, (height || 2*radius+minHeight));
         break;
 
         case 'pyramid':
