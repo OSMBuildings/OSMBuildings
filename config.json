@@ -8,6 +8,8 @@
   ],
 
   "src": [
+    "src/polyfills.js",
+
     "src/index.js",
     "src/Activity.js",
 

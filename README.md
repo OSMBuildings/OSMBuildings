@@ -71,6 +71,7 @@ In a script section initialize the map and add a map tile layer.
   var osmb = new OSMBuildings({
     minZoom: 15,
     maxZoom: 22,
+    optimize: 'performance', // default: 'quality'
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
