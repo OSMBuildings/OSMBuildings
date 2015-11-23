@@ -364,7 +364,7 @@ function getSunConfiguration(azimuth, elevation, coveredGroundVertices) {
     .scale(1, -1, 1); // flip Y
 
   
-  sun.direction = getDirection( -120, 60);
+  sun.direction = getDirection(azimuth, elevation);
   sun.projMatrix = getCoveringOrthoProjection( 
       substituteZCoordinate(coveredGroundVertices, 0.0).concat(
       substituteZCoordinate(coveredGroundVertices,SHADOW_MAP_MAX_BUILDING_HEIGHT)),
