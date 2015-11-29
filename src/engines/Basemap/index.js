@@ -87,13 +87,11 @@ Basemap.prototype = {
     var tilt     = (state.tilt     !== undefined) ? state.tilt     : options.tilt;
     var bend     = (state.bend     !== undefined) ? state.bend     : options.bend;
 
-    this.setState({
-      position: position || options.position || { latitude:52.520000, longitude:13.410000 },
-      zoom: zoom || this.minZoom,
-      rotation: rotation || 0,
-      tilt: tilt || 0,
-      bend: bend || 0
-    });
+    this.setPosition(position || options.position || { latitude:52.520000, longitude:13.410000 });
+    this.setZoom(zoom || this.minZoom);
+    this.setRotation(rotation || 0);
+    this.setTilt(tilt || 0);
+    this.setBend(bend || 0);
   },
 
   persistState: function() {
@@ -183,30 +181,6 @@ Basemap.prototype = {
       e: se.longitude
     };*/
     return null;
-  },
-
-  setState: function(state) {
-    if (state.position !== undefined) {
-      this.setPosition(state.position);
-    }
-
-    if (state.zoom !== undefined) {
-      this.setZoom(state.zoom);
-    }
-
-    if (state.rotation !== undefined) {
-      this.setRotation(state.rotation);
-    }
-
-    if (state.tilt !== undefined) {
-      this.setTilt(state.tilt);
-    }
-
-    if (state.bend !== undefined) {
-      this.setBend(state.bend);
-    }
-
-    return this;
   },
 
   setZoom: function(zoom, e) {
