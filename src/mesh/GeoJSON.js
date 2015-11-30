@@ -249,7 +249,7 @@ mesh.GeoJSON = (function() {
       H = height-minHeight;
       Z = minHeight;
 
-      vertexCountBefore = this.data.vertices.length/3;
+      vertexCountBefore = this.data.vertices.length;
       switch (properties.shape) {
         case 'cylinder':
           mesh.addCylinder(this.data, center, radius, radius, H, Z);
@@ -278,7 +278,7 @@ mesh.GeoJSON = (function() {
           mesh.addExtrusion(this.data, geometry, H, Z);
       }
 
-      vertexCount = vertexCountBefore-this.data.vertices.length/3;
+      vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
       color = new Color(this.color || wallColor || DEFAULT_COLOR).toArray();
       for (i = 0; i < vertexCount; i++) {
         this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
@@ -296,7 +296,7 @@ mesh.GeoJSON = (function() {
       H = roofHeight;
       Z = height;
 
-      vertexCountBefore = this.data.vertices.length/3;
+      vertexCountBefore = this.data.vertices.length;
       switch (properties.roofShape) {
         case 'cone':
           mesh.addCylinder(this.data, center, radius, 0, H, Z);
@@ -304,7 +304,7 @@ mesh.GeoJSON = (function() {
 
         case 'dome':
         case 'onion':
-          mesh.addDome(this.data, center, radius, height, (H || radius), Z);
+          mesh.addDome(this.data, center, radius, (H || radius), Z);
         break;
 
         case 'pyramid':
@@ -341,7 +341,7 @@ mesh.GeoJSON = (function() {
           }
       }
 
-      vertexCount = vertexCountBefore-this.data.vertices.length/3;
+      vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
       color = new Color(this.color || roofColor || DEFAULT_COLOR).toArray();
       for (i = 0; i<vertexCount; i++) {
         this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);
