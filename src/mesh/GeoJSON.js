@@ -223,12 +223,13 @@ mesh.GeoJSON = (function() {
 
         i,
         skipRoof,
-        vertexCount, color,
+        vertexCount, vertexCountBefore, color,
         idColor = render.Interaction.idToColor(id),
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
         bbox = getBBox(geometry[0]),
         radius = (bbox.maxX - bbox.minX)/2,
-        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+        center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2],
+        H, Z;
 
       // flat roofs or roofs we can't handle should not affect building's height
       switch (properties.roofShape) {
@@ -245,39 +246,39 @@ mesh.GeoJSON = (function() {
 
       //****** walls ******
 
-      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+      H = height-minHeight;
+      Z = minHeight;
+
+      vertexCountBefore = this.data.vertices.length/3;
       switch (properties.shape) {
         case 'cylinder':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
+          mesh.addCylinder(this.data, center, radius, radius, H, Z);
         break;
 
         case 'cone':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, minHeight, height);
+          mesh.addCylinder(this.data, center, radius, 0, H, Z);
           skipRoof = true;
         break;
 
         case 'dome':
-          vertexCount = Triangulate.dome(this.data, center, radius, minHeight, (height || (radius+minHeight)));
+          mesh.addDome(this.data, center, radius, (H || radius), Z);
         break;
 
         case 'sphere':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, (height || 2*radius+minHeight));
+          mesh.addSphere(this.data, center, radius, (H || 2*radius), Z);
         break;
 
         case 'pyramid':
         case 'pyramidal':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
+          mesh.addPyramid(this.data, geometry, center, H, Z);
           skipRoof = true;
         break;
 
         default:
-          if (isCircular(geometry[0], bbox, center)) {
-            vertexCount = Triangulate.cylinder(this.data, center, radius, radius, minHeight, height);
-          } else {
-            vertexCount = Triangulate.extrusion(this.data, geometry, minHeight, height);
-          }
+          mesh.addExtrusion(this.data, geometry, H, Z);
       }
 
+      vertexCount = vertexCountBefore-this.data.vertices.length/3;
       color = new Color(this.color || wallColor || DEFAULT_COLOR).toArray();
       for (i = 0; i < vertexCount; i++) {
         this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
@@ -292,30 +293,32 @@ mesh.GeoJSON = (function() {
         return;
       }
 
-      vertexCount = 0; // ensures there is no mess when walls or roofs are not drawn (b/c of unknown tagging)
+      H = roofHeight;
+      Z = height;
 
+      vertexCountBefore = this.data.vertices.length/3;
       switch (properties.roofShape) {
         case 'cone':
-          vertexCount = Triangulate.cylinder(this.data, center, radius, 0, height, height + roofHeight);
+          mesh.addCylinder(this.data, center, radius, 0, H, Z);
         break;
 
         case 'dome':
         case 'onion':
-          vertexCount = Triangulate.dome(this.data, center, radius, height, height + (roofHeight || radius));
+          mesh.addDome(this.data, center, radius, height, (H || radius), Z);
         break;
 
         case 'pyramid':
         case 'pyramidal':
           if (properties.shape === 'cylinder') {
-            vertexCount = Triangulate.cylinder(this.data, center, radius, 0, height, height + roofHeight);
+            mesh.addCylinder(this.data, center, radius, 0, H, Z);
           } else {
-            vertexCount = Triangulate.pyramid(this.data, geometry, center, height, height + roofHeight);
+            mesh.addPyramid(this.data, geometry, center, H, Z);
           }
           break;
 
         //case 'skillion':
         //  // TODO: skillion
-        //  vertexCount = Triangulate.polygon(this.data, geometry, height);
+        //  mesh.addPolygon(this.data, geometry, Z);
         //break;
         //
         //case 'gabled':
@@ -326,18 +329,19 @@ mesh.GeoJSON = (function() {
         //case 'round':
         //case 'saltbox':
         //  // TODO: gabled
-        //  vertexCount = Triangulate.pyramid(this.data, geometry, center, height, height + roofHeight);
+        //  mesh.addPyramid(this.data, geometry, center, H, Z);
         //break;
 
 //      case 'flat':
         default:
           if (properties.shape === 'cylinder') {
-            vertexCount = Triangulate.circle(this.data, center, radius, height);
+            mesh.addCircle(this.data, center, radius, Z);
           } else {
-            vertexCount = Triangulate.polygon(this.data, geometry, height);
+            mesh.addPolygon(this.data, geometry, Z);
           }
-        }
+      }
 
+      vertexCount = vertexCountBefore-this.data.vertices.length/3;
       color = new Color(this.color || roofColor || DEFAULT_COLOR).toArray();
       for (i = 0; i<vertexCount; i++) {
         this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);

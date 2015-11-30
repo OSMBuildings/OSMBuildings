@@ -6,38 +6,6 @@ function distance2(a, b) {
   return dx*dx + dy*dy;
 }
 
-function isCircular(polygon, bbox, center) {
-  var length = polygon.length;
-
-  if (length < 16) {
-    return false;
-  }
-
-  var
-    width = bbox.maxX-bbox.minX,
-    height = bbox.maxY-bbox.minY,
-    sizeRatio = width/height;
-
-  if (sizeRatio < 0.85 || sizeRatio > 1.15) {
-    return false;
-  }
-
-  var
-    radius = (width+height)/4,
-    sqRadius = radius*radius,
-    dist;
-
-
-  for (var i = 0; i < length; i++) {
-    dist = distance2(polygon[i], center);
-    if (dist/sqRadius < 0.75 || dist/sqRadius > 1.25) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 function isClockWise(polygon) {
   return 0 < polygon.reduce(function(a, b, c, d) {
     return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
