@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "buildings", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur", "shadow"],
+  "shaders": ["interaction", "buildings", "buildingsQuality", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur", "mapShadows"],
 
   "lib": [
     "lib/earcut.dev.js",
@@ -34,8 +34,8 @@
     "src/render/index.js",
     "src/render/Interaction.js",
     "src/render/SkyDome.js",
-    "src/render/ShadowMap.js",
     "src/render/Buildings.js",
+    "src/render/MapShadows.js",
     "src/render/Basemap.js",
     "src/render/HudRect.js",
     "src/render/NormalMap.js",

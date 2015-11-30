@@ -6,9 +6,8 @@
 uniform sampler2D uShadowTexIndex;
 uniform vec3 uFogColor;
 uniform vec3 uDirToSun;
-uniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide
-uniform float uInverseTexHeight;  //in 1/pixels
-uniform float uEffectStrength;
+uniform vec2 uShadowTexDimensions;
+uniform float uShadowStrength;
 
 
 varying vec2 vTexCoord;
@@ -34,38 +33,35 @@ float isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {
 }
 
 void main() {
-  vec2 texDim = vec2( uInverseTexWidth, uInverseTexHeight);
-  vec2 pos = fract( vSunRelPosition.xy * texDim);
+
 
   float diffuse = dot(uDirToSun, normalize(vNormal));
   diffuse = max( diffuse, 0.0);
 
   if (diffuse > 0.0)
   {
-    /* note: the diffuse term is also the cosine between the surface normal and the
-     * light direction */
+    // note: the diffuse term is also the cosine between the surface normal and the
+    // light direction
     float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);
     
-    vec2 tl = floor(vSunRelPosition.xy * texDim) / texDim;
-    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);
-    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / texDim, vSunRelPosition.z, bias);
-    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / texDim, vSunRelPosition.z, bias);
-    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / texDim, vSunRelPosition.z, bias);
+    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);
     
+    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;
+    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);
+    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);
+    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);
+    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);
+
     diffuse = mix( mix(tlVal, trVal, pos.x), 
                    mix(blVal, brVal, pos.x),
                    pos.y);
-  } 
+  }
 
   float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
   float darkness = (1.0 - diffuse);
-  darkness *= uEffectStrength * (1.0 - fogIntensity);
+  darkness *= uShadowStrength * (1.0 - fogIntensity);
   gl_FragColor = vec4(vec3(1.0 - darkness), 1.0);
 
-  
-  //vec3 color = vec3(texture2D(uTexIndex, vTexCoord));
-  //gl_FragColor = vec4(mix(color, uFogColor, fogIntensity), 1.0);
-  //gl_FragColor = vec4( vTexCoord.x, 0.0, 0.0, 1.0);
 }
