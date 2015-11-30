@@ -353,7 +353,7 @@ mesh.GeoJSON = (function() {
 
     fadeIn: function() {
       var item, filters = [];
-      var start = Filter.time() + 250, end = start + 500;
+      var start = Filter.getTime() + 250, end = start + 500;
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];

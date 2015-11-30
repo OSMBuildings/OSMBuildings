@@ -121,6 +121,7 @@ var render = {
 
     this.loop = setInterval(function() {
       requestAnimationFrame(function() {
+        Filter.nextTick();
 
         gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

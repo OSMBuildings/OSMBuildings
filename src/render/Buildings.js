@@ -61,7 +61,7 @@ render.Buildings = {
 
     gl.uniform3fv(shader.uniforms.uHighlightColor, render.highlightColor);
 
-    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+    gl.uniform1f(shader.uniforms.uTime, Filter.getTime());
 
     if (!this.highlightID) {
       this.highlightID = [0, 0, 0];

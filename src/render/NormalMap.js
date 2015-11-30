@@ -41,7 +41,7 @@ render.NormalMap = {
     gl.clearColor(0.5, 0.5, 1, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+    gl.uniform1f(shader.uniforms.uTime, Filter.getTime());
 
     var
       dataItems = data.Index.items.concat([this.mapPlane]),

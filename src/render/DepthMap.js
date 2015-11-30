@@ -61,7 +61,7 @@ render.DepthMap = {
 
     var item, modelMatrix;
 
-    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+    gl.uniform1f(shader.uniforms.uTime, Filter.getTime());
     gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
 
     // render all actual data items, but also a dummy map plane
