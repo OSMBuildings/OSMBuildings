@@ -104,7 +104,8 @@ mesh.GeoJSON = (function() {
       // counter-clockwise. If they are not, make them by reversing them.
       if ((ringIndex === 0) !== isClockWise(ring)) {
         ring.reverse();
-        return transform(ring, origin);
+      }
+      return transform(ring, origin);
     });
     return [res];
   }
@@ -186,7 +187,7 @@ mesh.GeoJSON = (function() {
           geometries = flattenGeometryHierarchy(feature.geometry, this.position)
             .filter(function(ring) {
               return ring.length > 0;
-            }});
+            });
 
           for (var j = 0, jl = geometries.length; j < jl; j++) {
             this.addItem(feature.id, feature.properties, geometries[j]);
