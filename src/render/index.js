@@ -69,7 +69,6 @@ var render = {
     //quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
     //data.Index.add(quad);
 
-<<<<<<< HEAD
     requestAnimationFrame( this.renderFrame.bind(this));
   },
   

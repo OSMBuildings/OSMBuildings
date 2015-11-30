@@ -5,7 +5,6 @@
 
    This depth texture can then be used for effects such as outline rendering, screen-space
    ambient occlusion (SSAO) and shadow mapping.
-   
 */
 
 render.DepthMap = function() {
@@ -63,7 +62,7 @@ render.DepthMap.prototype.render = function(viewProjMatrix, framebufferConfig, i
 
   var item, modelMatrix;
 
-  gl.uniform1f(shader.uniforms.uTime, Filter.time());
+  gl.uniform1f(shader.uniforms.uTime, Filter.getTime());
   gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
   gl.uniform1i(shader.uniforms.uIsPerspectiveProjection, isPerspective ? 1 : 0);
 
