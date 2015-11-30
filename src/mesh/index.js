@@ -6,20 +6,7 @@ var mesh = {};
   var LAT_SEGMENTS = 16, LON_SEGMENTS = 24;
 
   //function isVertical(a, b, c) {
-  //  var d1x = a[0]-b[0];
-  //  var d1y = a[1]-b[1];
-  //  var d1z = a[2]-b[2];
-  //
-  //  var d2x = b[0]-c[0];
-  //  var d2y = b[1]-c[1];
-  //  var d2z = b[2]-c[2];
-  //
-  //  var nx = d1y*d2z - d1z*d2y;
-  //  var ny = d1z*d2x - d1x*d2z;
-  //  var nz = d1x*d2y - d1y*d2x;
-  //
-  //  var n = unit(nx, ny, nz);
-  //  return Math.round(n[2]*5000) === 0;
+  //  return Math.abs(normal(a, b, c)[2]) < 1/5000;
   //}
 
   //*****************************************************************************
@@ -34,23 +21,9 @@ var mesh = {};
   };
 
   mesh.addTriangle = function(tris, a, b, c) {
-    tris.vertices.push(
-      a[0], a[1], a[2],
-      c[0], c[1], c[2],
-      b[0], b[1], b[2]
-    );
-
-    var n = normal(
-      c[0], c[1], c[2],
-      a[0], a[1], a[2],
-      b[0], b[1], b[2]
-    );
-
-    tris.normals.push(
-      n[0], n[1], n[2],
-      n[0], n[1], n[2],
-      n[0], n[1], n[2]
-    );
+    var n = normal(a, b, c);
+    [].push.apply(tris.vertices, [].concat(a, c, b));
+    [].push.apply(tris.normals,  [].concat(n, n, n));
   };
 
   mesh.addCircle = function(tris, center, radius, Z) {
@@ -181,7 +154,7 @@ var mesh = {};
   //*****************************************************************************
 
   mesh.addCylinder = function(tris, center, radius1, radius2, height, Z) {
-  Z = Z || 0;
+    Z = Z || 0;
     var
       currAngle, nextAngle,
       currSin, currCos,

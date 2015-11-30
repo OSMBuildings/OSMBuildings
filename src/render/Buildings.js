@@ -44,7 +44,7 @@ render.Buildings = {
 
     // TODO: suncalc
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, unit(1, 1, 1));
+    gl.uniform3fv(shader.uniforms.uLightDirection, norm3([1, 1, 1]));
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
