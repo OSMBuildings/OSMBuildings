@@ -1,11 +1,8 @@
 
 # Changelog
 
-## 2.2.1 @ 2015-11-18
-
 ### New
 
-- map.setState() for setting position, zoom, rotation etc. all at once
 - configuration option 'optimize' in order to switch anistrophic filtering and SSAO
 - methods for 3d projection/unprojection: transforms a point on 2d screen into 3d space and vice versa
 - screenshot() method

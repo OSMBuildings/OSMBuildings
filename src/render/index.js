@@ -69,10 +69,13 @@ var render = {
     //quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
     //data.Index.add(quad);
 
+<<<<<<< HEAD
     requestAnimationFrame( this.renderFrame.bind(this));
   },
   
   renderFrame: function() {
+    Filter.nextTick();
+
     requestAnimationFrame( this.renderFrame.bind(this));
     
     gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 1);

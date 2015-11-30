@@ -7,6 +7,7 @@
    ambient occlusion (SSAO) and shadow mapping.
    
 */
+
 render.DepthMap = function() {
   this.shader = new glx.Shader({
     vertexShader: Shaders.depth.vertex,

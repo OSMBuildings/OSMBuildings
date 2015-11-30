@@ -17,7 +17,6 @@
     "src/Request.js",
     "src/util.js",
     "src/Shaders.min.js",
-    "src/Triangulate.js",
 
     "src/Grid.js",
     "src/Filter.js",

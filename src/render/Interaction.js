@@ -44,7 +44,7 @@ render.Interaction = {
     gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
     gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
 
-    gl.uniform1f(shader.uniforms.uTime, Filter.time());
+    gl.uniform1f(shader.uniforms.uTime, Filter.getTime());
 
     gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
     gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);

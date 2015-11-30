@@ -1,6 +1,8 @@
 
 var Filter = {
+
   start: Date.now(),
+  now: 0,
   items: [],
 
   add: function(type, selector, duration) {
@@ -109,8 +111,12 @@ var Filter = {
     indexItem.applyFilter();
   },
 
-  time: function() {
-    return Date.now()-this.start;
+  getTime: function() {
+    return this.now;
+  },
+
+  nextTick: function() {
+    this.now = Date.now()-this.start;
   },
 
   destroy: function() {
