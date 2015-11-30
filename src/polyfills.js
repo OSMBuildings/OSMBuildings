@@ -5,7 +5,7 @@ if (CustomEvent === undefined) {
     var e = document.createEvent( 'CustomEvent' );
     e.initCustomEvent(type, params.bubbles, params.cancelable, params.detail );
     return e;
-  }
+  };
 
   CustomEvent.prototype = window.Event.prototype;
 }
