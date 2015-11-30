@@ -2,38 +2,68 @@
 render.Buildings = {
 
   init: function() {
-    this.shader = new glx.Shader({
-      vertexShader: Shaders.buildings.vertex,
-      fragmentShader: Shaders.buildings.fragment,
-      attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
-      uniforms: [
-        'uModelMatrix',
-        'uViewMatrix',
-        'uProjMatrix',
-        'uViewDirOnMap',
-        'uMatrix',
-        'uNormalTransform',
-        'uAlpha',
-        'uLightColor',
-        'uLightDirection',
-        'uLowerEdgePoint',
-        'uFogDistance',
-        'uFogBlurDistance',
-        'uFogColor',
-        'uBendRadius',
-        'uBendDistance',
-        'uHighlightColor',
-        'uHighlightID',
-        'uTime'
-      ]
+  
+    this.shader = (render.optimize !== 'quality') ?
+      new glx.Shader({
+        vertexShader: Shaders.buildings.vertex,
+        fragmentShader: Shaders.buildings.fragment,
+        attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
+        uniforms: [
+          'uModelMatrix',
+          'uViewMatrix',
+          'uProjMatrix',
+          'uViewDirOnMap',
+          'uMatrix',
+          'uNormalTransform',
+          'uAlpha',
+          'uLightColor',
+          'uLightDirection',
+          'uLowerEdgePoint',
+          'uFogDistance',
+          'uFogBlurDistance',
+          'uFogColor',
+          'uBendRadius',
+          'uBendDistance',
+          'uHighlightColor',
+          'uHighlightID',
+          'uTime',
+          'uDirToSun', 
+        ]
+    }) :
+    
+      new glx.Shader({
+        vertexShader: Shaders.buildingsQuality.vertex,
+        fragmentShader: Shaders.buildingsQuality.fragment,
+        attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
+        uniforms: [
+          'uModelMatrix',
+          'uViewMatrix',
+          'uProjMatrix',
+          'uViewDirOnMap',
+          'uMatrix',
+          'uNormalTransform',
+          'uAlpha',
+          'uLightColor',
+          'uLightDirection',
+          'uLowerEdgePoint',
+          'uFogDistance',
+          'uFogBlurDistance',
+          'uFogColor',
+          'uBendRadius',
+          'uBendDistance',
+          'uHighlightColor',
+          'uHighlightID',
+          'uTime',
+          'uDirToSun', 
+          'uSunMatrix', 
+          'uShadowTexIndex',
+          'uShadowTexDimensions',
+          'uShadowEffectStrength',
+        ]
     });
   },
 
-  render: function(sunDirection) {
-//  gl.enable(gl.BLEND);
-//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-//  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-//  gl.disable(gl.DEPTH_TEST);
+  render: function(sunConfiguration, depthFramebuffer, shadowStrength) {
 
     var shader = this.shader;
     shader.enable();
@@ -43,7 +73,7 @@ render.Buildings = {
     }
 
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, sunDirection);
+    gl.uniform3fv(shader.uniforms.uLightDirection, sunConfiguration.direction);
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
@@ -70,6 +100,12 @@ render.Buildings = {
     gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
     gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 
+    gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
+    gl.uniform1f(shader.uniforms.uShadowStrength,  shadowStrength);
+
+    depthFramebuffer.renderTexture.enable(0);
+    gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
+
     var
       dataItems = data.Index.items,
       item,
@@ -91,20 +127,13 @@ render.Buildings = {
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
-      item.vertexBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, sunConfiguration.viewProjMatrix));
 
-      item.normalBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      item.colorBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aColor, item.colorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      item.filterBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-      item.idBuffer.enable();
-      gl.vertexAttribPointer(shader.attributes.aID, item.idBuffer.itemSize, gl.FLOAT, false, 0, 0);
+      shader.bindBuffer(item.vertexBuffer, "aPosition");
+      shader.bindBuffer(item.normalBuffer, "aNormal");
+      shader.bindBuffer(item.colorBuffer,  "aColor");
+      shader.bindBuffer(item.filterBuffer, "aFilter");
+      shader.bindBuffer(item.idBuffer,     "aID");
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

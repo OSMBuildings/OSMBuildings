@@ -358,13 +358,13 @@ function getSunConfiguration(azimuth, elevation, coveredGroundVertices) {
   var sun = {};
   
   sun.viewMatrix = new glx.Matrix()
-    .rotateZ(-120)
-    .rotateX(60) //
+    .rotateZ(-azimuth)
+    .rotateX(elevation) //
     .translate(0, 0, -5000)
     .scale(1, -1, 1); // flip Y
 
   
-  sun.direction = getDirection(azimuth, elevation);
+  sun.direction = getDirection(-azimuth, elevation);
   sun.projMatrix = getCoveringOrthoProjection( 
       substituteZCoordinate(coveredGroundVertices, 0.0).concat(
       substituteZCoordinate(coveredGroundVertices,SHADOW_MAP_MAX_BUILDING_HEIGHT)),

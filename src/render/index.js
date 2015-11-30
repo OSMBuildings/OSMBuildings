@@ -50,7 +50,7 @@ var render = {
     render.Blur.init();
     //render.HudRect.init();
     //render.NormalMap.init();
-    render.ShadowMap = new render.ShadowMap();
+    render.MapShadows.init();
     render.CameraViewDepthMap = new render.DepthMap();
     render.SunViewDepthMap    = new render.DepthMap();
     
@@ -88,7 +88,7 @@ var render = {
                         [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
                         [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
-    var sun = getSunConfiguration(120, 60, this.getViewQuad());
+    var sun = getSunConfiguration(125, 80, this.getViewQuad());
     render.SkyDome.render();
     gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
@@ -102,18 +102,18 @@ var render = {
       render.SunViewDepthMap.render(    sun.viewProjMatrix);
       render.AmbientMap.render(render.CameraViewDepthMap, config, 0.5);
       render.Blur.render(render.AmbientMap.framebuffer, config);
-      render.ShadowMap.render(config, this.viewProjMatrix, sun, render.SunViewDepthMap.framebuffer, 0.2);
- 
-      render.Buildings.render(sun.direction);
+      render.Buildings.render(sun, render.SunViewDepthMap.framebuffer);
       render.Basemap.render();
 
       gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
       gl.enable(gl.BLEND);
-      render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
-      render.Overlay.render( render.ShadowMap.framebuffer.renderTexture.id, config);
+      {
+        render.MapShadows.render(sun, render.SunViewDepthMap.framebuffer, 0.5);
+        render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
+      }
       gl.disable(gl.BLEND);
 
-      //render.HudRect.render( render.ShadowMap.framebuffer.renderTexture.id, config );
+      //render.HudRect.render( render.SunViewDepthMap.framebuffer.renderTexture.id, config );
     }
 
     if (this.screenshotCallback) {

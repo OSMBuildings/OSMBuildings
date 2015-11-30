@@ -78,6 +78,25 @@ glx.Shader.prototype = {
     }
   },
   
+  bindBuffer: function(buffer, attribute) {
+    if (this.attributes[attribute] === undefined) {
+      //console.log("[WARN] attempt to bind VBO to non-existent attribute '%s'", attribute);
+      return;
+    }
+    
+    buffer.enable();
+    GL.vertexAttribPointer(this.attributes[attribute], buffer.itemSize, gl.FLOAT, false, 0, 0);
+
+  },
+  
+  setUniform: function(uniform, type, value) {
+    if (this.uniforms[uniform] === undefined) {
+      return;
+    }
+    
+    GL["uniform" + type]( this.uniforms[uniform], value);
+  },
+
   destroy: function() {
     this.disable();
     this.id = null;
