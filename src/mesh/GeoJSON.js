@@ -219,7 +219,7 @@ mesh.GeoJSON = (function() {
 
         wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material),
         roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial),
-
+        hasContinuousWindows = (properties.material === "glass"),
         i,
         skipRoof,
         vertexCount, vertexCountBefore, color,
@@ -274,7 +274,7 @@ mesh.GeoJSON = (function() {
         break;
 
         default:
-          this.addExtrusion(this.data, geometry, H, Z);
+          this.addExtrusion(this.data, geometry, H, Z, undefined, hasContinuousWindows);
       }
 
       vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
@@ -350,7 +350,7 @@ mesh.GeoJSON = (function() {
       this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
     },
 
-    addRingExtrusion: function(tris, ring, height, Z, numFloors) {
+    addRingExtrusion: function(tris, ring, height, Z, numFloors, hasContinuousWindows) {
       for (var r = 0; r < ring.length-1; r++) {
         a = ring[r];
         b = ring[r+1];
@@ -367,20 +367,31 @@ mesh.GeoJSON = (function() {
         [].push.apply(tris.vertices, [].concat(v0, v2, v1,   v0, v3, v2));
         [].push.apply(tris.normals,  [].concat(n, n, n, n, n, n));
 
-        tris.texCoords.push(
-          0.0, 0.0,
-          numWindows, numFloors,
-          numWindows, 0.0,
-          
-          0.0, 0.0,
-          0.0, numFloors,
-          numWindows, numFloors
-        );
-        
+        if (hasContinuousWindows) {
+          tris.texCoords.push(
+            0.0,        0.6,
+            numWindows, 0.8,
+            numWindows, 0.6,
+            
+            0.0,        0.6,
+            0.0,        0.8,
+            numWindows, 0.8
+          );
+        } else {
+          tris.texCoords.push(
+            0.0,        0.0,
+            numWindows, numFloors,
+            numWindows, 0.0,
+            
+            0.0,        0.0,
+            0.0,        numFloors,
+            numWindows, numFloors
+          );
+        }
       }
     },
 
-    addExtrusion: function(tris, polygon, height, Z, numFloors) {
+    addExtrusion: function(tris, polygon, height, Z, numFloors, hasContinuousWindows) {
       Z = Z || 0;
       numFloors = numFloors || Math.max( 1, Math.floor(height / METERS_PER_LEVEL));
       var ring, last;
@@ -392,7 +403,7 @@ mesh.GeoJSON = (function() {
           ring.push(ring[0]);
           last++;
         }
-        this.addRingExtrusion(tris, ring, height, Z, numFloors);
+        this.addRingExtrusion(tris, ring, height, Z, numFloors, hasContinuousWindows);
       }
     },
 
