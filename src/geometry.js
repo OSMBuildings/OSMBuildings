@@ -193,11 +193,9 @@ function normal(a, b, c) {
   var d1 = sub3(a, b);
   var d2 = sub3(b, c);
   // normalized cross product of d1 and d2.
-  return norm3(
-    d1[1]*d2[2] - d1[2]*d2[1],
-    d1[2]*d2[0] - d1[0]*d2[2],
-    d1[0]*d2[1] - d1[1]*d2[0]
-  );
+  return norm3([ d1[1]*d2[2] - d1[2]*d2[1],
+                 d1[2]*d2[0] - d1[0]*d2[2],
+                 d1[0]*d2[1] - d1[1]*d2[0] ]);
 }
 
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
