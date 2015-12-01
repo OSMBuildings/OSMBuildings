@@ -33,3 +33,10 @@ var SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
  * the visual artifacts introduced by shadow mapping. But increasing the
  * shadow depth map size impacts rendering performance */
 var SHADOW_DEPTH_MAP_SIZE = 2048;
+
+// number of windows per horizontal meter of building wall
+var WINDOWS_PER_METER = 0.5; 
+
+
+//the building wall texture as a data url
+var BUILDING_TEXTURE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gsCERQnr3mFHAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAACPSURBVGje7dmxDYAgEAXQ0zgEJftPRckWOIKSoKfJ+zUh966g+GxjjPhz9vh5AAAAAHJzXJ5orWUNV2tdALh50fLcXNyx9ro3dz8HiIhSyjvT9969QgAAAAAAAAAAAAAAAAAAAAAPZ6IXmqprPgdIaReXARL73ctsfikBAAAAAAAAAAAAAAAAAAAAAAAScgJF9xg/lQTR/QAAAABJRU5ErkJggg=="
