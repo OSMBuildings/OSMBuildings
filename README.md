@@ -148,7 +148,7 @@ addOBJ | url, position, options | adds an OBJ file, specify a geo position and
 addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color}
 addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color}
 addTileLayer | url, options | add a map tile set and specify options {bounds}
-getTarget | x, y | get a building id at position
+getTarget | x, y, function | get a building id at position. You need to provide a callback function do receive the data.
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
 show | function, duration | shows buildings according to a selector function. That function receives parameters id, data of an item
 hide | function, duration | hides buildings according to a selector function. That function receives parameters id, data of an item
@@ -183,12 +183,13 @@ map.on('change', function() {
 
 ~~~ javascript
 map.on('pointermove', function(e) {
-  var id = osmb.getTarget(e.x, e.y);
-  if (id) {
-    osmb.highlight(id, '#f08000');
-  } else {
-    osmb.highlight(null);
-  }
+  var id = osmb.getTarget(e.x, e.y, function(id) {
+    if (id) {
+      osmb.highlight(id, '#f08000');
+    } else {
+      osmb.highlight(null);
+    }
+  });
 });
 ~~~
 

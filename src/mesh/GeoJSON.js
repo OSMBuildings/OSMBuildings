@@ -71,51 +71,46 @@ mesh.GeoJSON = (function() {
     return materialColors[baseMaterials[str] || str] || null;
   }
 
-  function getGeometries(geometry, origin) {
-    var i, il, polygonRings, sub;
+
+
+  /* Converts a geometry of arbitrary type (GeometryCollection, MultiPolygon or Polygon)
+   * to an array of Polygons.
+   */
+  function flattenGeometryHierarchy(geometry, origin) {
     switch (geometry.type) {
       case 'GeometryCollection':
-        var geometries = [];
-        for (i = 0, il = geometry.geometries.length; i < il; i++) {
-          if ((sub = getGeometries(geometry.geometries[i]))) {
-            geometries.push.apply(geometries, sub);
-          }
-        }
-        return geometries;
+        return geometry.geometries.map(function(geometry) {
+          return flattenGeometryHierarchy(geometry.geometries[i]);
+        });
 
       case 'MultiPolygon':
-        var polygons = [];
-        for (i = 0, il = geometry.coordinates.length; i < il; i++) {
-          if ((sub = getGeometries({ type: 'Polygon', coordinates: geometry.coordinates[i] }))) {
-            polygons.push.apply(geometries, sub);
-          }
-        }
-        return polygons;
+        return geometry.coordinates.map(function(polygon) {
+          return flattenGeometryHierarchy({ type: 'Polygon', coordinates: polygon });
+        });
 
       case 'Polygon':
-        polygonRings = geometry.coordinates;
-        break;
+        return transformPolygon(geometry.coordinates, origin);
 
-      default: return [];
+      default:
+        return [];
     }
+  }
 
-    var ring;
-    var res = [];
-
-    for (i = 0, il = polygonRings.length; i < il; i++) {
-      if (!i) {
-        ring = isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
-      } else {
-        ring = !isClockWise(polygonRings[i]) ? polygonRings[i] : polygonRings[i].reverse();
+  // converts all coordinates of all rings in 'polygonRings' from lat/lng pairs
+  // to meters-from-origin.
+  function transformPolygon(polygonRings, origin) {
+    var res = polygonRings.map(function(ring, ringIndex) {
+      // outer rings (== the first ring) need to be clockwise, inner rings
+      // counter-clockwise. If they are not, make them by reversing them.
+      if ((ringIndex === 0) !== isClockWise(ring)) {
+        ring.reverse();
       }
-
-      res[i] = transform(ring, origin);
-    }
-
+      return transform(ring, origin);
+    });
     return [res];
   }
 
-  // Convert all coordinates from lat/lng to 'meters from reference point'
+  // converts all coordinates of 'ring' from lat/lng to 'meters from reference point'
   function transform(ring, origin) {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(origin.latitude / 180 * Math.PI);
 
@@ -189,7 +184,10 @@ mesh.GeoJSON = (function() {
         var feature, geometries;
         for (var i = startIndex; i < endIndex; i++) {
           feature = json.features[i];
-          geometries = getGeometries(feature.geometry, this.position);
+          geometries = flattenGeometryHierarchy(feature.geometry, this.position)
+            .filter(function(ring) {
+              return ring.length > 0;
+            });
 
           for (var j = 0, jl = geometries.length; j < jl; j++) {
             this.addItem(feature.id, feature.properties, geometries[j]);
@@ -224,7 +222,7 @@ mesh.GeoJSON = (function() {
         i,
         skipRoof,
         vertexCount, vertexCountBefore, color,
-        idColor = render.Interaction.idToColor(id),
+        idColor = render.Picking.idToColor(id),
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
         bbox = getBBox(geometry[0]),
         radius = (bbox.maxX - bbox.minX)/2,

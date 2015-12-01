@@ -107,14 +107,15 @@
   //***************************************************************************
 
   map.on('pointermove', function(e) {
-    var id = osmb.getTarget(e.x, e.y);
-    if (id) {
-      document.body.style.cursor = 'pointer';
-      osmb.highlight(id, '#f08000');
-    } else {
-      document.body.style.cursor = 'default';
-      osmb.highlight(null);
-    }
+    var id = osmb.getTarget(e.x, e.y, function(id) {
+      if (id) {
+        document.body.style.cursor = 'pointer';
+        osmb.highlight(id, '#f08000');
+      } else {
+        document.body.style.cursor = 'default';
+        osmb.highlight(null);
+      }
+    });
   });
 
   //***************************************************************************

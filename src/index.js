@@ -166,7 +166,8 @@ OSMBuildings.prototype = {
   },
 
   highlight: function(id) {
-    render.Buildings.highlightID = id ? render.Interaction.idToColor(id) : null;
+    render.Buildings.highlightID = id ? render.Picking.idToColor(id) : null;
+    return this;
   },
 
   // TODO: check naming. show() suggests it affects the layer rather than objects on it
@@ -181,8 +182,10 @@ OSMBuildings.prototype = {
     return this;
   },
 
-  getTarget: function(x, y) {
-    return render.Interaction.getTarget(x, y);
+  getTarget: function(x, y, callback) {
+    // TODO: use promises here
+    render.Picking.getTarget(x, y, callback);
+    return this;
   },
 
   screenshot: function(callback) {

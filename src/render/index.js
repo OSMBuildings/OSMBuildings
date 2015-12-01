@@ -41,7 +41,7 @@ var render = {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
-    render.Interaction.init(); // renders only on demand
+    render.Picking.init(); // renders only on demand
     render.SkyDome.init();
     render.Buildings.init();
     render.Basemap.init();
@@ -188,7 +188,7 @@ var render = {
     MAP.off('resize', this._onResize);
 
     this.stop();
-    render.Interaction.destroy();
+    render.Picking.destroy();
     render.SkyDome.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();

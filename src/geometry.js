@@ -188,20 +188,14 @@ function rasterConvexQuad (quad) {
   return res1.concat(res2);
 }
 
-function normal(ax, ay, az, bx, by, bz, cx, cy, cz) {
-  var d1x = ax-bx;
-  var d1y = ay-by;
-  var d1z = az-bz;
-
-  var d2x = bx-cx;
-  var d2y = by-cy;
-  var d2z = bz-cz;
-
-  var nx = d1y*d2z - d1z*d2y;
-  var ny = d1z*d2x - d1x*d2z;
-  var nz = d1x*d2y - d1y*d2x;
-
-  return unit(nx, ny, nz);
+// computes the normal vector of the triangle a-b-c
+function normal(a, b, c) {
+  var d1 = sub3(a, b);
+  var d2 = sub3(b, c);
+  // normalized cross product of d1 and d2.
+  return norm3([ d1[1]*d2[2] - d1[2]*d2[1],
+                 d1[2]*d2[0] - d1[0]*d2[2],
+                 d1[0]*d2[1] - d1[1]*d2[0] ]);
 }
 
 /* returns a unit-length vector pointing in (not away from!) the
@@ -216,16 +210,6 @@ function getDirection(rotationInDeg, tiltInDeg)
   var z =                      Math.sin(inclination);
   return [x,y,z];
   
-}
-
-function unit(x, y, z) {
-  var m = Math.sqrt(x*x + y*y + z*z);
-
-  if (m === 0) {
-    m = 0.00001;
-  }
-
-  return [x/m, y/m, z/m];
 }
 
 /* returns the quadrilateral part of the XY plane that is currently visible on
