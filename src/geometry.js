@@ -169,7 +169,7 @@ function rasterFlatTriangle( flat0, flat1, other ) {
     rightRasterPos = prevRightRasterPos;
     
     for (var x = leftRasterPos[0]; x <= rightRasterPos[0]; x++) {
-      points.push( [x,y] );
+      points.push([x, y]);
     }
   }
   

@@ -174,30 +174,30 @@ var mesh = {};
 
       this.addTriangle(
         tris,
-      [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ],
-      [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
-      [ center[0] + radius1*nextSin, center[1] + radius1*nextCos, Z ]
+        [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ],
+        [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
+        [ center[0] + radius1*nextSin, center[1] + radius1*nextCos, Z ]
       );
 
-    if (radius2 !== 0) {
+      if (radius2 !== 0) {
         this.addTriangle(
           tris,
-        [ center[0] + radius2*currSin, center[1] + radius2*currCos, Z+height ],
-        [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
-        [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ]
+          [ center[0] + radius2*currSin, center[1] + radius2*currCos, Z+height ],
+          [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
+          [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ]
         );
       }
     }
   };
 
-mesh.addDome = function(tris, center, radius, height, Z) {
-  Z = Z || 0;
+  mesh.addDome = function(tris, center, radius, height, Z) {
+    Z = Z || 0;
     var
       currAngle, nextAngle,
       currSin, currCos,
       nextSin, nextCos,
       currRadius, nextRadius,
-    nextHeight, nextZ,
+      nextHeight, nextZ,
       num = LAT_SEGMENTS/2,
       halfPI = Math.PI/2;
 
@@ -214,37 +214,37 @@ mesh.addDome = function(tris, center, radius, height, Z) {
       currRadius = currCos*radius;
       nextRadius = nextCos*radius;
 
-    nextHeight = (nextSin-currSin)*height;
-    nextZ = Z - nextSin*height;
+      nextHeight = (nextSin-currSin)*height;
+      nextZ = Z - nextSin*height;
 
-    this.addCylinder(tris, center, nextRadius, currRadius, nextHeight, nextZ);
+      this.addCylinder(tris, center, nextRadius, currRadius, nextHeight, nextZ);
     }
   };
 
+  // TODO
   mesh.addSphere = function(tris, center, radius, height, Z) {
     Z = Z || 0;
-    // TODO
     return this.addCylinder(tris, center, radius, radius, height, Z);
   };
 
-mesh.addPyramid = function(tris, polygon, center, height, Z) {
-  Z = Z || 0;
+  mesh.addPyramid = function(tris, polygon, center, height, Z) {
+    Z = Z || 0;
     polygon = polygon[0];
     for (var i = 0, il = polygon.length-1; i < il; i++) {
       this.addTriangle(
         tris,
-      [ polygon[i  ][0], polygon[i  ][1], Z ],
-      [ polygon[i+1][0], polygon[i+1][1], Z ],
-      [ center[0], center[1], Z+height ]
+        [ polygon[i  ][0], polygon[i  ][1], Z ],
+        [ polygon[i+1][0], polygon[i+1][1], Z ],
+        [ center[0], center[1], Z+height ]
       );
     }
   };
 
-mesh.addExtrusion = function(tris, polygon, height, Z) {
-  Z = Z || 0;
-  var ring, last, a, b;
-  for (var i = 0, il = polygon.length; i < il; i++) {
-    ring = polygon[i];
+  mesh.addExtrusion = function(tris, polygon, height, Z) {
+    Z = Z || 0;
+    var ring, last, a, b;
+    for (var i = 0, il = polygon.length; i < il; i++) {
+      ring = polygon[i];
       last = ring.length-1;
 
       if (ring[0][0] !== ring[last][0] || ring[0][1] !== ring[last][1]) {
@@ -257,10 +257,10 @@ mesh.addExtrusion = function(tris, polygon, height, Z) {
         b = ring[r+1];
         this.addQuad(
           tris,
-        [ a[0], a[1], Z ],
-        [ b[0], b[1], Z ],
-        [ b[0], b[1], Z+height ],
-        [ a[0], a[1], Z+height ]
+          [ a[0], a[1], Z ],
+          [ b[0], b[1], Z ],
+          [ b[0], b[1], Z+height ],
+          [ a[0], a[1], Z+height ]
         );
       }
     }
