@@ -11,12 +11,9 @@ Layers.prototype = {
   },
 
   remove: function(layer) {
-    for (var i = 0; i < this.items.length; i++) {
-      if (this.items[i] === layer) {
-        this.items.splice(i, 1);
-        return;
-      }
-    }
+    this.items = this.items.filter(function(item) {
+      return (item !== layer);
+    });
   },
 
   getAttribution: function() {
