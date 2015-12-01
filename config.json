@@ -33,7 +33,7 @@
     "src/geometry.js",
 
     "src/render/index.js",
-    "src/render/Interaction.js",
+    "src/render/Picking.js",
     "src/render/SkyDome.js",
     "src/render/Buildings.js",
     "src/render/Basemap.js",

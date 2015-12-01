@@ -202,7 +202,7 @@ mesh.OBJ = (function() {
         this.data.normals  = this.data.normals.concat(item.normals);
 
         id = this.id || item.id;
-        idColor = render.Interaction.idToColor(id);
+        idColor = render.Picking.idToColor(id);
 
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
         color = this.color || item.color || defaultColor;

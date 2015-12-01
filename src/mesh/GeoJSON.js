@@ -222,7 +222,7 @@ mesh.GeoJSON = (function() {
         i,
         skipRoof,
         vertexCount, vertexCountBefore, color,
-        idColor = render.Interaction.idToColor(id),
+        idColor = render.Picking.idToColor(id),
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
         bbox = getBBox(geometry[0]),
         radius = (bbox.maxX - bbox.minX)/2,
