@@ -3,7 +3,7 @@ var mesh = {};
 
 (function() {
 
-  var LAT_SEGMENTS = 16, LON_SEGMENTS = 24;
+  var LAT_SEGMENTS = 24, LON_SEGMENTS = 32;
 
   //function isVertical(a, b, c) {
   //  return Math.abs(normal(a, b, c)[2]) < 1/5000;
