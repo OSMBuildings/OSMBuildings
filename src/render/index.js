@@ -90,12 +90,12 @@ var render = {
                         [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
                         [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
-    var sun = getSunConfiguration(125, 80, this.getViewQuad());
+    var sun = getSunConfiguration(125, 70, this.getViewQuad());
     render.SkyDome.render();
     gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
     if (render.optimize !== 'quality') {
-      render.Buildings.render(sun.direction);
+      render.Buildings.render(sun);
       render.Basemap.render();
     } else {
       var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));

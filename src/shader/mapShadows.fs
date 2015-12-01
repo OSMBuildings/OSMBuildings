@@ -2,6 +2,20 @@
   precision mediump float;
 #endif
 
+/* This shader computes the diffuse brightness of the map layer. It does *not* 
+ * render the map texture itself, but is instead intended to be blended on top
+ * of an already rendered map.
+ * Note: this shader is not (and does not attempt to) be physically correct.
+ *       It is intented to be a blend between a useful illustration of cast
+ *       shadows and a mitigation of shadow casting artifacts occuring at
+ *       low angles on incidence.
+ *       Map brightness is only affected by shadows, not by light direction.
+ *       Shadows are darkest when light comes from straight above (and thus
+ *       shadows can be computed reliably) and become less and less visible
+ *       with the light source close to the horizont (where moiré and offset
+ *       artifacts would otherwise be visible).
+ */
+
 //uniform sampler2D uTexIndex;
 uniform sampler2D uShadowTexIndex;
 uniform vec3 uFogColor;
@@ -37,6 +51,8 @@ void main() {
 
   float diffuse = dot(uDirToSun, normalize(vNormal));
   diffuse = max( diffuse, 0.0);
+  
+  float shadowStrength = uShadowStrength * pow(diffuse, 1.5);
 
   if (diffuse > 0.0)
   {
@@ -57,11 +73,13 @@ void main() {
                    pos.y);
   }
 
+  diffuse = mix(1.0, diffuse, shadowStrength);
+  
   float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
   float darkness = (1.0 - diffuse);
-  darkness *= uShadowStrength * (1.0 - fogIntensity);
+  darkness *=  (1.0 - fogIntensity);
   gl_FragColor = vec4(vec3(1.0 - darkness), 1.0);
 
 }

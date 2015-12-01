@@ -100,11 +100,13 @@ render.Buildings = {
     gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
     gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
 
-    gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
     gl.uniform1f(shader.uniforms.uShadowStrength,  shadowStrength);
-
-    depthFramebuffer.renderTexture.enable(0);
-    gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
+    
+    if (depthFramebuffer) {
+      gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
+      depthFramebuffer.renderTexture.enable(0);
+      gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
+    }
 
     var
       dataItems = data.Index.items,
