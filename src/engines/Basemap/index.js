@@ -143,13 +143,10 @@ Basemap.prototype = {
     if (!this.listeners[type]) {
       return;
     }
-    var listener = this.listeners[type];
-    for (var i = 0; i < listener.length; i++) {
-      if (listener[i] === fn) {
-        listener.splice(i, 1);
-        return;
-      }
-    }
+
+    this.listeners[type] = this.listeners[type].filter(function(listener) {
+      return (listener !== fn);
+    });
   },
 
   setDisabled: function(flag) {

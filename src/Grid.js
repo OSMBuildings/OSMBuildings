@@ -55,8 +55,6 @@ Grid.prototype = {
   },
   
   getClosestTiles: function(tileList, referencePoint) {
-    var tilesOut = [];
-
     tileList.sort(function(a, b) {
       // tile coordinates correspond to the tile's upper left corner, but for
       // the distance computation we should rather use their center; hence the 0.5 offsets
@@ -69,19 +67,17 @@ Grid.prototype = {
       return distA > distB;
     });
 
-    var tile, prevX, prevY;
+    var prevX, prevY;
 
-    for (var i = 0, il = tileList.length; i < il; i++) {
-      tile = tileList[i];
-      if (tile[0] === prevX && tile[1] === prevY) { //remove duplicates
-        continue;
+    // removes duplicates
+    return tileList.filter(function(tile) {
+      if (tile[0] === prevX && tile[1] === prevY) {
+        return false;
       }
-      tilesOut.push(tile);
       prevX = tile[0];
       prevY = tile[1];
-    }
-
-    return tilesOut;
+      return true;
+    });
   },
   
   /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
@@ -172,7 +168,6 @@ Grid.prototype = {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
     }
 
-
     var tiles = rasterConvexQuad(viewQuad);
     tiles = ( this.fixedZoom ) ?
       this.getClosestTiles(tiles, mapCenterTile) :
@@ -180,12 +175,12 @@ Grid.prototype = {
     
     this.visibleTiles = {};
     for (i = 0; i < tiles.length; i++) {
-      if ( tiles[i][2] === undefined) {
+      if (tiles[i][2] === undefined) {
         tiles[i][2] = zoom;
       }
-        
       this.visibleTiles[ tiles[i] ] = true;
     }
+
     for (var key in this.visibleTiles) {
       tile = key.split(',');
       tileX = parseInt(tile[0]);

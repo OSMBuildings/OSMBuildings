@@ -9,6 +9,7 @@ var Filter = {
     duration = duration || 0;
 
     var filters = this.items;
+    // if filter already exists, do nothing
     for (i = 0, il = filters.length; i < il; i++) {
       if (filters[i].type === type && filters[i].selector === selector) {
         return;
@@ -49,13 +50,9 @@ var Filter = {
 
     var i, il;
 
-    var filters = this.items;
-    for (i = 0, il = filters.length; i < il; i++) {
-      if (filters[i].type === type && filters[i].selector === selector) {
-        filters.splice(i, 1);
-        break;
-      }
-    }
+    var filters = this.items.filter(function(item) {
+      return (item.type !== type || item.selector !== selector);
+    });
 
     // removes a single filter from all items
     // currently only suitable for 'hidden'
