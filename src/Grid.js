@@ -77,7 +77,7 @@ Grid.prototype = {
       prevX = tile[0];
       prevY = tile[1];
       return true;
-    })
+    });
   },
   
   /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
