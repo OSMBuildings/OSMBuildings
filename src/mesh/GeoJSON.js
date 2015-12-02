@@ -274,7 +274,9 @@ mesh.GeoJSON = (function() {
         break;
 
         default:
-          this.addExtrusion(this.data, geometry, H, Z, undefined, hasContinuousWindows);
+          var minLevel = properties.minLevel || 0;
+          var numFloors = "levels" in properties ? properties.levels - minLevel : undefined;
+          this.addExtrusion(this.data, geometry, H, Z, numFloors, hasContinuousWindows);
       }
 
       vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
