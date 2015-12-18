@@ -459,3 +459,4 @@ function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
 function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}
 function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
 function dist3(a,b){ return len3(sub3(a,b));}
+function equal3(a, b) { return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];}

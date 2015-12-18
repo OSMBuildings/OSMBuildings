@@ -42,7 +42,7 @@ var render = {
     gl.enable(gl.DEPTH_TEST);
 
     render.Picking.init(); // renders only on demand
-    render.SkyDome.init();
+    render.Sky = new render.SkyWall();
     render.Buildings.init();
     render.Basemap.init();
     render.Overlay.init();
@@ -77,26 +77,35 @@ var render = {
     requestAnimationFrame( this.renderFrame.bind(this));
 
     this.onChange();    
-    gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 1);
+    gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
     }
-    /*
-    var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
-    quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
-                        [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
-                        [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
-                        [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
+    
+    var viewTrapezoid = this.getViewQuad();
+                                          
+/*
+    this.quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
+                             [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
+                             [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
+                             [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);
+*/
+    
+    render.Sky.updateGeometry( viewTrapezoid);
 
-    var sun = getSunConfiguration(125, 70, this.getViewQuad());
-    render.SkyDome.render();
-    gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
-
+    var sun = getSunConfiguration(125, 70, viewTrapezoid);
+    
     if (render.optimize !== 'quality') {
       render.Buildings.render(sun);
       render.Basemap.render();
+      gl.enable(gl.BLEND);
+      gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE); 
+      gl.disable(gl.DEPTH_TEST);      
+      render.Sky.render();
+      gl.disable(gl.BLEND);
+      gl.enable(gl.DEPTH_TEST);
     } else {
       var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
@@ -107,11 +116,17 @@ var render = {
       render.Buildings.render(sun, render.SunViewDepthMap.framebuffer);
       render.Basemap.render();
 
-      gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
       gl.enable(gl.BLEND);
       {
+        //multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
+        gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
         render.MapShadows.render(sun, render.SunViewDepthMap.framebuffer, 0.5);
         render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
+
+        gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE);
+        gl.disable(gl.DEPTH_TEST);
+        render.Sky.render();
+        gl.enable(gl.DEPTH_TEST);
       }
       gl.disable(gl.BLEND);
 
@@ -140,10 +155,10 @@ var render = {
     var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     /* fogDistance: closest distance at which the fog affects the geometry */
-    this.fogDistance = Math.max(1500, lowerLeftDistanceToCenter);
+    this.fogDistance = Math.max(3000, lowerLeftDistanceToCenter);
     /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
      *                  completely enclosed in fog. */
-    this.fogBlurDistance = 300;
+    this.fogBlurDistance = 500;
   },
 
   onChange: function() {
@@ -159,7 +174,7 @@ var render = {
     this.viewMatrix = new glx.Matrix()
       .rotateZ(MAP.rotation)
       .rotateX(MAP.tilt)
-      .translate(0, 0, -1220/scale) //move away to simulate zoom; -1220 scales MAP tiles to ~256px
+      .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];
@@ -202,7 +217,7 @@ var render = {
 
     this.stop();
     render.Picking.destroy();
-    render.SkyDome.destroy();
+    render.Sky.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
 

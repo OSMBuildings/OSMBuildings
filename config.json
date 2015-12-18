@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "buildings", "buildingsQuality", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur", "mapShadows"],
+  "shaders": ["interaction", "buildings", "buildingsQuality", "flatColor", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur", "mapShadows"],
 
   "lib": [
     "lib/earcut.dev.js",
@@ -35,6 +35,7 @@
     "src/render/index.js",
     "src/render/Picking.js",
     "src/render/SkyDome.js",
+    "src/render/SkyWall.js",
     "src/render/Buildings.js",
     "src/render/MapShadows.js",
     "src/render/Basemap.js",

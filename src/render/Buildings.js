@@ -115,7 +115,7 @@ render.Buildings = {
     }
     
     this.wallTexture.enable(0);
-      gl.uniform1i(shader.uniforms.uWallTexIndex, 0);
+    gl.uniform1i(shader.uniforms.uWallTexIndex, 0);
     
 
     var
