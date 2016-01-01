@@ -20,7 +20,7 @@ float getDepth(vec2 pos, int dx, int dy)
                                               pos.t + float(dy) * uInverseTexHeight));
   //convert back to depth value
   return (codedDepth.x + 
-         codedDepth.y/ 255.0 + 
+         codedDepth.y/ 255.0 +
          codedDepth.z/(255.0*255.0)) / 256.0 * 255.0;
 }
 

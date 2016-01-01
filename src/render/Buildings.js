@@ -130,11 +130,11 @@ render.Buildings = {
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
       gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, sunConfiguration.viewProjMatrix));
 
-      shader.bindBuffer(item.vertexBuffer, "aPosition");
-      shader.bindBuffer(item.normalBuffer, "aNormal");
-      shader.bindBuffer(item.colorBuffer,  "aColor");
-      shader.bindBuffer(item.filterBuffer, "aFilter");
-      shader.bindBuffer(item.idBuffer,     "aID");
+      shader.bindBuffer(item.vertexBuffer, 'aPosition');
+      shader.bindBuffer(item.normalBuffer, 'aNormal');
+      shader.bindBuffer(item.colorBuffer,  'aColor');
+      shader.bindBuffer(item.filterBuffer, 'aFilter');
+      shader.bindBuffer(item.idBuffer,     'aID');
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

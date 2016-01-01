@@ -133,9 +133,9 @@ function rasterFlatTriangle( flat0, flat1, other ) {
 
   //console.log("RFT:\n%s\n%s\n%s", String(flat0), String(flat1), String(other));
   var points = [];
-  assert( flat0[1] === flat1[1], "not a flat triangle");
-  assert( other[1] !== flat0[1], "not a triangle");
-  assert( flat0[0] !== flat1[0], "not a triangle");
+  assert(flat0[1] === flat1[1], 'not a flat triangle');
+  assert(other[1] !== flat0[1], 'not a triangle');
+  assert(flat0[0] !== flat1[0], 'not a triangle');
 
   if (flat0[0] > flat1[0]) //guarantees that flat0 is always left of flat1
   {
@@ -181,7 +181,7 @@ function rasterFlatTriangle( flat0, flat1, other ) {
  * then the return value of this method is undefined.
  */
 function rasterConvexQuad (quad) {
-  assert(quad.length == 4, "Error: Quadrilateral with more or less than four vertices");
+  assert(quad.length == 4, 'Error: Quadrilateral with more or less than four vertices');
   var res1  = rasterTriangle( quad[0], quad[1], quad[2]);
   var res2 =  rasterTriangle( quad[0], quad[2], quad[3]);
   
