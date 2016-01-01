@@ -175,7 +175,7 @@ var label = document.getElementById('label');
 map.on('change', function() {
   var pos = osmb.project(52.52, 13.37, 50);
   label.style.left = Math.round(pos.x) + 'px';
-  label.stye.top = Math.round(pos.y) + 'px';
+  label.style.top = Math.round(pos.y) + 'px';
 });
 ~~~
 
