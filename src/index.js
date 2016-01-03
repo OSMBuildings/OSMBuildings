@@ -37,7 +37,13 @@ var OSMBuildings = function(options) {
   render.Buildings.showBackfaces = options.showBackfaces;
 
   // can be: 'quality', 'performance'
-  render.optimize = options.optimize || 'quality';
+  APP.optimize = options.optimize || 'quality';
+
+  render.effects = {};
+  var effects = options.effects || [];
+  for (var i = 0; i < effects.length; i++) {
+    render.effects[ effects[i] ] = true;
+  }
 
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
@@ -69,7 +75,7 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    glx = new GLX(MAP.container, MAP.width, MAP.height, render.optimize);
+    glx = new GLX(MAP.container, MAP.width, MAP.height, APP.optimize);
     gl = glx.context;
 
     MAP.addLayer(this);

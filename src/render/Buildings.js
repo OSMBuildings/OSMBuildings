@@ -3,7 +3,7 @@ render.Buildings = {
 
   init: function() {
   
-    this.shader = (render.optimize !== 'quality') ?
+    this.shader = !render.effects.shadows ?
       new glx.Shader({
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
@@ -28,9 +28,7 @@ render.Buildings = {
           'uHighlightID',
           'uTime'
         ]
-    }) :
-    
-      new glx.Shader({
+      }) : new glx.Shader({
         vertexShader: Shaders.buildingsQuality.vertex,
         fragmentShader: Shaders.buildingsQuality.fragment,
         attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],

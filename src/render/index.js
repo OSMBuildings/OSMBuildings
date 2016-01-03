@@ -94,7 +94,7 @@ var render = {
     render.SkyDome.render();
     gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
-    if (render.optimize !== 'quality') {
+    if (!render.effects.shadows) {
       render.Buildings.render();
       render.Basemap.render();
     } else {
