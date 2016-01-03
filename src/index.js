@@ -25,8 +25,6 @@ var OSMBuildings = function(options) {
 
   APP.baseURL = options.baseURL || '.';
 
-  APP.date = options.date || new Date();
-
   render.bendRadius = 500;
   render.bendDistance = 500;
 
@@ -36,8 +34,7 @@ var OSMBuildings = function(options) {
 
   render.Buildings.showBackfaces = options.showBackfaces;
 
-  // can be: 'quality', 'performance'
-  APP.optimize = options.optimize || 'quality';
+  APP.highQuality = !options.lowQuality;
 
   render.effects = {};
   var effects = options.effects || [];
@@ -75,12 +72,12 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    glx = new GLX(MAP.container, MAP.width, MAP.height, APP.optimize);
+    glx = new GLX(MAP.container, MAP.width, MAP.height, APP.highQuality);
     gl = glx.context;
 
     MAP.addLayer(this);
 
-    this.setDate(APP.date);
+    this.setDate(new Date());
 
     render.start();
 

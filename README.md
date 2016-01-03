@@ -71,7 +71,6 @@ In a script section initialize the map and add a map tile layer.
   var osmb = new OSMBuildings({
     minZoom: 15,
     maxZoom: 22,
-    optimize: 'performance', // default: 'quality'
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
@@ -134,10 +133,10 @@ attribution | string | attribution, optional
 showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
 fogColor | string | color to be used for sky gradients and distance fog.
 backgroundColor | string | overall background color
-optimize | string | sets rendering precedence for 'quality' or 'performance' (default)
+lowQuality | boolean | enables faster rendering at cost of image quality, consider also removing any effects
+effects | date | date for shadow calculation
 project | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 unproject | x, y | transforms a screen position into a geo coordinate with elevation 0
-date | date | date for shadow calculation
 
 
 ### OSM Buildings methods
