@@ -29,8 +29,8 @@ render.Buildings = {
           'uTime'
         ]
       }) : new glx.Shader({
-        vertexShader: Shaders.buildingsQuality.vertex,
-        fragmentShader: Shaders.buildingsQuality.fragment,
+        vertexShader: Shaders['buildings.shadows'].vertex,
+        fragmentShader: Shaders['buildings.shadows'].fragment,
         attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
         uniforms: [
           'uModelMatrix',

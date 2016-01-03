@@ -8,8 +8,8 @@ render.MapShadows = {
 
   init: function() {
     this.shader = new glx.Shader({
-      vertexShader: Shaders.mapShadows.vertex,
-      fragmentShader: Shaders.mapShadows.fragment,
+      vertexShader: Shaders['basemap.shadows'].vertex,
+      fragmentShader: Shaders['basemap.shadows'].fragment,
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
         'uModelMatrix',
