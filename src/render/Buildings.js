@@ -26,8 +26,7 @@ render.Buildings = {
           'uBendDistance',
           'uHighlightColor',
           'uHighlightID',
-          'uTime',
-          'uDirToSun', 
+          'uTime'
         ]
     }) :
     
@@ -45,6 +44,7 @@ render.Buildings = {
           'uAlpha',
           'uLightColor',
           'uLightDirection',
+          'uShadowStrength',
           'uLowerEdgePoint',
           'uFogDistance',
           'uFogBlurDistance',
@@ -54,16 +54,14 @@ render.Buildings = {
           'uHighlightColor',
           'uHighlightID',
           'uTime',
-          'uDirToSun', 
-          'uSunMatrix', 
+          'uSunMatrix',
           'uShadowTexIndex',
-          'uShadowTexDimensions',
-          'uShadowEffectStrength',
+          'uShadowTexDimensions'
         ]
     });
   },
 
-  render: function(sunConfiguration, depthFramebuffer, shadowStrength) {
+  render: function(depthFramebuffer, shadowStrength) {
 
     var shader = this.shader;
     shader.enable();
@@ -73,7 +71,8 @@ render.Buildings = {
     }
 
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, sunConfiguration.direction);
+    gl.uniform3fv(shader.uniforms.uLightDirection, Sun.direction);
+    gl.uniform1f(shader.uniforms.uShadowStrength, shadowStrength);
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
@@ -128,7 +127,7 @@ render.Buildings = {
 
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-      gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, sunConfiguration.viewProjMatrix));
+      gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
 
       shader.bindBuffer(item.vertexBuffer, 'aPosition');
       shader.bindBuffer(item.normalBuffer, 'aNormal');

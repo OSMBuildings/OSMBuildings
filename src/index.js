@@ -25,6 +25,8 @@ var OSMBuildings = function(options) {
 
   APP.baseURL = options.baseURL || '.';
 
+  APP.date = options.date || new Date();
+
   render.bendRadius = 500;
   render.bendDistance = 500;
 
@@ -72,6 +74,8 @@ OSMBuildings.prototype = {
 
     MAP.addLayer(this);
 
+    this.setDate(APP.date);
+
     render.start();
 
     return this;
@@ -92,6 +96,11 @@ OSMBuildings.prototype = {
     //if (color.isValid) {
     //  DEFAULT_COLOR = color.toArray();
     //}
+    return this;
+  },
+
+  setDate: function(date) {
+    Sun.setDate(typeof date === 'string' ? new Date(date) : date);
     return this;
   },
 

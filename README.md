@@ -137,6 +137,7 @@ backgroundColor | string | overall background color
 optimize | string | sets rendering precedence for 'quality' or 'performance' (default)
 project | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 unproject | x, y | transforms a screen position into a geo coordinate with elevation 0
+date | date | date for shadow calculation
 
 
 ### OSM Buildings methods
@@ -153,6 +154,7 @@ highlight | id, color | highlight a given building by id, this can only be one, 
 show | function, duration | shows buildings according to a selector function. That function receives parameters id, data of an item
 hide | function, duration | hides buildings according to a selector function. That function receives parameters id, data of an item
 screenshot | function | creates a screenshot from current view and returns it as data url. You need to provide a callback function do receive the data.
+setDate | date | sets a date for shadow calculations
 
 
 ### OSM Buildings server

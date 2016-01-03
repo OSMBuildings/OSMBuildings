@@ -35,6 +35,7 @@
 
     "src/render/index.js",
     "src/render/Picking.js",
+    "src/render/Sun.js",
     "src/render/SkyDome.js",
     "src/render/Buildings.js",
     "src/render/MapShadows.js",

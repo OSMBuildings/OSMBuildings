@@ -30,7 +30,6 @@ varying vec3 vNormal;
 varying vec3 vSunRelPosition;
 varying float verticalDistanceToLowerEdge;
 
-
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 
@@ -96,6 +95,5 @@ void main() {
     // *** shadow mapping ********
     vec4 sunRelPosition = uSunMatrix * pos;
     vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;
-    
   }
 }
