@@ -13,8 +13,8 @@ render.Overlay = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
-      attributes: ["aPosition", "aTexCoord"],
-      uniforms: [ "uMatrix", "uTexIndex", "uColor"]
+      attributes: ['aPosition', 'aTexCoord'],
+      uniforms: [ 'uMatrix', 'uTexIndex', 'uColor']
     });
   },
 
@@ -45,10 +45,10 @@ render.Overlay = {
     
     if (framebufferConfig !== undefined)
     {
-      tcHorizMin = 0                                  / framebufferConfig.width;
-      tcHorizMax = (framebufferConfig.usedWidth  - 0) / framebufferConfig.width;
-      tcVertMin  = 0                                  / framebufferConfig.height;
-      tcVertMax  = (framebufferConfig.usedHeight - 0) / framebufferConfig.height;
+      tcHorizMin = 0                            / framebufferConfig.width;
+      tcHorizMax = framebufferConfig.usedWidth  / framebufferConfig.width;
+      tcVertMin  = 0                            / framebufferConfig.height;
+      tcVertMax  = framebufferConfig.usedHeight / framebufferConfig.height;
     } else
     {
       tcHorizMin = tcVertMin = 0.0;

@@ -2,7 +2,7 @@
 //var ext = GL.getExtension('WEBGL_lose_context');
 //ext.loseContext();
 
-var GLX = function(container, width, height, optimize) {
+var GLX = function(container, width, height, highQuality) {
   var canvas = document.createElement('CANVAS');
   canvas.style.position = 'absolute';
   canvas.width = width;
@@ -10,7 +10,7 @@ var GLX = function(container, width, height, optimize) {
   container.appendChild(canvas);
 
   var options = {
-    antialias: true, //(optimize === 'quality'),
+    antialias: highQuality,
     depth: true,
     premultipliedAlpha: false
   };
@@ -43,7 +43,7 @@ var GLX = function(container, width, height, optimize) {
   context.enable(context.DEPTH_TEST);
   context.clearColor(0.5, 0.5, 0.5, 1);
 
-  if (optimize === 'quality') {
+  if (highQuality) {
     context.anisotropyExtension = context.getExtension('EXT_texture_filter_anisotropic');
     if (context.anisotropyExtension) {
       context.anisotropyExtension.maxAnisotropyLevel = context.getParameter(

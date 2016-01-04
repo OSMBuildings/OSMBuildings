@@ -90,32 +90,32 @@ var render = {
                         [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
                         [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
-    var sun = getSunConfiguration(125, 70, this.getViewQuad());
+    Sun.updateView(this.getViewQuad());
     render.SkyDome.render();
     gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
-    if (render.optimize !== 'quality') {
-      render.Buildings.render(sun);
+    if (!render.effects.shadows) {
+      render.Buildings.render();
       render.Basemap.render();
     } else {
       var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
       render.CameraViewDepthMap.render(this.viewProjMatrix, config, true);
-      render.SunViewDepthMap.render(    sun.viewProjMatrix);
+      render.SunViewDepthMap.render(Sun.viewProjMatrix);
       render.AmbientMap.render(render.CameraViewDepthMap, config, 0.5);
       render.Blur.render(render.AmbientMap.framebuffer, config);
-      render.Buildings.render(sun, render.SunViewDepthMap.framebuffer);
+      render.Buildings.render(render.SunViewDepthMap.framebuffer, 0.5);
       render.Basemap.render();
 
       gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
       gl.enable(gl.BLEND);
       {
-        render.MapShadows.render(sun, render.SunViewDepthMap.framebuffer, 0.5);
-        render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
+        render.MapShadows.render(render.SunViewDepthMap.framebuffer, 0.5);
+        render.Overlay.render(render.Blur.framebuffer.renderTexture.id, config);
       }
       gl.disable(gl.BLEND);
 
-      //render.HudRect.render( render.SunViewDepthMap.framebuffer.renderTexture.id, config );
+      // render.HudRect.render(render.SunViewDepthMap.framebuffer.renderTexture.id, config);
     }
 
     if (this.screenshotCallback) {
@@ -159,7 +159,7 @@ var render = {
     this.viewMatrix = new glx.Matrix()
       .rotateZ(MAP.rotation)
       .rotateX(MAP.tilt)
-      .translate(0, 0, -1220/scale) //move away to simulate zoom; -1220 scales MAP tiles to ~256px
+      .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];

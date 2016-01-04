@@ -50,7 +50,7 @@ var Filter = {
 
     var i, il;
 
-    var filters = this.items.filter(function(item) {
+    this.items = this.items.filter(function(item) {
       return (item.type !== type || item.selector !== selector);
     });
 

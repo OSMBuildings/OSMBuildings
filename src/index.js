@@ -34,8 +34,13 @@ var OSMBuildings = function(options) {
 
   render.Buildings.showBackfaces = options.showBackfaces;
 
-  // can be: 'quality', 'performance'
-  render.optimize = options.optimize || 'quality';
+  APP.highQuality = !options.lowQuality;
+
+  render.effects = {};
+  var effects = options.effects || [];
+  for (var i = 0; i < effects.length; i++) {
+    render.effects[ effects[i] ] = true;
+  }
 
   this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
@@ -67,10 +72,12 @@ OSMBuildings.prototype = {
 
   addTo: function(map) {
     MAP = map;
-    glx = new GLX(MAP.container, MAP.width, MAP.height, render.optimize);
+    glx = new GLX(MAP.container, MAP.width, MAP.height, APP.highQuality);
     gl = glx.context;
 
     MAP.addLayer(this);
+
+    this.setDate(new Date());
 
     render.start();
 
@@ -92,6 +99,11 @@ OSMBuildings.prototype = {
     //if (color.isValid) {
     //  DEFAULT_COLOR = color.toArray();
     //}
+    return this;
+  },
+
+  setDate: function(date) {
+    Sun.setDate(typeof date === 'string' ? new Date(date) : date);
     return this;
   },
 

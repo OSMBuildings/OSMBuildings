@@ -15,7 +15,8 @@
   "dependencies": {
     "Color": "git://github.com/kekscom/Color.git",
     "GLX": "git://github.com/kekscom/glx.git",
-    "earcut": "^2.0.5"
+    "earcut": "^2.0.5",
+    "suncalc": "git://github.com/OSMBuildings/suncalc.git"
   },
   "devDependencies": {
     "grunt": "^0.4.4",

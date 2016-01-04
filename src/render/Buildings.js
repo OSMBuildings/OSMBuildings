@@ -3,7 +3,7 @@ render.Buildings = {
 
   init: function() {
   
-    this.shader = (render.optimize !== 'quality') ?
+    this.shader = !render.effects.shadows ?
       new glx.Shader({
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
@@ -27,14 +27,11 @@ render.Buildings = {
           'uHighlightColor',
           'uHighlightID',
           'uTime',
-          'uDirToSun', 
           'uWallTexIndex'
         ]
-    }) :
-    
-      new glx.Shader({
-        vertexShader: Shaders.buildingsQuality.vertex,
-        fragmentShader: Shaders.buildingsQuality.fragment,
+      }) : new glx.Shader({
+        vertexShader: Shaders['buildings.shadows'].vertex,
+        fragmentShader: Shaders['buildings.shadows'].fragment,
         attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aID'],
         uniforms: [
           'uModelMatrix',
@@ -46,6 +43,7 @@ render.Buildings = {
           'uAlpha',
           'uLightColor',
           'uLightDirection',
+          'uShadowStrength',
           'uLowerEdgePoint',
           'uFogDistance',
           'uFogBlurDistance',
@@ -55,12 +53,10 @@ render.Buildings = {
           'uHighlightColor',
           'uHighlightID',
           'uTime',
-          'uDirToSun', 
-          'uSunMatrix', 
+          'uSunMatrix',
           'uShadowTexIndex',
           'uShadowTexDimensions',
-          'uShadowEffectStrength',
-          'uWallTexIndex',
+          'uWallTexIndex'
         ]
     });
     
@@ -69,7 +65,7 @@ render.Buildings = {
     this.wallTexture.load( BUILDING_TEXTURE);
   },
 
-  render: function(sunConfiguration, depthFramebuffer, shadowStrength) {
+  render: function(depthFramebuffer, shadowStrength) {
 
     var shader = this.shader;
     shader.enable();
@@ -79,7 +75,8 @@ render.Buildings = {
     }
 
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, sunConfiguration.direction);
+    gl.uniform3fv(shader.uniforms.uLightDirection, Sun.direction);
+    gl.uniform1f(shader.uniforms.uShadowStrength, shadowStrength);
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
     gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
@@ -138,14 +135,14 @@ render.Buildings = {
 
       gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-      gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, sunConfiguration.viewProjMatrix));
+      gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
 
-      shader.bindBuffer(item.vertexBuffer,   "aPosition");
-      shader.bindBuffer(item.texCoordBuffer, "aTexCoord");
-      shader.bindBuffer(item.normalBuffer,   "aNormal");
-      shader.bindBuffer(item.colorBuffer,    "aColor");
-      shader.bindBuffer(item.filterBuffer,   "aFilter");
-      shader.bindBuffer(item.idBuffer,       "aID");
+      shader.bindBuffer(item.vertexBuffer,   'aPosition');
+      shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');
+      shader.bindBuffer(item.normalBuffer,   'aNormal');
+      shader.bindBuffer(item.colorBuffer,    'aColor');
+      shader.bindBuffer(item.filterBuffer,   'aFilter');
+      shader.bindBuffer(item.idBuffer,       'aID');
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
