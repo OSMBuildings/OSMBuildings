@@ -12,8 +12,7 @@ function getDirection(rotationInDeg, tiltInDeg) {
 var Sun = {
 
   setDate: function(date) {
-    //var pos = suncalc(date, MAP.position.latitude, MAP.position.longitude);
-    var pos = { azimuth: 45, altitude: 45};
+    var pos = suncalc(date, MAP.position.latitude, MAP.position.longitude);
     var rotationInDeg = pos.azimuth / (Math.PI/180);
     var tiltInDeg     = 90 - pos.altitude / (Math.PI/180);
 
