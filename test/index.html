@@ -134,12 +134,72 @@
       attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">MapBox</a>'
     }
   );
+  var colorizerHeightInformationAvailability  = function(properties, colors) {
+    
+    if (!properties.levels && !properties.height) {
+      colors.roof = "red";
+    } else if (!properties.height) {
+      colors.roof = "lime";
+    } else {
+      colors.roof = "green";
+    }
+    
+    colors.wall = colors.roof;
+  }
 
+  var colorizerHeight  = function(properties, colors) {
+    var clamp = function(x, min, max) {
+      return Math.min(Math.max(x, min), max);
+    };
+    var height = parseFloat(properties.height) || (parseFloat(properties.levels)* 3.5) || 0;
+
+    if (height < 20)
+      colors.wall = "#CCCCCC";
+    else if (height < 30)
+      colors.wall = "purple";
+    else if (height < 60)
+      colors.wall = "#CC4444";
+    else 
+      colors.wall = "orange";
+      
+    colors.roof = colors.wall;
+  }
+  
+  var colorizerHighlightLandmarks = function(properties, colors)
+  {
+    var landmarkIDs = {
+      3074565: true,  // Rotes Rathaus
+      313675136: true, // Rotes Rathaus
+      2167988: true,  // Berliner Dom
+      37449517: true, // Bundestag
+      2326380: true,  // Kanzleramt
+      4065110: true,  // Fernsehturm components
+      304987177: true,
+      19046101: true,
+      96880470: true,
+      326772329: true,
+      230818931: true,	
+      304987174: true,
+      304987172: true,
+      304987176: true,
+      96880477: true,
+      304987173: true
+    }
+
+    if (properties.id in landmarkIDs)
+      colors.wall = "#CC4444";
+    else
+      colors.wall = "#DDDDDD";
+      
+    colors.roof = colors.wall;
+  }
+  
   osmb.addGeoJSONTiles(
     'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
 //  '../tiles/{z}/{x}/{y}.json',
 //  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
+      colorizer: colorizerHeightInformationAvailability,
       fixedZoom: 15
       // bounds
     });

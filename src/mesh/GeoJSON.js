@@ -124,7 +124,7 @@ mesh.GeoJSON = (function() {
 
     return res;
   }
-
+  
   //***************************************************************************
 
   function constructor(url, options) {
@@ -132,6 +132,7 @@ mesh.GeoJSON = (function() {
 
     this.id = options.id;
     this.color = options.color;
+    this.colorizer = options.colorizer;
 
     this.replace   = !!options.replace;
     this.scale     = options.scale     || 1;
@@ -216,9 +217,11 @@ mesh.GeoJSON = (function() {
         height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT),
         minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0),
         roofHeight = properties.roofHeight ||  3,
-
-        wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material),
-        roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial),
+        
+        colors = { 
+          wall: properties.wallColor || properties.color || getMaterialColor(properties.material),
+          roof: properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial)
+        },
         hasContinuousWindows = (properties.material === "glass"),
         i,
         skipRoof,
@@ -230,6 +233,18 @@ mesh.GeoJSON = (function() {
         center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2],
         H, Z;
 
+      // add ID to item properties to allow user-defined colorizers to color
+      // buildings based in their OSM ID
+      properties.id = properties.id | id; 
+      
+      //let user-defined colorizer overwrite the colors
+      if (this.colorizer) {
+        this.colorizer(properties, colors); 
+      }
+
+      var wallColor = colors.wall;
+      var roofColor = colors.roof;
+        
       // flat roofs or roofs we can't handle should not affect building's height
       switch (properties.roofShape) {
         case 'cone':
