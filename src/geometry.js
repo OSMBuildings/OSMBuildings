@@ -262,16 +262,16 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
     vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
   }
 
-  /* if vTopLeft is further than maxFarEdgeDistance away vertically from the map center,
+  /* if vTopLeft is further than maxFarEdgeDistance away vertically from the lower edge,
    * move it closer. */
- if (dot2( viewDirOnMap, vTopLeft) > maxFarEdgeDistance) {
+ if (dot2( viewDirOnMap, sub2(vTopLeft, vBottomLeft)) > maxFarEdgeDistance) {
     vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
     f = dot2(vLeftDir, viewDirOnMap);
     vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
  }
 
  /* dito for vTopRight*/
- if (dot2( viewDirOnMap, vTopRight) > maxFarEdgeDistance) {
+ if (dot2( viewDirOnMap, sub2(vTopRight, vBottomRight)) > maxFarEdgeDistance) {
     vRightDir = norm2(sub2( vTopRight, vBottomRight));
     f = dot2(vRightDir, viewDirOnMap);
     vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));

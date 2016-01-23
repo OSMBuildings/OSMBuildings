@@ -118,11 +118,21 @@ var render = {
 
       gl.enable(gl.BLEND);
       {
-        //multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
+        // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
+        // this aplies the shadow and SSAO effects (which selectively darken the scene)
+        // while keeping the alpha channel (that corresponds to how much the
+        // geometry should be blurred into the background in the next step) intact
         gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
         render.MapShadows.render(sun, render.SunViewDepthMap.framebuffer, 0.5);
         render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
 
+        // linear interpolation between the colors of the current framebuffer 
+        // ( =building geometries) and of the sky. The interpolation factor
+        // is the geometry alpha value, which contains the 'foggyness' of each pixel
+        // the alpha interpolation functions is set to gl.ONE for both operands
+        // to ensure that the alpha channel will become 1.0 for each pixel after this
+        // operation, and thus the whole canvas is not rendered partially transparently
+        // over its background.
         gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE);
         gl.disable(gl.DEPTH_TEST);
         render.Sky.render();
