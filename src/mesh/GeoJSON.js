@@ -274,7 +274,15 @@ mesh.GeoJSON = (function() {
         break;
 
         default:
-          this.addExtrusion(this.data, geometry, H, Z, properties.levels, hasContinuousWindows);
+          var numLevels;
+          if (properties.levels && properties.minLevel)
+            numLevels = parseFloat(properties.levels) - parseFloat(properties.minLevel);
+          else if (properties.levels)
+            numLevels = parseFloat(properties.levels);
+          else
+            numLevels = H / METERS_PER_LEVEL;
+            
+          this.addExtrusion(this.data, geometry, H, Z, Math.max(Math.floor(numLevels), 1), hasContinuousWindows);
       }
 
       vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
@@ -393,7 +401,7 @@ mesh.GeoJSON = (function() {
 
     addExtrusion: function(tris, polygon, height, Z, numFloors, hasContinuousWindows) {
       Z = Z || 0;
-      numFloors = numFloors || Math.max( 1, Math.floor(height / METERS_PER_LEVEL));
+      //numFloors = numFloors || Math.max( 1, Math.floor( (height-Z) / METERS_PER_LEVEL));
       var ring, last;
       for (var i = 0, il = polygon.length; i < il; i++) {
         ring = polygon[i];
