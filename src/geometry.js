@@ -133,9 +133,9 @@ function rasterFlatTriangle( flat0, flat1, other ) {
 
   //console.log("RFT:\n%s\n%s\n%s", String(flat0), String(flat1), String(other));
   var points = [];
-  assert( flat0[1] === flat1[1], "not a flat triangle");
-  assert( other[1] !== flat0[1], "not a triangle");
-  assert( flat0[0] !== flat1[0], "not a triangle");
+  assert(flat0[1] === flat1[1], 'not a flat triangle');
+  assert(other[1] !== flat0[1], 'not a triangle');
+  assert(flat0[0] !== flat1[0], 'not a triangle');
 
   if (flat0[0] > flat1[0]) //guarantees that flat0 is always left of flat1
   {
@@ -180,11 +180,10 @@ function rasterFlatTriangle( flat0, flat1, other ) {
  * convex quadrilateral 'quad'. If the passed quadrilateral is not convex,
  * then the return value of this method is undefined.
  */
-function rasterConvexQuad (quad) {
-  assert(quad.length == 4, "Error: Quadrilateral with more or less than four vertices");
-  var res1  = rasterTriangle( quad[0], quad[1], quad[2]);
-  var res2 =  rasterTriangle( quad[0], quad[2], quad[3]);
-  
+function rasterConvexQuad(quad) {
+  assert(quad.length == 4, 'Error: Quadrilateral with more or less than four vertices');
+  var res1  = rasterTriangle(quad[0], quad[1], quad[2]);
+  var res2 =  rasterTriangle(quad[0], quad[2], quad[3]);
   return res1.concat(res2);
 }
 
@@ -196,20 +195,6 @@ function normal(a, b, c) {
   return norm3([ d1[1]*d2[2] - d1[2]*d2[1],
                  d1[2]*d2[0] - d1[0]*d2[2],
                  d1[0]*d2[1] - d1[1]*d2[0] ]);
-}
-
-/* returns a unit-length vector pointing in (not away from!) the
- * direction given by rotationInDeg and tiltInDeg. */
-function getDirection(rotationInDeg, tiltInDeg)
-{
-  var azimuth = rotationInDeg / 180 * Math.PI;
-  var inclination= (90 - tiltInDeg) / 180 * Math.PI;
-  
-  var x = -Math.sin(azimuth) * Math.cos(inclination);
-  var y =  Math.cos(azimuth) * Math.cos(inclination);
-  var z =                      Math.sin(inclination);
-  return [x,y,z];
-  
 }
 
 /* returns the quadrilateral part of the XY plane that is currently visible on
@@ -303,28 +288,6 @@ function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height)
   }
   
   return new glx.Matrix.Ortho(left, right, top, bottom, near, far);
-  
-}
-
-function getSunConfiguration(azimuth, elevation, coveredGroundVertices) {
-  var sun = {};
-  
-  sun.viewMatrix = new glx.Matrix()
-    .rotateZ(-azimuth)
-    .rotateX(elevation) //
-    .translate(0, 0, -5000)
-    .scale(1, -1, 1); // flip Y
-
-  
-  sun.direction = getDirection(-azimuth, elevation);
-  sun.projMatrix = getCoveringOrthoProjection( 
-      substituteZCoordinate(coveredGroundVertices, 0.0).concat(
-      substituteZCoordinate(coveredGroundVertices,SHADOW_MAP_MAX_BUILDING_HEIGHT)),
-      sun.viewMatrix, 1000, 7500);
-
-  sun.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(sun.viewMatrix, sun.projMatrix));
- 
-  return sun;
 }
 
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.

@@ -1,10 +1,11 @@
 {
-  "shaders": ["interaction", "buildings", "buildingsQuality", "flatColor", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur", "mapShadows"],
+  "shaders": ["interaction", "buildings", "buildings.shadows", "flatColor", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur", "basemap.shadows"],
 
   "lib": [
     "lib/earcut.dev.js",
     "node_modules/Color/dist/Color.debug.js",
-    "lib/GLX.debug.js"
+    "lib/GLX.debug.js",
+    "node_modules/suncalc/suncalc.js"
   ],
 
   "src": [
@@ -34,7 +35,7 @@
 
     "src/render/index.js",
     "src/render/Picking.js",
-    "src/render/SkyDome.js",
+    "src/render/Sun.js",
     "src/render/SkyWall.js",
     "src/render/Buildings.js",
     "src/render/MapShadows.js",

@@ -2,29 +2,41 @@
   precision mediump float;
 #endif
 
-varying vec2 vTexCoord;
-varying vec3 vColor;
-varying vec3 vNormal;
-varying vec3 vSunRelPosition;
-varying float verticalDistanceToLowerEdge;
+/* This shader computes the diffuse brightness of the map layer. It does *not* 
+ * render the map texture itself, but is instead intended to be blended on top
+ * of an already rendered map.
+ * Note: this shader is not (and does not attempt to) be physically correct.
+ *       It is intented to be a blend between a useful illustration of cast
+ *       shadows and a mitigation of shadow casting artifacts occuring at
+ *       low angles on incidence.
+ *       Map brightness is only affected by shadows, not by light direction.
+ *       Shadows are darkest when light comes from straight above (and thus
+ *       shadows can be computed reliably) and become less and less visible
+ *       with the light source close to the horizont (where moiré and offset
+ *       artifacts would otherwise be visible).
+ */
 
-uniform vec3 uFogColor;
-uniform vec2 uShadowTexDimensions;
+//uniform sampler2D uTexIndex;
 uniform sampler2D uShadowTexIndex;
-uniform sampler2D uWallTexIndex;
+uniform vec3 uFogColor;
+uniform vec3 uDirToSun;
+uniform vec2 uShadowTexDimensions;
+uniform float uShadowStrength;
+
+
+varying vec2 vTexCoord;
+varying vec3 vSunRelPosition;
+varying vec3 vNormal;
+varying float verticalDistanceToLowerEdge;
 
 uniform float uFogDistance;
 uniform float uFogBlurDistance;
-//uniform float uShadowStrength;
-
-uniform vec3 uLightDirection;
-uniform vec3 uLightColor;
 
 float isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {
   if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport
     return 1.0;
   
-  vec4 depthTexel = texture2D( uShadowTexIndex, sunViewNDC.xy);
+  vec4 depthTexel = texture2D(uShadowTexIndex, sunViewNDC.xy);
   
   float depthFromTexture = depthTexel.x + 
                           (depthTexel.y / 255.0) + 
@@ -36,14 +48,16 @@ float isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {
 
 void main() {
 
-  vec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation
-  float diffuse = clamp (dot(vNormal, uLightDirection), 0.0, 1.0);
+  float diffuse = dot(uDirToSun, normalize(vNormal));
+  diffuse = max(diffuse, 0.0);
+  
+  float shadowStrength = uShadowStrength * (1.0 - pow(diffuse, 1.5));
 
-  if (diffuse > 0.0)  
-  {
+  if (diffuse > 0.0) {
     // note: the diffuse term is also the cosine between the surface normal and the
     // light direction
     float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);
+    
     vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);
     
     vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;
@@ -52,18 +66,17 @@ void main() {
     float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);
     float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);
 
-    diffuse *= mix( mix(tlVal, trVal, pos.x), 
+    diffuse = mix( mix(tlVal, trVal, pos.x), 
                    mix(blVal, brVal, pos.x),
                    pos.y);
   }
+
+  diffuse = mix(1.0, diffuse, shadowStrength);
   
-  
-  vec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb + 
-              (diffuse/1.5) * uLightColor;
-    
   float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
-  //gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);
-  gl_FragColor = vec4( color, 1.0-fogIntensity);
+  float darkness = (1.0 - diffuse);
+  darkness *=  (1.0 - fogIntensity);
+  gl_FragColor = vec4(vec3(1.0 - darkness), 1.0);
 }

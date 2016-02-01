@@ -71,7 +71,6 @@ In a script section initialize the map and add a map tile layer.
   var osmb = new OSMBuildings({
     minZoom: 15,
     maxZoom: 22,
-    optimize: 'performance', // default: 'quality'
     attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
 
@@ -134,7 +133,8 @@ attribution | string | attribution, optional
 showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
 fogColor | string | color to be used for sky gradients and distance fog.
 backgroundColor | string | overall background color
-optimize | string | sets rendering precedence for 'quality' or 'performance' (default)
+lowQuality | boolean | enables faster rendering at cost of image quality, consider also removing any effects
+effects | date | date for shadow calculation
 project | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 unproject | x, y | transforms a screen position into a geo coordinate with elevation 0
 
@@ -153,6 +153,7 @@ highlight | id, color | highlight a given building by id, this can only be one, 
 show | function, duration | shows buildings according to a selector function. That function receives parameters id, data of an item
 hide | function, duration | hides buildings according to a selector function. That function receives parameters id, data of an item
 screenshot | function | creates a screenshot from current view and returns it as data url. You need to provide a callback function do receive the data.
+setDate | date | sets a date for shadow calculations
 
 
 ### OSM Buildings server
@@ -175,7 +176,7 @@ var label = document.getElementById('label');
 map.on('change', function() {
   var pos = osmb.project(52.52, 13.37, 50);
   label.style.left = Math.round(pos.x) + 'px';
-  label.stye.top = Math.round(pos.y) + 'px';
+  label.style.top = Math.round(pos.y) + 'px';
 });
 ~~~
 

@@ -8,8 +8,8 @@ render.MapShadows = {
 
   init: function() {
     this.shader = new glx.Shader({
-      vertexShader: Shaders.mapShadows.vertex,
-      fragmentShader: Shaders.mapShadows.fragment,
+      vertexShader: Shaders['basemap.shadows'].vertex,
+      fragmentShader: Shaders['basemap.shadows'].fragment,
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
         'uModelMatrix',
@@ -20,7 +20,6 @@ render.MapShadows = {
         'uDirToSun',
         'uNormalTransform',
         'uLightColor',
-        'uLightDirection',
         'uLowerEdgePoint',
         'uFogDistance',
         'uFogBlurDistance',
@@ -30,11 +29,10 @@ render.MapShadows = {
       ]
     });
     
-  this.mapPlane = new mesh.MapPlane();
-    
+    this.mapPlane = new mesh.MapPlane();
   },
 
-  render: function(sun, depthFramebuffer, shadowStrength) {
+  render: function(Sun, depthFramebuffer, shadowStrength) {
     var shader = this.shader;
     shader.enable();
 
@@ -43,8 +41,7 @@ render.MapShadows = {
     }
 
     gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, sun.direction);
-    gl.uniform3fv(shader.uniforms.uDirToSun, sun.direction);
+    gl.uniform3fv(shader.uniforms.uDirToSun, Sun.direction);
 
     gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
     gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
@@ -54,7 +51,7 @@ render.MapShadows = {
     gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
 
     gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
-    gl.uniform1f(shader.uniforms.uShadowStrength,  shadowStrength);
+    gl.uniform1f(shader.uniforms.uShadowStrength, shadowStrength);
     depthFramebuffer.renderTexture.enable(0);
     gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
 
@@ -70,10 +67,10 @@ render.MapShadows = {
 
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-    gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, sun.viewProjMatrix));
+    gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
 
-    shader.bindBuffer(item.vertexBuffer, "aPosition");
-    shader.bindBuffer(item.normalBuffer, "aNormal");
+    shader.bindBuffer(item.vertexBuffer, 'aPosition');
+    shader.bindBuffer(item.normalBuffer, 'aNormal');
 
     gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
 

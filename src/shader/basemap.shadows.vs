@@ -17,7 +17,6 @@ varying vec3 vSunRelPosition;
 varying vec3 vNormal;
 varying float verticalDistanceToLowerEdge;
 
-
 void main() {
 
   vec4 pos = vec4(aPosition.xyz, 1.0);
@@ -30,5 +29,4 @@ void main() {
   vec4 worldPos = uModelMatrix * pos;
   vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
   verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
-    
 }

@@ -31,7 +31,6 @@ varying vec3 vColor;
 varying vec2 vTexCoord;
 varying float verticalDistanceToLowerEdge;
 
-
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 

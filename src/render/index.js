@@ -83,22 +83,19 @@ var render = {
     if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
     }
-    
-    var viewTrapezoid = this.getViewQuad();
-                                          
-/*
-    this.quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
-                             [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
-                             [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
-                             [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);
-*/
-    
-    render.Sky.updateGeometry( viewTrapezoid);
+    var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
+    /*
+    quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
+                        [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
+                        [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
+                        [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
-    var sun = getSunConfiguration(125, 70, viewTrapezoid);
-    
-    if (render.optimize !== 'quality') {
-      render.Buildings.render(sun);
+    Sun.updateView(viewTrapezoid);
+    render.Sky.updateGeometry(viewTrapezoid);
+    gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
+
+    if (false) {//!render.effects.shadows) {
+      render.Buildings.render();
       render.Basemap.render();
       gl.enable(gl.BLEND);
       gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE); 
@@ -110,12 +107,13 @@ var render = {
       var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
       render.CameraViewDepthMap.render(this.viewProjMatrix, config, true);
-      render.SunViewDepthMap.render(    sun.viewProjMatrix);
+      render.SunViewDepthMap.render(Sun.viewProjMatrix);
       render.AmbientMap.render(render.CameraViewDepthMap, config, 0.5);
       render.Blur.render(render.AmbientMap.framebuffer, config);
-      render.Buildings.render(sun, render.SunViewDepthMap.framebuffer);
+      render.Buildings.render(render.SunViewDepthMap.framebuffer, 0.5);
       render.Basemap.render();
 
+      gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
       gl.enable(gl.BLEND);
       {
         // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
@@ -123,7 +121,7 @@ var render = {
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
         gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
-        render.MapShadows.render(sun, render.SunViewDepthMap.framebuffer, 0.5);
+        render.MapShadows.render(Sun, render.SunViewDepthMap.framebuffer, 0.5);
         render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
 
         // linear interpolation between the colors of the current framebuffer 
