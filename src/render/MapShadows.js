@@ -32,7 +32,7 @@ render.MapShadows = {
     this.mapPlane = new mesh.MapPlane();
   },
 
-  render: function(depthFramebuffer, shadowStrength) {
+  render: function(Sun, depthFramebuffer, shadowStrength) {
     var shader = this.shader;
     shader.enable();
 

@@ -247,16 +247,16 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
     vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
   }
 
-  /* if vTopLeft is further than maxFarEdgeDistance away vertically from the map center,
+  /* if vTopLeft is further than maxFarEdgeDistance away vertically from the lower edge,
    * move it closer. */
- if (dot2( viewDirOnMap, vTopLeft) > maxFarEdgeDistance) {
+ if (dot2( viewDirOnMap, sub2(vTopLeft, vBottomLeft)) > maxFarEdgeDistance) {
     vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
     f = dot2(vLeftDir, viewDirOnMap);
     vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
  }
 
  /* dito for vTopRight*/
- if (dot2( viewDirOnMap, vTopRight) > maxFarEdgeDistance) {
+ if (dot2( viewDirOnMap, sub2(vTopRight, vBottomRight)) > maxFarEdgeDistance) {
     vRightDir = norm2(sub2( vTopRight, vBottomRight));
     f = dot2(vRightDir, viewDirOnMap);
     vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
@@ -422,3 +422,4 @@ function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
 function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}
 function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
 function dist3(a,b){ return len3(sub3(a,b));}
+function equal3(a, b) { return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];}
