@@ -94,7 +94,7 @@ var render = {
     render.Sky.updateGeometry(viewTrapezoid);
     gl.clear(gl.DEPTH_BUFFER_BIT);	//ensure everything is drawn in front of the sky dome
 
-    if (false) {//!render.effects.shadows) {
+    if (!render.effects.shadows) {
       render.Buildings.render();
       render.Basemap.render();
       gl.enable(gl.BLEND);
