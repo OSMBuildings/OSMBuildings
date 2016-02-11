@@ -5,7 +5,7 @@ However, you may use our service for *free*.
 
 Before hitting us with heavy load, please get in touch at support@osmbuildings.org
 
-The built in default server URL schema is `http://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json`
+The built in default server URL schema is `https://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json`
 
 Placeholder and adressing schema is described here:
 http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification#Tile_Resources

@@ -1,7 +1,7 @@
 
 # OSM Buildings
 
-<img src="http://osmbuildings.org/logo.svg" width="100" height="88"/>
+<img src="https://osmbuildings.org/logo.svg" width="100" height="88"/>
 
 OSM Buildings is a JavaScript library for visualizing OpenStreetMap building geometry on 2D and 3D maps.
 
@@ -11,7 +11,7 @@ You could help us a lot in advancing the project with spreading the word, donati
 The library version in this repository is a WebGL only variant of OSM Buildings.
 At some point it will fully integrate the classic 2.5D version.
 
-[Example](http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40)
+[Example](https://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40)
 
 For the latest information about the project [follow us on Twitter](https://twitter.com/osmbuildings), read [our blog](http://blog.osmbuildings.org), or just mail us at mail@osmbuildings.org. 
 
@@ -70,18 +70,17 @@ In a script section initialize the map and add a map tile layer.
 
   var osmb = new OSMBuildings({
     minZoom: 15,
-    maxZoom: 22,
-    attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+    maxZoom: 22
   }).addTo(map);
 
   osmb.addMapTiles(
-    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     {
       attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">MapBox</a>'
     }
   );
 
-  osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+  osmb.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
 ~~~
 
 ### GLMap Options

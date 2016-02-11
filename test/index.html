@@ -108,8 +108,7 @@
     maxZoom: 22,
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
     // lowQuality: true,
-    effects: ['shadows'],
-    attribution: '© 3D <a href="http://osmbuildings.org/copyright/">OSM Buildings</a>'
+    effects: ['shadows']
   }).addTo(map);
 
   var selector = function(id, data) {
@@ -125,9 +124,9 @@
   }
 
   osmb.addMapTiles(
-    //'http://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-    //'http://tile.stamen.com/toner/{z}/{x}/{y}.png',
-    'http://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    //'https://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
+    //'https://tile.stamen.com/toner/{z}/{x}/{y}.png',
+    'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     {
       minZoom: 12,
       maxZoom: 20,
@@ -136,7 +135,7 @@
   );
 
   osmb.addGeoJSONTiles(
-    'http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
 //  '../tiles/{z}/{x}/{y}.json',
 //  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
