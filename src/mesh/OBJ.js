@@ -208,7 +208,7 @@ mesh.OBJ = (function() {
         color = this.color || item.color || defaultColor;
         for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
           this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.ids.push(idColor[0], idColor[1], idColor[2], 1);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
         this.items.push({ id:id, vertexCount:item.vertices.length/3, data:item.data });
