@@ -2,6 +2,7 @@
   precision mediump float;
 #endif
 
+varying vec2 vTexCoord;
 varying vec3 vColor;
 varying vec3 vNormal;
 varying vec3 vSunRelPosition;
@@ -10,6 +11,8 @@ varying float verticalDistanceToLowerEdge;
 uniform vec3 uFogColor;
 uniform vec2 uShadowTexDimensions;
 uniform sampler2D uShadowTexIndex;
+uniform sampler2D uWallTexIndex;
+
 uniform float uFogDistance;
 uniform float uFogBlurDistance;
 uniform float uShadowStrength;
@@ -58,11 +61,12 @@ void main() {
   }
 
   diffuse = mix(1.0, diffuse, shadowStrength);
+  vec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +
+              (diffuse/1.5) * uLightColor;
 
-  vec3 color = vColor + (diffuse/1.5) * uLightColor;
-    
   float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
-  gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);
+  //gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);
+  gl_FragColor = vec4( color, 1.0-fogIntensity);
 }

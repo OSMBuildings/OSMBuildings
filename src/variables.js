@@ -7,7 +7,10 @@ var HEIGHT_SCALE = 1.0;
 var MAX_USED_ZOOM_LEVEL = 25;
 var DEFAULT_COLOR = 'rgb(220, 210, 200)';
 var HIGHLIGHT_COLOR = '#f08000';
-var FOG_COLOR = '#f0f8ff';
+// #E8E0D8 is the background color of the current OSMBuildings map layer,
+// and thus a good fog color to blend map tiles and buildings close to the horizont into
+var FOG_COLOR = '#e8e0d8';
+//var FOG_COLOR = '#f0f8ff';
 var BACKGROUND_COLOR = '#efe8e0';
 
 var document = global.document;
@@ -15,6 +18,9 @@ var document = global.document;
 var EARTH_RADIUS_IN_METERS = 6378137;
 var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
 var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+
+/* the height of the skywall in meters */
+var SKYWALL_HEIGHT = 2000.0;
 
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
  * to cover everything that's also visible to the user. For this to work 
@@ -33,3 +39,9 @@ var SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
  * the visual artifacts introduced by shadow mapping. But increasing the
  * shadow depth map size impacts rendering performance */
 var SHADOW_DEPTH_MAP_SIZE = 2048;
+
+// number of windows per horizontal meter of building wall
+var WINDOWS_PER_METER = 0.5;
+
+//the building wall texture as a data url
+var BUILDING_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wwCCAUQLpaUSQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAGUExURebm5v///zFES9kAAAAcSURBVCjPY/gPBQyUMh4wAAH/KAPCoFaoDnYGAAKtZsamTRFlAAAAAElFTkSuQmCC';

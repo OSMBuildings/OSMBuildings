@@ -6,9 +6,10 @@ uniform sampler2D uTexIndex;
 uniform vec3 uFogColor;
 
 varying vec2 vTexCoord;
-varying float vFogIntensity;
+varying float vRelativeHeight;
 
 void main() {
-  vec3 color = vec3(texture2D(uTexIndex, vec2(vTexCoord.x, -vTexCoord.y)));
-  gl_FragColor = vec4(mix(color, uFogColor, vFogIntensity), 1.0);
+  float blendFactor = min(100.0 * vRelativeHeight, 1.0);
+  vec4 texColor = texture2D(uTexIndex, vec2(vTexCoord.x, -vTexCoord.y));
+  gl_FragColor = mix( vec4(uFogColor, 1.0), texColor,  blendFactor);
 }

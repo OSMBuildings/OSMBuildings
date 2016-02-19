@@ -147,14 +147,52 @@ glx.Matrix = function(data) {
     return res;
   };
 
+  // returns a perspective projection matrix with a field-of-view of 'fov' 
+  // degrees, an width/height aspect ratio of 'aspect', the near plane at 'near'
+  // and the far plane at 'far'
   glx.Matrix.Perspective = function(fov, aspect, near, far) {
-    var f = 1/Math.tan(fov*(Math.PI/180)/2), nf = 1/(near - far);
+    var f =  1 / Math.tan(fov*(Math.PI/180)/2), 
+        nf = 1 / (near - far);
+        
     return new glx.Matrix([
-      f/aspect, 0,               0, 0,
-      0,        f,               0, 0,
-      0,        0, (far + near)*nf,-1,
-      0,        0, (2*far*near)*nf, 0
-    ]);
+      f/aspect, 0,               0,  0,
+      0,        f,               0,  0,
+      0,        0, (far + near)*nf, -1,
+      0,        0, (2*far*near)*nf,  0]);
+  };
+
+  //returns a perspective projection matrix with the near plane at 'near',
+  //the far plane at 'far' and the view rectangle on the near plane bounded
+  //by 'left', 'right', 'top', 'bottom'
+  glx.Matrix.Frustum = function (left, right, top, bottom, near, far) {
+    var rl = 1 / (right - left),
+        tb = 1 / (top - bottom),
+        nf = 1 / (near - far);
+        
+    return new glx.Matrix( [
+          (near * 2) * rl,                   0,                     0,  0,
+                        0,     (near * 2) * tb,                     0,  0,
+      (right + left) * rl, (top + bottom) * tb,     (far + near) * nf, -1,
+                        0,                   0, (far * near * 2) * nf,  0]);
+  };
+  
+  glx.Matrix.OffCenterProjection = function (screenBottomLeft, screenTopLeft, screenBottomRight, eye, near, far) {
+    var vRight = norm3(sub3( screenBottomRight, screenBottomLeft));
+    var vUp    = norm3(sub3( screenTopLeft,     screenBottomLeft));
+    var vNormal= normal( screenBottomLeft, screenTopLeft, screenBottomRight);
+    
+    var eyeToScreenBottomLeft = sub3( screenBottomLeft, eye);
+    var eyeToScreenTopLeft    = sub3( screenTopLeft,    eye);
+    var eyeToScreenBottomRight= sub3( screenBottomRight,eye);
+    
+    var d = - dot3(eyeToScreenBottomLeft, vNormal);
+    
+    var l = dot3(vRight, eyeToScreenBottomLeft) * near / d;
+    var r = dot3(vRight, eyeToScreenBottomRight)* near / d;
+    var b = dot3(vUp,    eyeToScreenBottomLeft) * near / d;
+    var t = dot3(vUp,    eyeToScreenTopLeft)    * near / d;
+    
+    return glx.Matrix.Frustum(l, r, t, b, near, far);
   };
   
   // based on http://www.songho.ca/opengl/gl_projectionmatrix.html

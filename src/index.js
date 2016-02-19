@@ -34,7 +34,7 @@ var OSMBuildings = function(options) {
 
   render.Buildings.showBackfaces = options.showBackfaces;
 
-  APP.highQuality = !options.lowQuality;
+  APP.highQuality = !options.fastMode;
 
   render.effects = {};
   var effects = options.effects || [];
@@ -51,7 +51,7 @@ var OSMBuildings = function(options) {
   }
 };
 
-OSMBuildings.VERSION = '2.2.1';
+OSMBuildings.VERSION = '{{VERSION}}';
 OSMBuildings.ATTRIBUTION = '<a href="https://osmbuildings.org">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {

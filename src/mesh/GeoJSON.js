@@ -147,6 +147,7 @@ mesh.GeoJSON = (function() {
 
     this.data = {
       vertices: [],
+      texCoords: [],
       normals: [],
       colors: [],
       ids: []
@@ -218,7 +219,7 @@ mesh.GeoJSON = (function() {
 
         wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material),
         roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial),
-
+        hasContinuousWindows = (properties.material === "glass"),
         i,
         skipRoof,
         vertexCount, vertexCountBefore, color,
@@ -251,29 +252,33 @@ mesh.GeoJSON = (function() {
       switch (properties.shape) {
         case 'cylinder':
           mesh.addCylinder(this.data, center, radius, radius, H, Z);
-        break;
+          break;
 
         case 'cone':
           mesh.addCylinder(this.data, center, radius, 0, H, Z);
           skipRoof = true;
-        break;
+          break;
 
         case 'dome':
           mesh.addDome(this.data, center, radius, (H || radius), Z);
-        break;
+          break;
 
         case 'sphere':
           mesh.addSphere(this.data, center, radius, (H || 2*radius), Z);
-        break;
+          break;
 
         case 'pyramid':
         case 'pyramidal':
           mesh.addPyramid(this.data, geometry, center, H, Z);
           skipRoof = true;
-        break;
+          break;
 
         default:
-          mesh.addExtrusion(this.data, geometry, H, Z);
+          var numLevels = 0;
+          if (properties.levels) {
+            numLevels = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0)) << 0;
+          }
+          this.addExtrusion(this.data, geometry, H, Z, numLevels, hasContinuousWindows);
       }
 
       vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
@@ -349,6 +354,63 @@ mesh.GeoJSON = (function() {
       this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
     },
 
+    addRingExtrusion: function(tris, ring, height, Z, numFloors, hasContinuousWindows) {
+      for (var r = 0; r < ring.length-1; r++) {
+        a = ring[r];
+        b = ring[r+1];
+        
+        var wallLength = len2(sub2( a, b));
+        var numWindows = Math.floor(wallLength * WINDOWS_PER_METER);
+        
+        var v0 = [ a[0], a[1], Z];
+        var v1 = [ b[0], b[1], Z];
+        var v2 = [ b[0], b[1], Z+height];
+        var v3 = [ a[0], a[1], Z+height];
+        
+        var n = normal(v0, v1, v2);
+        [].push.apply(tris.vertices, [].concat(v0, v2, v1,   v0, v3, v2));
+        [].push.apply(tris.normals,  [].concat(n, n, n, n, n, n));
+
+        if (hasContinuousWindows) {
+          tris.texCoords.push(
+            0.0,        0.6,
+            numWindows, 0.8,
+            numWindows, 0.6,
+            
+            0.0,        0.6,
+            0.0,        0.8,
+            numWindows, 0.8
+          );
+        } else {
+          tris.texCoords.push(
+            0.0,        0.0,
+            numWindows, numFloors,
+            numWindows, 0.0,
+            
+            0.0,        0.0,
+            0.0,        numFloors,
+            numWindows, numFloors
+          );
+        }
+      }
+    },
+
+    addExtrusion: function(tris, polygon, height, Z, numFloors, hasContinuousWindows) {
+      Z = Z || 0;
+      //numFloors = numFloors || Math.max( 1, Math.floor( (height-Z) / METERS_PER_LEVEL));
+      var ring, last;
+      for (var i = 0, il = polygon.length; i < il; i++) {
+        ring = polygon[i];
+        last = ring.length-1;
+
+        if (ring[0][0] !== ring[last][0] || ring[0][1] !== ring[last][1]) {
+          ring.push(ring[0]);
+          last++;
+        }
+        this.addRingExtrusion(tris, ring, height, Z, numFloors, hasContinuousWindows);
+      }
+    },
+
     fadeIn: function() {
       var item, filters = [];
       var start = Filter.getTime() + 250, end = start + 500;
@@ -374,10 +436,11 @@ mesh.GeoJSON = (function() {
     },
 
     onReady: function() {
-      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
+      this.vertexBuffer   = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
+      this.normalBuffer   = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.colorBuffer    = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.idBuffer       = new glx.Buffer(3, new Float32Array(this.data.ids));
       this.fadeIn();
       this.data = null;
 

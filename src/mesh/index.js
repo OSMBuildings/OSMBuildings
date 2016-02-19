@@ -24,6 +24,8 @@ var mesh = {};
     var n = normal(a, b, c);
     [].push.apply(tris.vertices, [].concat(a, c, b));
     [].push.apply(tris.normals,  [].concat(n, n, n));
+
+    tris.texCoords.push( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   };
 
   mesh.addCircle = function(tris, center, radius, Z) {
@@ -154,7 +156,7 @@ var mesh = {};
   //*****************************************************************************
 
   mesh.addCylinder = function(tris, center, radius1, radius2, height, Z) {
-    Z = Z || 0;
+  Z = Z || 0;
     var
       currAngle, nextAngle,
       currSin, currCos,

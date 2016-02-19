@@ -5,6 +5,7 @@
 #define halfPi 1.57079632679
 
 attribute vec4 aPosition;
+attribute vec2 aTexCoord;
 attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec4 aFilter;
@@ -27,6 +28,7 @@ uniform vec2 uLowerEdgePoint;
 uniform float uTime;
 
 varying vec3 vColor;
+varying vec2 vTexCoord;
 varying float verticalDistanceToLowerEdge;
 
 float gradientHeight = 90.0;
@@ -78,7 +80,7 @@ void main() {
     vec3 transformedNormal = aNormal * uNormalTransform;
     float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
     color = color + uLightColor * lightIntensity;
-
+    vTexCoord = aTexCoord;
     //*** vertical shading ******************************************************
 
     float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);

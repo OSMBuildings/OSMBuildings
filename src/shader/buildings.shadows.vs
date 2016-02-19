@@ -9,6 +9,7 @@ attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec4 aFilter;
 attribute vec3 aID;
+attribute vec2 aTexCoord;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uViewMatrix;
@@ -26,6 +27,7 @@ uniform vec2 uLowerEdgePoint;
 uniform float uTime;
 
 varying vec3 vColor;
+varying vec2 vTexCoord;
 varying vec3 vNormal;
 varying vec3 vSunRelPosition;
 varying float verticalDistanceToLowerEdge;
@@ -77,6 +79,7 @@ void main() {
     //*** light intensity, defined by light direction on surface ****************
 
     vNormal = aNormal;
+    vTexCoord = aTexCoord;
     //vec3 transformedNormal = aNormal * uNormalTransform;
     //float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;
     //color = color + uLightColor * lightIntensity;

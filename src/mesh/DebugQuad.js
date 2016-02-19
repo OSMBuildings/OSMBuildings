@@ -16,19 +16,14 @@ mesh.DebugQuad = (function() {
     this.maxZoom = APP.maxZoom;
   }
 
-  function areEqual(a, b) {
-    return a[0] === b[0] &&
-           a[1] === b[1] &&
-           a[2] === b[2];
-  }
 
   constructor.prototype = {
 
     updateGeometry: function(v1, v2, v3, v4) {
-      if ( areEqual(v1, this.v1) &&
-           areEqual(v2, this.v2) &&
-           areEqual(v3, this.v3) &&
-           areEqual(v4, this.v4))
+      if ( equal3(v1, this.v1) &&
+           equal3(v2, this.v2) &&
+           equal3(v3, this.v3) &&
+           equal3(v4, this.v4))
          return; //still up-to-date
 
       this.v1 = v1;
@@ -77,6 +72,14 @@ mesh.DebugQuad = (function() {
 
       this.idBuffer = new glx.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
+        
+      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
+        [0,0,0,0,0,0,0,0,0,0,0,0]));
+        
+      var filter = [0,1,1,1];
+      
+      this.filterBuffer = new glx.Buffer(4, new Float32Array(
+        [].concat(filter, filter, filter, filter, filter, filter)));
         
       //this.numDummyVertices = 6;
     },

@@ -7,7 +7,7 @@ render.Buildings = {
       new glx.Shader({
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
-        attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aID'],
         uniforms: [
           'uModelMatrix',
           'uViewMatrix',
@@ -26,12 +26,13 @@ render.Buildings = {
           'uBendDistance',
           'uHighlightColor',
           'uHighlightID',
-          'uTime'
+          'uTime',
+          'uWallTexIndex'
         ]
       }) : new glx.Shader({
         vertexShader: Shaders['buildings.shadows'].vertex,
         fragmentShader: Shaders['buildings.shadows'].fragment,
-        attributes: ['aPosition', 'aColor', 'aFilter', 'aNormal', 'aID'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aID'],
         uniforms: [
           'uModelMatrix',
           'uViewMatrix',
@@ -54,9 +55,14 @@ render.Buildings = {
           'uTime',
           'uSunMatrix',
           'uShadowTexIndex',
-          'uShadowTexDimensions'
+          'uShadowTexDimensions',
+          'uWallTexIndex'
         ]
     });
+    
+    this.wallTexture = new glx.texture.Image();
+    this.wallTexture.color( [1,1,1]);
+    this.wallTexture.load( BUILDING_TEXTURE);
   },
 
   render: function(depthFramebuffer, shadowStrength) {
@@ -101,9 +107,13 @@ render.Buildings = {
     
     if (depthFramebuffer) {
       gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
-      depthFramebuffer.renderTexture.enable(0);
-      gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
+      depthFramebuffer.renderTexture.enable(1);
+      gl.uniform1i(shader.uniforms.uShadowTexIndex, 1);
     }
+    
+    this.wallTexture.enable(0);
+    gl.uniform1i(shader.uniforms.uWallTexIndex, 0);
+    
 
     var
       dataItems = data.Index.items,
@@ -127,11 +137,12 @@ render.Buildings = {
       gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
       gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
 
-      shader.bindBuffer(item.vertexBuffer, 'aPosition');
-      shader.bindBuffer(item.normalBuffer, 'aNormal');
-      shader.bindBuffer(item.colorBuffer,  'aColor');
-      shader.bindBuffer(item.filterBuffer, 'aFilter');
-      shader.bindBuffer(item.idBuffer,     'aID');
+      shader.bindBuffer(item.vertexBuffer,   'aPosition');
+      shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');
+      shader.bindBuffer(item.normalBuffer,   'aNormal');
+      shader.bindBuffer(item.colorBuffer,    'aColor');
+      shader.bindBuffer(item.filterBuffer,   'aFilter');
+      shader.bindBuffer(item.idBuffer,       'aID');
 
       gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

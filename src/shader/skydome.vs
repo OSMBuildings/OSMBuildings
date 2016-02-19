@@ -13,13 +13,14 @@ uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
 
 varying vec2 vTexCoord;
-varying float vFogIntensity;
+varying float vRelativeHeight;
 
 float gradientHeight = 10.0;
 float gradientStrength = 1.0;
 
 uniform float uBendRadius;
 uniform float uBendDistance;
+uniform float uAbsoluteHeight;
 
 void main() {
 
@@ -43,5 +44,5 @@ void main() {
   gl_Position = uMatrix * aPosition;
 
   vTexCoord = aTexCoord;
-  vFogIntensity = clamp((gradientHeight-aPosition.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);
+  vRelativeHeight = aPosition.z / uAbsoluteHeight;
 }
