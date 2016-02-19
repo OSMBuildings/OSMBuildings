@@ -252,37 +252,33 @@ mesh.GeoJSON = (function() {
       switch (properties.shape) {
         case 'cylinder':
           mesh.addCylinder(this.data, center, radius, radius, H, Z);
-        break;
+          break;
 
         case 'cone':
           mesh.addCylinder(this.data, center, radius, 0, H, Z);
           skipRoof = true;
-        break;
+          break;
 
         case 'dome':
           mesh.addDome(this.data, center, radius, (H || radius), Z);
-        break;
+          break;
 
         case 'sphere':
           mesh.addSphere(this.data, center, radius, (H || 2*radius), Z);
-        break;
+          break;
 
         case 'pyramid':
         case 'pyramidal':
           mesh.addPyramid(this.data, geometry, center, H, Z);
           skipRoof = true;
-        break;
+          break;
 
         default:
-          var numLevels;
-          if (properties.levels && properties.minLevel)
-            numLevels = parseFloat(properties.levels) - parseFloat(properties.minLevel);
-          else if (properties.levels)
-            numLevels = parseFloat(properties.levels);
-          else
-            numLevels = H / METERS_PER_LEVEL;
-            
-          this.addExtrusion(this.data, geometry, H, Z, Math.max(Math.floor(numLevels), 1), hasContinuousWindows);
+          var numLevels = 0;
+          if (properties.levels) {
+            numLevels = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0)) << 0;
+          }
+          this.addExtrusion(this.data, geometry, H, Z, numLevels, hasContinuousWindows);
       }
 
       vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
