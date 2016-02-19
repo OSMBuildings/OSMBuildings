@@ -1,15 +1,22 @@
 
 # Changelog
 
+## 2.3.0 @ 2016-02-20
+
 ### New
 
-- configuration option 'optimize' in order to switch anistrophic filtering and SSAO
+- shadow casting on buildings and basemap
+- sky added
+- horizon fog added
+- building windows added
+- options to control effects and overall quality
 - methods for 3d projection/unprojection: transforms a point on 2d screen into 3d space and vice versa
 - screenshot() method
 
 ### Changed
 
 - internal coordinate system now based on meters instead of pixel+zoom representation
+- zoom logic changed from scale-the-world to move-away
 - events using much less abstraction code
 - JS files of GLMap and OSM Buildings are combined into one
 - default data tile zoom set to 15
@@ -19,8 +26,14 @@
 
 ### Fixed
 
+- OBJ files didn't work properly for picking
 - not re-retrieving uniform and attribute locations on shader switch
 - mouse events are now passed through, even if map is disabled
+- CustomEvent polyfill had always been in effect
+- potentially diverged animation frames fixed
+
+
+## 2.2.0 skipped
 
 
 ## 2.1.0 @ 2015-11-03

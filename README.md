@@ -133,7 +133,7 @@ attribution | string | attribution, optional
 showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
 fogColor | string | color to be used for sky gradients and distance fog.
 backgroundColor | string | overall background color
-lowQuality | boolean | enables faster rendering at cost of image quality, consider also removing any effects
+fastMode | boolean | enables faster rendering at cost of image quality, consider also removing any effects
 effects | date | date for shadow calculation
 project | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
 unproject | x, y | transforms a screen position into a geo coordinate with elevation 0

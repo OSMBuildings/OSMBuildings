@@ -1,4 +1,6 @@
 
+var fs = require('fs');
+
 module.exports = function(grunt) {
 
   grunt.initConfig({
@@ -33,7 +35,7 @@ module.exports = function(grunt) {
         dest: 'lib/GLX.debug.js'
       },
 
-      basemap: {
+      'osmb-basemap': {
         options: {
           separator: "\n",
           banner: "(function(global) {",
@@ -63,7 +65,7 @@ module.exports = function(grunt) {
     },
 
     uglify: {
-      basemap: {
+      'osmb-basemap': {
         options: {
           sourceMap: true
         },
@@ -77,6 +79,15 @@ module.exports = function(grunt) {
         src: 'src/shader',
         dest: 'src/Shaders.min.js',
         names: grunt.file.readJSON('config.json').shaders
+      }
+    },
+
+    version: {
+      dist: {
+        src: './dist/OSMBuildings/<%=pkg.name%>.debug.js',
+        mapping: {
+          '{{VERSION}}': '<%=pkg.version%>'
+        }
       }
     },
 
@@ -114,9 +125,19 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerMultiTask('shaders', 'Build shaders', function() {
-    var fs = require('fs');
+  grunt.registerMultiTask('version', 'Set version number', function() {
+    var config = this.data;
 
+    var content = '' + fs.readFileSync(config.src);
+
+    for (var tag in config.mapping) {
+      content = content.replace(tag, config.mapping[tag]);
+    }
+
+    fs.writeFileSync(config.src, content);
+  });
+
+  grunt.registerMultiTask('shaders', 'Build shaders', function() {
     // grunt.log.writeln(JSON.stringify(this.data));
     var config = this.data;
 
@@ -138,7 +159,8 @@ module.exports = function(grunt) {
   grunt.registerTask('default', 'Development build', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
     grunt.task.run('shaders');
-    grunt.task.run('concat:basemap');
+    grunt.task.run('concat:osmb-basemap');
+    grunt.task.run('version');
   });
 
   grunt.registerTask('release', 'Release', function() {
@@ -148,8 +170,9 @@ module.exports = function(grunt) {
 
     grunt.task.run('concat:glx');
     grunt.task.run('shaders');
-    grunt.task.run('concat:basemap');
-    grunt.task.run('uglify:basemap');
+    grunt.task.run('concat:osmb-basemap');
+    grunt.task.run('version');
+    grunt.task.run('uglify:osmb-basemap');
 
     grunt.task.run('copy:assets');
     grunt.task.run('copy:css');
