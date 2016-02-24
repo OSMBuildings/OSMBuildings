@@ -52,7 +52,7 @@ var OSMBuildings = function(options) {
 };
 
 OSMBuildings.VERSION = '{{VERSION}}';
-OSMBuildings.ATTRIBUTION = '<a href="https://osmbuildings.org">© OSM Buildings</a>';
+OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
 
