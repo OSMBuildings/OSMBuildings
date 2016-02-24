@@ -252,7 +252,7 @@ Basemap.prototype = {
   },
 
   setTilt: function(tilt) {
-    tilt = clamp(parseFloat(tilt), 0, 60);
+    tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
     if (this.tilt !== tilt) {
       this.tilt = tilt;
       this.emit('change');

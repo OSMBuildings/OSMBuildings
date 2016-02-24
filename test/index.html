@@ -107,7 +107,7 @@
     minZoom: 15,
     maxZoom: 22,
     // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    // lowQuality: true,
+    // fastMode: true,
     effects: ['shadows'],
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
   }).addTo(map);
@@ -195,9 +195,7 @@
   }
   
   osmb.addGeoJSONTiles(
-    'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-//  '../tiles/{z}/{x}/{y}.json',
-//  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
+  'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       colorizer: colorizerHeightInformationAvailability,
       fixedZoom: 15

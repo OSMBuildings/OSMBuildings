@@ -121,7 +121,7 @@ var render = {
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
         gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
-        render.MapShadows.render(Sun, render.SunViewDepthMap.framebuffer, 0.5);
+        render.MapShadows.render(Sun, render.SunViewDepthMap.framebuffer, 1.0);
         render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
 
         // linear interpolation between the colors of the current framebuffer 
