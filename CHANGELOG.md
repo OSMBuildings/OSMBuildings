@@ -1,7 +1,12 @@
 
-# 2.3.0 @ 2016-02-24
+# 2.3.1 @ 2016-03-02
 
-Return of the shadows
+## Fixed
+
+- missing texture coordinates for OBJ
+
+
+# 2.3.0 @ 2016-02-24
 
 ## New
 
@@ -24,8 +29,6 @@ Return of the shadows
 
 
 # 2.2.1 @ 2015-11-18
-
-New integration methods
 
 ## New
 
@@ -74,6 +77,7 @@ New integration methods
 - fixed minZoom/maxZoom options for GLMap
 - added minZoom/maxZoom options for OSM Buildings, all geometry items and tile layers
 - added fixedZoom option for GeoJSONTiles
+
 
 # 1.0.0 @ 2015-09-17
 
