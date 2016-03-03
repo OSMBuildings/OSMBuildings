@@ -437,8 +437,8 @@ mesh.GeoJSON = (function() {
 
     onReady: function() {
       this.vertexBuffer   = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
       this.normalBuffer   = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
       this.colorBuffer    = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer       = new glx.Buffer(3, new Float32Array(this.data.ids));
       this.fadeIn();
