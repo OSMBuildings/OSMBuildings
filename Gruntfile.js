@@ -102,6 +102,18 @@ module.exports = function(grunt) {
       all: grunt.file.readJSON('config.json').src
     },
 
+    compress: {
+      main: {
+        options: {
+          level: 5,
+          archive: 'dist/<%=pkg.name%>-<%=pkg.version%>.zip'
+        },
+        files: [
+          { expand: true, cwd: 'dist/', src: ['<%=pkg.name%>/*', 'index.html'] }
+        ]
+      }
+    },
+
     // just testing, whether wepack *would* work
     webpack: {
       test: {
@@ -123,6 +135,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-compress');
   grunt.loadNpmTasks('grunt-webpack');
 
   grunt.registerMultiTask('version', 'Set version number', function() {
@@ -177,6 +190,7 @@ module.exports = function(grunt) {
     grunt.task.run('copy:assets');
     grunt.task.run('copy:css');
 
+    grunt.task.run('compress');
     grunt.task.run('webpack');
   });
 };
