@@ -237,17 +237,20 @@ glx.Matrix = function(data) {
     ];
   };
 
+  glx.Matrix.transpose3 = function(a) {
+    return new Float32Array([
+      a[0], a[3], a[6],
+      a[1], a[4], a[7],
+      a[2], a[5], a[8]
+    ]);
+  };
+
   glx.Matrix.transpose = function(a) {
     return new Float32Array([
-      a[0],
-      a[3],
-      a[6],
-      a[1],
-      a[4],
-      a[7],
-      a[2],
-      a[5],
-      a[8]
+      a[0], a[4],  a[8], a[12], 
+      a[1], a[5],  a[9], a[13], 
+      a[2], a[6], a[10], a[14], 
+      a[3], a[7], a[11], a[15]
     ]);
   };
 

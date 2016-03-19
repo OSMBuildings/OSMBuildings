@@ -79,7 +79,7 @@ render.Buildings = {
     gl.uniform1f(shader.uniforms.uShadowStrength, shadowStrength);
 
     var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
-    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose(normalMatrix));
+    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose3(normalMatrix));
 
     gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
     gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
