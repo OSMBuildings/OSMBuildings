@@ -1,5 +1,9 @@
 
-glx.Framebuffer = function(width, height) {
+glx.Framebuffer = function(width, height, depthTexture) {
+  if (depthTexture && !GL.depthTextureExtension)
+    throw "Depth textures are not supported by your GPU";
+    
+  this.useDepthTexture = !!depthTexture; 
   this.setSize(width, height);
 };
 
@@ -19,10 +23,30 @@ glx.Framebuffer.prototype = {
 
     this.width  = width;
     this.height = height;
-
-    this.renderBuffer = GL.createRenderbuffer();
-    GL.bindRenderbuffer(GL.RENDERBUFFER, this.renderBuffer);
-    GL.renderbufferStorage(GL.RENDERBUFFER, GL.DEPTH_COMPONENT16, width, height);
+    
+    if (this.depthRenderBuffer) {
+      GL.deleteRenderbuffer(this.depthRenderBuffer)
+      this.depthRenderBuffer = null;
+    } 
+    
+    if (this.depthTexture) {
+      GL.deleteTexture(this.depthTexture);
+      this.depthTexture = null;
+    }
+    
+    if (this.useDepthTexture) {
+      this.depthTexture = GL.createTexture();
+      GL.bindTexture(GL.TEXTURE_2D, this.depthTexture);
+      GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+      GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+      GL.texImage2D(GL.TEXTURE_2D, 0, GL.DEPTH_STENCIL, width, height, 0, GL.DEPTH_STENCIL, GL.depthTextureExtension.UNSIGNED_INT_24_8_WEBGL, null);
+      GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, this.depthTexture, 0);
+    } else {
+      this.depthRenderBuffer = GL.createRenderbuffer();
+      GL.bindRenderbuffer(GL.RENDERBUFFER, this.depthRenderBuffer);
+      GL.renderbufferStorage(GL.RENDERBUFFER, GL.DEPTH_COMPONENT16, width, height);
+      GL.framebufferRenderbuffer(GL.FRAMEBUFFER, GL.DEPTH_ATTACHMENT, GL.RENDERBUFFER, this.depthRenderBuffer);
+    }
 
     if (this.renderTexture) {
       this.renderTexture.destroy();
@@ -30,7 +54,6 @@ glx.Framebuffer.prototype = {
 
     this.renderTexture = new glx.texture.Data(width, height);
 
-    GL.framebufferRenderbuffer(GL.FRAMEBUFFER, GL.DEPTH_ATTACHMENT, GL.RENDERBUFFER, this.renderBuffer);
     GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, this.renderTexture.id, 0);
 
     if (GL.checkFramebufferStatus(GL.FRAMEBUFFER) !== GL.FRAMEBUFFER_COMPLETE) {
@@ -43,12 +66,17 @@ glx.Framebuffer.prototype = {
 
   enable: function() {
     GL.bindFramebuffer(GL.FRAMEBUFFER, this.frameBuffer);
-    GL.bindRenderbuffer(GL.RENDERBUFFER, this.renderBuffer);
+
+    if (!this.useDepthTexture) {
+      GL.bindRenderbuffer(GL.RENDERBUFFER, this.depthRenderBuffer);
+    }
   },
 
   disable: function() {
     GL.bindFramebuffer(GL.FRAMEBUFFER, null);
-    GL.bindRenderbuffer(GL.RENDERBUFFER, null);
+    if (!this.useDepthTexture) {
+      GL.bindRenderbuffer(GL.RENDERBUFFER, null);
+    }
   },
 
   getPixel: function(x, y) {
