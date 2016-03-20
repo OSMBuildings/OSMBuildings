@@ -30,7 +30,7 @@ render.Blur = {
     ]));
   },
 
-  render: function(inputFramebuffer, framebufferConfig) {
+  render: function(inputTexture, framebufferConfig) {
 
     var
       shader = this.shader,
@@ -90,8 +90,7 @@ render.Blur = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindTexture(gl.TEXTURE_2D, inputFramebuffer.renderTexture.id);
-    gl.activeTexture(gl.TEXTURE0);
+    inputTexture.enable(0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
@@ -99,9 +98,6 @@ render.Blur = {
     shader.disable();
     framebuffer.disable();
 
-    gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    //gl.generateMipmap(gl.TEXTURE_2D); //no interpolation --> don't need a mipmap
-    
     gl.viewport(0, 0, MAP.width, MAP.height);
 
   },

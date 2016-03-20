@@ -30,17 +30,17 @@ glx.Framebuffer.prototype = {
     } 
     
     if (this.depthTexture) {
-      GL.deleteTexture(this.depthTexture);
+      this.depthTexture.destroy();
       this.depthTexture = null;
     }
     
     if (this.useDepthTexture) {
-      this.depthTexture = GL.createTexture();
-      GL.bindTexture(GL.TEXTURE_2D, this.depthTexture);
+      this.depthTexture = new glx.texture.Image()//GL.createTexture();
+      this.depthTexture.enable(0);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
       GL.texImage2D(GL.TEXTURE_2D, 0, GL.DEPTH_STENCIL, width, height, 0, GL.DEPTH_STENCIL, GL.depthTextureExtension.UNSIGNED_INT_24_8_WEBGL, null);
-      GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, this.depthTexture, 0);
+      GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, this.depthTexture.id, 0);
     } else {
       this.depthRenderBuffer = GL.createRenderbuffer();
       GL.bindRenderbuffer(GL.RENDERBUFFER, this.depthRenderBuffer);
@@ -94,6 +94,10 @@ glx.Framebuffer.prototype = {
   destroy: function() {
     if (this.renderTexture) {
       this.renderTexture.destroy();
+    }
+    
+    if (this.depthTexture) {
+      this.depthTexture.destroy();
     }
   }
 };

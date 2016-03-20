@@ -11,20 +11,31 @@ render.DepthMap = function() {
   this.shader = new glx.Shader({
     vertexShader: Shaders.depth.vertex,
     fragmentShader: Shaders.depth.fragment,
-    attributes: ['aPosition', 'aFilter'],
-    uniforms: ['uMatrix', 'uModelMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint', 'uIsPerspectiveProjection']
+    attributes: ['aPosition', 'aFilter', 'aNormal'],
+    uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint', 'uIsPerspectiveProjection']
   });
   
-  this.framebuffer = new glx.Framebuffer(128, 128); //dummy values, will be resized dynamically
+  this.framebuffer = new glx.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
 
   this.mapPlane = new mesh.MapPlane();
 };
 
-render.DepthMap.prototype.render = function(viewProjMatrix, framebufferConfig, isPerspective) {
+render.DepthMap.prototype.getDepthTexture = function() {
+  return this.framebuffer.depthTexture;
+};
+
+render.DepthMap.prototype.getFogNormalTexture = function() {
+  return this.framebuffer.renderTexture;
+};
+
+
+render.DepthMap.prototype.render = function(viewMatrix, projMatrix, framebufferConfig, isPerspective) {
 
   var
     shader = this.shader,
-    framebuffer = this.framebuffer;
+    framebuffer = this.framebuffer,
+    viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(viewMatrix,projMatrix));
+
 
   if (!framebufferConfig && this.framebufferConfig)
     framebufferConfig = this.framebufferConfig;
@@ -42,15 +53,6 @@ render.DepthMap.prototype.render = function(viewProjMatrix, framebufferConfig, i
     gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    
-    /* We will explicitly access (neighbor) texels in the depth texture to 
-     * compute the ambient map. So linear interpolation or mip-mapping of 
-     * texels is neither necessary nor desirable.
-     * Disabling it can also noticably improve render performance, as it leads to fewer
-     * texture lookups (1 for "NEAREST" vs. 4 for "LINEAR" vs. 8 for "LINEAR_MIPMAP_LINEAR");
-     */
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   }
     
   shader.enable();
@@ -80,16 +82,22 @@ render.DepthMap.prototype.render = function(viewProjMatrix, framebufferConfig, i
     if (!(modelMatrix = item.getMatrix())) {
       continue;
     }
-
+  
+    var modelViewMatrix = new glx.Matrix(glx.Matrix.multiply(modelMatrix, viewMatrix));
+    var normalMatrix = glx.Matrix.transpose3(glx.Matrix.invert3(modelViewMatrix.data));
     gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
     gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, viewProjMatrix));
     gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
+    gl.uniformMatrix3fv(shader.uniforms.uNormalMatrix, false, normalMatrix);
     gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
     gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
     
     item.vertexBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+    item.normalBuffer.enable();
+    gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     item.filterBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);

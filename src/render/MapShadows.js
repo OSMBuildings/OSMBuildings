@@ -52,7 +52,8 @@ render.MapShadows = {
 
     gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
     gl.uniform1f(shader.uniforms.uShadowStrength, shadowStrength);
-    depthFramebuffer.renderTexture.enable(0);
+
+    depthFramebuffer.depthTexture.enable(0);
     gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
 
     var item = this.mapPlane;

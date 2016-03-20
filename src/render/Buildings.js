@@ -107,7 +107,7 @@ render.Buildings = {
     
     if (depthFramebuffer) {
       gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
-      depthFramebuffer.renderTexture.enable(1);
+      depthFramebuffer.depthTexture.enable(1);
       gl.uniform1i(shader.uniforms.uShadowTexIndex, 1);
     }
     

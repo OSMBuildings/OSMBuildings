@@ -5,23 +5,23 @@
   precision mediump float;
 #endif
 
-uniform sampler2D uTexIndex;
+uniform sampler2D uDepthTexIndex;
+uniform sampler2D uFogTexIndex;
 uniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide
 uniform float uInverseTexHeight;  //in 1/pixels
 uniform float uEffectStrength;
 
 varying vec2 vTexCoord;
 
-/* Retrieves the depth value (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */
+/* Retrieves the depth value (dx, dy) pixels away from 'pos' from texture 'uDepthTexIndex'. */
 float getDepth(vec2 pos, int dx, int dy)
 {
-  //retrieve the color-coded depth
-  vec4 codedDepth = texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, 
-                                              pos.t + float(dy) * uInverseTexHeight));
-  //convert back to depth value
-  return (codedDepth.x + 
-         codedDepth.y/ 255.0 +
-         codedDepth.z/(255.0*255.0)) / 256.0 * 255.0;
+  float z = texture2D(uDepthTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, 
+                                   pos.t + float(dy) * uInverseTexHeight)).x;
+  //FIXME: terrible hack; linearize depth based on hard-coded near and far planes
+  const float n = 1.0;
+  const float f = 7500.0;
+  return (2.0 * n) / (f + n - z * (f - n));
 }
 
 
@@ -43,7 +43,7 @@ float getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)
       return 1.0;
       
     float relDepthDiff = depthThere / depthHere;
-
+    float depthDiff = abs(depthThere - depthHere) * 7500.0; //FIXME: hard-coded far plane
     /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes
      * 'here'. The occlusion is the higher the bigger the depth difference between the two
      * locations is.
@@ -51,7 +51,7 @@ float getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)
      * completely different depth region of the scene than 'here' and thus cannot occlude
      * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.
      */
-    return relDepthDiff > 0.95 ? relDepthDiff : 1.0;
+    return depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;
 }
 
 /* This shader approximates the ambient occlusion in screen space (SSAO). 
@@ -82,9 +82,8 @@ float getOcclusionFactor(float depthHere, vec2 pos, int dx, int dy)
  *    that need to be sampled.
  */
 void main() {
-
   float depthHere = getDepth(vTexCoord.st, 0, 0);
-  float fogIntensity = texture2D(uTexIndex, vTexCoord.st).w;
+  float fogIntensity = texture2D(uFogTexIndex, vTexCoord.st).w;
 
   if (depthHere == 0.0)
   {
@@ -92,46 +91,30 @@ void main() {
     gl_FragColor = vec4(1.0);
     return;
   }
-  
+
   float occlusionFactor = 1.0;
   
-  //always consider the direct horizontal and vertical neighbors for the ambient map 
   occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -1,   0);
   occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +1,   0);
   occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -1);
   occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +1);
-  /* note: exponents are hand-tuned to give about the same brightness no matter
-   *       how many samples are considered (4, 8 or 16) */
-  float exponent = 60.0;  
-  
-  if (depthHere < 0.4)
-  {
-    /* for closer objects, also consider the texels that are two pixels 
-     * away diagonally. */
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  -2);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  +2);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  -2);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  +2);
-    exponent = 12.0;
-  }
-    
-  if (depthHere < 0.3)
-  {
-    /* for the closest objects, also consider the texels that are four pixels 
-     * away horizontally, vertically and diagonally */
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,   0);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,   0);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -4);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +4);
 
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  -4);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  +4);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  -4);
-    occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  +4);
-    exponent = 4.0;
-  }
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  -2);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  +2);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +2,  -2);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -2,  +2);
 
-  occlusionFactor = pow(occlusionFactor, exponent);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,   0);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,   0);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  -4);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,   0,  +4);
+
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  -4);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  +4);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  +4,  -4);
+  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord.st,  -4,  +4);
+
+  occlusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane
   occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength);
   
   occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));

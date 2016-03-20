@@ -93,8 +93,7 @@ render.Overlay = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.activeTexture(gl.TEXTURE0);
+    texture.enable(0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
