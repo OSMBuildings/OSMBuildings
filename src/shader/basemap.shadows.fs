@@ -36,18 +36,16 @@ float isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {
   if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport
     return 1.0;
   
-  vec4 depthTexel = texture2D(uShadowTexIndex, sunViewNDC.xy);
+  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;
   
-  float depthFromTexture = depthTexel.x + 
-                          (depthTexel.y / 255.0) + 
-                          (depthTexel.z / (255.0 * 255.0));
-
   //compare depth values not in reciprocal but in linear depth
-  return step( 1.0/depthFromTexture, 1.0/depth + bias);
+  return step(1.0/depthFromTexture, 1.0/depth + bias);
 }
 
 void main() {
-
+  //vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;
+  //gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);
+  //return;
   float diffuse = dot(uDirToSun, normalize(vNormal));
   diffuse = max(diffuse, 0.0);
   

@@ -13,8 +13,9 @@ render.Overlay = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
+      shaderName: 'overlay texture shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: [ 'uMatrix', 'uTexIndex', 'uColor']
+      uniforms: ['uMatrix', 'uTexIndex']
     });
   },
 
@@ -80,22 +81,15 @@ render.Overlay = {
     var shader = this.shader;
 
     shader.enable();
-    /* we are rendering an *overlay* that is supposed to be rendered on top of the
+    /* we are rendering an *overlay*, which is supposed to be rendered on top of the
      * scene no matter what its actual depth is. */
     gl.disable(gl.DEPTH_TEST);    
     
-    var identity = new glx.Matrix();
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
-    this.vertexBuffer.enable();
+    shader.setUniformMatrix('uMatrix', '4fv', glx.Matrix.identity().data);
 
-    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    this.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1i(shader.uniforms.uTexIndex, 0);
+    shader.bindBuffer(this.vertexBuffer,  'aPosition');
+    shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
+    shader.bindTexture('uTexIndex', 0, texture);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 

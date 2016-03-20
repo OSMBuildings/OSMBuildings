@@ -73,8 +73,8 @@ render.SkyDome.prototype.createGeometry = function(radius) {
 
       vertices.push.apply(vertices, [].concat(A,B,C,A,C,D));
 
-      tcTop    = (1 - (j+1)/latSegments)*0.95;
-      tcBottom = (1 - j/latSegments)*0.95;
+      tcTop    = 1 - (1 - (j+1)/latSegments)*0.95;
+      tcBottom = 1 - (1 - j/latSegments)*0.95;
 
       texCoords.push(tcLeft, tcBottom, tcRight, tcBottom, tcRight, tcTop, tcLeft, tcBottom, tcRight, tcTop, tcLeft, tcTop);
     }

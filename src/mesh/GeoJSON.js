@@ -373,23 +373,23 @@ mesh.GeoJSON = (function() {
 
         if (hasContinuousWindows) {
           tris.texCoords.push(
-            0.0,        0.6,
-            numWindows, 0.8,
-            numWindows, 0.6,
+            0.0,        0.4,
+            numWindows, 0.2,
+            numWindows, 0.4,
             
-            0.0,        0.6,
-            0.0,        0.8,
-            numWindows, 0.8
+            0.0,        0.4,
+            0.0,        0.2,
+            numWindows, 0.2
           );
         } else {
           tris.texCoords.push(
-            0.0,        0.0,
-            numWindows, numFloors,
-            numWindows, 0.0,
-            
-            0.0,        0.0,
             0.0,        numFloors,
-            numWindows, numFloors
+            numWindows, 0.0,
+            numWindows, numFloors,
+            
+            0.0,        numFloors,
+            0.0,        0.0,
+            numWindows, 0.0
           );
         }
       }

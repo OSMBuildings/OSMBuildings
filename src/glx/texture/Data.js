@@ -8,10 +8,6 @@ glx.texture.Data = function(width, height, data, options) {
   GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
   GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
 
-  //if (options.flipY) {
-  //  GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
-  //}
-
   var bytes = null;
 
   if (data) {

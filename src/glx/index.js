@@ -50,6 +50,8 @@ var GLX = function(container, width, height, highQuality) {
         context.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT
       );
     }
+    
+    context.depthTextureExtension = context.getExtension('WEBGL_depth_texture');
   }
 
   return GLX.use(context);

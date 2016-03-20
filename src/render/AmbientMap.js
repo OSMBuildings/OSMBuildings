@@ -6,7 +6,7 @@ render.AmbientMap = {
       vertexShader:   Shaders.ambientFromDepth.vertex,
       fragmentShader: Shaders.ambientFromDepth.fragment,
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex', 'uEffectStrength']
+      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
@@ -30,7 +30,7 @@ render.AmbientMap = {
     ]));
   },
 
-  render: function(depthMap, framebufferConfig, effectStrength) {
+  render: function(depthTexture, fogTexture, framebufferConfig, effectStrength) {
 
     var
       shader = this.shader,
@@ -76,35 +76,28 @@ render.AmbientMap = {
     shader.enable();
     framebuffer.enable();
 
-    gl.clearColor(1.0, 0.0, 0, 1);
+    gl.clearColor(1.0, 0.0, 0.0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
 
-    var identity = new glx.Matrix();
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
+    shader.setUniforms([
+      ['uInverseTexWidth',  '1f', 1/framebufferConfig.width],
+      ['uInverseTexHeight', '1f', 1/framebufferConfig.height],
+      ['uEffectStrength',   '1f', effectStrength]
+    ]);
 
-    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebufferConfig.width);
-    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebufferConfig.height);
-    gl.uniform1f(shader.uniforms.uEffectStrength,  effectStrength);
+    shader.bindBuffer(this.vertexBuffer,   'aPosition');
+    shader.bindBuffer(this.texCoordBuffer, 'aTexCoord');
 
-    this.vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    this.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindTexture(gl.TEXTURE_2D, depthMap.framebuffer.renderTexture.id);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1i(shader.uniforms.uTexIndex, 0);
+    shader.bindTexture('uDepthTexIndex', 0, depthTexture);
+    shader.bindTexture('uFogTexIndex',   1, fogTexture);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
     framebuffer.disable();
 
-    gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    //gl.generateMipmap(gl.TEXTURE_2D); //no interpolation --> don't need a mipmap
-    
     gl.viewport(0, 0, MAP.width, MAP.height);
 
   },

@@ -7,8 +7,9 @@ render.SkyWall = function() {
   this.shader = new glx.Shader({
     vertexShader: Shaders.skydome.vertex,
     fragmentShader: Shaders.skydome.fragment,
+    shaderName: 'sky wall shader',
     attributes: ['aPosition', 'aTexCoord'],
-    uniforms: ['uAbsoluteHeight', 'uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogColor']
+    uniforms: ['uAbsoluteHeight', 'uMatrix', 'uTexIndex', 'uFogColor']
   });
   
   this.floorShader = new glx.Shader({
@@ -72,7 +73,7 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
   var tcRight =vRightArc;//MAP.rotation/360.0 + visibleSkyDiameterFraction*3;
         
   this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
-    [tcLeft,1, tcRight,1, tcRight,0, tcLeft,1, tcRight,0, tcLeft,0]));
+    [tcLeft,0, tcRight,0, tcRight,1, tcLeft,0, tcRight,1, tcLeft,1]));
     
   v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0];
   v2 = [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0];
@@ -97,29 +98,25 @@ render.SkyWall.prototype.render = function() {
 
   shader.enable();
 
-  gl.uniform3fv(shader.uniforms.uFogColor, fogColor);
-  gl.uniform1f( shader.uniforms.uAbsoluteHeight, SKYWALL_HEIGHT*10.0);
+  shader.setUniforms([
+    ['uFogColor',       '3fv', fogColor],
+    ['uAbsoluteHeight', '1f',  SKYWALL_HEIGHT*10.0]
+  ]);
 
-  var modelMatrix = new glx.Matrix();
-  gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-  gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-  gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
-  gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+  shader.setUniformMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
 
   shader.bindBuffer( this.vertexBuffer,   'aPosition');
   shader.bindBuffer( this.texCoordBuffer, 'aTexCoord');
 
-  gl.uniform1i(shader.uniforms.uTexIndex, 0);
-
-  this.texture.enable(0);
+  shader.bindTexture('uTexIndex', 0, this.texture);
 
   gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
   shader.disable();
   
 
   this.floorShader.enable();
-  gl.uniform4fv(this.floorShader.uniforms.uColor, fogColor.concat([1.0]));
-  gl.uniformMatrix4fv(this.floorShader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+  this.floorShader.setUniform('uColor', '4fv', fogColor.concat([1.0]));
+  this.floorShader.setUniformMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
   this.floorShader.bindBuffer(this.floorVertexBuffer, 'aPosition');
   gl.drawArrays(gl.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
   

@@ -5,6 +5,7 @@ render.Blur = {
     this.shader = new glx.Shader({
       vertexShader:   Shaders.blur.vertex,
       fragmentShader: Shaders.blur.fragment,
+      shaderName: 'blur shader',
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
     });
@@ -30,7 +31,7 @@ render.Blur = {
     ]));
   },
 
-  render: function(inputFramebuffer, framebufferConfig) {
+  render: function(inputTexture, framebufferConfig) {
 
     var
       shader = this.shader,
@@ -78,30 +79,21 @@ render.Blur = {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 
-    var identity = new glx.Matrix();
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
 
-    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebuffer.width);
-    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebuffer.height);
-
-    this.vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    this.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.bindTexture(gl.TEXTURE_2D, inputFramebuffer.renderTexture.id);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1i(shader.uniforms.uTexIndex, 0);
+    shader.setUniforms([
+      ['uInverseTexWidth', '1f', 1/framebuffer.width],
+      ['uInverseTexHeight', '1f', 1/framebuffer.height],
+    ]);
+    shader.bindBuffer(this.vertexBuffer,  'aPosition');
+    shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
+    shader.bindTexture('uTexIndex', 0, inputTexture);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
     framebuffer.disable();
 
-    gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    //gl.generateMipmap(gl.TEXTURE_2D); //no interpolation --> don't need a mipmap
-    
     gl.viewport(0, 0, MAP.width, MAP.height);
 
   },
