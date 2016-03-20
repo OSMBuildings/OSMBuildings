@@ -2,6 +2,7 @@
 glx.Shader = function(config) {
   var i;
 
+  this.shaderName = config.shaderName;
   this.id = GL.createProgram();
 
   this.attach(GL.VERTEX_SHADER,   config.vertexShader);
@@ -90,10 +91,35 @@ glx.Shader.prototype = {
   
   setUniform: function(uniform, type, value) {
     if (this.uniforms[uniform] === undefined) {
+      console.log("[warn] attempt to bind to invalid uniform '%s' in shader '%s'", uniform, this.shaderName);
       return;
     }
-    
     GL['uniform'+ type]( this.uniforms[uniform], value);
+  },
+
+  setUniforms: function(uniforms) {
+    for (var i in uniforms) {
+      this.setUniform(uniforms[i][0], uniforms[i][1], uniforms[i][2]);
+    }
+  },
+
+  setUniformMatrix: function(uniform, type, value) {
+    if (this.uniforms[uniform] === undefined) {
+      console.log("[warn] attempt to bind to invalid uniform '%s' in shader '%s'", uniform, this.shaderName);
+      return;
+    }
+    GL['uniformMatrix'+ type]( this.uniforms[uniform], false, value);
+  },
+
+  setUniformMatrices: function(uniforms) {
+    for (var i in uniforms) {
+      this.setUniformMatrix(uniforms[i][0], uniforms[i][1], uniforms[i][2]);
+    }
+  },
+  
+  bindTexture: function(uniform, textureUnit, glxTexture) {
+    glxTexture.enable(textureUnit);
+    this.setUniform(uniform, "1i", textureUnit);
   },
 
   destroy: function() {

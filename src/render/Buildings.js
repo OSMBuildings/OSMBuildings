@@ -74,45 +74,40 @@ render.Buildings = {
       gl.disable(gl.CULL_FACE);
     }
 
-    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uLightDirection, Sun.direction);
-    gl.uniform1f(shader.uniforms.uShadowStrength, shadowStrength);
-
-    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
-    gl.uniformMatrix3fv(shader.uniforms.uNormalTransform, false, glx.Matrix.transpose3(normalMatrix));
-
-    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
-    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
-
-    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
-    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
-    gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
-
-    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
-    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
-
-    gl.uniform3fv(shader.uniforms.uHighlightColor, render.highlightColor);
-
-    gl.uniform1f(shader.uniforms.uTime, Filter.getTime());
-
     if (!this.highlightID) {
       this.highlightID = [0, 0, 0];
     }
-    gl.uniform3fv(shader.uniforms.uHighlightID, this.highlightID);
 
-    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix,  false, render.viewMatrix.data);
-    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix,  false, render.projMatrix.data);
+    shader.setUniforms([
+      ["uBendRadius",      "1f",  render.bendRadius],
+      ["uBendDistance",    "1f",  render.bendDistance],
+      ["uFogDistance",     "1f",  render.fogDistance],
+      ["uFogBlurDistance", "1f",  render.fogBlurDistance],
+      ["uFogColor",        "3fv", render.fogColor],
+      ["uHighlightColor",  "3fv", render.highlightColor],
+      ["uHighlightID",     "3fv", this.highlightID],
+      ["uLightColor",      "3fv", [0.5, 0.5, 0.5]],
+      ["uLightDirection",  "3fv", Sun.direction],
+      ["uLowerEdgePoint",  "2fv", render.lowerLeftOnMap],
+      ["uShadowStrength",  "1f",  shadowStrength],
+      ["uTime",            "1f",  Filter.getTime()],
+      ["uViewDirOnMap",    "2fv", render.viewDirOnMap]
+    ]);
 
-    gl.uniform1f(shader.uniforms.uShadowStrength,  shadowStrength);
+    var normalMatrix = glx.Matrix.invert3(new glx.Matrix().data);
+
+    shader.setUniformMatrices([
+      ["uProjMatrix",      "4fv", render.projMatrix.data],
+      ["uViewMatrix",      "4fv", render.viewMatrix.data],
+      ["uNormalTransform", "3fv", glx.Matrix.transpose3(normalMatrix)]
+    ]);
+
+    shader.bindTexture("uWallTexIndex", 0, this.wallTexture);
     
     if (depthFramebuffer) {
-      gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
-      depthFramebuffer.depthTexture.enable(1);
-      gl.uniform1i(shader.uniforms.uShadowTexIndex, 1);
+      shader.setUniform("uShadowTexDimensions", "2fv", [depthFramebuffer.width, depthFramebuffer.height]);
+      shader.bindTexture("uShadowTexIndex", 1, depthFramebuffer.depthTexture);
     }
-    
-    this.wallTexture.enable(0);
-    gl.uniform1i(shader.uniforms.uWallTexIndex, 0);
     
 
     var
@@ -125,17 +120,15 @@ render.Buildings = {
 
       item = dataItems[i];
 
-      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
         continue;
       }
 
-      if (!(modelMatrix = item.getMatrix())) {
-        continue;
-      }
-
-      gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-      gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-      gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+      shader.setUniformMatrices([
+        ["uModelMatrix", "4fv", modelMatrix.data],
+        ["uMatrix",      "4fv", glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
+        ["uSunMatrix",   "4fv", glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
+      ]);
 
       shader.bindBuffer(item.vertexBuffer,   'aPosition');
       shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');
