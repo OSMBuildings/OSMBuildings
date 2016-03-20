@@ -1,17 +1,18 @@
 
-/* 'DepthMap' renders depth buffer of the current view into a texture. To be compatible with as
-   many devices as possible, this code does not use the WEBGL_depth_texture extension, but
-   instead color-codes the depth value into an ordinary RGB8 texture.
-
-   This depth texture can then be used for effects such as outline rendering, screen-space
-   ambient occlusion (SSAO) and shadow mapping.
+/* 'DepthFogNormalMap' renders the depth buffer and the scene's camera-space 
+   normals and fog intensities into textures. Depth is stored as a 24bit depth 
+   texture using the WEBGL_depth_texture extension, and normals and fog 
+   intensities are stored as the 'rgb' and 'a' of a shared 32bit texture.
+   Note that there is no dedicated shader to create the depth texture. Rather,
+   the depth buffer used by the GPU in depth testing while rendering the normals
+   and fog intensities is itself a texture.
 */
 
-render.DepthMap = function() {
+render.DepthFogNormalMap = function() {
   this.shader = new glx.Shader({
-    vertexShader: Shaders.depth.vertex,
-    fragmentShader: Shaders.depth.fragment,
-    shaderName: 'depth shader',
+    vertexShader: Shaders.fogNormal.vertex,
+    fragmentShader: Shaders.fogNormal.fragment,
+    shaderName: 'fog/normal shader',
     attributes: ['aPosition', 'aFilter', 'aNormal'],
     uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
@@ -21,16 +22,16 @@ render.DepthMap = function() {
   this.mapPlane = new mesh.MapPlane();
 };
 
-render.DepthMap.prototype.getDepthTexture = function() {
+render.DepthFogNormalMap.prototype.getDepthTexture = function() {
   return this.framebuffer.depthTexture;
 };
 
-render.DepthMap.prototype.getFogNormalTexture = function() {
+render.DepthFogNormalMap.prototype.getFogNormalTexture = function() {
   return this.framebuffer.renderTexture;
 };
 
 
-render.DepthMap.prototype.render = function(viewMatrix, projMatrix, framebufferConfig, isPerspective) {
+render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, framebufferConfig, isPerspective) {
 
   var
     shader = this.shader,
@@ -108,5 +109,5 @@ render.DepthMap.prototype.render = function(viewMatrix, projMatrix, framebufferC
   gl.viewport(0, 0, MAP.width, MAP.height);
 };
 
-render.DepthMap.prototype.destroy = function() {};
+render.DepthFogNormalMap.prototype.destroy = function() {};
 
