@@ -19,10 +19,10 @@ basemap.Tile = function(x, y, zoom) {
   ];
 
   var texCoords = [
-    1, 1,
     1, 0,
-    0, 1,
-    0, 0
+    1, 1,
+    0, 0,
+    0, 1
   ];
 
   this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
