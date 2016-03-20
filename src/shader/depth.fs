@@ -5,7 +5,6 @@
 
 uniform float uFogDistance;
 uniform float uFogBlurDistance;
-uniform int   uIsPerspectiveProjection;
 
 varying float verticalDistanceToLowerEdge;
 varying vec3 vNormal;

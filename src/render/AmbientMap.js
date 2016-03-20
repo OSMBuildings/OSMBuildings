@@ -76,26 +76,22 @@ render.AmbientMap = {
     shader.enable();
     framebuffer.enable();
 
-    gl.clearColor(1.0, 0.0, 0, 1);
+    gl.clearColor(1.0, 0.0, 0.0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
 
-    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebufferConfig.width);
-    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebufferConfig.height);
-    gl.uniform1f(shader.uniforms.uEffectStrength,  effectStrength);
+    shader.setUniforms([
+      ['uInverseTexWidth',  '1f', 1/framebufferConfig.width],
+      ['uInverseTexHeight', '1f', 1/framebufferConfig.height],
+      ['uEffectStrength',   '1f', effectStrength]
+    ]);
 
-    this.vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    shader.bindBuffer(this.vertexBuffer,   'aPosition');
+    shader.bindBuffer(this.texCoordBuffer, 'aTexCoord');
 
-    this.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    depthTexture.enable(0);
-    gl.uniform1i(shader.uniforms.uDepthTexIndex, 0);
-
-    fogTexture.enable(1);
-    gl.uniform1i(shader.uniforms.uFogTexIndex, 1);
+    shader.bindTexture('uDepthTexIndex', 0, depthTexture);
+    shader.bindTexture('uFogTexIndex',   1, fogTexture);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 

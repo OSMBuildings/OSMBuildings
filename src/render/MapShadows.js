@@ -10,21 +10,19 @@ render.MapShadows = {
     this.shader = new glx.Shader({
       vertexShader: Shaders['basemap.shadows'].vertex,
       fragmentShader: Shaders['basemap.shadows'].fragment,
+      shaderName: 'map shadows shader',
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
         'uModelMatrix',
-        'uViewMatrix',
-        'uProjMatrix',
         'uViewDirOnMap',
         'uMatrix',
         'uDirToSun',
-        'uNormalTransform',
-        'uLightColor',
         'uLowerEdgePoint',
         'uFogDistance',
         'uFogBlurDistance',
         'uShadowTexDimensions', 
         'uShadowStrength',
+        'uShadowTexIndex',
         'uSunMatrix',
       ]
     });
@@ -40,21 +38,17 @@ render.MapShadows = {
       gl.disable(gl.CULL_FACE);
     }
 
-    gl.uniform3fv(shader.uniforms.uLightColor, [0.5, 0.5, 0.5]);
-    gl.uniform3fv(shader.uniforms.uDirToSun, Sun.direction);
+    shader.setUniforms([
+      ['uDirToSun', '3fv', Sun.direction],
+      ['uViewDirOnMap', '2fv',   render.viewDirOnMap],
+      ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap],
+      ['uFogDistance', '1f', render.fogDistance],
+      ['uFogBlurDistance', '1f', render.fogBlurDistance],
+      ['uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] ],
+      ['uShadowStrength', '1f', shadowStrength]
+    ]);
 
-    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
-    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
-
-    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
-    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
-    gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
-
-    gl.uniform2f(shader.uniforms.uShadowTexDimensions, depthFramebuffer.width, depthFramebuffer.height);
-    gl.uniform1f(shader.uniforms.uShadowStrength, shadowStrength);
-
-    depthFramebuffer.depthTexture.enable(0);
-    gl.uniform1i(shader.uniforms.uShadowTexIndex, 0);
+    shader.bindTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
 
     var item = this.mapPlane;
     if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
@@ -66,9 +60,11 @@ render.MapShadows = {
       return;
     }
 
-    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-    gl.uniformMatrix4fv(shader.uniforms.uSunMatrix, false, glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+    shader.setUniformMatrices([
+      ['uModelMatrix', '4fv', modelMatrix.data],
+      ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
+      ['uSunMatrix',   '4fv', glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
+    ]);
 
     shader.bindBuffer(item.vertexBuffer, 'aPosition');
     shader.bindBuffer(item.normalBuffer, 'aNormal');

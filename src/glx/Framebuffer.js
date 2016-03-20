@@ -83,7 +83,7 @@ glx.Framebuffer.prototype = {
     var imageData = new Uint8Array(4);
     if (x < 0 || y < 0 || x >= this.width || y >= this.height)
     {
-      console.warn("out-of-bounds pixel read");
+      console.warn('out-of-bounds pixel read');
       x = Math.max(0, Math.min(x, this.width-1));
       y = Math.max(0, Math.min(y, this.height-1));
     }

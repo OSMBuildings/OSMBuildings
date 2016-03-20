@@ -11,8 +11,9 @@ render.DepthMap = function() {
   this.shader = new glx.Shader({
     vertexShader: Shaders.depth.vertex,
     fragmentShader: Shaders.depth.fragment,
+    shaderName: 'depth shader',
     attributes: ['aPosition', 'aFilter', 'aNormal'],
-    uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint', 'uIsPerspectiveProjection']
+    uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
   
   this.framebuffer = new glx.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
@@ -64,9 +65,7 @@ render.DepthMap.prototype.render = function(viewMatrix, projMatrix, framebufferC
 
   var item, modelMatrix;
 
-  gl.uniform1f(shader.uniforms.uTime, Filter.getTime());
-  gl.uniform1f(shader.uniforms.uFogRadius, render.fogRadius);
-  gl.uniform1i(shader.uniforms.uIsPerspectiveProjection, isPerspective ? 1 : 0);
+  shader.setUniform('uTime', '1f', Filter.getTime());
 
   // render all actual data items, but also a dummy map plane
   // Note: SSAO on the map plane has been disabled temporarily
@@ -82,25 +81,23 @@ render.DepthMap.prototype.render = function(viewMatrix, projMatrix, framebufferC
     if (!(modelMatrix = item.getMatrix())) {
       continue;
     }
-  
-    var modelViewMatrix = new glx.Matrix(glx.Matrix.multiply(modelMatrix, viewMatrix));
-    var normalMatrix = glx.Matrix.transpose3(glx.Matrix.invert3(modelViewMatrix.data));
-    gl.uniform2fv(shader.uniforms.uViewDirOnMap, render.viewDirOnMap);
-    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, viewProjMatrix));
-    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-    gl.uniformMatrix3fv(shader.uniforms.uNormalMatrix, false, normalMatrix);
-    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
-    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
+
+    shader.setUniforms([
+      ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
+      ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
+      ['uFogDistance',     '1f',  render.fogDistance],
+      ['uFogBlurDistance', '1f',  render.fogBlurDistance]
+    ]);
+
+    shader.setUniformMatrices([
+      ['uMatrix',       '4fv', glx.Matrix.multiply(modelMatrix, viewProjMatrix)],
+      ['uModelMatrix',  '4fv', modelMatrix.data],
+      ['uNormalMatrix', '3fv', glx.Matrix.transpose3(glx.Matrix.invert3(glx.Matrix.multiply(modelMatrix, viewMatrix)))]
+    ]);
     
-    item.vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, item.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    item.normalBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aNormal, item.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    item.filterBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aFilter, item.filterBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    shader.bindBuffer(item.vertexBuffer, 'aPosition');
+    shader.bindBuffer(item.normalBuffer, 'aNormal');
+    shader.bindBuffer(item.filterBuffer, 'aFilter');
 
     gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
   }

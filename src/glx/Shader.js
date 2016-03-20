@@ -29,12 +29,13 @@ glx.Shader = function(config) {
   }
 };
 
+glx.Shader.warned = {};
 glx.Shader.prototype = {
 
   locateAttribute: function(name) {
     var loc = GL.getAttribLocation(this.id, name);
     if (loc < 0) {
-      console.error('unable to locate attribute "'+ name +'" in shader');
+      console.warn('unable to locate attribute "%s" in shader "%s"', name, this.shaderName);
       return;
     }
     this.attributes[name] = loc;
@@ -42,8 +43,8 @@ glx.Shader.prototype = {
 
   locateUniform: function(name) {
     var loc = GL.getUniformLocation(this.id, name);
-    if (loc < 0) {
-      console.error('unable to locate uniform "'+ name +'" in shader');
+    if (!loc) {
+      console.warn('unable to locate uniform "%s" in shader "%s"', name, this.shaderName);
       return;
     }
     this.uniforms[name] = loc;
@@ -81,7 +82,11 @@ glx.Shader.prototype = {
   
   bindBuffer: function(buffer, attribute) {
     if (this.attributes[attribute] === undefined) {
-      //console.log("[WARN] attempt to bind VBO to non-existent attribute '%s'", attribute);
+      var qualifiedName = this.shaderName + ":" + attribute;
+      if ( !glx.Shader.warned[qualifiedName]) {
+        console.warn('attempt to bind VBO to invalid attribute "%s" in shader "%s"', attribute, this.shaderName);
+        glx.Shader.warned[qualifiedName] = true;
+      }
       return;
     }
     
@@ -91,7 +96,12 @@ glx.Shader.prototype = {
   
   setUniform: function(uniform, type, value) {
     if (this.uniforms[uniform] === undefined) {
-      console.log("[warn] attempt to bind to invalid uniform '%s' in shader '%s'", uniform, this.shaderName);
+      var qualifiedName = this.shaderName + ":" + uniform;
+      if ( !glx.Shader.warned[qualifiedName]) {
+        console.warn('attempt to bind to invalid uniform "%s" in shader "%s"', uniform, this.shaderName);
+        glx.Shader.warned[qualifiedName] = true;
+      }
+
       return;
     }
     GL['uniform'+ type]( this.uniforms[uniform], value);
@@ -105,7 +115,11 @@ glx.Shader.prototype = {
 
   setUniformMatrix: function(uniform, type, value) {
     if (this.uniforms[uniform] === undefined) {
-      console.log("[warn] attempt to bind to invalid uniform '%s' in shader '%s'", uniform, this.shaderName);
+      var qualifiedName = this.shaderName + ":" + uniform;
+      if ( !glx.Shader.warned[qualifiedName]) {
+        console.warn('attempt to bind to invalid uniform "%s" in shader "%s"', uniform, this.shaderName);
+        glx.Shader.warned[qualifiedName] = true;
+      }
       return;
     }
     GL['uniformMatrix'+ type]( this.uniforms[uniform], false, value);

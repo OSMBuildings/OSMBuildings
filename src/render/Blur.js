@@ -5,6 +5,7 @@ render.Blur = {
     this.shader = new glx.Shader({
       vertexShader:   Shaders.blur.vertex,
       fragmentShader: Shaders.blur.fragment,
+      shaderName: 'blur shader',
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
     });
@@ -80,17 +81,13 @@ render.Blur = {
 
     gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
 
-    gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebuffer.width);
-    gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebuffer.height);
-
-    this.vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    this.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    inputTexture.enable(0);
-    gl.uniform1i(shader.uniforms.uTexIndex, 0);
+    shader.setUniforms([
+      ['uInverseTexWidth', '1f', 1/framebuffer.width],
+      ['uInverseTexHeight', '1f', 1/framebuffer.height],
+    ]);
+    shader.bindBuffer(this.vertexBuffer,  'aPosition');
+    shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
+    shader.bindTexture('uTexIndex', 0, inputTexture);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
