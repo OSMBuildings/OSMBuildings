@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "buildings", "buildings.shadows", "flatColor", "skydome", "basemap", "texture", "normalmap", "depth", "ambientFromDepth", "blur", "basemap.shadows"],
+  "shaders": ["interaction", "buildings", "buildings.shadows", "flatColor", "skydome", "basemap", "texture", "depth", "ambientFromDepth", "blur", "basemap.shadows"],
 
   "lib": [
     "lib/earcut.dev.js",
