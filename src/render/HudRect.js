@@ -45,8 +45,7 @@ render.HudRect = {
 
     shader.enable();
     
-    var identity = new glx.Matrix();
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
     this.vertexBuffer.enable();
 
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

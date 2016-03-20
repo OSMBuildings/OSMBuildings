@@ -78,8 +78,7 @@ render.Blur = {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 
-    var identity = new glx.Matrix();
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
 
     gl.uniform1f(shader.uniforms.uInverseTexWidth,  1/framebuffer.width);
     gl.uniform1f(shader.uniforms.uInverseTexHeight, 1/framebuffer.height);

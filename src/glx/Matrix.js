@@ -1,11 +1,29 @@
 
 glx.Matrix = function(data) {
-  if (data) {
-    this.data = new Float32Array(data);
-  } else {
-    this.identity();
-  }
+  this.data = new Float32Array(data ? data : [
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  ]);
 };
+
+glx.Matrix.identity = function() {
+  return new glx.Matrix([
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  ]);
+},
+
+glx.Matrix.identity3 = function() {
+  return new glx.Matrix([
+    1, 0, 0,
+    0, 1, 0,
+    0, 0, 1,
+  ]);
+},
 
 (function() {
 
@@ -71,16 +89,6 @@ glx.Matrix = function(data) {
   }
 
   glx.Matrix.prototype = {
-
-    identity: function() {
-      this.data = new Float32Array([
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-      ]);
-      return this;
-    },
 
     multiply: function(m) {
       multiply(this.data, this.data, m.data);
