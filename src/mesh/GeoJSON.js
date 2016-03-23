@@ -221,7 +221,7 @@ mesh.GeoJSON = (function() {
         roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial),
         hasContinuousWindows = (properties.material === "glass"),
         i,
-        skipRoof,
+        skipWalls, skipRoof,
         vertexCount, vertexCountBefore, color,
         idColor = render.Picking.idToColor(id),
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
@@ -273,6 +273,10 @@ mesh.GeoJSON = (function() {
           skipRoof = true;
           break;
 
+        case 'none':
+          skipWalls = true;
+          break;
+
         default:
           var numLevels = 0;
           if (properties.levels) {
@@ -281,20 +285,22 @@ mesh.GeoJSON = (function() {
           this.addExtrusion(this.data, geometry, H, Z, numLevels, hasContinuousWindows);
       }
 
-      vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
-      color = new Color(this.color || wallColor || DEFAULT_COLOR).toArray();
-      for (i = 0; i < vertexCount; i++) {
-        this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+      if (!skipWalls) {
+        vertexCount = (this.data.vertices.length - vertexCountBefore)/3;
+        color = new Color(this.color || wallColor || DEFAULT_COLOR).toArray();
+        for (i = 0; i<vertexCount; i++) {
+          this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+        }
+
+        this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
       }
-
-      this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
-
-      //****** roof ******
 
       if (skipRoof) {
         return;
       }
+
+      //****** roof ******
 
       H = roofHeight;
       Z = height;
