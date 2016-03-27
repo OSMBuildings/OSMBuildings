@@ -12,7 +12,7 @@ var mesh = {};
   //*****************************************************************************
 
   mesh.create = function() {
-    return { vertices: [], normals: [] };
+    return { vertices: [], normals: [], texCoords: [] };
   };
 
   mesh.addQuad = function(tris, a, b, c, d) {
@@ -24,8 +24,7 @@ var mesh = {};
     var n = normal(a, b, c);
     [].push.apply(tris.vertices, [].concat(a, c, b));
     [].push.apply(tris.normals,  [].concat(n, n, n));
-
-    tris.texCoords.push( 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    tris.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   };
 
   mesh.addCircle = function(tris, center, radius, Z) {
@@ -242,9 +241,15 @@ var mesh = {};
     }
   };
 
-  mesh.addExtrusion = function(tris, polygon, height, Z) {
+  mesh.addExtrusion = function(tris, polygon, height, Z, tx) {
     Z = Z || 0;
-    var ring, last, a, b;
+    var
+      ring, last, a, b,
+      L,
+      v0, v1, v2, v3, n,
+      tx1, tx2,
+      ty1 = tx[2]*height, ty2 = tx[3]*height;
+
     for (var i = 0, il = polygon.length; i < il; i++) {
       ring = polygon[i];
       last = ring.length-1;
@@ -257,12 +262,27 @@ var mesh = {};
       for (var r = 0; r < last; r++) {
         a = ring[r];
         b = ring[r+1];
-        this.addQuad(
-          tris,
-          [ a[0], a[1], Z ],
-          [ b[0], b[1], Z ],
-          [ b[0], b[1], Z+height ],
-          [ a[0], a[1], Z+height ]
+        L = len2(sub2(a, b));
+
+        tx1 = (tx[0]*L) <<0;
+        tx2 = (tx[1]*L) <<0;
+
+        v0 = [ a[0], a[1], Z];
+        v1 = [ b[0], b[1], Z];
+        v2 = [ b[0], b[1], Z+height];
+        v3 = [ a[0], a[1], Z+height];
+
+        n = normal(v0, v1, v2);
+        [].push.apply(tris.vertices, [].concat(v0, v2, v1, v0, v3, v2));
+        [].push.apply(tris.normals,  [].concat(n, n, n, n, n, n));
+
+        tris.texCoords.push(
+          tx1, ty2,
+          tx2, ty1,
+          tx2, ty2,
+          tx1, ty2,
+          tx1, ty1,
+          tx2, ty1
         );
       }
     }

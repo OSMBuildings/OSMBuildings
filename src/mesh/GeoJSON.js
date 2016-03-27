@@ -114,7 +114,7 @@ mesh.GeoJSON = (function() {
   function transform(ring, origin) {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(origin.latitude / 180 * Math.PI);
 
-    var p, res = [];
+    var res = [];
     for (var i = 0, len = ring.length; i < len; i++) {
       res[i] = [
          (ring[i][0]-origin.longitude) * metersPerDegreeLongitude,
@@ -219,7 +219,6 @@ mesh.GeoJSON = (function() {
 
         wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material),
         roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial),
-        hasContinuousWindows = (properties.material === "glass"),
         i,
         skipWalls, skipRoof,
         vertexCount, vertexCountBefore, color,
@@ -278,11 +277,19 @@ mesh.GeoJSON = (function() {
           break;
 
         default:
-          var numLevels = 0;
-          if (properties.levels) {
-            numLevels = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0)) << 0;
+          var ty1 = 0.2;
+          var ty2 = 0.4;
+
+          // non-continuous windows
+          if (properties.material !== 'glass') {
+            ty1 = 0;
+            ty2 = 0;
+            if (properties.levels) {
+              ty2 = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0)) <<0;
+            }
           }
-          this.addExtrusion(this.data, geometry, H, Z, numLevels, hasContinuousWindows);
+
+          mesh.addExtrusion(this.data, geometry, H, Z, [0, WINDOWS_PER_METER, ty1/H, ty2/H]);
       }
 
       if (!skipWalls) {
@@ -360,63 +367,6 @@ mesh.GeoJSON = (function() {
       this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
     },
 
-    addRingExtrusion: function(tris, ring, height, Z, numFloors, hasContinuousWindows) {
-      for (var r = 0; r < ring.length-1; r++) {
-        a = ring[r];
-        b = ring[r+1];
-        
-        var wallLength = len2(sub2( a, b));
-        var numWindows = Math.floor(wallLength * WINDOWS_PER_METER);
-        
-        var v0 = [ a[0], a[1], Z];
-        var v1 = [ b[0], b[1], Z];
-        var v2 = [ b[0], b[1], Z+height];
-        var v3 = [ a[0], a[1], Z+height];
-        
-        var n = normal(v0, v1, v2);
-        [].push.apply(tris.vertices, [].concat(v0, v2, v1,   v0, v3, v2));
-        [].push.apply(tris.normals,  [].concat(n, n, n, n, n, n));
-
-        if (hasContinuousWindows) {
-          tris.texCoords.push(
-            0.0,        0.4,
-            numWindows, 0.2,
-            numWindows, 0.4,
-            
-            0.0,        0.4,
-            0.0,        0.2,
-            numWindows, 0.2
-          );
-        } else {
-          tris.texCoords.push(
-            0.0,        numFloors,
-            numWindows, 0.0,
-            numWindows, numFloors,
-            
-            0.0,        numFloors,
-            0.0,        0.0,
-            numWindows, 0.0
-          );
-        }
-      }
-    },
-
-    addExtrusion: function(tris, polygon, height, Z, numFloors, hasContinuousWindows) {
-      Z = Z || 0;
-      //numFloors = numFloors || Math.max( 1, Math.floor( (height-Z) / METERS_PER_LEVEL));
-      var ring, last;
-      for (var i = 0, il = polygon.length; i < il; i++) {
-        ring = polygon[i];
-        last = ring.length-1;
-
-        if (ring[0][0] !== ring[last][0] || ring[0][1] !== ring[last][1]) {
-          ring.push(ring[0]);
-          last++;
-        }
-        this.addRingExtrusion(tris, ring, height, Z, numFloors, hasContinuousWindows);
-      }
-    },
-
     fadeIn: function() {
       var item, filters = [];
       var start = Filter.getTime() + 250, end = start + 500;
@@ -473,11 +423,11 @@ mesh.GeoJSON = (function() {
 
       var dLat = this.position.latitude - MAP.position.latitude;
       var dLon = this.position.longitude - MAP.position.longitude;
-      
+
       var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(MAP.position.latitude / 180 * Math.PI);
 
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
-      
+
       return matrix;
     },
 
