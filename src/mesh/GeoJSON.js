@@ -100,6 +100,26 @@ mesh.GeoJSON = (function() {
     }
   }
 
+  //function flattenGeometry(geometry) {
+  //  switch (geometry.type) {
+  //    case 'GeometryCollection':
+  //      return geometry.geometries.map(function(geometry) {
+  //        return flattenGeometry(geometry);
+  //      });
+  //
+  //    case 'MultiPolygon':
+  //      return geometry.coordinates.map(function(polygon) {
+  //        return flattenGeometry({ type: 'Polygon', coordinates: polygon });
+  //      });
+  //
+  //    case 'Polygon':
+  //      return [geometry.coordinates];
+  //
+  //    default:
+  //      return [];
+  //  }
+  //}
+
   // converts all coordinates of all rings in 'polygonRings' from lat/lng pairs
   // to meters-from-origin.
   function transformPolygon(polygonRings, origin) {
@@ -129,61 +149,29 @@ mesh.GeoJSON = (function() {
     return res;
   }
 
-
-/***
-
-   function getCenterAndRadius(coordinates) {
-    var bbox = getBBox(coordinates);
-    return {
-      radius: (bbox.maxX - bbox.minX)/2,
-      center: [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2]
-    };
-  }
-
-   function flattenGeometry(geometry) {
-    switch (geometry.type) {
-      case 'GeometryCollection':
-        return geometry.geometries.map(function(geometry) {
-          return flattenGeometry(geometry);
-        });
-
-      case 'MultiPolygon':
-        return geometry.coordinates.map(function(polygon) {
-          return flattenGeometry({ type: 'Polygon', coordinates: polygon });
-        });
-
-      case 'Polygon':
-        return [geometry.coordinates];
-
-      default:
-        return [];
-    }
-  }
-
-   // converts all coordinates of 'ring' from lat/lon to meters from reference point
-   function transform(ring, position) {
-    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE*Math.cos(position.latitude/180*Math.PI);
-    var res = [];
-
-    //return rings.map(function(ring, i) {
-    //  // outer rings (== the first ring) need to be clockwise, inner rings
-    //  // counter-clockwise. If they are not, make them by reversing them.
-    //  if ((i === 0) !== isClockWise(ring)) {
-    //    ring.reverse();
-    //  }
-    //  return transform(ring, position);
-    //});
-
-    for (var i = 0, il = ring.length; i < il; i++) {
-      res[i] = [
-        (ring[i][0] - position.longitude)*metersPerDegreeLongitude,
-        -(ring[i][1] - position.latitude)*METERS_PER_DEGREE_LATITUDE
-      ];
-    }
-
-    return res;
-  }
-***/
+  // // converts all coordinates of 'ring' from lat/lon to meters from reference point
+  // function transform(ring, position) {
+  //  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE*Math.cos(position.latitude/180*Math.PI);
+  //  var res = [];
+  //
+  //  //return rings.map(function(ring, i) {
+  //  //  // outer rings (== the first ring) need to be clockwise, inner rings
+  //  //  // counter-clockwise. If they are not, make them by reversing them.
+  //  //  if ((i === 0) !== isClockWise(ring)) {
+  //  //    ring.reverse();
+  //  //  }
+  //  //  return transform(ring, position);
+  //  //});
+  //
+  //  for (var i = 0, il = ring.length; i < il; i++) {
+  //    res[i] = [
+  //      (ring[i][0] - position.longitude)*metersPerDegreeLongitude,
+  //      -(ring[i][1] - position.latitude)*METERS_PER_DEGREE_LATITUDE
+  //    ];
+  //  }
+  //
+  //  return res;
+  //}
 
   //***************************************************************************
 
