@@ -12,22 +12,6 @@ function isClockWise(polygon) {
   }, 0);
 }
 
-function getBBox(polygon) {
-  var
-    x =  Infinity, y =  Infinity,
-    X = -Infinity, Y = -Infinity;
-
-  for (var i = 0; i < polygon.length; i++) {
-    x = Math.min(x, polygon[i][0]);
-    y = Math.min(y, polygon[i][1]);
-
-    X = Math.max(X, polygon[i][0]);
-    Y = Math.max(Y, polygon[i][1]);
-  }
-
-  return { minX:x, minY:y, maxX:X, maxY:Y };
-}
-
 function assert(condition, message) {
   if (!condition) {
     throw message;

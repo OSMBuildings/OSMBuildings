@@ -4,6 +4,7 @@
   "lib": [
     "lib/earcut.dev.js",
     "lib/Triangulate.js",
+    "lib/GeoJSON.js",
     "node_modules/Color/dist/Color.debug.js",
     "lib/GLX.debug.js",
     "node_modules/suncalc/suncalc.js"
