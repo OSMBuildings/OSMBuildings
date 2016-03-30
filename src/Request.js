@@ -1,4 +1,6 @@
 
+// TODO: introduce promises
+
 var Request = {};
 
 (function() {
