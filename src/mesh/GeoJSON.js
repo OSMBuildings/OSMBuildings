@@ -81,13 +81,9 @@ mesh.GeoJSON = (function() {
   function flattenGeometry(geometry) {
     // TODO: handle GeometryCollection
     switch (geometry.type) {
-      case 'MultiPoint':
-      case 'MultiLineString':
       case 'MultiPolygon':
         return geometry.coordinates;
 
-      case 'Point':
-      case 'LineString':
       case 'Polygon':
         return [geometry.coordinates];
 
@@ -123,7 +119,7 @@ mesh.GeoJSON = (function() {
 
     this.id = options.id;
     this.color = options.color;
-    this.colorizer = options.colorizer;
+    this.propertyModifier = options.propertyModifier;
 
     this.replace   = !!options.replace;
     this.scale     = options.scale     || 1;
@@ -202,6 +198,15 @@ mesh.GeoJSON = (function() {
 
     addItem: function(id, properties, geometry) {
       id = this.id || properties.relationId || id || properties.id;
+
+      // add ID to item properties to allow user-defined property modifiers to modify
+      // buildings based in their OSM ID
+      properties.id = id;
+
+      //let user-defined hook modify the entity properties
+      if (this.propertyModifier) {
+        properties = this.propertyModifier(properties) || properties;
+      }
 
       var
         height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT),

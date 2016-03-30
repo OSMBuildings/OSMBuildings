@@ -11,7 +11,7 @@ var Grid = function(source, tileClass, options) {
   this.fixedZoom = options.fixedZoom;
 
   this.tileOptions = { color:options.color,
-                       colorizer: options.colorizer };
+                       propertyModifier: options.propertyModifier };
 
   this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
   this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;

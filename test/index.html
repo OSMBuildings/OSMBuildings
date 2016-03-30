@@ -134,38 +134,39 @@
       attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">MapBox</a>'
     }
   );
-  var colorizerHeightInformationAvailability  = function(properties, colors) {
+  var colorizerHeightInformationAvailability  = function(properties) {
     
     if (!properties.levels && !properties.height) {
-      colors.roof = "red";
+      properties.color = "red";
     } else if (!properties.height) {
-      colors.roof = "lime";
+      properties.color = "lime";
     } else {
-      colors.roof = "green";
+      properties.color = "green";
     }
     
-    colors.wall = colors.roof;
+    properties.roofColor = properties.color;
   }
 
-  var colorizerHeight  = function(properties, colors) {
+  var colorizerHeight  = function(properties) {
+  
     var clamp = function(x, min, max) {
       return Math.min(Math.max(x, min), max);
     };
     var height = parseFloat(properties.height) || (parseFloat(properties.levels)* 3.5) || 0;
 
     if (height < 20)
-      colors.wall = "#CCCCCC";
+      properties.color = "#CCCCCC";
     else if (height < 30)
-      colors.wall = "purple";
+      properties.color = "purple";
     else if (height < 60)
-      colors.wall = "#CC4444";
+      properties.color = "#CC4444";
     else 
-      colors.wall = "orange";
+      properties.color = "orange";
       
-    colors.roof = colors.wall;
+    properties.roofColor = properties.color;
   }
   
-  var colorizerHighlightLandmarks = function(properties, colors)
+  var colorizerHighlightLandmarks = function(properties)
   {
     var landmarkIDs = {
       3074565: true,  // Rotes Rathaus
@@ -186,19 +187,16 @@
       304987173: true
     }
 
-    if (properties.id in landmarkIDs)
-      colors.wall = "#CC4444";
-    else
-      colors.wall = "#DDDDDD";
+    properties.color = (properties.id in landmarkIDs) ? "#CC4444" : "#DDDDDD";
       
-    colors.roof = colors.wall;
+    properties.roofColor = properties.color;
   }
   
   osmb.addGeoJSONTiles(
 //  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
-      colorizer: colorizerHeightInformationAvailability,
+      propertyModifier: colorizerHeightInformationAvailability,
       fixedZoom: 15
       // bounds
     });
