@@ -21,15 +21,11 @@ uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 
 float isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {
-  if (clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  // not inside sun's viewport
+  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport
     return 1.0;
   
-  vec4 depthTexel = texture2D( uShadowTexIndex, sunViewNDC.xy);
+  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;
   
-  float depthFromTexture = depthTexel.x + 
-                          (depthTexel.y / 255.0) + 
-                          (depthTexel.z / (255.0 * 255.0));
-
   //compare depth values not in reciprocal but in linear depth
   return step(1.0/depthFromTexture, 1.0/depth + bias);
 }

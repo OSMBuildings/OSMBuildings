@@ -94,7 +94,8 @@ mesh.OBJ = (function() {
         id: id,
         color: color,
         vertices: geometry.vertices,
-        normals: geometry.normals
+        normals: geometry.normals,
+        texCoords: geometry.texCoords
       });
     }
   }
@@ -104,7 +105,7 @@ mesh.OBJ = (function() {
       v0, v1, v2,
       e1, e2,
       nor, len,
-      geometry = { vertices:[], normals:[] };
+      geometry = { vertices:[], normals:[], texCoords:[] };
 
     for (var i = 0, il = faces.length; i < il; i++) {
       v0 = vertexIndex[ faces[i][0] ];
@@ -132,6 +133,13 @@ mesh.OBJ = (function() {
         nor[0], nor[1], nor[2],
         nor[0], nor[1], nor[2]
       );
+
+      geometry.texCoords.push(
+        0.0, 0.0,
+        0.0, 0.0,
+        0.0, 0.0
+      );
+
     }
 
     return geometry;
@@ -160,10 +168,11 @@ mesh.OBJ = (function() {
     }
 
     this.data = {
+      colors: [],
+      ids: [],
       vertices: [],
       normals: [],
-      colors: [],
-      ids: []
+      texCoords: []
     };
 
     Activity.setBusy();
@@ -198,8 +207,9 @@ mesh.OBJ = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         item = items[i];
 
-        this.data.vertices = this.data.vertices.concat(item.vertices);
-        this.data.normals  = this.data.normals.concat(item.normals);
+        this.data.vertices  = this.data.vertices.concat(item.vertices);
+        this.data.normals   = this.data.normals.concat(item.normals);
+        this.data.texCoords = this.data.texCoords.concat(item.texCoords);
 
         id = this.id || item.id;
         idColor = render.Picking.idToColor(id);
@@ -240,10 +250,11 @@ mesh.OBJ = (function() {
     },
 
     onReady: function() {
-      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer  = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idBuffer     = new glx.Buffer(3, new Float32Array(this.data.ids));
+      this.vertexBuffer   = new glx.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer   = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
+      this.colorBuffer    = new glx.Buffer(3, new Float32Array(this.data.colors));
+      this.idBuffer       = new glx.Buffer(3, new Float32Array(this.data.ids));
       this.fadeIn();
       this.data = null;
 

@@ -5,8 +5,9 @@ render.Basemap = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
+      shaderName: 'basemap shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uModelMatrix', 'uViewMatrix', 'uProjMatrix', 'uMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uFogColor', 'uLowerEdgePoint', 'uBendRadius', 'uBendDistance', 'uViewDirOnMap']
+      uniforms: ['uModelMatrix', 'uMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
     });
   },
 
@@ -27,17 +28,14 @@ render.Basemap = {
       zoom = Math.round(MAP.zoom);
 
     shader.enable();
-
-    gl.uniform1f(shader.uniforms.uFogDistance, render.fogDistance);
-    gl.uniform1f(shader.uniforms.uFogBlurDistance, render.fogBlurDistance);
-    gl.uniform3fv(shader.uniforms.uFogColor, render.fogColor);
-
-//    gl.uniform1f(shader.uniforms.uBendRadius, render.bendRadius);
-//    gl.uniform1f(shader.uniforms.uBendDistance, render.bendDistance);
-
-    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
-    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
-
+    
+    shader.setUniforms([
+      ['uFogDistance',     '1f',  render.fogDistance],
+      ['uFogBlurDistance', '1f',  render.fogBlurDistance],
+      ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
+      ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap]
+    ]);
+    
     for (var key in layer.visibleTiles) {
       tile = layer.tiles[key];
 
@@ -81,22 +79,20 @@ render.Basemap = {
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
                      MAX_USED_ZOOM_LEVEL - tile.zoom);
-    gl.uniform2fv(shader.uniforms.uViewDirOnMap,   render.viewDirOnMap);
-    gl.uniform2fv(shader.uniforms.uLowerEdgePoint, render.lowerLeftOnMap);
-    gl.uniformMatrix4fv(shader.uniforms.uModelMatrix, false, modelMatrix.data);
-    gl.uniformMatrix4fv(shader.uniforms.uViewMatrix, false, render.viewMatrix.data);
-    gl.uniformMatrix4fv(shader.uniforms.uProjMatrix, false, render.projMatrix.data);
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+                     
+    shader.setUniforms([
+      ['uViewDirOnMap', '2fv',   render.viewDirOnMap],
+      ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap]
+    ]);
 
-    tile.vertexBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aPosition, tile.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    shader.setUniformMatrices([
+      ['uModelMatrix', '4fv', modelMatrix.data],
+      ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+    ]);
 
-    tile.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, tile.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-    gl.uniform1i(shader.uniforms.uTexIndex, 0);
-
-    tile.texture.enable(0);
+    shader.bindBuffer(tile.vertexBuffer,  'aPosition');
+    shader.bindBuffer(tile.texCoordBuffer,'aTexCoord');
+    shader.bindTexture('uTexIndex', 0, tile.texture);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     gl.disable(gl.POLYGON_OFFSET_FILL);

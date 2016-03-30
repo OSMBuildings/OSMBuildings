@@ -1,9 +1,16 @@
 
 mesh.GeoJSON = (function() {
 
+  var DEFAULT_HEIGHT = 10;
+
+  // number of windows per horizontal meter of building wall
+  var WINDOWS_PER_METER = 0.5;
+
+  var DEFAULT_COLOR = 'rgb(220, 210, 200)';
+
   var METERS_PER_LEVEL = 3;
 
-  var materialColors = {
+  var MATERIAL_COLORS = {
     brick:'#cc7755',
     bronze:'#ffeecc',
     canvas:'#fff8f0',
@@ -23,7 +30,7 @@ mesh.GeoJSON = (function() {
     wood:'#deb887'
   };
 
-  var baseMaterials = {
+  var BASE_MATERIALS = {
     asphalt:'tar_paper',
     bitumen:'tar_paper',
     block:'stone',
@@ -57,8 +64,8 @@ mesh.GeoJSON = (function() {
   };
 
   var
-    featuresPerChunk = 100,
-    delayPerChunk = 66;
+    featuresPerChunk = 90,
+    delayPerChunk = 75;
 
   function getMaterialColor(str) {
     if (typeof str !== 'string') {
@@ -68,63 +75,47 @@ mesh.GeoJSON = (function() {
     if (str[0] === '#') {
       return str;
     }
-    return materialColors[baseMaterials[str] || str] || null;
+    return MATERIAL_COLORS[BASE_MATERIALS[str] || str] || null;
   }
 
-
-
-  /* Converts a geometry of arbitrary type (GeometryCollection, MultiPolygon or Polygon)
-   * to an array of Polygons.
-   */
-  function flattenGeometryHierarchy(geometry, origin) {
+  function flattenGeometry(geometry) {
+    // TODO: handle GeometryCollection
     switch (geometry.type) {
-      case 'GeometryCollection':
-        return geometry.geometries.map(function(geometry) {
-          return flattenGeometryHierarchy(geometry.geometries[i]);
-        });
-
+      case 'MultiPoint':
+      case 'MultiLineString':
       case 'MultiPolygon':
-        return geometry.coordinates.map(function(polygon) {
-          return flattenGeometryHierarchy({ type: 'Polygon', coordinates: polygon });
-        });
+        return geometry.coordinates;
 
+      case 'Point':
+      case 'LineString':
       case 'Polygon':
-        return transformPolygon(geometry.coordinates, origin);
+        return [geometry.coordinates];
 
       default:
         return [];
     }
   }
 
-  // converts all coordinates of all rings in 'polygonRings' from lat/lng pairs
-  // to meters-from-origin.
-  function transformPolygon(polygonRings, origin) {
-    var res = polygonRings.map(function(ring, ringIndex) {
-      // outer rings (== the first ring) need to be clockwise, inner rings
-      // counter-clockwise. If they are not, make them by reversing them.
-      if ((ringIndex === 0) !== isClockWise(ring)) {
+  // converts all coordinates of all rings in 'polygonRings' from lat/lon pairs to meters-from-position
+  function transform(polygon, position) {
+    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(position.latitude / 180 * Math.PI);
+
+    return polygon.map(function(ring, i) {
+      // outer ring (first ring) needs to be clockwise, inner rings
+      // counter-clockwise. If they are not, make them by reverting order.
+      if ((i === 0) !== isClockWise(ring)) {
         ring.reverse();
       }
-      return transform(ring, origin);
+
+      return ring.map(function(point) {
+        return [
+           (point[0]-position.longitude) * metersPerDegreeLongitude,
+          -(point[1]-position.latitude)  * METERS_PER_DEGREE_LATITUDE
+        ];
+      });
     });
-    return [res];
   }
 
-  // converts all coordinates of 'ring' from lat/lng to 'meters from reference point'
-  function transform(ring, origin) {
-    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(origin.latitude / 180 * Math.PI);
-
-    var p, res = [];
-    for (var i = 0, len = ring.length; i < len; i++) {
-      res[i] = [
-         (ring[i][0]-origin.longitude) * metersPerDegreeLongitude,
-        -(ring[i][1]-origin.latitude)  * METERS_PER_DEGREE_LATITUDE
-      ];
-    }
-
-    return res;
-  }
-  
   //***************************************************************************
 
   function constructor(url, options) {
@@ -138,7 +129,6 @@ mesh.GeoJSON = (function() {
     this.scale     = options.scale     || 1;
     this.rotation  = options.rotation  || 0;
     this.elevation = options.elevation || 0;
-    this.position  = {};
 
     this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
     this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
@@ -173,8 +163,6 @@ mesh.GeoJSON = (function() {
         return;
       }
 
-      var coordinates0 = json.features[0].geometry.coordinates[0][0];
-      this.position = { latitude: coordinates0[1], longitude: coordinates0[0] };
       this.items = [];
 
       var
@@ -186,13 +174,15 @@ mesh.GeoJSON = (function() {
         var feature, geometries;
         for (var i = startIndex; i < endIndex; i++) {
           feature = json.features[i];
-          geometries = flattenGeometryHierarchy(feature.geometry, this.position)
-            .filter(function(ring) {
-              return ring.length > 0;
-            });
+          geometries = flattenGeometry(feature.geometry);
+
+          if (this.position === undefined) {
+            // schema: geometries[polygon][ring][point][lat/lon]
+            this.position = { latitude:geometries[0][0][0][1], longitude:geometries[0][0][0][0] };
+          }
 
           for (var j = 0, jl = geometries.length; j < jl; j++) {
-            this.addItem(feature.id, feature.properties, geometries[j]);
+            this.addItem(feature.id, feature.properties, transform(geometries[j], this.position));
           }
         }
 
@@ -216,15 +206,15 @@ mesh.GeoJSON = (function() {
       var
         height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT),
         minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0),
-        roofHeight = properties.roofHeight ||  3,
-        
-        colors = { 
+        roofHeight = properties.roofHeight || 3,
+
+        colors = {
           wall: properties.wallColor || properties.color || getMaterialColor(properties.material),
           roof: properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial)
         },
-        hasContinuousWindows = (properties.material === "glass"),
+
         i,
-        skipRoof,
+        skipWalls, skipRoof,
         vertexCount, vertexCountBefore, color,
         idColor = render.Picking.idToColor(id),
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
@@ -235,16 +225,16 @@ mesh.GeoJSON = (function() {
 
       // add ID to item properties to allow user-defined colorizers to color
       // buildings based in their OSM ID
-      properties.id = properties.id | id; 
-      
+      properties.id = properties.id | id;
+
       //let user-defined colorizer overwrite the colors
       if (this.colorizer) {
-        this.colorizer(properties, colors); 
+        this.colorizer(properties, colors);
       }
 
       var wallColor = colors.wall;
       var roofColor = colors.roof;
-        
+
       // flat roofs or roofs we can't handle should not affect building's height
       switch (properties.roofShape) {
         case 'cone':
@@ -266,50 +256,64 @@ mesh.GeoJSON = (function() {
       vertexCountBefore = this.data.vertices.length;
       switch (properties.shape) {
         case 'cylinder':
-          mesh.addCylinder(this.data, center, radius, radius, H, Z);
+          Triangulate.cylinder(this.data, center, radius, radius, H, Z);
           break;
 
         case 'cone':
-          mesh.addCylinder(this.data, center, radius, 0, H, Z);
+          Triangulate.cylinder(this.data, center, radius, 0, H, Z);
           skipRoof = true;
           break;
 
         case 'dome':
-          mesh.addDome(this.data, center, radius, (H || radius), Z);
+          Triangulate.dome(this.data, center, radius, (H || radius), Z);
           break;
 
         case 'sphere':
-          mesh.addSphere(this.data, center, radius, (H || 2*radius), Z);
+          Triangulate.sphere(this.data, center, radius, (H || 2*radius), Z);
           break;
 
         case 'pyramid':
         case 'pyramidal':
-          mesh.addPyramid(this.data, geometry, center, H, Z);
+          Triangulate.pyramid(this.data, geometry, center, H, Z);
           skipRoof = true;
           break;
 
+        case 'none':
+          skipWalls = true;
+          break;
+
         default:
-          var numLevels = 0;
-          if (properties.levels) {
-            numLevels = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0)) << 0;
+          var ty1 = 0.2;
+          var ty2 = 0.4;
+
+          // non-continuous windows
+          if (properties.material !== 'glass') {
+            ty1 = 0;
+            ty2 = 0;
+            if (properties.levels) {
+              ty2 = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0)) <<0;
+            }
           }
-          this.addExtrusion(this.data, geometry, H, Z, numLevels, hasContinuousWindows);
+
+          Triangulate.extrusion(this.data, geometry, H, Z, [0, WINDOWS_PER_METER, ty1/H, ty2/H]);
       }
 
-      vertexCount = (this.data.vertices.length-vertexCountBefore)/3;
-      color = new Color(this.color || wallColor || DEFAULT_COLOR).toArray();
-      for (i = 0; i < vertexCount; i++) {
-        this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-        this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+      if (!skipWalls) {
+        vertexCount = (this.data.vertices.length - vertexCountBefore)/3;
+        color = new Color(this.color || wallColor || DEFAULT_COLOR).toArray();
+        for (i = 0; i<vertexCount; i++) {
+          this.data.colors.push(color[0] + colorVariance, color[1] + colorVariance, color[2] + colorVariance);
+          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+        }
+
+        this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
       }
-
-      this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
-
-      //****** roof ******
 
       if (skipRoof) {
         return;
       }
+
+      //****** roof ******
 
       H = roofHeight;
       Z = height;
@@ -317,26 +321,26 @@ mesh.GeoJSON = (function() {
       vertexCountBefore = this.data.vertices.length;
       switch (properties.roofShape) {
         case 'cone':
-          mesh.addCylinder(this.data, center, radius, 0, H, Z);
+          Triangulate.cylinder(this.data, center, radius, 0, H, Z);
         break;
 
         case 'dome':
         case 'onion':
-          mesh.addDome(this.data, center, radius, (H || radius), Z);
+          Triangulate.dome(this.data, center, radius, (H || radius), Z);
         break;
 
         case 'pyramid':
         case 'pyramidal':
           if (properties.shape === 'cylinder') {
-            mesh.addCylinder(this.data, center, radius, 0, H, Z);
+            Triangulate.cylinder(this.data, center, radius, 0, H, Z);
           } else {
-            mesh.addPyramid(this.data, geometry, center, H, Z);
+            Triangulate.pyramid(this.data, geometry, center, H, Z);
           }
           break;
 
         //case 'skillion':
         //  // TODO: skillion
-        //  mesh.addPolygon(this.data, geometry, Z);
+        //  Triangulate.polygon(this.data, geometry, Z);
         //break;
         //
         //case 'gabled':
@@ -347,15 +351,15 @@ mesh.GeoJSON = (function() {
         //case 'round':
         //case 'saltbox':
         //  // TODO: gabled
-        //  mesh.addPyramid(this.data, geometry, center, H, Z);
+        //  Triangulate.pyramid(this.data, geometry, center, H, Z);
         //break;
 
 //      case 'flat':
         default:
           if (properties.shape === 'cylinder') {
-            mesh.addCircle(this.data, center, radius, Z);
+            Triangulate.circle(this.data, center, radius, Z);
           } else {
-            mesh.addPolygon(this.data, geometry, Z);
+            Triangulate.polygon(this.data, geometry, Z);
           }
       }
 
@@ -367,63 +371,6 @@ mesh.GeoJSON = (function() {
       }
 
       this.items.push({ id: id, vertexCount: vertexCount, data: properties.data });
-    },
-
-    addRingExtrusion: function(tris, ring, height, Z, numFloors, hasContinuousWindows) {
-      for (var r = 0; r < ring.length-1; r++) {
-        a = ring[r];
-        b = ring[r+1];
-        
-        var wallLength = len2(sub2( a, b));
-        var numWindows = Math.floor(wallLength * WINDOWS_PER_METER);
-        
-        var v0 = [ a[0], a[1], Z];
-        var v1 = [ b[0], b[1], Z];
-        var v2 = [ b[0], b[1], Z+height];
-        var v3 = [ a[0], a[1], Z+height];
-        
-        var n = normal(v0, v1, v2);
-        [].push.apply(tris.vertices, [].concat(v0, v2, v1,   v0, v3, v2));
-        [].push.apply(tris.normals,  [].concat(n, n, n, n, n, n));
-
-        if (hasContinuousWindows) {
-          tris.texCoords.push(
-            0.0,        0.6,
-            numWindows, 0.8,
-            numWindows, 0.6,
-            
-            0.0,        0.6,
-            0.0,        0.8,
-            numWindows, 0.8
-          );
-        } else {
-          tris.texCoords.push(
-            0.0,        0.0,
-            numWindows, numFloors,
-            numWindows, 0.0,
-            
-            0.0,        0.0,
-            0.0,        numFloors,
-            numWindows, numFloors
-          );
-        }
-      }
-    },
-
-    addExtrusion: function(tris, polygon, height, Z, numFloors, hasContinuousWindows) {
-      Z = Z || 0;
-      //numFloors = numFloors || Math.max( 1, Math.floor( (height-Z) / METERS_PER_LEVEL));
-      var ring, last;
-      for (var i = 0, il = polygon.length; i < il; i++) {
-        ring = polygon[i];
-        last = ring.length-1;
-
-        if (ring[0][0] !== ring[last][0] || ring[0][1] !== ring[last][1]) {
-          ring.push(ring[0]);
-          last++;
-        }
-        this.addRingExtrusion(tris, ring, height, Z, numFloors, hasContinuousWindows);
-      }
     },
 
     fadeIn: function() {
@@ -452,8 +399,8 @@ mesh.GeoJSON = (function() {
 
     onReady: function() {
       this.vertexBuffer   = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
       this.normalBuffer   = new glx.Buffer(3, new Float32Array(this.data.normals));
+      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
       this.colorBuffer    = new glx.Buffer(3, new Float32Array(this.data.colors));
       this.idBuffer       = new glx.Buffer(3, new Float32Array(this.data.ids));
       this.fadeIn();
@@ -480,13 +427,15 @@ mesh.GeoJSON = (function() {
         matrix.rotateZ(-this.rotation);
       }
 
+      // this position is be available once geometry processing is complete.
+      // should not be failing before because of this.isReady
       var dLat = this.position.latitude - MAP.position.latitude;
       var dLon = this.position.longitude - MAP.position.longitude;
-      
+
       var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(MAP.position.latitude / 180 * Math.PI);
 
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
-      
+
       return matrix;
     },
 

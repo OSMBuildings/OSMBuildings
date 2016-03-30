@@ -40,8 +40,5 @@ var SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
  * shadow depth map size impacts rendering performance */
 var SHADOW_DEPTH_MAP_SIZE = 2048;
 
-// number of windows per horizontal meter of building wall
-var WINDOWS_PER_METER = 0.5;
-
 //the building wall texture as a data url
 var BUILDING_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wwCCAUQLpaUSQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAGUExURebm5v///zFES9kAAAAcSURBVCjPY/gPBQyUMh4wAAH/KAPCoFaoDnYGAAKtZsamTRFlAAAAAElFTkSuQmCC';

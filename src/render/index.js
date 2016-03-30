@@ -51,10 +51,10 @@ var render = {
     //render.HudRect.init();
     //render.NormalMap.init();
     render.MapShadows.init();
-    render.CameraViewDepthMap = new render.DepthMap();
-    render.SunViewDepthMap    = new render.DepthMap();
+    render.CameraGBuffer = new render.DepthFogNormalMap();
+    render.SunGBuffer    = new render.DepthFogNormalMap();
     
-    render.SunViewDepthMap.framebufferConfig = {
+    render.SunGBuffer.framebufferConfig = {
       width:      SHADOW_DEPTH_MAP_SIZE,
       height:     SHADOW_DEPTH_MAP_SIZE,
       usedWidth:  SHADOW_DEPTH_MAP_SIZE,
@@ -106,14 +106,13 @@ var render = {
     } else {
       var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
-      render.CameraViewDepthMap.render(this.viewProjMatrix, config, true);
-      render.SunViewDepthMap.render(Sun.viewProjMatrix);
-      render.AmbientMap.render(render.CameraViewDepthMap, config, 0.5);
-      render.Blur.render(render.AmbientMap.framebuffer, config);
-      render.Buildings.render(render.SunViewDepthMap.framebuffer, 0.5);
+      render.CameraGBuffer.render(this.viewMatrix, this.projMatrix, config, true);
+      render.SunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
+      render.AmbientMap.render(render.CameraGBuffer.getDepthTexture(), render.CameraGBuffer.getFogNormalTexture(), config, 2.0);
+      render.Blur.render(render.AmbientMap.framebuffer.renderTexture, config);
+      render.Buildings.render(render.SunGBuffer.framebuffer, 0.5);
       render.Basemap.render();
 
-      gl.blendFunc(gl.ZERO, gl.SRC_COLOR); //multiply DEST_COLOR by SRC_COLOR
       gl.enable(gl.BLEND);
       {
         // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
@@ -121,8 +120,8 @@ var render = {
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
         gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
-        render.MapShadows.render(Sun, render.SunViewDepthMap.framebuffer, 1.0);
-        render.Overlay.render( render.Blur.framebuffer.renderTexture.id, config);
+        render.MapShadows.render(Sun, render.SunGBuffer.framebuffer, 1.0);
+        render.Overlay.render( render.Blur.framebuffer.renderTexture, config);
 
         // linear interpolation between the colors of the current framebuffer 
         // ( =building geometries) and of the sky. The interpolation factor
@@ -138,7 +137,7 @@ var render = {
       }
       gl.disable(gl.BLEND);
 
-      //render.HudRect.render( render.SunViewDepthMap.framebuffer.renderTexture.id, config );
+      //render.HudRect.render( render.SunGBuffer.getFogNormalTexture(), config );
     }
 
     if (this.screenshotCallback) {

@@ -45,8 +45,7 @@ render.HudRect = {
 
     shader.enable();
     
-    var identity = new glx.Matrix();
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, identity.data);
+    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
     this.vertexBuffer.enable();
 
     gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -54,8 +53,7 @@ render.HudRect = {
     this.texCoordBuffer.enable();
     gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.activeTexture(gl.TEXTURE0);
+    texture.enable(0);
     gl.uniform1i(shader.uniforms.uTexIndex, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
