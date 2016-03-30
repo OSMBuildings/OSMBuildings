@@ -1,9 +1,16 @@
 
 mesh.GeoJSON = (function() {
 
+  var DEFAULT_HEIGHT = 10;
+
+  // number of windows per horizontal meter of building wall
+  var WINDOWS_PER_METER = 0.5;
+
+  var DEFAULT_COLOR = 'rgb(220, 210, 200)';
+
   var METERS_PER_LEVEL = 3;
 
-  var materialColors = {
+  var MATERIAL_COLORS = {
     brick:'#cc7755',
     bronze:'#ffeecc',
     canvas:'#fff8f0',
@@ -23,7 +30,7 @@ mesh.GeoJSON = (function() {
     wood:'#deb887'
   };
 
-  var baseMaterials = {
+  var BASE_MATERIALS = {
     asphalt:'tar_paper',
     bitumen:'tar_paper',
     block:'stone',
@@ -68,10 +75,8 @@ mesh.GeoJSON = (function() {
     if (str[0] === '#') {
       return str;
     }
-    return materialColors[baseMaterials[str] || str] || null;
+    return MATERIAL_COLORS[BASE_MATERIALS[str] || str] || null;
   }
-
-
 
   /* Converts a geometry of arbitrary type (GeometryCollection, MultiPolygon or Polygon)
    * to an array of Polygons.
@@ -215,7 +220,7 @@ mesh.GeoJSON = (function() {
       var
         height    = properties.height    || (properties.levels   ? properties.levels  *METERS_PER_LEVEL : DEFAULT_HEIGHT),
         minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0),
-        roofHeight = properties.roofHeight ||  3,
+        roofHeight = properties.roofHeight || 3,
 
         wallColor = properties.wallColor || properties.color || getMaterialColor(properties.material),
         roofColor = properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial),
@@ -250,25 +255,25 @@ mesh.GeoJSON = (function() {
       vertexCountBefore = this.data.vertices.length;
       switch (properties.shape) {
         case 'cylinder':
-          mesh.addCylinder(this.data, center, radius, radius, H, Z);
+          Triangulate.cylinder(this.data, center, radius, radius, H, Z);
           break;
 
         case 'cone':
-          mesh.addCylinder(this.data, center, radius, 0, H, Z);
+          Triangulate.cylinder(this.data, center, radius, 0, H, Z);
           skipRoof = true;
           break;
 
         case 'dome':
-          mesh.addDome(this.data, center, radius, (H || radius), Z);
+          Triangulate.dome(this.data, center, radius, (H || radius), Z);
           break;
 
         case 'sphere':
-          mesh.addSphere(this.data, center, radius, (H || 2*radius), Z);
+          Triangulate.sphere(this.data, center, radius, (H || 2*radius), Z);
           break;
 
         case 'pyramid':
         case 'pyramidal':
-          mesh.addPyramid(this.data, geometry, center, H, Z);
+          Triangulate.pyramid(this.data, geometry, center, H, Z);
           skipRoof = true;
           break;
 
@@ -289,7 +294,7 @@ mesh.GeoJSON = (function() {
             }
           }
 
-          mesh.addExtrusion(this.data, geometry, H, Z, [0, WINDOWS_PER_METER, ty1/H, ty2/H]);
+            Triangulate.extrusion(this.data, geometry, H, Z, [0, WINDOWS_PER_METER, ty1/H, ty2/H]);
       }
 
       if (!skipWalls) {
@@ -315,26 +320,26 @@ mesh.GeoJSON = (function() {
       vertexCountBefore = this.data.vertices.length;
       switch (properties.roofShape) {
         case 'cone':
-          mesh.addCylinder(this.data, center, radius, 0, H, Z);
+          Triangulate.cylinder(this.data, center, radius, 0, H, Z);
         break;
 
         case 'dome':
         case 'onion':
-          mesh.addDome(this.data, center, radius, (H || radius), Z);
+          Triangulate.dome(this.data, center, radius, (H || radius), Z);
         break;
 
         case 'pyramid':
         case 'pyramidal':
           if (properties.shape === 'cylinder') {
-            mesh.addCylinder(this.data, center, radius, 0, H, Z);
+            Triangulate.cylinder(this.data, center, radius, 0, H, Z);
           } else {
-            mesh.addPyramid(this.data, geometry, center, H, Z);
+            Triangulate.pyramid(this.data, geometry, center, H, Z);
           }
           break;
 
         //case 'skillion':
         //  // TODO: skillion
-        //  mesh.addPolygon(this.data, geometry, Z);
+        //  Triangulate.polygon(this.data, geometry, Z);
         //break;
         //
         //case 'gabled':
@@ -345,15 +350,15 @@ mesh.GeoJSON = (function() {
         //case 'round':
         //case 'saltbox':
         //  // TODO: gabled
-        //  mesh.addPyramid(this.data, geometry, center, H, Z);
+        //  Triangulate.pyramid(this.data, geometry, center, H, Z);
         //break;
 
 //      case 'flat':
         default:
           if (properties.shape === 'cylinder') {
-            mesh.addCircle(this.data, center, radius, Z);
+            Triangulate.circle(this.data, center, radius, Z);
           } else {
-            mesh.addPolygon(this.data, geometry, Z);
+            Triangulate.polygon(this.data, geometry, Z);
           }
       }
 
