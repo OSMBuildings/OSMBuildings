@@ -49,7 +49,7 @@ void main() {
   float diffuse = dot(uDirToSun, normalize(vNormal));
   diffuse = max(diffuse, 0.0);
   
-  float shadowStrength = uShadowStrength * (1.0 - pow(diffuse, 1.5));
+  float shadowStrength = uShadowStrength * pow(diffuse, 1.5);
 
   if (diffuse > 0.0) {
     // note: the diffuse term is also the cosine between the surface normal and the

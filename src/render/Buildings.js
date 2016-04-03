@@ -78,9 +78,9 @@ render.Buildings = {
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
     ]);
 
-    shader.setUniformMatrices([
-      ['uNormalTransform', '3fv', glx.Matrix.identity3().data]
-    ]);
+    if (!render.effects.shadows) {
+      shader.setUniformMatrix('uNormalTransform', '3fv', glx.Matrix.identity3().data);
+    }
 
     shader.bindTexture('uWallTexIndex', 0, this.wallTexture);
     
@@ -105,9 +105,12 @@ render.Buildings = {
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
-        ['uSunMatrix',   '4fv', glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
+        ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
+      
+      if (render.effects.shadows) {
+        shader.setUniformMatrix('uSunMatrix', '4fv', glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+      }
 
       shader.bindBuffer(item.vertexBuffer,   'aPosition');
       shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');
