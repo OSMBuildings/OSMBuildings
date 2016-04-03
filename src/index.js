@@ -96,9 +96,8 @@ OSMBuildings.prototype = {
     //render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();
 
     DEFAULT_COLOR = style.color || style.wallColor || DEFAULT_COLOR;
-    //if (color.isValid) {
-    //  DEFAULT_COLOR = color.toArray();
-    //}
+    // is color valid?
+    // DEFAULT_COLOR = color.toArray();
     return this;
   },
 

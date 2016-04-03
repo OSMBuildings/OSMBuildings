@@ -5,7 +5,7 @@ Copyright (c) 2016, OSM Buildings
 
 Color.js
 https://github.com/kekscom/Color.js
-Copyright (c) 2015, Jan Marsch, keks.com
+Copyright (c) 2016, Jan Marsch, keks.com
 
 Triangulation.js
 https://github.com/OSMBuildings/Triangulation
