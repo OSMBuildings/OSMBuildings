@@ -52,7 +52,7 @@ mesh.GeoJSON = (function() {
       var resPickingColors = [];
 
       var
-        position = GeoJSON.getPosition(json.features[0].geometry),
+        position = Triangulate.getPosition(json.features[0].geometry),
         feature, id, properties,
         vertexCountBefore, vertexCount, pickingColor,
         startIndex = 0,
@@ -69,7 +69,7 @@ mesh.GeoJSON = (function() {
 
           vertexCountBefore = res.vertices.length;
 
-          GeoJSON.triangulate(res, id, feature, position, this.color);
+          Triangulate.split(res, id, feature, position, this.color);
 
           vertexCount = (res.vertices.length - vertexCountBefore)/3;
 
