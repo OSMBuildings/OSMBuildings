@@ -34,12 +34,21 @@ void main() {
 
   vec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation
 
-  float diffuse = dot(uLightDirection, normalize(vNormal));
+  float diffuse = dot(uLightDirection, normal);
   diffuse = max(diffuse, 0.0);
 
-  float shadowStrength = 1.0 - pow(diffuse, 1.5);
+  // reduce shadow strength with:
+  // - lowering sun positions, to be consistent with the shadows on the basemap (there,
+  //   shadows are faded out with lowering sun positions to hide shadow artifacts caused
+  //   when sun direction and map surface are almost perpendicular
+  // - large angles between the sun direction and the surface normal, to hide shadow
+  //   artifacts that occur when surface normal and sun direction are almost perpendicular
+  float shadowStrength = pow( max( min(
+    dot(uLightDirection, vec3(0.0, 0.0, 1.0)),
+    dot(uLightDirection, normal)
+  ), 0.0), 1.5);
 
-  if (diffuse > 0.0) {
+  if (diffuse > 0.0 && shadowStrength > 0.0) {
     // note: the diffuse term is also the cosine between the surface normal and the
     // light direction
     float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);
@@ -51,12 +60,13 @@ void main() {
     float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);
     float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);
 
-    diffuse *= mix( mix(tlVal, trVal, pos.x), 
-                   mix(blVal, brVal, pos.x),
-                   pos.y);
+    float occludedBySun = mix( 
+                            mix(tlVal, trVal, pos.x), 
+                            mix(blVal, brVal, pos.x),
+                            pos.y);
+    diffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));
   }
 
-  diffuse = mix(1.0, diffuse, shadowStrength);
   vec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +
               (diffuse/1.5) * uLightColor;
 
