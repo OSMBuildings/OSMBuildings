@@ -147,8 +147,8 @@ method | parameters | description
 --- | --- | ---
 addTo | map | adds it as a layer to a GLMap instance
 addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
-addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color}
-addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color}
+addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate feature properties once
+addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate feature properties once
 addTileLayer | url, options | add a map tile set and specify options {bounds}
 getTarget | x, y, function | get a building id at position. You need to provide a callback function do receive the data.
 highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight

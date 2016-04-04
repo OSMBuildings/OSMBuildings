@@ -9,7 +9,7 @@ mesh.GeoJSON = (function() {
 
     this.id = options.id;
     this.color = options.color;
-    this.propertyModifier = options.propertyModifier;
+    this.modifier = options.modifier;
 
     this.replace   = !!options.replace;
     this.scale     = options.scale     || 1;
@@ -68,50 +68,14 @@ mesh.GeoJSON = (function() {
           properties = feature.properties;
           id = this.id || properties.relationId || feature.id || properties.id;
 
+          //let user-defined hook modify the entity properties
+          if (this.modifier) {
+            this.modifier(id, properties);
+          }
+
           vertexCountBefore = res.vertices.length;
 
-
-
-
-/***
-// add ID to item properties to allow user-defined property modifiers to modify
-// buildings based in their OSM ID
-properties.id = id;
-
-//let user-defined hook modify the entity properties
-if (this.propertyModifier) {
-  properties = this.propertyModifier(properties) || properties;
-}
-
-var colors = {
-  wall: properties.wallColor || properties.color || getMaterialColor(properties.material),
-  roof: properties.roofColor || properties.color || getMaterialColor(properties.roofMaterial)
-};
-
-// add ID to item properties to allow user-defined colorizers to color
-// buildings based in their OSM ID
-properties.id = properties.id | id;
-
-//let user-defined colorizer overwrite the colors
-if (this.colorizer) {
-  this.colorizer(properties, colors);
-}
-
-var wallColor = colors.wall;
-var roofColor = colors.roof;
-***/
-
-
-
-
-
-
-
-
-
-
-
-            Triangulate.split(res, id, feature, position, this.color);
+          Triangulate.split(res, id, feature, position, this.color);
 
           vertexCount = (res.vertices.length - vertexCountBefore)/3;
 

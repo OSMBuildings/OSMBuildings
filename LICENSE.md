@@ -7,7 +7,7 @@ Color.js
 https://github.com/kekscom/Color.js
 Copyright (c) 2016, Jan Marsch, keks.com
 
-Triangulation.js
+Triangulate.js
 https://github.com/OSMBuildings/Triangulation
 Copyright (c) 2016, Jan Marsch, OSM Buildings
 

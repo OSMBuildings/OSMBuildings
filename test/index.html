@@ -134,8 +134,8 @@
       attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">MapBox</a>'
     }
   );
-  var colorizerHeightInformationAvailability  = function(properties) {
-    
+
+  var colorByHeightAvailable = function(id, properties) {
     if (!properties.levels && !properties.height) {
       properties.color = "red";
     } else if (!properties.height) {
@@ -145,13 +145,9 @@
     }
     
     properties.roofColor = properties.color;
-  }
+  };
 
-  var colorizerHeight  = function(properties) {
-  
-    var clamp = function(x, min, max) {
-      return Math.min(Math.max(x, min), max);
-    };
+  var colorByHeight = function(id, properties) {
     var height = parseFloat(properties.height) || (parseFloat(properties.levels)* 3.5) || 0;
 
     if (height < 20)
@@ -164,10 +160,9 @@
       properties.color = "orange";
       
     properties.roofColor = properties.color;
-  }
+  };
   
-  var colorizerHighlightLandmarks = function(properties)
-  {
+  var colorLandmarks = function(id, properties) {
     var landmarkIDs = {
       3074565: true,  // Rotes Rathaus
       313675136: true, // Rotes Rathaus
@@ -185,18 +180,18 @@
       304987176: true,
       96880477: true,
       304987173: true
-    }
+    };
 
-    properties.color = (properties.id in landmarkIDs) ? "#CC4444" : "#DDDDDD";
+    properties.color = (id in landmarkIDs) ? "#CC4444" : "#DDDDDD";
       
     properties.roofColor = properties.color;
-  }
+  };
   
   osmb.addGeoJSONTiles(
 //  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
-      propertyModifier: colorizerHeightInformationAvailability,
+      modifier: colorByHeightAvailable,
       fixedZoom: 15
       // bounds
     });
