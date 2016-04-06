@@ -142,7 +142,7 @@ Event | Description
 ### OSM Buildings options
 
 Option | Type | Default | Description
------- | ----- | -----------
+------ | ---- | ------- | -----------
 `baseURL` | String | '.' | For locating assets. This is relative to calling page
 `minZoom` | Float | 15 | Minimum allowed zoom
 `maxZoom` | Float | 22 | Maximum allowed zoom
