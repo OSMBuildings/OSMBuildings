@@ -158,17 +158,19 @@ Option | Type | Default | Description
 
 Method | Parameters | Description
 ------ | ---------- | -----------
-`addTo` | map | Adds it as a layer to a GLMap instance
-addOBJ | url, position, options | Adds an OBJ file, specify a geo position and options {scale, `rotation`, elevation, id, color}
-addGeoJSON | url, options | Add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate feature `properties` once
-addGeoJSONTiles | url, options | Add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate `feature` properties once
-`addTileLayer` | url, options | Add a map tile set and specify options {bounds}
-getTarget | x, y, function | Get a building id at position. You need to provide a callback `function` do receive the data.
-highlight | id, color | Highlight a given building by id, this can only be one, set color = `null` in order to un-highlight
-show | function, duration | Shows buildings according to a selector function. That function `receives` parameters id, data of an item
-hide | function, duration | Hides buildings according to a selector function. That function `receives` parameters id, data of an item
-screenshot | function | Creates a screenshot from current view and returns it as data url. You `need` to provide a callback function do receive the data.
-`setDate` | date | Sets a date for shadow calculations
+`addTo` | (GLMap) map | Adds it as a layer to the given map
+`addOBJ` | (String) url, (Object) {latitude, longitude}, (Object) {scale, rotation, elevation, id, color} | Adds an OBJ file to the scene
+`addGeoJSON` | (String) url, (Object) {scale, rotation, elevation, id, color, modifier} | Add a GeoJSON file or object and specify options. modifier(id, properties) allows to manipulate feature `properties` once
+`addGeoJSONTiles` | url, options | Add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate `feature` properties once
+`addTileLayer` | (String) url, (Object) {bounds} | Add a map tile set and specify options
+`getTarget` | (Float) x, (Float) y, (Function) callback | Get a building id at position
+`highlight` | (Integer) id, (String) color | Highlight a given building by id, this can only be one, set color = `null` in order to un-highlight
+`show` | (Function) selector, (Integer) duration | Shows buildings according to a `selector(id, data)` function
+`hide` | (Function) selector, (Integer) duration | Hides buildings according to a `selector(id, data)` function
+`screenshot` | (Function) callback | Creates a screenshot from current view and returns it as data url
+`setDate` | (Date) date | Sets a date for shadow calculations
+`project` | (Object) {latitude, longitude, elevation}| Transforms a geo coordinate + elevation to screen `position`
+`unproject` | (Float) x, (Float) y | Transforms a screen position into a geo coordinate with elevation 0
 
 
 ### OSM Buildings server
