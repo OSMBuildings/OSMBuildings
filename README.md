@@ -87,19 +87,19 @@ In a script section initialize the map and add a map tile layer.
 
 ### GLMap Options
 
-Option | Value | Description
------- | ----- | -----------
-`position` | object | Geo position of map center
-`zoom` | float | Map zoom
-`rotation` | float | Map rotation
-`tilt` | float | Map tilt
-`bend` | float | Map bend
-`disabled` | boolean | Disables user input, default false
-`minZoom` | float | Minimum allowed zoom
-`maxZoom` | float | Maximum allowed zoom
-`bounds` | {n, s, e, w} | Coordinates of bounds where the map can be moved within *Doesn't currently work*
-`attribution` | string | Attribution, optional
-`state` | boolean | Stores map position/rotation in url, default false
+Option | Type | Default | Description
+------ | ----- | ------- | -----------
+`position` | Object | { latitude: 52.520000, longitude: 13.410000 } | Geo position of map center
+`zoom` | Float | minZoom | Initial map zoom
+`rotation` | Float | 0 | Map rotation
+`tilt` | Float | 0 | Map tilt
+`bend` | Float | 0 | Map bend
+`disabled` | Boolean | false | Disables user input
+`minZoom` | Float | 10 | Minimum allowed zoom
+`maxZoom` | Float | 20 | Maximum allowed zoom
+`bounds` | Object | {} | Coordinates of bounds where the map can be moved within **Doesn't currently work**
+`attribution` | String | null | Attribution, optional
+`state` | Boolean | false | Stores map position/rotation in url
 
 
 ### GLMap methods
