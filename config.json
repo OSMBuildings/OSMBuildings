@@ -2,7 +2,7 @@
   "shaders": ["interaction", "buildings", "buildings.shadows", "flatColor", "skydome", "basemap", "texture", "fogNormal", "ambientFromDepth", "blur", "basemap.shadows"],
 
   "lib": [
-    "node_modules/Triangulate/dist/Triangulate.bundle.js",
+    "node_modules/Triangulate/dist/Triangulate.js",
     "node_modules/Color/src/Color.js",
     "lib/GLX.debug.js",
     "node_modules/suncalc/suncalc.js"

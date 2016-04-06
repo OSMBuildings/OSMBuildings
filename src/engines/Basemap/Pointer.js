@@ -63,7 +63,7 @@ Pointer.prototype = {
     if (!this.disabled) {
       this.map.setZoom(this.map.zoom + 1, e);
     }
-    this.map.emit('doubleclick', { x: e.clientX, y: e.clientY });
+    this.map.emit('doubleclick', { x: e.clientX, y: e.clientY, button: e.button });
   },
 
   onMouseDown: function(e) {
@@ -82,7 +82,7 @@ Pointer.prototype = {
 
     this.pointerIsDown = true;
 
-    this.map.emit('pointerdown', { x: e.clientX, y: e.clientY });
+    this.map.emit('pointerdown', { x: e.clientX, y: e.clientY, button: e.button });
   },
 
   onMouseMove: function(e) {
@@ -116,7 +116,7 @@ Pointer.prototype = {
 
     this.pointerIsDown = false;
 
-    this.map.emit('pointerup', { x: e.clientX, y: e.clientY });
+    this.map.emit('pointerup', { x: e.clientX, y: e.clientY, button: e.button });
   },
 
   onMouseWheel: function(e) {
@@ -192,7 +192,7 @@ Pointer.prototype = {
     this.startX = this.prevX = e.clientX;
     this.startY = this.prevY = e.clientY;
 
-    this.map.emit('pointerdown', { x: e.clientX, y: e.clientY });
+    this.map.emit('pointerdown', { x: e.clientX, y: e.clientY, button: 0 });
   },
 
   onTouchMove: function(e) {
@@ -217,7 +217,7 @@ Pointer.prototype = {
       this.moveMap(e);
     }
 
-    this.map.emit('pointerup', { x: e.clientX, y: e.clientY });
+    this.map.emit('pointerup', { x: e.clientX, y: e.clientY, button: 0 });
   },
 
   onGestureChange: function(e) {
