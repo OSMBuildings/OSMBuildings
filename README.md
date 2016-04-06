@@ -168,6 +168,7 @@ There is also documentation of OSM Buildings Server side. See https://github.com
 - [Map Control Buttons](examples/map_control_buttons.md)
 - [Adding arbitrary GeoJSON](examples/geojson.md)
 - [Position A Map Object](examples/position_a_map_object.md)
+- [Adding an 3D model, via OBJ](examples/obj.md)
 
 # Contributing
 We are happy to receive pull requests and issues
