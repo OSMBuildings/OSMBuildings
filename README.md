@@ -106,7 +106,7 @@ state | boolean | stores map position/rotation in url, default false
 
 method | parameters | description
 --- | --- | ---
-on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup
+on | type, function | listen to a [map event](#map-events)
 off | type, fn | remove event listener
 setDisabled | boolean | disables any user input
 isDisabled | | check wheether user input is disabled
@@ -121,6 +121,20 @@ setRotation | float | sets current rotation
 getRotation | | gets current rotation
 setTilt | float | sets current tilt
 getTilt | | gets current tilt
+
+### Map events
+
+event | description
+mousedown | fired when the user pushes the mouse button on the map
+mouseup | fired when the user releases the mouse button on the map
+mousemove | fired when the user moves the mouse on the map
+dblclick | fired when the user double clicks on the map
+mousewheel | fired when wheel button of a pointing device is rotated
+DOMMouseScroll | fired when wheel button of a pointing device is rotated
+touchstart | fired when the user touches the map on a touch screen
+touchmove | fired when a touch point is moved along the map
+touchend | fired when the user releases the map on a touch screen
+gesturechange | ???
 
 
 ### OSM Buildings options
