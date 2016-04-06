@@ -140,19 +140,18 @@ Event | Description
 
 ### OSM Buildings options
 
-Option | Value | Description
+Option | Type | Default | Description
 ------ | ----- | -----------
-`baseURL` | string | For locating assets, this is relative to calling page
-`minZoom` | float | Minimum allowed zoom
-`maxZoom` | float | Maximum allowed zoom
-`attribution` | string | Attribution, optional
-showBackfaces | boolean | Render front and backsides of polygons. false increases performance, `true` might be needed for bad geometries, default false
-`fogColor` | string | Color to be used for sky gradients and distance fog.
-`backgroundColor` | string | Overall background color
-fastMode | boolean | Enables faster rendering at cost of image quality, consider also removing `any` effects
-`effects` | date | Date for shadow calculation
-project | latitude, longitude, elevation | Transforms a geo coordinate + elevation to screen `position`
-`unproject` | x, y | Transforms a screen position into a geo coordinate with elevation 0
+`baseURL` | String | '.' | For locating assets. This is relative to calling page
+`minZoom` | Float | 15 | Minimum allowed zoom
+`maxZoom` | Float | 22 | Maximum allowed zoom
+`attribution` | String | '`<a href="http://osmbuildings.org">© OSM Buildings</a>`' | Attribution
+`showBackfaces` | Boolean | false | Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+`fogColor` | String | '#e8e0d8' | Color to be used for sky gradients and distance fog
+`backgroundColor` | String | '#efe8e0' | Overall background color
+`fastMode` | Boolean | false | Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
+`effects` | Array | [] | Which effects to enable. The only effect at the moment is 'shadows'
+`style` | Object | { color: 'rgb(220, 210, 200)' } | Sets the default building style
 
 
 ### OSM Buildings methods
