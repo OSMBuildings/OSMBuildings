@@ -106,20 +106,20 @@ Option | Type | Default | Description
 
 Method | Parameters | Description
 ------ | ---------- | -----------
-`on` | type, function | Listen to a [map event](#map-events)
-`off` | type, fn | Remove event listener
-`setDisabled` | boolean | Disables any user input
+`on` | (String) event, (Function) callback | Listen for a [map event](#map-events)
+`off` | (String) event, (Function) callback | Removes all event listeners for the given event. If callback is given, it only returns that function
+`setDisabled` | (Boolean) flag | Disables any user input (if flag is `true`, enables user input)
 `isDisabled` | | Check whether user input is disabled
-`getBounds` | | Returns coordinates of current map view, respects tilt and rotation but ignores `perspective`
-`setZoom` | float | Sets current zoom
+`getBounds` | | Returns coordinates of current map view, respecting tilt and rotation but ignoring `perspective`
+`setZoom` | (Float) zoom_level | Sets current zoom
 `getZoom` | | Gets current zoom
-`setPosition` | object | Sets current geo position of map center
+`setPosition` | (Object) {latitude, longitude} | Sets current geo position of map center
 `getPosition` | | Gets current geo position of map center
-`setSize` | {width, height} | Sets current map size in pixels
+`setSize` | (Object) {width, height} | Sets current map size in pixels
 `getSize` |  | Gets current map size in pixels
-`setRotation` | float | Sets current rotation
+`setRotation` | (Float) rotation | Sets current rotation
 `getRotation` | | Gets current rotation
-`setTilt` | float | Sets current tilt
+`setTilt` | (Float) tilt | Sets current tilt
 `getTilt` | | Gets current tilt
 
 ### Map events
