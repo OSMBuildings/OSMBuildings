@@ -129,6 +129,7 @@ Event | Description
 `mousedown` | Fired when the user pushes the mouse button on the map
 `mouseup` | Fired when the user releases the mouse button on the map
 `mousemove` | Fired when the user moves the mouse on the map
+`contextmenu` | Fired when the user right clicks the map
 `dblclick` | Fired when the user double clicks on the map
 `mousewheel` | Fired when wheel button of a pointing device is rotated
 `DOMMouseScroll` | Fired when wheel button of a pointing device is rotated
