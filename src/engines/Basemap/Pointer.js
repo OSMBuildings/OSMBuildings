@@ -21,6 +21,7 @@ var Pointer = function(map, container) {
     this._addListener(container, 'mousedown', this.onMouseDown);
     this._addListener(document, 'mousemove', this.onMouseMove);
     this._addListener(document, 'mouseup', this.onMouseUp);
+    this._addListener(container, 'contextmenu', this.onContextMenu);
     this._addListener(container, 'dblclick', this.onDoubleClick);
     this._addListener(container, 'mousewheel', this.onMouseWheel);
     this._addListener(container, 'DOMMouseScroll', this.onMouseWheel);
@@ -119,6 +120,12 @@ Pointer.prototype = {
     this.map.emit('pointerup', { x: e.clientX, y: e.clientY });
   },
 
+  onContextMenu: function(e) {
+    e.preventDefault();
+    this.map.emit('contextmenu', { x: e.clientX, y: e.clientY })
+    return false;
+  },
+
   onMouseWheel: function(e) {
     cancelEvent(e);
     var delta = 0;
@@ -143,26 +150,26 @@ Pointer.prototype = {
       return;
     }
 
-    /*FIXME: make movement exact, i.e. make the position that 
-     *       appeared at (this.prevX, this.prevY) before appear at 
+    /*FIXME: make movement exact, i.e. make the position that
+     *       appeared at (this.prevX, this.prevY) before appear at
      *       (e.clientX, e.clientY) now.
      */
-    // the constant 0.86 was chosen experimentally for the map movement to be 
+    // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
-    var scale = 0.86 * Math.pow( 2, -this.map.zoom);    
+    var scale = 0.86 * Math.pow( 2, -this.map.zoom);
     var lngScale = 1/Math.cos( this.map.position.latitude/ 180 * Math.PI);
     var dx = e.clientX - this.prevX;
     var dy = e.clientY - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
-    
+
     var vRight = [ Math.cos(angle),             Math.sin(angle)];
     var vForward=[ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)]
-    
-    var dir = add2(  mul2scalar(vRight,    dx), 
+
+    var dir = add2(  mul2scalar(vRight,    dx),
                      mul2scalar(vForward, -dy));
 
-    this.map.setPosition({ 
-      longitude: this.map.position.longitude - dir[0] * scale*lngScale, 
+    this.map.setPosition({
+      longitude: this.map.position.longitude - dir[0] * scale*lngScale,
       latitude:  this.map.position.latitude  + dir[1] * scale });
   },
 

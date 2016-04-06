@@ -13,7 +13,7 @@ At some point it will fully integrate the Classic 2.5D version.
 
 [Example](http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40)
 
-For the latest information about the project [follow us on Twitter](https://twitter.com/osmbuildings), read [our blog](http://blog.osmbuildings.org), or just mail us at mail@osmbuildings.org. 
+For the latest information about the project [follow us on Twitter](https://twitter.com/osmbuildings), read [our blog](http://blog.osmbuildings.org), or just mail us at mail@osmbuildings.org.
 
 **Not sure which version to use?**
 
@@ -107,7 +107,7 @@ state | boolean | stores map position/rotation in url, default false
 
 method | parameters | description
 --- | --- | ---
-on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup 
+on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup, contextmenu
 off | type, fn | remove event listener
 setDisabled | boolean | disables any user input
 isDisabled | | check wheether user input is disabled
@@ -128,7 +128,7 @@ getTilt | | gets current tilt
 
 option | value | description
 --- | --- | ---
-baseURL | string | for locating assets, this is relative to calling page 
+baseURL | string | for locating assets, this is relative to calling page
 minZoom | float | minimum allowed zoom
 maxZoom | float | maximum allowed zoom
 attribution | string | attribution, optional
