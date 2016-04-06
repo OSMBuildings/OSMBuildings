@@ -1,4 +1,3 @@
-
 # OSM Buildings
 
 <img src="http://osmbuildings.org/logo.svg" width="100" height="88"/>
@@ -13,7 +12,7 @@ At some point it will fully integrate the Classic 2.5D version.
 
 [Example](http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40)
 
-For the latest information about the project [follow us on Twitter](https://twitter.com/osmbuildings), read [our blog](http://blog.osmbuildings.org), or just mail us at mail@osmbuildings.org. 
+For the latest information about the project [follow us on Twitter](https://twitter.com/osmbuildings), read [our blog](http://blog.osmbuildings.org), or just mail us at mail@osmbuildings.org.
 
 **Not sure which version to use?**
 
@@ -107,7 +106,7 @@ state | boolean | stores map position/rotation in url, default false
 
 method | parameters | description
 --- | --- | ---
-on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup 
+on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup
 off | type, fn | remove event listener
 setDisabled | boolean | disables any user input
 isDisabled | | check wheether user input is disabled
@@ -128,7 +127,7 @@ getTilt | | gets current tilt
 
 option | value | description
 --- | --- | ---
-baseURL | string | for locating assets, this is relative to calling page 
+baseURL | string | for locating assets, this is relative to calling page
 minZoom | float | minimum allowed zoom
 maxZoom | float | maximum allowed zoom
 attribution | string | attribution, optional
@@ -146,7 +145,7 @@ unproject | x, y | transforms a screen position into a geo coordinate with eleva
 method | parameters | description
 --- | --- | ---
 addTo | map | adds it as a layer to a GLMap instance
-addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
+addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
 addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate feature properties once
 addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate feature properties once
 addTileLayer | url, options | add a map tile set and specify options {bounds}
@@ -328,3 +327,13 @@ document.addEventListener('keydown', function(e) {
   }));
 });
 ~~~
+
+# Contributing
+We are happy to receive pull requests and issues
+
+## Development environment
+Here's how to get your development environment set up:
+
+1. Clone the repo (`git clone git@github.com:OSMBuildings/OSMBuildings.git`)
+1. Install dependencies with `npm install`
+1. After making changes, you can try them out by running `grunt`, which will output a `dist/OSMBuildings/OSMBuildings.debug.js` file that you can include like normal
