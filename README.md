@@ -1,4 +1,3 @@
-
 # OSM Buildings
 
 <img src="http://osmbuildings.org/logo.svg" width="100" height="88"/>
@@ -88,74 +87,91 @@ In a script section initialize the map and add a map tile layer.
 
 ### GLMap Options
 
-option | value | description
---- | --- | ---
-position | object | geo position of map center
-zoom | float | map zoom
-rotation | float | map rotation
-tilt | float | map tilt
-bend | float | map bend
-disabled | boolean | disables user input, default false
-minZoom | float | minimum allowed zoom
-maxZoom | float | maximum allowed zoom
-bounds | object | n, e, s, w coordinates of bounds where the map can be moved within
-attribution | string | attribution, optional
-state | boolean | stores map position/rotation in url, default false
+Option | Type | Default | Description
+------ | ----- | ------- | -----------
+`position` | Object | { latitude: 52.520000, longitude: 13.410000 } | Geo position of map center
+`zoom` | Float | minZoom | Initial map zoom
+`rotation` | Float | 0 | Map rotation
+`tilt` | Float | 0 | Map tilt
+`bend` | Float | 0 | Map bend
+`disabled` | Boolean | false | Disables user input
+`minZoom` | Float | 10 | Minimum allowed zoom
+`maxZoom` | Float | 20 | Maximum allowed zoom
+`bounds` | Object | {} | Coordinates of bounds where the map can be moved within **Doesn't currently work**
+`attribution` | String | null | Attribution, optional
+`state` | Boolean | false | Stores map position/rotation in url
 
 
 ### GLMap methods
 
-method | parameters | description
---- | --- | ---
-on | type, function | add an event listener, types are: change, resize, pointerdown, pointermove, pointerup, contextmenu
-off | type, fn | remove event listener
-setDisabled | boolean | disables any user input
-isDisabled | | check wheether user input is disabled
-getBounds | | returns coordinates of current map view, respects tilt and rotation but ignores perspective
-setZoom | float | sets current zoom
-getZoom | | gets current zoom
-setPosition | object | sets current geo position of map center
-getPosition | | gets current geo position of map center
-setSize | object | {width,height} sets current map size in pixels
-getSize |  | gets current map size in pixels
-setRotation | float | sets current rotation
-getRotation | | gets current rotation
-setTilt | float | sets current tilt
-getTilt | | gets current tilt
+Method | Parameters | Description
+------ | ---------- | -----------
+`on` | (String) event, (Function) callback | Listen for a [map event](#map-events)
+`off` | (String) event, (Function) callback | Removes all event listeners for the given event. If callback is given, it only returns that function
+`setDisabled` | (Boolean) flag | Disables any user input (if flag is `true`, enables user input)
+`isDisabled` | | Check whether user input is disabled
+`getBounds` | | Returns coordinates of current map view, respecting tilt and rotation but ignoring `perspective`
+`setZoom` | (Float) zoom_level | Sets current zoom
+`getZoom` | | Gets current zoom
+`setPosition` | (Object) {latitude, longitude} | Sets current geo position of map center
+`getPosition` | | Gets current geo position of map center
+`setSize` | (Object) {width, height} | Sets current map size in pixels
+`getSize` |  | Gets current map size in pixels
+`setRotation` | (Float) rotation | Sets current rotation
+`getRotation` | | Gets current rotation
+`setTilt` | (Float) tilt | Sets current tilt
+`getTilt` | | Gets current tilt
+
+### Map events
+
+Event | Description
+----- | -----------
+`mousedown` | Fired when the user pushes the mouse button on the map
+`mouseup` | Fired when the user releases the mouse button on the map
+`mousemove` | Fired when the user moves the mouse on the map
+`contextmenu` | Fired when the user right clicks the map
+`dblclick` | Fired when the user double clicks on the map
+`mousewheel` | Fired when wheel button of a pointing device is rotated
+`DOMMouseScroll` | Fired when wheel button of a pointing device is rotated
+`touchstart` | Fired when the user touches the map on a touch screen
+`touchmove` | Fired when a touch point is moved along the map
+`touchend` | Fired when the user releases the map on a touch screen
+`gesturechange` | ???
 
 
 ### OSM Buildings options
 
-option | value | description
---- | --- | ---
-baseURL | string | for locating assets, this is relative to calling page
-minZoom | float | minimum allowed zoom
-maxZoom | float | maximum allowed zoom
-attribution | string | attribution, optional
-showBackfaces | boolean | render front and backsides of polygons. false increases performance, true might be needed for bad geometries, default false
-fogColor | string | color to be used for sky gradients and distance fog.
-backgroundColor | string | overall background color
-fastMode | boolean | enables faster rendering at cost of image quality, consider also removing any effects
-effects | date | date for shadow calculation
-project | latitude, longitude, elevation | transforms a geo coordinate + elevation to screen position
-unproject | x, y | transforms a screen position into a geo coordinate with elevation 0
+Option | Type | Default | Description
+------ | ---- | ------- | -----------
+`baseURL` | String | '.' | For locating assets. This is relative to calling page
+`minZoom` | Float | 15 | Minimum allowed zoom
+`maxZoom` | Float | 22 | Maximum allowed zoom
+`attribution` | String | '`<a href="http://osmbuildings.org">© OSM Buildings</a>`' | Attribution
+`showBackfaces` | Boolean | false | Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+`fogColor` | String | '#e8e0d8' | Color to be used for sky gradients and distance fog
+`backgroundColor` | String | '#efe8e0' | Overall background color
+`fastMode` | Boolean | false | Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
+`effects` | Array | [] | Which effects to enable. The only effect at the moment is 'shadows'
+`style` | Object | { color: 'rgb(220, 210, 200)' } | Sets the default building style
 
 
 ### OSM Buildings methods
 
-method | parameters | description
---- | --- | ---
-addTo | map | adds it as a layer to a GLMap instance
-addOBJ | url, position, options | adds an OBJ file, specify a geo position and options {scale, rotation, elevation, id, color}
-addGeoJSON | url, options | add a GeoJSON file or object and specify options {scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate feature properties once
-addGeoJSONTiles | url, options | add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate feature properties once
-addTileLayer | url, options | add a map tile set and specify options {bounds}
-getTarget | x, y, function | get a building id at position. You need to provide a callback function do receive the data.
-highlight | id, color | highlight a given building by id, this can only be one, set color = null in order to un-highlight
-show | function, duration | shows buildings according to a selector function. That function receives parameters id, data of an item
-hide | function, duration | hides buildings according to a selector function. That function receives parameters id, data of an item
-screenshot | function | creates a screenshot from current view and returns it as data url. You need to provide a callback function do receive the data.
-setDate | date | sets a date for shadow calculations
+Method | Parameters | Description
+------ | ---------- | -----------
+`addTo` | (GLMap) map | Adds it as a layer to the given map
+`addOBJ` | (String) url, (Object) {latitude, longitude}, (Object) {scale, rotation, elevation, id, color} | Adds an OBJ file to the scene
+`addGeoJSON` | (String) url, (Object) {scale, rotation, elevation, id, color, modifier} | Add a GeoJSON file or object and specify options. modifier(id, properties) allows to manipulate feature `properties` once
+`addGeoJSONTiles` | url, options | Add a GeoJSON tile set and specify options {bounds, scale, rotation, elevation, id, color, modifier}. modifier(id, properties) allows to manipulate `feature` properties once
+`addTileLayer` | (String) url, (Object) {bounds} | Add a map tile set and specify options
+`getTarget` | (Float) x, (Float) y, (Function) callback | Get a building id at position
+`highlight` | (Integer) id, (String) color | Highlight a given building by id, this can only be one, set color = `null` in order to un-highlight
+`show` | (Function) selector, (Integer) duration | Shows buildings according to a `selector(id, data)` function
+`hide` | (Function) selector, (Integer) duration | Hides buildings according to a `selector(id, data)` function
+`screenshot` | (Function) callback | Creates a screenshot from current view and returns it as data url
+`setDate` | (Date) date | Sets a date for shadow calculations
+`project` | (Object) {latitude, longitude, elevation}| Transforms a geo coordinate + elevation to screen `position`
+`unproject` | (Float) x, (Float) y | Transforms a screen position into a geo coordinate with elevation 0
 
 
 ### OSM Buildings server
@@ -164,167 +180,19 @@ There is also documentation of OSM Buildings Server side. See https://github.com
 
 
 ## Examples
+- [Moving Label](examples/moving_label.md)
+- [Highlight Buildings](examples/highlight_buildings.md)
+- [Map Control Buttons](examples/map_control_buttons.md)
+- [Adding arbitrary GeoJSON](examples/geojson.md)
+- [Position A Map Object](examples/position_a_map_object.md)
+- [Adding an 3D model, via OBJ](examples/obj.md)
 
-### Moving label
+# Contributing
+We are happy to receive pull requests and issues
 
-This label moves virtually in space.
+## Development environment
+Here's how to get your development environment set up:
 
-~~~ html
-<div id="label" style="width:10px;height:10px;position:absolute;z-Index:10;border:3px solid red;"></div>
-~~~
-
-~~~ javascript
-var label = document.getElementById('label');
-map.on('change', function() {
-  var pos = osmb.project(52.52, 13.37, 50);
-  label.style.left = Math.round(pos.x) + 'px';
-  label.style.top = Math.round(pos.y) + 'px';
-});
-~~~
-
-### Highlight buildings
-
-~~~ javascript
-map.on('pointermove', function(e) {
-  var id = osmb.getTarget(e.x, e.y, function(id) {
-    if (id) {
-      osmb.highlight(id, '#f08000');
-    } else {
-      osmb.highlight(null);
-    }
-  });
-});
-~~~
-
-### Map control buttons
-
-~~~ html
-<div class="control tilt">
-  <button class="dec">&#8601;</button>
-  <button class="inc">&#8599;</button>
-</div>
-
-<div class="control rotation">
-  <button class="inc">&#8630;</button>
-  <button class="dec">&#8631;</button>
-</div>
-
-<div class="control zoom">
-  <button class="dec">-</button>
-  <button class="inc">+</button>
-</div>
-
-<div class="control bend">
-  <button class="dec">A</button>
-  <button class="inc">V</button>
-</div>
-~~~
-
-~~~ javascript
-var controlButtons = document.querySelectorAll('.control button');
-
-for (var i = 0; i < controlButtons.length; i++) {
-  controlButtons[i].addEventListener('click', function(e) {
-    var button = this;
-    var parentClassList = button.parentNode.classList;
-    var direction = button.classList.contains('inc') ? 1 : -1;
-    var increment;
-    var property;
-
-    if (parentClassList.contains('tilt')) {
-      property = 'Tilt';
-      increment = direction*10;
-    }
-    if (parentClassList.contains('rotation')) {
-      property = 'Rotation';
-      increment = direction*10;
-    }
-    if (parentClassList.contains('zoom')) {
-      property = 'Zoom';
-      increment = direction*1;
-    }
-    if (parentClassList.contains('bend')) {
-      property = 'Bend';
-      increment = direction*1;
-    }
-    if (property) {
-      map['set'+ property](map['get'+ property]()+increment);
-    }
-  });
-}
-~~~
-
-### Add GeoJSON
-
-~~~ javascript
-var geojson = {
-  type: 'FeatureCollection',
-  features: [{
-    type: 'Feature',
-    properties: {
-      color: '#ff0000',
-      roofColor: '#cc0000',
-      height: 50,
-      minHeight: 0
-    },
-    geometry: {
-      type: 'Polygon',
-      coordinates: [
-        [
-          [13.37000, 52.52000],
-          [13.37010, 52.52000],
-          [13.37010, 52.52010],
-          [13.37000, 52.52010],
-          [13.37000, 52.52000]
-        ]
-      ]
-    }
-  }]
-};
-osmb.addGeoJSON(geojson);
-~~~
-
-### Position a map object
-
-~~~javascript
-var obj = osmb.addGeoJSON(geojson);
-
-/*
- * ## Key codes for object positioning ##
- * Cursor keys: move
- * +/- : scale
- * w/s : elevate
- * a/d : rotate
- *
- * Pressing Alt the same time accelerates
- */
-document.addEventListener('keydown', function(e) {
-  var transInc = e.altKey ? 0.0002 : 0.00002;
-  var scaleInc = e.altKey ? 0.1 : 0.01;
-  var rotaInc = e.altKey ? 10 : 1;
-  var eleInc = e.altKey ? 10 : 1;
-
-  switch (e.which) {
-    case 37: obj.position.longitude -= transInc; break;
-    case 39: obj.position.longitude += transInc; break;
-    case 38: obj.position.latitude += transInc; break;
-    case 40: obj.position.latitude -= transInc; break;
-    case 187: obj.scale += scaleInc; break;
-    case 189: obj.scale -= scaleInc; break;
-    case 65: obj.rotation += rotaInc; break;
-    case 68: obj.rotation -= rotaInc; break;
-    case 87: obj.elevation += eleInc; break;
-    case 83: obj.elevation -= eleInc; break;
-    default: return;
-  }
-  console.log(JSON.stringify({
-    position:{
-      latitude:parseFloat(obj.position.latitude.toFixed(5)),
-      longitude:parseFloat(obj.position.longitude.toFixed(5))
-    },
-    elevation:parseFloat(obj.elevation.toFixed(2)),
-    scale:parseFloat(obj.scale.toFixed(2)),
-    rotation:parseInt(obj.rotation, 10)
-  }));
-});
-~~~
+1. Clone the repo (`git clone git@github.com:OSMBuildings/OSMBuildings.git`)
+1. Install dependencies with `npm install`
+1. After making changes, you can try them out by running `grunt`, which will output a `dist/OSMBuildings/OSMBuildings.debug.js` file that you can include like normal
