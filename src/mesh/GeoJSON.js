@@ -26,20 +26,20 @@ mesh.GeoJSON = (function() {
 
     Activity.setBusy();
     if (typeof url === 'object') {
-      var json = url;
-      this.setData(json);
+      var collection = url;
+      this.setData(collection);
     } else {
-      this.request = Request.getJSON(url, function(json) {
+      this.request = Request.getJSON(url, function(collection) {
         this.request = null;
-        this.setData(json);
+        this.setData(collection);
       }.bind(this));
     }
   }
 
   constructor.prototype = {
 
-    setData: function(json) {
-      if (!json || !json.features.length) {
+    setData: function(collection) {
+      if (!collection || !collection.features.length) {
         return;
       }
 
@@ -53,18 +53,18 @@ mesh.GeoJSON = (function() {
       var resPickingColors = [];
 
       var
-        position = Triangulate.getPosition(json.features[0].geometry),
+        position = Triangulate.getPosition(collection.features[0].geometry),
         feature, id, properties,
         vertexCountBefore, vertexCount, pickingColor,
         startIndex = 0,
-        numFeatures = json.features.length,
+        numFeatures = collection.features.length,
         endIndex = startIndex + Math.min(numFeatures, FEATURES_PER_CHUNK);
 
       this.position = { latitude:position[1], longitude:position[0] };
 
       var process = function() {
         for (var i = startIndex; i < endIndex; i++) {
-          feature = json.features[i];
+          feature = collection.features[i];
           properties = feature.properties;
           id = this.id || properties.relationId || feature.id || properties.id;
 
