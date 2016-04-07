@@ -85,6 +85,14 @@ mesh.GeoJSON = (function() {
           }
 
           this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
+
+          MAP.emit('loadfeature', {
+            type: 'Feature',
+            id: id,
+            tile: this.id,
+            geometry: { type: 'Polygon', coordinates: geometry },
+            properties: properties
+          });  
         }
 
         if (endIndex === numFeatures) {
