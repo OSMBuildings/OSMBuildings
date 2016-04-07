@@ -156,7 +156,7 @@ Pointer.prototype = {
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
     var scale = 0.86 * Math.pow( 2, -this.map.zoom);    
-    var lngScale = 1/Math.cos( this.map.position.latitude/ 180 * Math.PI);
+    var lonScale = 1/Math.cos( this.map.position.latitude/ 180 * Math.PI);
     var dx = e.offsetX - this.prevX;
     var dy = e.offsetY - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
@@ -168,7 +168,7 @@ Pointer.prototype = {
                      mul2scalar(vForward, -dy));
 
     this.map.setPosition({ 
-      longitude: this.map.position.longitude - dir[0] * scale*lngScale, 
+      longitude: this.map.position.longitude - dir[0] * scale*lonScale, 
       latitude:  this.map.position.latitude  + dir[1] * scale });
   },
 
