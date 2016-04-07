@@ -63,7 +63,7 @@ Pointer.prototype = {
     if (!this.disabled) {
       this.map.setZoom(this.map.zoom + 1, e);
     }
-    this.map.emit('doubleclick', { x: e.clientX, y: e.clientY, button: e.button });
+    this.map.emit('doubleclick', { x: e.offsetX, y: e.offsetY, button: e.button });
   },
 
   onMouseDown: function(e) {
@@ -77,12 +77,12 @@ Pointer.prototype = {
     this.prevRotation = this.map.rotation;
     this.prevTilt = this.map.tilt;
 
-    this.startX = this.prevX = e.clientX;
-    this.startY = this.prevY = e.clientY;
+    this.startX = this.prevX = e.offsetX;
+    this.startY = this.prevY = e.offsetY;
 
     this.pointerIsDown = true;
 
-    this.map.emit('pointerdown', { x: e.clientX, y: e.clientY, button: e.button });
+    this.map.emit('pointerdown', { x: e.offsetX, y: e.offsetY, button: e.button });
   },
 
   onMouseMove: function(e) {
@@ -93,11 +93,11 @@ Pointer.prototype = {
         this.rotateMap(e);
       }
 
-      this.prevX = e.clientX;
-      this.prevY = e.clientY;
+      this.prevX = e.offsetX;
+      this.prevY = e.offsetY;
     }
 
-    this.map.emit('pointermove', { x: e.clientX, y: e.clientY });
+    this.map.emit('pointermove', { x: e.offsetX, y: e.offsetY });
   },
 
   onMouseUp: function(e) {
@@ -107,7 +107,7 @@ Pointer.prototype = {
     }
 
     if (e.button === 0 && !e.altKey) {
-      if (Math.abs(e.clientX - this.startX)>5 || Math.abs(e.clientY - this.startY)>5) {
+      if (Math.abs(e.offsetX - this.startX)>5 || Math.abs(e.offsetY - this.startY)>5) {
         this.moveMap(e);
       }
     } else {
@@ -116,7 +116,7 @@ Pointer.prototype = {
 
     this.pointerIsDown = false;
 
-    this.map.emit('pointerup', { x: e.clientX, y: e.clientY, button: e.button });
+    this.map.emit('pointerup', { x: e.offsetX, y: e.offsetY, button: e.button });
   },
 
   onMouseWheel: function(e) {
@@ -145,14 +145,14 @@ Pointer.prototype = {
 
     /*FIXME: make movement exact, i.e. make the position that 
      *       appeared at (this.prevX, this.prevY) before appear at 
-     *       (e.clientX, e.clientY) now.
+     *       (e.offsetX, e.offsetY) now.
      */
     // the constant 0.86 was chosen experimentally for the map movement to be 
     // "pinned" to the cursor movement when the map is shown top-down
     var scale = 0.86 * Math.pow( 2, -this.map.zoom);    
     var lngScale = 1/Math.cos( this.map.position.latitude/ 180 * Math.PI);
-    var dx = e.clientX - this.prevX;
-    var dy = e.clientY - this.prevY;
+    var dx = e.offsetX - this.prevX;
+    var dy = e.offsetY - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
     
     var vRight = [ Math.cos(angle),             Math.sin(angle)];
@@ -170,8 +170,8 @@ Pointer.prototype = {
     if (this.disabled) {
       return;
     }
-    this.prevRotation += (e.clientX - this.prevX)*(360/innerWidth);
-    this.prevTilt -= (e.clientY - this.prevY)*(360/innerHeight);
+    this.prevRotation += (e.offsetX - this.prevX)*(360/innerWidth);
+    this.prevTilt -= (e.offsetY - this.prevY)*(360/innerHeight);
     this.map.setRotation(this.prevRotation);
     this.map.setTilt(this.prevTilt);
   },
@@ -189,10 +189,10 @@ Pointer.prototype = {
       e = e.touches[0];
     }
 
-    this.startX = this.prevX = e.clientX;
-    this.startY = this.prevY = e.clientY;
+    this.startX = this.prevX = e.offsetX;
+    this.startY = this.prevY = e.offsetY;
 
-    this.map.emit('pointerdown', { x: e.clientX, y: e.clientY, button: 0 });
+    this.map.emit('pointerdown', { x: e.offsetX, y: e.offsetY, button: 0 });
   },
 
   onTouchMove: function(e) {
@@ -202,10 +202,10 @@ Pointer.prototype = {
 
     this.moveMap(e);
 
-    this.prevX = e.clientX;
-    this.prevY = e.clientY;
+    this.prevX = e.offsetX;
+    this.prevY = e.offsetY;
 
-    this.map.emit('pointermove', { x: e.clientX, y: e.clientY });
+    this.map.emit('pointermove', { x: e.offsetX, y: e.offsetY });
   },
 
   onTouchEnd: function(e) {
@@ -213,11 +213,11 @@ Pointer.prototype = {
       e = e.touches[0];
     }
 
-    if (Math.abs(e.clientX - this.startX)>5 || Math.abs(e.clientY - this.startY)>5) {
+    if (Math.abs(e.offsetX - this.startX)>5 || Math.abs(e.offsetY - this.startY)>5) {
       this.moveMap(e);
     }
 
-    this.map.emit('pointerup', { x: e.clientX, y: e.clientY, button: 0 });
+    this.map.emit('pointerup', { x: e.offsetX, y: e.offsetY, button: 0 });
   },
 
   onGestureChange: function(e) {
