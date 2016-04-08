@@ -136,7 +136,7 @@ Event | Description
 `touchstart` | Fired when the user touches the map on a touch screen
 `touchmove` | Fired when a touch point is moved along the map
 `touchend` | Fired when the user releases the map on a touch screen
-`gesturechange` | Fired when the user performs a gesture a touch screen
+`gesturechange` | Fired when the user performs a gesture on a touch screen
 `loadfeature` | Fired when a 3d object has been loaded
 
 
