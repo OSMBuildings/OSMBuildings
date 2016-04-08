@@ -227,7 +227,7 @@ var render = {
     render.Buildings.destroy();
     render.Basemap.destroy();
 
-    render.NormalMap.destroy();
+    render.DepthFogNormalMap.destroy();
     render.CameraViewDepthMap.destroy();
     render.SunViewDepthMap.destroy();
     render.AmbientMap.destroy();
