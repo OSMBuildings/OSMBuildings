@@ -169,11 +169,9 @@ module.exports = function(grunt) {
     fs.writeFileSync(config.dest, 'var Shaders = '+ JSON.stringify(Shaders) +';\n');
   });
 
-  grunt.registerTask('default', 'Development build', function() {
+  grunt.registerTask('default', 'Build shaders', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
     grunt.task.run('shaders');
-    grunt.task.run('concat:osmb-basemap');
-    grunt.task.run('version');
   });
 
   grunt.registerTask('release', 'Release', function() {
