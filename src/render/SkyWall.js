@@ -5,8 +5,8 @@ render.SkyWall = function() {
   this.updateGeometry( [[0,0,0], [0,0,0], [0,0,0], [0,0,0]]);
 
   this.shader = new glx.Shader({
-    vertexShader: Shaders.skydome.vertex,
-    fragmentShader: Shaders.skydome.fragment,
+    vertexShader: Shaders.skywall.vertex,
+    fragmentShader: Shaders.skywall.fragment,
     shaderName: 'sky wall shader',
     attributes: ['aPosition', 'aTexCoord'],
     uniforms: ['uAbsoluteHeight', 'uMatrix', 'uTexIndex', 'uFogColor']

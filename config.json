@@ -1,5 +1,5 @@
 {
-  "shaders": ["interaction", "buildings", "buildings.shadows", "flatColor", "skydome", "basemap", "texture", "fogNormal", "ambientFromDepth", "blur", "basemap.shadows"],
+  "shaders": ["interaction", "buildings", "buildings.shadows", "flatColor", "skywall", "basemap", "texture", "fogNormal", "ambientFromDepth", "blur", "basemap.shadows"],
 
   "lib": [
     "node_modules/Triangulate/dist/Triangulate.js",

@@ -137,7 +137,6 @@ Event | Description
 `touchmove` | Fired when a touch point is moved along the map
 `touchend` | Fired when the user releases the map on a touch screen
 `gesturechange` | Fired when the user performs a gesture on a touch screen
-`loadfeature` | Fired when a 3d object has been loaded
 
 
 ### OSM Buildings options
@@ -155,11 +154,12 @@ Option | Type | Default | Description
 `effects` | Array | [] | Which effects to enable. The only effect at the moment is 'shadows'
 `style` | Object | { color: 'rgb(220, 210, 200)' } | Sets the default building style
 
-
 ### OSM Buildings methods
 
 Method | Parameters | Description
 ------ | ---------- | -----------
+`on` | (String) event, (Function) callback | Listen for a [buildings event](#map-events)
+`off` | (String) event, (Function) callback | Removes all event listeners for the given event. If callback is given, it only returns that function
 `addTo` | (GLMap) map | Adds it as a layer to the given map
 `addOBJ` | (String) url, (Object) {latitude, longitude}, (Object) {scale, rotation, elevation, id, color} | Adds an OBJ file to the scene
 `addGeoJSON` | (String) url, (Object) {scale, rotation, elevation, id, color, modifier} | Add a GeoJSON file or object and specify options. modifier(id, properties) allows to manipulate feature `properties` once
@@ -173,6 +173,16 @@ Method | Parameters | Description
 `setDate` | (Date) date | Sets a date for shadow calculations
 `project` | (Object) {latitude, longitude, elevation}| Transforms a geo coordinate + elevation to screen `position`
 `unproject` | (Float) x, (Float) y | Transforms a screen position into a geo coordinate with elevation 0
+
+### OSM Buildings events
+
+Payload data is placed in e.detail
+
+Event | Description
+----- | -----------
+`busy` | Fired when data loading starts
+`idle` | Fired when data loading ends
+`loadfeature` | Fired when a 3d object has been loaded
 
 
 ### OSM Buildings server

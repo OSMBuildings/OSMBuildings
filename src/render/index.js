@@ -42,7 +42,7 @@ var render = {
     gl.enable(gl.DEPTH_TEST);
 
     render.Picking.init(); // renders only on demand
-    render.Sky = new render.SkyWall();
+    render.sky = new render.SkyWall();
     render.Buildings.init();
     render.Basemap.init();
     render.Overlay.init();
@@ -51,10 +51,10 @@ var render = {
     //render.HudRect.init();
     //render.NormalMap.init();
     render.MapShadows.init();
-    render.CameraGBuffer = new render.DepthFogNormalMap();
-    render.SunGBuffer    = new render.DepthFogNormalMap();
+    render.cameraGBuffer = new render.DepthFogNormalMap();
+    render.sunGBuffer    = new render.DepthFogNormalMap();
     
-    render.SunGBuffer.framebufferConfig = {
+    render.sunGBuffer.framebufferConfig = {
       width:      SHADOW_DEPTH_MAP_SIZE,
       height:     SHADOW_DEPTH_MAP_SIZE,
       usedWidth:  SHADOW_DEPTH_MAP_SIZE,
@@ -91,7 +91,7 @@ var render = {
                         [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
     Sun.updateView(viewTrapezoid);
-    render.Sky.updateGeometry(viewTrapezoid);
+    render.sky.updateGeometry(viewTrapezoid);
 
     if (!render.effects.shadows) {
       render.Buildings.render();
@@ -99,17 +99,17 @@ var render = {
       gl.enable(gl.BLEND);
       gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE); 
       gl.disable(gl.DEPTH_TEST);      
-      render.Sky.render();
+      render.sky.render();
       gl.disable(gl.BLEND);
       gl.enable(gl.DEPTH_TEST);
     } else {
       var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
-      render.CameraGBuffer.render(this.viewMatrix, this.projMatrix, config, true);
-      render.SunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
-      render.AmbientMap.render(render.CameraGBuffer.getDepthTexture(), render.CameraGBuffer.getFogNormalTexture(), config, 2.0);
+      render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, config, true);
+      render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
+      render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), config, 2.0);
       render.Blur.render(render.AmbientMap.framebuffer.renderTexture, config);
-      render.Buildings.render(render.SunGBuffer.framebuffer, 0.5);
+      render.Buildings.render(render.sunGBuffer.framebuffer, 0.5);
       render.Basemap.render();
 
       gl.enable(gl.BLEND);
@@ -119,7 +119,7 @@ var render = {
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
         gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
-        render.MapShadows.render(Sun, render.SunGBuffer.framebuffer, 0.5);
+        render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
         render.Overlay.render( render.Blur.framebuffer.renderTexture, config);
 
         // linear interpolation between the colors of the current framebuffer 
@@ -131,12 +131,12 @@ var render = {
         // over its background.
         gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE);
         gl.disable(gl.DEPTH_TEST);
-        render.Sky.render();
+        render.sky.render();
         gl.enable(gl.DEPTH_TEST);
       }
       gl.disable(gl.BLEND);
 
-      //render.HudRect.render( render.SunGBuffer.getFogNormalTexture(), config );
+      //render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
     }
 
     if (this.screenshotCallback) {
@@ -223,11 +223,13 @@ var render = {
 
     this.stop();
     render.Picking.destroy();
-    render.Sky.destroy();
+    render.sky.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
 
-    render.DepthFogNormalMap.destroy();
+    render.cameraGBuffer.destroy();
+    render.sunGBuffer.destroy();
+    
     render.CameraViewDepthMap.destroy();
     render.SunViewDepthMap.destroy();
     render.AmbientMap.destroy();

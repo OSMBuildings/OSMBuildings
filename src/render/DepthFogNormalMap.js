@@ -110,4 +110,3 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
 };
 
 render.DepthFogNormalMap.prototype.destroy = function() {};
-
