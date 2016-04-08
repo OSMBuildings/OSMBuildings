@@ -200,28 +200,30 @@ mesh.OBJ = (function() {
 
     addItems: function(items) {
       var
-        item, color, idColor, j, jl,
+        feature, color, idColor, j, jl,
         id, colorVariance,
         defaultColor = new Color(DEFAULT_COLOR).toArray();
 
       for (var i = 0, il = items.length; i < il; i++) {
-        item = items[i];
+        feature = items[i];
 
-        this.data.vertices  = this.data.vertices.concat(item.vertices);
-        this.data.normals   = this.data.normals.concat(item.normals);
-        this.data.texCoords = this.data.texCoords.concat(item.texCoords);
+        this.data.vertices  = this.data.vertices.concat(feature.vertices);
+        this.data.normals   = this.data.normals.concat(feature.normals);
+        this.data.texCoords = this.data.texCoords.concat(feature.texCoords);
 
-        id = this.id || item.id;
+        id = this.id || feature.id;
         idColor = render.Picking.idToColor(id);
 
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
-        color = this.color || item.color || defaultColor;
-        for (j = 0, jl = item.vertices.length - 2; j<jl; j += 3) {
+        color = this.color || feature.color || defaultColor;
+        for (j = 0, jl = feature.vertices.length - 2; j<jl; j += 3) {
           this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
           this.data.ids.push(idColor[0], idColor[1], idColor[2]);
         }
 
-        this.items.push({ id:id, vertexCount:item.vertices.length/3, data:item.data });
+        this.items.push({ id:id, vertexCount:feature.vertices.length/3, data:feature.data });
+
+        APP.emit('loadfeature', feature);
       }
     },
 

@@ -136,8 +136,8 @@ Event | Description
 `touchstart` | Fired when the user touches the map on a touch screen
 `touchmove` | Fired when a touch point is moved along the map
 `touchend` | Fired when the user releases the map on a touch screen
-`gesturechange` | ???
-`loadfeature` | Fired when GeoJSON features are loaded
+`gesturechange` | Fired when the user performs a gesture a touch screen
+`loadfeature` | Fired when a 3d object has been loaded
 
 
 ### OSM Buildings options
