@@ -260,5 +260,6 @@ Grid.prototype = {
       this.tiles[key].destroy();
     }
     this.tiles = [];
+    this.visibleTiles = {};
   }
 };

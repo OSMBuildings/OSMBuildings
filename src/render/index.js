@@ -230,8 +230,6 @@ var render = {
     render.cameraGBuffer.destroy();
     render.sunGBuffer.destroy();
     
-    render.CameraViewDepthMap.destroy();
-    render.SunViewDepthMap.destroy();
     render.AmbientMap.destroy();
     render.Blur.destroy();
   }
