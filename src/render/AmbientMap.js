@@ -5,8 +5,9 @@ render.AmbientMap = {
     this.shader = new glx.Shader({
       vertexShader:   Shaders.ambientFromDepth.vertex,
       fragmentShader: Shaders.ambientFromDepth.fragment,
+      shaderName: 'SSAO shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
+      uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
@@ -79,12 +80,11 @@ render.AmbientMap = {
     gl.clearColor(1.0, 0.0, 0.0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
-
     shader.setUniforms([
-      ['uInverseTexWidth',  '1f', 1/framebufferConfig.width],
-      ['uInverseTexHeight', '1f', 1/framebufferConfig.height],
-      ['uEffectStrength',   '1f', effectStrength]
+      ['uInverseTexSize', '2fv', [1/framebufferConfig.width, 1/framebufferConfig.height]],
+      ['uEffectStrength', '1f',  effectStrength],
+      ['uNearPlane',      '1f',  1.0], //FIXME: use actual near and far planes of the projection matrix
+      ['uFarPlane',       '1f',  7500.0]
     ]);
 
     shader.bindBuffer(this.vertexBuffer,   'aPosition');
