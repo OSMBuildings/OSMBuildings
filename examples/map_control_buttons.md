@@ -15,11 +15,6 @@
   <button class="dec">-</button>
   <button class="inc">+</button>
 </div>
-
-<div class="control bend">
-  <button class="dec">A</button>
-  <button class="inc">V</button>
-</div>
 ~~~
 
 ~~~ javascript
@@ -43,10 +38,6 @@ for (var i = 0; i < controlButtons.length; i++) {
     }
     if (parentClassList.contains('zoom')) {
       property = 'Zoom';
-      increment = direction*1;
-    }
-    if (parentClassList.contains('bend')) {
-      property = 'Bend';
       increment = direction*1;
     }
     if (property) {

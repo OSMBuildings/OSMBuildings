@@ -93,7 +93,6 @@ Option | Type | Default | Description
 `zoom` | Float | minZoom | Initial map zoom
 `rotation` | Float | 0 | Map rotation
 `tilt` | Float | 0 | Map tilt
-`bend` | Float | 0 | Map bend
 `disabled` | Boolean | false | Disables user input
 `minZoom` | Float | 10 | Minimum allowed zoom
 `maxZoom` | Float | 20 | Maximum allowed zoom

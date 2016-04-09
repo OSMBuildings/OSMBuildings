@@ -85,13 +85,11 @@ Basemap.prototype = {
     var zoom     = (state.zoom     !== undefined) ? state.zoom     : options.zoom;
     var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
     var tilt     = (state.tilt     !== undefined) ? state.tilt     : options.tilt;
-    var bend     = (state.bend     !== undefined) ? state.bend     : options.bend;
 
     this.setPosition(position || options.position || { latitude:52.520000, longitude:13.410000 });
     this.setZoom(zoom || this.minZoom);
     this.setRotation(rotation || 0);
     this.setTilt(tilt || 0);
-    this.setBend(bend || 0);
   },
 
   persistState: function() {
@@ -106,7 +104,6 @@ Basemap.prototype = {
       params.push('lon=' + this.position.longitude.toFixed(6));
       params.push('zoom=' + this.zoom.toFixed(1));
       params.push('tilt=' + this.tilt.toFixed(1));
-      params.push('bend=' + this.bend.toFixed(1));
       params.push('rotation=' + this.rotation.toFixed(1));
       history.replaceState({}, '', '?'+ params.join('&'));
     }.bind(this), 1000);
@@ -264,19 +261,6 @@ Basemap.prototype = {
 
   getTilt: function() {
     return this.tilt;
-  },
-
-  setBend: function(bend) {
-    bend = clamp(parseFloat(bend), 0, 90);
-    if (this.bend !== bend) {
-      this.bend = bend;
-      this.emit('change');
-    }
-    return this;
-  },
-
-  getBend: function() {
-    return this.bend;
   },
 
   addLayer: function(layer) {
