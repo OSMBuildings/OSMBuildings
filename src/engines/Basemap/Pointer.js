@@ -28,9 +28,9 @@ function cancelEvent(e) {
   if (e.preventDefault) {
     e.preventDefault();
   }
-  //if (e.stopPropagation) {
-  //  e.stopPropagation();
-  //}
+  if (e.stopPropagation) {
+    e.stopPropagation();
+  }
   e.returnValue = false;
 }
 
