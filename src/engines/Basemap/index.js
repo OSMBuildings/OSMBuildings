@@ -213,10 +213,12 @@ Basemap.prototype = {
   },
 
   setPosition: function(pos) {
-    this.position = {
-      latitude:  clamp(parseFloat(pos.latitude), -90, 90),
-      longitude: clamp(parseFloat(pos.longitude), -180, 180)
-    };
+    var lat = parseFloat(pos.latitude);
+    var lon = parseFloat(pos.longitude);
+    if (isNaN(lat) || isNaN(lon)) {
+      return;
+    }
+    this.position = { latitude:clamp(lat, -90, 90), longitude:clamp(lon, -180, 180) };
     this.emit('change');
     return this;
   },
