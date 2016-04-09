@@ -28,11 +28,6 @@ void main() {
     gl_Position = uMatrix * pos;
     vNormal = uNormalMatrix * aNormal;
 
-    /* in order for the SSAO (which is based on this depth shader) to work
-     * correctly in conjunction with the fog shading, we need to replicate
-     * the fog computation here. This way, the ambient occlusion shader can
-     * later attenuate the ambient occlusion effect in the foggy areas.*/
-
     vec4 worldPos = uModelMatrix * pos;
     vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
     verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
