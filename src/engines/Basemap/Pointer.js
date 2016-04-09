@@ -4,7 +4,6 @@
 
 function getEventOffset(e) {
   if (e.offsetX !== undefined) {
-    console.log({ x:e.offsetX, y:e.offsetY })
     return { x:e.offsetX, y:e.offsetY };
   }
   var offset = getElementOffset(e.target);
@@ -18,8 +17,8 @@ function getElementOffset(el) {
   var res = { x:0, y:0 };
 
   while(el.nodeType === 1) {
-    res.x += elem.offsetLeft;
-    res.y += elem.offsetTop;
+    res.x += el.offsetLeft;
+    res.y += el.offsetTop;
     el = el.parentNode;
   }
   return res;
@@ -188,7 +187,7 @@ Pointer.prototype = {
     //        (e.offsetX, e.offsetY) now.
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
-    var scale = 0.86 * Math.pow( 2, -this.map.zoom);    
+    var scale = 0.86 * Math.pow(2, -this.map.zoom);
     var lonScale = 1/Math.cos( this.map.position.latitude/ 180 * Math.PI);
     var pos = getEventOffset(e);
     var dx = pos.x - this.prevX;

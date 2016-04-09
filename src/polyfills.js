@@ -26,7 +26,7 @@ if (!('ongesturechange' in window) && 'ontouchstart' in window) {
       var t2 = e.touches[1];
       var dx = t1.clientX - t2.clientX;
       var dy = t1.clientY - t2.clientY;
-      dist1 = Math.sqrt(dx*dx+dy*dy);
+      dist1 = dx*dx + dy*dy;
       angle1 = Math.atan2(dy,dx);
       gestureStarted = true;
     }, false);
@@ -38,7 +38,7 @@ if (!('ongesturechange' in window) && 'ontouchstart' in window) {
       var t2 = e.touches[1];
       var dx = t1.clientX - t2.clientX;
       var dy = t1.clientY - t2.clientY;
-      var dist2 = Math.sqrt(dx*dx+dy*dy);
+      var dist2 = dx*dx + dy*dy;
       var angle2 = Math.atan2(dy,dx);
 
       var event = new CustomEvent('gesturechange', { bubbles: true });
@@ -47,7 +47,7 @@ if (!('ongesturechange' in window) && 'ontouchstart' in window) {
       event.metaKey = e.metaKey;
       event.shiftKey = e.shiftKey;
       event.rotation = ((angle2 - angle1) * (180 / Math.PI)) % 360;
-      event.scale = dist2/dist1;
+      event.scale = Math.sqrt(dist1/dist2);
 
       // setTimeout(function() { target.dispatchEvent(event); }, 0);
       e.target.dispatchEvent(event);
