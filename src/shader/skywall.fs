@@ -10,6 +10,6 @@ varying float vRelativeHeight;
 
 void main() {
   float blendFactor = min(100.0 * vRelativeHeight, 1.0);
-  vec4 texColor = texture2D(uTexIndex, vec2(vTexCoord.x, -vTexCoord.y));
+  vec4 texColor = texture2D(uTexIndex, vTexCoord);
   gl_FragColor = mix( vec4(uFogColor, 1.0), texColor,  blendFactor);
 }
