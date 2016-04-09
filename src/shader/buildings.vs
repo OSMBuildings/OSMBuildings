@@ -10,8 +10,6 @@ attribute vec4 aFilter;
 attribute vec3 aID;
 
 uniform mat4 uModelMatrix;
-uniform mat4 uViewMatrix;
-uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
 
 uniform mat3 uNormalTransform;
@@ -29,11 +27,8 @@ varying vec3 vColor;
 varying vec2 vTexCoord;
 varying float verticalDistanceToLowerEdge;
 
-float gradientHeight = 90.0;
-float gradientStrength = 0.4;
-
-uniform float uBendRadius;
-uniform float uBendDistance;
+const float gradientHeight = 90.0;
+const float gradientStrength = 0.4;
 
 void main() {
 
@@ -46,24 +41,6 @@ void main() {
   } else {
 
     vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
-
-    //*** bending ***************************************************************
-
-  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
-  //
-  //  float innerRadius = uBendRadius + mwPosition.y;
-  //  float depth = abs(mwPosition.z);
-  //  float s = depth-uBendDistance;
-  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);
-  //
-  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the "base" of a building
-  //  // travels the full uBendRadius path
-  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);
-  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);
-  //
-  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
-  //  gl_Position = uProjMatrix * newPosition;
-
     gl_Position = uMatrix * pos;
 
     //*** highlight object ******************************************************
