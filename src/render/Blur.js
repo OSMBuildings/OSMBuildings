@@ -7,7 +7,7 @@ render.Blur = {
       fragmentShader: Shaders.blur.fragment,
       shaderName: 'blur shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uMatrix', 'uInverseTexWidth', 'uInverseTexHeight', 'uTexIndex']
+      uniforms: ['uInverseTexSize', 'uTexIndex']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
@@ -78,13 +78,7 @@ render.Blur = {
     gl.clearColor(1.0, 0.0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
-
-    shader.setUniforms([
-      ['uInverseTexWidth', '1f', 1/framebuffer.width],
-      ['uInverseTexHeight', '1f', 1/framebuffer.height],
-    ]);
+    shader.setUniform('uInverseTexSize', '2fv', [1/framebuffer.width, 1/framebuffer.height]);
     shader.bindBuffer(this.vertexBuffer,  'aPosition');
     shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
     shader.bindTexture('uTexIndex', 0, inputTexture);
