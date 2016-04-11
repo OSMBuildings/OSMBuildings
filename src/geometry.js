@@ -401,6 +401,7 @@ function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l]; }
 function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];}
 function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
 function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
+function add3scalar(a,f) { return [a[0]+f, a[1]+f, a[2]+f];}
 function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
 function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
 function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}

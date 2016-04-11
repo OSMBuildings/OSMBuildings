@@ -112,15 +112,7 @@ mesh.OBJ = (function() {
       v1 = vertexIndex[ faces[i][1] ];
       v2 = vertexIndex[ faces[i][2] ];
 
-      e1 = [ v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2] ];
-      e2 = [ v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2] ];
-
-      nor = [ e1[1]*e2[2] - e1[2]*e2[1], e1[2]*e2[0] - e1[0]*e2[2], e1[0]*e2[1] - e1[1]*e2[0] ];
-      len = Math.sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
-
-      nor[0] /= len;
-      nor[1] /= len;
-      nor[2] /= len;
+      nor = normal(v0, v1, v2);
 
       geometry.vertices.push(
         v0[0], v0[2], v0[1],
@@ -207,9 +199,9 @@ mesh.OBJ = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         feature = items[i];
 
-        this.data.vertices  = this.data.vertices.concat(feature.vertices);
-        this.data.normals   = this.data.normals.concat(feature.normals);
-        this.data.texCoords = this.data.texCoords.concat(feature.texCoords);
+        [].push.apply(this.data.vertices,  feature.vertices);
+        [].push.apply(this.data.normals,   feature.normals);
+        [].push.apply(this.data.texCoords, feature.texCoords);
 
         id = this.id || feature.id;
         idColor = render.Picking.idToColor(id);
@@ -217,8 +209,8 @@ mesh.OBJ = (function() {
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
         color = this.color || feature.color || defaultColor;
         for (j = 0, jl = feature.vertices.length - 2; j<jl; j += 3) {
-          this.data.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
-          this.data.ids.push(idColor[0], idColor[1], idColor[2]);
+          [].push.apply(this.data.colors, add3scalar(color, colorVariance));
+          [].push.apply(this.data.ids, idColor);
         }
 
         this.items.push({ id:id, vertexCount:feature.vertices.length/3, data:feature.data });
