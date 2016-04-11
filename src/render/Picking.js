@@ -23,62 +23,82 @@ render.Picking = {
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
   },
 
+  render: function(framebufferConfig) {
+    var
+      shader = this.shader,
+      framebuffer = this.framebuffer;
+
+    if (framebuffer.width != framebufferConfig.width || 
+        framebuffer.height!= framebufferConfig.height)
+    {
+      framebuffer.setSize( framebufferConfig.width, framebufferConfig.height );
+      gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
+    
+    shader.enable();
+    framebuffer.enable();
+    gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
+
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    shader.setUniforms([
+      ['uFogRadius', '1f', render.fogDistance],
+      ['uTime',      '1f', Filter.getTime()]
+    ]);
+
+    var
+      dataItems = data.Index.items,
+      item,
+      modelMatrix;
+
+    for (var i = 0, il = dataItems.length; i<il; i++) {
+      item = dataItems[i];
+
+      if (MAP.zoom<item.minZoom || MAP.zoom>item.maxZoom) {
+        continue;
+      }
+
+      if (!(modelMatrix = item.getMatrix())) {
+        continue;
+      }
+
+      shader.setUniformMatrices([
+        ['uModelMatrix', '4fv', modelMatrix.data],
+        ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+      ]);
+
+      shader.bindBuffer(item.vertexBuffer, 'aPosition');
+      shader.bindBuffer(item.idBuffer, 'aID');
+      shader.bindBuffer(item.filterBuffer, 'aFilter');
+
+      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    }
+
+    this.shader.disable();
+    this.framebuffer.disable();
+    gl.viewport(0, 0, MAP.width, MAP.height);
+  },
+  
   // TODO: throttle calls
   getTarget: function(x, y, callback) {
     requestAnimationFrame(function() {
-      var
-        shader = this.shader,
-        framebuffer = this.framebuffer;
-
-      gl.viewport(0, 0, this.viewportSize, this.viewportSize);
-      shader.enable();
-      framebuffer.enable();
-
-      gl.clearColor(0, 0, 0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      shader.setUniforms([
-        ['uFogRadius',    '1f', render.fogRadius],
-        ['uTime',         '1f', Filter.getTime()]
-      ]);
-
-      var
-        dataItems = data.Index.items,
-        item,
-        modelMatrix;
-
-      for (var i = 0, il = dataItems.length; i<il; i++) {
-        item = dataItems[i];
-
-        if (MAP.zoom<item.minZoom || MAP.zoom>item.maxZoom) {
-          continue;
-        }
-
-        if (!(modelMatrix = item.getMatrix())) {
-          continue;
-        }
-
-        shader.setUniformMatrices([
-          ['uModelMatrix', '4fv', modelMatrix.data],
-          ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
-        ]);
-
-        shader.bindBuffer(item.vertexBuffer, 'aPosition');
-        shader.bindBuffer(item.idBuffer, 'aID');
-        shader.bindBuffer(item.filterBuffer, 'aFilter');
-
-        gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
-      }
+      this.render({
+        width:      this.viewportSize,
+        height:     this.viewportSize,
+        usedWidth:  this.viewportSize,
+        usedHeight: this.viewportSize
+      });
 
       x = x/MAP.width *this.viewportSize <<0;
       y = y/MAP.height*this.viewportSize <<0;
 
-      var imageData = framebuffer.getPixel(x, this.viewportSize-y);
+      this.framebuffer.enable();
+      var imageData = this.framebuffer.getPixel(x, this.viewportSize-y);
       var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
-
-      shader.disable();
-      framebuffer.disable();
-      gl.viewport(0, 0, MAP.width, MAP.height);
+      this.framebuffer.disable();
 
       callback(this.idMapping[color]);
     }.bind(this));
