@@ -1,7 +1,5 @@
 mesh.OBJ = (function() {
 
-  var vertexIndex;
-
   function parseMTL(str) {
     var
       lines = str.split(/[\r\n]/g),
@@ -46,6 +44,7 @@ mesh.OBJ = (function() {
 
   function parseOBJ(str, materials) {
     var
+      vertexIndex = [],
       lines = str.split(/[\r\n]/g), cols,
       meshes = [],
       id,
@@ -58,13 +57,13 @@ mesh.OBJ = (function() {
       switch (cols[0]) {
         case 'g':
         case 'o':
-          storeOBJ(meshes, id, color, faces);
+          storeOBJ(vertexIndex, meshes, id, color, faces);
           id = cols[1];
           faces = [];
           break;
 
         case 'usemtl':
-          storeOBJ(meshes, id, color, faces);
+          storeOBJ(vertexIndex, meshes, id, color, faces);
           if (materials[ cols[1] ]) {
             color = materials[ cols[1] ];
           }
@@ -81,15 +80,15 @@ mesh.OBJ = (function() {
       }
     }
 
-    storeOBJ(meshes, id, color, faces);
+    storeOBJ(vertexIndex, meshes, id, color, faces);
     str = null;
 
     return meshes;
   }
 
-  function storeOBJ(meshes, id, color, faces) {
+  function storeOBJ(vertexIndex, meshes, id, color, faces) {
     if (faces.length) {
-      var geometry = createGeometry(faces);
+      var geometry = createGeometry(vertexIndex, faces);
       meshes.push({
         id: id,
         color: color,
@@ -100,7 +99,7 @@ mesh.OBJ = (function() {
     }
   }
 
-  function createGeometry(faces) {
+  function createGeometry(vertexIndex, faces) {
     var
       v0, v1, v2,
       e1, e2,
@@ -148,8 +147,6 @@ mesh.OBJ = (function() {
   //***************************************************************************
 
   function constructor(url, position, options) {
-    vertexIndex = [];
-
     options = options || {};
 
     this.id = options.id;
@@ -195,7 +192,7 @@ mesh.OBJ = (function() {
   constructor.prototype = {
     onLoad: function(obj, mtl) {
       this.items = [];
-      this.addItems(parseOBJ(obj, mtl));
+      this.addItems( parseOBJ(obj, mtl) );
       this.onReady();
     },
 
