@@ -206,4 +206,4 @@ Here's how to get your development environment set up:
 
 1. Clone the repo (`git clone git@github.com:OSMBuildings/OSMBuildings.git`)
 1. Install dependencies with `npm install`
-1. After making changes, you can try them out by running `grunt`, which will output a `dist/OSMBuildings/OSMBuildings.debug.js` file that you can include like normal
+1. After making changes, you can try them out by running `grunt release`, which will output a `dist/OSMBuildings/OSMBuildings.debug.js` file that you can include like normal
