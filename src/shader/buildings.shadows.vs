@@ -47,7 +47,7 @@ void main() {
     //*** highlight object ******************************************************
 
     vec3 color = aColor;
-    if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {
+    if (uHighlightID == aID) {
       color = mix(aColor, uHighlightColor, 0.5);
     }
 
