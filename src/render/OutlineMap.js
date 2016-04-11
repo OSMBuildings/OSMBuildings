@@ -7,7 +7,7 @@ render.OutlineMap = {
       fragmentShader: Shaders.outlineMap.fragment,
       shaderName: 'outline map shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uMatrix', 'uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogNormalTexIndex', 'uEffectStrength']
+      uniforms: ['uMatrix', 'uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogNormalTexIndex', 'uIdTexIndex', 'uEffectStrength']
     });
 
     this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
@@ -31,7 +31,7 @@ render.OutlineMap = {
     ]));
   },
 
-  render: function(depthTexture, fogNormalTexture, framebufferConfig, effectStrength) {
+  render: function(depthTexture, fogNormalTexture, idTexture, framebufferConfig, effectStrength) {
 
     var
       shader = this.shader,
@@ -94,6 +94,7 @@ render.OutlineMap = {
 
     shader.bindTexture('uDepthTexIndex',    0, depthTexture);
     shader.bindTexture('uFogNormalTexIndex',1, fogNormalTexture);
+    shader.bindTexture('uIdTexIndex',       2, idTexture);
 
     gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
 
