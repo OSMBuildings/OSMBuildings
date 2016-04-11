@@ -1,6 +1,6 @@
 mesh.OBJ = (function() {
 
-  var vertexIndex = [];
+  var vertexIndex;
 
   function parseMTL(str) {
     var
@@ -148,6 +148,8 @@ mesh.OBJ = (function() {
   //***************************************************************************
 
   function constructor(url, position, options) {
+    vertexIndex = [];
+
     options = options || {};
 
     this.id = options.id;
@@ -193,7 +195,6 @@ mesh.OBJ = (function() {
   constructor.prototype = {
     onLoad: function(obj, mtl) {
       this.items = [];
-      // TODO: add single parsed items directly and save intermediate data storage
       this.addItems(parseOBJ(obj, mtl));
       this.onReady();
     },
