@@ -13,8 +13,9 @@ render.HudRect = {
     this.shader = new glx.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
+      shaderName: 'HUD rectangle shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: [ 'uMatrix', 'uTexIndex', 'uColor']
+      uniforms: [ 'uMatrix', 'uTexIndex']
     });
   },
 
