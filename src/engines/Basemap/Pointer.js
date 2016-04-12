@@ -111,6 +111,7 @@ Pointer.prototype = {
     this.pointerIsDown = true;
 
     this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
+    this.map.emit('dragstart', { x: pos.x, y: pos.y })
   },
 
   onMouseMove: function(e) {
@@ -119,6 +120,7 @@ Pointer.prototype = {
     if (this.pointerIsDown) {
       if (e.button === 0 && !e.altKey) {
         this.moveMap(e);
+        this.map.emit('drag', { x: pos.x, y: pos.y })
       } else {
         this.rotateMap(e);
       }
@@ -142,6 +144,7 @@ Pointer.prototype = {
       if (Math.abs(pos.x - this.startX)>5 || Math.abs(pos.y - this.startY)>5) {
         this.moveMap(e);
       }
+      this.map.emit('dragend', { x: pos.x, y: pos.y })
     } else {
       this.rotateMap(e);
     }
@@ -193,16 +196,19 @@ Pointer.prototype = {
     var dx = pos.x - this.prevX;
     var dy = pos.y - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
-    
+
     var vRight = [ Math.cos(angle),             Math.sin(angle)];
     var vForward=[ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)]
-    
-    var dir = add2(  mul2scalar(vRight,    dx), 
+
+    var dir = add2(  mul2scalar(vRight,    dx),
                      mul2scalar(vForward, -dy));
 
-    this.map.setPosition({ 
-      longitude: this.map.position.longitude - dir[0] * scale*lonScale, 
-      latitude:  this.map.position.latitude  + dir[1] * scale });
+    var new_position = {
+      longitude: this.map.position.longitude - dir[0] * scale*lonScale,
+      latitude:  this.map.position.latitude  + dir[1] * scale };
+
+    this.map.setPosition(new_position);
+    this.map.emit('move', new_position)
   },
 
   rotateMap: function(e) {
