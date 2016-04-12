@@ -47,7 +47,9 @@ var render = {
     render.Basemap.init();
     render.Overlay.init();
     render.AmbientMap.init();
-    render.Blur.init();
+    render.OutlineMap.init();
+    render.blurredAmbientMap = new render.Blur();
+    render.blurredOutlineMap = new render.Blur();
     //render.HudRect.init();
     //render.NormalMap.init();
     render.MapShadows.init();
@@ -92,25 +94,50 @@ var render = {
 
     Sun.updateView(viewTrapezoid);
     render.sky.updateGeometry(viewTrapezoid);
+    var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
 
     if (!render.effects.shadows) {
       render.Buildings.render();
       render.Basemap.render();
+
+      if (render.effects.outlines) {
+        render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, config, true);
+        render.Picking.render(config);
+        render.OutlineMap.render(
+          render.cameraGBuffer.getDepthTexture(), 
+          render.cameraGBuffer.getFogNormalTexture(), 
+          render.Picking.framebuffer.renderTexture, config, 1.0);
+        render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, config);
+      }
+
       gl.enable(gl.BLEND);
+      if (render.effects.outlines) {
+        gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
+        render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, config);
+      }
+
       gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE); 
       gl.disable(gl.DEPTH_TEST);      
       render.sky.render();
       gl.disable(gl.BLEND);
       gl.enable(gl.DEPTH_TEST);
     } else {
-      var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
-
       render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, config, true);
       render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
       render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), config, 2.0);
-      render.Blur.render(render.AmbientMap.framebuffer.renderTexture, config);
+      render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, config);
       render.Buildings.render(render.sunGBuffer.framebuffer, 0.5);
       render.Basemap.render();
+
+      if (render.effects.outlines) {
+        render.Picking.render(config);
+        render.OutlineMap.render(
+          render.cameraGBuffer.getDepthTexture(), 
+          render.cameraGBuffer.getFogNormalTexture(), 
+          render.Picking.framebuffer.renderTexture, config, 1.0
+        );
+        render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, config);
+      }
 
       gl.enable(gl.BLEND);
       {
@@ -119,8 +146,12 @@ var render = {
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
         gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
+        if (render.effects.outlines) {
+          render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, config);
+        }
+
         render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
-        render.Overlay.render( render.Blur.framebuffer.renderTexture, config);
+        render.Overlay.render( render.blurredAmbientMap.framebuffer.renderTexture, config);
 
         // linear interpolation between the colors of the current framebuffer 
         // ( =building geometries) and of the sky. The interpolation factor
@@ -231,6 +262,7 @@ var render = {
     render.sunGBuffer.destroy();
     
     render.AmbientMap.destroy();
-    render.Blur.destroy();
+    render.blurredAmbientMap.destroy();
+    render.blurredOutlineMap.destroy();
   }
 };
