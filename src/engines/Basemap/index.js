@@ -203,6 +203,7 @@ Basemap.prototype = {
         this.center.x += dx;
         this.center.y += dy;*/
       }
+      this.zoom('zoom', { zoom: zoom });
       this.emit('change');
     }
     return this;

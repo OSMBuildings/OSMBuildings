@@ -134,6 +134,7 @@ Event | Data | Description
 `mousewheel` | {delta} | Fired when wheel button of a pointing device is rotated
 `gesture` | ??? | Fired when the user performs a gesture on a touch screen
 `move` | {latitude, longitude} | Fired on any movement of the map view
+`zoom` | {zoom} | Fired when the zoom level changes
 
 ### OSM Buildings options
 
