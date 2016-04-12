@@ -159,15 +159,37 @@ Basemap.prototype = {
   },
 
   getBounds: function() {
+    //FIXME: update method; the old code did only work for straight top-down
+    //       views, not for other cameras.
+    /*
+    var
+      W2 = this.width/2, H2 = this.height/2,
+      angle = this.rotation*Math.PI/180,
+      x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
+      y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
+      position = this.position,
+      worldSize = Basemap.TILE_SIZE*Math.pow(2, this.zoom),
+      nw = this.unproject(position.x - x, position.y - y, worldSize),
+      se = this.unproject(position.x + x, position.y + y, worldSize);
+    return {
+      n: nw.latitude,
+      w: nw.longitude,
+      s: se.latitude,
+      e: se.longitude
+    };*/
+    return null;
+  },
+
+  getCameraBounds: function() {
     var c = this.container.getBoundingClientRect(),
         osmb = this.layers.items[0]; // TODO: This assumes that the OSMB layer is the first one
 
-    return {
-      nw: osmb.unproject(c.left, c.top),
-      ne: osmb.unproject(c.right, c.top),
-      se: osmb.unproject(c.right, c.bottom),
-      sw: osmb.unproject(c.left, c.bottom)
-    };
+    return [
+      osmb.unproject(c.left, c.top),
+      osmb.unproject(c.right, c.top),
+      osmb.unproject(c.right, c.bottom),
+      osmb.unproject(c.left, c.bottom)
+    ];
   },
 
   setZoom: function(zoom, e) {
