@@ -203,7 +203,7 @@ Basemap.prototype = {
         this.center.x += dx;
         this.center.y += dy;*/
       }
-      this.zoom('zoom', { zoom: zoom });
+      this.emit('zoom', { zoom: zoom });
       this.emit('change');
     }
     return this;
@@ -259,7 +259,7 @@ Basemap.prototype = {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
     if (this.tilt !== tilt) {
       this.tilt = tilt;
-      this.emit('tilt'. { tilt: tilt });
+      this.emit('tilt', { tilt: tilt });
       this.emit('change');
     }
     return this;
