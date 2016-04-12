@@ -245,6 +245,7 @@ Basemap.prototype = {
     rotation = parseFloat(rotation)%360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
+      this.emit('rotate', { rotation: rotation })
       this.emit('change');
     }
     return this;
