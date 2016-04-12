@@ -245,7 +245,7 @@ Basemap.prototype = {
     rotation = parseFloat(rotation)%360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
-      this.emit('rotate', { rotation: rotation })
+      this.emit('rotate', { rotation: rotation });
       this.emit('change');
     }
     return this;
@@ -259,6 +259,7 @@ Basemap.prototype = {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
     if (this.tilt !== tilt) {
       this.tilt = tilt;
+      this.emit('tilt'. { tilt: tilt });
       this.emit('change');
     }
     return this;

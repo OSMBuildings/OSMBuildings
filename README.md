@@ -136,7 +136,8 @@ Event | Data | Description
 `resize` | {width, height} | Fired when the size of the map is changed
 `move` | {latitude, longitude} | Fired on any movement of the map view
 `zoom` | {zoom} | Fired when the zoom level changes
-`rotate` | {rotation} | Fired when the map is rotated
+`rotate` | {rotation} | Fired when the map is rotated (about the elevation axis)
+`tilt` | {tilt} | Fired when the map is tilted (rotated about the camera X axis)
 
 ### OSM Buildings options
 
