@@ -124,20 +124,16 @@ Method | Parameters | Description
 
 ### Map events
 
-Event | Description
------ | -----------
-`mousedown` | Fired when the user pushes the mouse button on the map
-`mouseup` | Fired when the user releases the mouse button on the map
-`mousemove` | Fired when the user moves the mouse on the map
-`contextmenu` | Fired when the user right clicks the map
-`dblclick` | Fired when the user double clicks on the map
-`mousewheel` | Fired when wheel button of a pointing device is rotated
-`DOMMouseScroll` | Fired when wheel button of a pointing device is rotated
-`touchstart` | Fired when the user touches the map on a touch screen
-`touchmove` | Fired when a touch point is moved along the map
-`touchend` | Fired when the user releases the map on a touch screen
-`gesturechange` | Fired when the user performs a gesture on a touch screen
-`move` | Fired on any movement of the map view
+Event | Data | Description
+----- | ---- | -----------
+`pointerdown` | {x, y, button} | Fired when the user pushes the mouse button on the map
+`pointerup` | {x, y, button} | Fired when the user releases the mouse button on the map
+`pointermove` | {x, y} | Fired when the user moves the mouse on the map
+`contextmenu` | {x, y} | Fired when the user right clicks the map
+`doubleclick` | {x, y, button} | Fired when the user double clicks on the map
+`mousewheel` | {delta} | Fired when wheel button of a pointing device is rotated
+`gesture` | ??? | Fired when the user performs a gesture on a touch screen
+`move` | {latitude, longitude} | Fired on any movement of the map view
 
 ### OSM Buildings options
 
