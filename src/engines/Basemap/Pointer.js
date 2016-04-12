@@ -154,7 +154,7 @@ Pointer.prototype = {
   onContextMenu: function(e) {
     e.preventDefault();
     var pos = getEventOffset(e);
-    this.map.emit('contextmenu', { x: pos.x, y: pos.y })
+    this.map.emit('contextmenu', { x: pos.x, y: pos.y });
     return false;
   },
 
@@ -205,7 +205,7 @@ Pointer.prototype = {
       latitude:  this.map.position.latitude  + dir[1] * scale };
 
     this.map.setPosition(new_position);
-    this.map.emit('move', new_position)
+    this.map.emit('move', new_position);
   },
 
   rotateMap: function(e) {
