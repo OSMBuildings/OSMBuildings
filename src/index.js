@@ -3,17 +3,32 @@ var MAP, glx, gl;
 /*
  * Note: OSMBuildings cannot use a single global world coordinate system.
  *       The numerical accuracy required for such a system would be about
- *       32bits to represent world-wide geometry faithfully within a few 
- *       centimeters of accuracy. Most computations in OSMBuildings, however, 
+ *       32bits to represent world-wide geometry faithfully within a few
+ *       centimeters of accuracy. Most computations in OSMBuildings, however,
  *       are performed on a GPU where only IEEE floats with 23bits of accuracy
  *       (plus 8 bits of range) are available.
  *       Instead, OSMBuildings' coordinate system has a reference point
  *       (MAP.position) at the viewport center, and all world positions are
- *       expressed as distances in meters from that reference point. The 
- *       reference point itself shifts with map panning so that all world 
- *       positions relevant to the part of the world curently rendered on-screen 
+ *       expressed as distances in meters from that reference point. The
+ *       reference point itself shifts with map panning so that all world
+ *       positions relevant to the part of the world curently rendered on-screen
  *       can accurately be represented within the limited accuracy of IEEE floats.*/
 
+/**
+ * OSMBuildings main class
+ * @constructor
+ * @param {Object} [options] - OSMBuildings options
+ * @param {String} [options.baseURL='.'] - For locating assets. This is relative to calling page
+ * @param {Float} [options.minZoom=15] - Minimum allowed zoom
+ * @param {Float} [options.maxZoom=22] - Maximum allowed zoom
+ * @param {String} [options.attribution='<a href="http://osmbuildings.org">© OSM Buildings</a>'] - Attribution
+ * @param {Boolean} [options.showBackfaces=false] - Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+ * @param {String} [options.fogColor='#e8e0d8'] - Color to be used for sky gradients and distance fog
+ * @param {String} [options.backgroundColor='#efe8e0'] - Overall background color
+ * @param {Boolean} [options.fastMode=false] - Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
+ * @param {Array} [options.effects=[]] - Which effects to enable. The only effect at the moment is 'shadows'
+ * @param {Object} [options.style={ color: 'rgb(220, 210, 200)' }] - Sets the default building style
+ */
 var OSMBuildings = function(options) {
   APP = this; // references to this. Should make other globals obsolete.
 
@@ -112,7 +127,7 @@ OSMBuildings.prototype = {
    */
   project: function(latitude, longitude, elevation) {
     var
-      metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+      metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
                                  Math.cos(MAP.position.latitude / 180 * Math.PI),
       worldPos = [ (longitude- MAP.position.longitude) * metersPerDegreeLongitude,
                   -(latitude - MAP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
@@ -120,7 +135,7 @@ OSMBuildings.prototype = {
     // takes current cam pos into account.
     var posNDC = transformVec3( render.viewProjMatrix.data, worldPos);
     posNDC = mul3scalar( add3(posNDC, [1, 1, 1]), 1/2); // from [-1..1] to [0..1]
-    
+
     return { x:    posNDC[0]  * MAP.width,
              y: (1-posNDC[1]) * MAP.height,
              z:    posNDC[2]
@@ -128,16 +143,16 @@ OSMBuildings.prototype = {
   },
 
   // TODO: this should be part of the underlying map engine
-  /* returns the geographic position (latitude/longitude) of the map layer 
+  /* returns the geographic position (latitude/longitude) of the map layer
    * (elevation==0) at viewport position (x,y), or 'undefined' if no part of the
    * map plane would be rendered at (x,y) - e.g. if (x,y) lies above the horizon.
    */
   unproject: function(x, y) {
     var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
-    /* convert window/viewport coordinates to NDC [0..1]. Note that the browser 
-     * screen coordinates are y-down, while the WebGL NDC coordinates are y-up, 
+    /* convert window/viewport coordinates to NDC [0..1]. Note that the browser
+     * screen coordinates are y-down, while the WebGL NDC coordinates are y-up,
      * so we have to invert the y value here */
-    var posNDC = [x/MAP.width, 1-y/MAP.height]; 
+    var posNDC = [x/MAP.width, 1-y/MAP.height];
     posNDC = add2( mul2scalar(posNDC, 2.0), [-1, -1, -1]); // [0..1] to [-1..1];
     var worldPos = getIntersectionWithXYPlane(posNDC[0], posNDC[1], inverse);
     if (worldPos === undefined) {
