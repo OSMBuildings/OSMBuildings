@@ -371,15 +371,23 @@ function getTileSizeInMeters( latitude, zoom) {
          Math.pow(2, zoom);
 }
 
-function getTilePositionFromLocal(localXY, zoom) {
-  
+function getPositionFromLocal(localXY) {
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
                                  Math.cos(MAP.position.latitude / 180 * Math.PI);
 
   var longitude= MAP.position.longitude + localXY[0] / metersPerDegreeLongitude;
   var latitude = MAP.position.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
   
-  return [long2tile(longitude, zoom), lat2tile(latitude, zoom)];
+  return { 
+    "longitude": longitude,
+    "latitude":  latitude
+  };
+}
+
+function getTilePositionFromLocal(localXY, zoom) {
+  var pos = getPositionFromLocal(localXY);
+  
+  return [long2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
 }
 
 //all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames

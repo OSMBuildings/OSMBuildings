@@ -155,26 +155,41 @@ Basemap.prototype = {
     return !!this.pointer.disabled;
   },
 
+  /* returns the geographical bounds of the current view.
+   * notes: 
+   * - since the bounds are always axis-aligned they will contain areas that are
+   *   not currently visible if the current view is not also axis-aligned.
+   * - the bounds only contain the map area that OSMBuildings considers for rendering.
+   *   OSMBuilding has a rendering distance of about 3.5km, so the bounds will
+   *   never extend beyond that, even if the horizon is visible (in which case the
+   *   bounds would mathematically be infinite).
+   * - the bounds only consider ground level. For example, buildings whose top 
+   *   is seen at the lower edge of the screen, but whose footprint is outside 
+   *   of the current view below the lower edge do not contribute to the bounds.
+   *   so their top may be visible and they may still be out of bounds.
+   */
   getBounds: function() {
-    //FIXME: update method; the old code did only work for straight top-down
-    //       views, not for other cameras.
-    /*
-    var
-      W2 = this.width/2, H2 = this.height/2,
-      angle = this.rotation*Math.PI/180,
-      x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
-      y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
-      position = this.position,
-      worldSize = Basemap.TILE_SIZE*Math.pow(2, this.zoom),
-      nw = this.unproject(position.x - x, position.y - y, worldSize),
-      se = this.unproject(position.x + x, position.y + y, worldSize);
+    var viewQuad = render.getViewQuad();
+    console.log(this.position);
+    var latMin = Infinity,
+        lonMin = Infinity,
+        latMax = -Infinity,
+        lonMax = -Infinity;
+    
+    for (var i in viewQuad) {
+      var pos = getPositionFromLocal(viewQuad[i]);
+      latMin = Math.min(latMin, pos.latitude);
+      latMax = Math.max(latMax, pos.latitude);
+      lonMin = Math.min(lonMin, pos.longitude);
+      lonMax = Math.max(lonMax, pos.longitude);
+    }
+
     return {
-      n: nw.latitude,
-      w: nw.longitude,
-      s: se.latitude,
-      e: se.longitude
-    };*/
-    return null;
+      n: latMax,
+      w: lonMin,
+      s: latMin,
+      e: lonMax
+    };
   },
 
   setZoom: function(zoom, e) {

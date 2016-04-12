@@ -85,7 +85,7 @@ var render = {
     if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
     }
-    var viewTrapezoid = this.getViewQuad( this.viewProjMatrix.data);
+    var viewTrapezoid = this.getViewQuad();
     /*
     quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
                         [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
