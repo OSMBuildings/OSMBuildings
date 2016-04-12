@@ -71,20 +71,39 @@ OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</
 
 OSMBuildings.prototype = {
 
+  /**
+   * Adds an event listener
+   * @param {string} event - An event identifier to listen for
+   * @callback fn
+   */
   on: function(type, fn) {
     gl.canvas.addEventListener(type, fn);
     return this;
   },
 
+  /**
+   * Removes event listeners
+   * @param {string} event - An event identifier to listen for
+   * @param {Function} [fn] - If given, only remove the given function
+   */
   off: function(type, fn) {
     gl.canvas.removeEventListener(type, fn);
   },
 
+  /**
+   * Emit the given event
+   * @param {string} event
+   * @param {Object} detail - details about the event
+   */
   emit: function(type, detail) {
     var event = new CustomEvent(type, { detail:detail });
     gl.canvas.dispatchEvent(event);
   },
 
+  /**
+   * Adds the OSMBuildings object as a layer to the given map
+   * @param {Object} map - The map to add it to
+   */
   addTo: function(map) {
     MAP = map;
     glx = new GLX(MAP.container, MAP.width, MAP.height, APP.highQuality);
@@ -99,12 +118,20 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  /**
+   * Removes the OSMBuildings object from the map
+   */
   remove: function() {
     render.stop();
     MAP.removeLayer(this);
     MAP = null;
   },
 
+  /**
+   * Sets the map style
+   * @param {Object} style
+   * @param {string} [style.color] - The color for buildings
+   */
   setStyle: function(style) {
     //render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
     //render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
@@ -116,14 +143,21 @@ OSMBuildings.prototype = {
     return this;
   },
 
+  /**
+   * Sets the date for shadow calculations
+   * @param {Date} date
+   */
   setDate: function(date) {
     Sun.setDate(typeof date === 'string' ? new Date(date) : date);
     return this;
   },
 
   // TODO: this should be part of the underlying map engine
-  /* Returns the screen position of the point at 'latitude'/'longitude' with
-    'elevation'.
+  /**
+   * Returns the screen position of the point
+   * @param {Float} latitude - Latitude of the point
+   * @param {Float} longitude - Longitude of the point
+   * @param {Float} elevation - Elevation of the point
    */
   project: function(latitude, longitude, elevation) {
     var
@@ -143,9 +177,12 @@ OSMBuildings.prototype = {
   },
 
   // TODO: this should be part of the underlying map engine
-  /* returns the geographic position (latitude/longitude) of the map layer
+  /**
+   * Returns the geographic position (latitude/longitude) of the map layer
    * (elevation==0) at viewport position (x,y), or 'undefined' if no part of the
    * map plane would be rendered at (x,y) - e.g. if (x,y) lies above the horizon.
+   * @param {Integer} x - the x position in the viewport
+   * @param {Integer} y - the y position in the viewport
    */
   unproject: function(x, y) {
     var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
@@ -167,9 +204,10 @@ OSMBuildings.prototype = {
     };
   },
 
-  //// TODO: this should be part of the underlying map engine
-  //getBounds: function(latitude, longitude, elevation) {},
-
+  /**
+   * Adds an OBJ (3D object) file to the map
+   * @param {string} url - Url of the OBJ file
+   */
   addOBJ: function(url, position, options) {
     return new mesh.OBJ(url, position, options);
   },
