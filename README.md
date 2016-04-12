@@ -133,6 +133,7 @@ Event | Data | Description
 `doubleclick` | {x, y, button} | Fired when the user double clicks on the map
 `mousewheel` | {delta} | Fired when wheel button of a pointing device is rotated
 `gesture` | ??? | Fired when the user performs a gesture on a touch screen
+`resize` | {width, height} | Fired when the size of the map is changed
 `move` | {latitude, longitude} | Fired on any movement of the map view
 `zoom` | {zoom} | Fired when the zoom level changes
 

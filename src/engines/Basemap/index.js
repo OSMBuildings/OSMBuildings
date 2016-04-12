@@ -188,10 +188,10 @@ Basemap.prototype = {
 
       /* if a screen position was given for which the geographic position displayed
        * should not change under the zoom */
-      if (e) {  
-        //FIXME: add code; this needs to take the current camera (rotation and 
+      if (e) {
+        //FIXME: add code; this needs to take the current camera (rotation and
         //       perspective) into account
-        //NOTE:  the old code (comment out below) only works for north-up 
+        //NOTE:  the old code (comment out below) only works for north-up
         //       non-perspective views
         /*
         var dx = this.container.offsetWidth/2  - e.clientX;
@@ -232,7 +232,7 @@ Basemap.prototype = {
     if (size.width !== this.width || size.height !== this.height) {
       this.width = size.width;
       this.height = size.height;
-      this.emit('resize');
+      this.emit('resize', { width: this.width, height: this.height });
     }
     return this;
   },
