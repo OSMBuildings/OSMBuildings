@@ -111,7 +111,6 @@ Pointer.prototype = {
     this.pointerIsDown = true;
 
     this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
-    this.map.emit('dragstart', { x: pos.x, y: pos.y })
   },
 
   onMouseMove: function(e) {
@@ -120,7 +119,6 @@ Pointer.prototype = {
     if (this.pointerIsDown) {
       if (e.button === 0 && !e.altKey) {
         this.moveMap(e);
-        this.map.emit('drag', { x: pos.x, y: pos.y })
       } else {
         this.rotateMap(e);
       }
@@ -144,7 +142,6 @@ Pointer.prototype = {
       if (Math.abs(pos.x - this.startX)>5 || Math.abs(pos.y - this.startY)>5) {
         this.moveMap(e);
       }
-      this.map.emit('dragend', { x: pos.x, y: pos.y })
     } else {
       this.rotateMap(e);
     }

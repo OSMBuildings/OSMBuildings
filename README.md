@@ -138,9 +138,6 @@ Event | Description
 `touchend` | Fired when the user releases the map on a touch screen
 `gesturechange` | Fired when the user performs a gesture on a touch screen
 `move` | Fired on any movement of the map view
-`dragstart` | Fired repeatedly while the user drags the map
-`drag` | Fired repeatedly while the user drags the map
-`dragend` | Fired repeatedly while the user drags the map
 
 ### OSM Buildings options
 
