@@ -23,23 +23,16 @@ render.Picking = {
     this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
   },
 
-  render: function(framebufferConfig) {
+  render: function(framebufferSize) {
     var
       shader = this.shader,
       framebuffer = this.framebuffer;
 
-    if (framebuffer.width != framebufferConfig.width || 
-        framebuffer.height!= framebufferConfig.height)
-    {
-      framebuffer.setSize( framebufferConfig.width, framebufferConfig.height );
-      gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    }
+    framebuffer.setSize(framebufferSize[0], framebufferSize[1]);
     
     shader.enable();
     framebuffer.enable();
-    gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
+    gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -85,12 +78,7 @@ render.Picking = {
   // TODO: throttle calls
   getTarget: function(x, y, callback) {
     requestAnimationFrame(function() {
-      this.render({
-        width:      this.viewportSize,
-        height:     this.viewportSize,
-        usedWidth:  this.viewportSize,
-        usedHeight: this.viewportSize
-      });
+      this.render( [this.viewportSize, this.viewportSize] );
 
       x = x/MAP.width *this.viewportSize <<0;
       y = y/MAP.height*this.viewportSize <<0;

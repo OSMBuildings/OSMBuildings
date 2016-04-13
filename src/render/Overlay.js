@@ -41,42 +41,7 @@ render.Overlay = {
     return { vertices: vertices , texCoords: texCoords };
   },
 
-  render: function(texture, framebufferConfig) {
-    var tcHorizMin, tcVertMin, tcHorizMax, tcVertMax;
-    
-    if (framebufferConfig !== undefined)
-    {
-      tcHorizMin = 0                            / framebufferConfig.width;
-      tcHorizMax = framebufferConfig.usedWidth  / framebufferConfig.width;
-      tcVertMin  = 0                            / framebufferConfig.height;
-      tcVertMax  = framebufferConfig.usedHeight / framebufferConfig.height;
-    } else
-    {
-      tcHorizMin = tcVertMin = 0.0;
-      tcHorizMax = tcVertMax = 1.0;
-    }
-
-    if (tcHorizMin != this.tcHorizMin ||
-        tcHorizMax != this.tcHorizMax ||
-        tcVertMin != this.tcVertMin ||
-        tcVertMax != this.tcVertMax)
-    {
-      //console.log("resetting texCoord buffer to", tcHorizMin, tcHorizMax, tcVertMin, tcVertMax);
-      this.texCoordBuffer.destroy();
-      this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
-        tcHorizMin, tcVertMin,
-        tcHorizMax, tcVertMin,
-        tcHorizMax, tcVertMax,
-
-        tcHorizMin, tcVertMin,
-        tcHorizMax, tcVertMax,
-        tcHorizMin, tcVertMax]));
-      
-      this.tcHorizMin = tcHorizMin;
-      this.tcHorizMax = tcHorizMax;
-      this.tcVertMin  = tcVertMin;
-      this.tcVertMax  = tcVertMax;
-    }
+  render: function(texture, framebufferSize) {
 
     var shader = this.shader;
 
