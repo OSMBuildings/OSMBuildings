@@ -35,6 +35,17 @@ Best for:
 
 This version uses GLMap for any events and layers logic.
 
+### Compatibility
+
+Runs likely on earlier versons than listed below, but this is our baseline for tests.
+
+- Win7: latest Chrome (MSIE11 not running, Firefox TBD)
+- Win10: TBD
+- OSX: latest Crome, Safari, Firefox
+- Linux: TBD
+- Android 5.0
+- iOS 9.3
+
 ## Get the files ##
 
 Checking in built versions causes a lot of trouble during development. So we decided to use the Github release system instead.
