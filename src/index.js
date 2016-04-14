@@ -73,7 +73,7 @@ OSMBuildings.prototype = {
 
   /**
    * Adds an event listener
-   * @param {string} event - An event identifier to listen for
+   * @param {String} event - An event identifier to listen for
    * @callback fn
    */
   on: function(type, fn) {
@@ -83,18 +83,13 @@ OSMBuildings.prototype = {
 
   /**
    * Removes event listeners
-   * @param {string} event - An event identifier to listen for
+   * @param {String} event - An event identifier to listen for
    * @param {Function} [fn] - If given, only remove the given function
    */
   off: function(type, fn) {
     gl.canvas.removeEventListener(type, fn);
   },
 
-  /**
-   * Emit the given event
-   * @param {string} event
-   * @param {Object} detail - details about the event
-   */
   emit: function(type, detail) {
     var event = new CustomEvent(type, { detail:detail });
     gl.canvas.dispatchEvent(event);
@@ -130,7 +125,7 @@ OSMBuildings.prototype = {
   /**
    * Sets the map style
    * @param {Object} style
-   * @param {string} [style.color] - The color for buildings
+   * @param {String} [style.color] - The color for buildings
    */
   setStyle: function(style) {
     //render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
@@ -206,17 +201,55 @@ OSMBuildings.prototype = {
 
   /**
    * Adds an OBJ (3D object) file to the map
-   * @param {string} url - Url of the OBJ file
+   * @param {String} url - URL of the OBJ file
+   * @param {Object} position - Where to render the OBJ
+   * @param {Float} position.latitude - Latitude for the OBJ
+   * @param {Float} position.longitude - Longitude for the OBJ
+   * @param {Object} [options] - Options for rendering the OBJ
+   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
+   * @param {String} [options.color] - A color to apply to the model
    */
   addOBJ: function(url, position, options) {
     return new mesh.OBJ(url, position, options);
   },
 
+
+  /**
+   * A function that will be called on each feature, for modification before rendering
+   * @callback modifierFunction
+   * @param {String} id - The feature's id
+   * @param {Object} properties - The feature's properties
+   */
+  /**
+   * Adds a GeoJSON layer to the map
+   * @param {String} url - URL of the GeoJSON file
+   * @param {Object} options - Options to apply to the GeoJSON being rendered
+   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
+   * @param {String} [options.color] - A color to apply to the model
+   * @param {modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   */
   addGeoJSON: function(url, options) {
     return new mesh.GeoJSON(url, options);
   },
 
   // TODO: allow more data layers later on
+  /**
+   * Adds a GeoJSON tile base layer, for rendering the buildings
+   * @param {String} url - The URL of the GeoJSON tile server, in {@link https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md the correct format}
+   * @param {Object} options
+   * @param {Integer} [options.fixedZoom=15]
+   * @param {Object} [options.bounds] - Currently not used
+   * @param {String} [options.color] - A color to apply to all features on this layer
+   * @param {modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
+   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   */
   addGeoJSONTiles: function(url, options) {
     options = options || {};
     options.fixedZoom = options.fixedZoom || 15;
