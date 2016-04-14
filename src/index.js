@@ -240,7 +240,7 @@ OSMBuildings.prototype = {
 
   // TODO: allow more data layers later on
   /**
-   * Adds a GeoJSON tile base layer, for rendering the buildings
+   * Adds a GeoJSON tile base layer, for rendering the 3D buildings
    * @param {String} url - The URL of the GeoJSON tile server, in {@link https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md the correct format}
    * @param {Object} options
    * @param {Integer} [options.fixedZoom=15]
@@ -257,6 +257,17 @@ OSMBuildings.prototype = {
     return APP.dataGrid;
   },
 
+  /**
+   * Adds a 2D map source, to render below the 3D buildings
+   * @param {String} url - The URL of the map server. This could be Mapbox, or {@link https://wiki.openstreetmap.org/wiki/Tiles any other tile server} that supports the right format
+   * @param {Object} options
+   * @param {Integer} [options.fixedZoom]
+   * @param {Object} [options.bounds] - Currently not used
+   * @param {String} [options.color] - A color to apply to all features on this layer
+   * @param {modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
+   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   */
   addMapTiles: function(url, options) {
     APP.basemapGrid = new Grid(url, basemap.Tile, options);
     return APP.basemapGrid;
