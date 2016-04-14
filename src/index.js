@@ -262,35 +262,78 @@ OSMBuildings.prototype = {
     return APP.basemapGrid;
   },
 
+  /**
+   * Highlight a given feature by id. Currently, the highlight can only be applied to one feature. Set color = `null` in order to un-highlight
+   * @param {String} id - The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever's defined in the options passed to it.
+   */
   highlight: function(id) {
     render.Buildings.highlightID = id ? render.Picking.idToColor(id) : null;
     return this;
   },
 
   // TODO: check naming. show() suggests it affects the layer rather than objects on it
+  /**
+   * A function that will be called on each feature, for modification before rendering
+   * @callback selectorFunction
+   * @param {String} id - The feature's id
+   * @param {Object} data - The feature's data
+   */
+  /**
+   * Sets a function that defines which objects to show on this layer
+   * @param {selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to show the feature
+   * @param {Integer} [duration=0] - How long to show the feature for
+   */
   show: function(selector, duration) {
     Filter.remove('hidden', selector, duration);
     return this;
   },
 
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
+ /**
+  * Sets a function that defines which objects to hide on this layer
+  * @param {selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
+  * @param {Integer} [duration=0] - How long to hide the feature for
+  */
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
     return this;
   },
 
+  /**
+   * A callback function for getTarget
+   * @callback getTargetCallback
+   * @param {Object} feature - The feature
+   */
+  /**
+   * Returns the feature from a position on the screen
+   * @param {Integer} x - The x coordinate (in pixels) of position on the screen
+   * @param {Integer} y - The y coordinate (in pixels) of position on the screen
+   * @param {getTargetCallback} callback - A callback function that receives the object
+   */
   getTarget: function(x, y, callback) {
     // TODO: use promises here
     render.Picking.getTarget(x, y, callback);
     return this;
   },
 
+  /**
+   * A callback function for screnshot
+   * @callback screenshotCallback
+   * @param screenshot - The screenshot
+   */
+  /**
+   * Take a screenshot
+   * @param {screenshotCallback} callback - A callback function that receives the screenshot
+   */
   screenshot: function(callback) {
     // TODO: use promises here
     render.screenshotCallback = callback;
     return this;
   },
 
+  /**
+   * Destroy's the layer
+   */
   destroy: function() {
     render.destroy();
     if (APP.basemapGrid) APP.basemapGrid.destroy();
