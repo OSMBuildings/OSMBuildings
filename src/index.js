@@ -72,9 +72,14 @@ OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</
 OSMBuildings.prototype = {
 
   /**
+   * A function that will be called when an event is fired. The parameters passed to the function
+   * depend on what type of event it is
+   * @callback OSMBuildings~eventListenerFunction
+   */
+  /**
    * Adds an event listener
    * @param {String} event - An event identifier to listen for
-   * @callback fn
+   * @param {OSMBuildings~eventListenerFunction} callback
    */
   on: function(type, fn) {
     gl.canvas.addEventListener(type, fn);
@@ -84,7 +89,7 @@ OSMBuildings.prototype = {
   /**
    * Removes event listeners
    * @param {String} event - An event identifier to listen for
-   * @param {Function} [fn] - If given, only remove the given function
+   * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
    */
   off: function(type, fn) {
     gl.canvas.removeEventListener(type, fn);
@@ -219,7 +224,7 @@ OSMBuildings.prototype = {
 
   /**
    * A function that will be called on each feature, for modification before rendering
-   * @callback modifierFunction
+   * @callback OSMBuildings~modifierFunction
    * @param {String} id - The feature's id
    * @param {Object} properties - The feature's properties
    */
@@ -232,7 +237,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
-   * @param {modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    */
   addGeoJSON: function(url, options) {
     return new mesh.GeoJSON(url, options);
@@ -246,7 +251,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.fixedZoom=15]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
@@ -264,7 +269,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
@@ -285,13 +290,13 @@ OSMBuildings.prototype = {
   // TODO: check naming. show() suggests it affects the layer rather than objects on it
   /**
    * A function that will be called on each feature, for modification before rendering
-   * @callback selectorFunction
+   * @callback OSMBuildings~selectorFunction
    * @param {String} id - The feature's id
    * @param {Object} data - The feature's data
    */
   /**
    * Sets a function that defines which objects to show on this layer
-   * @param {selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to show the feature
+   * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to show the feature
    * @param {Integer} [duration=0] - How long to show the feature for
    */
   show: function(selector, duration) {
@@ -302,7 +307,7 @@ OSMBuildings.prototype = {
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
  /**
   * Sets a function that defines which objects to hide on this layer
-  * @param {selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
+  * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
   * @param {Integer} [duration=0] - How long to hide the feature for
   */
   hide: function(selector, duration) {
@@ -312,14 +317,14 @@ OSMBuildings.prototype = {
 
   /**
    * A callback function for getTarget
-   * @callback getTargetCallback
+   * @callback OSMBuildings~getTargetCallback
    * @param {Object} feature - The feature
    */
   /**
    * Returns the feature from a position on the screen
    * @param {Integer} x - The x coordinate (in pixels) of position on the screen
    * @param {Integer} y - The y coordinate (in pixels) of position on the screen
-   * @param {getTargetCallback} callback - A callback function that receives the object
+   * @param {OSMBuildings~getTargetCallback} callback - A callback function that receives the object
    */
   getTarget: function(x, y, callback) {
     // TODO: use promises here
@@ -329,12 +334,12 @@ OSMBuildings.prototype = {
 
   /**
    * A callback function for screnshot
-   * @callback screenshotCallback
+   * @callback OSMBuildings~screenshotCallback
    * @param screenshot - The screenshot
    */
   /**
    * Take a screenshot
-   * @param {screenshotCallback} callback - A callback function that receives the screenshot
+   * @param {OSMBuildings~screenshotCallback} callback - A callback function that receives the screenshot
    */
   screenshot: function(callback) {
     // TODO: use promises here
