@@ -1,6 +1,6 @@
 #!/bin/bash
 # Source: https://gist.github.com/domenic/ec8b0fc8ab45f39403dd
-
+set -x
 set -e # exit with nonzero exit code if anything fails
 
 # clear and re-create the out directory
