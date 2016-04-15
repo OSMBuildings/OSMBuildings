@@ -9,7 +9,7 @@ before_script:
 script:
   - grunt release
 after_success:
-  -
+  - build/docs.sh
 env:
   global:
     - GH_REF: github.com/OSMBuildings/OSMBuildings.git
