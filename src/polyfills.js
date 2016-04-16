@@ -47,7 +47,7 @@ if (!('ongesturechange' in window) && 'ontouchstart' in window) {
       event.metaKey = e.metaKey;
       event.shiftKey = e.shiftKey;
       event.rotation = ((angle2 - angle1) * (180 / Math.PI)) % 360;
-      event.scale = Math.sqrt(dist1/dist2);
+      event.scale = Math.sqrt(dist2/dist1);
 
       // setTimeout(function() { target.dispatchEvent(event); }, 0);
       e.target.dispatchEvent(event);
