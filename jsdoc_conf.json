@@ -1,0 +1,9 @@
+{
+  "templates": {
+    "systemName"            : "OSMBuildings",
+    "copyright"             : "© 3D <a href=\"https://osmbuildings.org/copyright/\">OSM Buildings</a>",
+    "theme"                 : "united",
+    "linenums"              : "true",
+    "syntaxThem"            : "dark"
+  }
+}

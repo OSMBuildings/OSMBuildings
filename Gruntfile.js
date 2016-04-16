@@ -137,6 +137,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-compress');
   grunt.loadNpmTasks('grunt-webpack');
+  grunt.loadNpmTasks('grunt-jsdoc');
 
   grunt.registerMultiTask('version', 'Set version number', function() {
     var config = this.data;

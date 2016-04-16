@@ -13,3 +13,6 @@ lib/GLX.debug.js
 
 # JavaScript source maps
 *.js.map 
+
+# Docs
+out
