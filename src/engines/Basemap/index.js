@@ -192,6 +192,18 @@ Basemap.prototype = {
     };
   },
 
+  getCameraBounds: function() {
+    var c = this.container.getBoundingClientRect(),
+        osmb = this.layers.items[0]; // TODO: This assumes that the OSMB layer is the first one
+
+    return [
+      osmb.unproject(c.left, c.top),
+      osmb.unproject(c.right, c.top),
+      osmb.unproject(c.right, c.bottom),
+      osmb.unproject(c.left, c.bottom)
+    ];
+  },
+
   setZoom: function(zoom, e) {
     zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
