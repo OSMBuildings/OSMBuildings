@@ -161,7 +161,7 @@ Option | Type | Default | Description
 `fogColor` | String | '#e8e0d8' | Color to be used for sky gradients and distance fog
 `backgroundColor` | String | '#efe8e0' | Overall background color
 `fastMode` | Boolean | false | Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
-`effects` | Array | [] | Which effects to enable. The only effect at the moment is 'shadows'
+`effects` | Array | [] | Which effects to enable. Available effects are 'shadows' and 'outline'
 `style` | Object | { color: 'rgb(220, 210, 200)' } | Sets the default building style
 
 ### OSM Buildings methods

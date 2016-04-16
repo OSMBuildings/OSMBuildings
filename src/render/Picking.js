@@ -8,8 +8,8 @@ render.Picking = {
 
   init: function() {
     this.shader = new glx.Shader({
-      vertexShader: Shaders.interaction.vertex,
-      fragmentShader: Shaders.interaction.fragment,
+      vertexShader: Shaders.picking.vertex,
+      fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
       attributes: ['aPosition', 'aID', 'aFilter'],
       uniforms: [
