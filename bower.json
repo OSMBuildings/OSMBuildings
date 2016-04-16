@@ -2,7 +2,9 @@
   "name": "OSMBuildings",
   "homepage": "https://github.com/OSMBuildings/OSMBuildings",
   "authors": [
-    "Jan Marsch <jama@keks.com>"
+    "Jan Marsch <jama@keks.com>",
+    "Robert Buchholz <robertbuchholz@gmx.de>",
+    "Derek Kniffin <derek.kniffin@gmail.com>"
   ],
   "description": "OpenStreetMap building geometry on 2D and 3D maps",
   "main": "src/index.js",
