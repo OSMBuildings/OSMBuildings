@@ -1,0 +1,30 @@
+{
+  "name": "OSMBuildings",
+  "homepage": "https://github.com/OSMBuildings/OSMBuildings",
+  "authors": [
+    "Jan Marsch <jama@keks.com>"
+  ],
+  "description": "OpenStreetMap building geometry on 2D and 3D maps",
+  "main": "src/index.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "osm",
+    "openstreetmap",
+    "building",
+    "3d",
+    "webgl",
+    "obj",
+    "map",
+    "geojson"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
