@@ -97,8 +97,13 @@ render.Picking = {
 
       this.framebuffer.enable();
       var imageData = this.framebuffer.getPixel(x, this.viewportSize - 1 - y);
-      var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
       this.framebuffer.disable();
+
+      if (imageData === undefined) {
+        callback(undefined);
+        return;
+      }
+      var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
 
       callback(this.idMapping[color]);
     }.bind(this));
