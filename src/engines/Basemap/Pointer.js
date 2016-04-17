@@ -254,16 +254,14 @@ Pointer.prototype = {
   },
 
   onTouchEnd: function(e) {
-    if (e.touches.length) {
-      e = e.touches[0];
+    if (e.touches.length == 0) {
+      this.map.emit('pointerup', { x: this.prevX, y: this.prevY, button: 0 });
+    } else if (e.touches.length == 1) {
+      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
+      var pos = getEventOffset(e.touches[0]);
+      this.prevX = pos.x;
+      this.prevY = pos.y;
     }
-
-    var pos = getEventOffset(e);
-    if (Math.abs(pos.x - this.startX)>5 || Math.abs(pos.y - this.startY)>5) {
-      this.moveMap(e);
-    }
-
-    this.map.emit('pointerup', { x: pos.x, y: pos.y, button: 0 });
   },
 
   onGestureChange: function(e) {
