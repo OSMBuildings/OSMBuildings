@@ -1,6 +1,7 @@
 
 // TODO: detect pointerleave from container
 // TODO: continue drag/gesture even when off container
+// TODO: allow two finger swipe for tilt
 
 function getEventOffset(e) {
   if (e.offsetX !== undefined) {
@@ -254,9 +255,9 @@ Pointer.prototype = {
   },
 
   onTouchEnd: function(e) {
-    if (e.touches.length == 0) {
+    if (e.touches.length === 0) {
       this.map.emit('pointerup', { x: this.prevX, y: this.prevY, button: 0 });
-    } else if (e.touches.length == 1) {
+    } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
       var pos = getEventOffset(e.touches[0]);
       this.prevX = pos.x;
