@@ -160,7 +160,7 @@ Basemap.prototype = {
    * - since the bounds are always axis-aligned they will contain areas that are
    *   not currently visible if the current view is not also axis-aligned.
    * - the bounds only contain the map area that OSMBuildings considers for rendering.
-   *   OSMBuilding has a rendering distance of about 3.5km, so the bounds will
+   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
    *   never extend beyond that, even if the horizon is visible (in which case the
    *   bounds would mathematically be infinite).
    * - the bounds only consider ground level. For example, buildings whose top 
@@ -169,39 +169,11 @@ Basemap.prototype = {
    *   so their top may be visible and they may still be out of bounds.
    */
   getBounds: function() {
-    var viewQuad = render.getViewQuad();
-    console.log(this.position);
-    var latMin = Infinity,
-        lonMin = Infinity,
-        latMax = -Infinity,
-        lonMax = -Infinity;
-    
+    var viewQuad = render.getViewQuad(), res = [];
     for (var i in viewQuad) {
-      var pos = getPositionFromLocal(viewQuad[i]);
-      latMin = Math.min(latMin, pos.latitude);
-      latMax = Math.max(latMax, pos.latitude);
-      lonMin = Math.min(lonMin, pos.longitude);
-      lonMax = Math.max(lonMax, pos.longitude);
+      res[i] = getPositionFromLocal(viewQuad[i]);
     }
-
-    return {
-      n: latMax,
-      w: lonMin,
-      s: latMin,
-      e: lonMax
-    };
-  },
-
-  getCameraBounds: function() {
-    var c = this.container.getBoundingClientRect(),
-        osmb = this.layers.items[0]; // TODO: This assumes that the OSMB layer is the first one
-
-    return [
-      osmb.unproject(c.left, c.top),
-      osmb.unproject(c.right, c.top),
-      osmb.unproject(c.right, c.bottom),
-      osmb.unproject(c.left, c.bottom)
-    ];
+    return res;
   },
 
   setZoom: function(zoom, e) {

@@ -120,8 +120,7 @@ Method | Parameters | Description
 `off` | (String) event, (Function) callback | Removes all event listeners for the given event. If callback is given, it only returns that function
 `setDisabled` | (Boolean) flag | Disables any user input (if flag is `true`, enables user input)
 `isDisabled` | | Check whether user input is disabled
-`getBounds` | | Returns coordinates of current map view, respecting tilt and rotation but ignoring `perspective`
-`getCameraBounds` | | Returns an array of points outlining the current camera view. Each point is an object with `latitude` and `longitude`. _Note: the points are not guaranteed to be returned in a specific order_
+`getBounds` | | Returns an array of points outlining the current camera view. Each point is an object with `latitude` and `longitude`. _Note: the points are not guaranteed to be returned in a specific order_
 `setZoom` | (Float) zoom_level | Sets current zoom
 `getZoom` | | Gets current zoom
 `setPosition` | (Object) {latitude, longitude} | Sets current geo position of map center
