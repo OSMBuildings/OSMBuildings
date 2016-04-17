@@ -1,9 +1,9 @@
 
-glx.Framebuffer = function(width, height, usedepthTexture) {
-  if (usedepthTexture && !GL.depthTextureExtension)
+glx.Framebuffer = function(width, height, useDepthTexture) {
+  if (useDepthTexture && !GL.depthTextureExtension)
     throw "Depth textures are not supported by your GPU";
     
-  this.useDepthTexture = !!usedepthTexture; 
+  this.useDepthTexture = !!useDepthTexture;
   this.setSize(width, height);
 };
 
