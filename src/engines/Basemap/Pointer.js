@@ -1,6 +1,7 @@
 
 // TODO: detect pointerleave from container
 // TODO: continue drag/gesture even when off container
+// TODO: allow two finger swipe for tilt
 
 function getEventOffset(e) {
   if (e.offsetX !== undefined) {
@@ -28,9 +29,9 @@ function cancelEvent(e) {
   if (e.preventDefault) {
     e.preventDefault();
   }
-  if (e.stopPropagation) {
-    e.stopPropagation();
-  }
+  //if (e.stopPropagation) {
+  //  e.stopPropagation();
+  //}
   e.returnValue = false;
 }
 
@@ -154,7 +155,7 @@ Pointer.prototype = {
   onContextMenu: function(e) {
     e.preventDefault();
     var pos = getEventOffset(e);
-    this.map.emit('contextmenu', { x: pos.x, y: pos.y })
+    this.map.emit('contextmenu', { x: pos.x, y: pos.y });
     return false;
   },
 
@@ -193,16 +194,19 @@ Pointer.prototype = {
     var dx = pos.x - this.prevX;
     var dy = pos.y - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
-    
+
     var vRight = [ Math.cos(angle),             Math.sin(angle)];
     var vForward=[ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)]
-    
-    var dir = add2(  mul2scalar(vRight,    dx), 
+
+    var dir = add2(  mul2scalar(vRight,    dx),
                      mul2scalar(vForward, -dy));
 
-    this.map.setPosition({ 
-      longitude: this.map.position.longitude - dir[0] * scale*lonScale, 
-      latitude:  this.map.position.latitude  + dir[1] * scale });
+    var new_position = {
+      longitude: this.map.position.longitude - dir[0] * scale*lonScale,
+      latitude:  this.map.position.latitude  + dir[1] * scale };
+
+    this.map.setPosition(new_position);
+    this.map.emit('move', new_position);
   },
 
   rotateMap: function(e) {
@@ -251,16 +255,14 @@ Pointer.prototype = {
   },
 
   onTouchEnd: function(e) {
-    if (e.touches.length) {
-      e = e.touches[0];
+    if (e.touches.length === 0) {
+      this.map.emit('pointerup', { x: this.prevX, y: this.prevY, button: 0 });
+    } else if (e.touches.length === 1) {
+      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
+      var pos = getEventOffset(e.touches[0]);
+      this.prevX = pos.x;
+      this.prevY = pos.y;
     }
-
-    var pos = getEventOffset(e);
-    if (Math.abs(pos.x - this.startX)>5 || Math.abs(pos.y - this.startY)>5) {
-      this.moveMap(e);
-    }
-
-    this.map.emit('pointerup', { x: pos.x, y: pos.y, button: 0 });
   },
 
   onGestureChange: function(e) {

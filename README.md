@@ -35,6 +35,17 @@ Best for:
 
 This version uses GLMap for any events and layers logic.
 
+### Compatibility
+
+Runs likely on earlier versons than listed below, but this is our baseline for tests.
+
+- Win7: latest Chrome (MSIE11 not running, Firefox TBD)
+- Win10: TBD
+- OSX: latest Crome, Safari, Firefox
+- Linux: TBD
+- Android 5.0
+- iOS 9.3
+
 ## Get the files ##
 
 Checking in built versions causes a lot of trouble during development. So we decided to use the Github release system instead.
@@ -109,7 +120,7 @@ Method | Parameters | Description
 `off` | (String) event, (Function) callback | Removes all event listeners for the given event. If callback is given, it only returns that function
 `setDisabled` | (Boolean) flag | Disables any user input (if flag is `true`, enables user input)
 `isDisabled` | | Check whether user input is disabled
-`getBounds` | | Returns coordinates of current map view, respecting tilt and rotation but ignoring `perspective`
+`getBounds` | | Returns an array of points outlining the current camera view. Each point is an object with `latitude` and `longitude`. _Note: the points are not guaranteed to be returned in a specific order_
 `setZoom` | (Float) zoom_level | Sets current zoom
 `getZoom` | | Gets current zoom
 `setPosition` | (Object) {latitude, longitude} | Sets current geo position of map center
@@ -123,20 +134,20 @@ Method | Parameters | Description
 
 ### Map events
 
-Event | Description
------ | -----------
-`mousedown` | Fired when the user pushes the mouse button on the map
-`mouseup` | Fired when the user releases the mouse button on the map
-`mousemove` | Fired when the user moves the mouse on the map
-`contextmenu` | Fired when the user right clicks the map
-`dblclick` | Fired when the user double clicks on the map
-`mousewheel` | Fired when wheel button of a pointing device is rotated
-`DOMMouseScroll` | Fired when wheel button of a pointing device is rotated
-`touchstart` | Fired when the user touches the map on a touch screen
-`touchmove` | Fired when a touch point is moved along the map
-`touchend` | Fired when the user releases the map on a touch screen
-`gesturechange` | Fired when the user performs a gesture on a touch screen
-
+Event | Data | Description
+----- | ---- | -----------
+`pointerdown` | {x, y, button} | Fired when the user pushes the mouse button on the map
+`pointerup` | {x, y, button} | Fired when the user releases the mouse button on the map
+`pointermove` | {x, y} | Fired when the user moves the mouse on the map
+`contextmenu` | {x, y} | Fired when the user right clicks the map
+`doubleclick` | {x, y, button} | Fired when the user double clicks on the map
+`mousewheel` | {delta} | Fired when wheel button of a pointing device is rotated
+`gesture` | ??? | Fired when the user performs a gesture on a touch screen
+`resize` | {width, height} | Fired when the size of the map is changed
+`move` | {latitude, longitude} | Fired on any movement of the map view
+`zoom` | {zoom} | Fired when the zoom level changes
+`rotate` | {rotation} | Fired when the map is rotated (about the elevation axis)
+`tilt` | {tilt} | Fired when the map is tilted (rotated about the camera X axis)
 
 ### OSM Buildings options
 
@@ -150,7 +161,7 @@ Option | Type | Default | Description
 `fogColor` | String | '#e8e0d8' | Color to be used for sky gradients and distance fog
 `backgroundColor` | String | '#efe8e0' | Overall background color
 `fastMode` | Boolean | false | Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
-`effects` | Array | [] | Which effects to enable. The only effect at the moment is 'shadows'
+`effects` | Array | [] | Which effects to enable. Available effects are 'shadows' and 'outline'
 `style` | Object | { color: 'rgb(220, 210, 200)' } | Sets the default building style
 
 ### OSM Buildings methods
@@ -205,4 +216,4 @@ Here's how to get your development environment set up:
 
 1. Clone the repo (`git clone git@github.com:OSMBuildings/OSMBuildings.git`)
 1. Install dependencies with `npm install`
-1. After making changes, you can try them out by running `grunt`, which will output a `dist/OSMBuildings/OSMBuildings.debug.js` file that you can include like normal
+1. After making changes, you can try them out by running `grunt release`, which will output a `dist/OSMBuildings/OSMBuildings.debug.js` file that you can include like normal

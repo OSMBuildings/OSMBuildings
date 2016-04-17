@@ -8,8 +8,8 @@ render.Picking = {
 
   init: function() {
     this.shader = new glx.Shader({
-      vertexShader: Shaders.interaction.vertex,
-      fragmentShader: Shaders.interaction.fragment,
+      vertexShader: Shaders.picking.vertex,
+      fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
       attributes: ['aPosition', 'aID', 'aFilter'],
       uniforms: [
@@ -84,9 +84,14 @@ render.Picking = {
       y = y/MAP.height*this.viewportSize <<0;
 
       this.framebuffer.enable();
-      var imageData = this.framebuffer.getPixel(x, this.viewportSize-y);
-      var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
+      var imageData = this.framebuffer.getPixel(x, this.viewportSize - 1 - y);
       this.framebuffer.disable();
+
+      if (imageData === undefined) {
+        callback(undefined);
+        return;
+      }
+      var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
 
       callback(this.idMapping[color]);
     }.bind(this));

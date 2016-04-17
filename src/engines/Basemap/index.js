@@ -160,7 +160,7 @@ Basemap.prototype = {
    * - since the bounds are always axis-aligned they will contain areas that are
    *   not currently visible if the current view is not also axis-aligned.
    * - the bounds only contain the map area that OSMBuildings considers for rendering.
-   *   OSMBuilding has a rendering distance of about 3.5km, so the bounds will
+   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
    *   never extend beyond that, even if the horizon is visible (in which case the
    *   bounds would mathematically be infinite).
    * - the bounds only consider ground level. For example, buildings whose top 
@@ -169,27 +169,11 @@ Basemap.prototype = {
    *   so their top may be visible and they may still be out of bounds.
    */
   getBounds: function() {
-    var viewQuad = render.getViewQuad();
-    console.log(this.position);
-    var latMin = Infinity,
-        lonMin = Infinity,
-        latMax = -Infinity,
-        lonMax = -Infinity;
-    
+    var viewQuad = render.getViewQuad(), res = [];
     for (var i in viewQuad) {
-      var pos = getPositionFromLocal(viewQuad[i]);
-      latMin = Math.min(latMin, pos.latitude);
-      latMax = Math.max(latMax, pos.latitude);
-      lonMin = Math.min(lonMin, pos.longitude);
-      lonMax = Math.max(lonMax, pos.longitude);
+      res[i] = getPositionFromLocal(viewQuad[i]);
     }
-
-    return {
-      n: latMax,
-      w: lonMin,
-      s: latMin,
-      e: lonMax
-    };
+    return res;
   },
 
   setZoom: function(zoom, e) {
@@ -200,10 +184,10 @@ Basemap.prototype = {
 
       /* if a screen position was given for which the geographic position displayed
        * should not change under the zoom */
-      if (e) {  
-        //FIXME: add code; this needs to take the current camera (rotation and 
+      if (e) {
+        //FIXME: add code; this needs to take the current camera (rotation and
         //       perspective) into account
-        //NOTE:  the old code (comment out below) only works for north-up 
+        //NOTE:  the old code (comment out below) only works for north-up
         //       non-perspective views
         /*
         var dx = this.container.offsetWidth/2  - e.clientX;
@@ -215,6 +199,7 @@ Basemap.prototype = {
         this.center.x += dx;
         this.center.y += dy;*/
       }
+      this.emit('zoom', { zoom: zoom });
       this.emit('change');
     }
     return this;
@@ -243,7 +228,7 @@ Basemap.prototype = {
     if (size.width !== this.width || size.height !== this.height) {
       this.width = size.width;
       this.height = size.height;
-      this.emit('resize');
+      this.emit('resize', { width: this.width, height: this.height });
     }
     return this;
   },
@@ -256,6 +241,7 @@ Basemap.prototype = {
     rotation = parseFloat(rotation)%360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
+      this.emit('rotate', { rotation: rotation });
       this.emit('change');
     }
     return this;
@@ -269,6 +255,7 @@ Basemap.prototype = {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
     if (this.tilt !== tilt) {
       this.tilt = tilt;
+      this.emit('tilt', { tilt: tilt });
       this.emit('change');
     }
     return this;
