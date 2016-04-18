@@ -5,7 +5,10 @@
     "Jan Marsch <jama@keks.com>"
   ],
   "description": "OpenStreetMap building geometry on 2D and 3D maps",
-  "main": "src/index.js",
+  "main": [
+    "dist/OSMBuildings/OSMBuildings.js",
+    "dist/OSMBuildings/OSMBuildings.css"
+  ],
   "moduleType": [
     "globals"
   ],

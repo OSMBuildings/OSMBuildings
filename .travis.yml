@@ -11,3 +11,9 @@ before_script:
   - npm install
 script:
   - grunt release
+deploy:
+  provider: script
+  script: build/deploy.sh
+  on:
+    branch: master
+    
