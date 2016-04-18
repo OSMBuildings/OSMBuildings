@@ -9,7 +9,7 @@ mkdir out;
 
 # Build docs
 npm install -g jsdoc
-jsdoc -c jsdoc_conf.json -t ./node_modules/ink-docstrap/template -R README.md -r src
+jsdoc -c jsdoc_conf.json
 
 # go to the out directory and create a *new* Git repo
 cd out
