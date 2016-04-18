@@ -86,7 +86,7 @@ glx.Framebuffer.prototype = {
   getPixel: function(x, y) {
     var imageData = new Uint8Array(4);
     if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
-      return undefined;
+      return;
     }
     GL.readPixels(x, y, 1, 1, GL.RGBA, GL.UNSIGNED_BYTE, imageData);
     return imageData;

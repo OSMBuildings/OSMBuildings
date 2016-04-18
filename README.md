@@ -107,7 +107,6 @@ Option | Type | Default | Description
 `disabled` | Boolean | false | Disables user input
 `minZoom` | Float | 10 | Minimum allowed zoom
 `maxZoom` | Float | 20 | Maximum allowed zoom
-`bounds` | Object | {} | Coordinates of bounds where the map can be moved within **Doesn't currently work**
 `attribution` | String | null | Attribution, optional
 `state` | Boolean | false | Stores map position/rotation in url
 

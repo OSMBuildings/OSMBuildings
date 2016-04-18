@@ -375,12 +375,9 @@ function getPositionFromLocal(localXY) {
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
                                  Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-  var longitude= MAP.position.longitude + localXY[0] / metersPerDegreeLongitude;
-  var latitude = MAP.position.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
-  
-  return { 
-    "longitude": longitude,
-    "latitude":  latitude
+  return {
+    longitude: MAP.position.longitude + localXY[0]/metersPerDegreeLongitude,
+    latitude: MAP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
   };
 }
 
