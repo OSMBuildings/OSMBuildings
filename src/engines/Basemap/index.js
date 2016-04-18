@@ -5,6 +5,25 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(value, min));
 }
 
+/**
+ * OSMBuildings basemap
+ * @constructor
+ * @param {String} container - The id of the html element to display the map in
+ * @param {Object} options
+ * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
+ * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Object} [options.bounds] - A bounding box to restrict the map to
+ * @param {Boolean} [options.state=false] - Store the map state in the URL
+ * @param {Boolean} [options.disabled=false] - Disable user input
+ * @param {String} [options.attribution] - An attribution string
+ * @param {Float} [options.zoom=minZoom] - Initial zoom
+ * @param {Float} [options.rotation=0] - Initial rotation
+ * @param {Float} [options.tilt=0] - Initial tilt
+ * @param {Float} [options.bend=0] - Initial bend
+ * @param {Object} [options.position] - Initial position
+ * @param {Float} [options.position.latitude=52.520000]
+ * @param {Float} [options.position.latitude=13.410000]
+ */
 var Basemap = function(container, options) {
   this.container = typeof container === 'string' ? document.getElementById(container) : container;
   options = options || {};
