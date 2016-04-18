@@ -1,7 +1,6 @@
 ### Calculate bounding box on screen for a feature
 
-~~~ javascript
-
+````javascript
 var METERS_PER_LEVEL = 3;
 var DEFAULT_HEIGHT = 10;
 
@@ -32,5 +31,4 @@ function getBoundingBox(osmb, feature) {
     }
     return bounds;
 }
-~~~
-
+````

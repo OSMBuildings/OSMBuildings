@@ -1,6 +1,6 @@
 ### Position a map object
 
-~~~javascript
+````javascript
 var obj = osmb.addGeoJSON(geojson);
 
 /*
@@ -41,4 +41,4 @@ document.addEventListener('keydown', function(e) {
     rotation:parseInt(obj.rotation, 10)
   }));
 });
-~~~
+````

@@ -1,6 +1,6 @@
 ### Map control buttons
 
-~~~ html
+````xml
 <div class="control tilt">
   <button class="dec">&#8601;</button>
   <button class="inc">&#8599;</button>
@@ -20,9 +20,9 @@
   <button class="dec">A</button>
   <button class="inc">V</button>
 </div>
-~~~
+````
 
-~~~ javascript
+````javascript
 var controlButtons = document.querySelectorAll('.control button');
 
 for (var i = 0; i < controlButtons.length; i++) {
@@ -54,4 +54,4 @@ for (var i = 0; i < controlButtons.length; i++) {
     }
   });
 }
-~~~
+````

@@ -1,6 +1,6 @@
 ### Highlight buildings
 
-~~~ javascript
+````javascript
 map.on('pointermove', function(e) {
   var id = osmb.getTarget(e.x, e.y, function(id) {
     if (id) {
@@ -10,4 +10,4 @@ map.on('pointermove', function(e) {
     }
   });
 });
-~~~
+````

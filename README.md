@@ -10,7 +10,7 @@ You could help us a lot in advancing the project with spreading the word, donati
 The library version in this repository is a WebGL only variant of OSM Buildings.
 At some point it will fully integrate the Classic 2.5D version.
 
-![screenshot](http://i.imgur.com/pxh2Cpt.png)
+<img src='http://i.imgur.com/pxh2Cpt.png' width='100%' />
 
 [Example](http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40)
 
@@ -201,15 +201,6 @@ Event | Description
 ### OSM Buildings server
 
 There is also documentation of OSM Buildings Server side. See https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md
-
-
-## Examples
-- [Moving Label](examples/moving_label.md)
-- [Highlight Buildings](examples/highlight_buildings.md)
-- [Map Control Buttons](examples/map_control_buttons.md)
-- [Adding arbitrary GeoJSON](examples/geojson.md)
-- [Position A Map Object](examples/position_a_map_object.md)
-- [Adding an 3D model, via OBJ](examples/obj.md)
 
 # Contributing
 We are happy to receive pull requests and issues

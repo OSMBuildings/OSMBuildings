@@ -1,6 +1,6 @@
 ### Add GeoJSON
 
-~~~ javascript
+````javascript
 var geojson = {
   type: 'FeatureCollection',
   features: [{
@@ -26,4 +26,4 @@ var geojson = {
   }]
 };
 osmb.addGeoJSON(geojson);
-~~~
+````

@@ -1,6 +1,6 @@
 ### Fetch building details
 
-~~~ javascript
+````javascript
 map.on('pointerdown', function(e) {
   var id = osmb.getTarget(e.x, e.y, function(id) {
     if (id) {
@@ -8,4 +8,4 @@ map.on('pointerdown', function(e) {
     }
   });
 });
-~~~
+````
