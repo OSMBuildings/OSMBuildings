@@ -10,6 +10,8 @@ You could help us a lot in advancing the project with spreading the word, donati
 The library version in this repository is a WebGL only variant of OSM Buildings.
 At some point it will fully integrate the Classic 2.5D version.
 
+![screenshot](http://i.imgur.com/pxh2Cpt.png)
+
 [Example](http://osmbuildings.org/gl/?lat=40.70614&lon=-74.01039&zoom=17.00&rotation=0&tilt=40)
 
 For the latest information about the project [follow us on Twitter](https://twitter.com/osmbuildings), read [our blog](http://blog.osmbuildings.org), or just mail us at mail@osmbuildings.org.
@@ -46,7 +48,7 @@ Runs likely on earlier versons than listed below, but this is our baseline for t
 - Android 5.0
 - iOS 9.3
 
-## Get the files ##
+## Get the files
 
 Checking in built versions causes a lot of trouble during development. So we decided to use the Github release system instead.
 
@@ -60,7 +62,7 @@ All geo coordinates are in EPSG:4326.
 
 Link all required libraries in your HTML head section. Files are provided in folder `/dist`.
 
-~~~ html
+````html
 <head>
   <link rel="stylesheet" href="OSMBuildings/OSMBuildings.css">
   <script src="OSMBuildings/OSMBuildings.js"></script>
@@ -68,11 +70,10 @@ Link all required libraries in your HTML head section. Files are provided in fol
 
 <body>
   <div id="map"></div>
-~~~
-
+````
 In a script section initialize the map and add a map tile layer.
 
-~~~ javascript
+```` javascript
   var map = new GLMap('map', {
     position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16
@@ -94,7 +95,7 @@ In a script section initialize the map and add a map tile layer.
   );
 
   osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
-~~~
+````
 
 ### GLMap Options
 

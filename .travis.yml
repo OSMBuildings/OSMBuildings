@@ -13,7 +13,3 @@ script:
   - grunt release
 after_success:
   - build/docs.sh
-env:
-  global:
-    - GH_REF: github.com/OSMBuildings/OSMBuildings.git
-    - secure: "ShrZgqUzA7gvgRZDiUECWwLHeTMWZnYEp5vS/bjV7E3w9jhBrBM4s+haPOA6IZdVySOPcNF5kjgBIzCpKzgb0fS5FaN0SVFLhlhdUK+pxJjICZjx22vv0VkcovT037ds/QnwleoS0YZw8Cki9cRt5pwKCy7ZFapXE/wPKJFtc4Ma1Dxf8ROqQm2/WL3vwGzKUGc+NKjpAqeuQ1OqWhR+92t9n275XjnM++5zeNOy42xNkxO7rARevmOXGy9Jl6AU7xCXBA9BEDpOhqITH6axhkZqQG6QJK2oeRFbYB/MDvMOeYsFyysiYgNuxkkUn/1CTRp9vk3i13QKl4oWF4YXrVq2c8R81BV+bJl+5v4Xmj0Mwd8mBjcaO48pfjnqPZ4nApErnk/cf12ruFOK/eAj6FrXdhmwFk/vSCxHhf6e/kgjEGIIwzcp91Up0byXb9MwUaxidb5xQVGRKMRlzfDnThzUUjyUUyB9mkVky5uZps9920AYdxcIgZlo7eFFJ72lPjTqPeK2OxGg566rbvBzNjoN2boO9uk2H8+luHzQlC2Wwp+pxTZ7EFbMUbP1+jhoLYykMff4j1de4te0qL/Cl3GWWkk+g/fO5r+WzOuE+WPyvSujRzlNiELboM6WqY/4uIsv7P8MT3ABWH67fzxAaeWaJy87MHDCuyOCH1TW6zY="
