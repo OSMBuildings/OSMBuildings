@@ -1,25 +1,23 @@
 
-glx.Framebuffer = function(width, height, depthTexture) {
-  if (depthTexture && !GL.depthTextureExtension)
+glx.Framebuffer = function(width, height, useDepthTexture) {
+  if (useDepthTexture && !GL.depthTextureExtension)
     throw "Depth textures are not supported by your GPU";
     
-  this.useDepthTexture = !!depthTexture; 
+  this.useDepthTexture = !!useDepthTexture;
   this.setSize(width, height);
 };
 
 glx.Framebuffer.prototype = {
 
   setSize: function(width, height) {
-    this.frameBuffer = GL.createFramebuffer();
-    GL.bindFramebuffer(GL.FRAMEBUFFER, this.frameBuffer);
-
-    width = glx.util.nextPowerOf2(width);
-    height= glx.util.nextPowerOf2(height);
-    
-    // already has the right size
-    if (width === this.width && height === this.height) {
+    if (!this.frameBuffer) {
+      this.frameBuffer = GL.createFramebuffer();
+    } else if (width === this.width && height === this.height) { // already has the right size
       return;
     }
+
+    GL.bindFramebuffer(GL.FRAMEBUFFER, this.frameBuffer);
+
 
     this.width  = width;
     this.height = height;
@@ -39,6 +37,9 @@ glx.Framebuffer.prototype = {
       this.depthTexture.enable(0);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+      //CLAMP_TO_EDGE is required for NPOT textures
+      GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       GL.texImage2D(GL.TEXTURE_2D, 0, GL.DEPTH_STENCIL, width, height, 0, GL.DEPTH_STENCIL, GL.depthTextureExtension.UNSIGNED_INT_24_8_WEBGL, null);
       GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, this.depthTexture.id, 0);
     } else {
@@ -53,7 +54,10 @@ glx.Framebuffer.prototype = {
     }
 
     this.renderTexture = new glx.texture.Data(width, height);
+    GL.bindTexture(GL.TEXTURE_2D, this.renderTexture.id);
 
+    GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //necessary for NPOT textures
+    GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, this.renderTexture.id, 0);
 
     if (GL.checkFramebufferStatus(GL.FRAMEBUFFER) !== GL.FRAMEBUFFER_COMPLETE) {

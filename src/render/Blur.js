@@ -29,46 +29,14 @@ render.Blur = function() {
   ]));
 };
 
-render.Blur.prototype.render = function(inputTexture, framebufferConfig) {
+render.Blur.prototype.render = function(inputTexture, framebufferSize) {
   var
     shader = this.shader,
     framebuffer = this.framebuffer;
 
+  framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
 
-  if (framebuffer.width != framebufferConfig.width || 
-      framebuffer.height!= framebufferConfig.height)
-  {
-    framebuffer.setSize( framebufferConfig.width, framebufferConfig.height );
-    gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    // we'll render the blurred image 1:1 to the screen pixels,
-    // so no interpolation is necessary
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  }
-
-
-  if (framebufferConfig.tcRight  != this.tcRight || 
-      framebufferConfig.tcTop    != this.tcTop   || 
-      framebufferConfig.tcLeft   != this.tcLeft  ||
-      framebufferConfig.tcBottom != this.tcBottom )
-  {
-    this.texCoordBuffer.destroy();
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
-      [framebufferConfig.tcLeft,  framebufferConfig.tcTop,
-       framebufferConfig.tcRight, framebufferConfig.tcTop,
-       framebufferConfig.tcRight, framebufferConfig.tcBottom,
-       framebufferConfig.tcLeft,  framebufferConfig.tcTop,
-       framebufferConfig.tcRight, framebufferConfig.tcBottom,
-       framebufferConfig.tcLeft,  framebufferConfig.tcBottom
-      ]));      
-  
-    this.tcRight = framebufferConfig.tcRight;
-    this.tcBottom= framebufferConfig.tcBottom;
-    this.tcLeft =  framebufferConfig.tcLeft;
-    this.tcTop =   framebufferConfig.tcTop;
-  }
-
-  gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
+  gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
   shader.enable();
   framebuffer.enable();
 
