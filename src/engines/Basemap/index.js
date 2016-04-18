@@ -192,6 +192,10 @@ Basemap.prototype = {
     ];
   },
 
+  /**
+   * @fires Basemap#zoom
+   * @fires Basemap#change
+   */
   setZoom: function(zoom, e) {
     zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
@@ -215,7 +219,16 @@ Basemap.prototype = {
         this.center.x += dx;
         this.center.y += dy;*/
       }
+      /**
+       * Fired when the basemap is zoomed (in either direction)
+       * @event Basemap#zoom
+       */
       this.emit('zoom', { zoom: zoom });
+      
+      /**
+       * Fired when the basemap changes
+       * @event Basemap#change
+       */
       this.emit('change');
     }
     return this;
@@ -225,6 +238,9 @@ Basemap.prototype = {
     return this.zoom;
   },
 
+  /**
+   * @fires Basemap#change
+   */
   setPosition: function(pos) {
     var lat = parseFloat(pos.latitude);
     var lon = parseFloat(pos.longitude);
@@ -240,10 +256,18 @@ Basemap.prototype = {
     return this.position;
   },
 
+  /**
+   * @fires Basemap#resize
+   */
   setSize: function(size) {
     if (size.width !== this.width || size.height !== this.height) {
       this.width = size.width;
       this.height = size.height;
+      
+      /**
+       * Fired when the map is resized
+       * @event Basemap#resize
+       */
       this.emit('resize', { width: this.width, height: this.height });
     }
     return this;
@@ -252,11 +276,20 @@ Basemap.prototype = {
   getSize: function() {
     return { width: this.width, height: this.height };
   },
-
+  
+  /**
+   * @fires Basemap#rotate
+   * @fires Basemap#change
+   */
   setRotation: function(rotation) {
     rotation = parseFloat(rotation)%360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
+      
+      /**
+       * Fired when the basemap is rotated
+       * @event Basemap#rotate
+       */
       this.emit('rotate', { rotation: rotation });
       this.emit('change');
     }
@@ -267,10 +300,19 @@ Basemap.prototype = {
     return this.rotation;
   },
 
+  /**
+   * @fires Basemap#tilt
+   * @fires Basemap#change
+   */
   setTilt: function(tilt) {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
     if (this.tilt !== tilt) {
       this.tilt = tilt;
+      
+      /**
+       * Fired when the basemap is tilted
+       * @event Basemap#tilt
+       */
       this.emit('tilt', { tilt: tilt });
       this.emit('change');
     }
@@ -281,6 +323,9 @@ Basemap.prototype = {
     return this.tilt;
   },
 
+  /**
+   * @fires Basemap#change
+   */
   setBend: function(bend) {
     bend = clamp(parseFloat(bend), 0, 90);
     if (this.bend !== bend) {
