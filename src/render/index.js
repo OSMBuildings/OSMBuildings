@@ -8,6 +8,15 @@ var render = {
   },
 
   start: function() {
+    // disable effects if they rely on WebGL extensions
+    // that the current hardware does not support
+    if (!gl.depthTextureExtension) {
+      console.log('[WARN] effects "shadows" and "outlines" disabled in OSMBuildings, because your GPU does not support WEBGL_depth_texture');
+      //both effects rely on depth textures
+      delete render.effects.shadows;
+      delete render.effects.outlines;
+    }
+
     this.viewMatrix = new glx.Matrix();
     this.projMatrix = new glx.Matrix();
     this.viewProjMatrix = new glx.Matrix();
