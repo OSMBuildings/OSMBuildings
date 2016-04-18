@@ -1,16 +1,18 @@
+env:
+  global:
+  - GH_REF: github.com/OSMBuildings/OSMBuildings.git
+  - secure: "sAp3gwhczJugVc2nh6qbbWgPs0Z23zJ86hyA0q7UR7KC25YXi9vFWExhYDh4WRcDTT3EVNES14RVTsJA9Pz5lmYFWy580q+OjUAfQtcdoXsTw2SeDvKyTxdqMCmFSzxpl/nmoA+CuUbrqAPr/r6uq6y80YArU7VGTZujbUR4+C0znjYoReB61aLLLysLI8ozHhOpEM5f7Qembw+RBNa6tMkkojeqP6iIfbqFQ+lpWtxofGyeLVcHsYBv7AS3SOFSOc5S1RFWTQ7mwBaF5uDtWt3nmeG+tnkVLRoEoEO/wOSXW8u1J7W7hHCFz6Ru8bMY1EoM6k/S0wzG+qqwlX527OnDttwfjpjIogRgqoIJEIL1zATELtD5w5kMtMFpb0aDdDTSVKTKhRwFYErp3qvxNZMoDpwCV4m4fDRC0hHWF8OlxXqAurq9JIrNC/WExOQI/ZdPkYrFBzurAu1oRgJ+fUcSFVx/7sPVVI4Us1w4K3JvF70/xD4I/dRpOpQlhARn86p8JktUSCzQspNrQXDMg43Rmxa8RFt6w8wzypJgJQUUxm3yqwp659JG/80H4Gw+E+n2iepp4idrGOHeAUv18W9ZFqDRdcPCQ4gdjpCvpt0mzoJmCJBelhiY0HpcgwVZUiSQl/7S28wFCh7E3IuAQW0ZAqIU8s032B7Vj98jigw="
+
 language: node_js
 node_js:
 - "0.10"
-#install:
-#  - npm install
 before_script:
   - npm install grunt-cli -g
   - npm install
 script:
   - grunt release
-after_success:
-  - build/docs.sh
-env:
-  global:
-    - GH_REF: github.com/OSMBuildings/OSMBuildings.git
-    - secure: "ShrZgqUzA7gvgRZDiUECWwLHeTMWZnYEp5vS/bjV7E3w9jhBrBM4s+haPOA6IZdVySOPcNF5kjgBIzCpKzgb0fS5FaN0SVFLhlhdUK+pxJjICZjx22vv0VkcovT037ds/QnwleoS0YZw8Cki9cRt5pwKCy7ZFapXE/wPKJFtc4Ma1Dxf8ROqQm2/WL3vwGzKUGc+NKjpAqeuQ1OqWhR+92t9n275XjnM++5zeNOy42xNkxO7rARevmOXGy9Jl6AU7xCXBA9BEDpOhqITH6axhkZqQG6QJK2oeRFbYB/MDvMOeYsFyysiYgNuxkkUn/1CTRp9vk3i13QKl4oWF4YXrVq2c8R81BV+bJl+5v4Xmj0Mwd8mBjcaO48pfjnqPZ4nApErnk/cf12ruFOK/eAj6FrXdhmwFk/vSCxHhf6e/kgjEGIIwzcp91Up0byXb9MwUaxidb5xQVGRKMRlzfDnThzUUjyUUyB9mkVky5uZps9920AYdxcIgZlo7eFFJ72lPjTqPeK2OxGg566rbvBzNjoN2boO9uk2H8+luHzQlC2Wwp+pxTZ7EFbMUbP1+jhoLYykMff4j1de4te0qL/Cl3GWWkk+g/fO5r+WzOuE+WPyvSujRzlNiELboM6WqY/4uIsv7P8MT3ABWH67fzxAaeWaJy87MHDCuyOCH1TW6zY="
+deploy:
+  provider: script
+  script: build/deploy.sh
+  on:
+    branch: master
