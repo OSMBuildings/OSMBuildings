@@ -10,6 +10,7 @@ mkdir out;
 # Build docs
 npm install -g jsdoc
 jsdoc -c jsdoc_conf.json
+cp -r tutorials/assets out
 
 # go to the out directory and create a *new* Git repo
 cd out

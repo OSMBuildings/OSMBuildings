@@ -1,4 +1,8 @@
-<!-- TODO: Add OSMB includes -->
+### Adding a tutorial
+
+To add a tutorial to the docs, create a new file in the tutorials directory, with the `md` extension, and add the following code to it, filling in the `TODO:` sections:
+
+````md
 <link rel="stylesheet" href="assets/OSMBuildings/OSMBuildings.css">
 <script src=assets/OSMBuildings/OSMBuildings.js></script>
 
@@ -82,13 +86,8 @@
     });
   }
   
-  <!-- Tutorial code below -->
-
-  osmb.addOBJ('./assets/models/sphere.obj', { latitude: 52.519991, longitude: 13.406453 }, { id: "my_object_1", color: 'red'});
+  <!-- TODO: ADD WORKING TUTORIAL CODE HERE -->
 </script>
 
-You can display custom 3D models in the map environment, with the following:
-
-````javascript
-osmb.addOBJ('sphere.obj', { latitude: 52.519991, longitude: 13.406453 }, { id: "my_object_1", color: 'red'});
+### TODO: PLACE TUTORIAL TEXT HERE, FORMATTED IN MARKDOWN
 ````

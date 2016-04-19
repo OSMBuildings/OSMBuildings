@@ -6,4 +6,4 @@ set -e
 # a successful build of the master branch
 
 ./dist.sh # Build and push the dist directory, which bower depends on
-$(dirname $0)/docs.sh
+$(dirname $0)/docs.sh # Build docs, and push them to GH pages
