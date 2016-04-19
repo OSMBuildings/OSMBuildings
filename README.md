@@ -15,7 +15,7 @@ At some point it will fully integrate the Classic 2.5D version.
 
 For the latest information about the project [follow us on Twitter](https://twitter.com/osmbuildings), read [our blog](http://blog.osmbuildings.org), or just mail us at mail@osmbuildings.org.
 
-### Not sure which version to use?**
+### Not sure which version to use?
 
 #### Classic 2.5D
 
