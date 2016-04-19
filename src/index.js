@@ -40,9 +40,6 @@ var OSMBuildings = function(options) {
 
   APP.baseURL = options.baseURL || '.';
 
-  render.bendRadius = 500;
-  render.bendDistance = 500;
-
   render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
   render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
   render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();

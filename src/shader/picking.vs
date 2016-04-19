@@ -1,18 +1,18 @@
 precision highp float;  //is default in vertex shaders anyway, using highp fixes #49
 
+#define halfPi 1.57079632679
+
 attribute vec4 aPosition;
+attribute vec3 aID;
 attribute vec4 aFilter;
-attribute vec3 aNormal;
 
-uniform mat4 uMatrix;
 uniform mat4 uModelMatrix;
-uniform mat3 uNormalMatrix;
-uniform vec2 uViewDirOnMap;
-uniform vec2 uLowerEdgePoint;
+uniform mat4 uMatrix;
 
-varying float verticalDistanceToLowerEdge;
-varying vec3 vNormal;
+uniform float uFogRadius;
 uniform float uTime;
+
+varying vec4 vColor;
 
 void main() {
 
@@ -21,15 +21,18 @@ void main() {
 
   if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
-    verticalDistanceToLowerEdge = 0.0;
+    vColor = vec4(0.0, 0.0, 0.0, 0.0);
   } else {
     vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
-
     gl_Position = uMatrix * pos;
-    vNormal = uNormalMatrix * aNormal;
 
-    vec4 worldPos = uModelMatrix * pos;
-    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
-    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
+    vec4 mPosition = vec4(uModelMatrix * pos);
+    float distance = length(mPosition);
+
+    if (distance > uFogRadius) {
+      vColor = vec4(0.0, 0.0, 0.0, 0.0);
+    } else {
+      vColor = vec4(aID, 1.0);
+    }
   }
 }

@@ -31,35 +31,19 @@ render.DepthFogNormalMap.prototype.getFogNormalTexture = function() {
 };
 
 
-render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, framebufferConfig, isPerspective) {
+render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, framebufferSize, isPerspective) {
 
   var
     shader = this.shader,
     framebuffer = this.framebuffer,
     viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(viewMatrix,projMatrix));
 
-
-  if (!framebufferConfig && this.framebufferConfig)
-    framebufferConfig = this.framebufferConfig;
-
-
-  if (framebuffer.width != framebufferConfig.width || 
-      framebuffer.height!= framebufferConfig.height) {
-    framebuffer.setSize( framebufferConfig.width, framebufferConfig.height );
-
-    /* We will be sampling neighboring pixels of the depth texture to create an ambient
-     * occlusion map. With the default texture wrap mode 'gl.REPEAT', sampling the neighbors
-     * of edge texels would return texels on the opposite edge of the texture, which is not
-     * what we want. Setting the wrap mode to 'gl.CLAMP_TO_EDGE' instead returns 
-     * the texels themselves, which is far more useful for ambient occlusion maps */
-    gl.bindTexture(gl.TEXTURE_2D, this.framebuffer.renderTexture.id);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  }
+  framebufferSize = framebufferSize || this.framebufferSize;
+  framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
     
   shader.enable();
   framebuffer.enable();
-  gl.viewport(0, 0, framebufferConfig.usedWidth, framebufferConfig.usedHeight);
+  gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
 
   gl.clearColor(0.0, 0.0, 0.0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

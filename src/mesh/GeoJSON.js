@@ -81,7 +81,7 @@ mesh.GeoJSON = (function() {
 
           pickingColor = render.Picking.idToColor(id);
           for (var j = 0; j < vertexCount; j++) {
-            resPickingColors.push(pickingColor[0], pickingColor[1], pickingColor[2]);
+            [].push.apply(resPickingColors, pickingColor);
           }
 
           this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });

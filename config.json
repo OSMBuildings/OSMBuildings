@@ -1,9 +1,9 @@
 {
-  "shaders": ["interaction", "buildings", "buildings.shadows", "flatColor", "skywall", "basemap", "texture", "fogNormal", "ambientFromDepth", "blur", "basemap.shadows"],
+  "shaders": ["picking", "buildings", "buildings.shadows", "flatColor", "skywall", "basemap", "texture", "fogNormal", "ambientFromDepth", "blur", "basemap.shadows", "outlineMap"],
 
   "lib": [
     "node_modules/Triangulate/dist/Triangulate.js",
-    "node_modules/Color/src/Color.js",
+    "node_modules/Color/dist/Color.debug.js",
     "lib/GLX.debug.js",
     "node_modules/suncalc/suncalc.js"
   ],
@@ -44,6 +44,7 @@
     "src/render/DepthFogNormalMap.js",
     "src/render/AmbientMap.js",
     "src/render/Overlay.js",
+    "src/render/OutlineMap.js",
     "src/render/Blur.js",
 
     "src/basemap/index.js",

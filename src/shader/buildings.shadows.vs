@@ -10,8 +10,6 @@ attribute vec3 aID;
 attribute vec2 aTexCoord;
 
 uniform mat4 uModelMatrix;
-uniform mat4 uViewMatrix;
-uniform mat4 uProjMatrix;
 uniform mat4 uMatrix;
 uniform mat4 uSunMatrix;
 
@@ -33,9 +31,6 @@ varying float verticalDistanceToLowerEdge;
 float gradientHeight = 90.0;
 float gradientStrength = 0.4;
 
-uniform float uBendRadius;
-uniform float uBendDistance;
-
 void main() {
 
   float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
@@ -47,30 +42,12 @@ void main() {
   } else {
 
     vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
-
-    //*** bending ***************************************************************
-
-  //  vec4 mwPosition = uViewMatrix * uModelMatrix * aPosition;
-  //
-  //  float innerRadius = uBendRadius + mwPosition.y;
-  //  float depth = abs(mwPosition.z);
-  //  float s = depth-uBendDistance;
-  //  float theta = min(max(s, 0.0)/uBendRadius, halfPi);
-  //
-  //  // halfPi*uBendRadius, not halfPi*innerRadius, because the "base" of a building
-  //  // travels the full uBendRadius path
-  //  float newY = cos(theta)*innerRadius - uBendRadius - max(s-halfPi*uBendRadius, 0.0);
-  //  float newZ = normalize(mwPosition.z) * (min(depth, uBendDistance) + sin(theta)*innerRadius);
-  //
-  //  vec4 newPosition = vec4(mwPosition.x, newY, newZ, 1.0);
-  //  gl_Position = uProjMatrix * newPosition;
-
     gl_Position = uMatrix * pos;
 
     //*** highlight object ******************************************************
 
     vec3 color = aColor;
-    if (uHighlightID.r == aID.r && uHighlightID.g == aID.g && uHighlightID.b == aID.b) {
+    if (uHighlightID == aID) {
       color = mix(aColor, uHighlightColor, 0.5);
     }
 

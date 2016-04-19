@@ -104,13 +104,11 @@ Basemap.prototype = {
     var zoom     = (state.zoom     !== undefined) ? state.zoom     : options.zoom;
     var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
     var tilt     = (state.tilt     !== undefined) ? state.tilt     : options.tilt;
-    var bend     = (state.bend     !== undefined) ? state.bend     : options.bend;
 
     this.setPosition(position || options.position || { latitude:52.520000, longitude:13.410000 });
     this.setZoom(zoom || this.minZoom);
     this.setRotation(rotation || 0);
     this.setTilt(tilt || 0);
-    this.setBend(bend || 0);
   },
 
   persistState: function() {
@@ -125,7 +123,6 @@ Basemap.prototype = {
       params.push('lon=' + this.position.longitude.toFixed(6));
       params.push('zoom=' + this.zoom.toFixed(1));
       params.push('tilt=' + this.tilt.toFixed(1));
-      params.push('bend=' + this.bend.toFixed(1));
       params.push('rotation=' + this.rotation.toFixed(1));
       history.replaceState({}, '', '?'+ params.join('&'));
     }.bind(this), 1000);
@@ -177,38 +174,25 @@ Basemap.prototype = {
     return !!this.pointer.disabled;
   },
 
+  /* returns the geographical bounds of the current view.
+   * notes: 
+   * - since the bounds are always axis-aligned they will contain areas that are
+   *   not currently visible if the current view is not also axis-aligned.
+   * - the bounds only contain the map area that OSMBuildings considers for rendering.
+   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
+   *   never extend beyond that, even if the horizon is visible (in which case the
+   *   bounds would mathematically be infinite).
+   * - the bounds only consider ground level. For example, buildings whose top 
+   *   is seen at the lower edge of the screen, but whose footprint is outside 
+   *   of the current view below the lower edge do not contribute to the bounds.
+   *   so their top may be visible and they may still be out of bounds.
+   */
   getBounds: function() {
-    //FIXME: update method; the old code did only work for straight top-down
-    //       views, not for other cameras.
-    /*
-    var
-      W2 = this.width/2, H2 = this.height/2,
-      angle = this.rotation*Math.PI/180,
-      x = Math.cos(angle)*W2 - Math.sin(angle)*H2,
-      y = Math.sin(angle)*W2 + Math.cos(angle)*H2,
-      position = this.position,
-      worldSize = Basemap.TILE_SIZE*Math.pow(2, this.zoom),
-      nw = this.unproject(position.x - x, position.y - y, worldSize),
-      se = this.unproject(position.x + x, position.y + y, worldSize);
-    return {
-      n: nw.latitude,
-      w: nw.longitude,
-      s: se.latitude,
-      e: se.longitude
-    };*/
-    return null;
-  },
-
-  getCameraBounds: function() {
-    var c = this.container.getBoundingClientRect(),
-        osmb = this.layers.items[0]; // TODO: This assumes that the OSMB layer is the first one
-
-    return [
-      osmb.unproject(c.left, c.top),
-      osmb.unproject(c.right, c.top),
-      osmb.unproject(c.right, c.bottom),
-      osmb.unproject(c.left, c.bottom)
-    ];
+    var viewQuad = render.getViewQuad(), res = [];
+    for (var i in viewQuad) {
+      res[i] = getPositionFromLocal(viewQuad[i]);
+    }
+    return res;
   },
 
   /**
@@ -340,22 +324,6 @@ Basemap.prototype = {
 
   getTilt: function() {
     return this.tilt;
-  },
-
-  /**
-   * @fires Basemap#change
-   */
-  setBend: function(bend) {
-    bend = clamp(parseFloat(bend), 0, 90);
-    if (this.bend !== bend) {
-      this.bend = bend;
-      this.emit('change');
-    }
-    return this;
-  },
-
-  getBend: function() {
-    return this.bend;
   },
 
   addLayer: function(layer) {

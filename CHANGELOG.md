@@ -1,8 +1,34 @@
 
-# 2.3.1 @ 2016-03-02
+# 2.4.1 @ 2016-04-18
+
+## New
+
+- render effect 'outline'
+- bower.json added
+- option 'modifier' when adding GeoJSON or OBJ to change all properties upon load
+- map events for move, zoom, rotate, tilt, rightclick, contextmenu
+- OSM Buildings event for loadfeature
+
+## Changed
+
+- picking precision improved
+- first steps in new documentation setup
+- initial steps in CI
+- geometry processing rewritten
+- switch from color-coded depth calculation to depth textures
+- don't render walls for building=roof
+- code examples reorganized
 
 ## Fixed
 
+- disable effects if GPU does not support them, fixes broken MSIE 11 on old machines
+- pointerup event when releasing a finger
+- map.getBounds() fixed, return format changed
+- several destroy() methods fixed
+- polyfill for Android gestures added
+- pointer coordinates adjusted for maps with offset
+- sun direction fixed
+- several shadow Moire effects
 - missing texture coordinates for OBJ
 
 

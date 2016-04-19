@@ -3,33 +3,28 @@
 #endif
 
 uniform sampler2D uTexIndex;
-uniform float uInverseTexWidth;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide
-uniform float uInverseTexHeight;  //in 1/pixels
+uniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide
 
 varying vec2 vTexCoord;
 
-/* Retrieves the texel color at (dx, dy) pixels away from 'pos' from texture 'uTexIndex'. */
-vec4 getTexel(vec2 pos, int dx, int dy)
+/* Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'. */
+vec4 getTexel(vec2 pos, vec2 offset)
 {
-  //retrieve the color-coded depth
-  return texture2D(uTexIndex, vec2(pos.s + float(dx) * uInverseTexWidth, 
-                                   pos.t + float(dy) * uInverseTexHeight));
+  return texture2D(uTexIndex, pos + offset * uInverseTexSize);
 }
-
 
 void main() {
 
   vec4 center = texture2D(uTexIndex, vTexCoord);
-  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, -1, 0) +
-                              getTexel(vTexCoord, +1, 0) +
-                              getTexel(vTexCoord,  0,-1) +
-                              getTexel(vTexCoord,  0,+1);
+  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0,  0.0)) +
+                              getTexel(vTexCoord, vec2(+1.0,  0.0)) +
+                              getTexel(vTexCoord, vec2( 0.0, -1.0)) +
+                              getTexel(vTexCoord, vec2( 0.0, +1.0));
 
-  vec4 diagonalNeighbors =    getTexel(vTexCoord, -1,-1) +
-                              getTexel(vTexCoord, +1,+1) +
-                              getTexel(vTexCoord, -1,+1) +
-                              getTexel(vTexCoord, +1,-1);  
-
+  vec4 diagonalNeighbors =    getTexel(vTexCoord, vec2(-1.0, -1.0)) +
+                              getTexel(vTexCoord, vec2(+1.0, +1.0)) +
+                              getTexel(vTexCoord, vec2(-1.0, +1.0)) +
+                              getTexel(vTexCoord, vec2(+1.0, -1.0));
   
   //approximate Gaussian blur (mean 0.0, stdev 1.0)
   gl_FragColor = 0.2/1.0 * center + 

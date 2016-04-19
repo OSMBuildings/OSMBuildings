@@ -371,15 +371,20 @@ function getTileSizeInMeters( latitude, zoom) {
          Math.pow(2, zoom);
 }
 
-function getTilePositionFromLocal(localXY, zoom) {
-  
+function getPositionFromLocal(localXY) {
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
                                  Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-  var longitude= MAP.position.longitude + localXY[0] / metersPerDegreeLongitude;
-  var latitude = MAP.position.latitude -  localXY[1] / METERS_PER_DEGREE_LATITUDE;
+  return {
+    longitude: MAP.position.longitude + localXY[0]/metersPerDegreeLongitude,
+    latitude: MAP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
+  };
+}
+
+function getTilePositionFromLocal(localXY, zoom) {
+  var pos = getPositionFromLocal(localXY);
   
-  return [long2tile(longitude, zoom), lat2tile(latitude, zoom)];
+  return [long2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
 }
 
 //all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
@@ -401,6 +406,7 @@ function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l]; }
 function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];}
 function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
 function add3(a,b) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];}
+function add3scalar(a,f) { return [a[0]+f, a[1]+f, a[2]+f];}
 function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
 function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
 function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}

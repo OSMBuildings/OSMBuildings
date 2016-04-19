@@ -1,6 +1,7 @@
 
 // TODO: detect pointerleave from container
 // TODO: continue drag/gesture even when off container
+// TODO: allow two finger swipe for tilt
 
 function getEventOffset(e) {
   if (e.offsetX !== undefined) {
@@ -232,22 +233,22 @@ Pointer.prototype = {
     var dy = pos.y - this.prevY;
     var angle = this.map.rotation * Math.PI/180;
 
-    var vRight = [ Math.cos(angle),             Math.sin(angle)];
-    var vForward=[ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)]
+    var vRight   = [ Math.cos(angle),             Math.sin(angle)];
+    var vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)]
 
     var dir = add2(  mul2scalar(vRight,    dx),
                      mul2scalar(vForward, -dy));
 
-    var new_position = {
+    var newPosition = {
       longitude: this.map.position.longitude - dir[0] * scale*lonScale,
       latitude:  this.map.position.latitude  + dir[1] * scale };
 
-    this.map.setPosition(new_position);
     /**
      * Fired basemap is moved 
      * @event Basemap#move
      */
-    this.map.emit('move', new_position);
+    this.map.setPosition(newPosition);
+    this.map.emit('move', newPosition);
   },
 
   rotateMap: function(e) {
@@ -305,16 +306,14 @@ Pointer.prototype = {
    * @fires Basemap#pointerup
    */
   onTouchEnd: function(e) {
-    if (e.touches.length) {
-      e = e.touches[0];
+    if (e.touches.length === 0) {
+      this.map.emit('pointerup', { x: this.prevX, y: this.prevY, button: 0 });
+    } else if (e.touches.length === 1) {
+      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
+      var pos = getEventOffset(e.touches[0]);
+      this.prevX = pos.x;
+      this.prevY = pos.y;
     }
-
-    var pos = getEventOffset(e);
-    if (Math.abs(pos.x - this.startX)>5 || Math.abs(pos.y - this.startY)>5) {
-      this.moveMap(e);
-    }
-
-    this.map.emit('pointerup', { x: pos.x, y: pos.y, button: 0 });
   },
 
   /**

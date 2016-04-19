@@ -105,11 +105,9 @@ Option | Type | Default | Description
 `zoom` | Float | minZoom | Initial map zoom
 `rotation` | Float | 0 | Map rotation
 `tilt` | Float | 0 | Map tilt
-`bend` | Float | 0 | Map bend
 `disabled` | Boolean | false | Disables user input
 `minZoom` | Float | 10 | Minimum allowed zoom
 `maxZoom` | Float | 20 | Maximum allowed zoom
-`bounds` | Object | {} | Coordinates of bounds where the map can be moved within **Doesn't currently work**
 `attribution` | String | null | Attribution, optional
 `state` | Boolean | false | Stores map position/rotation in url
 
@@ -122,8 +120,7 @@ Method | Parameters | Description
 `off` | (String) event, (Function) callback | Removes all event listeners for the given event. If callback is given, it only returns that function
 `setDisabled` | (Boolean) flag | Disables any user input (if flag is `true`, enables user input)
 `isDisabled` | | Check whether user input is disabled
-`getBounds` | | Returns coordinates of current map view, respecting tilt and rotation but ignoring `perspective`
-`getCameraBounds` | | Returns an array of points outlining the current camera view. Each point is an object with `latitude` and `longitude`. _Note: the points are not guaranteed to be returned in a specific order_
+`getBounds` | | Returns an array of points outlining the current camera view. Each point is an object with `latitude` and `longitude`. _Note: the points are not guaranteed to be returned in a specific order_
 `setZoom` | (Float) zoom_level | Sets current zoom
 `getZoom` | | Gets current zoom
 `setPosition` | (Object) {latitude, longitude} | Sets current geo position of map center
@@ -164,7 +161,7 @@ Option | Type | Default | Description
 `fogColor` | String | '#e8e0d8' | Color to be used for sky gradients and distance fog
 `backgroundColor` | String | '#efe8e0' | Overall background color
 `fastMode` | Boolean | false | Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
-`effects` | Array | [] | Which effects to enable. The only effect at the moment is 'shadows'
+`effects` | Array | [] | Which effects to enable. Available effects are 'shadows' and 'outline'
 `style` | Object | { color: 'rgb(220, 210, 200)' } | Sets the default building style
 
 ### OSM Buildings methods
