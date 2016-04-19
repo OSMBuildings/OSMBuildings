@@ -174,15 +174,16 @@ Basemap.prototype = {
     return !!this.pointer.disabled;
   },
 
-  /* returns the geographical bounds of the current view.
-   * notes: 
-   * - since the bounds are always axis-aligned they will contain areas that are
+  /**
+   * Returns the geographical bounds of the current view.
+   * Notes:
+   * - Since the bounds are always axis-aligned they will contain areas that are
    *   not currently visible if the current view is not also axis-aligned.
-   * - the bounds only contain the map area that OSMBuildings considers for rendering.
+   * - The bounds only contain the map area that OSMBuildings considers for rendering.
    *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
    *   never extend beyond that, even if the horizon is visible (in which case the
    *   bounds would mathematically be infinite).
-   * - the bounds only consider ground level. For example, buildings whose top 
+   * - The bounds only consider ground level. For example, buildings whose top 
    *   is seen at the lower edge of the screen, but whose footprint is outside 
    *   of the current view below the lower edge do not contribute to the bounds.
    *   so their top may be visible and they may still be out of bounds.
@@ -196,6 +197,9 @@ Basemap.prototype = {
   },
 
   /**
+   * Sets the zoom level
+   * @param {Float} zoom - The new zoom level
+   * @param {Object} e - **Not currently used**
    * @fires Basemap#zoom
    * @fires Basemap#change
    */
@@ -237,11 +241,18 @@ Basemap.prototype = {
     return this;
   },
 
+  /**
+   * Returns the current zoom level
+   */
   getZoom: function() {
     return this.zoom;
   },
 
   /**
+   * Sets the map's geographic position
+   * @param {Object} pos - The new position
+   * @param {Float} pos.latitude
+   * @param {Float} pos.longitude
    * @fires Basemap#change
    */
   setPosition: function(pos) {
@@ -255,11 +266,18 @@ Basemap.prototype = {
     return this;
   },
 
+  /**
+   * Returns the map's current geographic position
+   */
   getPosition: function() {
     return this.position;
   },
 
   /**
+   * Sets the map's size
+   * @param {Object} size
+   * @param {Integer} size.width
+   * @param {Integer} size.height
    * @fires Basemap#resize
    */
   setSize: function(size) {
@@ -276,11 +294,16 @@ Basemap.prototype = {
     return this;
   },
 
+  /**
+   * Returns the map's current size
+   */
   getSize: function() {
     return { width: this.width, height: this.height };
   },
-  
+
   /**
+   * Set's the maps rotation
+   * @param {Float} rotation - The new rotation angle
    * @fires Basemap#rotate
    * @fires Basemap#change
    */
@@ -299,11 +322,16 @@ Basemap.prototype = {
     return this;
   },
 
+  /**
+   * Returns the maps current rotation
+   */
   getRotation: function() {
     return this.rotation;
   },
 
   /**
+   * Sets the map's tilt
+   * @param {Float} tilt - The new tilt
    * @fires Basemap#tilt
    * @fires Basemap#change
    */
@@ -322,21 +350,35 @@ Basemap.prototype = {
     return this;
   },
 
+  /**
+   * Returns the map's current tilt
+   */
   getTilt: function() {
     return this.tilt;
   },
 
+  /**
+   * Adds a layer to the map
+   * @param {Object} layer - The layer to add
+   */
   addLayer: function(layer) {
     this.layers.add(layer);
     this.updateAttribution();
     return this;
   },
 
+  /**
+   * Removes a layer from the map
+   * @param {Object} layer - The layer to remove
+   */
   removeLayer: function(layer) {
     this.layers.remove(layer);
     this.updateAttribution();
   },
 
+  /**
+   * Destroys the map
+   */
   destroy: function() {
     this.listeners = [];
     this.pointer.destroy();
