@@ -12,7 +12,7 @@ before_script:
 script:
   - grunt release
 after_success:
-  - ./docs.sh
+  - ./build/docs.sh
 deploy:
   provider: script
   script: build/deploy.sh
