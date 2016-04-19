@@ -19,7 +19,6 @@ function clamp(value, min, max) {
  * @param {Float} [options.zoom=minZoom] - Initial zoom
  * @param {Float} [options.rotation=0] - Initial rotation
  * @param {Float} [options.tilt=0] - Initial tilt
- * @param {Float} [options.bend=0] - Initial bend
  * @param {Object} [options.position] - Initial position
  * @param {Float} [options.position.latitude=52.520000]
  * @param {Float} [options.position.latitude=13.410000]
