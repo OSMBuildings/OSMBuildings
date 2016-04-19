@@ -17,6 +17,10 @@ var Activity = {};
         clearTimeout(debounce);
         debounce = null;
       } else {
+        /**
+         * Fired when data loading starts
+         * @event OSMBuildings#busy
+         */
         APP.emit('busy');
       }
     }
@@ -32,6 +36,11 @@ var Activity = {};
     if (!count) {
       debounce = setTimeout(function() {
         debounce = null;
+        
+        /**
+         * Fired when data loading ends
+         * @event OSMBuildings#idle
+         */
         APP.emit('idle');
       }, 33);
     }
