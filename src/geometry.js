@@ -6,12 +6,6 @@ function distance2(a, b) {
   return dx*dx + dy*dy;
 }
 
-function isClockWise(polygon) {
-  return 0 < polygon.reduce(function(a, b, c, d) {
-    return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-  }, 0);
-}
-
 function assert(condition, message) {
   if (!condition) {
     throw message;
