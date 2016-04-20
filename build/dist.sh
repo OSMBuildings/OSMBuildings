@@ -5,7 +5,7 @@ set -e # exit with nonzero exit code if anything fails
 git config user.name "Travis CI"
 git checkout master
 git add --force dist/OSMBuildings/*
-git commit -m "Distributing a new build" -m "[ci skip]"
+git diff-index --quiet HEAD || git commit -m "Distributing a new build" -m "[ci skip]"
 
 # Force push from the current repo's master branch to the remote
 # repo's gh-pages branch. (All previous history on the gh-pages branch
