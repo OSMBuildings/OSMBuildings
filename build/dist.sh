@@ -3,6 +3,7 @@ set -x
 set -e # exit with nonzero exit code if anything fails
 
 git config user.name "Travis CI"
+git checkout master
 git add --force dist/OSMBuildings/*
 git commit -m "Distributing a new build"
 
