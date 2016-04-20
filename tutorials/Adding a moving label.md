@@ -18,10 +18,8 @@
 </style>
 
 <script>
-  <!-- TODO: You may want to fill in a position here -->
   map.setPosition({latitude: 52.52, longitude: 13.37});
   
-  <!-- TODO: Example code -->
   var label = document.getElementById('label');
   map.on('change', function() {
     var pos = osmb.project(52.52, 13.37, 50);
