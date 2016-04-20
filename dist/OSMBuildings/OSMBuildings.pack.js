@@ -3624,7 +3624,7 @@
 	  }
 	};
 
-	OSMBuildings.VERSION = '2.4.1';
+	OSMBuildings.VERSION = '2.4.2';
 	OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</a>';
 
 	OSMBuildings.prototype = {
@@ -5308,12 +5308,6 @@
 	    dx = a[0]-b[0],
 	    dy = a[1]-b[1];
 	  return dx*dx + dy*dy;
-	}
-
-	function isClockWise(polygon) {
-	  return 0 < polygon.reduce(function(a, b, c, d) {
-	    return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-	  }, 0);
 	}
 
 	function assert(condition, message) {
@@ -7130,9 +7124,7 @@
 	        currentQueue = queue;
 	        queue = [];
 	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
+	            currentQueue[queueIndex].run();
 	        }
 	        queueIndex = -1;
 	        len = queue.length;
@@ -7184,6 +7176,7 @@
 	    throw new Error('process.binding is not supported');
 	};
 
+	// TODO(shtylman)
 	process.cwd = function () { return '/' };
 	process.chdir = function (dir) {
 	    throw new Error('process.chdir is not supported');

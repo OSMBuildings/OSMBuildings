@@ -3578,7 +3578,7 @@ var OSMBuildings = function(options) {
   }
 };
 
-OSMBuildings.VERSION = '2.4.1';
+OSMBuildings.VERSION = '2.4.2';
 OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
@@ -5262,12 +5262,6 @@ function distance2(a, b) {
     dx = a[0]-b[0],
     dy = a[1]-b[1];
   return dx*dx + dy*dy;
-}
-
-function isClockWise(polygon) {
-  return 0 < polygon.reduce(function(a, b, c, d) {
-    return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-  }, 0);
 }
 
 function assert(condition, message) {
