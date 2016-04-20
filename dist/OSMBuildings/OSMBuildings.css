@@ -1,0 +1,28 @@
+
+.osmb-container {
+}
+
+.osmb-attribution {
+    position:absolute;
+    right:0;
+    bottom:0;
+    padding:1px 3px;
+    background:rgba(255,255,255,0.5);
+    font:11px sans-serif;
+    z-index: 10;
+}
+
+.osmb-attribution a {
+    text-decoration:none;
+    color:#0078A8;
+}
+
+.osmb-attribution a:visited {
+    text-decoration:none;
+    color:#0078A8;
+}
+
+.osmb-attribution a:hover {
+    text-decoration:underline;
+    color:#0078A8;
+}

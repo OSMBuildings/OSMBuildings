@@ -1,5 +1,5 @@
 
-# 2.4.1 @ 2016-04-17
+# 2.4.1 @ 2016-04-18
 
 ## New
 
@@ -21,6 +21,7 @@
 
 ## Fixed
 
+- disable effects if GPU does not support them, fixes broken MSIE 11 on old machines
 - pointerup event when releasing a finger
 - map.getBounds() fixed, return format changed
 - several destroy() methods fixed
