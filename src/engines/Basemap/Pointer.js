@@ -85,15 +85,25 @@ Pointer.prototype = {
     this._listeners.push({ target:target, type:type, fn:boundFn });
   },
 
+  /**
+   * @fires Basemap#doubleclick
+   */
   onDoubleClick: function(e) {
     cancelEvent(e);
     if (!this.disabled) {
       this.map.setZoom(this.map.zoom + 1, e);
     }
     var pos = getEventOffset(e);
+    /**
+     * Fired when the basemap is clicked twice in quick succession
+     * @event Basemap#doubleclick
+     */
     this.map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
   },
 
+  /**
+   * @fires Basemap#pointerdown
+   */
   onMouseDown: function(e) {
     if (e.button > 1) {
       return;
@@ -111,9 +121,16 @@ Pointer.prototype = {
 
     this.pointerIsDown = true;
 
+    /**
+     * Fired when the left mouse button is pressed down on the basemap
+     * @event Basemap#pointerdown
+     */
     this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
   },
 
+  /**
+   * @fires Basemap#pointermove
+   */
   onMouseMove: function(e) {
     var pos = getEventOffset(e);
 
@@ -128,9 +145,16 @@ Pointer.prototype = {
       this.prevY = pos.y;
     }
 
+    /**
+     * Fired when the mouse is moved on the basemap
+     * @event Basemap#pointermove
+     */
     this.map.emit('pointermove', { x: pos.x, y: pos.y });
   },
 
+  /**
+   * @fires Basemap#pointerup
+   */
   onMouseUp: function(e) {
     // prevents clicks on other page elements
     if (!this.pointerIsDown) {
@@ -149,6 +173,10 @@ Pointer.prototype = {
 
     this.pointerIsDown = false;
 
+    /**
+     * Fired when the left mouse button is released on the basemap 
+     * @event Basemap#pointerup
+     */
     this.map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
   },
 
@@ -159,6 +187,9 @@ Pointer.prototype = {
     return false;
   },
 
+  /**
+   * @fires Basemap#mousewheel
+   */
   onMouseWheel: function(e) {
     cancelEvent(e);
     var delta = 0;
@@ -175,9 +206,16 @@ Pointer.prototype = {
       this.map.setZoom(this.map.zoom + adjust, e);
     }
 
+    /**
+     * Fired when the mouse wheel is pressed on the basemap 
+     * @event Basemap#mousewheel
+     */
     this.map.emit('mousewheel', { delta: delta });
   },
 
+  /**
+   * @fires Basemap#move
+   */
   moveMap: function(e) {
     if (this.disabled) {
       return;
@@ -205,6 +243,10 @@ Pointer.prototype = {
       longitude: this.map.position.longitude - dir[0] * scale*lonScale,
       latitude:  this.map.position.latitude  + dir[1] * scale };
 
+    /**
+     * Fired basemap is moved 
+     * @event Basemap#move
+     */
     this.map.setPosition(newPosition);
     this.map.emit('move', newPosition);
   },
@@ -222,6 +264,9 @@ Pointer.prototype = {
 
   //***************************************************************************
 
+  /**
+   * @fires Basemap#pointerdown
+   */
   onTouchStart: function(e) {
     cancelEvent(e);
 
@@ -240,6 +285,9 @@ Pointer.prototype = {
     this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
   },
 
+  /**
+   * @fires Basemap#pointermove
+   */
   onTouchMove: function(e) {
     if (e.touches.length) {
       e = e.touches[0];
@@ -254,6 +302,9 @@ Pointer.prototype = {
     this.map.emit('pointermove', { x: pos.x, y: pos.y });
   },
 
+  /**
+   * @fires Basemap#pointerup
+   */
   onTouchEnd: function(e) {
     if (e.touches.length === 0) {
       this.map.emit('pointerup', { x: this.prevX, y: this.prevY, button: 0 });
@@ -265,6 +316,9 @@ Pointer.prototype = {
     }
   },
 
+  /**
+   * @fires Basemap#gesture
+   */
   onGestureChange: function(e) {
     cancelEvent(e);
     if (!this.disabled) {
@@ -272,6 +326,10 @@ Pointer.prototype = {
       this.map.setRotation(this.prevRotation - e.rotation);
   //  this.map.setTilt(prevTilt ...);
     }
+    /**
+     * Fired when a touch gesture occurs on the basemap
+     * @event Basemap#gesture
+     */
     this.map.emit('gesture', e.touches);
   },
 
