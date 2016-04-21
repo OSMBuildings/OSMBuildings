@@ -51,6 +51,24 @@
 	  return Math.min(max, Math.max(value, min));
 	}
 
+	/**
+	 * OSMBuildings basemap
+	 * @constructor
+	 * @param {String} container - The id of the html element to display the map in
+	 * @param {Object} options
+	 * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
+	 * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+	 * @param {Object} [options.bounds] - A bounding box to restrict the map to
+	 * @param {Boolean} [options.state=false] - Store the map state in the URL
+	 * @param {Boolean} [options.disabled=false] - Disable user input
+	 * @param {String} [options.attribution] - An attribution string
+	 * @param {Float} [options.zoom=minZoom] - Initial zoom
+	 * @param {Float} [options.rotation=0] - Initial rotation
+	 * @param {Float} [options.tilt=0] - Initial tilt
+	 * @param {Object} [options.position] - Initial position
+	 * @param {Float} [options.position.latitude=52.520000]
+	 * @param {Float} [options.position.latitude=13.410000]
+	 */
 	var Basemap = function(container, options) {
 	  this.container = typeof container === 'string' ? document.getElementById(container) : container;
 	  options = options || {};
@@ -201,15 +219,16 @@
 	    return !!this.pointer.disabled;
 	  },
 
-	  /* returns the geographical bounds of the current view.
-	   * notes: 
-	   * - since the bounds are always axis-aligned they will contain areas that are
+	  /**
+	   * Returns the geographical bounds of the current view.
+	   * Notes:
+	   * - Since the bounds are always axis-aligned they will contain areas that are
 	   *   not currently visible if the current view is not also axis-aligned.
-	   * - the bounds only contain the map area that OSMBuildings considers for rendering.
+	   * - The bounds only contain the map area that OSMBuildings considers for rendering.
 	   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
 	   *   never extend beyond that, even if the horizon is visible (in which case the
 	   *   bounds would mathematically be infinite).
-	   * - the bounds only consider ground level. For example, buildings whose top 
+	   * - The bounds only consider ground level. For example, buildings whose top 
 	   *   is seen at the lower edge of the screen, but whose footprint is outside 
 	   *   of the current view below the lower edge do not contribute to the bounds.
 	   *   so their top may be visible and they may still be out of bounds.
@@ -222,6 +241,13 @@
 	    return res;
 	  },
 
+	  /**
+	   * Sets the zoom level
+	   * @param {Float} zoom - The new zoom level
+	   * @param {Object} e - **Not currently used**
+	   * @fires Basemap#zoom
+	   * @fires Basemap#change
+	   */
 	  setZoom: function(zoom, e) {
 	    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
 
@@ -245,16 +271,35 @@
 	        this.center.x += dx;
 	        this.center.y += dy;*/
 	      }
+	      /**
+	       * Fired when the basemap is zoomed (in either direction)
+	       * @event Basemap#zoom
+	       */
 	      this.emit('zoom', { zoom: zoom });
+	      
+	      /**
+	       * Fired when the basemap changes
+	       * @event Basemap#change
+	       */
 	      this.emit('change');
 	    }
 	    return this;
 	  },
 
+	  /**
+	   * Returns the current zoom level
+	   */
 	  getZoom: function() {
 	    return this.zoom;
 	  },
 
+	  /**
+	   * Sets the map's geographic position
+	   * @param {Object} pos - The new position
+	   * @param {Float} pos.latitude
+	   * @param {Float} pos.longitude
+	   * @fires Basemap#change
+	   */
 	  setPosition: function(pos) {
 	    var lat = parseFloat(pos.latitude);
 	    var lon = parseFloat(pos.longitude);
@@ -266,62 +311,119 @@
 	    return this;
 	  },
 
+	  /**
+	   * Returns the map's current geographic position
+	   */
 	  getPosition: function() {
 	    return this.position;
 	  },
 
+	  /**
+	   * Sets the map's size
+	   * @param {Object} size
+	   * @param {Integer} size.width
+	   * @param {Integer} size.height
+	   * @fires Basemap#resize
+	   */
 	  setSize: function(size) {
 	    if (size.width !== this.width || size.height !== this.height) {
 	      this.width = size.width;
 	      this.height = size.height;
+	      
+	      /**
+	       * Fired when the map is resized
+	       * @event Basemap#resize
+	       */
 	      this.emit('resize', { width: this.width, height: this.height });
 	    }
 	    return this;
 	  },
 
+	  /**
+	   * Returns the map's current size
+	   */
 	  getSize: function() {
 	    return { width: this.width, height: this.height };
 	  },
 
+	  /**
+	   * Set's the maps rotation
+	   * @param {Float} rotation - The new rotation angle
+	   * @fires Basemap#rotate
+	   * @fires Basemap#change
+	   */
 	  setRotation: function(rotation) {
 	    rotation = parseFloat(rotation)%360;
 	    if (this.rotation !== rotation) {
 	      this.rotation = rotation;
+	      
+	      /**
+	       * Fired when the basemap is rotated
+	       * @event Basemap#rotate
+	       */
 	      this.emit('rotate', { rotation: rotation });
 	      this.emit('change');
 	    }
 	    return this;
 	  },
 
+	  /**
+	   * Returns the maps current rotation
+	   */
 	  getRotation: function() {
 	    return this.rotation;
 	  },
 
+	  /**
+	   * Sets the map's tilt
+	   * @param {Float} tilt - The new tilt
+	   * @fires Basemap#tilt
+	   * @fires Basemap#change
+	   */
 	  setTilt: function(tilt) {
 	    tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
 	    if (this.tilt !== tilt) {
 	      this.tilt = tilt;
+	      
+	      /**
+	       * Fired when the basemap is tilted
+	       * @event Basemap#tilt
+	       */
 	      this.emit('tilt', { tilt: tilt });
 	      this.emit('change');
 	    }
 	    return this;
 	  },
 
+	  /**
+	   * Returns the map's current tilt
+	   */
 	  getTilt: function() {
 	    return this.tilt;
 	  },
 
+	  /**
+	   * Adds a layer to the map
+	   * @param {Object} layer - The layer to add
+	   */
 	  addLayer: function(layer) {
 	    this.layers.add(layer);
 	    this.updateAttribution();
 	    return this;
 	  },
 
+	  /**
+	   * Removes a layer from the map
+	   * @param {Object} layer - The layer to remove
+	   */
 	  removeLayer: function(layer) {
 	    this.layers.remove(layer);
 	    this.updateAttribution();
 	  },
 
+	  /**
+	   * Destroys the map
+	   */
 	  destroy: function() {
 	    this.listeners = [];
 	    this.pointer.destroy();
@@ -421,15 +523,25 @@
 	    this._listeners.push({ target:target, type:type, fn:boundFn });
 	  },
 
+	  /**
+	   * @fires Basemap#doubleclick
+	   */
 	  onDoubleClick: function(e) {
 	    cancelEvent(e);
 	    if (!this.disabled) {
 	      this.map.setZoom(this.map.zoom + 1, e);
 	    }
 	    var pos = getEventOffset(e);
+	    /**
+	     * Fired when the basemap is clicked twice in quick succession
+	     * @event Basemap#doubleclick
+	     */
 	    this.map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
 	  },
 
+	  /**
+	   * @fires Basemap#pointerdown
+	   */
 	  onMouseDown: function(e) {
 	    if (e.button > 1) {
 	      return;
@@ -447,9 +559,16 @@
 
 	    this.pointerIsDown = true;
 
+	    /**
+	     * Fired when the left mouse button is pressed down on the basemap
+	     * @event Basemap#pointerdown
+	     */
 	    this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
 	  },
 
+	  /**
+	   * @fires Basemap#pointermove
+	   */
 	  onMouseMove: function(e) {
 	    var pos = getEventOffset(e);
 
@@ -464,9 +583,16 @@
 	      this.prevY = pos.y;
 	    }
 
+	    /**
+	     * Fired when the mouse is moved on the basemap
+	     * @event Basemap#pointermove
+	     */
 	    this.map.emit('pointermove', { x: pos.x, y: pos.y });
 	  },
 
+	  /**
+	   * @fires Basemap#pointerup
+	   */
 	  onMouseUp: function(e) {
 	    // prevents clicks on other page elements
 	    if (!this.pointerIsDown) {
@@ -485,6 +611,10 @@
 
 	    this.pointerIsDown = false;
 
+	    /**
+	     * Fired when the left mouse button is released on the basemap 
+	     * @event Basemap#pointerup
+	     */
 	    this.map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
 	  },
 
@@ -495,6 +625,9 @@
 	    return false;
 	  },
 
+	  /**
+	   * @fires Basemap#mousewheel
+	   */
 	  onMouseWheel: function(e) {
 	    cancelEvent(e);
 	    var delta = 0;
@@ -511,9 +644,16 @@
 	      this.map.setZoom(this.map.zoom + adjust, e);
 	    }
 
+	    /**
+	     * Fired when the mouse wheel is pressed on the basemap 
+	     * @event Basemap#mousewheel
+	     */
 	    this.map.emit('mousewheel', { delta: delta });
 	  },
 
+	  /**
+	   * @fires Basemap#move
+	   */
 	  moveMap: function(e) {
 	    if (this.disabled) {
 	      return;
@@ -541,6 +681,10 @@
 	      longitude: this.map.position.longitude - dir[0] * scale*lonScale,
 	      latitude:  this.map.position.latitude  + dir[1] * scale };
 
+	    /**
+	     * Fired basemap is moved 
+	     * @event Basemap#move
+	     */
 	    this.map.setPosition(newPosition);
 	    this.map.emit('move', newPosition);
 	  },
@@ -558,6 +702,9 @@
 
 	  //***************************************************************************
 
+	  /**
+	   * @fires Basemap#pointerdown
+	   */
 	  onTouchStart: function(e) {
 	    cancelEvent(e);
 
@@ -576,6 +723,9 @@
 	    this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
 	  },
 
+	  /**
+	   * @fires Basemap#pointermove
+	   */
 	  onTouchMove: function(e) {
 	    if (e.touches.length) {
 	      e = e.touches[0];
@@ -590,6 +740,9 @@
 	    this.map.emit('pointermove', { x: pos.x, y: pos.y });
 	  },
 
+	  /**
+	   * @fires Basemap#pointerup
+	   */
 	  onTouchEnd: function(e) {
 	    if (e.touches.length === 0) {
 	      this.map.emit('pointerup', { x: this.prevX, y: this.prevY, button: 0 });
@@ -601,6 +754,9 @@
 	    }
 	  },
 
+	  /**
+	   * @fires Basemap#gesture
+	   */
 	  onGestureChange: function(e) {
 	    cancelEvent(e);
 	    if (!this.disabled) {
@@ -608,6 +764,10 @@
 	      this.map.setRotation(this.prevRotation - e.rotation);
 	  //  this.map.setTilt(prevTilt ...);
 	    }
+	    /**
+	     * Fired when a touch gesture occurs on the basemap
+	     * @event Basemap#gesture
+	     */
 	    this.map.emit('gesture', e.touches);
 	  },
 
@@ -3576,7 +3736,7 @@
 	 *       can accurately be represented within the limited accuracy of IEEE floats.*/
 
 	/**
-	 * OSMBuildings main class
+	 * OSMBuildings building layer
 	 * @constructor
 	 * @param {Object} [options] - OSMBuildings options
 	 * @param {String} [options.baseURL='.'] - For locating assets. This is relative to calling page
@@ -3947,6 +4107,10 @@
 	        clearTimeout(debounce);
 	        debounce = null;
 	      } else {
+	        /**
+	         * Fired when data loading starts
+	         * @event OSMBuildings#busy
+	         */
 	        APP.emit('busy');
 	      }
 	    }
@@ -3962,6 +4126,11 @@
 	    if (!count) {
 	      debounce = setTimeout(function() {
 	        debounce = null;
+	        
+	        /**
+	         * Fired when data loading ends
+	         * @event OSMBuildings#idle
+	         */
 	        APP.emit('idle');
 	      }, 33);
 	    }
@@ -4678,6 +4847,10 @@
 
 	          this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
 
+	          /**
+	           * Fired when a 3d object has been loaded
+	           * @event OSMBuildings#loadfeature
+	           */
 	          APP.emit('loadfeature', feature);
 	        }
 
