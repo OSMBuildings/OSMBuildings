@@ -11,8 +11,6 @@ before_script:
   - npm install
 script:
   - grunt release
-after_success:
-  - ./build/docs.sh
 deploy:
   provider: script
   script: build/deploy.sh
