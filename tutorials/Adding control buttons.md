@@ -1,6 +1,6 @@
-<link rel="stylesheet" href="assets/OSMBuildings/OSMBuildings.css">
+<link rel="stylesheet" href="https://raw.githubusercontent.com/OSMBuildings/OSMBuildings/master/dist/OSMBuildings/OSMBuildings.css">
 <link rel=stylesheet href=assets/tutorial_prep.css>
-<script src=assets/OSMBuildings/OSMBuildings.js></script>
+<script src=https://rawgit.com/OSMBuildings/OSMBuildings/master/dist/OSMBuildings/OSMBuildings.js></script>
 
 <style>
   .control {
