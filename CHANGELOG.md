@@ -1,4 +1,11 @@
 
+# 2.4.2 @ 2016-04-21
+
+## Changed
+
+Updates for CI automation
+
+
 # 2.4.1 @ 2016-04-18
 
 ## New
