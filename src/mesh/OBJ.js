@@ -102,8 +102,7 @@ mesh.OBJ = (function() {
   function createGeometry(vertexIndex, faces) {
     var
       v0, v1, v2,
-      e1, e2,
-      nor, len,
+      nor,
       geometry = { vertices:[], normals:[], texCoords:[] };
 
     for (var i = 0, il = faces.length; i < il; i++) {
