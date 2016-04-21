@@ -32,8 +32,6 @@ map.on('pointerdown', function(e) {
 });
 </script>
 
-### Fetch building details
-
 Sometimes, you may want access to the raw Openstreetmap data. Currently, we don't store that
 locally, but we do store the ids, so you can query overpass turbo for it.
 

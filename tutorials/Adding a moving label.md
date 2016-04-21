@@ -28,8 +28,6 @@
   });
 </script>
 
-### Moving label
-
 This label moves virtually in space.
 
 ````xml

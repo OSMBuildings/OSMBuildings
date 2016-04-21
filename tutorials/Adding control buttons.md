@@ -93,8 +93,6 @@ for (var i = 0; i < controlButtons.length; i++) {
 }
 </script>
 
-### Map control buttons
-
 The code below adds buttons to the top left of the map, for controlling tilt, rotation, and zoom.
 
 ````css

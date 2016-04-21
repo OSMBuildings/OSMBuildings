@@ -39,7 +39,7 @@
   }
 </script>
 
-### Calculate bounding box on screen for a feature
+This function returns a bounding box for a given feature.
 
 ````javascript
 var METERS_PER_LEVEL = 3;
