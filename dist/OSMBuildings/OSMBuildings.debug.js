@@ -1,4 +1,4 @@
-(function(global) {var Triangulate = (function() {
+(function() {var Triangulate = (function() {
 var w3cColors = {
   aliceblue: '#f0f8ff',
   antiquewhite: '#faebd7',
@@ -1837,7 +1837,10 @@ var GLX = (function() {
 //var ext = GL.getExtension('WEBGL_lose_context');
 //ext.loseContext();
 
-var GLX = function(container, width, height, highQuality) {
+var GLX = {};
+var GL;
+
+GLX.init = function(container, width, height, highQuality) {
   var canvas = document.createElement('CANVAS');
   canvas.style.position = 'absolute';
   canvas.width = width;
@@ -1850,17 +1853,15 @@ var GLX = function(container, width, height, highQuality) {
     premultipliedAlpha: false
   };
 
-  var context;
-
   try {
-    context = canvas.getContext('webgl', options);
+    GL = canvas.getContext('webgl', options);
   } catch (ex) {}
-  if (!context) {
+  if (!GL) {
     try {
-      context = canvas.getContext('experimental-webgl', options);
+      GL = canvas.getContext('experimental-webgl', options);
     } catch (ex) {}
   }
-  if (!context) {
+  if (!GL) {
     throw new Error('WebGL not supported');
   }
 
@@ -1872,53 +1873,47 @@ var GLX = function(container, width, height, highQuality) {
     console.warn('context restored');
   });
 
-  context.viewport(0, 0, width, height);
-  context.cullFace(context.BACK);
-  context.enable(context.CULL_FACE);
-  context.enable(context.DEPTH_TEST);
-  context.clearColor(0.5, 0.5, 0.5, 1);
+  GL.viewport(0, 0, width, height);
+  GL.cullFace(GL.BACK);
+  GL.enable(GL.CULL_FACE);
+  GL.enable(GL.DEPTH_TEST);
+  GL.clearColor(0.5, 0.5, 0.5, 1);
 
   if (highQuality) {
-    context.anisotropyExtension = context.getExtension('EXT_texture_filter_anisotropic');
-    if (context.anisotropyExtension) {
-      context.anisotropyExtension.maxAnisotropyLevel = context.getParameter(
-        context.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT
+    GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
+    if (GL.anisotropyExtension) {
+      GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(
+        GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT
       );
     }
-    
-    context.depthTextureExtension = context.getExtension('WEBGL_depth_texture');
+
+    GL.depthTextureExtension = GL.getExtension('WEBGL_depth_texture');
   }
 
-  return GLX.use(context);
+  return GL;
 };
 
-GLX.use = function(context) {
+GLX.start = function(render) {
+  return setInterval(function() {
+    requestAnimationFrame(render);
+  }, 17);
+};
 
-  return (function(GL) {
+GLX.stop = function(loop) {
+  clearInterval(loop);
+};
 
-    var glx = {};
-
-    glx.context = context;
-
-    glx.start = function(render) {
-      return setInterval(function() {
-        requestAnimationFrame(render);
-      }, 17);
-    };
-
-    glx.stop = function(loop) {
-      clearInterval(loop);
-    };
-
-    glx.destroy = function() {
-      context.canvas.parentNode.removeChild(context.canvas);
-      context = null;
-    };
+GLX.destroy = function() {
+  if (GL !== undefined) {
+    GL.canvas.parentNode.removeChild(GL.canvas);
+    GL = undefined;
+  }
+};
 
 
-glx.util = {};
+GLX.util = {};
 
-glx.util.nextPowerOf2 = function(n) {
+GLX.util.nextPowerOf2 = function(n) {
   n--;
   n |= n >> 1;  // handle  2 bit numbers
   n |= n >> 2;  // handle  4 bit numbers
@@ -1929,7 +1924,7 @@ glx.util.nextPowerOf2 = function(n) {
   return n;
 };
 
-glx.util.calcNormal = function(ax, ay, az, bx, by, bz, cx, cy, cz) {
+GLX.util.calcNormal = function(ax, ay, az, bx, by, bz, cx, cy, cz) {
   var d1x = ax-bx;
   var d1y = ay-by;
   var d1z = az-bz;
@@ -1945,7 +1940,7 @@ glx.util.calcNormal = function(ax, ay, az, bx, by, bz, cx, cy, cz) {
   return this.calcUnit(nx, ny, nz);
 };
 
-glx.util.calcUnit = function(x, y, z) {
+GLX.util.calcUnit = function(x, y, z) {
   var m = Math.sqrt(x*x + y*y + z*z);
 
   if (m === 0) {
@@ -1956,7 +1951,7 @@ glx.util.calcUnit = function(x, y, z) {
 };
 
 
-glx.Buffer = function(itemSize, data) {
+GLX.Buffer = function(itemSize, data) {
   this.id = GL.createBuffer();
   this.itemSize = itemSize;
   this.numItems = data.length/itemSize;
@@ -1965,7 +1960,7 @@ glx.Buffer = function(itemSize, data) {
   data = null;
 };
 
-glx.Buffer.prototype = {
+GLX.Buffer.prototype = {
   enable: function() {
     GL.bindBuffer(GL.ARRAY_BUFFER, this.id);
   },
@@ -1977,7 +1972,7 @@ glx.Buffer.prototype = {
 };
 
 
-glx.Framebuffer = function(width, height, useDepthTexture) {
+GLX.Framebuffer = function(width, height, useDepthTexture) {
   if (useDepthTexture && !GL.depthTextureExtension)
     throw "Depth textures are not supported by your GPU";
     
@@ -1985,7 +1980,7 @@ glx.Framebuffer = function(width, height, useDepthTexture) {
   this.setSize(width, height);
 };
 
-glx.Framebuffer.prototype = {
+GLX.Framebuffer.prototype = {
 
   setSize: function(width, height) {
     if (!this.frameBuffer) {
@@ -2011,7 +2006,7 @@ glx.Framebuffer.prototype = {
     }
     
     if (this.useDepthTexture) {
-      this.depthTexture = new glx.texture.Image();//GL.createTexture();
+      this.depthTexture = new GLX.texture.Image();//GL.createTexture();
       this.depthTexture.enable(0);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
@@ -2031,7 +2026,7 @@ glx.Framebuffer.prototype = {
       this.renderTexture.destroy();
     }
 
-    this.renderTexture = new glx.texture.Data(width, height);
+    this.renderTexture = new GLX.texture.Data(width, height);
     GL.bindTexture(GL.TEXTURE_2D, this.renderTexture.id);
 
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE); //necessary for NPOT textures
@@ -2088,7 +2083,7 @@ glx.Framebuffer.prototype = {
 };
 
 
-glx.Shader = function(config) {
+GLX.Shader = function(config) {
   var i;
 
   this.shaderName = config.shaderName;
@@ -2118,8 +2113,8 @@ glx.Shader = function(config) {
   }
 };
 
-glx.Shader.warned = {};
-glx.Shader.prototype = {
+GLX.Shader.warned = {};
+GLX.Shader.prototype = {
 
   locateAttribute: function(name) {
     var loc = GL.getAttribLocation(this.id, name);
@@ -2172,9 +2167,9 @@ glx.Shader.prototype = {
   bindBuffer: function(buffer, attribute) {
     if (this.attributes[attribute] === undefined) {
       var qualifiedName = this.shaderName + ":" + attribute;
-      if ( !glx.Shader.warned[qualifiedName]) {
+      if ( !GLX.Shader.warned[qualifiedName]) {
         console.warn('attempt to bind VBO to invalid attribute "%s" in shader "%s"', attribute, this.shaderName);
-        glx.Shader.warned[qualifiedName] = true;
+        GLX.Shader.warned[qualifiedName] = true;
       }
       return;
     }
@@ -2186,9 +2181,9 @@ glx.Shader.prototype = {
   setUniform: function(uniform, type, value) {
     if (this.uniforms[uniform] === undefined) {
       var qualifiedName = this.shaderName + ":" + uniform;
-      if ( !glx.Shader.warned[qualifiedName]) {
+      if ( !GLX.Shader.warned[qualifiedName]) {
         console.warn('attempt to bind to invalid uniform "%s" in shader "%s"', uniform, this.shaderName);
-        glx.Shader.warned[qualifiedName] = true;
+        GLX.Shader.warned[qualifiedName] = true;
       }
 
       return;
@@ -2205,9 +2200,9 @@ glx.Shader.prototype = {
   setUniformMatrix: function(uniform, type, value) {
     if (this.uniforms[uniform] === undefined) {
       var qualifiedName = this.shaderName + ":" + uniform;
-      if ( !glx.Shader.warned[qualifiedName]) {
+      if ( !GLX.Shader.warned[qualifiedName]) {
         console.warn('attempt to bind to invalid uniform "%s" in shader "%s"', uniform, this.shaderName);
-        glx.Shader.warned[qualifiedName] = true;
+        GLX.Shader.warned[qualifiedName] = true;
       }
       return;
     }
@@ -2232,7 +2227,7 @@ glx.Shader.prototype = {
 };
 
 
-glx.Matrix = function(data) {
+GLX.Matrix = function(data) {
   this.data = new Float32Array(data ? data : [
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -2241,8 +2236,8 @@ glx.Matrix = function(data) {
   ]);
 };
 
-glx.Matrix.identity = function() {
-  return new glx.Matrix([
+GLX.Matrix.identity = function() {
+  return new GLX.Matrix([
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
@@ -2250,8 +2245,8 @@ glx.Matrix.identity = function() {
   ]);
 };
 
-glx.Matrix.identity3 = function() {
-  return new glx.Matrix([
+GLX.Matrix.identity3 = function() {
+  return new GLX.Matrix([
     1, 0, 0,
     0, 1, 0,
     0, 0, 1
@@ -2321,7 +2316,7 @@ glx.Matrix.identity3 = function() {
     res[15] = a30*b03 + a31*b13 + a32*b23 + a33*b33;
   }
 
-  glx.Matrix.prototype = {
+  GLX.Matrix.prototype = {
 
     multiply: function(m) {
       multiply(this.data, this.data, m.data);
@@ -2382,7 +2377,7 @@ glx.Matrix.identity3 = function() {
     }
   };
 
-  glx.Matrix.multiply = function(a, b) {
+  GLX.Matrix.multiply = function(a, b) {
     var res = new Float32Array(16);
     multiply(res, a.data, b.data);
     return res;
@@ -2391,11 +2386,11 @@ glx.Matrix.identity3 = function() {
   // returns a perspective projection matrix with a field-of-view of 'fov' 
   // degrees, an width/height aspect ratio of 'aspect', the near plane at 'near'
   // and the far plane at 'far'
-  glx.Matrix.Perspective = function(fov, aspect, near, far) {
+  GLX.Matrix.Perspective = function(fov, aspect, near, far) {
     var f =  1 / Math.tan(fov*(Math.PI/180)/2), 
         nf = 1 / (near - far);
         
-    return new glx.Matrix([
+    return new GLX.Matrix([
       f/aspect, 0,               0,  0,
       0,        f,               0,  0,
       0,        0, (far + near)*nf, -1,
@@ -2405,19 +2400,19 @@ glx.Matrix.identity3 = function() {
   //returns a perspective projection matrix with the near plane at 'near',
   //the far plane at 'far' and the view rectangle on the near plane bounded
   //by 'left', 'right', 'top', 'bottom'
-  glx.Matrix.Frustum = function (left, right, top, bottom, near, far) {
+  GLX.Matrix.Frustum = function (left, right, top, bottom, near, far) {
     var rl = 1 / (right - left),
         tb = 1 / (top - bottom),
         nf = 1 / (near - far);
         
-    return new glx.Matrix( [
+    return new GLX.Matrix( [
           (near * 2) * rl,                   0,                     0,  0,
                         0,     (near * 2) * tb,                     0,  0,
       (right + left) * rl, (top + bottom) * tb,     (far + near) * nf, -1,
                         0,                   0, (far * near * 2) * nf,  0]);
   };
   
-  glx.Matrix.OffCenterProjection = function (screenBottomLeft, screenTopLeft, screenBottomRight, eye, near, far) {
+  GLX.Matrix.OffCenterProjection = function (screenBottomLeft, screenTopLeft, screenBottomRight, eye, near, far) {
     var vRight = norm3(sub3( screenBottomRight, screenBottomLeft));
     var vUp    = norm3(sub3( screenTopLeft,     screenBottomLeft));
     var vNormal= normal( screenBottomLeft, screenTopLeft, screenBottomRight);
@@ -2433,12 +2428,12 @@ glx.Matrix.identity3 = function() {
     var b = dot3(vUp,    eyeToScreenBottomLeft) * near / d;
     var t = dot3(vUp,    eyeToScreenTopLeft)    * near / d;
     
-    return glx.Matrix.Frustum(l, r, t, b, near, far);
+    return GLX.Matrix.Frustum(l, r, t, b, near, far);
   };
   
   // based on http://www.songho.ca/opengl/gl_projectionmatrix.html
-  glx.Matrix.Ortho = function(left, right, top, bottom, near, far) {
-    return new glx.Matrix([
+  GLX.Matrix.Ortho = function(left, right, top, bottom, near, far) {
+    return new GLX.Matrix([
                    2/(right-left),                          0,                       0, 0,
                                 0,           2/(top - bottom),                       0, 0,
                                 0,                          0,         -2/(far - near), 0,
@@ -2446,7 +2441,7 @@ glx.Matrix.identity3 = function() {
     ]);
   };
 
-  glx.Matrix.invert3 = function(a) {
+  GLX.Matrix.invert3 = function(a) {
     var
       a00 = a[0], a01 = a[1], a02 = a[2],
       a04 = a[4], a05 = a[5], a06 = a[6],
@@ -2477,7 +2472,7 @@ glx.Matrix.identity3 = function() {
     ];
   };
 
-  glx.Matrix.transpose3 = function(a) {
+  GLX.Matrix.transpose3 = function(a) {
     return new Float32Array([
       a[0], a[3], a[6],
       a[1], a[4], a[7],
@@ -2485,7 +2480,7 @@ glx.Matrix.identity3 = function() {
     ]);
   };
 
-  glx.Matrix.transpose = function(a) {
+  GLX.Matrix.transpose = function(a) {
     return new Float32Array([
       a[0], a[4],  a[8], a[12], 
       a[1], a[5],  a[9], a[13], 
@@ -2494,7 +2489,7 @@ glx.Matrix.identity3 = function() {
     ]);
   };
 
-  // glx.Matrix.transform = function(x, y, z, m) {
+  // GLX.Matrix.transform = function(x, y, z, m) {
   //   var X = x*m[0] + y*m[4] + z*m[8]  + m[12];
   //   var Y = x*m[1] + y*m[5] + z*m[9]  + m[13];
   //   var Z = x*m[2] + y*m[6] + z*m[10] + m[14];
@@ -2505,7 +2500,7 @@ glx.Matrix.identity3 = function() {
   //   };
   // };
 
-  glx.Matrix.transform = function(m) {
+  GLX.Matrix.transform = function(m) {
     var X = m[12];
     var Y = m[13];
     var Z = m[14];
@@ -2517,7 +2512,7 @@ glx.Matrix.identity3 = function() {
     };
   };
 
-  glx.Matrix.invert = function(a) {
+  GLX.Matrix.invert = function(a) {
     var
       res = new Float32Array(16),
 
@@ -2574,10 +2569,10 @@ glx.Matrix.identity3 = function() {
 }());
 
 
-glx.texture = {};
+GLX.texture = {};
 
 
-glx.texture.Image = function() {
+GLX.texture.Image = function() {
   this.id = GL.createTexture();
   GL.bindTexture(GL.TEXTURE_2D, this.id);
 
@@ -2587,7 +2582,7 @@ glx.texture.Image = function() {
   GL.bindTexture(GL.TEXTURE_2D, null);
 };
 
-glx.texture.Image.prototype = {
+GLX.texture.Image.prototype = {
 
   clamp: function(image, maxSize) {
     if (image.width <= maxSize && image.height <= maxSize) {
@@ -2679,7 +2674,7 @@ glx.texture.Image.prototype = {
 };
 
 
-glx.texture.Data = function(width, height, data, options) {
+GLX.texture.Data = function(width, height, data, options) {
   //options = options || {};
 
   this.id = GL.createTexture();
@@ -2700,7 +2695,7 @@ glx.texture.Data = function(width, height, data, options) {
   GL.bindTexture(GL.TEXTURE_2D, null);
 };
 
-glx.texture.Data.prototype = {
+GLX.texture.Data.prototype = {
 
   enable: function(index) {
     GL.activeTexture(GL.TEXTURE0 + (index || 0));
@@ -2713,124 +2708,6 @@ glx.texture.Data.prototype = {
     GL.deleteTexture(this.id);
     this.id = null;
   }
-};
-
-
-glx.mesh = {};
-
-glx.mesh.addQuad = function(data, a, b, c, d, color) {
-  this.addTriangle(data, a, b, c, color);
-  this.addTriangle(data, c, d, a, color);
-};
-
-glx.mesh.addTriangle = function(data, a, b, c, color) {
-  data.vertices.push(
-    a[0], a[1], a[2],
-    b[0], b[1], b[2],
-    c[0], c[1], c[2]
-  );
-
-  var n = glx.util.calcNormal(
-    a[0], a[1], a[2],
-    b[0], b[1], b[2],
-    c[0], c[1], c[2]
-  );
-
-  data.normals.push(
-    n[0], n[1], n[2],
-    n[0], n[1], n[2],
-    n[0], n[1], n[2]
-  );
-
-  data.colors.push(
-    color[0], color[1], color[2], color[3],
-    color[0], color[1], color[2], color[3],
-    color[0], color[1], color[2], color[3]
-  );
-};
-
-
-glx.mesh.Triangle = function(size, color) {
-
-  var data = {
-    vertices: [],
-    normals: [],
-    colors: []
-  };
-
-  var a = [-size/2, -size/2, 0];
-  var b = [ size/2, -size/2, 0];
-  var c = [ size/2,  size/2, 0];
-
-  glx.mesh.addTriangle(data, a, b, c, color);
-
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = new glx.Buffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = new glx.Buffer(4, new Float32Array(data.colors));
-
- 	this.transform = new glx.Matrix();
-};
-
-
-glx.mesh.Plane = function(size, color) {
-
-  var data = {
-    vertices: [],
-    normals: [],
-    colors: []
-  };
-
-  var a = [-size/2, -size/2, 0];
-  var b = [ size/2, -size/2, 0];
-  var c = [ size/2,  size/2, 0];
-  var d = [-size/2,  size/2, 0];
-
-  glx.mesh.addQuad(data, a, b, c, d, color);
-
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = new glx.Buffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = new glx.Buffer(4, new Float32Array(data.colors));
-
- 	this.transform = new glx.Matrix();
-};
-
-
-glx.mesh.Cube = function(size, color) {
-
-  var data = {
-    vertices: [],
-    normals: [],
-    colors: []
-  };
-
-  var a = [-size/2, -size/2, -size/2];
-  var b = [ size/2, -size/2, -size/2];
-  var c = [ size/2,  size/2, -size/2];
-  var d = [-size/2,  size/2, -size/2];
-
-  var A = [-size/2, -size/2, size/2];
-  var B = [ size/2, -size/2, size/2];
-  var C = [ size/2,  size/2, size/2];
-  var D = [-size/2,  size/2, size/2];
-
-  glx.mesh.addQuad(data, a, b, c, d, color);
-  glx.mesh.addQuad(data, A, B, C, D, color);
-  glx.mesh.addQuad(data, a, b, B, A, color);
-  glx.mesh.addQuad(data, b, c, C, B, color);
-  glx.mesh.addQuad(data, c, d, D, C, color);
-  glx.mesh.addQuad(data, d, a, A, D, color);
-
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = new glx.Buffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = new glx.Buffer(4, new Float32Array(data.colors));
-
-  this.transform = new glx.Matrix();
-};
-
-
-    return glx;
-
-  }(context));
 };
 
 return GLX;
@@ -3393,7 +3270,7 @@ Events.init = function(map) {
       dist2 = dx*dx + dy*dy,
       angle2 = Math.atan2(dy, dx);
 
-    onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
+    onGestureChange({ touches: e.touches, rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
   }
 
   function onTouchStart(e) {
@@ -3463,7 +3340,7 @@ Events.init = function(map) {
     if (!Events.disabled) {
       map.setZoom(startZoom + (e.scale - 1));
       map.setRotation(prevRotation - e.rotation);
-  //  map.setTilt(prevTilt ...);
+      map.setTilt(prevTilt);
     }
 
     map.emit('gesture', e);
@@ -3472,7 +3349,7 @@ Events.init = function(map) {
 
 return Basemap;
 }());
-var GLMap = Basemap;
+window.GLMap = Basemap;
 
 //
 
@@ -3488,7 +3365,7 @@ if (CustomEvent === undefined) {
 }
 
 var APP;
-var MAP, glx, GL;
+var MAP, GL;
 /*
  * Note: OSMBuildings cannot use a single global world coordinate system.
  *       The numerical accuracy required for such a system would be about
@@ -3592,8 +3469,7 @@ OSMBuildings.prototype = {
    */
   addTo: function(map) {
     MAP = map;
-    glx = new GLX(MAP.container, MAP.width, MAP.height, APP.highQuality);
-    GL = glx.context;
+    GL = GLX.init(MAP.container, MAP.width, MAP.height, APP.highQuality);
 
     MAP.addLayer(this);
 
@@ -3671,7 +3547,7 @@ OSMBuildings.prototype = {
    * @param {Integer} y - the y position in the viewport
    */
   unproject: function(x, y) {
-    var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
+    var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
     /* convert window/viewport coordinates to NDC [0..1]. Note that the browser
      * screen coordinates are y-down, while the WebGL NDC coordinates are y-up,
      * so we have to invert the y value here */
@@ -3843,18 +3719,18 @@ OSMBuildings.prototype = {
     if (APP.dataGrid)    APP.dataGrid.destroy();
 
     // TODO: when taking over an existing canvas, don't destroy it here
-    glx.destroy();
+    GLX.destroy();
   }
 };
 
 //*****************************************************************************
 
-if (typeof global.define === 'function') {
-  global.define([], OSMBuildings);
-} else if (typeof global.exports === 'object') {
-  global.module.exports = OSMBuildings;
+if (typeof define === 'function') {
+  define([], OSMBuildings);
+} else if (typeof module === 'object') {
+  module.exports = OSMBuildings;
 } else {
-  global.OSMBuildings = OSMBuildings;
+  window.OSMBuildings = OSMBuildings;
 }
 
 
@@ -3919,7 +3795,7 @@ var FOG_COLOR = '#e8e0d8';
 //var FOG_COLOR = '#f0f8ff';
 var BACKGROUND_COLOR = '#efe8e0';
 
-var document = global.document;
+var document = window.document;
 
 var EARTH_RADIUS_IN_METERS = 6378137;
 var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
@@ -4609,11 +4485,11 @@ mesh.GeoJSON = (function() {
         }
 
         if (endIndex === numFeatures) {
-          this.vertexBuffer   = new glx.Buffer(3, new Float32Array(res.vertices));
-          this.normalBuffer   = new glx.Buffer(3, new Float32Array(res.normals));
-          this.texCoordBuffer = new glx.Buffer(2, new Float32Array(res.texCoords));
-          this.colorBuffer    = new glx.Buffer(3, new Float32Array(res.colors));
-          this.idBuffer       = new glx.Buffer(3, new Float32Array(resPickingColors));
+          this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(res.vertices));
+          this.normalBuffer   = new GLX.Buffer(3, new Float32Array(res.normals));
+          this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(res.texCoords));
+          this.colorBuffer    = new GLX.Buffer(3, new Float32Array(res.colors));
+          this.idBuffer       = new GLX.Buffer(3, new Float32Array(resPickingColors));
           this.fadeIn();
 
           Filter.apply(this);
@@ -4644,7 +4520,7 @@ mesh.GeoJSON = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     applyFilter: function() {
@@ -4655,12 +4531,12 @@ mesh.GeoJSON = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      var matrix = new glx.Matrix();
+      var matrix = new GLX.Matrix();
 
       if (this.elevation) {
         matrix.translate(0, 0, this.elevation);
@@ -4787,9 +4663,9 @@ mesh.MapPlane = (function() {
           [].push.apply(this.filterBuffer, filterEntries);
       }
        
-      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.vertexBuffer));
-      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.normalBuffer));
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(this.filterBuffer));
+      this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
+      this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(this.filterBuffer));
        
     },
 
@@ -4797,7 +4673,7 @@ mesh.MapPlane = (function() {
     getMatrix: function() {
       //var scale = Math.pow(2, MAP.zoom - 16);
 
-      var modelMatrix = new glx.Matrix();
+      var modelMatrix = new GLX.Matrix();
       //modelMatrix.scale(scale, scale, scale);
     
       return modelMatrix;
@@ -4852,10 +4728,10 @@ mesh.DebugQuad = (function() {
         this.vertexBuffer.destroy();
 
       var vertices = [].concat(v1, v2, v3, v1, v3, v4);
-      this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
+      this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
 
       /*
-      this.dummyMapPlaneTexCoords = new glx.Buffer(2, new Float32Array([
+      this.dummyMapPlaneTexCoords = new GLX.Buffer(2, new Float32Array([
         0.0, 0.0,
           1, 0.0,
           1,   1,
@@ -4867,7 +4743,7 @@ mesh.DebugQuad = (function() {
       if (this.normalBuffer)
         this.normalBuffer.destroy();
         
-      this.normalBuffer = new glx.Buffer(3, new Float32Array([
+      this.normalBuffer = new GLX.Buffer(3, new Float32Array([
         0, 0, 1,
         0, 0, 1,
         0, 0, 1,
@@ -4880,22 +4756,22 @@ mesh.DebugQuad = (function() {
       if (this.colorBuffer)
         this.colorBuffer.destroy();
         
-      this.colorBuffer = new glx.Buffer(3, new Float32Array(
+      this.colorBuffer = new GLX.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
 
 
       if (this.idBuffer)
         this.idBuffer.destroy();
 
-      this.idBuffer = new glx.Buffer(3, new Float32Array(
+      this.idBuffer = new GLX.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
         
-      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
+      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
         [0,0,0,0,0,0,0,0,0,0,0,0]));
         
       var filter = [0,1,1,1];
       
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(
         [].concat(filter, filter, filter, filter, filter, filter)));
         
       //this.numDummyVertices = 6;
@@ -4904,7 +4780,7 @@ mesh.DebugQuad = (function() {
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       //var scale = render.fogRadius/this.radius;
-      var modelMatrix = new glx.Matrix();
+      var modelMatrix = new GLX.Matrix();
       //modelMatrix.scale(scale, scale, scale);
     
       return modelMatrix;
@@ -5150,7 +5026,7 @@ mesh.OBJ = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     applyFilter: function() {
@@ -5161,15 +5037,15 @@ mesh.OBJ = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     onReady: function() {
-      this.vertexBuffer   = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer   = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
-      this.colorBuffer    = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idBuffer       = new glx.Buffer(3, new Float32Array(this.data.ids));
+      this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer   = new GLX.Buffer(3, new Float32Array(this.data.normals));
+      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(this.data.texCoords));
+      this.colorBuffer    = new GLX.Buffer(3, new Float32Array(this.data.colors));
+      this.idBuffer       = new GLX.Buffer(3, new Float32Array(this.data.ids));
       this.fadeIn();
       this.data = null;
 
@@ -5182,7 +5058,7 @@ mesh.OBJ = (function() {
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      var matrix = new glx.Matrix();
+      var matrix = new GLX.Matrix();
 
       if (this.elevation) {
         matrix.translate(0, 0, this.elevation);
@@ -5416,7 +5292,7 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
    * geometry is still visible */
   //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
 
-  var inverse = glx.Matrix.invert(viewProjectionMatrix);
+  var inverse = GLX.Matrix.invert(viewProjectionMatrix);
 
   var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
   var vBottomRight = getIntersectionWithXYPlane( 1, -1, inverse);
@@ -5495,7 +5371,7 @@ function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height)
     bottom=Math.min( bottom,p[1]);
   }
   
-  return new glx.Matrix.Ortho(left, right, top, bottom, near, far);
+  return new GLX.Matrix.Ortho(left, right, top, bottom, near, far);
 }
 
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
@@ -5553,13 +5429,13 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
   var tileLon = tile2lon(tileX, tileZoom);
   var tileLat = tile2lat(tileY, tileZoom);
   
-  var modelMatrix = new glx.Matrix();
+  var modelMatrix = new GLX.Matrix();
   modelMatrix.translate( (tileLon - MAP.position.longitude)* metersPerDegreeLongitude,
                         -(tileLat - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
   var size = getTileSizeInMeters( MAP.position.latitude, tileZoom);
   
-  var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
+  var mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
   var tr = transformVec3(mvpMatrix, [size, 0   , 0]);
   var bl = transformVec3(mvpMatrix, [0   , size, 0]);
@@ -5657,9 +5533,9 @@ var render = {
       delete render.effects.outlines;
     }
 
-    this.viewMatrix = new glx.Matrix();
-    this.projMatrix = new glx.Matrix();
-    this.viewProjMatrix = new glx.Matrix();
+    this.viewMatrix = new GLX.Matrix();
+    this.projMatrix = new GLX.Matrix();
+    this.viewProjMatrix = new GLX.Matrix();
     this.viewDirOnMap = [0.0, -1.0];
 
     MAP.on('change', this._onChange = this.onChange.bind(this));
@@ -5808,7 +5684,7 @@ var render = {
   },
 
   updateFogDistance: function() {
-    var inverse = glx.Matrix.invert(this.viewProjMatrix.data);
+    var inverse = GLX.Matrix.invert(this.viewProjMatrix.data);
     
     //need to store this as a reference point to determine fog distance
     this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
@@ -5833,9 +5709,9 @@ var render = {
       refHeight = 1024,
       refVFOV = 45;
 
-    glx.context.viewport(0, 0, width, height);
+    GL.viewport(0, 0, width, height);
 
-    this.viewMatrix = new glx.Matrix()
+    this.viewMatrix = new GLX.Matrix()
       .rotateZ(MAP.rotation)
       .rotateX(MAP.tilt)
       .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
@@ -5859,19 +5735,19 @@ var render = {
     //    internal reasons).
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
-    this.projMatrix = new glx.Matrix()
+    this.projMatrix = new GLX.Matrix()
       .translate(0, -height/(2.0*scale), 0) // 0, MAP y offset to neutralize camera y offset, 
       .scale(1, -1, 1) // flip Y
-      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
+      .multiply(new GLX.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
 
-    this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
+    this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
     this.updateFogDistance();
   },
 
   onResize: function() {
-    glx.context.canvas.width  = MAP.width;
-    glx.context.canvas.height = MAP.height;
+    GL.canvas.width  = MAP.width;
+    GL.canvas.height = MAP.height;
     this.onChange();
   },
 
@@ -5908,7 +5784,7 @@ render.Picking = {
   viewportSize: 512,
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
@@ -5921,7 +5797,7 @@ render.Picking = {
       ]
     });
 
-    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+    this.framebuffer = new GLX.Framebuffer(this.viewportSize, this.viewportSize);
   },
 
   render: function(framebufferSize) {
@@ -5961,7 +5837,7 @@ render.Picking = {
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+        ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
 
       shader.bindBuffer(item.vertexBuffer, 'aPosition');
@@ -6028,7 +5904,7 @@ var Sun = {
     var rotationInDeg = pos.azimuth / (Math.PI/180);
     var tiltInDeg     = 90 - pos.altitude / (Math.PI/180);
 
-    this.viewMatrix = new glx.Matrix()
+    this.viewMatrix = new GLX.Matrix()
       .rotateZ(rotationInDeg)
       .rotateX(tiltInDeg)
       .translate(0, 0, -5000)
@@ -6044,7 +5920,7 @@ var Sun = {
       7500
     );
 
-    this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
+    this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
   }
 };
 
@@ -6054,7 +5930,7 @@ render.SkyWall = function() {
   this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
   this.updateGeometry( [[0,0,0], [0,0,0], [0,0,0], [0,0,0]]);
 
-  this.shader = new glx.Shader({
+  this.shader = new GLX.Shader({
     vertexShader: Shaders.skywall.vertex,
     fragmentShader: Shaders.skywall.fragment,
     shaderName: 'sky wall shader',
@@ -6062,7 +5938,7 @@ render.SkyWall = function() {
     uniforms: ['uAbsoluteHeight', 'uMatrix', 'uTexIndex', 'uFogColor']
   });
   
-  this.floorShader = new glx.Shader({
+  this.floorShader = new GLX.Shader({
     vertexShader:   Shaders.flatColor.vertex,
     fragmentShader: Shaders.flatColor.fragment,
     attributes: ['aPosition'],
@@ -6071,7 +5947,7 @@ render.SkyWall = function() {
   
   Activity.setBusy();
   var url = APP.baseURL + '/skydome.jpg';
-  this.texture = new glx.texture.Image().load(url, function(image) {
+  this.texture = new GLX.texture.Image().load(url, function(image) {
     Activity.setIdle();
     if (image) {
       this.isReady = true;
@@ -6101,12 +5977,12 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
     this.vertexBuffer.destroy();
 
   var vertices = [].concat(v1, v2, v3, v1, v3, v4);
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
+  this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
 
   if (this.texCoordBuffer)
     this.texCoordBuffer.destroy();
 
-  var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
+  var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
   var vBottomCenter = getIntersectionWithXYPlane(0, -1, inverse);
   
   var vLeftDir = norm2(sub2( v1, vBottomCenter));
@@ -6122,7 +5998,7 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
   var tcLeft = vLeftArc;//MAP.rotation/360.0;
   var tcRight =vRightArc;//MAP.rotation/360.0 + visibleSkyDiameterFraction*3;
         
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
+  this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
     [tcLeft, 1, tcRight, 1, tcRight, 0, tcLeft, 1, tcRight, 0, tcLeft, 0]));
     
   v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0];
@@ -6133,7 +6009,7 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
   if (this.floorVertexBuffer)
     this.floorVertexBuffer.destroy();
     
-  this.floorVertexBuffer = new glx.Buffer(3, new Float32Array(
+  this.floorVertexBuffer = new GLX.Buffer(3, new Float32Array(
     [].concat( v1, v2, v3, v4)));
 };
 
@@ -6185,7 +6061,7 @@ render.Buildings = {
   init: function() {
   
     this.shader = !render.effects.shadows ?
-      new glx.Shader({
+      new GLX.Shader({
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
@@ -6205,7 +6081,7 @@ render.Buildings = {
           'uTime',
           'uWallTexIndex'
         ]
-      }) : new glx.Shader({
+      }) : new GLX.Shader({
         vertexShader: Shaders['buildings.shadows'].vertex,
         fragmentShader: Shaders['buildings.shadows'].fragment,
         shaderName: 'quality building shader',
@@ -6229,7 +6105,7 @@ render.Buildings = {
         ]
     });
     
-    this.wallTexture = new glx.texture.Image();
+    this.wallTexture = new GLX.texture.Image();
     this.wallTexture.color( [1,1,1]);
     this.wallTexture.load( BUILDING_TEXTURE);
   },
@@ -6260,7 +6136,7 @@ render.Buildings = {
     ]);
 
     if (!render.effects.shadows) {
-      shader.setUniformMatrix('uNormalTransform', '3fv', glx.Matrix.identity3().data);
+      shader.setUniformMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);
     }
 
     shader.bindTexture('uWallTexIndex', 0, this.wallTexture);
@@ -6286,11 +6162,11 @@ render.Buildings = {
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+        ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
       
       if (render.effects.shadows) {
-        shader.setUniformMatrix('uSunMatrix', '4fv', glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+        shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
       }
 
       shader.bindBuffer(item.vertexBuffer,   'aPosition');
@@ -6322,7 +6198,7 @@ render.Buildings = {
 render.MapShadows = {
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders['basemap.shadows'].vertex,
       fragmentShader: Shaders['basemap.shadows'].fragment,
       shaderName: 'map shadows shader',
@@ -6377,8 +6253,8 @@ render.MapShadows = {
 
     shader.setUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
-      ['uSunMatrix',   '4fv', glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
+      ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
+      ['uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
     ]);
 
     shader.bindBuffer(item.vertexBuffer, 'aPosition');
@@ -6400,7 +6276,7 @@ render.MapShadows = {
 render.Basemap = {
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
       shaderName: 'basemap shader',
@@ -6470,7 +6346,7 @@ render.Basemap = {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
                                    Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-    var modelMatrix = new glx.Matrix();
+    var modelMatrix = new GLX.Matrix();
     modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
                           -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
@@ -6485,7 +6361,7 @@ render.Basemap = {
 
     shader.setUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+      ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
     ]);
 
     shader.bindBuffer(tile.vertexBuffer,  'aPosition');
@@ -6508,10 +6384,10 @@ render.HudRect = {
   init: function() {
   
     var geometry = this.createGeometry();
-    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
+    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
       shaderName: 'HUD rectangle shader',
@@ -6547,7 +6423,7 @@ render.HudRect = {
 
     shader.enable();
     
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, GLX.Matrix.identity().data);
     this.vertexBuffer.enable();
 
     GL.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -6577,7 +6453,7 @@ render.HudRect = {
 */
 
 render.DepthFogNormalMap = function() {
-  this.shader = new glx.Shader({
+  this.shader = new GLX.Shader({
     vertexShader: Shaders.fogNormal.vertex,
     fragmentShader: Shaders.fogNormal.fragment,
     shaderName: 'fog/normal shader',
@@ -6585,7 +6461,7 @@ render.DepthFogNormalMap = function() {
     uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
   
-  this.framebuffer = new glx.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
+  this.framebuffer = new GLX.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
 
   this.mapPlane = new mesh.MapPlane();
 };
@@ -6604,7 +6480,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
   var
     shader = this.shader,
     framebuffer = this.framebuffer,
-    viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(viewMatrix,projMatrix));
+    viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(viewMatrix,projMatrix));
 
   framebufferSize = framebufferSize || this.framebufferSize;
   framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
@@ -6643,9 +6519,9 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
     ]);
 
     shader.setUniformMatrices([
-      ['uMatrix',       '4fv', glx.Matrix.multiply(modelMatrix, viewProjMatrix)],
+      ['uMatrix',       '4fv', GLX.Matrix.multiply(modelMatrix, viewProjMatrix)],
       ['uModelMatrix',  '4fv', modelMatrix.data],
-      ['uNormalMatrix', '3fv', glx.Matrix.transpose3(glx.Matrix.invert3(glx.Matrix.multiply(modelMatrix, viewMatrix)))]
+      ['uNormalMatrix', '3fv', GLX.Matrix.transpose3(GLX.Matrix.invert3(GLX.Matrix.multiply(modelMatrix, viewMatrix)))]
     ]);
     
     shader.bindBuffer(item.vertexBuffer, 'aPosition');
@@ -6667,7 +6543,7 @@ render.DepthFogNormalMap.prototype.destroy = function() {};
 render.AmbientMap = {
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader:   Shaders.ambientFromDepth.vertex,
       fragmentShader: Shaders.ambientFromDepth.fragment,
       shaderName: 'SSAO shader',
@@ -6675,9 +6551,9 @@ render.AmbientMap = {
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });
 
-    this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
+    this.framebuffer = new GLX.Framebuffer(128, 128); //dummy value, size will be set dynamically
     
-    this.vertexBuffer = new glx.Buffer(3, new Float32Array([
+    this.vertexBuffer = new GLX.Buffer(3, new Float32Array([
       -1, -1, 1E-5,
        1, -1, 1E-5,
        1,  1, 1E-5,
@@ -6686,7 +6562,7 @@ render.AmbientMap = {
       -1,  1, 1E-5
     ]));
        
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array([
       0,0,
       1,0,
       1,1,
@@ -6749,10 +6625,10 @@ render.Overlay = {
   init: function() {
   
     var geometry = this.createGeometry();
-    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
+    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
       shaderName: 'overlay texture shader',
@@ -6792,7 +6668,7 @@ render.Overlay = {
      * scene no matter what its actual depth is. */
     GL.disable(GL.DEPTH_TEST);
     
-    shader.setUniformMatrix('uMatrix', '4fv', glx.Matrix.identity().data);
+    shader.setUniformMatrix('uMatrix', '4fv', GLX.Matrix.identity().data);
 
     shader.bindBuffer(this.vertexBuffer,  'aPosition');
     shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
@@ -6811,7 +6687,7 @@ render.Overlay = {
 render.OutlineMap = {
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader:   Shaders.outlineMap.vertex,
       fragmentShader: Shaders.outlineMap.fragment,
       shaderName: 'outline map shader',
@@ -6819,9 +6695,9 @@ render.OutlineMap = {
       uniforms: ['uMatrix', 'uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogNormalTexIndex', 'uIdTexIndex', 'uEffectStrength']
     });
 
-    this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
+    this.framebuffer = new GLX.Framebuffer(128, 128); //dummy value, size will be set dynamically
     
-    this.vertexBuffer = new glx.Buffer(3, new Float32Array([
+    this.vertexBuffer = new GLX.Buffer(3, new Float32Array([
       -1, -1, 1E-5,
        1, -1, 1E-5,
        1,  1, 1E-5,
@@ -6830,7 +6706,7 @@ render.OutlineMap = {
       -1,  1, 1E-5
     ]));
        
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array([
       0,0,
       1,0,
       1,1,
@@ -6859,7 +6735,7 @@ render.OutlineMap = {
     GL.clearColor(1.0, 0.0, 0.0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, GLX.Matrix.identity().data);
 
     shader.setUniforms([
       ['uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]],
@@ -6889,7 +6765,7 @@ render.OutlineMap = {
 
 
 render.Blur = function() {
-  this.shader = new glx.Shader({
+  this.shader = new GLX.Shader({
     vertexShader:   Shaders.blur.vertex,
     fragmentShader: Shaders.blur.fragment,
     shaderName: 'blur shader',
@@ -6897,9 +6773,9 @@ render.Blur = function() {
     uniforms: ['uInverseTexSize', 'uTexIndex']
   });
 
-  this.framebuffer = new glx.Framebuffer(128, 128); //dummy value, size will be set dynamically
+  this.framebuffer = new GLX.Framebuffer(128, 128); //dummy value, size will be set dynamically
   
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array([
+  this.vertexBuffer = new GLX.Buffer(3, new Float32Array([
     -1, -1, 1E-5,
      1, -1, 1E-5,
      1,  1, 1E-5,
@@ -6908,7 +6784,7 @@ render.Blur = function() {
     -1,  1, 1E-5
   ]));
      
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array([
+  this.texCoordBuffer = new GLX.Buffer(2, new Float32Array([
     0,0,
     1,0,
     1,1,
@@ -6982,14 +6858,14 @@ basemap.Tile = function(x, y, zoom) {
     0, 1
   ];
 
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
+  this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+  this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
 };
 
 basemap.Tile.prototype = {
   load: function(url) {
     Activity.setBusy();
-    this.texture = new glx.texture.Image().load(url, function(image) {
+    this.texture = new GLX.texture.Image().load(url, function(image) {
       Activity.setIdle();
       if (image) {
         this.isReady = true;
@@ -7010,5 +6886,5 @@ basemap.Tile.prototype = {
     }
   }
 };
-}(this));
+}());
 //# sourceMappingURL=OSMBuildings.debug.js.map

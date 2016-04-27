@@ -334,7 +334,7 @@ Events.init = function(map) {
     if (!Events.disabled) {
       map.setZoom(startZoom + (e.scale - 1));
       map.setRotation(prevRotation - e.rotation);
-  //  map.setTilt(prevTilt ...);
+      map.setTilt(prevTilt);
     }
 
     map.emit('gesture', e);

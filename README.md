@@ -135,17 +135,17 @@ Method | Parameters | Description
 
 Event | Data | Description
 ----- | ---- | -----------
-`pointerdown` | {x, y, button} | Fired when the user pushes the mouse button on the map
-`pointerup` | {x, y, button} | Fired when the user releases the mouse button on the map
-`pointermove` | {x, y} | Fired when the user moves the mouse on the map
-`doubleclick` | {x, y, button} | Fired when the user double clicks on the map
-`mousewheel` | {delta} | Fired when wheel button of a pointing device is rotated
-`gesture` | ??? | Fired when the user performs a gesture on a touch screen
-`resize` | {width, height} | Fired when the size of the map is changed
-`move` | {latitude, longitude} | Fired on any movement of the map view
-`zoom` | {zoom} | Fired when the zoom level changes
-`rotate` | {rotation} | Fired when the map is rotated (about the elevation axis)
-`tilt` | {tilt} | Fired when the map is tilted (rotated about the camera X axis)
+`pointerdown` | detail.{x, y, button} | Fired when the user pushes the mouse button on the map
+`pointerup` | detail.{x, y, button} | Fired when the user releases the mouse button on the map
+`pointermove` | detail.{x, y} | Fired when the user moves the mouse on the map
+`doubleclick` | detail.{x, y, button} | Fired when the user double clicks on the map
+`mousewheel` | detail.{delta} | Fired when wheel button of a pointing device is rotated
+`gesture` | detail.{rotation, scale} | Fired when the user performs a gesture on a touch screen
+`resize` | detail.{width, height} | Fired when the size of the map is changed
+`move` | detail.{latitude, longitude} | Fired on any movement of the map view
+`zoom` | detail.{zoom} | Fired when the zoom level changes
+`rotate` | detail.{rotation} | Fired when the map is rotated (about the elevation axis)
+`tilt` | detail.{tilt} | Fired when the map is tilted (rotated about the camera X axis)
 
 ### OSM Buildings options
 

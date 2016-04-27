@@ -62,6 +62,7 @@
 </head>
 
 <body>
+<!--<div id="map" style="position:absolute;top:100px"></div>-->
 <div id="map"></div>
 
 <div id="label" style="width:10px;height:10px;position:absolute;z-Index:1000;border:3px solid red;"></div>
@@ -224,7 +225,7 @@
 //  });
 
   map.on('pointermove', function(e) {
-    var id = osmb.getTarget(e.x, e.y, function(id) {
+    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
       if (id) {
         document.body.style.cursor = 'pointer';
         osmb.highlight(id, '#f08000');
@@ -236,12 +237,12 @@
   });
 
 //  map.on('pointermove', function(e) {
-//    obj.position = osmb.unproject(e.x, e.y);
+//    obj.position = osmb.unproject(e.detail.x, e.detail.y);
 //  });
 //
 
 //  map.on('pointerdown', function(e) {
-//    var id = osmb.getTarget(e.x, e.y, function(id) {
+//    var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
 //      console.log(id);
 //    });
 //  });
