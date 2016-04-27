@@ -1,23 +1,58 @@
 {
-  "shaders": ["picking", "buildings", "buildings.shadows", "flatColor", "skywall", "basemap", "texture", "fogNormal", "ambientFromDepth", "blur", "basemap.shadows", "outlineMap"],
+  "shaders": [
+    "picking",
+    "buildings",
+    "buildings.shadows",
+    "flatColor",
+    "skywall",
+    "basemap",
+    "texture",
+    "fogNormal",
+    "ambientFromDepth",
+    "blur",
+    "basemap.shadows",
+    "outlineMap"
+  ],
 
-  "ext": [
+  "modules": [
     "node_modules/Triangulate/dist/Triangulate.js",
     "node_modules/Color/dist/Color.debug.js",
-    "node_modules/suncalc/suncalc.js",
-    "ext/polyfills.js"
+    "node_modules/suncalc/suncalc.js"
+  ],
 
+  "glx": [
+    "src/glx/index.js",
+    "src/glx/prefix.js",
+    "src/glx/util.js",
+    "src/glx/Buffer.js",
+    "src/glx/Framebuffer.js",
+    "src/glx/Shader.js",
+    "src/glx/Matrix.js",
+    "src/glx/Texture.js",
+    "src/glx/texture/index.js",
+    "src/glx/texture/Image.js",
+    "src/glx/texture/Data.js",
+    "src/glx/mesh/index.js",
+    "src/glx/mesh/Triangle.js",
+    "src/glx/mesh/Plane.js",
+    "src/glx/mesh/Cube.js",
+    "src/glx/suffix.js"
+  ],
+
+  "basemap": [
+    "src/engines/Basemap/index.js",
+    "src/engines/Basemap/Events.js"
   ],
 
   "src": [
-    "ext/GLX.debug.js",
+    "src/polyfills.js",
+
     "src/index.js",
     "src/Activity.js",
 
     "src/variables.js",
     "src/Request.js",
     "src/util.js",
-    "src/Shaders.min.js",
 
     "src/Grid.js",
     "src/Filter.js",

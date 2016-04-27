@@ -6,45 +6,28 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
+    cfg: grunt.file.readJSON('config.json'),
+
     concat: {
       glx: {
         options: {
           separator: "\n",
-          banner: "(function(global) {",
-          footer: "}(this));",
+          banner: "var GLX = (function() {",
+          footer: "\nreturn GLX;\n}());\n",
           sourceMap: true
         },
-        src: [
-          "src/glx/index.js",
-          "src/glx/prefix.js",
-          "src/glx/util.js",
-          "src/glx/Buffer.js",
-          "src/glx/Framebuffer.js",
-          "src/glx/Shader.js",
-          "src/glx/Matrix.js",
-          "src/glx/Texture.js",
-          "src/glx/texture/index.js",
-          "src/glx/texture/Image.js",
-          "src/glx/texture/Data.js",
-          "src/glx/mesh/index.js",
-          "src/glx/mesh/Triangle.js",
-          "src/glx/mesh/Plane.js",
-          "src/glx/mesh/Cube.js",
-          "src/glx/suffix.js"
-        ],
-        dest: 'ext/GLX.debug.js'
+        src:'<%=cfg.glx%>',
+        dest: 'build/temp/GLX.debug.js'
       },
 
       'basemap': {
         options: {
           separator: "\n",
           banner: "var Basemap = (function() {\n",
-          footer: "\nreturn Basemap;\n}());\n"
+          footer: "\nreturn Basemap;\n}());\nvar GLMap = Basemap;\n",
+          sourceMap: true
         },
-        src: [
-          'engines/Basemap/index.js',
-          'engines/Basemap/Events.js'
-        ],
+        src:'<%=cfg.basemap%>',
         dest: 'build/temp/Basemap.debug.js'
       },
 
@@ -56,9 +39,11 @@ module.exports = function(grunt) {
           sourceMap: true
         },
         src: [
-          grunt.file.readJSON('config.json').ext,
+          '<%=cfg.modules%>',
+          'build/temp/Shaders.js',
+          'build/temp/GLX.debug.js',
           'build/temp/Basemap.debug.js',
-          grunt.file.readJSON('config.json').src
+          '<%=cfg.src%>'
         ],
         dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
       }
@@ -76,7 +61,7 @@ module.exports = function(grunt) {
     },
 
     uglify: {
-      'dist': {
+      dist: {
         options: {
           sourceMap: true
         },
@@ -88,8 +73,8 @@ module.exports = function(grunt) {
     shaders: {
       dist: {
         src: 'src/shader',
-        dest: 'src/Shaders.min.js',
-        names: grunt.file.readJSON('config.json').shaders
+        dest: 'build/temp/Shaders.js',
+        names: '<%=cfg.shaders%>'
       }
     },
 
@@ -102,11 +87,12 @@ module.exports = function(grunt) {
       }
     },
 
-    clean: {
-      dist: ['./dist/OSMBuildings/<%=pkg.name%>.pack.js']
-    },
-
     jshint: {
+      glx: {
+        options: {},
+        src: ['build/temp/GLX.debug.js']
+      },
+
       basemap: {
         options: {},
         src: ['build/temp/Basemap.debug.js']
@@ -114,7 +100,7 @@ module.exports = function(grunt) {
 
       osmb: {
         options: {},
-        src: grunt.file.readJSON('config.json').src
+        src: '<%=cfg.src%>'
       }
     },
 
@@ -138,25 +124,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-compress');
   grunt.loadNpmTasks('grunt-jsdoc');
 
-  grunt.registerTask('basemap', 'base map for standalone OSM Buildings', function() {
-    grunt.task.run('concat:basemap');
-    grunt.task.run('jshint:basemap');
-  });
-
-  grunt.registerMultiTask('version', 'Set version number', function() {
-    var config = this.data;
-
-    var content = '' + fs.readFileSync(config.src);
-
-    for (var tag in config.mapping) {
-      content = content.replace(tag, config.mapping[tag]);
-    }
-
-    fs.writeFileSync(config.src, content);
-  });
-
   grunt.registerMultiTask('shaders', 'Build shaders', function() {
-    // grunt.log.writeln(JSON.stringify(this.data));
+    //grunt.log.writeln(JSON.stringify(this.data));
     var config = this.data;
 
     var src, name, Shaders = {};
@@ -174,22 +143,51 @@ module.exports = function(grunt) {
     fs.writeFileSync(config.dest, 'var Shaders = '+ JSON.stringify(Shaders) +';\n');
   });
 
-  grunt.registerTask('default', 'Build shaders', function() {
-    grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
+  grunt.registerTask('glx', 'GL abstraction layer for OSM Buildings', function() {
+    grunt.task.run('concat:glx');
+    grunt.task.run('jshint:glx');
+  });
+
+  grunt.registerTask('basemap', 'base map for standalone OSM Buildings', function() {
+    grunt.task.run('concat:basemap');
+    grunt.task.run('jshint:basemap');
+  });
+
+  grunt.registerMultiTask('version', 'set version number', function() {
+    //grunt.log.writeln(JSON.stringify(this.data));
+    var config = this.data;
+
+    var content = '' + fs.readFileSync(config.src);
+
+    for (var tag in config.mapping) {
+      content = content.replace(tag, config.mapping[tag]);
+    }
+
+    fs.writeFileSync(config.src, content);
+  });
+
+  grunt.registerTask('osmb', 'core OSM Buildings task', function() {
+    grunt.task.run('shaders');
+    grunt.task.run('glx');
+    grunt.task.run('basemap');
+
+    grunt.task.run('jshint:osmb');
+
+    grunt.task.run('concat:osmb-with-basemap');
+
+    grunt.task.run('version');
+
+    grunt.task.run('uglify');
+  });
+
+  grunt.registerTask('default', 'dev build', function() {
     grunt.task.run('shaders');
   });
 
   grunt.registerTask('release', 'Release', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
 
-    grunt.task.run('jshint:osmb');
-
-    grunt.task.run('concat:glx');
-    grunt.task.run('shaders');
-    grunt.task.run('basemap');
-    grunt.task.run('concat:osmb-with-basemap');
-    grunt.task.run('version');
-    grunt.task.run('uglify');
+    grunt.task.run('osmb');
 
     grunt.task.run('copy:assets');
     grunt.task.run('copy:css');
