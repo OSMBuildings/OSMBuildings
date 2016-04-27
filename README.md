@@ -138,7 +138,6 @@ Event | Data | Description
 `pointerdown` | {x, y, button} | Fired when the user pushes the mouse button on the map
 `pointerup` | {x, y, button} | Fired when the user releases the mouse button on the map
 `pointermove` | {x, y} | Fired when the user moves the mouse on the map
-`contextmenu` | {x, y} | Fired when the user right clicks the map
 `doubleclick` | {x, y, button} | Fired when the user double clicks on the map
 `mousewheel` | {delta} | Fired when wheel button of a pointing device is rotated
 `gesture` | ??? | Fired when the user performs a gesture on a touch screen

@@ -3135,7 +3135,19 @@ Basemap.prototype = {
 // gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
 // MIT License
 
-var inetractionDisabled = false;
+/**
+ * @private
+ */
+function add2(a, b) {
+  return [a[0] + b[0], a[1] + b[1]];
+}
+
+/**
+ * @private
+ */
+function mul2scalar(a, f) {
+  return [a[0]*f, a[1]*f];
+}
 
 /**
  * @private
@@ -3209,7 +3221,6 @@ Events.init = function(map) {
     addListener(map.container, 'mousedown', onMouseDown);
     addListener(document, 'mousemove', onMouseMove);
     addListener(document, 'mouseup', onMouseUp);
-    addListener(map.container, 'contextmenu', onContextMenu);
     addListener(map.container, 'dblclick', onDoubleClick);
     addListener(map.container, 'mousewheel', onMouseWheel);
     addListener(map.container, 'DOMMouseScroll', onMouseWheel);
@@ -3248,11 +3259,11 @@ Events.init = function(map) {
   }
 
   function onMouseDown(e) {
+    cancelEvent(e);
+
     if (e.button > 1) {
       return;
     }
-
-    cancelEvent(e);
 
     startZoom = map.zoom;
     prevRotation = map.rotation;
@@ -3305,15 +3316,9 @@ Events.init = function(map) {
     map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
   }
 
-  function onContextMenu(e) {
-    e.preventDefault();
-    var pos = getEventOffset(e);
-    map.emit('contextmenu', { x: pos.x, y: pos.y });
-    return false;
-  }
-
   function onMouseWheel(e) {
     cancelEvent(e);
+
     var delta = 0;
     if (e.wheelDeltaY) {
       delta = e.wheelDeltaY;
@@ -3328,8 +3333,10 @@ Events.init = function(map) {
       map.setZoom(map.zoom + adjust, e);
     }
 
-    map.emit('mousewheel', { delta: delta });
+    // we don't emit mousewheel here as we don't want to run into a loop of death
   }
+
+  //***************************************************************************
 
   function moveMap(e) {
     if (Events.disabled) {
@@ -3458,6 +3465,7 @@ Events.init = function(map) {
       map.setRotation(prevRotation - e.rotation);
   //  map.setTilt(prevTilt ...);
     }
+
     map.emit('gesture', e);
   }
 };
@@ -3480,7 +3488,7 @@ if (CustomEvent === undefined) {
 }
 
 var APP;
-var MAP, glx, gl;
+var MAP, glx, GL;
 /*
  * Note: OSMBuildings cannot use a single global world coordinate system.
  *       The numerical accuracy required for such a system would be about
@@ -3560,7 +3568,7 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~eventListenerFunction} callback
    */
   on: function(type, fn) {
-    gl.canvas.addEventListener(type, fn);
+    GL.canvas.addEventListener(type, fn);
     return this;
   },
 
@@ -3570,12 +3578,12 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
    */
   off: function(type, fn) {
-    gl.canvas.removeEventListener(type, fn);
+    GL.canvas.removeEventListener(type, fn);
   },
 
   emit: function(type, detail) {
     var event = new CustomEvent(type, { detail:detail });
-    gl.canvas.dispatchEvent(event);
+    GL.canvas.dispatchEvent(event);
   },
 
   /**
@@ -3585,7 +3593,7 @@ OSMBuildings.prototype = {
   addTo: function(map) {
     MAP = map;
     glx = new GLX(MAP.container, MAP.width, MAP.height, APP.highQuality);
-    gl = glx.context;
+    GL = glx.context;
 
     MAP.addLayer(this);
 
@@ -5642,7 +5650,7 @@ var render = {
   start: function() {
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
-    if (!gl.depthTextureExtension) {
+    if (!GL.depthTextureExtension) {
       console.log('[WARN] effects "shadows" and "outlines" disabled in OSMBuildings, because your GPU does not support WEBGL_depth_texture');
       //both effects rely on depth textures
       delete render.effects.shadows;
@@ -5661,9 +5669,9 @@ var render = {
     this.onResize();  //initialize projection matrix
     this.onChange();  //initialize view matrix
 
-    gl.cullFace(gl.BACK);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
+    GL.cullFace(GL.BACK);
+    GL.enable(GL.CULL_FACE);
+    GL.enable(GL.DEPTH_TEST);
 
     render.Picking.init(); // renders only on demand
     render.sky = new render.SkyWall();
@@ -5698,8 +5706,8 @@ var render = {
     requestAnimationFrame( this.renderFrame.bind(this));
 
     this.onChange();    
-    gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
@@ -5729,17 +5737,17 @@ var render = {
           render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
       }
 
-      gl.enable(gl.BLEND);
+      GL.enable(GL.BLEND);
       if (render.effects.outlines) {
-        gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
+        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
         render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
       }
 
-      gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE); 
-      gl.disable(gl.DEPTH_TEST);      
+      GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+      GL.disable(GL.DEPTH_TEST);
       render.sky.render();
-      gl.disable(gl.BLEND);
-      gl.enable(gl.DEPTH_TEST);
+      GL.disable(GL.BLEND);
+      GL.enable(GL.DEPTH_TEST);
     } else {
       render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
       render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
@@ -5758,13 +5766,13 @@ var render = {
         render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
       }
 
-      gl.enable(gl.BLEND);
+      GL.enable(GL.BLEND);
       {
         // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
         // this aplies the shadow and SSAO effects (which selectively darken the scene)
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
-        gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
+        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
         if (render.effects.outlines) {
           render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
         }
@@ -5775,22 +5783,22 @@ var render = {
         // linear interpolation between the colors of the current framebuffer 
         // ( =building geometries) and of the sky. The interpolation factor
         // is the geometry alpha value, which contains the 'foggyness' of each pixel
-        // the alpha interpolation functions is set to gl.ONE for both operands
+        // the alpha interpolation functions is set to GL.ONE for both operands
         // to ensure that the alpha channel will become 1.0 for each pixel after this
         // operation, and thus the whole canvas is not rendered partially transparently
         // over its background.
-        gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE);
-        gl.disable(gl.DEPTH_TEST);
+        GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+        GL.disable(GL.DEPTH_TEST);
         render.sky.render();
-        gl.enable(gl.DEPTH_TEST);
+        GL.enable(GL.DEPTH_TEST);
       }
-      gl.disable(gl.BLEND);
+      GL.disable(GL.BLEND);
 
       //render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
     }
 
     if (this.screenshotCallback) {
-      this.screenshotCallback(gl.canvas.toDataURL());
+      this.screenshotCallback(GL.canvas.toDataURL());
       this.screenshotCallback = null;
     }  
   },
@@ -5925,10 +5933,10 @@ render.Picking = {
     
     shader.enable();
     framebuffer.enable();
-    gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+    GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
 
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(0, 0, 0, 1);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     shader.setUniforms([
       ['uFogRadius', '1f', render.fogDistance],
@@ -5960,12 +5968,12 @@ render.Picking = {
       shader.bindBuffer(item.idBuffer, 'aID');
       shader.bindBuffer(item.filterBuffer, 'aFilter');
 
-      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     this.shader.disable();
     this.framebuffer.disable();
-    gl.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, MAP.width, MAP.height);
   },
   
   // TODO: throttle calls
@@ -6152,7 +6160,7 @@ render.SkyWall.prototype.render = function() {
 
   shader.bindTexture('uTexIndex', 0, this.texture);
 
-  gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+  GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
   shader.disable();
   
 
@@ -6160,7 +6168,7 @@ render.SkyWall.prototype.render = function() {
   this.floorShader.setUniform('uColor', '4fv', fogColor.concat([1.0]));
   this.floorShader.setUniformMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
   this.floorShader.bindBuffer(this.floorVertexBuffer, 'aPosition');
-  gl.drawArrays(gl.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
+  GL.drawArrays(GL.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
   
   this.floorShader.disable();
   
@@ -6232,7 +6240,7 @@ render.Buildings = {
     shader.enable();
 
     if (this.showBackfaces) {
-      gl.disable(gl.CULL_FACE);
+      GL.disable(GL.CULL_FACE);
     }
 
     if (!this.highlightID) {
@@ -6292,11 +6300,11 @@ render.Buildings = {
       shader.bindBuffer(item.filterBuffer,   'aFilter');
       shader.bindBuffer(item.idBuffer,       'aID');
 
-      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     if (this.showBackfaces) {
-      gl.enable(gl.CULL_FACE);
+      GL.enable(GL.CULL_FACE);
     }
 
     shader.disable();
@@ -6342,7 +6350,7 @@ render.MapShadows = {
     shader.enable();
 
     if (this.showBackfaces) {
-      gl.disable(gl.CULL_FACE);
+      GL.disable(GL.CULL_FACE);
     }
 
     shader.setUniforms([
@@ -6376,10 +6384,10 @@ render.MapShadows = {
     shader.bindBuffer(item.vertexBuffer, 'aPosition');
     shader.bindBuffer(item.normalBuffer, 'aNormal');
 
-    gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 
     if (this.showBackfaces) {
-      gl.enable(gl.CULL_FACE);
+      GL.enable(GL.CULL_FACE);
     }
 
     shader.disable();
@@ -6466,8 +6474,8 @@ render.Basemap = {
     modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
                           -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
-    gl.enable(gl.POLYGON_OFFSET_FILL);
-    gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
+    GL.enable(GL.POLYGON_OFFSET_FILL);
+    GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,
                      MAX_USED_ZOOM_LEVEL - tile.zoom);
                      
     shader.setUniforms([
@@ -6484,8 +6492,8 @@ render.Basemap = {
     shader.bindBuffer(tile.texCoordBuffer,'aTexCoord');
     shader.bindTexture('uTexIndex', 0, tile.texture);
 
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
-    gl.disable(gl.POLYGON_OFFSET_FILL);
+    GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+    GL.disable(GL.POLYGON_OFFSET_FILL);
   },
 
   destroy: function() {}
@@ -6539,18 +6547,18 @@ render.HudRect = {
 
     shader.enable();
     
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
     this.vertexBuffer.enable();
 
-    gl.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    GL.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
     this.texCoordBuffer.enable();
-    gl.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    GL.vertexAttribPointer(shader.attributes.aTexCoord, this.texCoordBuffer.itemSize, GL.FLOAT, false, 0, 0);
 
     texture.enable(0);
-    gl.uniform1i(shader.uniforms.uTexIndex, 0);
+    GL.uniform1i(shader.uniforms.uTexIndex, 0);
 
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
   },
@@ -6603,10 +6611,10 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
     
   shader.enable();
   framebuffer.enable();
-  gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+  GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
 
-  gl.clearColor(0.0, 0.0, 0.0, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  GL.clearColor(0.0, 0.0, 0.0, 1);
+  GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
   var item, modelMatrix;
 
@@ -6644,13 +6652,13 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
     shader.bindBuffer(item.normalBuffer, 'aNormal');
     shader.bindBuffer(item.filterBuffer, 'aFilter');
 
-    gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
   }
 
   shader.disable();
   framebuffer.disable();
 
-  gl.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, MAP.width, MAP.height);
 };
 
 render.DepthFogNormalMap.prototype.destroy = function() {};
@@ -6700,12 +6708,12 @@ render.AmbientMap = {
 
     framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
 
-    gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+    GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
     shader.enable();
     framebuffer.enable();
 
-    gl.clearColor(1.0, 0.0, 0.0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(1.0, 0.0, 0.0, 1);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     shader.setUniforms([
       ['uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]],
@@ -6720,12 +6728,12 @@ render.AmbientMap = {
     shader.bindTexture('uDepthTexIndex', 0, depthTexture);
     shader.bindTexture('uFogTexIndex',   1, fogTexture);
 
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
     framebuffer.disable();
 
-    gl.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, MAP.width, MAP.height);
 
   },
 
@@ -6782,7 +6790,7 @@ render.Overlay = {
     shader.enable();
     /* we are rendering an *overlay*, which is supposed to be rendered on top of the
      * scene no matter what its actual depth is. */
-    gl.disable(gl.DEPTH_TEST);    
+    GL.disable(GL.DEPTH_TEST);
     
     shader.setUniformMatrix('uMatrix', '4fv', glx.Matrix.identity().data);
 
@@ -6790,9 +6798,9 @@ render.Overlay = {
     shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
     shader.bindTexture('uTexIndex', 0, texture);
 
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
-    gl.enable(gl.DEPTH_TEST);
+    GL.enable(GL.DEPTH_TEST);
     shader.disable();
   },
 
@@ -6844,14 +6852,14 @@ render.OutlineMap = {
 
     framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
 
-    gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+    GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
     shader.enable();
     framebuffer.enable();
 
-    gl.clearColor(1.0, 0.0, 0.0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(1.0, 0.0, 0.0, 1);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    gl.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
 
     shader.setUniforms([
       ['uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]],
@@ -6867,12 +6875,12 @@ render.OutlineMap = {
     shader.bindTexture('uFogNormalTexIndex',1, fogNormalTexture);
     shader.bindTexture('uIdTexIndex',       2, idTexture);
 
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
     framebuffer.disable();
 
-    gl.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, MAP.width, MAP.height);
 
   },
 
@@ -6917,24 +6925,24 @@ render.Blur.prototype.render = function(inputTexture, framebufferSize) {
 
   framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
 
-  gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+  GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
   shader.enable();
   framebuffer.enable();
 
-  gl.clearColor(1.0, 0.0, 0, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  GL.clearColor(1.0, 0.0, 0, 1);
+  GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
   shader.setUniform('uInverseTexSize', '2fv', [1/framebuffer.width, 1/framebuffer.height]);
   shader.bindBuffer(this.vertexBuffer,  'aPosition');
   shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
   shader.bindTexture('uTexIndex', 0, inputTexture);
 
-  gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+  GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
   shader.disable();
   framebuffer.disable();
 
-  gl.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, MAP.width, MAP.height);
 };
 
 render.Blur.prototype.destroy = function() 
@@ -6987,9 +6995,9 @@ basemap.Tile.prototype = {
         this.isReady = true;
         /* The whole texture will be mapped to fit the whole tile exactly. So
          * don't attempt to wrap around the texture coordinates. */
-        gl.bindTexture(gl.TEXTURE_2D, this.texture.id);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        GL.bindTexture(GL.TEXTURE_2D, this.texture.id);
+        GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+        GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
       }
     }.bind(this));
   },

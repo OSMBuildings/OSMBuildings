@@ -92,7 +92,6 @@ Events.init = function(map) {
     addListener(map.container, 'mousedown', onMouseDown);
     addListener(document, 'mousemove', onMouseMove);
     addListener(document, 'mouseup', onMouseUp);
-    addListener(map.container, 'contextmenu', onContextMenu);
     addListener(map.container, 'dblclick', onDoubleClick);
     addListener(map.container, 'mousewheel', onMouseWheel);
     addListener(map.container, 'DOMMouseScroll', onMouseWheel);
@@ -131,11 +130,11 @@ Events.init = function(map) {
   }
 
   function onMouseDown(e) {
+    cancelEvent(e);
+
     if (e.button > 1) {
       return;
     }
-
-    cancelEvent(e);
 
     startZoom = map.zoom;
     prevRotation = map.rotation;
@@ -188,15 +187,9 @@ Events.init = function(map) {
     map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
   }
 
-  function onContextMenu(e) {
-    e.preventDefault();
-    var pos = getEventOffset(e);
-    map.emit('contextmenu', { x: pos.x, y: pos.y });
-    return false;
-  }
-
   function onMouseWheel(e) {
     cancelEvent(e);
+
     var delta = 0;
     if (e.wheelDeltaY) {
       delta = e.wheelDeltaY;
@@ -211,8 +204,10 @@ Events.init = function(map) {
       map.setZoom(map.zoom + adjust, e);
     }
 
-    map.emit('mousewheel', { delta: delta });
+    // we don't emit mousewheel here as we don't want to run into a loop of death
   }
+
+  //***************************************************************************
 
   function moveMap(e) {
     if (Events.disabled) {
@@ -341,6 +336,7 @@ Events.init = function(map) {
       map.setRotation(prevRotation - e.rotation);
   //  map.setTilt(prevTilt ...);
     }
+
     map.emit('gesture', e);
   }
 };
