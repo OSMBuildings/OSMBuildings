@@ -1,5 +1,5 @@
 var APP;
-var MAP, glx, gl;
+var MAP, glx, GL;
 /*
  * Note: OSMBuildings cannot use a single global world coordinate system.
  *       The numerical accuracy required for such a system would be about
@@ -79,7 +79,7 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~eventListenerFunction} callback
    */
   on: function(type, fn) {
-    gl.canvas.addEventListener(type, fn);
+    GL.canvas.addEventListener(type, fn);
     return this;
   },
 
@@ -89,12 +89,12 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
    */
   off: function(type, fn) {
-    gl.canvas.removeEventListener(type, fn);
+    GL.canvas.removeEventListener(type, fn);
   },
 
   emit: function(type, detail) {
     var event = new CustomEvent(type, { detail:detail });
-    gl.canvas.dispatchEvent(event);
+    GL.canvas.dispatchEvent(event);
   },
 
   /**
@@ -104,7 +104,7 @@ OSMBuildings.prototype = {
   addTo: function(map) {
     MAP = map;
     glx = new GLX(MAP.container, MAP.width, MAP.height, APP.highQuality);
-    gl = glx.context;
+    GL = glx.context;
 
     MAP.addLayer(this);
 

@@ -43,10 +43,10 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
     
   shader.enable();
   framebuffer.enable();
-  gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+  GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
 
-  gl.clearColor(0.0, 0.0, 0.0, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  GL.clearColor(0.0, 0.0, 0.0, 1);
+  GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
   var item, modelMatrix;
 
@@ -84,13 +84,13 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
     shader.bindBuffer(item.normalBuffer, 'aNormal');
     shader.bindBuffer(item.filterBuffer, 'aFilter');
 
-    gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
   }
 
   shader.disable();
   framebuffer.disable();
 
-  gl.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, MAP.width, MAP.height);
 };
 
 render.DepthFogNormalMap.prototype.destroy = function() {};

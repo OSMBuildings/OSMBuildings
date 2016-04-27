@@ -10,7 +10,7 @@ var render = {
   start: function() {
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
-    if (!gl.depthTextureExtension) {
+    if (!GL.depthTextureExtension) {
       console.log('[WARN] effects "shadows" and "outlines" disabled in OSMBuildings, because your GPU does not support WEBGL_depth_texture');
       //both effects rely on depth textures
       delete render.effects.shadows;
@@ -29,9 +29,9 @@ var render = {
     this.onResize();  //initialize projection matrix
     this.onChange();  //initialize view matrix
 
-    gl.cullFace(gl.BACK);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
+    GL.cullFace(GL.BACK);
+    GL.enable(GL.CULL_FACE);
+    GL.enable(GL.DEPTH_TEST);
 
     render.Picking.init(); // renders only on demand
     render.sky = new render.SkyWall();
@@ -66,8 +66,8 @@ var render = {
     requestAnimationFrame( this.renderFrame.bind(this));
 
     this.onChange();    
-    gl.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
       return;
@@ -97,17 +97,17 @@ var render = {
           render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
       }
 
-      gl.enable(gl.BLEND);
+      GL.enable(GL.BLEND);
       if (render.effects.outlines) {
-        gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
+        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
         render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
       }
 
-      gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE); 
-      gl.disable(gl.DEPTH_TEST);      
+      GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+      GL.disable(GL.DEPTH_TEST);
       render.sky.render();
-      gl.disable(gl.BLEND);
-      gl.enable(gl.DEPTH_TEST);
+      GL.disable(GL.BLEND);
+      GL.enable(GL.DEPTH_TEST);
     } else {
       render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
       render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
@@ -126,13 +126,13 @@ var render = {
         render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
       }
 
-      gl.enable(gl.BLEND);
+      GL.enable(GL.BLEND);
       {
         // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
         // this aplies the shadow and SSAO effects (which selectively darken the scene)
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
-        gl.blendFuncSeparate(gl.ZERO, gl.SRC_COLOR, gl.ZERO, gl.ONE); 
+        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
         if (render.effects.outlines) {
           render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
         }
@@ -143,22 +143,22 @@ var render = {
         // linear interpolation between the colors of the current framebuffer 
         // ( =building geometries) and of the sky. The interpolation factor
         // is the geometry alpha value, which contains the 'foggyness' of each pixel
-        // the alpha interpolation functions is set to gl.ONE for both operands
+        // the alpha interpolation functions is set to GL.ONE for both operands
         // to ensure that the alpha channel will become 1.0 for each pixel after this
         // operation, and thus the whole canvas is not rendered partially transparently
         // over its background.
-        gl.blendFuncSeparate(gl.ONE_MINUS_DST_ALPHA, gl.DST_ALPHA, gl.ONE, gl.ONE);
-        gl.disable(gl.DEPTH_TEST);
+        GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+        GL.disable(GL.DEPTH_TEST);
         render.sky.render();
-        gl.enable(gl.DEPTH_TEST);
+        GL.enable(GL.DEPTH_TEST);
       }
-      gl.disable(gl.BLEND);
+      GL.disable(GL.BLEND);
 
       //render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
     }
 
     if (this.screenshotCallback) {
-      this.screenshotCallback(gl.canvas.toDataURL());
+      this.screenshotCallback(GL.canvas.toDataURL());
       this.screenshotCallback = null;
     }  
   },

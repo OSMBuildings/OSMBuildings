@@ -36,24 +36,24 @@ render.Blur.prototype.render = function(inputTexture, framebufferSize) {
 
   framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
 
-  gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+  GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
   shader.enable();
   framebuffer.enable();
 
-  gl.clearColor(1.0, 0.0, 0, 1);
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  GL.clearColor(1.0, 0.0, 0, 1);
+  GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
   shader.setUniform('uInverseTexSize', '2fv', [1/framebuffer.width, 1/framebuffer.height]);
   shader.bindBuffer(this.vertexBuffer,  'aPosition');
   shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
   shader.bindTexture('uTexIndex', 0, inputTexture);
 
-  gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+  GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
   shader.disable();
   framebuffer.disable();
 
-  gl.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, MAP.width, MAP.height);
 };
 
 render.Blur.prototype.destroy = function() 

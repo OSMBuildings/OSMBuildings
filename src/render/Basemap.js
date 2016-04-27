@@ -76,8 +76,8 @@ render.Basemap = {
     modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
                           -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
-    gl.enable(gl.POLYGON_OFFSET_FILL);
-    gl.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, 
+    GL.enable(GL.POLYGON_OFFSET_FILL);
+    GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,
                      MAX_USED_ZOOM_LEVEL - tile.zoom);
                      
     shader.setUniforms([
@@ -94,8 +94,8 @@ render.Basemap = {
     shader.bindBuffer(tile.texCoordBuffer,'aTexCoord');
     shader.bindTexture('uTexIndex', 0, tile.texture);
 
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
-    gl.disable(gl.POLYGON_OFFSET_FILL);
+    GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+    GL.disable(GL.POLYGON_OFFSET_FILL);
   },
 
   destroy: function() {}

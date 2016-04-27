@@ -38,9 +38,9 @@ basemap.Tile.prototype = {
         this.isReady = true;
         /* The whole texture will be mapped to fit the whole tile exactly. So
          * don't attempt to wrap around the texture coordinates. */
-        gl.bindTexture(gl.TEXTURE_2D, this.texture.id);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        GL.bindTexture(GL.TEXTURE_2D, this.texture.id);
+        GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+        GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
       }
     }.bind(this));
   },

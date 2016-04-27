@@ -32,10 +32,10 @@ render.Picking = {
     
     shader.enable();
     framebuffer.enable();
-    gl.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+    GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
 
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    GL.clearColor(0, 0, 0, 1);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
     shader.setUniforms([
       ['uFogRadius', '1f', render.fogDistance],
@@ -67,12 +67,12 @@ render.Picking = {
       shader.bindBuffer(item.idBuffer, 'aID');
       shader.bindBuffer(item.filterBuffer, 'aFilter');
 
-      gl.drawArrays(gl.TRIANGLES, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
 
     this.shader.disable();
     this.framebuffer.disable();
-    gl.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, MAP.width, MAP.height);
   },
   
   // TODO: throttle calls

@@ -48,7 +48,7 @@ render.Overlay = {
     shader.enable();
     /* we are rendering an *overlay*, which is supposed to be rendered on top of the
      * scene no matter what its actual depth is. */
-    gl.disable(gl.DEPTH_TEST);    
+    GL.disable(GL.DEPTH_TEST);
     
     shader.setUniformMatrix('uMatrix', '4fv', glx.Matrix.identity().data);
 
@@ -56,9 +56,9 @@ render.Overlay = {
     shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
     shader.bindTexture('uTexIndex', 0, texture);
 
-    gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+    GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
-    gl.enable(gl.DEPTH_TEST);
+    GL.enable(GL.DEPTH_TEST);
     shader.disable();
   },
 

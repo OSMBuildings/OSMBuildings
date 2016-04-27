@@ -110,7 +110,7 @@ render.SkyWall.prototype.render = function() {
 
   shader.bindTexture('uTexIndex', 0, this.texture);
 
-  gl.drawArrays(gl.TRIANGLES, 0, this.vertexBuffer.numItems);
+  GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
   shader.disable();
   
 
@@ -118,7 +118,7 @@ render.SkyWall.prototype.render = function() {
   this.floorShader.setUniform('uColor', '4fv', fogColor.concat([1.0]));
   this.floorShader.setUniformMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
   this.floorShader.bindBuffer(this.floorVertexBuffer, 'aPosition');
-  gl.drawArrays(gl.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
+  GL.drawArrays(GL.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
   
   this.floorShader.disable();
   
