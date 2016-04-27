@@ -91,7 +91,7 @@ glx.Shader.prototype = {
     }
     
     buffer.enable();
-    GL.vertexAttribPointer(this.attributes[attribute], buffer.itemSize, gl.FLOAT, false, 0, 0);
+    GL.vertexAttribPointer(this.attributes[attribute], buffer.itemSize, GL.FLOAT, false, 0, 0);
   },
   
   setUniform: function(uniform, type, value) {

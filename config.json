@@ -28,7 +28,6 @@
     "src/glx/Framebuffer.js",
     "src/glx/Shader.js",
     "src/glx/Matrix.js",
-    "src/glx/Texture.js",
     "src/glx/texture/index.js",
     "src/glx/texture/Image.js",
     "src/glx/texture/Data.js",

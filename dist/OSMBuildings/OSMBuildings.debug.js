@@ -1,615 +1,4 @@
-(function(global) {
-var document = global.document;
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(value, min));
-}
-
-var Basemap = function(container, options) {
-  this.container = typeof container === 'string' ? document.getElementById(container) : container;
-  options = options || {};
-
-  this.container.classList.add('osmb-container');
-  this.width = this.container.offsetWidth;
-  this.height = this.container.offsetHeight;
-
-  this.minZoom = parseFloat(options.minZoom) || 10;
-  this.maxZoom = parseFloat(options.maxZoom) || 20;
-
-  if (this.maxZoom < this.minZoom) {
-    this.maxZoom = this.minZoom;
-  }
-
-  this.bounds = options.bounds;
-
-  this.position = {};
-  this.zoom = 0;
-
-  this.listeners = {};
-
-  this.initState(options);
-
-  if (options.state) {
-    this.persistState();
-    this.on('change', function() {
-      this.persistState();
-    }.bind(this));
-  }
-
-  this.pointer = new Pointer(this, this.container);
-  this.layers  = new Layers(this);
-
-  if (options.disabled) {
-    this.setDisabled(true);
-  }
-
-  this.attribution = options.attribution;
-  this.attributionDiv = document.createElement('DIV');
-  this.attributionDiv.className = 'osmb-attribution';
-  this.container.appendChild(this.attributionDiv);
-  this.updateAttribution();
-};
-
-Basemap.TILE_SIZE = 256;
-
-Basemap.prototype = {
-
-  updateAttribution: function() {
-    var attribution = this.layers.getAttribution();
-    if (this.attribution) {
-      attribution.unshift(this.attribution);
-    }
-    this.attributionDiv.innerHTML = attribution.join(' · ');
-  },
-
-  initState: function(options) {
-    var
-      query = location.search,
-      state = {};
-    if (query) {
-      query.substring(1).replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function($0, $1, $2) {
-        if ($1) {
-          state[$1] = $2;
-        }
-      });
-    }
-
-    var position;
-    if (state.lat !== undefined && state.lon !== undefined) {
-      position = { latitude:parseFloat(state.lat), longitude:parseFloat(state.lon) };
-    }
-    if (!position && state.latitude !== undefined && state.longitude !== undefined) {
-      position = { latitude:state.latitude, longitude:state.longitude };
-    }
-
-    var zoom     = (state.zoom     !== undefined) ? state.zoom     : options.zoom;
-    var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
-    var tilt     = (state.tilt     !== undefined) ? state.tilt     : options.tilt;
-
-    this.setPosition(position || options.position || { latitude:52.520000, longitude:13.410000 });
-    this.setZoom(zoom || this.minZoom);
-    this.setRotation(rotation || 0);
-    this.setTilt(tilt || 0);
-  },
-
-  persistState: function() {
-    if (!history.replaceState || this.stateDebounce) {
-      return;
-    }
-
-    this.stateDebounce = setTimeout(function() {
-      this.stateDebounce = null;
-      var params = [];
-      params.push('lat=' + this.position.latitude.toFixed(6));
-      params.push('lon=' + this.position.longitude.toFixed(6));
-      params.push('zoom=' + this.zoom.toFixed(1));
-      params.push('tilt=' + this.tilt.toFixed(1));
-      params.push('rotation=' + this.rotation.toFixed(1));
-      history.replaceState({}, '', '?'+ params.join('&'));
-    }.bind(this), 1000);
-  },
-
-  // TODO: switch to native events
-  emit: function(type, payload) {
-    if (!this.listeners[type]) {
-      return;
-    }
-
-    var listeners = this.listeners[type];
-
-    requestAnimationFrame(function() {
-      for (var i = 0, il = listeners.length; i < il; i++) {
-        listeners[i](payload);
-      }
-    });
-  },
-
-  //***************************************************************************
-
-  // TODO: switch to native events
-  on: function(type, fn) {
-    if (!this.listeners[type]) {
-      this.listeners[type] = [];
-    }
-    this.listeners[type].push(fn);
-    return this;
-  },
-
-  // TODO: switch to native events
-  off: function(type, fn) {
-    if (!this.listeners[type]) {
-      return;
-    }
-
-    this.listeners[type] = this.listeners[type].filter(function(listener) {
-      return (listener !== fn);
-    });
-  },
-
-  setDisabled: function(flag) {
-    this.pointer.disabled = !!flag;
-    return this;
-  },
-
-  isDisabled: function() {
-    return !!this.pointer.disabled;
-  },
-
-  /* returns the geographical bounds of the current view.
-   * notes: 
-   * - since the bounds are always axis-aligned they will contain areas that are
-   *   not currently visible if the current view is not also axis-aligned.
-   * - the bounds only contain the map area that OSMBuildings considers for rendering.
-   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
-   *   never extend beyond that, even if the horizon is visible (in which case the
-   *   bounds would mathematically be infinite).
-   * - the bounds only consider ground level. For example, buildings whose top 
-   *   is seen at the lower edge of the screen, but whose footprint is outside 
-   *   of the current view below the lower edge do not contribute to the bounds.
-   *   so their top may be visible and they may still be out of bounds.
-   */
-  getBounds: function() {
-    var viewQuad = render.getViewQuad(), res = [];
-    for (var i in viewQuad) {
-      res[i] = getPositionFromLocal(viewQuad[i]);
-    }
-    return res;
-  },
-
-  setZoom: function(zoom, e) {
-    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
-
-    if (this.zoom !== zoom) {
-      this.zoom = zoom;
-
-      /* if a screen position was given for which the geographic position displayed
-       * should not change under the zoom */
-      if (e) {
-        //FIXME: add code; this needs to take the current camera (rotation and
-        //       perspective) into account
-        //NOTE:  the old code (comment out below) only works for north-up
-        //       non-perspective views
-        /*
-        var dx = this.container.offsetWidth/2  - e.clientX;
-        var dy = this.container.offsetHeight/2 - e.clientY;
-        this.center.x -= dx;
-        this.center.y -= dy;
-        this.center.x *= ratio;
-        this.center.y *= ratio;
-        this.center.x += dx;
-        this.center.y += dy;*/
-      }
-      this.emit('zoom', { zoom: zoom });
-      this.emit('change');
-    }
-    return this;
-  },
-
-  getZoom: function() {
-    return this.zoom;
-  },
-
-  setPosition: function(pos) {
-    var lat = parseFloat(pos.latitude);
-    var lon = parseFloat(pos.longitude);
-    if (isNaN(lat) || isNaN(lon)) {
-      return;
-    }
-    this.position = { latitude:clamp(lat, -90, 90), longitude:clamp(lon, -180, 180) };
-    this.emit('change');
-    return this;
-  },
-
-  getPosition: function() {
-    return this.position;
-  },
-
-  setSize: function(size) {
-    if (size.width !== this.width || size.height !== this.height) {
-      this.width = size.width;
-      this.height = size.height;
-      this.emit('resize', { width: this.width, height: this.height });
-    }
-    return this;
-  },
-
-  getSize: function() {
-    return { width: this.width, height: this.height };
-  },
-
-  setRotation: function(rotation) {
-    rotation = parseFloat(rotation)%360;
-    if (this.rotation !== rotation) {
-      this.rotation = rotation;
-      this.emit('rotate', { rotation: rotation });
-      this.emit('change');
-    }
-    return this;
-  },
-
-  getRotation: function() {
-    return this.rotation;
-  },
-
-  setTilt: function(tilt) {
-    tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
-    if (this.tilt !== tilt) {
-      this.tilt = tilt;
-      this.emit('tilt', { tilt: tilt });
-      this.emit('change');
-    }
-    return this;
-  },
-
-  getTilt: function() {
-    return this.tilt;
-  },
-
-  addLayer: function(layer) {
-    this.layers.add(layer);
-    this.updateAttribution();
-    return this;
-  },
-
-  removeLayer: function(layer) {
-    this.layers.remove(layer);
-    this.updateAttribution();
-  },
-
-  destroy: function() {
-    this.listeners = [];
-    this.pointer.destroy();
-    this.layers.destroy();
-    this.container.innerHTML = '';
-  }
-};
-
-//*****************************************************************************
-
-global.GLMap = Basemap;
-
-
-// TODO: detect pointerleave from container
-// TODO: continue drag/gesture even when off container
-// TODO: allow two finger swipe for tilt
-
-function getEventOffset(e) {
-  if (e.offsetX !== undefined) {
-    return { x:e.offsetX, y:e.offsetY };
-  }
-  var offset = getElementOffset(e.target);
-  return {
-    x: e.clientX - offset.x,
-    y: e.clientY - offset.y
-  }
-}
-
-function getElementOffset(el) {
-  var res = { x:0, y:0 };
-
-  while(el.nodeType === 1) {
-    res.x += el.offsetLeft;
-    res.y += el.offsetTop;
-    el = el.parentNode;
-  }
-  return res;
-}
-
-function cancelEvent(e) {
-  if (e.preventDefault) {
-    e.preventDefault();
-  }
-  //if (e.stopPropagation) {
-  //  e.stopPropagation();
-  //}
-  e.returnValue = false;
-}
-
-var Pointer = function(map, container) {
-  this.map = map;
-
-  if ('ontouchstart' in global) {
-    this._addListener(container, 'touchstart', this.onTouchStart);
-    this._addListener(container, 'touchmove', this.onTouchMove);
-    this._addListener(container, 'touchend', this.onTouchEnd);
-    this._addListener(container, 'gesturechange', this.onGestureChange);
-  } else {
-    this._addListener(container, 'mousedown', this.onMouseDown);
-    this._addListener(container, 'mousemove', this.onMouseMove);
-    this._addListener(container, 'mouseup', this.onMouseUp);
-    this._addListener(container, 'contextmenu', this.onContextMenu);
-    this._addListener(container, 'dblclick', this.onDoubleClick);
-    this._addListener(container, 'mousewheel', this.onMouseWheel);
-    this._addListener(container, 'DOMMouseScroll', this.onMouseWheel);
-  }
-
-  var resizeDebounce;
-  this._addListener(global, 'resize', function() {
-    if (resizeDebounce) {
-      return;
-    }
-    resizeDebounce = setTimeout(function() {
-      resizeDebounce = null;
-      map.setSize({ width:container.offsetWidth, height:container.offsetHeight });
-    }, 250);
-  });
-};
-
-Pointer.prototype = {
-
-  prevX: 0,
-  prevY: 0,
-  startX: 0,
-  startY: 0,
-  startZoom: 0,
-  prevRotation: 0,
-  prevTilt: 0,
-  disabled: false,
-  pointerIsDown: false,
-
-  _listeners: [],
-
-  _addListener: function(target, type, fn) {
-    var boundFn = fn.bind(this);
-    target.addEventListener(type, boundFn, false);
-    this._listeners.push({ target:target, type:type, fn:boundFn });
-  },
-
-  onDoubleClick: function(e) {
-    cancelEvent(e);
-    if (!this.disabled) {
-      this.map.setZoom(this.map.zoom + 1, e);
-    }
-    var pos = getEventOffset(e);
-    this.map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
-  },
-
-  onMouseDown: function(e) {
-    if (e.button > 1) {
-      return;
-    }
-
-    cancelEvent(e);
-
-    this.startZoom = this.map.zoom;
-    this.prevRotation = this.map.rotation;
-    this.prevTilt = this.map.tilt;
-
-    var pos = getEventOffset(e);
-    this.startX = this.prevX = pos.x;
-    this.startY = this.prevY = pos.y;
-
-    this.pointerIsDown = true;
-
-    this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
-  },
-
-  onMouseMove: function(e) {
-    var pos = getEventOffset(e);
-
-    if (this.pointerIsDown) {
-      if (e.button === 0 && !e.altKey) {
-        this.moveMap(e);
-      } else {
-        this.rotateMap(e);
-      }
-
-      this.prevX = pos.x;
-      this.prevY = pos.y;
-    }
-
-    this.map.emit('pointermove', { x: pos.x, y: pos.y });
-  },
-
-  onMouseUp: function(e) {
-    // prevents clicks on other page elements
-    if (!this.pointerIsDown) {
-      return;
-    }
-
-    var pos = getEventOffset(e);
-
-    if (e.button === 0 && !e.altKey) {
-      if (Math.abs(pos.x - this.startX)>5 || Math.abs(pos.y - this.startY)>5) {
-        this.moveMap(e);
-      }
-    } else {
-      this.rotateMap(e);
-    }
-
-    this.pointerIsDown = false;
-
-    this.map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
-  },
-
-  onContextMenu: function(e) {
-    e.preventDefault();
-    var pos = getEventOffset(e);
-    this.map.emit('contextmenu', { x: pos.x, y: pos.y });
-    return false;
-  },
-
-  onMouseWheel: function(e) {
-    cancelEvent(e);
-    var delta = 0;
-    if (e.wheelDeltaY) {
-      delta = e.wheelDeltaY;
-    } else if (e.wheelDelta) {
-      delta = e.wheelDelta;
-    } else if (e.detail) {
-      delta = -e.detail;
-    }
-
-    if (!this.disabled) {
-      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
-      this.map.setZoom(this.map.zoom + adjust, e);
-    }
-
-    this.map.emit('mousewheel', { delta: delta });
-  },
-
-  moveMap: function(e) {
-    if (this.disabled) {
-      return;
-    }
-
-    // FIXME: make movement exact, i.e. make the position that
-    //        appeared at (this.prevX, this.prevY) before appear at
-    //        (e.offsetX, e.offsetY) now.
-    // the constant 0.86 was chosen experimentally for the map movement to be
-    // "pinned" to the cursor movement when the map is shown top-down
-    var scale = 0.86 * Math.pow(2, -this.map.zoom);
-    var lonScale = 1/Math.cos( this.map.position.latitude/ 180 * Math.PI);
-    var pos = getEventOffset(e);
-    var dx = pos.x - this.prevX;
-    var dy = pos.y - this.prevY;
-    var angle = this.map.rotation * Math.PI/180;
-
-    var vRight   = [ Math.cos(angle),             Math.sin(angle)];
-    var vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)]
-
-    var dir = add2(  mul2scalar(vRight,    dx),
-                     mul2scalar(vForward, -dy));
-
-    var newPosition = {
-      longitude: this.map.position.longitude - dir[0] * scale*lonScale,
-      latitude:  this.map.position.latitude  + dir[1] * scale };
-
-    this.map.setPosition(newPosition);
-    this.map.emit('move', newPosition);
-  },
-
-  rotateMap: function(e) {
-    if (this.disabled) {
-      return;
-    }
-    var pos = getEventOffset(e);
-    this.prevRotation += (pos.x - this.prevX)*(360/innerWidth);
-    this.prevTilt -= (pos.y - this.prevY)*(360/innerHeight);
-    this.map.setRotation(this.prevRotation);
-    this.map.setTilt(this.prevTilt);
-  },
-
-  //***************************************************************************
-
-  onTouchStart: function(e) {
-    cancelEvent(e);
-
-    this.startZoom = this.map.zoom;
-    this.prevRotation = this.map.rotation;
-    this.prevTilt = this.map.tilt;
-
-    if (e.touches.length) {
-      e = e.touches[0];
-    }
-
-    var pos = getEventOffset(e);
-    this.startX = this.prevX = pos.x;
-    this.startY = this.prevY = pos.y;
-
-    this.map.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
-  },
-
-  onTouchMove: function(e) {
-    if (e.touches.length) {
-      e = e.touches[0];
-    }
-
-    this.moveMap(e);
-
-    var pos = getEventOffset(e);
-    this.prevX = pos.x;
-    this.prevY = pos.y;
-
-    this.map.emit('pointermove', { x: pos.x, y: pos.y });
-  },
-
-  onTouchEnd: function(e) {
-    if (e.touches.length === 0) {
-      this.map.emit('pointerup', { x: this.prevX, y: this.prevY, button: 0 });
-    } else if (e.touches.length === 1) {
-      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
-      var pos = getEventOffset(e.touches[0]);
-      this.prevX = pos.x;
-      this.prevY = pos.y;
-    }
-  },
-
-  onGestureChange: function(e) {
-    cancelEvent(e);
-    if (!this.disabled) {
-      this.map.setZoom(this.startZoom + (e.scale - 1));
-      this.map.setRotation(this.prevRotation - e.rotation);
-  //  this.map.setTilt(prevTilt ...);
-    }
-    this.map.emit('gesture', e.touches);
-  },
-
-  destroy: function() {
-    this.disabled = true;
-    var listener;
-    for (var i = 0; i < this._listeners.length; i++) {
-      listener = this._listeners[i];
-      listener.target.removeEventListener(listener.type, listener.fn, false);
-    }
-    this._listeners = [];
-  }
-};
-
-
-var Layers = function(map) {
-  this.map = map;
-  this.items = [];
-};
-
-Layers.prototype = {
-
-  add: function(layer) {
-    this.items.push(layer);
-  },
-
-  remove: function(layer) {
-    this.items = this.items.filter(function(item) {
-      return (item !== layer);
-    });
-  },
-
-  getAttribution: function() {
-    var attribution = [];
-    for (var i = 0; i < this.items.length; i++) {
-      if (this.items[i].attribution) {
-        attribution.push(this.items[i].attribution);
-      }
-    }
-    return attribution;
-  },
-
-  destroy: function() {
-    this.items = [];
-  }
-};
-
-var Triangulate = (function() {
+(function(global) {var Triangulate = (function() {
 var w3cColors = {
   aliceblue: '#f0f8ff',
   antiquewhite: '#faebd7',
@@ -2335,7 +1724,116 @@ return Color;
 
 if (typeof module === 'object') { module.exports = Color; }
 
-(function(global) {
+/*
+ (c) 2011-2015, Vladimir Agafonkin
+ SunCalc is a JavaScript library for calculating sun position and light phases.
+ https://github.com/mourner/suncalc
+*/
+
+var suncalc = (function () {
+  'use strict';
+
+// shortcuts for easier to read formulas
+
+  var PI = Math.PI,
+    sin = Math.sin,
+    cos = Math.cos,
+    tan = Math.tan,
+    asin = Math.asin,
+    atan = Math.atan2,
+    rad = PI/180;
+
+// sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
+
+
+// date/time constants and conversions
+
+  var dayMs = 1000*60*60*24,
+    J1970 = 2440588,
+    J2000 = 2451545;
+
+  function toJulian(date) {
+    return date.valueOf()/dayMs - 0.5 + J1970;
+  }
+
+  function toDays(date) {
+    return toJulian(date) - J2000;
+  }
+
+
+// general calculations for position
+
+  var e = rad*23.4397; // obliquity of the Earth
+
+  function rightAscension(l, b) {
+    return atan(sin(l)*cos(e) - tan(b)*sin(e), cos(l));
+  }
+
+  function declination(l, b) {
+    return asin(sin(b)*cos(e) + cos(b)*sin(e)*sin(l));
+  }
+
+  function azimuth(H, phi, dec) {
+    return atan(sin(H), cos(H)*sin(phi) - tan(dec)*cos(phi));
+  }
+
+  function altitude(H, phi, dec) {
+    return asin(sin(phi)*sin(dec) + cos(phi)*cos(dec)*cos(H));
+  }
+
+  function siderealTime(d, lw) {
+    return rad*(280.16 + 360.9856235*d) - lw;
+  }
+
+
+// general sun calculations
+
+  function solarMeanAnomaly(d) {
+    return rad*(357.5291 + 0.98560028*d);
+  }
+
+  function eclipticLongitude(M) {
+
+    var C = rad*(1.9148*sin(M) + 0.02*sin(2*M) + 0.0003*sin(3*M)), // equation of center
+      P = rad*102.9372; // perihelion of the Earth
+
+    return M + C + P + PI;
+  }
+
+  function sunCoords(d) {
+
+    var M = solarMeanAnomaly(d),
+      L = eclipticLongitude(M);
+
+    return {
+      dec: declination(L, 0),
+      ra: rightAscension(L, 0)
+    };
+  }
+
+// calculates sun position for a given date and latitude/longitude
+
+  return function(date, lat, lng) {
+
+    var lw = rad* -lng,
+      phi = rad*lat,
+      d = toDays(date),
+
+      c = sunCoords(d),
+      H = siderealTime(d, lw) - c.ra;
+
+    return {
+      azimuth: azimuth(H, phi, c.dec),
+      altitude: altitude(H, phi, c.dec)
+    };
+  };
+
+}());
+
+
+var Shaders = {"picking":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aID;\nattribute vec4 aFilter;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nuniform float uTime;\nvarying vec4 vColor;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vec4 mPosition = vec4(uModelMatrix * pos);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aID, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec4 aFilter;\nattribute vec3 aID;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientHeight = 90.0;\nconst float gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightID == aID) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    vTexCoord = aTexCoord;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n    \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"},"buildings.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec4 aFilter;\nattribute vec3 aID;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightID == aID) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vNormal = aNormal;\n    vTexCoord = aTexCoord;\n    //vec3 transformedNormal = aNormal * uNormalTransform;\n    //float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n    //color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n    \n    // *** shadow mapping ********\n    vec4 sunRelPosition = uSunMatrix * pos;\n    vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  }\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  vec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\n  float diffuse = dot(uLightDirection, normal);\n  diffuse = max(diffuse, 0.0);\n  // reduce shadow strength with:\n  // - lowering sun positions, to be consistent with the shadows on the basemap (there,\n  //   shadows are faded out with lowering sun positions to hide shadow artifacts caused\n  //   when sun direction and map surface are almost perpendicular\n  // - large angles between the sun direction and the surface normal, to hide shadow\n  //   artifacts that occur when surface normal and sun direction are almost perpendicular\n  float shadowStrength = pow( max( min(\n    dot(uLightDirection, vec3(0.0, 0.0, 1.0)),\n    dot(uLightDirection, normal)\n  ), 0.0), 1.5);\n  if (diffuse > 0.0 && shadowStrength > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float occludedBySun = mix( \n                            mix(tlVal, trVal, pos.x), \n                            mix(blVal, brVal, pos.x),\n                            pos.y);\n    diffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n  }\n  vec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n              (diffuse/1.5) * uLightColor;\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\n  gl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"},"flatColor":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\n  gl_FragColor = uColor;\n}\n"},"skywall":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform float uAbsoluteHeight;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nconst float gradientHeight = 10.0;\nconst float gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vRelativeHeight = aPosition.z / uAbsoluteHeight;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nvoid main() {\n  float blendFactor = min(100.0 * vRelativeHeight, 1.0);\n  vec4 texColor = texture2D(uTexIndex, vTexCoord);\n  gl_FragColor = mix( vec4(uFogColor, 1.0), texColor,  blendFactor);\n}\n"},"basemap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vec4 worldPos = uModelMatrix * aPosition;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"},"texture":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"fogNormal":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec4 aFilter;\nattribute vec3 aNormal;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nuniform float uTime;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    verticalDistanceToLowerEdge = 0.0;\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vNormal = uNormalMatrix * aNormal;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  gl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"},"ambientFromDepth":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset)\n{\n    float depthThere = getDepth(pos, offset);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    float depthDiff = abs(depthThere - depthHere) * uFarPlane;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we do not consider all \n * texels in the sampling area, but only 16. This causes some sampling artifacts\n * that are later removed by blurring the ambient occlusion texture (this is \n * done in a separate shader).\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord, ivec2(0, 0));\n  float fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4(1.0);\n    return;\n  }\n  float occlusionFactor = 1.0;\n  \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\n  occlusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"},"blur":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n/* Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, vec2 offset)\n{\n  return texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2(+1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, -1.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, +1.0));\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, vec2(-1.0, -1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(-1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, -1.0));\n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"},"basemap.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  vec4 pos = vec4(aPosition.xyz, 1.0);\n  gl_Position = uMatrix * pos;\n  vec4 sunRelPosition = uSunMatrix * pos;\n  vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  vNormal = aNormal;\n  vec4 worldPos = uModelMatrix * pos;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not* \n * render the map texture itself, but is instead intended to be blended on top\n * of an already rendered map.\n * Note: this shader is not (and does not attempt to) be physically correct.\n *       It is intented to be a blend between a useful illustration of cast\n *       shadows and a mitigation of shadow casting artifacts occuring at\n *       low angles on incidence.\n *       Map brightness is only affected by shadows, not by light direction.\n *       Shadows are darkest when light comes from straight above (and thus\n *       shadows can be computed reliably) and become less and less visible\n *       with the light source close to the horizont (where moirC) and offset\n *       artifacts would otherwise be visible).\n */\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  //vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n  //gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n  //return;\n  float diffuse = dot(uDirToSun, normalize(vNormal));\n  diffuse = max(diffuse, 0.0);\n  \n  float shadowStrength = uShadowStrength * pow(diffuse, 1.5);\n  if (diffuse > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    \n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    diffuse = mix( mix(tlVal, trVal, pos.x), \n                   mix(blVal, brVal, pos.x),\n                   pos.y);\n  }\n  diffuse = mix(1.0, diffuse, shadowStrength);\n  \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  float darkness = (1.0 - diffuse);\n  darkness *=  (1.0 - fogIntensity);\n  gl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"},"outlineMap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogNormalTexIndex;\nuniform sampler2D uIdTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, vec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + offset * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\nvec3 getNormal(vec2 pos, vec2 offset)\n{\n  return normalize(texture2D(uFogNormalTexIndex, pos + offset * uInverseTexSize).xyz * 2.0 - 1.0);\n}\nvec3 getEncodedId(vec2 pos, vec2 offset)\n{\n  return texture2D(uIdTexIndex, pos + offset * uInverseTexSize).xyz;\n}\nvoid main() {\n  float fogIntensity = texture2D(uFogNormalTexIndex, vTexCoord).w;\n  vec3 normalHere =  getNormal(vTexCoord, vec2(0, 0));\n  vec3 normalRight = getNormal(vTexCoord, vec2(1, 0));\n  vec3 normalAbove = getNormal(vTexCoord, vec2(0,-1));\n  \n  float edgeStrengthFromNormal = \n    step( dot(normalHere, normalRight), 0.9) +\n    step( dot(normalHere, normalAbove), 0.9);\n  float depthHere =  getDepth(vTexCoord, vec2(0,  0));\n  float depthRight = getDepth(vTexCoord, vec2(1,  0));\n  float depthAbove = getDepth(vTexCoord, vec2(0, -1));\n  float depthDiffRight = abs(depthHere - depthRight) * 7500.0;\n  float depthDiffAbove = abs(depthHere - depthAbove) * 7500.0;\n  float edgeStrengthFromDepth = step(10.0, depthDiffRight) + \n                                step(10.0, depthDiffAbove);\n  \n  vec3 idHere = getEncodedId(vTexCoord, vec2(0,0));\n  vec3 idRight = getEncodedId(vTexCoord, vec2(1,0));\n  vec3 idAbove = getEncodedId(vTexCoord, vec2(0,-1));\n  float edgeStrengthFromId = (idHere != idRight || idHere != idAbove) ? 1.0 : 0.0;\n  \n  float edgeStrength = max( edgeStrengthFromId, max( edgeStrengthFromNormal, edgeStrengthFromDepth));\n  float occlusionFactor = 1.0 - (edgeStrength * uEffectStrength);\n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"}};
+
+var GLX = (function() {
 //var ext = GL.getExtension('WEBGL_lose_context');
 //ext.loseContext();
 
@@ -2503,7 +2001,7 @@ glx.Framebuffer.prototype = {
     this.height = height;
     
     if (this.depthRenderBuffer) {
-      GL.deleteRenderbuffer(this.depthRenderBuffer)
+      GL.deleteRenderbuffer(this.depthRenderBuffer);
       this.depthRenderBuffer = null;
     } 
     
@@ -2513,13 +2011,13 @@ glx.Framebuffer.prototype = {
     }
     
     if (this.useDepthTexture) {
-      this.depthTexture = new glx.texture.Image()//GL.createTexture();
+      this.depthTexture = new glx.texture.Image();//GL.createTexture();
       this.depthTexture.enable(0);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
       //CLAMP_TO_EDGE is required for NPOT textures
-      GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+      GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
       GL.texImage2D(GL.TEXTURE_2D, 0, GL.DEPTH_STENCIL, width, height, 0, GL.DEPTH_STENCIL, GL.depthTextureExtension.UNSIGNED_INT_24_8_WEBGL, null);
       GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.DEPTH_STENCIL_ATTACHMENT, GL.TEXTURE_2D, this.depthTexture.id, 0);
     } else {
@@ -2536,8 +2034,8 @@ glx.Framebuffer.prototype = {
     this.renderTexture = new glx.texture.Data(width, height);
     GL.bindTexture(GL.TEXTURE_2D, this.renderTexture.id);
 
-    GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); //necessary for NPOT textures
-    GL.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE); //necessary for NPOT textures
+    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
     GL.framebufferTexture2D(GL.FRAMEBUFFER, GL.COLOR_ATTACHMENT0, GL.TEXTURE_2D, this.renderTexture.id, 0);
 
     if (GL.checkFramebufferStatus(GL.FRAMEBUFFER) !== GL.FRAMEBUFFER_COMPLETE) {
@@ -2682,7 +2180,7 @@ glx.Shader.prototype = {
     }
     
     buffer.enable();
-    GL.vertexAttribPointer(this.attributes[attribute], buffer.itemSize, gl.FLOAT, false, 0, 0);
+    GL.vertexAttribPointer(this.attributes[attribute], buffer.itemSize, GL.FLOAT, false, 0, 0);
   },
   
   setUniform: function(uniform, type, value) {
@@ -3335,122 +2833,640 @@ glx.mesh.Cube = function(size, color) {
   }(context));
 };
 
-if (typeof define === 'function') {
-  define([], GLX);
-} else if (typeof exports === 'object') {
-  module.exports = GLX;
-} else {
-  global.GLX = GLX;
-}
-}(this));
-//
-/*
- (c) 2011-2015, Vladimir Agafonkin
- SunCalc is a JavaScript library for calculating sun position and light phases.
- https://github.com/mourner/suncalc
-*/
-
-var suncalc = (function () {
-  'use strict';
-
-// shortcuts for easier to read formulas
-
-  var PI = Math.PI,
-    sin = Math.sin,
-    cos = Math.cos,
-    tan = Math.tan,
-    asin = Math.asin,
-    atan = Math.atan2,
-    rad = PI/180;
-
-// sun calculations are based on http://aa.quae.nl/en/reken/zonpositie.html formulas
-
-
-// date/time constants and conversions
-
-  var dayMs = 1000*60*60*24,
-    J1970 = 2440588,
-    J2000 = 2451545;
-
-  function toJulian(date) {
-    return date.valueOf()/dayMs - 0.5 + J1970;
-  }
-
-  function toDays(date) {
-    return toJulian(date) - J2000;
-  }
-
-
-// general calculations for position
-
-  var e = rad*23.4397; // obliquity of the Earth
-
-  function rightAscension(l, b) {
-    return atan(sin(l)*cos(e) - tan(b)*sin(e), cos(l));
-  }
-
-  function declination(l, b) {
-    return asin(sin(b)*cos(e) + cos(b)*sin(e)*sin(l));
-  }
-
-  function azimuth(H, phi, dec) {
-    return atan(sin(H), cos(H)*sin(phi) - tan(dec)*cos(phi));
-  }
-
-  function altitude(H, phi, dec) {
-    return asin(sin(phi)*sin(dec) + cos(phi)*cos(dec)*cos(H));
-  }
-
-  function siderealTime(d, lw) {
-    return rad*(280.16 + 360.9856235*d) - lw;
-  }
-
-
-// general sun calculations
-
-  function solarMeanAnomaly(d) {
-    return rad*(357.5291 + 0.98560028*d);
-  }
-
-  function eclipticLongitude(M) {
-
-    var C = rad*(1.9148*sin(M) + 0.02*sin(2*M) + 0.0003*sin(3*M)), // equation of center
-      P = rad*102.9372; // perihelion of the Earth
-
-    return M + C + P + PI;
-  }
-
-  function sunCoords(d) {
-
-    var M = solarMeanAnomaly(d),
-      L = eclipticLongitude(M);
-
-    return {
-      dec: declination(L, 0),
-      ra: rightAscension(L, 0)
-    };
-  }
-
-// calculates sun position for a given date and latitude/longitude
-
-  return function(date, lat, lng) {
-
-    var lw = rad* -lng,
-      phi = rad*lat,
-      d = toDays(date),
-
-      c = sunCoords(d),
-      H = siderealTime(d, lw) - c.ra;
-
-    return {
-      azimuth: azimuth(H, phi, c.dec),
-      altitude: altitude(H, phi, c.dec)
-    };
-  };
-
+return GLX;
 }());
 
+//
+var Basemap = (function() {
+/**
+ * This is the base map engine for standalone OSM Buildings
+ * @class Basemap
+ */
 
+/**
+ * @private
+ */
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(value, min));
+}
+
+/**
+ * Basemap
+ * @Basemap
+ * @param {HTMLElement} DOM container
+ * @param {Object} options
+ */
+var Basemap = function(container, options) {
+  this.container = typeof container === 'string' ? document.getElementById(container) : container;
+  options = options || {};
+
+  this.container.classList.add('osmb-container');
+  this.width = this.container.offsetWidth;
+  this.height = this.container.offsetHeight;
+
+  this.minZoom = parseFloat(options.minZoom) || 10;
+  this.maxZoom = parseFloat(options.maxZoom) || 20;
+
+  if (this.maxZoom<this.minZoom) {
+    this.maxZoom = this.minZoom;
+  }
+
+  this.bounds = options.bounds;
+
+  this.position = {};
+  this.zoom = 0;
+
+  this.listeners = {};
+  this.layers = [];
+
+  this.initState(options);
+
+  if (options.state) {
+    this.persistState();
+    this.on('change', function() {
+      this.persistState();
+    }.bind(this));
+  }
+
+  Events.init(this);
+
+  if (options.disabled) {
+    this.setDisabled(true);
+  }
+
+  this.attribution = options.attribution;
+  this.attributionDiv = document.createElement('DIV');
+  this.attributionDiv.className = 'osmb-attribution';
+  this.container.appendChild(this.attributionDiv);
+  this.updateAttribution();
+};
+
+Basemap.prototype = {
+
+  /**
+   * @private
+   */
+  updateAttribution: function() {
+    var attribution = [];
+    for (var i = 0; i < this.layers.length; i++) {
+      if (this.layers[i].attribution) {
+        attribution.push(this.layers[i].attribution);
+      }
+    }
+    if (this.attribution) {
+      attribution.unshift(this.attribution);
+    }
+    this.attributionDiv.innerHTML = attribution.join(' · ');
+  },
+
+  /**
+   * @private
+   */
+  initState: function(options) {
+    var
+      query = location.search,
+      state = {};
+    if (query) {
+      query.substring(1).replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function($0, $1, $2) {
+        if ($1) {
+          state[$1] = $2;
+        }
+      });
+    }
+
+    var position;
+    if (state.lat !== undefined && state.lon !== undefined) {
+      position = { latitude: parseFloat(state.lat), longitude: parseFloat(state.lon) };
+    }
+    if (!position && state.latitude !== undefined && state.longitude !== undefined) {
+      position = { latitude: state.latitude, longitude: state.longitude };
+    }
+
+    var zoom = (state.zoom !== undefined) ? state.zoom : options.zoom;
+    var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
+    var tilt = (state.tilt !== undefined) ? state.tilt : options.tilt;
+
+    this.setPosition(position || options.position || { latitude: 52.520000, longitude: 13.410000 });
+    this.setZoom(zoom || this.minZoom);
+    this.setRotation(rotation || 0);
+    this.setTilt(tilt || 0);
+  },
+
+  /**
+   * @private
+   */
+  persistState: function() {
+    if (!history.replaceState || this.stateDebounce) {
+      return;
+    }
+
+    this.stateDebounce = setTimeout(function() {
+      this.stateDebounce = null;
+      var params = [];
+      params.push('lat=' + this.position.latitude.toFixed(6));
+      params.push('lon=' + this.position.longitude.toFixed(6));
+      params.push('zoom=' + this.zoom.toFixed(1));
+      params.push('tilt=' + this.tilt.toFixed(1));
+      params.push('rotation=' + this.rotation.toFixed(1));
+      history.replaceState({}, '', '?' + params.join('&'));
+    }.bind(this), 1000);
+  },
+
+  emit: function(type, detail) {
+    var event = new CustomEvent(type, { detail:detail });
+    this.container.dispatchEvent(event);
+  },
+
+  //***************************************************************************
+
+  on: function(type, fn) {
+    this.container.addEventListener(type, fn, false);
+    return this;
+  },
+
+  off: function(type, fn) {
+    this.container.removeEventListener(type, fn, false);
+  },
+
+  setDisabled: function(flag) {
+    Events.disabled = !!flag;
+    return this;
+  },
+
+  isDisabled: function() {
+    return !!Events.disabled;
+  },
+
+  /* returns the geographical bounds of the current view.
+   * notes:
+   * - since the bounds are always axis-aligned they will contain areas that are
+   *   not currently visible if the current view is not also axis-aligned.
+   * - the bounds only contain the map area that OSMBuildings considers for rendering.
+   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
+   *   never extend beyond that, even if the horizon is visible (in which case the
+   *   bounds would mathematically be infinite).
+   * - the bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
+   *   of the current view below the lower edge do not contribute to the bounds.
+   *   so their top may be visible and they may still be out of bounds.
+   */
+  getBounds: function() {
+    var viewQuad = render.getViewQuad(), res = [];
+    for (var i in viewQuad) {
+      res[i] = getPositionFromLocal(viewQuad[i]);
+    }
+    return res;
+  },
+
+  setZoom: function(zoom, e) {
+    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
+
+    if (this.zoom !== zoom) {
+      this.zoom = zoom;
+
+      /* if a screen position was given for which the geographic position displayed
+       * should not change under the zoom */
+      if (e) {
+        //FIXME: add code; this needs to take the current camera (rotation and
+        //       perspective) into account
+        //NOTE:  the old code (comment out below) only works for north-up
+        //       non-perspective views
+        /*
+         var dx = this.container.offsetWidth/2  - e.clientX;
+         var dy = this.container.offsetHeight/2 - e.clientY;
+         this.center.x -= dx;
+         this.center.y -= dy;
+         this.center.x *= ratio;
+         this.center.y *= ratio;
+         this.center.x += dx;
+         this.center.y += dy;*/
+      }
+      this.emit('zoom', { zoom: zoom });
+      this.emit('change');
+    }
+    return this;
+  },
+
+  getZoom: function() {
+    return this.zoom;
+  },
+
+  setPosition: function(pos) {
+    var lat = parseFloat(pos.latitude);
+    var lon = parseFloat(pos.longitude);
+    if (isNaN(lat) || isNaN(lon)) {
+      return;
+    }
+    this.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+    this.emit('change');
+    return this;
+  },
+
+  getPosition: function() {
+    return this.position;
+  },
+
+  setSize: function(size) {
+    if (size.width !== this.width || size.height !== this.height) {
+      this.width = size.width;
+      this.height = size.height;
+      this.emit('resize', { width: this.width, height: this.height });
+    }
+    return this;
+  },
+
+  getSize: function() {
+    return { width: this.width, height: this.height };
+  },
+
+  setRotation: function(rotation) {
+    rotation = parseFloat(rotation)%360;
+    if (this.rotation !== rotation) {
+      this.rotation = rotation;
+      this.emit('rotate', { rotation: rotation });
+      this.emit('change');
+    }
+    return this;
+  },
+
+  getRotation: function() {
+    return this.rotation;
+  },
+
+  setTilt: function(tilt) {
+    tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
+    if (this.tilt !== tilt) {
+      this.tilt = tilt;
+      this.emit('tilt', { tilt: tilt });
+      this.emit('change');
+    }
+    return this;
+  },
+
+  getTilt: function() {
+    return this.tilt;
+  },
+
+  addLayer: function(layer) {
+    this.layers.push(layer);
+    this.updateAttribution();
+    return this;
+  },
+
+  removeLayer: function(layer) {
+    this.layers = this.layers.filter(function(item) {
+      return (item !== layer);
+    });
+    this.updateAttribution();
+  },
+
+  destroy: function() {
+    this.listeners = [];
+    this.layers = [];
+    this.container.innerHTML = '';
+  }
+};
+
+
+// TODO: detect pointerleave from map.container
+// TODO: continue drag/gesture even when off map.container
+// TODO: allow two finger swipe for tilt
+
+// gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
+// MIT License
+
+var inetractionDisabled = false;
+
+/**
+ * @private
+ */
+function getEventOffset(e) {
+  if (e.offsetX !== undefined) {
+    return { x:e.offsetX, y:e.offsetY };
+  }
+  var offset = getElementOffset(e.target);
+  return {
+    x: e.clientX - offset.x,
+    y: e.clientY - offset.y
+  };
+}
+
+/**
+ * @private
+ */
+function getElementOffset(el) {
+  var res = { x:0, y:0 };
+
+  while(el.nodeType === 1) {
+    res.x += el.offsetLeft;
+    res.y += el.offsetTop;
+    el = el.parentNode;
+  }
+  return res;
+}
+
+/**
+ * @private
+ */
+function cancelEvent(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  //if (e.stopPropagation) {
+  //  e.stopPropagation();
+  //}
+  e.returnValue = false;
+}
+
+/**
+ * @private
+ */
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn, false);
+}
+
+/**
+ * @private
+ */
+var Events = {};
+
+/**
+ * @private
+ */
+Events.disabled = false;
+
+/**
+ * @private
+ */
+Events.init = function(map) {
+
+  if ('ontouchstart' in window) {
+    addListener(map.container, 'touchstart', onTouchStart);
+    addListener(document, 'touchmove', onTouchMove);
+    addListener(document, 'touchend', onTouchEnd);
+    addListener(document, 'gesturechange', onGestureChange);
+  } else {
+    addListener(map.container, 'mousedown', onMouseDown);
+    addListener(document, 'mousemove', onMouseMove);
+    addListener(document, 'mouseup', onMouseUp);
+    addListener(map.container, 'contextmenu', onContextMenu);
+    addListener(map.container, 'dblclick', onDoubleClick);
+    addListener(map.container, 'mousewheel', onMouseWheel);
+    addListener(map.container, 'DOMMouseScroll', onMouseWheel);
+  }
+
+  var resizeDebounce;
+  addListener(window, 'resize', function() {
+    if (resizeDebounce) {
+      return;
+    }
+    resizeDebounce = setTimeout(function() {
+      resizeDebounce = null;
+        map.setSize({ width:map.container.offsetWidth, height:map.container.offsetHeight });
+    }, 250);
+  });
+
+  //***************************************************************************
+
+  var
+    prevX = 0,
+    prevY = 0,
+    startX = 0,
+    startY = 0,
+    startZoom = 0,
+    prevRotation = 0,
+    prevTilt = 0,
+    pointerIsDown = false;
+
+  function onDoubleClick(e) {
+    cancelEvent(e);
+    if (!Events.disabled) {
+      map.setZoom(map.zoom + 1, e);
+    }
+    var pos = getEventOffset(e);
+      map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+  }
+
+  function onMouseDown(e) {
+    if (e.button > 1) {
+      return;
+    }
+
+    cancelEvent(e);
+
+    startZoom = map.zoom;
+    prevRotation = map.rotation;
+    prevTilt = map.tilt;
+
+    var pos = getEventOffset(e);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    pointerIsDown = true;
+
+    map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onMouseMove(e) {
+    var pos = getEventOffset(e);
+
+    if (pointerIsDown) {
+      if (e.button === 0 && !e.altKey) {
+        moveMap(e);
+      } else {
+        rotateMap(e);
+      }
+
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+
+    map.emit('pointermove', { x: pos.x, y: pos.y });
+  }
+
+  function onMouseUp(e) {
+    // prevents clicks on other page elements
+    if (!pointerIsDown) {
+      return;
+    }
+
+    var pos = getEventOffset(e);
+
+    if (e.button === 0 && !e.altKey) {
+      if (Math.abs(pos.x - startX)>5 || Math.abs(pos.y - startY)>5) {
+        moveMap(e);
+      }
+    } else {
+      rotateMap(e);
+    }
+
+    pointerIsDown = false;
+
+    map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onContextMenu(e) {
+    e.preventDefault();
+    var pos = getEventOffset(e);
+    map.emit('contextmenu', { x: pos.x, y: pos.y });
+    return false;
+  }
+
+  function onMouseWheel(e) {
+    cancelEvent(e);
+    var delta = 0;
+    if (e.wheelDeltaY) {
+      delta = e.wheelDeltaY;
+    } else if (e.wheelDelta) {
+      delta = e.wheelDelta;
+    } else if (e.detail) {
+      delta = -e.detail;
+    }
+
+    if (!Events.disabled) {
+      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+      map.setZoom(map.zoom + adjust, e);
+    }
+
+    map.emit('mousewheel', { delta: delta });
+  }
+
+  function moveMap(e) {
+    if (Events.disabled) {
+      return;
+    }
+
+    // FIXME: make movement exact, i.e. make the position that
+    // appeared at (prevX, prevY) before appear at (e.offsetX, e.offsetY) now.
+    // the constant 0.86 was chosen experimentally for the map movement to be
+    // "pinned" to the cursor movement when the map is shown top-down
+    var
+      scale = 0.86 * Math.pow(2, -map.zoom),
+      lonScale = 1/Math.cos( map.position.latitude/ 180 * Math.PI),
+      pos = getEventOffset(e),
+      dx = pos.x - prevX,
+      dy = pos.y - prevY,
+      angle = map.rotation * Math.PI/180,
+      vRight   = [ Math.cos(angle),             Math.sin(angle)],
+      vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
+      dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
+
+    var newPosition = {
+      longitude: map.position.longitude - dir[0] * scale*lonScale,
+      latitude:  map.position.latitude  + dir[1] * scale };
+
+    map.setPosition(newPosition);
+    map.emit('move', newPosition);
+  }
+
+  function rotateMap(e) {
+    if (Events.disabled) {
+      return;
+    }
+    var pos = getEventOffset(e);
+    prevRotation += (pos.x - prevX)*(360/innerWidth);
+    prevTilt -= (pos.y - prevY)*(360/innerHeight);
+    map.setRotation(prevRotation);
+    map.setTilt(prevTilt);
+  }
+
+  //***************************************************************************
+
+  var
+    dist1 = 0,
+    angle1 = 0,
+    gestureStarted = false;
+
+  function emitGestureChange(e) {
+    var
+      t1 = e.touches[0],
+      t2 = e.touches[1],
+      dx = t1.clientX - t2.clientX,
+      dy = t1.clientY - t2.clientY,
+      dist2 = dx*dx + dy*dy,
+      angle2 = Math.atan2(dy, dx);
+
+    onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
+  }
+
+  function onTouchStart(e) {
+    cancelEvent(e);
+
+    // gesturechange polyfill
+    if (e.touches.length === 2 && !('ongesturechange' in window)) {
+      var t1 = e.touches[0];
+      var t2 = e.touches[1];
+      var dx = t1.clientX - t2.clientX;
+      var dy = t1.clientY - t2.clientY;
+      dist1 = dx*dx + dy*dy;
+      angle1 = Math.atan2(dy,dx);
+      gestureStarted = true;
+    }
+
+    startZoom = map.zoom;
+    prevRotation = map.rotation;
+    prevTilt = map.tilt;
+
+    if (e.touches.length) {
+      e = e.touches[0];
+    }
+
+    var pos = getEventOffset(e);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    map.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
+  }
+
+  function onTouchMove(e) {
+    // gesturechange polyfill
+    if (e.touches.length === 2 && !('ongesturechange' in window)) {
+      emitGestureChange(e);
+    }
+
+    if (e.touches.length) {
+      e = e.touches[0];
+    }
+
+    moveMap(e);
+
+    var pos = getEventOffset(e);
+    prevX = pos.x;
+    prevY = pos.y;
+
+    map.emit('pointermove', { x: pos.x, y: pos.y });
+  }
+
+  function onTouchEnd(e) {
+    // gesturechange polyfill
+    gestureStarted = false;
+
+    if (e.touches.length === 0) {
+      map.emit('pointerup', { x: prevX, y: prevY, button: 0 });
+    } else if (e.touches.length === 1) {
+      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
+      var pos = getEventOffset(e.touches[0]);
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+  }
+
+  function onGestureChange(e) {
+    cancelEvent(e);
+    if (!Events.disabled) {
+      map.setZoom(startZoom + (e.scale - 1));
+      map.setRotation(prevRotation - e.rotation);
+  //  map.setTilt(prevTilt ...);
+    }
+    map.emit('gesture', e);
+  }
+};
+
+return Basemap;
+}());
+var GLMap = Basemap;
+
+//
 
 if (CustomEvent === undefined) {
   var CustomEvent = function(type, params) {
@@ -3461,56 +3477,6 @@ if (CustomEvent === undefined) {
   };
 
   CustomEvent.prototype = window.Event.prototype;
-}
-
-// adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
-// MIT License
-
-if (!('ongesturechange' in window) && 'ontouchstart' in window) {
-  (function() {
-
-    var dist1 = 0;
-    var angle1 = 0;
-    var gestureStarted = false;
-
-    document.addEventListener('touchstart', function(e) {
-      if (e.touches.length !== 2) { return; }
-      var t1 = e.touches[0];
-      var t2 = e.touches[1];
-      var dx = t1.clientX - t2.clientX;
-      var dy = t1.clientY - t2.clientY;
-      dist1 = dx*dx + dy*dy;
-      angle1 = Math.atan2(dy,dx);
-      gestureStarted = true;
-    }, false);
-
-    document.addEventListener('touchmove', function(e) {
-      if (e.touches.length !== 2) { return; }
-
-      var t1 = e.touches[0];
-      var t2 = e.touches[1];
-      var dx = t1.clientX - t2.clientX;
-      var dy = t1.clientY - t2.clientY;
-      var dist2 = dx*dx + dy*dy;
-      var angle2 = Math.atan2(dy,dx);
-
-      var event = new CustomEvent('gesturechange', { bubbles: true });
-      event.altKey = e.altKey;
-      event.ctrlKey = e.ctrlKey;
-      event.metaKey = e.metaKey;
-      event.shiftKey = e.shiftKey;
-      event.rotation = ((angle2 - angle1) * (180 / Math.PI)) % 360;
-      event.scale = Math.sqrt(dist2/dist1);
-
-      // setTimeout(function() { target.dispatchEvent(event); }, 0);
-      e.target.dispatchEvent(event);
-    }, false);
-
-    document.addEventListener('touchend', function(e) {
-      gestureStarted = false;
-    }, false);
-
-  }());
 }
 
 var APP;
@@ -3718,6 +3684,7 @@ OSMBuildings.prototype = {
 
   /**
    * Adds an OBJ (3D object) file to the map
+   * Important: objects with same url are cached and only loaded once
    * @param {String} url - URL of the OBJ file
    * @param {Object} position - Where to render the OBJ
    * @param {Float} position.latitude - Latitude for the OBJ
@@ -4103,8 +4070,6 @@ function substituteZCoordinate(points, zValue) {
   return res;
 }
 
-
-var Shaders = {"picking":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aID;\nattribute vec4 aFilter;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nuniform float uTime;\nvarying vec4 vColor;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vec4 mPosition = vec4(uModelMatrix * pos);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aID, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec4 aFilter;\nattribute vec3 aID;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientHeight = 90.0;\nconst float gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightID == aID) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    vTexCoord = aTexCoord;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n    \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"},"buildings.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec4 aFilter;\nattribute vec3 aID;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightID;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientHeight = 90.0;\nfloat gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightID == aID) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vNormal = aNormal;\n    vTexCoord = aTexCoord;\n    //vec3 transformedNormal = aNormal * uNormalTransform;\n    //float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n    //color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n    \n    // *** shadow mapping ********\n    vec4 sunRelPosition = uSunMatrix * pos;\n    vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  }\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  vec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\n  float diffuse = dot(uLightDirection, normal);\n  diffuse = max(diffuse, 0.0);\n  // reduce shadow strength with:\n  // - lowering sun positions, to be consistent with the shadows on the basemap (there,\n  //   shadows are faded out with lowering sun positions to hide shadow artifacts caused\n  //   when sun direction and map surface are almost perpendicular\n  // - large angles between the sun direction and the surface normal, to hide shadow\n  //   artifacts that occur when surface normal and sun direction are almost perpendicular\n  float shadowStrength = pow( max( min(\n    dot(uLightDirection, vec3(0.0, 0.0, 1.0)),\n    dot(uLightDirection, normal)\n  ), 0.0), 1.5);\n  if (diffuse > 0.0 && shadowStrength > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float occludedBySun = mix( \n                            mix(tlVal, trVal, pos.x), \n                            mix(blVal, brVal, pos.x),\n                            pos.y);\n    diffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n  }\n  vec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n              (diffuse/1.5) * uLightColor;\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\n  gl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"},"flatColor":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\n  gl_FragColor = uColor;\n}\n"},"skywall":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform float uAbsoluteHeight;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nconst float gradientHeight = 10.0;\nconst float gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vRelativeHeight = aPosition.z / uAbsoluteHeight;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nvoid main() {\n  float blendFactor = min(100.0 * vRelativeHeight, 1.0);\n  vec4 texColor = texture2D(uTexIndex, vTexCoord);\n  gl_FragColor = mix( vec4(uFogColor, 1.0), texColor,  blendFactor);\n}\n"},"basemap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vec4 worldPos = uModelMatrix * aPosition;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"},"texture":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"fogNormal":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec4 aFilter;\nattribute vec3 aNormal;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nuniform float uTime;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    verticalDistanceToLowerEdge = 0.0;\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vNormal = uNormalMatrix * aNormal;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  gl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"},"ambientFromDepth":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset)\n{\n    float depthThere = getDepth(pos, offset);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    float depthDiff = abs(depthThere - depthHere) * uFarPlane;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we do not consider all \n * texels in the sampling area, but only 16. This causes some sampling artifacts\n * that are later removed by blurring the ambient occlusion texture (this is \n * done in a separate shader).\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord, ivec2(0, 0));\n  float fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4(1.0);\n    return;\n  }\n  float occlusionFactor = 1.0;\n  \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\n  occlusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"},"blur":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n/* Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, vec2 offset)\n{\n  return texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2(+1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, -1.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, +1.0));\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, vec2(-1.0, -1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(-1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, -1.0));\n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"},"basemap.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  vec4 pos = vec4(aPosition.xyz, 1.0);\n  gl_Position = uMatrix * pos;\n  vec4 sunRelPosition = uSunMatrix * pos;\n  vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  vNormal = aNormal;\n  vec4 worldPos = uModelMatrix * pos;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not* \n * render the map texture itself, but is instead intended to be blended on top\n * of an already rendered map.\n * Note: this shader is not (and does not attempt to) be physically correct.\n *       It is intented to be a blend between a useful illustration of cast\n *       shadows and a mitigation of shadow casting artifacts occuring at\n *       low angles on incidence.\n *       Map brightness is only affected by shadows, not by light direction.\n *       Shadows are darkest when light comes from straight above (and thus\n *       shadows can be computed reliably) and become less and less visible\n *       with the light source close to the horizont (where moirC) and offset\n *       artifacts would otherwise be visible).\n */\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  //vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n  //gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n  //return;\n  float diffuse = dot(uDirToSun, normalize(vNormal));\n  diffuse = max(diffuse, 0.0);\n  \n  float shadowStrength = uShadowStrength * pow(diffuse, 1.5);\n  if (diffuse > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    \n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    diffuse = mix( mix(tlVal, trVal, pos.x), \n                   mix(blVal, brVal, pos.x),\n                   pos.y);\n  }\n  diffuse = mix(1.0, diffuse, shadowStrength);\n  \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  float darkness = (1.0 - diffuse);\n  darkness *=  (1.0 - fogIntensity);\n  gl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"},"outlineMap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogNormalTexIndex;\nuniform sampler2D uIdTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, vec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + offset * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\nvec3 getNormal(vec2 pos, vec2 offset)\n{\n  return normalize(texture2D(uFogNormalTexIndex, pos + offset * uInverseTexSize).xyz * 2.0 - 1.0);\n}\nvec3 getEncodedId(vec2 pos, vec2 offset)\n{\n  return texture2D(uIdTexIndex, pos + offset * uInverseTexSize).xyz;\n}\nvoid main() {\n  float fogIntensity = texture2D(uFogNormalTexIndex, vTexCoord).w;\n  vec3 normalHere =  getNormal(vTexCoord, vec2(0, 0));\n  vec3 normalRight = getNormal(vTexCoord, vec2(1, 0));\n  vec3 normalAbove = getNormal(vTexCoord, vec2(0,-1));\n  \n  float edgeStrengthFromNormal = \n    step( dot(normalHere, normalRight), 0.9) +\n    step( dot(normalHere, normalAbove), 0.9);\n  float depthHere =  getDepth(vTexCoord, vec2(0,  0));\n  float depthRight = getDepth(vTexCoord, vec2(1,  0));\n  float depthAbove = getDepth(vTexCoord, vec2(0, -1));\n  float depthDiffRight = abs(depthHere - depthRight) * 7500.0;\n  float depthDiffAbove = abs(depthHere - depthAbove) * 7500.0;\n  float edgeStrengthFromDepth = step(10.0, depthDiffRight) + \n                                step(10.0, depthDiffAbove);\n  \n  vec3 idHere = getEncodedId(vTexCoord, vec2(0,0));\n  vec3 idRight = getEncodedId(vTexCoord, vec2(1,0));\n  vec3 idAbove = getEncodedId(vTexCoord, vec2(0,-1));\n  float edgeStrengthFromId = (idHere != idRight || idHere != idAbove) ? 1.0 : 0.0;\n  \n  float edgeStrength = max( edgeStrengthFromId, max( edgeStrengthFromNormal, edgeStrengthFromDepth));\n  float occlusionFactor = 1.0 - (edgeStrength * uEffectStrength);\n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"}};
 
 
 var Grid = function(source, tileClass, options) {
@@ -5053,8 +5018,7 @@ mesh.OBJ = (function() {
   function createGeometry(vertexIndex, faces) {
     var
       v0, v1, v2,
-      e1, e2,
-      nor, len,
+      nor,
       geometry = { vertices:[], normals:[], texCoords:[] };
 
     for (var i = 0, il = faces.length; i < il; i++) {
