@@ -29,11 +29,7 @@
     "src/glx/Matrix.js",
     "src/glx/texture/index.js",
     "src/glx/texture/Image.js",
-    "src/glx/texture/Data.js",
-    "src/glx/mesh/index.js",
-    "src/glx/mesh/Triangle.js",
-    "src/glx/mesh/Plane.js",
-    "src/glx/mesh/Cube.js"
+    "src/glx/texture/Data.js"
   ],
 
   "basemap": [
