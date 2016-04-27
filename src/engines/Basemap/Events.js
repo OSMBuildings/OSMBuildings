@@ -297,22 +297,20 @@ Events.init = function(map) {
   }
 
   function onTouchMove(e) {
-    // gesturechange polyfill
-    if (e.touches.length === 2 && !('ongesturechange' in window)) {
-      emitGestureChange(e);
+    var pos = getEventOffset(e.touches[0]);
+    if (e.touches.length > 1) {
+      map.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
+      prevTilt = map.tilt;
+      // gesturechange polyfill
+      if (!('ongesturechange' in window)) {
+        emitGestureChange(e);
+      }
+    } else {
+      moveMap(e.touches[0]);
+      map.emit('pointermove', { x: pos.x, y: pos.y });
     }
-
-    if (e.touches.length) {
-      e = e.touches[0];
-    }
-
-    moveMap(e);
-
-    var pos = getEventOffset(e);
     prevX = pos.x;
     prevY = pos.y;
-
-    map.emit('pointermove', { x: pos.x, y: pos.y });
   }
 
   function onTouchEnd(e) {
@@ -331,10 +329,10 @@ Events.init = function(map) {
 
   function onGestureChange(e) {
     cancelEvent(e);
+
     if (!Events.disabled) {
       map.setZoom(startZoom + (e.scale - 1));
       map.setRotation(prevRotation - e.rotation);
-      map.setTilt(prevTilt);
     }
 
     map.emit('gesture', e);
