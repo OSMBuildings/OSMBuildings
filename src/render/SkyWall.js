@@ -4,7 +4,7 @@ render.SkyWall = function() {
   this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
   this.updateGeometry( [[0,0,0], [0,0,0], [0,0,0], [0,0,0]]);
 
-  this.shader = new glx.Shader({
+  this.shader = new GLX.Shader({
     vertexShader: Shaders.skywall.vertex,
     fragmentShader: Shaders.skywall.fragment,
     shaderName: 'sky wall shader',
@@ -12,7 +12,7 @@ render.SkyWall = function() {
     uniforms: ['uAbsoluteHeight', 'uMatrix', 'uTexIndex', 'uFogColor']
   });
   
-  this.floorShader = new glx.Shader({
+  this.floorShader = new GLX.Shader({
     vertexShader:   Shaders.flatColor.vertex,
     fragmentShader: Shaders.flatColor.fragment,
     attributes: ['aPosition'],
@@ -21,7 +21,7 @@ render.SkyWall = function() {
   
   Activity.setBusy();
   var url = APP.baseURL + '/skydome.jpg';
-  this.texture = new glx.texture.Image().load(url, function(image) {
+  this.texture = new GLX.texture.Image().load(url, function(image) {
     Activity.setIdle();
     if (image) {
       this.isReady = true;
@@ -51,12 +51,12 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
     this.vertexBuffer.destroy();
 
   var vertices = [].concat(v1, v2, v3, v1, v3, v4);
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
+  this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
 
   if (this.texCoordBuffer)
     this.texCoordBuffer.destroy();
 
-  var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
+  var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
   var vBottomCenter = getIntersectionWithXYPlane(0, -1, inverse);
   
   var vLeftDir = norm2(sub2( v1, vBottomCenter));
@@ -72,7 +72,7 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
   var tcLeft = vLeftArc;//MAP.rotation/360.0;
   var tcRight =vRightArc;//MAP.rotation/360.0 + visibleSkyDiameterFraction*3;
         
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
+  this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
     [tcLeft, 1, tcRight, 1, tcRight, 0, tcLeft, 1, tcRight, 0, tcLeft, 0]));
     
   v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0];
@@ -83,7 +83,7 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
   if (this.floorVertexBuffer)
     this.floorVertexBuffer.destroy();
     
-  this.floorVertexBuffer = new glx.Buffer(3, new Float32Array(
+  this.floorVertexBuffer = new GLX.Buffer(3, new Float32Array(
     [].concat( v1, v2, v3, v4)));
 };
 

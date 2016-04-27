@@ -1,2 +1,2 @@
 
-glx.texture = {};
+GLX.texture = {};

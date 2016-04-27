@@ -9,7 +9,7 @@
 */
 
 render.DepthFogNormalMap = function() {
-  this.shader = new glx.Shader({
+  this.shader = new GLX.Shader({
     vertexShader: Shaders.fogNormal.vertex,
     fragmentShader: Shaders.fogNormal.fragment,
     shaderName: 'fog/normal shader',
@@ -17,7 +17,7 @@ render.DepthFogNormalMap = function() {
     uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
   
-  this.framebuffer = new glx.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
+  this.framebuffer = new GLX.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
 
   this.mapPlane = new mesh.MapPlane();
 };
@@ -36,7 +36,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
   var
     shader = this.shader,
     framebuffer = this.framebuffer,
-    viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(viewMatrix,projMatrix));
+    viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(viewMatrix,projMatrix));
 
   framebufferSize = framebufferSize || this.framebufferSize;
   framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
@@ -75,9 +75,9 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
     ]);
 
     shader.setUniformMatrices([
-      ['uMatrix',       '4fv', glx.Matrix.multiply(modelMatrix, viewProjMatrix)],
+      ['uMatrix',       '4fv', GLX.Matrix.multiply(modelMatrix, viewProjMatrix)],
       ['uModelMatrix',  '4fv', modelMatrix.data],
-      ['uNormalMatrix', '3fv', glx.Matrix.transpose3(glx.Matrix.invert3(glx.Matrix.multiply(modelMatrix, viewMatrix)))]
+      ['uNormalMatrix', '3fv', GLX.Matrix.transpose3(GLX.Matrix.invert3(GLX.Matrix.multiply(modelMatrix, viewMatrix)))]
     ]);
     
     shader.bindBuffer(item.vertexBuffer, 'aPosition');

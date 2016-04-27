@@ -7,10 +7,10 @@ render.HudRect = {
   init: function() {
   
     var geometry = this.createGeometry();
-    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
+    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
       shaderName: 'HUD rectangle shader',
@@ -46,7 +46,7 @@ render.HudRect = {
 
     shader.enable();
     
-    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, glx.Matrix.identity().data);
+    GL.uniformMatrix4fv(shader.uniforms.uMatrix, false, GLX.Matrix.identity().data);
     this.vertexBuffer.enable();
 
     GL.vertexAttribPointer(shader.attributes.aPosition, this.vertexBuffer.itemSize, GL.FLOAT, false, 0, 0);

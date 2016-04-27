@@ -7,10 +7,10 @@ render.Overlay = {
   init: function() {
   
     var geometry = this.createGeometry();
-    this.vertexBuffer   = new glx.Buffer(3, new Float32Array(geometry.vertices));
-    this.texCoordBuffer = new glx.Buffer(2, new Float32Array(geometry.texCoords));
+    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
       shaderName: 'overlay texture shader',
@@ -50,7 +50,7 @@ render.Overlay = {
      * scene no matter what its actual depth is. */
     GL.disable(GL.DEPTH_TEST);
     
-    shader.setUniformMatrix('uMatrix', '4fv', glx.Matrix.identity().data);
+    shader.setUniformMatrix('uMatrix', '4fv', GLX.Matrix.identity().data);
 
     shader.bindBuffer(this.vertexBuffer,  'aPosition');
     shader.bindBuffer(this.texCoordBuffer,'aTexCoord');

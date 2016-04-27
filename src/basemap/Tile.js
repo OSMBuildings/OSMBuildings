@@ -25,14 +25,14 @@ basemap.Tile = function(x, y, zoom) {
     0, 1
   ];
 
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
-  this.texCoordBuffer = new glx.Buffer(2, new Float32Array(texCoords));
+  this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+  this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
 };
 
 basemap.Tile.prototype = {
   load: function(url) {
     Activity.setBusy();
-    this.texture = new glx.texture.Image().load(url, function(image) {
+    this.texture = new GLX.texture.Image().load(url, function(image) {
       Activity.setIdle();
       if (image) {
         this.isReady = true;

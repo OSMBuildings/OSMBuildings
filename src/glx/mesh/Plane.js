@@ -1,5 +1,5 @@
 
-glx.mesh.Plane = function(size, color) {
+GLX.mesh.Plane = function(size, color) {
 
   var data = {
     vertices: [],
@@ -12,11 +12,11 @@ glx.mesh.Plane = function(size, color) {
   var c = [ size/2,  size/2, 0];
   var d = [-size/2,  size/2, 0];
 
-  glx.mesh.addQuad(data, a, b, c, d, color);
+  GLX.mesh.addQuad(data, a, b, c, d, color);
 
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = new glx.Buffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = new glx.Buffer(4, new Float32Array(data.colors));
+  this.vertexBuffer = new GLX.Buffer(3, new Float32Array(data.vertices));
+  this.normalBuffer = new GLX.Buffer(3, new Float32Array(data.normals));
+  this.colorBuffer  = new GLX.Buffer(4, new Float32Array(data.colors));
 
- 	this.transform = new glx.Matrix();
+ 	this.transform = new GLX.Matrix();
 };

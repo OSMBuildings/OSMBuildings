@@ -7,7 +7,7 @@ render.Picking = {
   viewportSize: 512,
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
@@ -20,7 +20,7 @@ render.Picking = {
       ]
     });
 
-    this.framebuffer = new glx.Framebuffer(this.viewportSize, this.viewportSize);
+    this.framebuffer = new GLX.Framebuffer(this.viewportSize, this.viewportSize);
   },
 
   render: function(framebufferSize) {
@@ -60,7 +60,7 @@ render.Picking = {
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+        ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
 
       shader.bindBuffer(item.vertexBuffer, 'aPosition');

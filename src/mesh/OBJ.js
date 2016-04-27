@@ -226,7 +226,7 @@ mesh.OBJ = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     applyFilter: function() {
@@ -237,15 +237,15 @@ mesh.OBJ = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     onReady: function() {
-      this.vertexBuffer   = new glx.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer   = new glx.Buffer(3, new Float32Array(this.data.normals));
-      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(this.data.texCoords));
-      this.colorBuffer    = new glx.Buffer(3, new Float32Array(this.data.colors));
-      this.idBuffer       = new glx.Buffer(3, new Float32Array(this.data.ids));
+      this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(this.data.vertices));
+      this.normalBuffer   = new GLX.Buffer(3, new Float32Array(this.data.normals));
+      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(this.data.texCoords));
+      this.colorBuffer    = new GLX.Buffer(3, new Float32Array(this.data.colors));
+      this.idBuffer       = new GLX.Buffer(3, new Float32Array(this.data.ids));
       this.fadeIn();
       this.data = null;
 
@@ -258,7 +258,7 @@ mesh.OBJ = (function() {
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      var matrix = new glx.Matrix();
+      var matrix = new GLX.Matrix();
 
       if (this.elevation) {
         matrix.translate(0, 0, this.elevation);

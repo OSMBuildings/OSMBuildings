@@ -35,10 +35,10 @@ mesh.DebugQuad = (function() {
         this.vertexBuffer.destroy();
 
       var vertices = [].concat(v1, v2, v3, v1, v3, v4);
-      this.vertexBuffer = new glx.Buffer(3, new Float32Array(vertices));
+      this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
 
       /*
-      this.dummyMapPlaneTexCoords = new glx.Buffer(2, new Float32Array([
+      this.dummyMapPlaneTexCoords = new GLX.Buffer(2, new Float32Array([
         0.0, 0.0,
           1, 0.0,
           1,   1,
@@ -50,7 +50,7 @@ mesh.DebugQuad = (function() {
       if (this.normalBuffer)
         this.normalBuffer.destroy();
         
-      this.normalBuffer = new glx.Buffer(3, new Float32Array([
+      this.normalBuffer = new GLX.Buffer(3, new Float32Array([
         0, 0, 1,
         0, 0, 1,
         0, 0, 1,
@@ -63,22 +63,22 @@ mesh.DebugQuad = (function() {
       if (this.colorBuffer)
         this.colorBuffer.destroy();
         
-      this.colorBuffer = new glx.Buffer(3, new Float32Array(
+      this.colorBuffer = new GLX.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
 
 
       if (this.idBuffer)
         this.idBuffer.destroy();
 
-      this.idBuffer = new glx.Buffer(3, new Float32Array(
+      this.idBuffer = new GLX.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
         
-      this.texCoordBuffer = new glx.Buffer(2, new Float32Array(
+      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
         [0,0,0,0,0,0,0,0,0,0,0,0]));
         
       var filter = [0,1,1,1];
       
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(
         [].concat(filter, filter, filter, filter, filter, filter)));
         
       //this.numDummyVertices = 6;
@@ -87,7 +87,7 @@ mesh.DebugQuad = (function() {
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       //var scale = render.fogRadius/this.radius;
-      var modelMatrix = new glx.Matrix();
+      var modelMatrix = new GLX.Matrix();
       //modelMatrix.scale(scale, scale, scale);
     
       return modelMatrix;

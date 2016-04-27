@@ -75,9 +75,9 @@ mesh.MapPlane = (function() {
           [].push.apply(this.filterBuffer, filterEntries);
       }
        
-      this.vertexBuffer = new glx.Buffer(3, new Float32Array(this.vertexBuffer));
-      this.normalBuffer = new glx.Buffer(3, new Float32Array(this.normalBuffer));
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(this.filterBuffer));
+      this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
+      this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(this.filterBuffer));
        
     },
 
@@ -85,7 +85,7 @@ mesh.MapPlane = (function() {
     getMatrix: function() {
       //var scale = Math.pow(2, MAP.zoom - 16);
 
-      var modelMatrix = new glx.Matrix();
+      var modelMatrix = new GLX.Matrix();
       //modelMatrix.scale(scale, scale, scale);
     
       return modelMatrix;

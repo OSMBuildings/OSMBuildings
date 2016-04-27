@@ -1,5 +1,5 @@
 
-glx.Buffer = function(itemSize, data) {
+GLX.Buffer = function(itemSize, data) {
   this.id = GL.createBuffer();
   this.itemSize = itemSize;
   this.numItems = data.length/itemSize;
@@ -8,7 +8,7 @@ glx.Buffer = function(itemSize, data) {
   data = null;
 };
 
-glx.Buffer.prototype = {
+GLX.Buffer.prototype = {
   enable: function() {
     GL.bindBuffer(GL.ARRAY_BUFFER, this.id);
   },

@@ -1,5 +1,5 @@
 var APP;
-var MAP, glx, GL;
+var MAP, GL;
 /*
  * Note: OSMBuildings cannot use a single global world coordinate system.
  *       The numerical accuracy required for such a system would be about
@@ -103,8 +103,7 @@ OSMBuildings.prototype = {
    */
   addTo: function(map) {
     MAP = map;
-    glx = new GLX(MAP.container, MAP.width, MAP.height, APP.highQuality);
-    GL = glx.context;
+    GL = GLX.init(MAP.container, MAP.width, MAP.height, APP.highQuality);
 
     MAP.addLayer(this);
 
@@ -182,7 +181,7 @@ OSMBuildings.prototype = {
    * @param {Integer} y - the y position in the viewport
    */
   unproject: function(x, y) {
-    var inverse = glx.Matrix.invert(render.viewProjMatrix.data);
+    var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
     /* convert window/viewport coordinates to NDC [0..1]. Note that the browser
      * screen coordinates are y-down, while the WebGL NDC coordinates are y-up,
      * so we have to invert the y value here */
@@ -354,7 +353,7 @@ OSMBuildings.prototype = {
     if (APP.dataGrid)    APP.dataGrid.destroy();
 
     // TODO: when taking over an existing canvas, don't destroy it here
-    glx.destroy();
+    GLX.destroy();
   }
 };
 

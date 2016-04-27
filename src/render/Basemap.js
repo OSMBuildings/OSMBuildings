@@ -2,7 +2,7 @@
 render.Basemap = {
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
       shaderName: 'basemap shader',
@@ -72,7 +72,7 @@ render.Basemap = {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
                                    Math.cos(MAP.position.latitude / 180 * Math.PI);
 
-    var modelMatrix = new glx.Matrix();
+    var modelMatrix = new GLX.Matrix();
     modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
                           -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
@@ -87,7 +87,7 @@ render.Basemap = {
 
     shader.setUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+      ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
     ]);
 
     shader.bindBuffer(tile.vertexBuffer,  'aPosition');

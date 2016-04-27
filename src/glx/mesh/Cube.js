@@ -1,5 +1,5 @@
 
-glx.mesh.Cube = function(size, color) {
+GLX.mesh.Cube = function(size, color) {
 
   var data = {
     vertices: [],
@@ -17,16 +17,16 @@ glx.mesh.Cube = function(size, color) {
   var C = [ size/2,  size/2, size/2];
   var D = [-size/2,  size/2, size/2];
 
-  glx.mesh.addQuad(data, a, b, c, d, color);
-  glx.mesh.addQuad(data, A, B, C, D, color);
-  glx.mesh.addQuad(data, a, b, B, A, color);
-  glx.mesh.addQuad(data, b, c, C, B, color);
-  glx.mesh.addQuad(data, c, d, D, C, color);
-  glx.mesh.addQuad(data, d, a, A, D, color);
+  GLX.mesh.addQuad(data, a, b, c, d, color);
+  GLX.mesh.addQuad(data, A, B, C, D, color);
+  GLX.mesh.addQuad(data, a, b, B, A, color);
+  GLX.mesh.addQuad(data, b, c, C, B, color);
+  GLX.mesh.addQuad(data, c, d, D, C, color);
+  GLX.mesh.addQuad(data, d, a, A, D, color);
 
-  this.vertexBuffer = new glx.Buffer(3, new Float32Array(data.vertices));
-  this.normalBuffer = new glx.Buffer(3, new Float32Array(data.normals));
-  this.colorBuffer  = new glx.Buffer(4, new Float32Array(data.colors));
+  this.vertexBuffer = new GLX.Buffer(3, new Float32Array(data.vertices));
+  this.normalBuffer = new GLX.Buffer(3, new Float32Array(data.normals));
+  this.colorBuffer  = new GLX.Buffer(4, new Float32Array(data.colors));
 
-  this.transform = new glx.Matrix();
+  this.transform = new GLX.Matrix();
 };

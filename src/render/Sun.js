@@ -12,7 +12,7 @@ var Sun = {
     var rotationInDeg = pos.azimuth / (Math.PI/180);
     var tiltInDeg     = 90 - pos.altitude / (Math.PI/180);
 
-    this.viewMatrix = new glx.Matrix()
+    this.viewMatrix = new GLX.Matrix()
       .rotateZ(rotationInDeg)
       .rotateX(tiltInDeg)
       .translate(0, 0, -5000)
@@ -28,6 +28,6 @@ var Sun = {
       7500
     );
 
-    this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
+    this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
   }
 };

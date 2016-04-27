@@ -1,5 +1,5 @@
 
-glx.Matrix = function(data) {
+GLX.Matrix = function(data) {
   this.data = new Float32Array(data ? data : [
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -8,8 +8,8 @@ glx.Matrix = function(data) {
   ]);
 };
 
-glx.Matrix.identity = function() {
-  return new glx.Matrix([
+GLX.Matrix.identity = function() {
+  return new GLX.Matrix([
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
@@ -17,8 +17,8 @@ glx.Matrix.identity = function() {
   ]);
 };
 
-glx.Matrix.identity3 = function() {
-  return new glx.Matrix([
+GLX.Matrix.identity3 = function() {
+  return new GLX.Matrix([
     1, 0, 0,
     0, 1, 0,
     0, 0, 1
@@ -88,7 +88,7 @@ glx.Matrix.identity3 = function() {
     res[15] = a30*b03 + a31*b13 + a32*b23 + a33*b33;
   }
 
-  glx.Matrix.prototype = {
+  GLX.Matrix.prototype = {
 
     multiply: function(m) {
       multiply(this.data, this.data, m.data);
@@ -149,7 +149,7 @@ glx.Matrix.identity3 = function() {
     }
   };
 
-  glx.Matrix.multiply = function(a, b) {
+  GLX.Matrix.multiply = function(a, b) {
     var res = new Float32Array(16);
     multiply(res, a.data, b.data);
     return res;
@@ -158,11 +158,11 @@ glx.Matrix.identity3 = function() {
   // returns a perspective projection matrix with a field-of-view of 'fov' 
   // degrees, an width/height aspect ratio of 'aspect', the near plane at 'near'
   // and the far plane at 'far'
-  glx.Matrix.Perspective = function(fov, aspect, near, far) {
+  GLX.Matrix.Perspective = function(fov, aspect, near, far) {
     var f =  1 / Math.tan(fov*(Math.PI/180)/2), 
         nf = 1 / (near - far);
         
-    return new glx.Matrix([
+    return new GLX.Matrix([
       f/aspect, 0,               0,  0,
       0,        f,               0,  0,
       0,        0, (far + near)*nf, -1,
@@ -172,19 +172,19 @@ glx.Matrix.identity3 = function() {
   //returns a perspective projection matrix with the near plane at 'near',
   //the far plane at 'far' and the view rectangle on the near plane bounded
   //by 'left', 'right', 'top', 'bottom'
-  glx.Matrix.Frustum = function (left, right, top, bottom, near, far) {
+  GLX.Matrix.Frustum = function (left, right, top, bottom, near, far) {
     var rl = 1 / (right - left),
         tb = 1 / (top - bottom),
         nf = 1 / (near - far);
         
-    return new glx.Matrix( [
+    return new GLX.Matrix( [
           (near * 2) * rl,                   0,                     0,  0,
                         0,     (near * 2) * tb,                     0,  0,
       (right + left) * rl, (top + bottom) * tb,     (far + near) * nf, -1,
                         0,                   0, (far * near * 2) * nf,  0]);
   };
   
-  glx.Matrix.OffCenterProjection = function (screenBottomLeft, screenTopLeft, screenBottomRight, eye, near, far) {
+  GLX.Matrix.OffCenterProjection = function (screenBottomLeft, screenTopLeft, screenBottomRight, eye, near, far) {
     var vRight = norm3(sub3( screenBottomRight, screenBottomLeft));
     var vUp    = norm3(sub3( screenTopLeft,     screenBottomLeft));
     var vNormal= normal( screenBottomLeft, screenTopLeft, screenBottomRight);
@@ -200,12 +200,12 @@ glx.Matrix.identity3 = function() {
     var b = dot3(vUp,    eyeToScreenBottomLeft) * near / d;
     var t = dot3(vUp,    eyeToScreenTopLeft)    * near / d;
     
-    return glx.Matrix.Frustum(l, r, t, b, near, far);
+    return GLX.Matrix.Frustum(l, r, t, b, near, far);
   };
   
   // based on http://www.songho.ca/opengl/gl_projectionmatrix.html
-  glx.Matrix.Ortho = function(left, right, top, bottom, near, far) {
-    return new glx.Matrix([
+  GLX.Matrix.Ortho = function(left, right, top, bottom, near, far) {
+    return new GLX.Matrix([
                    2/(right-left),                          0,                       0, 0,
                                 0,           2/(top - bottom),                       0, 0,
                                 0,                          0,         -2/(far - near), 0,
@@ -213,7 +213,7 @@ glx.Matrix.identity3 = function() {
     ]);
   };
 
-  glx.Matrix.invert3 = function(a) {
+  GLX.Matrix.invert3 = function(a) {
     var
       a00 = a[0], a01 = a[1], a02 = a[2],
       a04 = a[4], a05 = a[5], a06 = a[6],
@@ -244,7 +244,7 @@ glx.Matrix.identity3 = function() {
     ];
   };
 
-  glx.Matrix.transpose3 = function(a) {
+  GLX.Matrix.transpose3 = function(a) {
     return new Float32Array([
       a[0], a[3], a[6],
       a[1], a[4], a[7],
@@ -252,7 +252,7 @@ glx.Matrix.identity3 = function() {
     ]);
   };
 
-  glx.Matrix.transpose = function(a) {
+  GLX.Matrix.transpose = function(a) {
     return new Float32Array([
       a[0], a[4],  a[8], a[12], 
       a[1], a[5],  a[9], a[13], 
@@ -261,7 +261,7 @@ glx.Matrix.identity3 = function() {
     ]);
   };
 
-  // glx.Matrix.transform = function(x, y, z, m) {
+  // GLX.Matrix.transform = function(x, y, z, m) {
   //   var X = x*m[0] + y*m[4] + z*m[8]  + m[12];
   //   var Y = x*m[1] + y*m[5] + z*m[9]  + m[13];
   //   var Z = x*m[2] + y*m[6] + z*m[10] + m[14];
@@ -272,7 +272,7 @@ glx.Matrix.identity3 = function() {
   //   };
   // };
 
-  glx.Matrix.transform = function(m) {
+  GLX.Matrix.transform = function(m) {
     var X = m[12];
     var Y = m[13];
     var Z = m[14];
@@ -284,7 +284,7 @@ glx.Matrix.identity3 = function() {
     };
   };
 
-  glx.Matrix.invert = function(a) {
+  GLX.Matrix.invert = function(a) {
     var
       res = new Float32Array(16),
 

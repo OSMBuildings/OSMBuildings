@@ -7,7 +7,7 @@
 render.MapShadows = {
 
   init: function() {
-    this.shader = new glx.Shader({
+    this.shader = new GLX.Shader({
       vertexShader: Shaders['basemap.shadows'].vertex,
       fragmentShader: Shaders['basemap.shadows'].fragment,
       shaderName: 'map shadows shader',
@@ -62,8 +62,8 @@ render.MapShadows = {
 
     shader.setUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
-      ['uSunMatrix',   '4fv', glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
+      ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
+      ['uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
     ]);
 
     shader.bindBuffer(item.vertexBuffer, 'aPosition');

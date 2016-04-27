@@ -22,7 +22,6 @@
 
   "glx": [
     "src/glx/index.js",
-    "src/glx/prefix.js",
     "src/glx/util.js",
     "src/glx/Buffer.js",
     "src/glx/Framebuffer.js",
@@ -34,8 +33,7 @@
     "src/glx/mesh/index.js",
     "src/glx/mesh/Triangle.js",
     "src/glx/mesh/Plane.js",
-    "src/glx/mesh/Cube.js",
-    "src/glx/suffix.js"
+    "src/glx/mesh/Cube.js"
   ],
 
   "basemap": [

@@ -90,11 +90,11 @@ mesh.GeoJSON = (function() {
         }
 
         if (endIndex === numFeatures) {
-          this.vertexBuffer   = new glx.Buffer(3, new Float32Array(res.vertices));
-          this.normalBuffer   = new glx.Buffer(3, new Float32Array(res.normals));
-          this.texCoordBuffer = new glx.Buffer(2, new Float32Array(res.texCoords));
-          this.colorBuffer    = new glx.Buffer(3, new Float32Array(res.colors));
-          this.idBuffer       = new glx.Buffer(3, new Float32Array(resPickingColors));
+          this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(res.vertices));
+          this.normalBuffer   = new GLX.Buffer(3, new Float32Array(res.normals));
+          this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(res.texCoords));
+          this.colorBuffer    = new GLX.Buffer(3, new Float32Array(res.colors));
+          this.idBuffer       = new GLX.Buffer(3, new Float32Array(resPickingColors));
           this.fadeIn();
 
           Filter.apply(this);
@@ -125,7 +125,7 @@ mesh.GeoJSON = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     applyFilter: function() {
@@ -136,12 +136,12 @@ mesh.GeoJSON = (function() {
           filters.push.apply(filters, item.filter);
         }
       }
-      this.filterBuffer = new glx.Buffer(4, new Float32Array(filters));
+      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      var matrix = new glx.Matrix();
+      var matrix = new GLX.Matrix();
 
       if (this.elevation) {
         matrix.translate(0, 0, this.elevation);

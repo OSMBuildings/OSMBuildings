@@ -1,5 +1,5 @@
 
-glx.Shader = function(config) {
+GLX.Shader = function(config) {
   var i;
 
   this.shaderName = config.shaderName;
@@ -29,8 +29,8 @@ glx.Shader = function(config) {
   }
 };
 
-glx.Shader.warned = {};
-glx.Shader.prototype = {
+GLX.Shader.warned = {};
+GLX.Shader.prototype = {
 
   locateAttribute: function(name) {
     var loc = GL.getAttribLocation(this.id, name);
@@ -83,9 +83,9 @@ glx.Shader.prototype = {
   bindBuffer: function(buffer, attribute) {
     if (this.attributes[attribute] === undefined) {
       var qualifiedName = this.shaderName + ":" + attribute;
-      if ( !glx.Shader.warned[qualifiedName]) {
+      if ( !GLX.Shader.warned[qualifiedName]) {
         console.warn('attempt to bind VBO to invalid attribute "%s" in shader "%s"', attribute, this.shaderName);
-        glx.Shader.warned[qualifiedName] = true;
+        GLX.Shader.warned[qualifiedName] = true;
       }
       return;
     }
@@ -97,9 +97,9 @@ glx.Shader.prototype = {
   setUniform: function(uniform, type, value) {
     if (this.uniforms[uniform] === undefined) {
       var qualifiedName = this.shaderName + ":" + uniform;
-      if ( !glx.Shader.warned[qualifiedName]) {
+      if ( !GLX.Shader.warned[qualifiedName]) {
         console.warn('attempt to bind to invalid uniform "%s" in shader "%s"', uniform, this.shaderName);
-        glx.Shader.warned[qualifiedName] = true;
+        GLX.Shader.warned[qualifiedName] = true;
       }
 
       return;
@@ -116,9 +116,9 @@ glx.Shader.prototype = {
   setUniformMatrix: function(uniform, type, value) {
     if (this.uniforms[uniform] === undefined) {
       var qualifiedName = this.shaderName + ":" + uniform;
-      if ( !glx.Shader.warned[qualifiedName]) {
+      if ( !GLX.Shader.warned[qualifiedName]) {
         console.warn('attempt to bind to invalid uniform "%s" in shader "%s"', uniform, this.shaderName);
-        glx.Shader.warned[qualifiedName] = true;
+        GLX.Shader.warned[qualifiedName] = true;
       }
       return;
     }

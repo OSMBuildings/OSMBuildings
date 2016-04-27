@@ -1,5 +1,5 @@
 
-glx.texture.Image = function() {
+GLX.texture.Image = function() {
   this.id = GL.createTexture();
   GL.bindTexture(GL.TEXTURE_2D, this.id);
 
@@ -9,7 +9,7 @@ glx.texture.Image = function() {
   GL.bindTexture(GL.TEXTURE_2D, null);
 };
 
-glx.texture.Image.prototype = {
+GLX.texture.Image.prototype = {
 
   clamp: function(image, maxSize) {
     if (image.width <= maxSize && image.height <= maxSize) {

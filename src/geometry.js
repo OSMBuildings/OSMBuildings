@@ -186,7 +186,7 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
    * geometry is still visible */
   //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
 
-  var inverse = glx.Matrix.invert(viewProjectionMatrix);
+  var inverse = GLX.Matrix.invert(viewProjectionMatrix);
 
   var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
   var vBottomRight = getIntersectionWithXYPlane( 1, -1, inverse);
@@ -265,7 +265,7 @@ function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height)
     bottom=Math.min( bottom,p[1]);
   }
   
-  return new glx.Matrix.Ortho(left, right, top, bottom, near, far);
+  return new GLX.Matrix.Ortho(left, right, top, bottom, near, far);
 }
 
 /* transforms the 3D vector 'v' according to the transformation matrix 'm'.
@@ -323,13 +323,13 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
   var tileLon = tile2lon(tileX, tileZoom);
   var tileLat = tile2lat(tileY, tileZoom);
   
-  var modelMatrix = new glx.Matrix();
+  var modelMatrix = new GLX.Matrix();
   modelMatrix.translate( (tileLon - MAP.position.longitude)* metersPerDegreeLongitude,
                         -(tileLat - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
   var size = getTileSizeInMeters( MAP.position.latitude, tileZoom);
   
-  var mvpMatrix = glx.Matrix.multiply(modelMatrix, viewProjMatrix);
+  var mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
   var tr = transformVec3(mvpMatrix, [size, 0   , 0]);
   var bl = transformVec3(mvpMatrix, [0   , size, 0]);

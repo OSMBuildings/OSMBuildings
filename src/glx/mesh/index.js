@@ -1,19 +1,19 @@
 
-glx.mesh = {};
+GLX.mesh = {};
 
-glx.mesh.addQuad = function(data, a, b, c, d, color) {
+GLX.mesh.addQuad = function(data, a, b, c, d, color) {
   this.addTriangle(data, a, b, c, color);
   this.addTriangle(data, c, d, a, color);
 };
 
-glx.mesh.addTriangle = function(data, a, b, c, color) {
+GLX.mesh.addTriangle = function(data, a, b, c, color) {
   data.vertices.push(
     a[0], a[1], a[2],
     b[0], b[1], b[2],
     c[0], c[1], c[2]
   );
 
-  var n = glx.util.calcNormal(
+  var n = GLX.util.calcNormal(
     a[0], a[1], a[2],
     b[0], b[1], b[2],
     c[0], c[1], c[2]

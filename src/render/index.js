@@ -17,9 +17,9 @@ var render = {
       delete render.effects.outlines;
     }
 
-    this.viewMatrix = new glx.Matrix();
-    this.projMatrix = new glx.Matrix();
-    this.viewProjMatrix = new glx.Matrix();
+    this.viewMatrix = new GLX.Matrix();
+    this.projMatrix = new GLX.Matrix();
+    this.viewProjMatrix = new GLX.Matrix();
     this.viewDirOnMap = [0.0, -1.0];
 
     MAP.on('change', this._onChange = this.onChange.bind(this));
@@ -168,7 +168,7 @@ var render = {
   },
 
   updateFogDistance: function() {
-    var inverse = glx.Matrix.invert(this.viewProjMatrix.data);
+    var inverse = GLX.Matrix.invert(this.viewProjMatrix.data);
     
     //need to store this as a reference point to determine fog distance
     this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
@@ -193,9 +193,9 @@ var render = {
       refHeight = 1024,
       refVFOV = 45;
 
-    glx.context.viewport(0, 0, width, height);
+    GL.viewport(0, 0, width, height);
 
-    this.viewMatrix = new glx.Matrix()
+    this.viewMatrix = new GLX.Matrix()
       .rotateZ(MAP.rotation)
       .rotateX(MAP.tilt)
       .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
@@ -219,19 +219,19 @@ var render = {
     //    internal reasons).
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
-    this.projMatrix = new glx.Matrix()
+    this.projMatrix = new GLX.Matrix()
       .translate(0, -height/(2.0*scale), 0) // 0, MAP y offset to neutralize camera y offset, 
       .scale(1, -1, 1) // flip Y
-      .multiply(new glx.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
+      .multiply(new GLX.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
 
-    this.viewProjMatrix = new glx.Matrix(glx.Matrix.multiply(this.viewMatrix, this.projMatrix));
+    this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
     this.updateFogDistance();
   },
 
   onResize: function() {
-    glx.context.canvas.width  = MAP.width;
-    glx.context.canvas.height = MAP.height;
+    GL.canvas.width  = MAP.width;
+    GL.canvas.height = MAP.height;
     this.onChange();
   },
 

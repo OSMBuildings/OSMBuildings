@@ -1,5 +1,5 @@
 
-glx.texture.Data = function(width, height, data, options) {
+GLX.texture.Data = function(width, height, data, options) {
   //options = options || {};
 
   this.id = GL.createTexture();
@@ -20,7 +20,7 @@ glx.texture.Data = function(width, height, data, options) {
   GL.bindTexture(GL.TEXTURE_2D, null);
 };
 
-glx.texture.Data.prototype = {
+GLX.texture.Data.prototype = {
 
   enable: function(index) {
     GL.activeTexture(GL.TEXTURE0 + (index || 0));

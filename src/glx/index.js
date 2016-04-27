@@ -2,7 +2,10 @@
 //var ext = GL.getExtension('WEBGL_lose_context');
 //ext.loseContext();
 
-var GLX = function(container, width, height, highQuality) {
+var GLX = {};
+var GL;
+
+GLX.init = function(container, width, height, highQuality) {
   var canvas = document.createElement('CANVAS');
   canvas.style.position = 'absolute';
   canvas.width = width;
@@ -15,17 +18,15 @@ var GLX = function(container, width, height, highQuality) {
     premultipliedAlpha: false
   };
 
-  var context;
-
   try {
-    context = canvas.getContext('webgl', options);
+    GL = canvas.getContext('webgl', options);
   } catch (ex) {}
-  if (!context) {
+  if (!GL) {
     try {
-      context = canvas.getContext('experimental-webgl', options);
+      GL = canvas.getContext('experimental-webgl', options);
     } catch (ex) {}
   }
-  if (!context) {
+  if (!GL) {
     throw new Error('WebGL not supported');
   }
 
@@ -37,22 +38,39 @@ var GLX = function(container, width, height, highQuality) {
     console.warn('context restored');
   });
 
-  context.viewport(0, 0, width, height);
-  context.cullFace(context.BACK);
-  context.enable(context.CULL_FACE);
-  context.enable(context.DEPTH_TEST);
-  context.clearColor(0.5, 0.5, 0.5, 1);
+  GL.viewport(0, 0, width, height);
+  GL.cullFace(GL.BACK);
+  GL.enable(GL.CULL_FACE);
+  GL.enable(GL.DEPTH_TEST);
+  GL.clearColor(0.5, 0.5, 0.5, 1);
 
   if (highQuality) {
-    context.anisotropyExtension = context.getExtension('EXT_texture_filter_anisotropic');
-    if (context.anisotropyExtension) {
-      context.anisotropyExtension.maxAnisotropyLevel = context.getParameter(
-        context.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT
+    GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
+    if (GL.anisotropyExtension) {
+      GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(
+        GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT
       );
     }
-    
-    context.depthTextureExtension = context.getExtension('WEBGL_depth_texture');
+
+    GL.depthTextureExtension = GL.getExtension('WEBGL_depth_texture');
   }
 
-  return GLX.use(context);
+  return GL;
+};
+
+GLX.start = function(render) {
+  return setInterval(function() {
+    requestAnimationFrame(render);
+  }, 17);
+};
+
+GLX.stop = function(loop) {
+  clearInterval(loop);
+};
+
+GLX.destroy = function() {
+  if (GL !== undefined) {
+    GL.canvas.parentNode.removeChild(GL.canvas);
+    GL = undefined;
+  }
 };

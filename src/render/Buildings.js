@@ -4,7 +4,7 @@ render.Buildings = {
   init: function() {
   
     this.shader = !render.effects.shadows ?
-      new glx.Shader({
+      new GLX.Shader({
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
@@ -24,7 +24,7 @@ render.Buildings = {
           'uTime',
           'uWallTexIndex'
         ]
-      }) : new glx.Shader({
+      }) : new GLX.Shader({
         vertexShader: Shaders['buildings.shadows'].vertex,
         fragmentShader: Shaders['buildings.shadows'].fragment,
         shaderName: 'quality building shader',
@@ -48,7 +48,7 @@ render.Buildings = {
         ]
     });
     
-    this.wallTexture = new glx.texture.Image();
+    this.wallTexture = new GLX.texture.Image();
     this.wallTexture.color( [1,1,1]);
     this.wallTexture.load( BUILDING_TEXTURE);
   },
@@ -79,7 +79,7 @@ render.Buildings = {
     ]);
 
     if (!render.effects.shadows) {
-      shader.setUniformMatrix('uNormalTransform', '3fv', glx.Matrix.identity3().data);
+      shader.setUniformMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);
     }
 
     shader.bindTexture('uWallTexIndex', 0, this.wallTexture);
@@ -105,11 +105,11 @@ render.Buildings = {
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', glx.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+        ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
       
       if (render.effects.shadows) {
-        shader.setUniformMatrix('uSunMatrix', '4fv', glx.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+        shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
       }
 
       shader.bindBuffer(item.vertexBuffer,   'aPosition');

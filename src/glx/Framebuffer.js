@@ -1,5 +1,5 @@
 
-glx.Framebuffer = function(width, height, useDepthTexture) {
+GLX.Framebuffer = function(width, height, useDepthTexture) {
   if (useDepthTexture && !GL.depthTextureExtension)
     throw "Depth textures are not supported by your GPU";
     
@@ -7,7 +7,7 @@ glx.Framebuffer = function(width, height, useDepthTexture) {
   this.setSize(width, height);
 };
 
-glx.Framebuffer.prototype = {
+GLX.Framebuffer.prototype = {
 
   setSize: function(width, height) {
     if (!this.frameBuffer) {
@@ -33,7 +33,7 @@ glx.Framebuffer.prototype = {
     }
     
     if (this.useDepthTexture) {
-      this.depthTexture = new glx.texture.Image();//GL.createTexture();
+      this.depthTexture = new GLX.texture.Image();//GL.createTexture();
       this.depthTexture.enable(0);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
@@ -53,7 +53,7 @@ glx.Framebuffer.prototype = {
       this.renderTexture.destroy();
     }
 
-    this.renderTexture = new glx.texture.Data(width, height);
+    this.renderTexture = new GLX.texture.Data(width, height);
     GL.bindTexture(GL.TEXTURE_2D, this.renderTexture.id);
 
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE); //necessary for NPOT textures
