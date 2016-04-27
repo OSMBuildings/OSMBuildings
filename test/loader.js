@@ -41,8 +41,8 @@ var config = JSON.parse(loadFile(baseURL +'config.json'));
 var file, str, js = '';
 var global = this;
 
-for (var i = 0; i < config.lib.length; i++) {
-  js += loadFile(baseURL + config.lib[i]) +'\n\n';
+for (var i = 0; i < config.ext.length; i++) {
+  js += loadFile(baseURL + config.ext[i]) +'\n\n';
 }
 
 for (var i = 0; i < config.src.length; i++) {

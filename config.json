@@ -1,16 +1,16 @@
 {
   "shaders": ["picking", "buildings", "buildings.shadows", "flatColor", "skywall", "basemap", "texture", "fogNormal", "ambientFromDepth", "blur", "basemap.shadows", "outlineMap"],
 
-  "lib": [
+  "ext": [
     "node_modules/Triangulate/dist/Triangulate.js",
     "node_modules/Color/dist/Color.debug.js",
-    "lib/GLX.debug.js",
-    "node_modules/suncalc/suncalc.js"
+    "node_modules/suncalc/suncalc.js",
+    "ext/polyfills.js"
+
   ],
 
   "src": [
-    "src/polyfills.js",
-
+    "ext/GLX.debug.js",
     "src/index.js",
     "src/Activity.js",
 

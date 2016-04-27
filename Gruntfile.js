@@ -32,10 +32,23 @@ module.exports = function(grunt) {
           "src/glx/mesh/Cube.js",
           "src/glx/suffix.js"
         ],
-        dest: 'lib/GLX.debug.js'
+        dest: 'ext/GLX.debug.js'
       },
 
-      'osmb-basemap': {
+      'basemap': {
+        options: {
+          separator: "\n",
+          banner: "var Basemap = (function() {\n",
+          footer: "\nreturn Basemap;\n}());\n"
+        },
+        src: [
+          'engines/Basemap/index.js',
+          'engines/Basemap/Events.js'
+        ],
+        dest: 'build/temp/Basemap.debug.js'
+      },
+
+      'osmb-with-basemap': {
         options: {
           separator: "\n",
           banner: "(function(global) {",
@@ -43,10 +56,8 @@ module.exports = function(grunt) {
           sourceMap: true
         },
         src: [
-          'src/engines/Basemap/index.js',
-          'src/engines/Basemap/Pointer.js',
-          'src/engines/Basemap/Layers.js',
-          grunt.file.readJSON('config.json').lib,
+          grunt.file.readJSON('config.json').ext,
+          'build/temp/Basemap.debug.js',
           grunt.file.readJSON('config.json').src
         ],
         dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
@@ -65,7 +76,7 @@ module.exports = function(grunt) {
     },
 
     uglify: {
-      'osmb-basemap': {
+      'dist': {
         options: {
           sourceMap: true
         },
@@ -96,10 +107,15 @@ module.exports = function(grunt) {
     },
 
     jshint: {
-      options: {
-         globals: {}
-       },
-      all: grunt.file.readJSON('config.json').src
+      basemap: {
+        options: {},
+        src: ['build/temp/Basemap.debug.js']
+      },
+
+      osmb: {
+        options: {},
+        src: grunt.file.readJSON('config.json').src
+      }
     },
 
     compress: {
@@ -112,22 +128,6 @@ module.exports = function(grunt) {
           { expand: true, cwd: 'dist/', src: ['<%=pkg.name%>/*', 'index.html'] }
         ]
       }
-    },
-
-    // just testing, whether wepack *would* work
-    webpack: {
-      test: {
-        entry: './dist/OSMBuildings/<%=pkg.name%>.debug.js',
-        output: {
-            path: './dist/OSMBuildings',
-            filename: '<%=pkg.name%>.pack.js',
-        },
-        stats: false, // the stats output
-        progress: false, // show progress
-        failOnError: true, // don't report error to grunt if webpack find errors
-        watch: false,
-        keepalive: true // don't finish the grunt task
-      }
     }
   });
 
@@ -136,8 +136,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-compress');
-  grunt.loadNpmTasks('grunt-webpack');
   grunt.loadNpmTasks('grunt-jsdoc');
+
+  grunt.registerTask('basemap', 'base map for standalone OSM Buildings', function() {
+    grunt.task.run('concat:basemap');
+    grunt.task.run('jshint:basemap');
+  });
 
   grunt.registerMultiTask('version', 'Set version number', function() {
     var config = this.data;
@@ -178,18 +182,18 @@ module.exports = function(grunt) {
   grunt.registerTask('release', 'Release', function() {
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
 
-    grunt.task.run('jshint');
+    grunt.task.run('jshint:osmb');
 
     grunt.task.run('concat:glx');
     grunt.task.run('shaders');
-    grunt.task.run('concat:osmb-basemap');
+    grunt.task.run('basemap');
+    grunt.task.run('concat:osmb-with-basemap');
     grunt.task.run('version');
-    grunt.task.run('uglify:osmb-basemap');
+    grunt.task.run('uglify');
 
     grunt.task.run('copy:assets');
     grunt.task.run('copy:css');
 
-    grunt.task.run('compress');
-    grunt.task.run('webpack');
+    grunt.task.run('compress'); // zip a release bundle
   });
 };

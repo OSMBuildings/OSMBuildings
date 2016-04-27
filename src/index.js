@@ -203,6 +203,7 @@ OSMBuildings.prototype = {
 
   /**
    * Adds an OBJ (3D object) file to the map
+   * Important: objects with same url are cached and only loaded once
    * @param {String} url - URL of the OBJ file
    * @param {Object} position - Where to render the OBJ
    * @param {Float} position.latitude - Latitude for the OBJ

@@ -1,10 +1,21 @@
+/**
+ * This is the base map engine for standalone OSM Buildings
+ * @class Basemap
+ */
 
-var document = global.document;
-
+/**
+ * @private
+ */
 function clamp(value, min, max) {
   return Math.min(max, Math.max(value, min));
 }
 
+/**
+ * Basemap
+ * @Basemap
+ * @param {HTMLElement} DOM container
+ * @param {Object} options
+ */
 var Basemap = function(container, options) {
   this.container = typeof container === 'string' ? document.getElementById(container) : container;
   options = options || {};
@@ -16,7 +27,7 @@ var Basemap = function(container, options) {
   this.minZoom = parseFloat(options.minZoom) || 10;
   this.maxZoom = parseFloat(options.maxZoom) || 20;
 
-  if (this.maxZoom < this.minZoom) {
+  if (this.maxZoom<this.minZoom) {
     this.maxZoom = this.minZoom;
   }
 
@@ -26,6 +37,7 @@ var Basemap = function(container, options) {
   this.zoom = 0;
 
   this.listeners = {};
+  this.layers = [];
 
   this.initState(options);
 
@@ -36,8 +48,7 @@ var Basemap = function(container, options) {
     }.bind(this));
   }
 
-  this.pointer = new Pointer(this, this.container);
-  this.layers  = new Layers(this);
+  Events.init(this);
 
   if (options.disabled) {
     this.setDisabled(true);
@@ -50,18 +61,27 @@ var Basemap = function(container, options) {
   this.updateAttribution();
 };
 
-Basemap.TILE_SIZE = 256;
-
 Basemap.prototype = {
 
+  /**
+   * @private
+   */
   updateAttribution: function() {
-    var attribution = this.layers.getAttribution();
+    var attribution = [];
+    for (var i = 0; i < this.layers.length; i++) {
+      if (this.layers[i].attribution) {
+        attribution.push(this.layers[i].attribution);
+      }
+    }
     if (this.attribution) {
       attribution.unshift(this.attribution);
     }
     this.attributionDiv.innerHTML = attribution.join(' · ');
   },
 
+  /**
+   * @private
+   */
   initState: function(options) {
     var
       query = location.search,
@@ -76,22 +96,25 @@ Basemap.prototype = {
 
     var position;
     if (state.lat !== undefined && state.lon !== undefined) {
-      position = { latitude:parseFloat(state.lat), longitude:parseFloat(state.lon) };
+      position = { latitude: parseFloat(state.lat), longitude: parseFloat(state.lon) };
     }
     if (!position && state.latitude !== undefined && state.longitude !== undefined) {
-      position = { latitude:state.latitude, longitude:state.longitude };
+      position = { latitude: state.latitude, longitude: state.longitude };
     }
 
-    var zoom     = (state.zoom     !== undefined) ? state.zoom     : options.zoom;
+    var zoom = (state.zoom !== undefined) ? state.zoom : options.zoom;
     var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
-    var tilt     = (state.tilt     !== undefined) ? state.tilt     : options.tilt;
+    var tilt = (state.tilt !== undefined) ? state.tilt : options.tilt;
 
-    this.setPosition(position || options.position || { latitude:52.520000, longitude:13.410000 });
+    this.setPosition(position || options.position || { latitude: 52.520000, longitude: 13.410000 });
     this.setZoom(zoom || this.minZoom);
     this.setRotation(rotation || 0);
     this.setTilt(tilt || 0);
   },
 
+  /**
+   * @private
+   */
   persistState: function() {
     if (!history.replaceState || this.stateDebounce) {
       return;
@@ -105,66 +128,45 @@ Basemap.prototype = {
       params.push('zoom=' + this.zoom.toFixed(1));
       params.push('tilt=' + this.tilt.toFixed(1));
       params.push('rotation=' + this.rotation.toFixed(1));
-      history.replaceState({}, '', '?'+ params.join('&'));
+      history.replaceState({}, '', '?' + params.join('&'));
     }.bind(this), 1000);
   },
 
-  // TODO: switch to native events
-  emit: function(type, payload) {
-    if (!this.listeners[type]) {
-      return;
-    }
-
-    var listeners = this.listeners[type];
-
-    requestAnimationFrame(function() {
-      for (var i = 0, il = listeners.length; i < il; i++) {
-        listeners[i](payload);
-      }
-    });
+  emit: function(type, detail) {
+    var event = new CustomEvent(type, { detail:detail });
+    this.container.dispatchEvent(event);
   },
 
   //***************************************************************************
 
-  // TODO: switch to native events
   on: function(type, fn) {
-    if (!this.listeners[type]) {
-      this.listeners[type] = [];
-    }
-    this.listeners[type].push(fn);
+    this.container.addEventListener(type, fn, false);
     return this;
   },
 
-  // TODO: switch to native events
   off: function(type, fn) {
-    if (!this.listeners[type]) {
-      return;
-    }
-
-    this.listeners[type] = this.listeners[type].filter(function(listener) {
-      return (listener !== fn);
-    });
+    this.container.removeEventListener(type, fn, false);
   },
 
   setDisabled: function(flag) {
-    this.pointer.disabled = !!flag;
+    Events.disabled = !!flag;
     return this;
   },
 
   isDisabled: function() {
-    return !!this.pointer.disabled;
+    return !!Events.disabled;
   },
 
   /* returns the geographical bounds of the current view.
-   * notes: 
+   * notes:
    * - since the bounds are always axis-aligned they will contain areas that are
    *   not currently visible if the current view is not also axis-aligned.
    * - the bounds only contain the map area that OSMBuildings considers for rendering.
    *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
    *   never extend beyond that, even if the horizon is visible (in which case the
    *   bounds would mathematically be infinite).
-   * - the bounds only consider ground level. For example, buildings whose top 
-   *   is seen at the lower edge of the screen, but whose footprint is outside 
+   * - the bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
    *   of the current view below the lower edge do not contribute to the bounds.
    *   so their top may be visible and they may still be out of bounds.
    */
@@ -190,14 +192,14 @@ Basemap.prototype = {
         //NOTE:  the old code (comment out below) only works for north-up
         //       non-perspective views
         /*
-        var dx = this.container.offsetWidth/2  - e.clientX;
-        var dy = this.container.offsetHeight/2 - e.clientY;
-        this.center.x -= dx;
-        this.center.y -= dy;
-        this.center.x *= ratio;
-        this.center.y *= ratio;
-        this.center.x += dx;
-        this.center.y += dy;*/
+         var dx = this.container.offsetWidth/2  - e.clientX;
+         var dy = this.container.offsetHeight/2 - e.clientY;
+         this.center.x -= dx;
+         this.center.y -= dy;
+         this.center.x *= ratio;
+         this.center.y *= ratio;
+         this.center.x += dx;
+         this.center.y += dy;*/
       }
       this.emit('zoom', { zoom: zoom });
       this.emit('change');
@@ -215,7 +217,7 @@ Basemap.prototype = {
     if (isNaN(lat) || isNaN(lon)) {
       return;
     }
-    this.position = { latitude:clamp(lat, -90, 90), longitude:clamp(lon, -180, 180) };
+    this.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
     this.emit('change');
     return this;
   },
@@ -266,24 +268,21 @@ Basemap.prototype = {
   },
 
   addLayer: function(layer) {
-    this.layers.add(layer);
+    this.layers.push(layer);
     this.updateAttribution();
     return this;
   },
 
   removeLayer: function(layer) {
-    this.layers.remove(layer);
+    this.layers = this.layers.filter(function(item) {
+      return (item !== layer);
+    });
     this.updateAttribution();
   },
 
   destroy: function() {
     this.listeners = [];
-    this.pointer.destroy();
-    this.layers.destroy();
+    this.layers = [];
     this.container.innerHTML = '';
   }
 };
-
-//*****************************************************************************
-
-global.GLMap = Basemap;

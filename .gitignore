@@ -8,6 +8,8 @@ dist/OSMBuildings*
 src/Shaders.min.js
 lib/GLX.debug.js
 
+build/temp
+
 # backup files
 *~
 

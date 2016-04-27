@@ -23,7 +23,7 @@ glx.Framebuffer.prototype = {
     this.height = height;
     
     if (this.depthRenderBuffer) {
-      GL.deleteRenderbuffer(this.depthRenderBuffer)
+      GL.deleteRenderbuffer(this.depthRenderBuffer);
       this.depthRenderBuffer = null;
     } 
     
@@ -33,7 +33,7 @@ glx.Framebuffer.prototype = {
     }
     
     if (this.useDepthTexture) {
-      this.depthTexture = new glx.texture.Image()//GL.createTexture();
+      this.depthTexture = new glx.texture.Image();//GL.createTexture();
       this.depthTexture.enable(0);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
