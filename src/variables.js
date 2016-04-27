@@ -13,7 +13,7 @@ var FOG_COLOR = '#e8e0d8';
 //var FOG_COLOR = '#f0f8ff';
 var BACKGROUND_COLOR = '#efe8e0';
 
-var document = global.document;
+var document = window.document;
 
 var EARTH_RADIUS_IN_METERS = 6378137;
 var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;

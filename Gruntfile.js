@@ -24,7 +24,7 @@ module.exports = function(grunt) {
         options: {
           separator: "\n",
           banner: "var Basemap = (function() {\n",
-          footer: "\nreturn Basemap;\n}());\nvar GLMap = Basemap;\n",
+          footer: "\nreturn Basemap;\n}());\nwindow.GLMap = Basemap;\n",
           sourceMap: true
         },
         src:'<%=cfg.basemap%>',
@@ -34,8 +34,8 @@ module.exports = function(grunt) {
       'osmb-with-basemap': {
         options: {
           separator: "\n",
-          banner: "(function(global) {",
-          footer: "}(this));",
+          banner: "(function() {",
+          footer: "}());",
           sourceMap: true
         },
         src: [

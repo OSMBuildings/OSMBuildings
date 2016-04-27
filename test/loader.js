@@ -42,6 +42,7 @@ function loadShaders(config) {
 
 var config = JSON.parse(loadFile(baseURL +'config.json'));
 var js = '';
+js += "(function() {";
 
 // modules
 
@@ -68,15 +69,16 @@ for (var i = 0; i < config.basemap.length; i++) {
   js += loadFile(baseURL + config.basemap[i]) + '\n';
 }
 js += "\nreturn Basemap;\n}());\n";
-js += "\nvar GLMap = Basemap;\n";
+js += "\nwindow.GLMap = Basemap;\n";
 
 // core
 
-js += "(function(global) {";
 for (var i = 0; i < config.src.length; i++) {
   js += loadFile(baseURL + config.src[i]) + '\n';
 }
-js += "}(this));";
+
+
+js += "}());";
 
 
 var global = this;

@@ -360,10 +360,10 @@ OSMBuildings.prototype = {
 
 //*****************************************************************************
 
-if (typeof global.define === 'function') {
-  global.define([], OSMBuildings);
-} else if (typeof global.exports === 'object') {
-  global.module.exports = OSMBuildings;
+if (typeof define === 'function') {
+  define([], OSMBuildings);
+} else if (typeof module === 'object') {
+  module.exports = OSMBuildings;
 } else {
-  global.OSMBuildings = OSMBuildings;
+  window.OSMBuildings = OSMBuildings;
 }
