@@ -83,7 +83,7 @@ var render = {
     function renderEyeFramebuffer(framebuffer, width, height, isRightEye) {
       framebuffer.setSize(width, height);
       framebuffer.enable();
-      render.onChange(true);
+      render.onChange(isRightEye);
       GL.clearColor(render.fogColor[0], render.fogColor[1], render.fogColor[2], 0.0);
       GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
       GL.viewport(0, 0, width, height);
