@@ -25,6 +25,7 @@ var render = {
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
 
+    render.Anaglyph.init();
     render.Picking.init(); // renders only on demand
     render.sky = new render.SkyWall();
     render.Buildings.init();
@@ -101,14 +102,30 @@ var render = {
       framebuffer.disable();
     }
 
-    renderEyeFramebuffer(render.leftEyeFramebuffer, halfWidth, MAP.height, false);
-    renderEyeFramebuffer(render.rightEyeFramebuffer, MAP.width - halfWidth, MAP.height, true);
 
-    GL.viewport(0,0, halfWidth, MAP.height);
-    render.Overlay.render( render.leftEyeFramebuffer.renderTexture);
+    
+    var anaglyph = false;
+    if (anaglyph) {
+      renderEyeFramebuffer(render.leftEyeFramebuffer,  MAP.width, MAP.height, false);
+      renderEyeFramebuffer(render.rightEyeFramebuffer, MAP.width, MAP.height, true);
+      GL.viewport(0, 0, MAP.width, MAP.height);
+          //console.log("%s, %s", MAP.width, MAP.height);
+          //var config = this.getFramebufferConfig(MAP.width, MAP.height, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+      render.Anaglyph.render(
+        render.leftEyeFramebuffer.renderTexture, 
+        render.rightEyeFramebuffer.renderTexture
+      );
+    } else {
+      renderEyeFramebuffer(render.leftEyeFramebuffer, halfWidth, MAP.height, false);
+      renderEyeFramebuffer(render.rightEyeFramebuffer, MAP.width - halfWidth, MAP.height, true);
+      
+      GL.viewport(0, 0, halfWidth, MAP.height);
+      render.Overlay.render( render.leftEyeFramebuffer.renderTexture);
 
-    GL.viewport(halfWidth, 0, MAP.width - halfWidth, MAP.height);
-    render.Overlay.render( render.rightEyeFramebuffer.renderTexture);
+      GL.viewport(halfWidth, 0, MAP.width - halfWidth, MAP.height);
+      render.Overlay.render( render.rightEyeFramebuffer.renderTexture);
+    }
+
   
     if (this.screenshotCallback) {
       this.screenshotCallback(GL.canvas.toDataURL());
@@ -136,7 +153,7 @@ var render = {
       .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
 
     if (isRightEye)
-        this.viewMatrix.translate(5*scale, 0, 0);
+        this.viewMatrix.translate(-2*scale, 0, 0);
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];

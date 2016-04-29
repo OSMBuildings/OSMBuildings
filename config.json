@@ -1,5 +1,6 @@
 {
   "shaders": [
+    "anaglyph",
     "picking",
     "buildings",
     "buildings.shadows",
@@ -62,6 +63,7 @@
     "src/geometry.js",
 
     "src/render/index.js",
+    "src/render/Anaglyph.js",
     "src/render/Picking.js",
     "src/render/Sun.js",
     "src/render/SkyWall.js",
