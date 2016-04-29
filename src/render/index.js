@@ -34,6 +34,9 @@ var render = {
     render.OutlineMap.init();
     render.blurredAmbientMap = new render.Blur();
     render.blurredOutlineMap = new render.Blur();
+    render.leftEyeFramebuffer = new GLX.Framebuffer( 1024, 1024);
+    render.rightEyeFramebuffer = new GLX.Framebuffer(1024, 1024);
+    
     //render.HudRect.init();
     //render.NormalMap.init();
     render.MapShadows.init();
@@ -74,92 +77,50 @@ var render = {
     Sun.updateView(viewTrapezoid);
     render.sky.updateGeometry(viewTrapezoid);
     var viewSize = [MAP.width, MAP.height];
+    var halfWidth = MAP.width / 2 | 0;
+    
+    
+    function renderEyeFramebuffer(framebuffer, width, height, isRightEye) {
+      framebuffer.setSize(width, height);
+      framebuffer.enable();
+      render.onChange(true);
+      GL.clearColor(render.fogColor[0], render.fogColor[1], render.fogColor[2], 0.0);
+      GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+      GL.viewport(0, 0, width, height);
 
-    if (!render.effects.shadows) {
       render.Buildings.render();
       render.Basemap.render();
 
-      if (render.effects.outlines) {
-        render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
-        render.Picking.render(viewSize);
-        render.OutlineMap.render(
-          render.cameraGBuffer.getDepthTexture(), 
-          render.cameraGBuffer.getFogNormalTexture(), 
-          render.Picking.framebuffer.renderTexture, viewSize, 1.0);
-          render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
-      }
-
-      GL.enable(GL.BLEND);
-      if (render.effects.outlines) {
-        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
-        render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
-      }
-
       GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
       GL.disable(GL.DEPTH_TEST);
+      GL.enable(GL.BLEND);
       render.sky.render();
       GL.disable(GL.BLEND);
       GL.enable(GL.DEPTH_TEST);
-    } else {
-      render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
-      render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
-      render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), viewSize, 2.0);
-      render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
-      render.Buildings.render(render.sunGBuffer.framebuffer, 0.5);
-      render.Basemap.render();
 
-      if (render.effects.outlines) {
-        render.Picking.render(viewSize);
-        render.OutlineMap.render(
-          render.cameraGBuffer.getDepthTexture(), 
-          render.cameraGBuffer.getFogNormalTexture(), 
-          render.Picking.framebuffer.renderTexture, viewSize, 1.0
-        );
-        render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
-      }
-
-      GL.enable(GL.BLEND);
-      {
-        // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
-        // this aplies the shadow and SSAO effects (which selectively darken the scene)
-        // while keeping the alpha channel (that corresponds to how much the
-        // geometry should be blurred into the background in the next step) intact
-        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
-        if (render.effects.outlines) {
-          render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
-        }
-
-        render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
-        render.Overlay.render( render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
-
-        // linear interpolation between the colors of the current framebuffer 
-        // ( =building geometries) and of the sky. The interpolation factor
-        // is the geometry alpha value, which contains the 'foggyness' of each pixel
-        // the alpha interpolation functions is set to GL.ONE for both operands
-        // to ensure that the alpha channel will become 1.0 for each pixel after this
-        // operation, and thus the whole canvas is not rendered partially transparently
-        // over its background.
-        GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
-        GL.disable(GL.DEPTH_TEST);
-        render.sky.render();
-        GL.enable(GL.DEPTH_TEST);
-      }
-      GL.disable(GL.BLEND);
-
-      //render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
+      framebuffer.disable();
     }
 
+    renderEyeFramebuffer(render.leftEyeFramebuffer, halfWidth, MAP.height, false);
+    renderEyeFramebuffer(render.rightEyeFramebuffer, MAP.width - halfWidth, MAP.height, true);
+
+    GL.viewport(0,0, halfWidth, MAP.height);
+    render.Overlay.render( render.leftEyeFramebuffer.renderTexture);
+
+    GL.viewport(halfWidth, 0, MAP.width - halfWidth, MAP.height);
+    render.Overlay.render( render.rightEyeFramebuffer.renderTexture);
+  
     if (this.screenshotCallback) {
       this.screenshotCallback(GL.canvas.toDataURL());
       this.screenshotCallback = null;
-    }  
+    }
   },
 
   stop: function() {
     clearInterval(this.loop);
   },
   
-  onChange: function() {
+  onChange: function(isRightEye) {
     var 
       scale = 1.38*Math.pow(2, MAP.zoom-17),
       width = MAP.width,
@@ -173,6 +134,9 @@ var render = {
       .rotateZ(MAP.rotation)
       .rotateX(MAP.tilt)
       .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
+
+    if (isRightEye)
+        this.viewMatrix.translate(5*scale, 0, 0);
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];
