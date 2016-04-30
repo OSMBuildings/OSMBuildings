@@ -97,6 +97,8 @@ Events.init = function(map) {
     addListener(map.container, 'DOMMouseScroll', onMouseWheel);
   }
 
+  addListener(window, 'devicemotion', onDeviceMotion);
+
   var resizeDebounce;
   addListener(window, 'resize', function() {
     if (resizeDebounce) {
@@ -336,5 +338,44 @@ Events.init = function(map) {
     }
 
     map.emit('gesture', e);
+  }
+
+  //***************************************************************************
+
+  var a1 = 0, b1 = 0, c1 = 0;
+  //var aFilter = 0, bFilter = 0, cFilter = 0;
+
+  function onDeviceMotion(e) {
+    if (!e.accelerationIncludingGravity) {
+      return;
+    }
+
+    var
+      acceleration = e.accelerationIncludingGravity,
+      a = acceleration.z*0.1 + a1*0.9,
+      b = acceleration.x*0.1 + b1*0.9,
+      c = acceleration.y*0.1 + c1*0.9;
+
+    var
+      aDelta = a-a1,
+      bDelta = b-b1,
+      cDelta = c-c1;
+
+    if (!aDelta && !bDelta && !cDelta) {
+      return;
+    }
+
+    //map.emit('motion', {
+    //  alpha: aDelta,
+    //  beta:  bDelta,
+    //  gamma: cDelta
+    //});
+
+    map.setTilt(map.tilt + aDelta*5);
+    //map.setRotation(map.rotation - cDelta*5);
+
+    a1 = a;
+    b1 = b;
+    c1 = c;
   }
 };
