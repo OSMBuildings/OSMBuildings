@@ -17,17 +17,9 @@ var render = {
       delete render.effects.outlines;
     }
 
-    this.viewMatrix = new GLX.Matrix();
-    this.projMatrix = new GLX.Matrix();
-    this.viewProjMatrix = new GLX.Matrix();
-    this.viewDirOnMap = [0.0, -1.0];
-
     MAP.on('change', this._onChange = this.onChange.bind(this));
-    this.onChange();
-
     MAP.on('resize', this._onResize = this.onResize.bind(this));
-    this.onResize();  //initialize projection matrix
-    this.onChange();  //initialize view matrix
+    this.onResize();  //initialize view and projection matrix, fog distance, etc.
 
     GL.cullFace(GL.BACK);
     GL.enable(GL.CULL_FACE);
@@ -166,25 +158,7 @@ var render = {
   stop: function() {
     clearInterval(this.loop);
   },
-
-  updateFogDistance: function() {
-    var inverse = GLX.Matrix.invert(this.viewProjMatrix.data);
-    
-    //need to store this as a reference point to determine fog distance
-    this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, inverse);
-    if (this.lowerLeftOnMap === undefined) {
-      return;
-    }
-
-    var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
-
-    /* fogDistance: closest distance at which the fog affects the geometry */
-    this.fogDistance = Math.max(3000, lowerLeftDistanceToCenter);
-    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
-     *                  completely enclosed in fog. */
-    this.fogBlurDistance = 500;
-  },
-
+  
   onChange: function() {
     var 
       scale = 1.38*Math.pow(2, MAP.zoom-17),
@@ -202,7 +176,6 @@ var render = {
 
     this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
                          -Math.cos(MAP.rotation / 180* Math.PI)];
-
 
     // OSMBuildings' perspective camera is ... special: The reference point for
     // camera movement, rotation and zoom is at the screen center (as usual). 
@@ -226,7 +199,20 @@ var render = {
       .translate(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
-    this.updateFogDistance();
+
+    //need to store this as a reference point to determine fog distance
+    this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, GLX.Matrix.invert(this.viewProjMatrix.data));
+    if (this.lowerLeftOnMap === undefined) {
+      return;
+    }
+
+    var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
+
+    /* fogDistance: closest distance at which the fog affects the geometry */
+    this.fogDistance = Math.max(3000, lowerLeftDistanceToCenter);
+    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
+     *                  completely enclosed in fog. */
+    this.fogBlurDistance = 500;
   },
 
   onResize: function() {
