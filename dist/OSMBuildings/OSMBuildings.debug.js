@@ -3269,7 +3269,7 @@ Events.init = function(map) {
       dy = t1.clientY - t2.clientY,
       dist2 = dx*dx + dy*dy,
       angle2 = Math.atan2(dy, dx);
-// TODO add native e here
+
     onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
   }
 
