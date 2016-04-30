@@ -16,7 +16,7 @@ module.exports = function(grunt) {
           footer: "\nreturn GLX;\n}());\n",
           sourceMap: true
         },
-        src:'<%=cfg.glx%>',
+        src: '<%=cfg.glx%>',
         dest: 'build/temp/GLX.debug.js'
       },
 
@@ -27,7 +27,7 @@ module.exports = function(grunt) {
           footer: "\nreturn Basemap;\n}());\nwindow.GLMap = Basemap;\n",
           sourceMap: true
         },
-        src:'<%=cfg.basemap%>',
+        src: '<%=cfg.basemap%>',
         dest: 'build/temp/Basemap.debug.js'
       },
 
@@ -124,7 +124,26 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-compress');
   grunt.loadNpmTasks('grunt-jsdoc');
 
+
+  function safeMkdir(dir) {
+    try {
+      fs.readdirSync(dir);
+    } catch (ex) {
+      fs.mkdirSync(dir);
+      grunt.log.writeln('directory created: ' + dir);
+    }
+  }
+
+  function setup() {
+    safeMkdir('dist');
+    safeMkdir('dist/OSMBuildings');
+    safeMkdir('build');
+    safeMkdir('build/temp');
+  }
+
   grunt.registerMultiTask('shaders', 'Build shaders', function() {
+    setup();
+
     //grunt.log.writeln(JSON.stringify(this.data));
     var config = this.data;
 
@@ -144,16 +163,19 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('glx', 'GL abstraction layer for OSM Buildings', function() {
+    setup();
     grunt.task.run('concat:glx');
     grunt.task.run('jshint:glx');
   });
 
   grunt.registerTask('basemap', 'base map for standalone OSM Buildings', function() {
+    setup();
     grunt.task.run('concat:basemap');
     grunt.task.run('jshint:basemap');
   });
 
   grunt.registerMultiTask('version', 'set version number', function() {
+    setup();
     //grunt.log.writeln(JSON.stringify(this.data));
     var config = this.data;
 
@@ -167,6 +189,7 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('osmb', 'core OSM Buildings task', function() {
+    setup();
     grunt.task.run('shaders');
     grunt.task.run('glx');
     grunt.task.run('basemap');
@@ -181,10 +204,12 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('default', 'dev build', function() {
+    setup();
     grunt.task.run('shaders');
   });
 
   grunt.registerTask('release', 'Release', function() {
+    setup();
     grunt.log.writeln('\033[1;36m'+ grunt.template.date(new Date(), 'yyyy-mm-dd HH:MM:ss') +'\033[0m');
 
     grunt.task.run('osmb');
