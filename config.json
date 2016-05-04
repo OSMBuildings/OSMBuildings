@@ -58,6 +58,7 @@
     "src/mesh/MapPlane.js",
     "src/mesh/DebugQuad.js",
     "src/mesh/OBJ.js",
+    "src/mesh/Terrain.js",
 
     "src/geometry.js",
 
