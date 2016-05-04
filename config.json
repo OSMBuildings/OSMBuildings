@@ -52,6 +52,7 @@
 
     "src/data/index.js",
     "src/data/Tile.js",
+    "src/data/TerrainTile.js",
 
     "src/mesh/index.js",
     "src/mesh/GeoJSON.js",

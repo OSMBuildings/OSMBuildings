@@ -25,10 +25,13 @@ var render = {
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
 
-    /*var terrainTile = */
-    new mesh.Terrain("https://terrain-preview.mapzen.com/terrarium/14/8799/5377.png");
-    //new mesh.Terrain("https://terrain-preview.mapzen.com/terrarium/14/2617/6333.png");
-    //new mesh.Terrain("https://terrain-preview.mapzen.com/terrarium/14/2616/6333.png");
+    new Grid("{x}/{y}/{z}/{s}", data.TerrainTile, {
+      fixedZoom:13,
+      terrainUrl:   "https://terrain-preview.mapzen.com/terrarium/{z}/{x}/{y}.png",
+      normalUrl:       "https://terrain-preview.mapzen.com/normal/{z}/{x}/{y}.png",
+      mapUrl:'https://a.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png'
+    });
+    
     render.Picking.init(); // renders only on demand
     render.sky = new render.SkyWall();
     render.Buildings.init();

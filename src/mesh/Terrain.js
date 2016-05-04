@@ -1,4 +1,11 @@
 
+/* Note: this initial terrain rendering is incorrect in several ways
+ * - alignment between the terrain vertices and the height data has not been checked (might be off by half a terrain pixel (~5m)
+ * - there seem to be lon/lat gaps between adjacent tiles
+ * - heights at the right hand and lower edge of each tile duplicate those one terrain pixel left of it
+ * - no attempt has been made to hide cracks between adjacent terrain tiles
+ *
+ */
 mesh.Terrain = (function() {
 
   function constructor(url, options) {
@@ -12,12 +19,13 @@ mesh.Terrain = (function() {
     }
 
     //FIXME: more robust passing of x/y/z
-    var re = new RegExp(".*/(\\d+)/(\\d+)/(\\d+)\\.png");
+    var re = new RegExp("(\\d+)/(\\d+)/(\\d+)/(.*)");
     //var re = new RegExp(".*(\\d+)\\.png");
     var m = url.match(re);
-    this.z = parseInt(m[1]);
-    this.x = parseInt(m[2]);
-    this.y = parseInt(m[3]);
+    this.x = parseInt(m[1]);
+    this.y = parseInt(m[2]);
+    this.z = parseInt(m[3]);
+    this.s = m[4];
     this.geoCenter = { 
       latitude: tile2lat(this.y+0.5, this.z), 
       longitude: tile2lon(this.x+0.5, this.z)
@@ -33,21 +41,20 @@ mesh.Terrain = (function() {
       }
     }.bind(this);
 
-    
     this.heightImage = new Image();
     this.heightImage.crossOrigin = "Anonymous"; //enable CORS
     this.heightImage.onload = onload;
-    this.heightImage.src = url;
-    
+    this.heightImage.src = pattern(options.terrainUrl, { s:this.s, x:this.x, y:this.y, z:this.z });
+
     this.normalImage = new Image();
     this.normalImage.crossOrigin = "Anonymous";
     this.normalImage.onload = onload;
-    this.normalImage.src = "https://terrain-preview.mapzen.com/normal/" + this.z + "/" + this.x + "/" + this.y + ".png";
-    
+    this.normalImage.src = pattern(options.normalUrl, { s:this.s, x:this.x, y:this.y, z:this.z });
+
     this.mapImage = new Image();
     this.mapImage.crossOrigin = "Anonymous";
     this.mapImage.onload = onload;
-    this.mapImage.src = 'https://a.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/'+ this.z+'/' + this.x + '/' + this.y+'.png';
+    this.mapImage.src = pattern(options.mapUrl, { s:this.s, x:this.x, y:this.y, z:this.z });
 
   }
 
