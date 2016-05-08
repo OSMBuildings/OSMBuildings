@@ -4,7 +4,7 @@
     "copyright"             : "© 3D <a href=\"https://osmbuildings.org/copyright/\">OSM Buildings</a>",
     "theme"                 : "united",
     "linenums"              : "true",
-    "syntaxTheme"            : "dark"
+    "syntaxTheme"           : "dark"
   },
   "source": {
     "include": ["src"],
