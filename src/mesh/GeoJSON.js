@@ -86,6 +86,10 @@ mesh.GeoJSON = (function() {
 
           this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
 
+          /**
+           * Fired when a 3d object has been loaded
+           * @event OSMBuildings#loadfeature
+           */
           APP.emit('loadfeature', feature);
         }
 

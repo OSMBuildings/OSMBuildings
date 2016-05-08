@@ -4,7 +4,7 @@
     "copyright"             : "© 3D <a href=\"https://osmbuildings.org/copyright/\">OSM Buildings</a>",
     "theme"                 : "united",
     "linenums"              : "true",
-    "syntaxThem"            : "dark"
+    "syntaxTheme"            : "dark"
   },
   "source": {
     "include": ["src"],
@@ -14,6 +14,7 @@
     "recurse": true,
     "tutorials": "examples",
     "readme": "README.md",
-    "template": "./node_modules/ink-docstrap/template"
+    "template": "./node_modules/ink-docstrap/template",
+    "tutorials": "tutorials"
   }
 }

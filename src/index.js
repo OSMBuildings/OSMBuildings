@@ -15,7 +15,7 @@ var MAP, GL;
  *       can accurately be represented within the limited accuracy of IEEE floats.*/
 
 /**
- * OSMBuildings main class
+ * OSMBuildings building layer
  * @constructor
  * @param {Object} [options] - OSMBuildings options
  * @param {String} [options.baseURL='.'] - For locating assets. This is relative to calling page

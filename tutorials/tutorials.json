@@ -1,0 +1,26 @@
+{
+  "obj": {
+    "title": "Add a 3D Model"
+  },
+  "moving_label": {
+    "title": "Adding a Moving Label"
+  },
+  "fetch_details": {
+    "title": "Fetching details"
+  },
+  "geojson": {
+    "title": "GeoJSON"
+  },
+  "highlight_buildings": {
+    "title": "Highlighting buildings"
+  },
+  "map_control_buttons": {
+    "title": "Adding control buttons"
+  },
+  "position_a_map_object": {
+    "title": "Positioning a map object"
+  },
+  "calculate_bounding_box": {
+    "title": "Calculating a bounding box"
+  }
+}
