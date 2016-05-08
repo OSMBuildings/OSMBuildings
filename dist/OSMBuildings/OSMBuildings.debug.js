@@ -3534,7 +3534,7 @@ var OSMBuildings = function(options) {
   }
 };
 
-OSMBuildings.VERSION = '2.4.2';
+OSMBuildings.VERSION = '2.4.3';
 OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {

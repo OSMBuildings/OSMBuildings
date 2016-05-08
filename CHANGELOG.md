@@ -1,4 +1,16 @@
 
+# 2.4.3 @ 2016-05-09
+
+## New
+
+- Touch gesture for map tilt (2 finger vertical swipe)
+
+## Changed
+
+- internal GL tools reorganized
+- Basemap now using native events
+
+
 # 2.4.2 @ 2016-04-21
 
 ## Changed
