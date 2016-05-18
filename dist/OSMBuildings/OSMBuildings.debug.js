@@ -2714,10 +2714,10 @@ return GLX;
 }());
 
 //
-var Basemap = (function() {
+var GLMap = (function() {
 /**
  * This is the base map engine for standalone OSM Buildings
- * @class Basemap
+ * @class GLMap
  */
 
 /**
@@ -2728,8 +2728,8 @@ function clamp(value, min, max) {
 }
 
 /**
- * Basemap
- * @Basemap
+ * GLMap
+ * @GLMap
  * @param {HTMLElement} DOM container
  * @param {Object} options
  */
@@ -2751,7 +2751,7 @@ function clamp(value, min, max) {
  * @param {Float} [options.position.latitude=52.520000]
  * @param {Float} [options.position.latitude=13.410000]
  */
-var Basemap = function(container, options) {
+var GLMap = function(container, options) {
   this.container = typeof container === 'string' ? document.getElementById(container) : container;
   options = options || {};
 
@@ -2796,7 +2796,7 @@ var Basemap = function(container, options) {
   this.updateAttribution();
 };
 
-Basemap.prototype = {
+GLMap.prototype = {
 
   /**
    * @private
@@ -2923,8 +2923,8 @@ Basemap.prototype = {
    * Sets the zoom level
    * @param {Float} zoom - The new zoom level
    * @param {Object} e - **Not currently used**
-   * @fires Basemap#zoom
-   * @fires Basemap#change
+   * @fires GLMap#zoom
+   * @fires GLMap#change
    */
   setZoom: function(zoom, e) {
     zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
@@ -2950,14 +2950,14 @@ Basemap.prototype = {
          this.center.y += dy;*/
       }
       /**
-       * Fired when the basemap is zoomed (in either direction)
-       * @event Basemap#zoom
+       * Fired when the map is zoomed (in either direction)
+       * @event GLMap#zoom
        */
       this.emit('zoom', { zoom: zoom });
 
       /**
-       * Fired when the basemap changes
-       * @event Basemap#change
+       * Fired when the map is zoomed, tilted or panned
+       * @event GLMap#change
        */
       this.emit('change');
     }
@@ -2976,7 +2976,7 @@ Basemap.prototype = {
    * @param {Object} pos - The new position
    * @param {Float} pos.latitude
    * @param {Float} pos.longitude
-   * @fires Basemap#change
+   * @fires GLMap#change
    */
   setPosition: function(pos) {
     var lat = parseFloat(pos.latitude);
@@ -3001,7 +3001,7 @@ Basemap.prototype = {
    * @param {Object} size
    * @param {Integer} size.width
    * @param {Integer} size.height
-   * @fires Basemap#resize
+   * @fires GLMap#resize
    */
   setSize: function(size) {
     if (size.width !== this.width || size.height !== this.height) {
@@ -3010,7 +3010,7 @@ Basemap.prototype = {
 
       /**
        * Fired when the map is resized
-       * @event Basemap#resize
+       * @event GLMap#resize
        */
       this.emit('resize', { width: this.width, height: this.height });
     }
@@ -3027,8 +3027,8 @@ Basemap.prototype = {
   /**
    * Set's the maps rotation
    * @param {Float} rotation - The new rotation angle
-   * @fires Basemap#rotate
-   * @fires Basemap#change
+   * @fires GLMap#rotate
+   * @fires GLMap#change
    */
   setRotation: function(rotation) {
     rotation = parseFloat(rotation)%360;
@@ -3036,8 +3036,8 @@ Basemap.prototype = {
       this.rotation = rotation;
 
       /**
-       * Fired when the basemap is rotated
-       * @event Basemap#rotate
+       * Fired when the map is rotated
+       * @event GLMap#rotate
        */
       this.emit('rotate', { rotation: rotation });
       this.emit('change');
@@ -3055,8 +3055,8 @@ Basemap.prototype = {
   /**
    * Sets the map's tilt
    * @param {Float} tilt - The new tilt
-   * @fires Basemap#tilt
-   * @fires Basemap#change
+   * @fires GLMap#tilt
+   * @fires GLMap#change
    */
   setTilt: function(tilt) {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
@@ -3064,8 +3064,8 @@ Basemap.prototype = {
       this.tilt = tilt;
 
       /**
-       * Fired when the basemap is tilted
-       * @event Basemap#tilt
+       * Fired when the map is tilted
+       * @event GLMap#tilt
        */
       this.emit('tilt', { tilt: tilt });
       this.emit('change');
@@ -3136,11 +3136,7 @@ function mul2scalar(a, f) {
 /**
  * @private
  */
-function getEventOffset(e) {
-  if (e.offsetX !== undefined) {
-    return { x:e.offsetX, y:e.offsetY };
-  }
-  var offset = getElementOffset(e.target);
+function getEventPosition(e, offset) {
   return {
     x: e.clientX - offset.x,
     y: e.clientY - offset.y
@@ -3151,8 +3147,12 @@ function getEventOffset(e) {
  * @private
  */
 function getElementOffset(el) {
-  var res = { x:0, y:0 };
+  if (el.getBoundingClientRect) {
+    var box = el.getBoundingClientRect();
+    return { x:box.left, y:box.top };
+  }
 
+  var res = { x:0, y:0 };
   while(el.nodeType === 1) {
     res.x += el.offsetLeft;
     res.y += el.offsetTop;
@@ -3229,6 +3229,7 @@ Events.init = function(map) {
     startX = 0,
     startY = 0,
     startZoom = 0,
+    startOffset,
     prevRotation = 0,
     prevTilt = 0,
     pointerIsDown = false;
@@ -3238,8 +3239,8 @@ Events.init = function(map) {
     if (!Events.disabled) {
       map.setZoom(map.zoom + 1, e);
     }
-    var pos = getEventOffset(e);
-      map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+    var pos = getEventPosition(e, getElementOffset(e.target));
+    map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
   }
 
   function onMouseDown(e) {
@@ -3253,7 +3254,8 @@ Events.init = function(map) {
     prevRotation = map.rotation;
     prevTilt = map.tilt;
 
-    var pos = getEventOffset(e);
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, startOffset);
     startX = prevX = pos.x;
     startY = prevY = pos.y;
 
@@ -3263,15 +3265,17 @@ Events.init = function(map) {
   }
 
   function onMouseMove(e) {
-    var pos = getEventOffset(e);
-
-    if (pointerIsDown) {
+    var pos;
+    if (!pointerIsDown) {
+      pos = getEventPosition(e, getElementOffset(e.target));
+    } else {
       if (e.button === 0 && !e.altKey) {
-        moveMap(e);
+        moveMap(e, startOffset);
       } else {
-        rotateMap(e);
+        rotateMap(e, startOffset);
       }
 
+      pos = getEventPosition(e, startOffset);
       prevX = pos.x;
       prevY = pos.y;
     }
@@ -3285,14 +3289,14 @@ Events.init = function(map) {
       return;
     }
 
-    var pos = getEventOffset(e);
+    var pos = getEventPosition(e, startOffset);
 
     if (e.button === 0 && !e.altKey) {
       if (Math.abs(pos.x - startX)>5 || Math.abs(pos.y - startY)>5) {
-        moveMap(e);
+        moveMap(e, startOffset);
       }
     } else {
-      rotateMap(e);
+      rotateMap(e, startOffset);
     }
 
     pointerIsDown = false;
@@ -3322,7 +3326,7 @@ Events.init = function(map) {
 
   //***************************************************************************
 
-  function moveMap(e) {
+  function moveMap(e, offset) {
     if (Events.disabled) {
       return;
     }
@@ -3334,7 +3338,7 @@ Events.init = function(map) {
     var
       scale = 0.86 * Math.pow(2, -map.zoom),
       lonScale = 1/Math.cos( map.position.latitude/ 180 * Math.PI),
-      pos = getEventOffset(e),
+      pos = getEventPosition(e, offset),
       dx = pos.x - prevX,
       dy = pos.y - prevY,
       angle = map.rotation * Math.PI/180,
@@ -3350,11 +3354,11 @@ Events.init = function(map) {
     map.emit('move', newPosition);
   }
 
-  function rotateMap(e) {
+  function rotateMap(e, offset) {
     if (Events.disabled) {
       return;
     }
-    var pos = getEventOffset(e);
+    var pos = getEventPosition(e, offset);
     prevRotation += (pos.x - prevX)*(360/innerWidth);
     prevTilt -= (pos.y - prevY)*(360/innerHeight);
     map.setRotation(prevRotation);
@@ -3402,7 +3406,8 @@ Events.init = function(map) {
       e = e.touches[0];
     }
 
-    var pos = getEventOffset(e);
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, offset);
     startX = prevX = pos.x;
     startY = prevY = pos.y;
 
@@ -3410,7 +3415,7 @@ Events.init = function(map) {
   }
 
   function onTouchMove(e) {
-    var pos = getEventOffset(e.touches[0]);
+    var pos = getEventPosition(e.touches[0], startOffset);
     if (e.touches.length > 1) {
       map.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
       prevTilt = map.tilt;
@@ -3419,7 +3424,7 @@ Events.init = function(map) {
         emitGestureChange(e);
       }
     } else {
-      moveMap(e.touches[0]);
+      moveMap(e.touches[0], startOffset);
       map.emit('pointermove', { x: pos.x, y: pos.y });
     }
     prevX = pos.x;
@@ -3434,7 +3439,7 @@ Events.init = function(map) {
       map.emit('pointerup', { x: prevX, y: prevY, button: 0 });
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
-      var pos = getEventOffset(e.touches[0]);
+      var pos = getEventPosition(e.touches[0], startOffset);
       prevX = pos.x;
       prevY = pos.y;
     }
@@ -3452,9 +3457,9 @@ Events.init = function(map) {
   }
 };
 
-return Basemap;
+return GLMap;
 }());
-window.GLMap = Basemap;
+window.GLMap = GLMap;
 
 //
 

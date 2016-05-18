@@ -36,7 +36,7 @@ function getEventPosition(e, offset) {
 function getElementOffset(el) {
   if (el.getBoundingClientRect) {
     var box = el.getBoundingClientRect();
-    return { x:box.left, y:box.top }
+    return { x:box.left, y:box.top };
   }
 
   var res = { x:0, y:0 };
