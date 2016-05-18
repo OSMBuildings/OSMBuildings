@@ -54,7 +54,7 @@ for (var i = 0; i < config.modules.length; i++) {
 
 js += loadShaders(config.shaders);
 
-// glx
+// GLX
 
 js += "var GLX = (function() {";
 for (var i = 0; i < config.glx.length; i++) {
@@ -62,16 +62,16 @@ for (var i = 0; i < config.glx.length; i++) {
 }
 js += "\nreturn GLX;\n}());\n";
 
-// basemap
+// GLMap
 
-js += "var Basemap = (function() {";
-for (var i = 0; i < config.basemap.length; i++) {
-  js += loadFile(baseURL + config.basemap[i]) + '\n';
+js += "var GLMap = (function() {";
+for (var i = 0; i < config.glmap.length; i++) {
+  js += loadFile(baseURL + config.glmap[i]) + '\n';
 }
-js += "\nreturn Basemap;\n}());\n";
-js += "\nwindow.GLMap = Basemap;\n";
+js += "\nreturn GLMap;\n}());\n";
+js += "\nwindow.GLMap = GLMap;\n";
 
-// core
+// OSMB core
 
 for (var i = 0; i < config.src.length; i++) {
   js += loadFile(baseURL + config.src[i]) + '\n';
@@ -80,8 +80,6 @@ for (var i = 0; i < config.src.length; i++) {
 
 js += "}());";
 
-
-var global = this;
 
 try {
   eval(js);

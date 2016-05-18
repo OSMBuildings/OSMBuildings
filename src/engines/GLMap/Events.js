@@ -23,11 +23,7 @@ function mul2scalar(a, f) {
 /**
  * @private
  */
-function getEventOffset(e) {
-  if (e.offsetX !== undefined) {
-    return { x:e.offsetX, y:e.offsetY };
-  }
-  var offset = getElementOffset(e.target);
+function getEventPosition(e, offset) {
   return {
     x: e.clientX - offset.x,
     y: e.clientY - offset.y
@@ -38,8 +34,12 @@ function getEventOffset(e) {
  * @private
  */
 function getElementOffset(el) {
-  var res = { x:0, y:0 };
+  if (el.getBoundingClientRect) {
+    var box = el.getBoundingClientRect();
+    return { x:box.left, y:box.top }
+  }
 
+  var res = { x:0, y:0 };
   while(el.nodeType === 1) {
     res.x += el.offsetLeft;
     res.y += el.offsetTop;
@@ -116,6 +116,7 @@ Events.init = function(map) {
     startX = 0,
     startY = 0,
     startZoom = 0,
+    startOffset,
     prevRotation = 0,
     prevTilt = 0,
     pointerIsDown = false;
@@ -125,8 +126,8 @@ Events.init = function(map) {
     if (!Events.disabled) {
       map.setZoom(map.zoom + 1, e);
     }
-    var pos = getEventOffset(e);
-      map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+    var pos = getEventPosition(e, getElementOffset(e.target));
+    map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
   }
 
   function onMouseDown(e) {
@@ -140,7 +141,8 @@ Events.init = function(map) {
     prevRotation = map.rotation;
     prevTilt = map.tilt;
 
-    var pos = getEventOffset(e);
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, startOffset);
     startX = prevX = pos.x;
     startY = prevY = pos.y;
 
@@ -150,15 +152,17 @@ Events.init = function(map) {
   }
 
   function onMouseMove(e) {
-    var pos = getEventOffset(e);
-
-    if (pointerIsDown) {
+    var pos;
+    if (!pointerIsDown) {
+      pos = getEventPosition(e, getElementOffset(e.target));
+    } else {
       if (e.button === 0 && !e.altKey) {
-        moveMap(e);
+        moveMap(e, startOffset);
       } else {
-        rotateMap(e);
+        rotateMap(e, startOffset);
       }
 
+      pos = getEventPosition(e, startOffset);
       prevX = pos.x;
       prevY = pos.y;
     }
@@ -172,14 +176,14 @@ Events.init = function(map) {
       return;
     }
 
-    var pos = getEventOffset(e);
+    var pos = getEventPosition(e, startOffset);
 
     if (e.button === 0 && !e.altKey) {
       if (Math.abs(pos.x - startX)>5 || Math.abs(pos.y - startY)>5) {
-        moveMap(e);
+        moveMap(e, startOffset);
       }
     } else {
-      rotateMap(e);
+      rotateMap(e, startOffset);
     }
 
     pointerIsDown = false;
@@ -209,7 +213,7 @@ Events.init = function(map) {
 
   //***************************************************************************
 
-  function moveMap(e) {
+  function moveMap(e, offset) {
     if (Events.disabled) {
       return;
     }
@@ -221,7 +225,7 @@ Events.init = function(map) {
     var
       scale = 0.86 * Math.pow(2, -map.zoom),
       lonScale = 1/Math.cos( map.position.latitude/ 180 * Math.PI),
-      pos = getEventOffset(e),
+      pos = getEventPosition(e, offset),
       dx = pos.x - prevX,
       dy = pos.y - prevY,
       angle = map.rotation * Math.PI/180,
@@ -237,11 +241,11 @@ Events.init = function(map) {
     map.emit('move', newPosition);
   }
 
-  function rotateMap(e) {
+  function rotateMap(e, offset) {
     if (Events.disabled) {
       return;
     }
-    var pos = getEventOffset(e);
+    var pos = getEventPosition(e, offset);
     prevRotation += (pos.x - prevX)*(360/innerWidth);
     prevTilt -= (pos.y - prevY)*(360/innerHeight);
     map.setRotation(prevRotation);
@@ -289,7 +293,8 @@ Events.init = function(map) {
       e = e.touches[0];
     }
 
-    var pos = getEventOffset(e);
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, offset);
     startX = prevX = pos.x;
     startY = prevY = pos.y;
 
@@ -297,7 +302,7 @@ Events.init = function(map) {
   }
 
   function onTouchMove(e) {
-    var pos = getEventOffset(e.touches[0]);
+    var pos = getEventPosition(e.touches[0], startOffset);
     if (e.touches.length > 1) {
       map.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
       prevTilt = map.tilt;
@@ -306,7 +311,7 @@ Events.init = function(map) {
         emitGestureChange(e);
       }
     } else {
-      moveMap(e.touches[0]);
+      moveMap(e.touches[0], startOffset);
       map.emit('pointermove', { x: pos.x, y: pos.y });
     }
     prevX = pos.x;
@@ -321,7 +326,7 @@ Events.init = function(map) {
       map.emit('pointerup', { x: prevX, y: prevY, button: 0 });
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
-      var pos = getEventOffset(e.touches[0]);
+      var pos = getEventPosition(e.touches[0], startOffset);
       prevX = pos.x;
       prevY = pos.y;
     }

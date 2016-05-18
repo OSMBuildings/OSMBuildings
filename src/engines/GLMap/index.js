@@ -1,6 +1,6 @@
 /**
  * This is the base map engine for standalone OSM Buildings
- * @class Basemap
+ * @class GLMap
  */
 
 /**
@@ -11,8 +11,8 @@ function clamp(value, min, max) {
 }
 
 /**
- * Basemap
- * @Basemap
+ * GLMap
+ * @GLMap
  * @param {HTMLElement} DOM container
  * @param {Object} options
  */
@@ -34,7 +34,7 @@ function clamp(value, min, max) {
  * @param {Float} [options.position.latitude=52.520000]
  * @param {Float} [options.position.latitude=13.410000]
  */
-var Basemap = function(container, options) {
+var GLMap = function(container, options) {
   this.container = typeof container === 'string' ? document.getElementById(container) : container;
   options = options || {};
 
@@ -79,7 +79,7 @@ var Basemap = function(container, options) {
   this.updateAttribution();
 };
 
-Basemap.prototype = {
+GLMap.prototype = {
 
   /**
    * @private
@@ -206,8 +206,8 @@ Basemap.prototype = {
    * Sets the zoom level
    * @param {Float} zoom - The new zoom level
    * @param {Object} e - **Not currently used**
-   * @fires Basemap#zoom
-   * @fires Basemap#change
+   * @fires GLMap#zoom
+   * @fires GLMap#change
    */
   setZoom: function(zoom, e) {
     zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
@@ -233,14 +233,14 @@ Basemap.prototype = {
          this.center.y += dy;*/
       }
       /**
-       * Fired when the basemap is zoomed (in either direction)
-       * @event Basemap#zoom
+       * Fired when the map is zoomed (in either direction)
+       * @event GLMap#zoom
        */
       this.emit('zoom', { zoom: zoom });
 
       /**
-       * Fired when the basemap changes
-       * @event Basemap#change
+       * Fired when the map is zoomed, tilted or panned
+       * @event GLMap#change
        */
       this.emit('change');
     }
@@ -259,7 +259,7 @@ Basemap.prototype = {
    * @param {Object} pos - The new position
    * @param {Float} pos.latitude
    * @param {Float} pos.longitude
-   * @fires Basemap#change
+   * @fires GLMap#change
    */
   setPosition: function(pos) {
     var lat = parseFloat(pos.latitude);
@@ -284,7 +284,7 @@ Basemap.prototype = {
    * @param {Object} size
    * @param {Integer} size.width
    * @param {Integer} size.height
-   * @fires Basemap#resize
+   * @fires GLMap#resize
    */
   setSize: function(size) {
     if (size.width !== this.width || size.height !== this.height) {
@@ -293,7 +293,7 @@ Basemap.prototype = {
 
       /**
        * Fired when the map is resized
-       * @event Basemap#resize
+       * @event GLMap#resize
        */
       this.emit('resize', { width: this.width, height: this.height });
     }
@@ -310,8 +310,8 @@ Basemap.prototype = {
   /**
    * Set's the maps rotation
    * @param {Float} rotation - The new rotation angle
-   * @fires Basemap#rotate
-   * @fires Basemap#change
+   * @fires GLMap#rotate
+   * @fires GLMap#change
    */
   setRotation: function(rotation) {
     rotation = parseFloat(rotation)%360;
@@ -319,8 +319,8 @@ Basemap.prototype = {
       this.rotation = rotation;
 
       /**
-       * Fired when the basemap is rotated
-       * @event Basemap#rotate
+       * Fired when the map is rotated
+       * @event GLMap#rotate
        */
       this.emit('rotate', { rotation: rotation });
       this.emit('change');
@@ -338,8 +338,8 @@ Basemap.prototype = {
   /**
    * Sets the map's tilt
    * @param {Float} tilt - The new tilt
-   * @fires Basemap#tilt
-   * @fires Basemap#change
+   * @fires GLMap#tilt
+   * @fires GLMap#change
    */
   setTilt: function(tilt) {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
@@ -347,8 +347,8 @@ Basemap.prototype = {
       this.tilt = tilt;
 
       /**
-       * Fired when the basemap is tilted
-       * @event Basemap#tilt
+       * Fired when the map is tilted
+       * @event GLMap#tilt
        */
       this.emit('tilt', { tilt: tilt });
       this.emit('change');

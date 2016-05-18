@@ -32,9 +32,9 @@
     "src/glx/texture/Data.js"
   ],
 
-  "basemap": [
-    "src/engines/Basemap/index.js",
-    "src/engines/Basemap/Events.js"
+  "glmap": [
+    "src/engines/GLMap/index.js",
+    "src/engines/GLMap/Events.js"
   ],
 
   "src": [
