@@ -23,7 +23,7 @@ function httpGetAsync(theUrl, callback)
 map.on('pointerdown', function(e) {
   var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
     if (id) {
-      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace('/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace('/^[a-z]+/, '') + ");way(23853131);node(w));out;";
+      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace(/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace(/^[a-z]+/, '') + ");way(23853131);node(w));out;";
       httpGetAsync(url, function(response){
         alert(response);
       });
@@ -55,7 +55,7 @@ function httpGetAsync(theUrl, callback)
 map.on('pointerdown', function(e) {
   var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
     if (id) {
-      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace('/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace('/^[a-z]+/, '') + ");way(23853131);node(w));out;";
+      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace(/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace(/^[a-z]+/, '') + ");way(23853131);node(w));out;";
       httpGetAsync(url, function(response){
         alert(response);
       });
