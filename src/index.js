@@ -52,46 +52,44 @@ var APP, GL; // TODO: make them local references
 var OSMBuildings = function(options) {
   APP = this; // refers to 'this'. Should make other globals obsolete.
 
-  options = options || {};
+  APP.options = (options || {});
 
-  if (options.style) {
-    APP.setStyle(options.style);
+  if (APP.options.style) {
+    APP.setStyle(APP.options.style);
   }
 
-  APP.baseURL = options.baseURL || '.';
+  APP.baseURL = APP.options.baseURL || '.';
 
-  render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
-  render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
-  render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();
+  render.backgroundColor = new Color(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
+  render.fogColor        = new Color(APP.options.fogColor        || FOG_COLOR).toArray();
+  render.highlightColor  = new Color(APP.options.highlightColor  || HIGHLIGHT_COLOR).toArray();
 
-  render.Buildings.showBackfaces = options.showBackfaces;
-
-  APP.highQuality = !options.fastMode;
+  render.Buildings.showBackfaces = APP.options.showBackfaces;
 
   render.effects = {};
-  var effects = options.effects || [];
+  var effects = APP.options.effects || [];
   for (var i = 0; i < effects.length; i++) {
     render.effects[ effects[i] ] = true;
   }
 
-  APP.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
+  APP.attribution = APP.options.attribution || OSMBuildings.ATTRIBUTION;
 
-  APP.minZoom = parseFloat(options.minZoom) || 10;
-  APP.maxZoom = parseFloat(options.maxZoom) || 20;
+  APP.minZoom = parseFloat(APP.options.minZoom) || 10;
+  APP.maxZoom = parseFloat(APP.options.maxZoom) || 20;
   if (APP.maxZoom < APP.minZoom) {
     APP.maxZoom = APP.minZoom;
   }
 
-  APP.bounds = options.bounds;
+  APP.bounds = APP.options.bounds;
 
-  APP.position = options.position || { latitude: 52.520000, longitude: 13.410000 };
-  APP.zoom = options.zoom || APP.minZoom;
-  APP.rotation = options.rotation || 0;
-  APP.tilt = options.tilt || 0;
+  APP.position = APP.options.position || { latitude: 52.520000, longitude: 13.410000 };
+  APP.zoom = APP.options.zoom || APP.minZoom;
+  APP.rotation = APP.options.rotation || 0;
+  APP.tilt = APP.options.tilt || 0;
 
   APP.layers = [];
 
-  if (options.disabled) {
+  if (APP.options.disabled) {
     APP.setDisabled(true);
   }
 };
@@ -107,25 +105,32 @@ OSMBuildings.prototype = {
    * @param {HTMLElement|String} DOM container or its id to append the map to
    */
   appendTo: function(container) {
-    APP.container = typeof container === 'string' ? document.getElementById(container) : container;
-    APP.container.classList.add('osmb-container');
+    if (typeof container === 'string') {
+      container = document.getElementById(container);
+    }
 
-    APP.width = APP.container.offsetWidth;
-    APP.height = APP.container.offsetHeight;
+    APP.width = container.offsetWidth;
+    APP.height = container.offsetHeight;
+    
+    var canvas = document.createElement('CANVAS');
+    canvas.className = 'osmb-viewport';
+    canvas.width = container.offsetWidth;
+    canvas.height = container.offsetHeight;
+    container.appendChild(canvas);
 
-    GL = GLX.createCanvas(APP.container, APP.width, APP.height, APP.highQuality);
+    GL = GLX.getContext(canvas);
 
-    Events.init();
+    Events.init(container);
 
     APP.getStateFromUrl();
-    // if (options.state) {
-    //    APP.setStateToUrl();
-    //    APP.on('change', APP.setStateToUrl);
-    // }
+    if (APP.options.state) {
+      APP.setStateToUrl();
+      APP.on('change', APP.setStateToUrl);
+    }
 
     APP.attributionContainer = document.createElement('DIV');
     APP.attributionContainer.className = 'osmb-attribution';
-    APP.container.appendChild(APP.attributionContainer);
+    container.appendChild(APP.attributionContainer);
     APP.updateAttribution();
 
     APP.setDate(new Date());
@@ -140,7 +145,7 @@ OSMBuildings.prototype = {
   // TODO: test this
   remove: function() {
     render.stop();
-    APP.container = null;
+    GLX.destroy();
   },
 
   /**

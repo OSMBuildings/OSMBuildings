@@ -77,20 +77,20 @@ Events.disabled = false;
 /**
  * @private
  */
-Events.init = function() {
+Events.init = function(container) {
 
   if ('ontouchstart' in window) {
-    addListener(APP.container, 'touchstart', onTouchStart);
+    addListener(container, 'touchstart', onTouchStart);
     addListener(document, 'touchmove', onTouchMove);
     addListener(document, 'touchend', onTouchEnd);
     addListener(document, 'gesturechange', onGestureChange);
   } else {
-    addListener(APP.container, 'mousedown', onMouseDown);
+    addListener(container, 'mousedown', onMouseDown);
     addListener(document, 'mousemove', onMouseMove);
     addListener(document, 'mouseup', onMouseUp);
-    addListener(APP.container, 'dblclick', onDoubleClick);
-    addListener(APP.container, 'mousewheel', onMouseWheel);
-    addListener(APP.container, 'DOMMouseScroll', onMouseWheel);
+    addListener(container, 'dblclick', onDoubleClick);
+    addListener(container, 'mousewheel', onMouseWheel);
+    addListener(container, 'DOMMouseScroll', onMouseWheel);
   }
 
   var resizeDebounce;
@@ -100,7 +100,7 @@ Events.init = function() {
     }
     resizeDebounce = setTimeout(function() {
       resizeDebounce = null;
-        APP.setSize({ width:APP.container.offsetWidth, height:APP.container.offsetHeight });
+        APP.setSize({ width:container.offsetWidth, height:container.offsetHeight });
     }, 250);
   });
 

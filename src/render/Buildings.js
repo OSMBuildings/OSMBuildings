@@ -53,7 +53,7 @@ render.Buildings = {
     this.wallTexture.load( BUILDING_TEXTURE);
   },
 
-  render: function(depthFramebuffer, shadowStrength) {
+  render: function(depthFramebuffer) {
 
     var shader = this.shader;
     shader.enable();

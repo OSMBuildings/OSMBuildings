@@ -1838,17 +1838,10 @@ var GLX = (function() {
 //ext.loseContext();
 
 var GLX = {};
-var GL;
 
-GLX.createCanvas = function(container, width, height, highQuality) {
-  var canvas = document.createElement('CANVAS');
-  canvas.style.position = 'absolute';
-  canvas.width = width;
-  canvas.height = height;
-  container.appendChild(canvas);
-
+GLX.getContext = function(canvas) {
   var options = {
-    antialias: highQuality,
+    antialias: !APP.options.fastMode,
     depth: true,
     premultipliedAlpha: false
   };
@@ -1873,13 +1866,13 @@ GLX.createCanvas = function(container, width, height, highQuality) {
     console.warn('context restored');
   });
 
-  GL.viewport(0, 0, width, height);
+  GL.viewport(0, 0, canvas.width, canvas.height);
   GL.cullFace(GL.BACK);
   GL.enable(GL.CULL_FACE);
   GL.enable(GL.DEPTH_TEST);
   GL.clearColor(0.5, 0.5, 0.5, 1);
 
-  if (highQuality) {
+  if (!APP.options.fastMode) {
     GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
     if (GL.anisotropyExtension) {
       GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(
@@ -3528,46 +3521,44 @@ var APP, GL; // TODO: make them local references
 var OSMBuildings = function(options) {
   APP = this; // refers to 'this'. Should make other globals obsolete.
 
-  options = options || {};
+  APP.options = (options || {});
 
-  if (options.style) {
-    APP.setStyle(options.style);
+  if (APP.options.style) {
+    APP.setStyle(APP.options.style);
   }
 
-  APP.baseURL = options.baseURL || '.';
+  APP.baseURL = APP.options.baseURL || '.';
 
-  render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
-  render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
-  render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();
+  render.backgroundColor = new Color(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
+  render.fogColor        = new Color(APP.options.fogColor        || FOG_COLOR).toArray();
+  render.highlightColor  = new Color(APP.options.highlightColor  || HIGHLIGHT_COLOR).toArray();
 
-  render.Buildings.showBackfaces = options.showBackfaces;
-
-  APP.highQuality = !options.fastMode;
+  render.Buildings.showBackfaces = APP.options.showBackfaces;
 
   render.effects = {};
-  var effects = options.effects || [];
+  var effects = APP.options.effects || [];
   for (var i = 0; i < effects.length; i++) {
     render.effects[ effects[i] ] = true;
   }
 
-  APP.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
+  APP.attribution = APP.options.attribution || OSMBuildings.ATTRIBUTION;
 
-  APP.minZoom = parseFloat(options.minZoom) || 12;
-  APP.maxZoom = parseFloat(options.maxZoom) || 22;
+  APP.minZoom = parseFloat(APP.options.minZoom) || 10;
+  APP.maxZoom = parseFloat(APP.options.maxZoom) || 20;
   if (APP.maxZoom < APP.minZoom) {
     APP.maxZoom = APP.minZoom;
   }
 
-  APP.bounds = options.bounds;
+  APP.bounds = APP.options.bounds;
 
-  APP.position = options.position || { latitude: 52.520000, longitude: 13.410000 };
-  APP.zoom = options.zoom || APP.minZoom;
-  APP.rotation = options.rotation || 0;
-  APP.tilt = options.tilt || 0;
+  APP.position = APP.options.position || { latitude: 52.520000, longitude: 13.410000 };
+  APP.zoom = APP.options.zoom || APP.minZoom;
+  APP.rotation = APP.options.rotation || 0;
+  APP.tilt = APP.options.tilt || 0;
 
   APP.layers = [];
 
-  if (options.disabled) {
+  if (APP.options.disabled) {
     APP.setDisabled(true);
   }
 };
@@ -3583,25 +3574,32 @@ OSMBuildings.prototype = {
    * @param {HTMLElement|String} DOM container or its id to append the map to
    */
   appendTo: function(container) {
-    APP.container = typeof container === 'string' ? document.getElementById(container) : container;
-    APP.container.classList.add('osmb-container');
+    if (typeof container === 'string') {
+      container = document.getElementById(container);
+    }
 
-    APP.width = APP.container.offsetWidth;
-    APP.height = APP.container.offsetHeight;
+    APP.width = container.offsetWidth;
+    APP.height = container.offsetHeight;
+    
+    var canvas = document.createElement('CANVAS');
+    canvas.className = 'osmb-viewport';
+    canvas.width = container.offsetWidth;
+    canvas.height = container.offsetHeight;
+    container.appendChild(canvas);
 
-    GL = GLX.createCanvas(APP.container, APP.width, APP.height, APP.highQuality);
+    GL = GLX.getContext(canvas);
 
-    Events.init();
+    Events.init(container);
 
     APP.getStateFromUrl();
-    // if (options.state) {
-    //    APP.setStateToUrl();
-    //    APP.on('change', APP.setStateToUrl);
-    // }
+    if (APP.options.state) {
+      APP.setStateToUrl();
+      APP.on('change', APP.setStateToUrl);
+    }
 
     APP.attributionContainer = document.createElement('DIV');
     APP.attributionContainer.className = 'osmb-attribution';
-    APP.container.appendChild(APP.attributionContainer);
+    container.appendChild(APP.attributionContainer);
     APP.updateAttribution();
 
     APP.setDate(new Date());
@@ -3616,7 +3614,7 @@ OSMBuildings.prototype = {
   // TODO: test this
   remove: function() {
     render.stop();
-    APP.container = null;
+    GLX.destroy();
   },
 
   /**
@@ -3774,12 +3772,12 @@ OSMBuildings.prototype = {
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
-   * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
+   * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
   addGeoJSONTiles: function(url, options) {
     options = options || {};
-    options.fixedZoom = options.fixedZoom || 15;
+    options.fixedZoom = options.fixedZoom || 14.5;
     APP.dataGrid = new Grid(url, data.Tile, options);
     return APP.dataGrid;
   },
@@ -4254,20 +4252,20 @@ Events.disabled = false;
 /**
  * @private
  */
-Events.init = function() {
+Events.init = function(container) {
 
   if ('ontouchstart' in window) {
-    addListener(APP.container, 'touchstart', onTouchStart);
+    addListener(container, 'touchstart', onTouchStart);
     addListener(document, 'touchmove', onTouchMove);
     addListener(document, 'touchend', onTouchEnd);
     addListener(document, 'gesturechange', onGestureChange);
   } else {
-    addListener(APP.container, 'mousedown', onMouseDown);
+    addListener(container, 'mousedown', onMouseDown);
     addListener(document, 'mousemove', onMouseMove);
     addListener(document, 'mouseup', onMouseUp);
-    addListener(APP.container, 'dblclick', onDoubleClick);
-    addListener(APP.container, 'mousewheel', onMouseWheel);
-    addListener(APP.container, 'DOMMouseScroll', onMouseWheel);
+    addListener(container, 'dblclick', onDoubleClick);
+    addListener(container, 'mousewheel', onMouseWheel);
+    addListener(container, 'DOMMouseScroll', onMouseWheel);
   }
 
   var resizeDebounce;
@@ -4277,7 +4275,7 @@ Events.init = function() {
     }
     resizeDebounce = setTimeout(function() {
       resizeDebounce = null;
-        APP.setSize({ width:APP.container.offsetWidth, height:APP.container.offsetHeight });
+        APP.setSize({ width:container.offsetWidth, height:container.offsetHeight });
     }, 250);
   });
 
@@ -6896,7 +6894,7 @@ render.Buildings = {
     this.wallTexture.load( BUILDING_TEXTURE);
   },
 
-  render: function(depthFramebuffer, shadowStrength) {
+  render: function(depthFramebuffer) {
 
     var shader = this.shader;
     shader.enable();

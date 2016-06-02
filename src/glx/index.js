@@ -3,17 +3,10 @@
 //ext.loseContext();
 
 var GLX = {};
-var GL;
 
-GLX.createCanvas = function(container, width, height, highQuality) {
-  var canvas = document.createElement('CANVAS');
-  canvas.style.position = 'absolute';
-  canvas.width = width;
-  canvas.height = height;
-  container.appendChild(canvas);
-
+GLX.getContext = function(canvas) {
   var options = {
-    antialias: highQuality,
+    antialias: !APP.options.fastMode,
     depth: true,
     premultipliedAlpha: false
   };
@@ -38,13 +31,13 @@ GLX.createCanvas = function(container, width, height, highQuality) {
     console.warn('context restored');
   });
 
-  GL.viewport(0, 0, width, height);
+  GL.viewport(0, 0, canvas.width, canvas.height);
   GL.cullFace(GL.BACK);
   GL.enable(GL.CULL_FACE);
   GL.enable(GL.DEPTH_TEST);
   GL.clearColor(0.5, 0.5, 0.5, 1);
 
-  if (highQuality) {
+  if (!APP.options.fastMode) {
     GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
     if (GL.anisotropyExtension) {
       GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(
