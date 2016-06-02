@@ -76,8 +76,8 @@ var OSMBuildings = function(options) {
 
   APP.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
-  APP.minZoom = parseFloat(options.minZoom) || 12;
-  APP.maxZoom = parseFloat(options.maxZoom) || 22;
+  APP.minZoom = parseFloat(options.minZoom) || 10;
+  APP.maxZoom = parseFloat(options.maxZoom) || 20;
   if (APP.maxZoom < APP.minZoom) {
     APP.maxZoom = APP.minZoom;
   }
@@ -298,12 +298,12 @@ OSMBuildings.prototype = {
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
-   * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
+   * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
   addGeoJSONTiles: function(url, options) {
     options = options || {};
-    options.fixedZoom = options.fixedZoom || 15;
+    options.fixedZoom = options.fixedZoom || 14.5;
     APP.dataGrid = new Grid(url, data.Tile, options);
     return APP.dataGrid;
   },

@@ -1840,7 +1840,7 @@ var GLX = (function() {
 var GLX = {};
 var GL;
 
-GLX.init = function(container, width, height, highQuality) {
+GLX.createCanvas = function(container, width, height, highQuality) {
   var canvas = document.createElement('CANVAS');
   canvas.style.position = 'absolute';
   canvas.width = width;
@@ -3474,30 +3474,46 @@ if (CustomEvent === undefined) {
   CustomEvent.prototype = window.Event.prototype;
 }
 
-var APP;
-var MAP, GL;
+var APP, GL; // TODO: make them local references
+
+/**
+ * OSMBuildings
+ * @OSMBuildings
+ * @param {Object} options
+ */
+
 /*
- * Note: OSMBuildings cannot use a single global world coordinate system.
+ * NOTE: OSMBuildings cannot use a single global world coordinate system.
  *       The numerical accuracy required for such a system would be about
  *       32bits to represent world-wide geometry faithfully within a few
  *       centimeters of accuracy. Most computations in OSMBuildings, however,
  *       are performed on a GPU where only IEEE floats with 23bits of accuracy
  *       (plus 8 bits of range) are available.
  *       Instead, OSMBuildings' coordinate system has a reference point
- *       (MAP.position) at the viewport center, and all world positions are
+ *       (APP.position) at the viewport center, and all world positions are
  *       expressed as distances in meters from that reference point. The
  *       reference point itself shifts with map panning so that all world
  *       positions relevant to the part of the world curently rendered on-screen
- *       can accurately be represented within the limited accuracy of IEEE floats.*/
+ *       can accurately be represented within the limited accuracy of IEEE floats. */
 
 /**
- * OSMBuildings building layer
+ * OSMBuildings
  * @constructor
  * @param {Object} [options] - OSMBuildings options
+ * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
+ * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Object} [options.bounds] - A bounding box to restrict the map to
+ * @param {Boolean} [options.state=false] - Store the map state in the URL
+ * @param {Boolean} [options.disabled=false] - Disable user input
+ * @param {String} [options.attribution] - An attribution string
+ * @param {Float} [options.zoom=minZoom] - Initial zoom
+ * @param {Float} [options.rotation=0] - Initial rotation
+ * @param {Float} [options.tilt=0] - Initial tilt
+ * @param {Object} [options.position] - Initial position
+ * @param {Float} [options.position.latitude=52.520000]
+ * @param {Float} [options.position.latitude=13.410000]
+
  * @param {String} [options.baseURL='.'] - For locating assets. This is relative to calling page
- * @param {Float} [options.minZoom=15] - Minimum allowed zoom
- * @param {Float} [options.maxZoom=22] - Maximum allowed zoom
- * @param {String} [options.attribution='<a href="http://osmbuildings.org">© OSM Buildings</a>'] - Attribution
  * @param {Boolean} [options.showBackfaces=false] - Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
  * @param {String} [options.fogColor='#e8e0d8'] - Color to be used for sky gradients and distance fog
  * @param {String} [options.backgroundColor='#efe8e0'] - Overall background color
@@ -3505,13 +3521,17 @@ var MAP, GL;
  * @param {Array} [options.effects=[]] - Which effects to enable. The only effect at the moment is 'shadows'
  * @param {Object} [options.style={ color: 'rgb(220, 210, 200)' }] - Sets the default building style
  */
+
+// TODO: check minZoom, maxZoom, attribution for duplicate meaning
+// <a href="http://osmbuildings.org">© OSM Buildings</a>'
+
 var OSMBuildings = function(options) {
-  APP = this; // references to this. Should make other globals obsolete.
+  APP = this; // refers to 'this'. Should make other globals obsolete.
 
   options = options || {};
 
   if (options.style) {
-    this.setStyle(options.style);
+    APP.setStyle(options.style);
   }
 
   APP.baseURL = options.baseURL || '.';
@@ -3530,19 +3550,74 @@ var OSMBuildings = function(options) {
     render.effects[ effects[i] ] = true;
   }
 
-  this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
+  APP.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
-  APP.minZoom = parseFloat(options.minZoom) || 15;
+  APP.minZoom = parseFloat(options.minZoom) || 12;
   APP.maxZoom = parseFloat(options.maxZoom) || 22;
   if (APP.maxZoom < APP.minZoom) {
     APP.maxZoom = APP.minZoom;
   }
+
+  APP.bounds = options.bounds;
+
+  APP.position = options.position || { latitude: 52.520000, longitude: 13.410000 };
+  APP.zoom = options.zoom || APP.minZoom;
+  APP.rotation = options.rotation || 0;
+  APP.tilt = options.tilt || 0;
+
+  APP.layers = [];
+
+  if (options.disabled) {
+    APP.setDisabled(true);
+  }
 };
 
-OSMBuildings.VERSION = '2.4.3';
+OSMBuildings.VERSION = '3.0.0';
 OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
+
+  /**
+   * Adds the OSMBuildings to DOM container
+   * @public
+   * @param {HTMLElement|String} DOM container or its id to append the map to
+   */
+  appendTo: function(container) {
+    APP.container = typeof container === 'string' ? document.getElementById(container) : container;
+    APP.container.classList.add('osmb-container');
+
+    APP.width = APP.container.offsetWidth;
+    APP.height = APP.container.offsetHeight;
+
+    GL = GLX.createCanvas(APP.container, APP.width, APP.height, APP.highQuality);
+
+    Events.init();
+
+    APP.getStateFromUrl();
+    // if (options.state) {
+    //    APP.setStateToUrl();
+    //    APP.on('change', APP.setStateToUrl);
+    // }
+
+    APP.attributionContainer = document.createElement('DIV');
+    APP.attributionContainer.className = 'osmb-attribution';
+    APP.container.appendChild(APP.attributionContainer);
+    APP.updateAttribution();
+
+    APP.setDate(new Date());
+    render.start();
+
+    return APP;
+  },
+
+  /**
+   * Removes the OSMBuildings object from the map
+   */
+  // TODO: test this
+  remove: function() {
+    render.stop();
+    APP.container = null;
+  },
 
   /**
    * A function that will be called when an event is fired. The parameters passed to the function
@@ -3556,7 +3631,7 @@ OSMBuildings.prototype = {
    */
   on: function(type, fn) {
     GL.canvas.addEventListener(type, fn);
-    return this;
+    return APP;
   },
 
   /**
@@ -3574,45 +3649,20 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Adds the OSMBuildings object as a layer to the given map
-   * @param {Object} map - The map to add it to
-   */
-  addTo: function(map) {
-    MAP = map;
-    GL = GLX.init(MAP.container, MAP.width, MAP.height, APP.highQuality);
-
-    MAP.addLayer(this);
-
-    this.setDate(new Date());
-
-    render.start();
-
-    return this;
-  },
-
-  /**
-   * Removes the OSMBuildings object from the map
-   */
-  remove: function() {
-    render.stop();
-    MAP.removeLayer(this);
-    MAP = null;
-  },
-
-  /**
    * Sets the map style
    * @param {Object} style
    * @param {String} [style.color] - The color for buildings
    */
   setStyle: function(style) {
+    // TODO
     //render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
     //render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
     //render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();
 
     DEFAULT_COLOR = style.color || style.wallColor || DEFAULT_COLOR;
-    // is color valid?
+    // TODO: is color valid?
     // DEFAULT_COLOR = color.toArray();
-    return this;
+    return APP;
   },
 
   /**
@@ -3621,7 +3671,7 @@ OSMBuildings.prototype = {
    */
   setDate: function(date) {
     Sun.setDate(typeof date === 'string' ? new Date(date) : date);
-    return this;
+    return APP;
   },
 
   // TODO: this should be part of the underlying map engine
@@ -3634,16 +3684,16 @@ OSMBuildings.prototype = {
   project: function(latitude, longitude, elevation) {
     var
       metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-                                 Math.cos(MAP.position.latitude / 180 * Math.PI),
-      worldPos = [ (longitude- MAP.position.longitude) * metersPerDegreeLongitude,
-                  -(latitude - MAP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
+                                 Math.cos(APP.position.latitude / 180 * Math.PI),
+      worldPos = [ (longitude- APP.position.longitude) * metersPerDegreeLongitude,
+                  -(latitude - APP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
                     elevation                          * HEIGHT_SCALE ];
     // takes current cam pos into account.
     var posNDC = transformVec3( render.viewProjMatrix.data, worldPos);
     posNDC = mul3scalar( add3(posNDC, [1, 1, 1]), 1/2); // from [-1..1] to [0..1]
 
-    return { x:    posNDC[0]  * MAP.width,
-             y: (1-posNDC[1]) * MAP.height,
+    return { x:    posNDC[0]  * APP.width,
+             y: (1-posNDC[1]) * APP.height,
              z:    posNDC[2]
     };
   },
@@ -3661,18 +3711,18 @@ OSMBuildings.prototype = {
     /* convert window/viewport coordinates to NDC [0..1]. Note that the browser
      * screen coordinates are y-down, while the WebGL NDC coordinates are y-up,
      * so we have to invert the y value here */
-    var posNDC = [x/MAP.width, 1-y/MAP.height];
+    var posNDC = [x/APP.width, 1-y/APP.height];
     posNDC = add2( mul2scalar(posNDC, 2.0), [-1, -1, -1]); // [0..1] to [-1..1];
     var worldPos = getIntersectionWithXYPlane(posNDC[0], posNDC[1], inverse);
     if (worldPos === undefined) {
       return;
     }
     metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-                               Math.cos(MAP.position.latitude / 180 * Math.PI);
+                               Math.cos(APP.position.latitude / 180 * Math.PI);
 
     return {
-      latitude:  MAP.position.latitude - worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
-      longitude: MAP.position.longitude+ worldPos[0]/ metersPerDegreeLongitude
+      latitude:  APP.position.latitude - worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
+      longitude: APP.position.longitude+ worldPos[0]/ metersPerDegreeLongitude
     };
   },
 
@@ -3693,7 +3743,6 @@ OSMBuildings.prototype = {
   addOBJ: function(url, position, options) {
     return new mesh.OBJ(url, position, options);
   },
-
 
   /**
    * A function that will be called on each feature, for modification before rendering
@@ -3757,7 +3806,7 @@ OSMBuildings.prototype = {
    */
   highlight: function(id) {
     render.Buildings.highlightID = id ? render.Picking.idToColor(id) : null;
-    return this;
+    return APP;
   },
 
   // TODO: check naming. show() suggests it affects the layer rather than objects on it
@@ -3774,7 +3823,7 @@ OSMBuildings.prototype = {
    */
   show: function(selector, duration) {
     Filter.remove('hidden', selector, duration);
-    return this;
+    return APP;
   },
 
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
@@ -3785,7 +3834,7 @@ OSMBuildings.prototype = {
   */
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
-    return this;
+    return APP;
   },
 
   /**
@@ -3802,7 +3851,7 @@ OSMBuildings.prototype = {
   getTarget: function(x, y, callback) {
     // TODO: use promises here
     render.Picking.getTarget(x, y, callback);
-    return this;
+    return APP;
   },
 
   /**
@@ -3817,19 +3866,302 @@ OSMBuildings.prototype = {
   screenshot: function(callback) {
     // TODO: use promises here
     render.screenshotCallback = callback;
-    return this;
+    return APP;
   },
 
   /**
-   * Destroy's the layer
+   * @private
+   */
+  updateAttribution: function() {
+    var attribution = [];
+    if (APP.attribution) {
+      attribution.push(APP.attribution);
+    }
+    for (var i = 0; i < APP.layers.length; i++) {
+      if (APP.layers[i].attribution) {
+        attribution.push(APP.layers[i].attribution);
+      }
+    }
+    APP.attributionContainer.innerHTML = attribution.join(' · ');
+  },
+
+  /**
+   * @private
+   */
+  getStateFromUrl: function() {
+    var
+      query = location.search,
+      state = {};
+    if (query) {
+      query.substring(1).replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function($0, $1, $2) {
+        if ($1) {
+          state[$1] = $2;
+        }
+      });
+    }
+
+    APP.setPosition((state.lat !== undefined && state.lon !== undefined) ? { latitude:state.lat, longitude:state.lon } : APP.position);
+    APP.setRotation(state.zoom !== undefined ? state.zoom : APP.zoom);
+    APP.setZoom(state.rotation !== undefined ? state.rotation : APP.rotation);
+    APP.setTilt(state.tilt !== undefined ? state.tilt : APP.tilt);
+  },
+
+  /**
+   * @private
+   */
+  setStateToUrl: function() {
+    if (!history.replaceState || APP.stateDebounce) {
+      return;
+    }
+
+    APP.stateDebounce = setTimeout(function() {
+      APP.stateDebounce = null;
+      var params = [];
+      params.push('lat=' + APP.position.latitude.toFixed(6));
+      params.push('lon=' + APP.position.longitude.toFixed(6));
+      params.push('zoom=' + APP.zoom.toFixed(1));
+      params.push('tilt=' + APP.tilt.toFixed(1));
+      params.push('rotation=' + APP.rotation.toFixed(1));
+      history.replaceState({}, '', '?' + params.join('&'));
+    }, 1000);
+  },
+
+  setDisabled: function(flag) {
+    Events.disabled = !!flag;
+    return APP;
+  },
+
+  isDisabled: function() {
+    return !!Events.disabled;
+  },
+
+  /* returns the geographical bounds of the current view.
+   * notes:
+   * - since the bounds are always axis-aligned they will contain areas that are
+   /**
+   * Returns the geographical bounds of the current view.
+   * Notes:
+   * - Since the bounds are always axis-aligned they will contain areas that are
+   *   not currently visible if the current view is not also axis-aligned.
+   * - The bounds only contain the map area that OSMBuildings considers for rendering.
+   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
+   *   never extend beyond that, even if the horizon is visible (in which case the
+   *   bounds would mathematically be infinite).
+   * - the bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
+   * - The bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
+   *   of the current view below the lower edge do not contribute to the bounds.
+   *   so their top may be visible and they may still be out of bounds.
+   */
+  getBounds: function() {
+    var viewQuad = render.getViewQuad(), res = [];
+    for (var i in viewQuad) {
+      res[i] = getPositionFromLocal(viewQuad[i]);
+    }
+    return res;
+  },
+
+  /**
+   * Sets the zoom level
+   * @param {Float} zoom - The new zoom level
+   * @param {Object} e - **Not currently used**
+   * @fires OSMBuildings#zoom
+   * @fires OSMBuildings#change
+   */
+  setZoom: function(zoom, e) {
+    zoom = clamp(parseFloat(zoom), APP.minZoom, APP.maxZoom);
+
+    if (APP.zoom !== zoom) {
+      APP.zoom = zoom;
+
+      /* if a screen position was given for which the geographic position displayed
+       * should not change under the zoom */
+      if (e) {
+        // FIXME: add code; this needs to take the current camera (rotation and
+        //        perspective) into account
+        // NOTE:  the old code (comment out below) only works for north-up
+        //        non-perspective views
+        /*
+         var dx = APP.container.offsetWidth/2  - e.clientX;
+         var dy = APP.container.offsetHeight/2 - e.clientY;
+         APP.center.x -= dx;
+         APP.center.y -= dy;
+         APP.center.x *= ratio;
+         APP.center.y *= ratio;
+         APP.center.x += dx;
+         APP.center.y += dy;*/
+      }
+      /**
+       * Fired when the map is zoomed (in either direction)
+       * @event OSMBuildings#zoom
+       */
+      APP.emit('zoom', { zoom: zoom });
+
+      /**
+       * Fired when the map is zoomed, tilted or panned
+       * @event OSMBuildings#change
+       */
+      APP.emit('change');
+    }
+    return APP;
+  },
+
+  /**
+   * Returns the current zoom level
+   */
+  getZoom: function() {
+    return APP.zoom;
+  },
+
+  /**
+   * Sets the map's geographic position
+   * @param {Object} pos - The new position
+   * @param {Float} pos.latitude
+   * @param {Float} pos.longitude
+   * @fires OSMBuildings#change
+   */
+  setPosition: function(pos) {
+    var lat = parseFloat(pos.latitude);
+    var lon = parseFloat(pos.longitude);
+    if (isNaN(lat) || isNaN(lon)) {
+      return;
+    }
+    APP.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+    APP.emit('change');
+    return APP;
+  },
+
+  /**
+   * Returns the map's current geographic position
+   */
+  getPosition: function() {
+    return APP.position;
+  },
+
+  /**
+   * Sets the map's size
+   * @param {Object} size
+   * @param {Integer} size.width
+   * @param {Integer} size.height
+   * @fires OSMBuildings#resize
+   */
+  setSize: function(size) {
+    if (size.width !== APP.width || size.height !== APP.height) {
+      APP.width = size.width;
+      APP.height = size.height;
+
+      /**
+       * Fired when the map is resized
+       * @event OSMBuildings#resize
+       */
+      APP.emit('resize', { width: APP.width, height: APP.height });
+    }
+    return APP;
+  },
+
+  /**
+   * Returns the map's current size
+   */
+  getSize: function() {
+    return { width: APP.width, height: APP.height };
+  },
+
+  /**
+   * Set's the maps rotation
+   * @param {Float} rotation - The new rotation angle
+   * @fires OSMBuildings#rotate
+   * @fires OSMBuildings#change
+   */
+  setRotation: function(rotation) {
+    rotation = parseFloat(rotation)%360;
+    if (APP.rotation !== rotation) {
+      APP.rotation = rotation;
+
+      /**
+       * Fired when the map is rotated
+       * @event OSMBuildings#rotate
+       */
+      APP.emit('rotate', { rotation: rotation });
+      APP.emit('change');
+    }
+    return APP;
+  },
+
+  /**
+   * Returns the maps current rotation
+   */
+  getRotation: function() {
+    return APP.rotation;
+  },
+
+  /**
+   * Sets the map's tilt
+   * @param {Float} tilt - The new tilt
+   * @fires OSMBuildings#tilt
+   * @fires OSMBuildings#change
+   */
+  setTilt: function(tilt) {
+    tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
+    if (APP.tilt !== tilt) {
+      APP.tilt = tilt;
+
+      /**
+       * Fired when the map is tilted
+       * @event OSMBuildings#tilt
+       */
+      APP.emit('tilt', { tilt: tilt });
+      APP.emit('change');
+    }
+    return APP;
+  },
+
+  /**
+   * Returns the map's current tilt
+   */
+  getTilt: function() {
+    return APP.tilt;
+  },
+
+  /**
+   * Adds a layer to the map
+   * @param {Object} layer - The layer to add
+   */
+  addLayer: function(layer) {
+    APP.layers.push(layer);
+    APP.updateAttribution();
+    return APP;
+  },
+
+  /**
+   * Removes a layer from the map
+   * @param {Object} layer - The layer to remove
+   */
+  removeLayer: function(layer) {
+    APP.layers = APP.layers.filter(function(item) {
+      return (item !== layer);
+    });
+    APP.updateAttribution();
+  },
+
+  /**
+   * Destroys the map
    */
   destroy: function() {
     render.destroy();
-    if (APP.basemapGrid) APP.basemapGrid.destroy();
-    if (APP.dataGrid)    APP.dataGrid.destroy();
 
-    // TODO: when taking over an existing canvas, don't destroy it here
+    // APP.basemapGrid.destroy();
+    // APP.dataGrid.destroy();
+    for (var i = 0; i < APP.layers.length; i++) {
+      APP.layers[i].destroy();
+    }
+
+    APP.layers = [];
+
+    // TODO: when taking over an existing canvas, better don't destroy it here
     GLX.destroy();
+
+    APP.container.innerHTML = '';
   }
 };
 
@@ -3842,6 +4174,348 @@ if (typeof define === 'function') {
 } else {
   window.OSMBuildings = OSMBuildings;
 }
+
+
+// gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
+// MIT License
+
+/**
+ * @private
+ */
+function add2(a, b) {
+  return [a[0] + b[0], a[1] + b[1]];
+}
+
+/**
+ * @private
+ */
+function mul2scalar(a, f) {
+  return [a[0]*f, a[1]*f];
+}
+
+/**
+ * @private
+ */
+function getEventPosition(e, offset) {
+  return {
+    x: e.clientX - offset.x,
+    y: e.clientY - offset.y
+  };
+}
+
+/**
+ * @private
+ */
+function getElementOffset(el) {
+  if (el.getBoundingClientRect) {
+    var box = el.getBoundingClientRect();
+    return { x:box.left, y:box.top };
+  }
+
+  var res = { x:0, y:0 };
+  while(el.nodeType === 1) {
+    res.x += el.offsetLeft;
+    res.y += el.offsetTop;
+    el = el.parentNode;
+  }
+  return res;
+}
+
+/**
+ * @private
+ */
+function cancelEvent(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  //if (e.stopPropagation) {
+  //  e.stopPropagation();
+  //}
+  e.returnValue = false;
+}
+
+/**
+ * @private
+ */
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn, false);
+}
+
+/**
+ * @private
+ */
+var Events = {};
+
+/**
+ * @private
+ */
+Events.disabled = false;
+
+/**
+ * @private
+ */
+Events.init = function() {
+
+  if ('ontouchstart' in window) {
+    addListener(APP.container, 'touchstart', onTouchStart);
+    addListener(document, 'touchmove', onTouchMove);
+    addListener(document, 'touchend', onTouchEnd);
+    addListener(document, 'gesturechange', onGestureChange);
+  } else {
+    addListener(APP.container, 'mousedown', onMouseDown);
+    addListener(document, 'mousemove', onMouseMove);
+    addListener(document, 'mouseup', onMouseUp);
+    addListener(APP.container, 'dblclick', onDoubleClick);
+    addListener(APP.container, 'mousewheel', onMouseWheel);
+    addListener(APP.container, 'DOMMouseScroll', onMouseWheel);
+  }
+
+  var resizeDebounce;
+  addListener(window, 'resize', function() {
+    if (resizeDebounce) {
+      return;
+    }
+    resizeDebounce = setTimeout(function() {
+      resizeDebounce = null;
+        APP.setSize({ width:APP.container.offsetWidth, height:APP.container.offsetHeight });
+    }, 250);
+  });
+
+  //***************************************************************************
+
+  var
+    prevX = 0,
+    prevY = 0,
+    startX = 0,
+    startY = 0,
+    startZoom = 0,
+    startOffset,
+    prevRotation = 0,
+    prevTilt = 0,
+    pointerIsDown = false;
+
+  function onDoubleClick(e) {
+    cancelEvent(e);
+    if (!Events.disabled) {
+      APP.setZoom(APP.zoom + 1, e);
+    }
+    var pos = getEventPosition(e, getElementOffset(e.target));
+      APP.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+  }
+
+  function onMouseDown(e) {
+    cancelEvent(e);
+
+    if (e.button > 1) {
+      return;
+    }
+
+    startZoom = APP.zoom;
+    prevRotation = APP.rotation;
+    prevTilt = APP.tilt;
+
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, startOffset);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    pointerIsDown = true;
+
+    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onMouseMove(e) {
+    var pos;
+    if (!pointerIsDown) {
+      pos = getEventPosition(e, getElementOffset(e.target));
+    } else {
+      if (e.button === 0 && !e.altKey) {
+        moveMap(e, startOffset);
+      } else {
+        rotateMap(e, startOffset);
+      }
+
+      pos = getEventPosition(e, startOffset);
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+
+    APP.emit('pointermove', { x: pos.x, y: pos.y });
+  }
+
+  function onMouseUp(e) {
+    // prevents clicks on other page elements
+    if (!pointerIsDown) {
+      return;
+    }
+
+    var pos = getEventPosition(e, startOffset);
+
+    if (e.button === 0 && !e.altKey) {
+      if (Math.abs(pos.x - startX)>5 || Math.abs(pos.y - startY)>5) {
+        moveMap(e, startOffset);
+      }
+    } else {
+      rotateMap(e, startOffset);
+    }
+
+    pointerIsDown = false;
+
+    APP.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onMouseWheel(e) {
+    cancelEvent(e);
+
+    var delta = 0;
+    if (e.wheelDeltaY) {
+      delta = e.wheelDeltaY;
+    } else if (e.wheelDelta) {
+      delta = e.wheelDelta;
+    } else if (e.detail) {
+      delta = -e.detail;
+    }
+
+    if (!Events.disabled) {
+      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+      APP.setZoom(APP.zoom + adjust, e);
+    }
+
+    // we don't emit mousewheel here as we don't want to run into a loop of death
+  }
+
+  //***************************************************************************
+
+  function moveMap(e, offset) {
+    if (Events.disabled) {
+      return;
+    }
+
+    // FIXME: make movement exact, i.e. make the position that
+    // appeared at (prevX, prevY) before appear at (e.offsetX, e.offsetY) now.
+    // the constant 0.86 was chosen experimentally for the map movement to be
+    // "pinned" to the cursor movement when the map is shown top-down
+    var
+      scale = 0.86 * Math.pow(2, -APP.zoom),
+      lonScale = 1/Math.cos( APP.position.latitude/ 180 * Math.PI),
+      pos = getEventPosition(e, offset),
+      dx = pos.x - prevX,
+      dy = pos.y - prevY,
+      angle = APP.rotation * Math.PI/180,
+      vRight   = [ Math.cos(angle),             Math.sin(angle)],
+      vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
+      dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
+
+    var newPosition = {
+      longitude: APP.position.longitude - dir[0] * scale*lonScale,
+      latitude:  APP.position.latitude  + dir[1] * scale };
+
+    APP.setPosition(newPosition);
+    APP.emit('move', newPosition);
+  }
+
+  function rotateMap(e, offset) {
+    if (Events.disabled) {
+      return;
+    }
+    var pos = getEventPosition(e, offset);
+    prevRotation += (pos.x - prevX)*(360/innerWidth);
+    prevTilt -= (pos.y - prevY)*(360/innerHeight);
+    APP.setRotation(prevRotation);
+    APP.setTilt(prevTilt);
+  }
+
+  //***************************************************************************
+
+  var
+    dist1 = 0,
+    angle1 = 0,
+    gestureStarted = false;
+
+  function emitGestureChange(e) {
+    var
+      t1 = e.touches[0],
+      t2 = e.touches[1],
+      dx = t1.clientX - t2.clientX,
+      dy = t1.clientY - t2.clientY,
+      dist2 = dx*dx + dy*dy,
+      angle2 = Math.atan2(dy, dx);
+
+    onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
+  }
+
+  function onTouchStart(e) {
+    cancelEvent(e);
+
+    // gesturechange polyfill
+    if (e.touches.length === 2 && !('ongesturechange' in window)) {
+      var t1 = e.touches[0];
+      var t2 = e.touches[1];
+      var dx = t1.clientX - t2.clientX;
+      var dy = t1.clientY - t2.clientY;
+      dist1 = dx*dx + dy*dy;
+      angle1 = Math.atan2(dy,dx);
+      gestureStarted = true;
+    }
+
+    startZoom = APP.zoom;
+    prevRotation = APP.rotation;
+    prevTilt = APP.tilt;
+
+    if (e.touches.length) {
+      e = e.touches[0];
+    }
+
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, offset);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
+  }
+
+  function onTouchMove(e) {
+    var pos = getEventPosition(e.touches[0], startOffset);
+    if (e.touches.length > 1) {
+      APP.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
+      prevTilt = APP.tilt;
+      // gesturechange polyfill
+      if (!('ongesturechange' in window)) {
+        emitGestureChange(e);
+      }
+    } else {
+      moveMap(e.touches[0], startOffset);
+      APP.emit('pointermove', { x: pos.x, y: pos.y });
+    }
+    prevX = pos.x;
+    prevY = pos.y;
+  }
+
+  function onTouchEnd(e) {
+    // gesturechange polyfill
+    gestureStarted = false;
+
+    if (e.touches.length === 0) {
+      APP.emit('pointerup', { x: prevX, y: prevY, button: 0 });
+    } else if (e.touches.length === 1) {
+      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
+      var pos = getEventPosition(e.touches[0], startOffset);
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+  }
+
+  function onGestureChange(e) {
+    cancelEvent(e);
+
+    if (!Events.disabled) {
+      APP.setZoom(startZoom + (e.scale - 1));
+      APP.setRotation(prevRotation - e.rotation);
+    }
+
+    APP.emit('gesture', e);
+  }
+};
 
 
 var Activity = {};
@@ -4073,6 +4747,9 @@ function substituteZCoordinate(points, zValue) {
   return res;
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(value, min));
+}
 
 
 var Grid = function(source, tileClass, options) {
@@ -4094,11 +4771,11 @@ var Grid = function(source, tileClass, options) {
     this.maxZoom = this.minZoom;
   }
 
-  MAP.on('change', this._onChange = function() {
+  APP.on('change', this._onChange = function() {
     this.update(500);
   }.bind(this));
 
-  MAP.on('resize', this._onResize = this.update.bind(this));
+  APP.on('resize', this._onResize = this.update.bind(this));
 
   this.update();
 };
@@ -4108,7 +4785,7 @@ Grid.prototype = {
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
-    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
+    if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
       return;
     }
 
@@ -4215,7 +4892,7 @@ Grid.prototype = {
   },
 
   loadTiles: function() {
-    var zoom = Math.round(this.fixedZoom || MAP.zoom);
+    var zoom = Math.round(this.fixedZoom || APP.zoom);
 
     // TODO: if there are user defined bounds for this layer, respect these too
     //  if (this.fixedBounds) {
@@ -4237,8 +4914,8 @@ Grid.prototype = {
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      mapCenterTile = [ long2tile(MAP.position.longitude, zoom),
-                        lat2tile (MAP.position.latitude,  zoom)];
+      mapCenterTile = [ long2tile(APP.position.longitude, zoom),
+                        lat2tile (APP.position.latitude,  zoom)];
 
     for (i = 0; i < 4; i++) {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
@@ -4286,7 +4963,7 @@ Grid.prototype = {
 
   purge: function() {
     var
-      zoom = Math.round(MAP.zoom),
+      zoom = Math.round(APP.zoom),
       tile, parent;
 
     for (var key in this.tiles) {
@@ -4328,8 +5005,8 @@ Grid.prototype = {
   },
 
   destroy: function() {
-    MAP.off('change', this._onChange);
-    MAP.off('resize', this._onResize);
+    APP.off('change', this._onChange);
+    APP.off('resize', this._onResize);
 
     clearTimeout(this.debounce);
     for (var key in this.tiles) {
@@ -4673,10 +5350,10 @@ mesh.GeoJSON = (function() {
 
       // this position is available once geometry processing is complete.
       // should not be failing before because of this.isReady
-      var dLat = this.position.latitude - MAP.position.latitude;
-      var dLon = this.position.longitude - MAP.position.longitude;
+      var dLat = this.position.latitude - APP.position.latitude;
+      var dLon = this.position.longitude - APP.position.longitude;
 
-      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(MAP.position.latitude / 180 * Math.PI);
+      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
 
@@ -4794,7 +5471,7 @@ mesh.MapPlane = (function() {
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      //var scale = Math.pow(2, MAP.zoom - 16);
+      //var scale = Math.pow(2, APP.zoom - 16);
 
       var modelMatrix = new GLX.Matrix();
       //modelMatrix.scale(scale, scale, scale);
@@ -5194,10 +5871,10 @@ mesh.OBJ = (function() {
       }
 
       var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                     Math.cos(MAP.position.latitude / 180 * Math.PI);
+                                     Math.cos(APP.position.latitude / 180 * Math.PI);
 
-      var dLat = this.position.latitude - MAP.position.latitude;
-      var dLon = this.position.longitude- MAP.position.longitude;
+      var dLat = this.position.latitude - APP.position.latitude;
+      var dLon = this.position.longitude- APP.position.longitude;
       
       matrix.translate( dLon * metersPerDegreeLongitude,
                        -dLat * METERS_PER_DEGREE_LATITUDE, 0);
@@ -5477,7 +6154,7 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
  * points of 'points' when watched from the position given by targetViewMatrix.
  * The depth range of the returned matrix is [near, far].
  * The 'points' are given as euclidean coordinates in [m] distance to the 
- * current reference point (MAP.position). 
+ * current reference point (APP.position). 
  */
 function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height) {
   var p0 = transformVec3(targetViewMatrix.data, points[0]);
@@ -5548,15 +6225,15 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
  */
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                 Math.cos(MAP.position.latitude / 180 * Math.PI);
+                                 Math.cos(APP.position.latitude / 180 * Math.PI);
   var tileLon = tile2lon(tileX, tileZoom);
   var tileLat = tile2lat(tileY, tileZoom);
   
   var modelMatrix = new GLX.Matrix();
-  modelMatrix.translate( (tileLon - MAP.position.longitude)* metersPerDegreeLongitude,
-                        -(tileLat - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+  modelMatrix.translate( (tileLon - APP.position.longitude)* metersPerDegreeLongitude,
+                        -(tileLat - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
-  var size = getTileSizeInMeters( MAP.position.latitude, tileZoom);
+  var size = getTileSizeInMeters( APP.position.latitude, tileZoom);
   
   var mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
@@ -5566,8 +6243,8 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
   var verts = [tl, tr, bl, br];
   for (var i in verts) { 
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * MAP.width;
-    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * MAP.height;
+    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * APP.width;
+    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * APP.height;
   }
   
   return getConvexQuadArea( [tl, tr, br, bl]);
@@ -5596,11 +6273,11 @@ function getTileSizeInMeters( latitude, zoom) {
 
 function getPositionFromLocal(localXY) {
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                 Math.cos(MAP.position.latitude / 180 * Math.PI);
+                                 Math.cos(APP.position.latitude / 180 * Math.PI);
 
   return {
-    longitude: MAP.position.longitude + localXY[0]/metersPerDegreeLongitude,
-    latitude: MAP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
+    longitude: APP.position.longitude + localXY[0]/metersPerDegreeLongitude,
+    latitude: APP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
   };
 }
 
@@ -5656,8 +6333,8 @@ var render = {
       delete render.effects.outlines;
     }
 
-    MAP.on('change', this._onChange = this.onChange.bind(this));
-    MAP.on('resize', this._onResize = this.onResize.bind(this));
+    APP.on('change', this._onChange = this.onChange.bind(this));
+    APP.on('resize', this._onResize = this.onResize.bind(this));
     this.onResize();  //initialize view and projection matrix, fog distance, etc.
 
     GL.cullFace(GL.BACK);
@@ -5700,7 +6377,7 @@ var render = {
     GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
+    if (APP.zoom < APP.minZoom || APP.zoom > APP.maxZoom) {
       return;
     }
     var viewTrapezoid = this.getViewQuad();
@@ -5712,7 +6389,7 @@ var render = {
 
     Sun.updateView(viewTrapezoid);
     render.sky.updateGeometry(viewTrapezoid);
-    var viewSize = [MAP.width, MAP.height];
+    var viewSize = [APP.width, APP.height];
 
     if (!render.effects.shadows) {
       render.Buildings.render();
@@ -5799,22 +6476,22 @@ var render = {
   },
   
   onChange: function() {
-    var 
-      scale = 1.38*Math.pow(2, MAP.zoom-17),
-      width = MAP.width,
-      height = MAP.height,
+    var
+      scale = 1.38*Math.pow(2, APP.zoom-17),
+      width = APP.width,
+      height = APP.height,
       refHeight = 1024,
       refVFOV = 45;
 
     GL.viewport(0, 0, width, height);
 
     this.viewMatrix = new GLX.Matrix()
-      .rotateZ(MAP.rotation)
-      .rotateX(MAP.tilt)
-      .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
+      .rotateZ(APP.rotation)
+      .rotateX(APP.tilt)
+      .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
-    this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
-                         -Math.cos(MAP.rotation / 180* Math.PI)];
+    this.viewDirOnMap = [ Math.sin(APP.rotation / 180* Math.PI),
+                         -Math.cos(APP.rotation / 180* Math.PI)];
 
     // OSMBuildings' perspective camera is ... special: The reference point for
     // camera movement, rotation and zoom is at the screen center (as usual). 
@@ -5832,7 +6509,7 @@ var render = {
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
     this.projMatrix = new GLX.Matrix()
-      .translate(0, -height/(2.0*scale), 0) // 0, MAP y offset to neutralize camera y offset, 
+      .translate(0, -height/(2.0*scale), 0) // 0, APP y offset to neutralize camera y offset, 
       .scale(1, -1, 1) // flip Y
       .multiply(new GLX.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
@@ -5855,14 +6532,14 @@ var render = {
   },
 
   onResize: function() {
-    GL.canvas.width  = MAP.width;
-    GL.canvas.height = MAP.height;
+    GL.canvas.width  = APP.width;
+    GL.canvas.height = APP.height;
     this.onChange();
   },
 
   destroy: function() {
-    MAP.off('change', this._onChange);
-    MAP.off('resize', this._onResize);
+    APP.off('change', this._onChange);
+    APP.off('resize', this._onResize);
 
     this.stop();
     render.Picking.destroy();
@@ -5936,7 +6613,7 @@ render.Picking = {
     for (var i = 0, il = dataItems.length; i<il; i++) {
       item = dataItems[i];
 
-      if (MAP.zoom<item.minZoom || MAP.zoom>item.maxZoom) {
+      if (APP.zoom<item.minZoom || APP.zoom>item.maxZoom) {
         continue;
       }
 
@@ -5958,7 +6635,7 @@ render.Picking = {
 
     this.shader.disable();
     this.framebuffer.disable();
-    GL.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, APP.width, APP.height);
   },
   
   // TODO: throttle calls
@@ -5966,8 +6643,8 @@ render.Picking = {
     requestAnimationFrame(function() {
       this.render( [this.viewportSize, this.viewportSize] );
 
-      x = x/MAP.width *this.viewportSize <<0;
-      y = y/MAP.height*this.viewportSize <<0;
+      x = x/APP.width *this.viewportSize <<0;
+      y = y/APP.height*this.viewportSize <<0;
 
       this.framebuffer.enable();
       var imageData = this.framebuffer.getPixel(x, this.viewportSize - 1 - y);
@@ -6003,7 +6680,7 @@ render.Picking = {
 var Sun = {
 
   setDate: function(date) {
-    var pos = suncalc(date, MAP.position.latitude, MAP.position.longitude);
+    var pos = suncalc(date, APP.position.latitude, APP.position.longitude);
     this.direction = [
       -Math.sin(pos.azimuth) * Math.cos(pos.altitude),
        Math.cos(pos.azimuth) * Math.cos(pos.altitude),
@@ -6104,8 +6781,8 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
   //console.log(vLeftArc, vRightArc);
 
   var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
-  var tcLeft = vLeftArc;//MAP.rotation/360.0;
-  var tcRight =vRightArc;//MAP.rotation/360.0 + visibleSkyDiameterFraction*3;
+  var tcLeft = vLeftArc;//APP.rotation/360.0;
+  var tcRight =vRightArc;//APP.rotation/360.0 + visibleSkyDiameterFraction*3;
         
   this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
     [tcLeft, 1, tcRight, 1, tcRight, 0, tcLeft, 1, tcRight, 0, tcLeft, 0]));
@@ -6265,7 +6942,7 @@ render.Buildings = {
 
       item = dataItems[i];
 
-      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
+      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
         continue;
       }
 
@@ -6351,7 +7028,7 @@ render.MapShadows = {
     shader.bindTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
 
     var item = this.mapPlane;
-    if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+    if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
       return;
     }
 
@@ -6401,14 +7078,14 @@ render.Basemap = {
       return;
     }
 
-    if (MAP.zoom < layer.minZoom || MAP.zoom > layer.maxZoom) {
+    if (APP.zoom < layer.minZoom || APP.zoom > layer.maxZoom) {
       return;
     }
 
     var
       shader = this.shader,
       tile,
-      zoom = Math.round(MAP.zoom);
+      zoom = Math.round(APP.zoom);
 
     shader.enable();
     
@@ -6453,11 +7130,11 @@ render.Basemap = {
 
   renderTile: function(tile, shader) {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                   Math.cos(MAP.position.latitude / 180 * Math.PI);
+                                   Math.cos(APP.position.latitude / 180 * Math.PI);
 
     var modelMatrix = new GLX.Matrix();
-    modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
-                          -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+    modelMatrix.translate( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
+                          -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     GL.enable(GL.POLYGON_OFFSET_FILL);
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,
@@ -6612,7 +7289,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
   for (var i = 0; i < dataItems.length; i++) {
     item = dataItems[i];
 
-    if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+    if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
       continue;
     }
 
@@ -6643,7 +7320,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
   shader.disable();
   framebuffer.disable();
 
-  GL.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, APP.width, APP.height);
 };
 
 render.DepthFogNormalMap.prototype.destroy = function() {};
@@ -6718,7 +7395,7 @@ render.AmbientMap = {
     shader.disable();
     framebuffer.disable();
 
-    GL.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, APP.width, APP.height);
 
   },
 
@@ -6865,7 +7542,7 @@ render.OutlineMap = {
     shader.disable();
     framebuffer.disable();
 
-    GL.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, APP.width, APP.height);
 
   },
 
@@ -6927,7 +7604,7 @@ render.Blur.prototype.render = function(inputTexture, framebufferSize) {
   shader.disable();
   framebuffer.disable();
 
-  GL.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, APP.width, APP.height);
 };
 
 render.Blur.prototype.destroy = function() 
