@@ -70,21 +70,17 @@ Link all required libraries in your HTML head section. Files are provided in fol
 <body>
   <div id="map"></div>
 ````
-In a script section initialize the map and add a map tile layer.
+In a script section initialize OSM Buildings and add it to a DOM container.
 
 ```` javascript
-  var map = new GLMap('map', {
-    position: { latitude:52.52000, longitude:13.41000 },
-    zoom: 16
-  });
-
-
-// add OSM Buildings to the map and let it load data tiles.
-
   var osmb = new OSMBuildings({
+    position: { latitude:52.52000, longitude:13.41000 },
+    zoom: 16,
     minZoom: 15,
     maxZoom: 22
-  }).addTo(map);
+  });
+
+  osmb.appendTo('map');
 
   osmb.addMapTiles(
     'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',

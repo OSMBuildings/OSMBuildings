@@ -7,9 +7,9 @@
 <script src=assets/tutorial_prep.js></script>
 
 <script>
-  map.setPosition({latitude: 52.519991, longitude: 13.406453});
-  map.setTilt(30);
-  map.setZoom(19);
+  osmb.setPosition({latitude: 52.519991, longitude: 13.406453});
+  osmb.setTilt(30);
+  osmb.setZoom(19);
   osmb.addOBJ('./assets/models/sphere.obj', { latitude: 52.519991, longitude: 13.406453 }, { id: "my_object_1", color: 'red'});
 </script>
 

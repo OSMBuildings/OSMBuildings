@@ -1,19 +1,17 @@
-var map = new GLMap('map', {
-  position: { latitude:52.519991, longitude:13.406453 },
-  zoom: 15,
-  minZoom: 12,
-  maxZoom: 20,
-  tilt: 30,
-  state: false
-});
 
 var osmb = new OSMBuildings({
+  position: { latitude:52.519991, longitude:13.406453 },
+  zoom: 15,
+  tilt: 30,
+  state: false,
   baseURL: './OSMBuildings',
-  minZoom: 15,
-  maxZoom: 22,
+  minZoom: 14,
+  maxZoom: 20,
   effects: ['shadows'],
   attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
-}).addTo(map);
+});
+
+osmb.appendTo('map');
 
 osmb.addMapTiles(
   'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
@@ -26,7 +24,7 @@ osmb.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{
 
 //***************************************************************************
 
-map.on('pointermove', function(e) {
+osmb.on('pointermove', function(e) {
   var id = osmb.getTarget(e.x, e.y, function(id) {
     if (id) {
       document.body.style.cursor = 'pointer';
@@ -63,7 +61,7 @@ for (var i = 0, il = controlButtons.length; i < il; i++) {
       increment = direction*1;
     }
     if (property) {
-      map['set'+ property](map['get'+ property]()+increment);
+      osmb['set'+ property](osmb['get'+ property]()+increment);
     }
   });
 }

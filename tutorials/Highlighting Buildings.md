@@ -13,7 +13,7 @@
 This code will highlight a building on hover.
 
 ````javascript
-map.on('pointermove', function(e) {
+osmb.on('pointermove', function(e) {
   var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
     if (id) {
       osmb.highlight(id, '#f08000');

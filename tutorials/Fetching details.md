@@ -20,7 +20,7 @@ function httpGetAsync(theUrl, callback)
     xmlHttp.send(null);
 }
 
-map.on('pointerdown', function(e) {
+osmb.on('pointerdown', function(e) {
   var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
     if (id) {
       var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace(/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace(/^[a-z]+/, '') + ");way(23853131);node(w));out;";
@@ -52,7 +52,7 @@ function httpGetAsync(theUrl, callback)
     xmlHttp.send(null);
 }
 
-map.on('pointerdown', function(e) {
+osmb.on('pointerdown', function(e) {
   var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
     if (id) {
       var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace(/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace(/^[a-z]+/, '') + ");way(23853131);node(w));out;";

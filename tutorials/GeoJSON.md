@@ -7,7 +7,7 @@
 <script src=assets/tutorial_prep.js></script>
 
 <script>
-  map.setPosition({latitude: 52.52000, longitude: 13.37000});
+  osmb.setPosition({latitude: 52.52000, longitude: 13.37000});
   
   var geojson = {
     type: 'FeatureCollection',

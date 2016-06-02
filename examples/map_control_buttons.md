@@ -41,7 +41,7 @@ for (var i = 0; i < controlButtons.length; i++) {
       increment = direction*1;
     }
     if (property) {
-      map['set'+ property](map['get'+ property]()+increment);
+      osmb['set'+ property](osmb['get'+ property]()+increment);
     }
   });
 }
