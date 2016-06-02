@@ -127,7 +127,7 @@ Events.init = function(map) {
       map.setZoom(map.zoom + 1, e);
     }
     var pos = getEventPosition(e, getElementOffset(e.target));
-    map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+      map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
   }
 
   function onMouseDown(e) {
