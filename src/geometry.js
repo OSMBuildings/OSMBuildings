@@ -248,7 +248,7 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
  * points of 'points' when watched from the position given by targetViewMatrix.
  * The depth range of the returned matrix is [near, far].
  * The 'points' are given as euclidean coordinates in [m] distance to the 
- * current reference point (MAP.position). 
+ * current reference point (APP.position). 
  */
 function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height) {
   var p0 = transformVec3(targetViewMatrix.data, points[0]);
@@ -319,15 +319,15 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
  */
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                 Math.cos(MAP.position.latitude / 180 * Math.PI);
+                                 Math.cos(APP.position.latitude / 180 * Math.PI);
   var tileLon = tile2lon(tileX, tileZoom);
   var tileLat = tile2lat(tileY, tileZoom);
   
   var modelMatrix = new GLX.Matrix();
-  modelMatrix.translate( (tileLon - MAP.position.longitude)* metersPerDegreeLongitude,
-                        -(tileLat - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+  modelMatrix.translate( (tileLon - APP.position.longitude)* metersPerDegreeLongitude,
+                        -(tileLat - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
-  var size = getTileSizeInMeters( MAP.position.latitude, tileZoom);
+  var size = getTileSizeInMeters( APP.position.latitude, tileZoom);
   
   var mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
   var tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
@@ -337,8 +337,8 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
   var verts = [tl, tr, bl, br];
   for (var i in verts) { 
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * MAP.width;
-    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * MAP.height;
+    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * APP.width;
+    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * APP.height;
   }
   
   return getConvexQuadArea( [tl, tr, br, bl]);
@@ -367,11 +367,11 @@ function getTileSizeInMeters( latitude, zoom) {
 
 function getPositionFromLocal(localXY) {
   var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                 Math.cos(MAP.position.latitude / 180 * Math.PI);
+                                 Math.cos(APP.position.latitude / 180 * Math.PI);
 
   return {
-    longitude: MAP.position.longitude + localXY[0]/metersPerDegreeLongitude,
-    latitude: MAP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
+    longitude: APP.position.longitude + localXY[0]/metersPerDegreeLongitude,
+    latitude: APP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
   };
 }
 

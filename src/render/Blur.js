@@ -53,7 +53,7 @@ render.Blur.prototype.render = function(inputTexture, framebufferSize) {
   shader.disable();
   framebuffer.disable();
 
-  GL.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, APP.width, APP.height);
 };
 
 render.Blur.prototype.destroy = function() 

@@ -68,7 +68,7 @@ render.AmbientMap = {
     shader.disable();
     framebuffer.disable();
 
-    GL.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, APP.width, APP.height);
 
   },
 

@@ -159,10 +159,10 @@ mesh.GeoJSON = (function() {
 
       // this position is available once geometry processing is complete.
       // should not be failing before because of this.isReady
-      var dLat = this.position.latitude - MAP.position.latitude;
-      var dLon = this.position.longitude - MAP.position.longitude;
+      var dLat = this.position.latitude - APP.position.latitude;
+      var dLon = this.position.longitude - APP.position.longitude;
 
-      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(MAP.position.latitude / 180 * Math.PI);
+      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
 

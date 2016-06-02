@@ -50,7 +50,7 @@ render.Picking = {
     for (var i = 0, il = dataItems.length; i<il; i++) {
       item = dataItems[i];
 
-      if (MAP.zoom<item.minZoom || MAP.zoom>item.maxZoom) {
+      if (APP.zoom<item.minZoom || APP.zoom>item.maxZoom) {
         continue;
       }
 
@@ -72,7 +72,7 @@ render.Picking = {
 
     this.shader.disable();
     this.framebuffer.disable();
-    GL.viewport(0, 0, MAP.width, MAP.height);
+    GL.viewport(0, 0, APP.width, APP.height);
   },
   
   // TODO: throttle calls
@@ -80,8 +80,8 @@ render.Picking = {
     requestAnimationFrame(function() {
       this.render( [this.viewportSize, this.viewportSize] );
 
-      x = x/MAP.width *this.viewportSize <<0;
-      y = y/MAP.height*this.viewportSize <<0;
+      x = x/APP.width *this.viewportSize <<0;
+      y = y/APP.height*this.viewportSize <<0;
 
       this.framebuffer.enable();
       var imageData = this.framebuffer.getPixel(x, this.viewportSize - 1 - y);

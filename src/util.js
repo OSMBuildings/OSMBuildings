@@ -38,3 +38,6 @@ function substituteZCoordinate(points, zValue) {
   return res;
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(value, min));
+}

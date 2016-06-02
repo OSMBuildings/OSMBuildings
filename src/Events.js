@@ -1,8 +1,4 @@
 
-// TODO: detect pointerleave from map.container
-// TODO: continue drag/gesture even when off map.container
-// TODO: allow two finger swipe for tilt
-
 // gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
 // MIT License
 
@@ -81,20 +77,20 @@ Events.disabled = false;
 /**
  * @private
  */
-Events.init = function(map) {
+Events.init = function() {
 
   if ('ontouchstart' in window) {
-    addListener(map.container, 'touchstart', onTouchStart);
+    addListener(APP.container, 'touchstart', onTouchStart);
     addListener(document, 'touchmove', onTouchMove);
     addListener(document, 'touchend', onTouchEnd);
     addListener(document, 'gesturechange', onGestureChange);
   } else {
-    addListener(map.container, 'mousedown', onMouseDown);
+    addListener(APP.container, 'mousedown', onMouseDown);
     addListener(document, 'mousemove', onMouseMove);
     addListener(document, 'mouseup', onMouseUp);
-    addListener(map.container, 'dblclick', onDoubleClick);
-    addListener(map.container, 'mousewheel', onMouseWheel);
-    addListener(map.container, 'DOMMouseScroll', onMouseWheel);
+    addListener(APP.container, 'dblclick', onDoubleClick);
+    addListener(APP.container, 'mousewheel', onMouseWheel);
+    addListener(APP.container, 'DOMMouseScroll', onMouseWheel);
   }
 
   var resizeDebounce;
@@ -104,7 +100,7 @@ Events.init = function(map) {
     }
     resizeDebounce = setTimeout(function() {
       resizeDebounce = null;
-        map.setSize({ width:map.container.offsetWidth, height:map.container.offsetHeight });
+        APP.setSize({ width:APP.container.offsetWidth, height:APP.container.offsetHeight });
     }, 250);
   });
 
@@ -124,10 +120,10 @@ Events.init = function(map) {
   function onDoubleClick(e) {
     cancelEvent(e);
     if (!Events.disabled) {
-      map.setZoom(map.zoom + 1, e);
+      APP.setZoom(APP.zoom + 1, e);
     }
     var pos = getEventPosition(e, getElementOffset(e.target));
-      map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+      APP.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
   }
 
   function onMouseDown(e) {
@@ -137,9 +133,9 @@ Events.init = function(map) {
       return;
     }
 
-    startZoom = map.zoom;
-    prevRotation = map.rotation;
-    prevTilt = map.tilt;
+    startZoom = APP.zoom;
+    prevRotation = APP.rotation;
+    prevTilt = APP.tilt;
 
     startOffset = getElementOffset(e.target);
     var pos = getEventPosition(e, startOffset);
@@ -148,7 +144,7 @@ Events.init = function(map) {
 
     pointerIsDown = true;
 
-    map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
+    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
   }
 
   function onMouseMove(e) {
@@ -167,7 +163,7 @@ Events.init = function(map) {
       prevY = pos.y;
     }
 
-    map.emit('pointermove', { x: pos.x, y: pos.y });
+    APP.emit('pointermove', { x: pos.x, y: pos.y });
   }
 
   function onMouseUp(e) {
@@ -188,7 +184,7 @@ Events.init = function(map) {
 
     pointerIsDown = false;
 
-    map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
+    APP.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
   }
 
   function onMouseWheel(e) {
@@ -205,7 +201,7 @@ Events.init = function(map) {
 
     if (!Events.disabled) {
       var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
-      map.setZoom(map.zoom + adjust, e);
+      APP.setZoom(APP.zoom + adjust, e);
     }
 
     // we don't emit mousewheel here as we don't want to run into a loop of death
@@ -223,22 +219,22 @@ Events.init = function(map) {
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
     var
-      scale = 0.86 * Math.pow(2, -map.zoom),
-      lonScale = 1/Math.cos( map.position.latitude/ 180 * Math.PI),
+      scale = 0.86 * Math.pow(2, -APP.zoom),
+      lonScale = 1/Math.cos( APP.position.latitude/ 180 * Math.PI),
       pos = getEventPosition(e, offset),
       dx = pos.x - prevX,
       dy = pos.y - prevY,
-      angle = map.rotation * Math.PI/180,
+      angle = APP.rotation * Math.PI/180,
       vRight   = [ Math.cos(angle),             Math.sin(angle)],
       vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
       dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
 
     var newPosition = {
-      longitude: map.position.longitude - dir[0] * scale*lonScale,
-      latitude:  map.position.latitude  + dir[1] * scale };
+      longitude: APP.position.longitude - dir[0] * scale*lonScale,
+      latitude:  APP.position.latitude  + dir[1] * scale };
 
-    map.setPosition(newPosition);
-    map.emit('move', newPosition);
+    APP.setPosition(newPosition);
+    APP.emit('move', newPosition);
   }
 
   function rotateMap(e, offset) {
@@ -248,8 +244,8 @@ Events.init = function(map) {
     var pos = getEventPosition(e, offset);
     prevRotation += (pos.x - prevX)*(360/innerWidth);
     prevTilt -= (pos.y - prevY)*(360/innerHeight);
-    map.setRotation(prevRotation);
-    map.setTilt(prevTilt);
+    APP.setRotation(prevRotation);
+    APP.setTilt(prevTilt);
   }
 
   //***************************************************************************
@@ -285,9 +281,9 @@ Events.init = function(map) {
       gestureStarted = true;
     }
 
-    startZoom = map.zoom;
-    prevRotation = map.rotation;
-    prevTilt = map.tilt;
+    startZoom = APP.zoom;
+    prevRotation = APP.rotation;
+    prevTilt = APP.tilt;
 
     if (e.touches.length) {
       e = e.touches[0];
@@ -298,21 +294,21 @@ Events.init = function(map) {
     startX = prevX = pos.x;
     startY = prevY = pos.y;
 
-    map.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
+    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
   }
 
   function onTouchMove(e) {
     var pos = getEventPosition(e.touches[0], startOffset);
     if (e.touches.length > 1) {
-      map.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
-      prevTilt = map.tilt;
+      APP.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
+      prevTilt = APP.tilt;
       // gesturechange polyfill
       if (!('ongesturechange' in window)) {
         emitGestureChange(e);
       }
     } else {
       moveMap(e.touches[0], startOffset);
-      map.emit('pointermove', { x: pos.x, y: pos.y });
+      APP.emit('pointermove', { x: pos.x, y: pos.y });
     }
     prevX = pos.x;
     prevY = pos.y;
@@ -323,7 +319,7 @@ Events.init = function(map) {
     gestureStarted = false;
 
     if (e.touches.length === 0) {
-      map.emit('pointerup', { x: prevX, y: prevY, button: 0 });
+      APP.emit('pointerup', { x: prevX, y: prevY, button: 0 });
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
       var pos = getEventPosition(e.touches[0], startOffset);
@@ -336,10 +332,10 @@ Events.init = function(map) {
     cancelEvent(e);
 
     if (!Events.disabled) {
-      map.setZoom(startZoom + (e.scale - 1));
-      map.setRotation(prevRotation - e.rotation);
+      APP.setZoom(startZoom + (e.scale - 1));
+      APP.setRotation(prevRotation - e.rotation);
     }
 
-    map.emit('gesture', e);
+    APP.emit('gesture', e);
   }
 };

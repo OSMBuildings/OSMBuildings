@@ -57,7 +57,7 @@
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="../dist/OSMBuildings/OSMBuildings.css">
+  <link rel="stylesheet" href="../src/style.css">
   <script src="loader.js"></script>
 </head>
 
@@ -85,21 +85,6 @@
 </div>
 
 <script>
-  var map = new GLMap('map', {
-    position: { latitude:52.52000, longitude:13.41000 },
-//  position: { latitude:40.69924, longitude:-74.01692 },
-    //bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
-    zoom: 17,
-    rotation: 0,
-    tilt: 0, // optional
-    // disabled: true, // disables user input
-    minZoom: 14.5,
-    maxZoom: 20,
-    state: true // stores map position, zoom etc. in url
-  });
-
-  //***************************************************************************
-
   var osmb = new OSMBuildings({
     baseURL: './OSMBuildings',
     minZoom: 14.5,
@@ -108,8 +93,17 @@
     // fastMode: true,
     // effects: ['shadows', 'outlines'],
     effects: ['shadows'],
-    attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
-  }).addTo(map);
+    attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>',
+    position: { latitude:52.52000, longitude:13.41000 },
+    // bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
+    zoom: 17,
+    rotation: 0,
+    tilt: 0, // optional
+    // disabled: true, // disables user input
+    state: true // stores map position, zoom etc. in url
+  });
+
+  osmb.appendTo('map');
 
   var selector = function(id, data) {
     return id % 2 === 0;
@@ -198,7 +192,7 @@
   // osmb.addOBJ('data/Fernsehturm.obj', { latitude:52.524133, longitude:13.407434 }, { id:'Fernsehturm', scale:2, color:'#ff0000', elevation:0, rotation:51 });
   // osmb.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { elevation:-3, rotation:97, id:'London Eye' });
 
-  // map.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
+  // osmb.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
   var gj = { type: 'FeatureCollection', features: [
     { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 50, minHeight: 0 }, geometry:
@@ -218,13 +212,13 @@
   //osmb.addGeoJSON('../../OBJ2GeoJSON/data/geojson C/o2-nach90.geo.json', { color: '#00ccff' });
 
   var label = document.getElementById('label');
-//  map.on('change', function() {
+//  osmb.on('change', function() {
 //    var pos = osmb.project(52.52, 13.37, 50);
 //    label.style.left = Math.round(pos.x) + 'px';
 //    label.style.top = Math.round(pos.y) + 'px';
 //  });
 
-  map.on('pointermove', function(e) {
+  osmb.on('pointermove', function(e) {
     osmb.getTarget(e.detail.x, e.detail.y, function(id) {
       if (id) {
         document.body.style.cursor = 'pointer';
@@ -236,12 +230,12 @@
    });
   });
 
-//  map.on('pointermove', function(e) {
+//  osmb.on('pointermove', function(e) {
 //    obj.position = osmb.unproject(e.detail.x, e.detail.y);
 //  });
 //
 
-//  map.on('pointerdown', function(e) {
+//  osmb.on('pointerdown', function(e) {
 //    var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
 //      console.log(id);
 //    });
@@ -327,7 +321,7 @@
         increment = direction*1;
       }
       if (property) {
-        map['set'+ property](map['get'+ property]()+increment);
+        osmb['set'+ property](osmb['get'+ property]()+increment);
       }
     });
   }

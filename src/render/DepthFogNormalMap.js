@@ -59,7 +59,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
   for (var i = 0; i < dataItems.length; i++) {
     item = dataItems[i];
 
-    if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+    if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
       continue;
     }
 
@@ -90,7 +90,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
   shader.disable();
   framebuffer.disable();
 
-  GL.viewport(0, 0, MAP.width, MAP.height);
+  GL.viewport(0, 0, APP.width, APP.height);
 };
 
 render.DepthFogNormalMap.prototype.destroy = function() {};

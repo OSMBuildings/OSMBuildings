@@ -17,8 +17,8 @@ var render = {
       delete render.effects.outlines;
     }
 
-    MAP.on('change', this._onChange = this.onChange.bind(this));
-    MAP.on('resize', this._onResize = this.onResize.bind(this));
+    APP.on('change', this._onChange = this.onChange.bind(this));
+    APP.on('resize', this._onResize = this.onResize.bind(this));
     this.onResize();  //initialize view and projection matrix, fog distance, etc.
 
     GL.cullFace(GL.BACK);
@@ -61,7 +61,7 @@ var render = {
     GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    if (MAP.zoom < APP.minZoom || MAP.zoom > APP.maxZoom) {
+    if (APP.zoom < APP.minZoom || APP.zoom > APP.maxZoom) {
       return;
     }
     var viewTrapezoid = this.getViewQuad();
@@ -73,7 +73,7 @@ var render = {
 
     Sun.updateView(viewTrapezoid);
     render.sky.updateGeometry(viewTrapezoid);
-    var viewSize = [MAP.width, MAP.height];
+    var viewSize = [APP.width, APP.height];
 
     if (!render.effects.shadows) {
       render.Buildings.render();
@@ -160,22 +160,22 @@ var render = {
   },
   
   onChange: function() {
-    var 
-      scale = 1.38*Math.pow(2, MAP.zoom-17),
-      width = MAP.width,
-      height = MAP.height,
+    var
+      scale = 1.38*Math.pow(2, APP.zoom-17),
+      width = APP.width,
+      height = APP.height,
       refHeight = 1024,
       refVFOV = 45;
 
     GL.viewport(0, 0, width, height);
 
     this.viewMatrix = new GLX.Matrix()
-      .rotateZ(MAP.rotation)
-      .rotateX(MAP.tilt)
-      .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales MAP tiles to ~256px
+      .rotateZ(APP.rotation)
+      .rotateX(APP.tilt)
+      .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
-    this.viewDirOnMap = [ Math.sin(MAP.rotation / 180* Math.PI),
-                         -Math.cos(MAP.rotation / 180* Math.PI)];
+    this.viewDirOnMap = [ Math.sin(APP.rotation / 180* Math.PI),
+                         -Math.cos(APP.rotation / 180* Math.PI)];
 
     // OSMBuildings' perspective camera is ... special: The reference point for
     // camera movement, rotation and zoom is at the screen center (as usual). 
@@ -193,7 +193,7 @@ var render = {
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
     this.projMatrix = new GLX.Matrix()
-      .translate(0, -height/(2.0*scale), 0) // 0, MAP y offset to neutralize camera y offset, 
+      .translate(0, -height/(2.0*scale), 0) // 0, APP y offset to neutralize camera y offset, 
       .scale(1, -1, 1) // flip Y
       .multiply(new GLX.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
@@ -216,14 +216,14 @@ var render = {
   },
 
   onResize: function() {
-    GL.canvas.width  = MAP.width;
-    GL.canvas.height = MAP.height;
+    GL.canvas.width  = APP.width;
+    GL.canvas.height = APP.height;
     this.onChange();
   },
 
   destroy: function() {
-    MAP.off('change', this._onChange);
-    MAP.off('resize', this._onResize);
+    APP.off('change', this._onChange);
+    APP.off('resize', this._onResize);
 
     this.stop();
     render.Picking.destroy();

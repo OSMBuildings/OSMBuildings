@@ -2,7 +2,7 @@
 var Sun = {
 
   setDate: function(date) {
-    var pos = suncalc(date, MAP.position.latitude, MAP.position.longitude);
+    var pos = suncalc(date, APP.position.latitude, APP.position.longitude);
     this.direction = [
       -Math.sin(pos.azimuth) * Math.cos(pos.altitude),
        Math.cos(pos.azimuth) * Math.cos(pos.altitude),

@@ -5,7 +5,7 @@
 var GLX = {};
 var GL;
 
-GLX.init = function(container, width, height, highQuality) {
+GLX.createCanvas = function(container, width, height, highQuality) {
   var canvas = document.createElement('CANVAS');
   canvas.style.position = 'absolute';
   canvas.width = width;

@@ -51,7 +51,7 @@ render.MapShadows = {
     shader.bindTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
 
     var item = this.mapPlane;
-    if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom) {
+    if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
       return;
     }
 

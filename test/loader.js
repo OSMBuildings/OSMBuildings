@@ -62,15 +62,6 @@ for (var i = 0; i < config.glx.length; i++) {
 }
 js += "\nreturn GLX;\n}());\n";
 
-// GLMap
-
-js += "var GLMap = (function() {";
-for (var i = 0; i < config.glmap.length; i++) {
-  js += loadFile(baseURL + config.glmap[i]) + '\n';
-}
-js += "\nreturn GLMap;\n}());\n";
-js += "\nwindow.GLMap = GLMap;\n";
-
 // OSMB core
 
 for (var i = 0; i < config.src.length; i++) {

@@ -69,8 +69,8 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
   //console.log(vLeftArc, vRightArc);
 
   var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
-  var tcLeft = vLeftArc;//MAP.rotation/360.0;
-  var tcRight =vRightArc;//MAP.rotation/360.0 + visibleSkyDiameterFraction*3;
+  var tcLeft = vLeftArc;//APP.rotation/360.0;
+  var tcRight =vRightArc;//APP.rotation/360.0 + visibleSkyDiameterFraction*3;
         
   this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
     [tcLeft, 1, tcRight, 1, tcRight, 0, tcLeft, 1, tcRight, 0, tcLeft, 0]));

@@ -18,11 +18,11 @@ var Grid = function(source, tileClass, options) {
     this.maxZoom = this.minZoom;
   }
 
-  MAP.on('change', this._onChange = function() {
+  APP.on('change', this._onChange = function() {
     this.update(500);
   }.bind(this));
 
-  MAP.on('resize', this._onResize = this.update.bind(this));
+  APP.on('resize', this._onResize = this.update.bind(this));
 
   this.update();
 };
@@ -32,7 +32,7 @@ Grid.prototype = {
   // strategy: start loading after {delay}ms, skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
-    if (MAP.zoom < this.minZoom || MAP.zoom > this.maxZoom) {
+    if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
       return;
     }
 
@@ -139,7 +139,7 @@ Grid.prototype = {
   },
 
   loadTiles: function() {
-    var zoom = Math.round(this.fixedZoom || MAP.zoom);
+    var zoom = Math.round(this.fixedZoom || APP.zoom);
 
     // TODO: if there are user defined bounds for this layer, respect these too
     //  if (this.fixedBounds) {
@@ -161,8 +161,8 @@ Grid.prototype = {
       queue = [],
       i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      mapCenterTile = [ long2tile(MAP.position.longitude, zoom),
-                        lat2tile (MAP.position.latitude,  zoom)];
+      mapCenterTile = [ long2tile(APP.position.longitude, zoom),
+                        lat2tile (APP.position.latitude,  zoom)];
 
     for (i = 0; i < 4; i++) {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
@@ -210,7 +210,7 @@ Grid.prototype = {
 
   purge: function() {
     var
-      zoom = Math.round(MAP.zoom),
+      zoom = Math.round(APP.zoom),
       tile, parent;
 
     for (var key in this.tiles) {
@@ -252,8 +252,8 @@ Grid.prototype = {
   },
 
   destroy: function() {
-    MAP.off('change', this._onChange);
-    MAP.off('resize', this._onResize);
+    APP.off('change', this._onChange);
+    APP.off('resize', this._onResize);
 
     clearTimeout(this.debounce);
     for (var key in this.tiles) {

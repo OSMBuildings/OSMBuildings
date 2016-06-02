@@ -83,7 +83,7 @@ mesh.MapPlane = (function() {
 
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
-      //var scale = Math.pow(2, MAP.zoom - 16);
+      //var scale = Math.pow(2, APP.zoom - 16);
 
       var modelMatrix = new GLX.Matrix();
       //modelMatrix.scale(scale, scale, scale);

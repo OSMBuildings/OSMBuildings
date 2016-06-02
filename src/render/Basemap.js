@@ -18,14 +18,14 @@ render.Basemap = {
       return;
     }
 
-    if (MAP.zoom < layer.minZoom || MAP.zoom > layer.maxZoom) {
+    if (APP.zoom < layer.minZoom || APP.zoom > layer.maxZoom) {
       return;
     }
 
     var
       shader = this.shader,
       tile,
-      zoom = Math.round(MAP.zoom);
+      zoom = Math.round(APP.zoom);
 
     shader.enable();
     
@@ -70,11 +70,11 @@ render.Basemap = {
 
   renderTile: function(tile, shader) {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                   Math.cos(MAP.position.latitude / 180 * Math.PI);
+                                   Math.cos(APP.position.latitude / 180 * Math.PI);
 
     var modelMatrix = new GLX.Matrix();
-    modelMatrix.translate( (tile.longitude- MAP.position.longitude)* metersPerDegreeLongitude,
-                          -(tile.latitude - MAP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+    modelMatrix.translate( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
+                          -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     GL.enable(GL.POLYGON_OFFSET_FILL);
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,

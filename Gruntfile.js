@@ -20,18 +20,7 @@ module.exports = function(grunt) {
         dest: 'build/temp/GLX.debug.js'
       },
 
-      'glmap': {
-        options: {
-          separator: "\n",
-          banner: "var GLMap = (function() {\n",
-          footer: "\nreturn GLMap;\n}());\nwindow.GLMap = GLMap;\n",
-          sourceMap: true
-        },
-        src: '<%=cfg.glmap%>',
-        dest: 'build/temp/GLMap.debug.js'
-      },
-
-      'osmb-with-glmap': {
+      'osmb-standalone': {
         options: {
           separator: "\n",
           banner: "(function() {",
@@ -55,7 +44,7 @@ module.exports = function(grunt) {
         dest: 'dist/OSMBuildings/skydome.jpg'
       },
       'css': {
-        src: 'src/engines/GLMap/style.css',
+        src: 'src/style.css',
         dest: 'dist/OSMBuildings/<%=pkg.name%>.css'
       }
     },
@@ -91,11 +80,6 @@ module.exports = function(grunt) {
       glx: {
         options: {},
         src: ['build/temp/GLX.debug.js']
-      },
-
-      glmap: {
-        options: {},
-        src: ['build/temp/GLMap.debug.js']
       },
 
       osmb: {
@@ -168,12 +152,6 @@ module.exports = function(grunt) {
     grunt.task.run('jshint:glx');
   });
 
-  grunt.registerTask('glmap', 'base map for standalone OSM Buildings', function() {
-    setup();
-    grunt.task.run('concat:glmap');
-    grunt.task.run('jshint:glmap');
-  });
-
   grunt.registerMultiTask('version', 'set version number', function() {
     setup();
     //grunt.log.writeln(JSON.stringify(this.data));
@@ -192,11 +170,10 @@ module.exports = function(grunt) {
     setup();
     grunt.task.run('shaders');
     grunt.task.run('glx');
-    grunt.task.run('glmap');
 
     grunt.task.run('jshint:osmb');
 
-    grunt.task.run('concat:osmb-with-glmap');
+    grunt.task.run('concat:osmb-standalone');
 
     grunt.task.run('version');
 

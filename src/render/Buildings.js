@@ -99,7 +99,7 @@ render.Buildings = {
 
       item = dataItems[i];
 
-      if (MAP.zoom < item.minZoom || MAP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
+      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
         continue;
       }
 

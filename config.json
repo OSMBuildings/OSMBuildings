@@ -32,15 +32,11 @@
     "src/glx/texture/Data.js"
   ],
 
-  "glmap": [
-    "src/engines/GLMap/index.js",
-    "src/engines/GLMap/Events.js"
-  ],
-
   "src": [
     "src/polyfills.js",
 
     "src/index.js",
+    "src/Events.js",
     "src/Activity.js",
 
     "src/variables.js",
