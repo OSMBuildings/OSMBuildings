@@ -104,23 +104,27 @@ OSMBuildings.prototype = {
    * @public
    * @param {HTMLElement|String} DOM container or its id to append the map to
    */
-  appendTo: function(container) {
+  appendTo: function(container, width, height) {
     if (typeof container === 'string') {
       container = document.getElementById(container);
     }
 
-    APP.width = container.offsetWidth;
-    APP.height = container.offsetHeight;
+    APP.container = document.createElement('DIV');
+    APP.container.className = 'osmb';
+    container.appendChild(APP.container);
+
+    APP.width  = width  !== undefined ? width  : container.offsetWidth;
+    APP.height = height !== undefined ? height : container.offsetHeight;
     
     var canvas = document.createElement('CANVAS');
     canvas.className = 'osmb-viewport';
-    canvas.width = container.offsetWidth;
-    canvas.height = container.offsetHeight;
-    container.appendChild(canvas);
+    canvas.width = APP.width;
+    canvas.height = APP.width;
+    APP.container.appendChild(canvas);
 
     GL = GLX.getContext(canvas);
 
-    Events.init(container);
+    Events.init(canvas);
 
     APP.getStateFromUrl();
     if (APP.options.state) {
@@ -128,10 +132,10 @@ OSMBuildings.prototype = {
       APP.on('change', APP.setStateToUrl);
     }
 
-    APP.attributionContainer = document.createElement('DIV');
-    APP.attributionContainer.className = 'osmb-attribution';
-    container.appendChild(APP.attributionContainer);
-    APP.updateAttribution();
+    APP._attribution = document.createElement('DIV');
+    APP._attribution.className = 'osmb-attribution';
+    APP.container.appendChild(APP._attribution);
+    APP._updateAttribution();
 
     APP.setDate(new Date());
     render.start();
@@ -401,7 +405,7 @@ OSMBuildings.prototype = {
   /**
    * @private
    */
-  updateAttribution: function() {
+  _updateAttribution: function() {
     var attribution = [];
     if (APP.attribution) {
       attribution.push(APP.attribution);
@@ -411,7 +415,7 @@ OSMBuildings.prototype = {
         attribution.push(APP.layers[i].attribution);
       }
     }
-    APP.attributionContainer.innerHTML = attribution.join(' · ');
+    APP._attribution.innerHTML = attribution.join(' · ');
   },
 
   /**
@@ -658,7 +662,7 @@ OSMBuildings.prototype = {
    */
   addLayer: function(layer) {
     APP.layers.push(layer);
-    APP.updateAttribution();
+    APP._updateAttribution();
     return APP;
   },
 
@@ -670,7 +674,7 @@ OSMBuildings.prototype = {
     APP.layers = APP.layers.filter(function(item) {
       return (item !== layer);
     });
-    APP.updateAttribution();
+    APP._updateAttribution();
   },
 
   /**

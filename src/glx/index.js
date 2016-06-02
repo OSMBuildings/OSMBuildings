@@ -31,7 +31,7 @@ GLX.getContext = function(canvas) {
     console.warn('context restored');
   });
 
-  GL.viewport(0, 0, canvas.width, canvas.height);
+  GL.viewport(0, 0, APP.width, APP.height);
   GL.cullFace(GL.BACK);
   GL.enable(GL.CULL_FACE);
   GL.enable(GL.DEPTH_TEST);
