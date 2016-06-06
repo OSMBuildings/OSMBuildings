@@ -434,8 +434,8 @@ OSMBuildings.prototype = {
     }
 
     APP.setPosition((state.lat !== undefined && state.lon !== undefined) ? { latitude:state.lat, longitude:state.lon } : APP.position);
-    APP.setRotation(state.zoom !== undefined ? state.zoom : APP.zoom);
-    APP.setZoom(state.rotation !== undefined ? state.rotation : APP.rotation);
+    APP.setZoom(state.zoom !== undefined ? state.zoom : APP.zoom);
+    APP.setRotation(state.rotation !== undefined ? state.rotation : APP.rotation);
     APP.setTilt(state.tilt !== undefined ? state.tilt : APP.tilt);
   },
 

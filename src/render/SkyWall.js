@@ -68,7 +68,7 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
     vRightArc +=1;
   //console.log(vLeftArc, vRightArc);
 
-  var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
+  // var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
   var tcLeft = vLeftArc;//APP.rotation/360.0;
   var tcRight =vRightArc;//APP.rotation/360.0 + visibleSkyDiameterFraction*3;
         
