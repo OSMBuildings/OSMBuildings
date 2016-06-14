@@ -161,7 +161,7 @@ var render = {
   
   onChange: function() {
     var
-      scale = 1.38*Math.pow(2, APP.zoom-17),
+      scale = 1.3567 * Math.pow(2, APP.zoom-17),
       width = APP.width,
       height = APP.height,
       refHeight = 1024,
@@ -172,10 +172,34 @@ var render = {
     this.viewMatrix = new GLX.Matrix()
       .rotateZ(APP.rotation)
       .rotateX(APP.tilt)
+      .translate(0, 8/scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
       .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
     this.viewDirOnMap = [ Math.sin(APP.rotation / 180* Math.PI),
                          -Math.cos(APP.rotation / 180* Math.PI)];
+
+    // First, we need to determine the field-of-view so that our map scale does
+    // not change when the viewport size changes. The map scale is given by the
+    // 'refFOV' (e.g. 45°) at a WebGL viewport height of 'refHeight' pixels.
+    // Since our viewport will not usually be 1024 pixels high, we'll need to
+    // find the FOV that corresponds to our viewport height.
+    // The half viewport height and half FOV form a leg and the opposite angle
+    // of a right triangle (see sketch below). Since the relation between the
+    // two is non-linear, we cannot simply scale the reference FOV by the ratio
+    // of reference height to actual height to get the desired FOV.
+    // But be can use the reference height and reference FOV to determine the
+    // virtual distance to the camera and then use that virtual distance to
+    // compute the FOV corresponding to the actual height.
+    //
+    //                   ____/|
+    //              ____/     |
+    //         ____/          | refHeight/2
+    //    ____/  \            |
+    //   /refFOV/2|           |
+    //  ----------------------|
+    //     "virtual distance"
+    var virtualDistance = refHeight/ (2 * Math.tan( (refVFOV/2) / 180 * Math.PI));
+    var verticalFOV = 2* Math.atan((height/2.0)/virtualDistance) / Math.PI * 180;
 
     // OSMBuildings' perspective camera is ... special: The reference point for
     // camera movement, rotation and zoom is at the screen center (as usual). 
@@ -195,7 +219,7 @@ var render = {
     this.projMatrix = new GLX.Matrix()
       .translate(0, -height/(2.0*scale), 0) // 0, APP y offset to neutralize camera y offset, 
       .scale(1, -1, 1) // flip Y
-      .multiply(new GLX.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
+      .multiply(new GLX.Matrix.Perspective(verticalFOV, width/height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
