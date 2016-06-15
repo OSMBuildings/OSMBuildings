@@ -503,7 +503,8 @@ OSMBuildings.prototype = {
    * @fires OSMBuildings#change
    */
   setZoom: function(zoom, e) {
-    zoom = clamp(parseFloat(zoom), APP.minZoom, APP.maxZoom);
+    // not clamping anymore. notice zoomlevel but perhaps don't render
+    zoom = parseFloat(zoom);
 
     if (APP.zoom !== zoom) {
       APP.zoom = zoom;
