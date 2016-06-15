@@ -150,7 +150,7 @@ var w3cColors = {
   yellowgreen: '#9acd32'
 };
 
-var parseColor = exports = function(str) {
+function parseColor(str) {
   str = str || '';
   str = str.toLowerCase();
   str = w3cColors[str] || str;
@@ -168,9 +168,9 @@ var parseColor = exports = function(str) {
       parseInt(m[1], 10)/255,
       parseInt(m[2], 10)/255,
       parseInt(m[3], 10)/255
-    ]
+    ];
   }
-};
+}
 
 
 var earcut = (function() {
@@ -765,10 +765,11 @@ var earcut = (function() {
   earcut.deviation = function(data, holeIndices, dim, triangles) {
     var hasHoles = holeIndices && holeIndices.length;
     var outerLen = hasHoles ? holeIndices[0]*dim : data.length;
+    var i, len;
 
     var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
     if (hasHoles) {
-      for (var i = 0, len = holeIndices.length; i<len; i++) {
+      for (i = 0, len = holeIndices.length; i<len; i++) {
         var start = holeIndices[i]*dim;
         var end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
         polygonArea -= Math.abs(signedArea(data, start, end, dim));
@@ -776,7 +777,7 @@ var earcut = (function() {
     }
 
     var trianglesArea = 0;
-    for (i = 0; i<triangles.length; i += 3) {
+    for (i = 0, len = triangles.length; i < len; i += 3) {
       var a = triangles[i]*dim;
       var b = triangles[i + 1]*dim;
       var c = triangles[i + 2]*dim;
@@ -4366,7 +4367,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (var i = 0, il = data.Index.items.length; i<il; i++) {
@@ -4402,7 +4403,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (i = 0, il = data.Index.items.length; i<il; i++) {
