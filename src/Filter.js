@@ -24,7 +24,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (var i = 0, il = data.Index.items.length; i<il; i++) {
@@ -60,7 +60,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (i = 0, il = data.Index.items.length; i<il; i++) {
