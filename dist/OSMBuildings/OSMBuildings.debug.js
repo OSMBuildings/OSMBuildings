@@ -150,7 +150,7 @@ var w3cColors = {
   yellowgreen: '#9acd32'
 };
 
-var parseColor = exports = function(str) {
+function parseColor(str) {
   str = str || '';
   str = str.toLowerCase();
   str = w3cColors[str] || str;
@@ -168,9 +168,9 @@ var parseColor = exports = function(str) {
       parseInt(m[1], 10)/255,
       parseInt(m[2], 10)/255,
       parseInt(m[3], 10)/255
-    ]
+    ];
   }
-};
+}
 
 
 var earcut = (function() {
@@ -765,10 +765,11 @@ var earcut = (function() {
   earcut.deviation = function(data, holeIndices, dim, triangles) {
     var hasHoles = holeIndices && holeIndices.length;
     var outerLen = hasHoles ? holeIndices[0]*dim : data.length;
+    var i, len;
 
     var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
     if (hasHoles) {
-      for (var i = 0, len = holeIndices.length; i<len; i++) {
+      for (i = 0, len = holeIndices.length; i<len; i++) {
         var start = holeIndices[i]*dim;
         var end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
         polygonArea -= Math.abs(signedArea(data, start, end, dim));
@@ -776,7 +777,7 @@ var earcut = (function() {
     }
 
     var trianglesArea = 0;
-    for (i = 0; i<triangles.length; i += 3) {
+    for (i = 0, len = triangles.length; i < len; i += 3) {
       var a = triangles[i]*dim;
       var b = triangles[i + 1]*dim;
       var c = triangles[i + 2]*dim;
@@ -3710,6 +3711,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
+   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
    * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    */
   addGeoJSON: function(url, options) {
@@ -3727,6 +3729,7 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
    */
   addGeoJSONTiles: function(url, options) {
     options = options || {};
@@ -4366,7 +4369,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (var i = 0, il = data.Index.items.length; i<il; i++) {
@@ -4402,7 +4405,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (i = 0, il = data.Index.items.length; i<il; i++) {
@@ -4525,10 +4528,11 @@ mesh.GeoJSON = (function() {
     this.color = options.color;
     this.modifier = options.modifier;
 
-    this.replace   = !!options.replace;
-    this.scale     = options.scale     || 1;
-    this.rotation  = options.rotation  || 0;
-    this.elevation = options.elevation || 0;
+    this.replace      = !!options.replace;
+    this.scale        = options.scale     || 1;
+    this.rotation     = options.rotation  || 0;
+    this.elevation    = options.elevation || 0;
+    this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
 
     this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
     this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
@@ -4635,7 +4639,11 @@ mesh.GeoJSON = (function() {
 
     fadeIn: function() {
       var item, filters = [];
-      var start = Filter.getTime() + 250, end = start + 500;
+      var start = Filter.getTime(), end = start;
+      if (this.shouldFadeIn) {
+        start += 250;
+        end += 750;
+      }
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];
@@ -5068,11 +5076,12 @@ mesh.OBJ = (function() {
       this.color = new Color(options.color).toArray();
     }
 
-    this.replace   = !!options.replace;
-    this.scale     = options.scale     || 1;
-    this.rotation  = options.rotation  || 0;
-    this.elevation = options.elevation || 0;
-    this.position  = position;
+    this.replace      = !!options.replace;
+    this.scale        = options.scale     || 1;
+    this.rotation     = options.rotation  || 0;
+    this.elevation    = options.elevation || 0;
+    this.position     = position;
+    this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
 
     this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
     this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
@@ -5141,7 +5150,11 @@ mesh.OBJ = (function() {
 
     fadeIn: function() {
       var item, filters = [];
-      var start = Filter.getTime() + 250, end = start + 500;
+      var start = Filter.getTime(), end = start;
+      if (this.shouldFadeIn) {
+        start += 250;
+        end += 750;
+      }
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];
