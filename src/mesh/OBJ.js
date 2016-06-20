@@ -145,11 +145,12 @@ mesh.OBJ = (function() {
       this.color = new Color(options.color).toArray();
     }
 
-    this.replace   = !!options.replace;
-    this.scale     = options.scale     || 1;
-    this.rotation  = options.rotation  || 0;
-    this.elevation = options.elevation || 0;
-    this.position  = position;
+    this.replace      = !!options.replace;
+    this.scale        = options.scale     || 1;
+    this.rotation     = options.rotation  || 0;
+    this.elevation    = options.elevation || 0;
+    this.position     = position;
+    this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
 
     this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
     this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
@@ -218,7 +219,11 @@ mesh.OBJ = (function() {
 
     fadeIn: function() {
       var item, filters = [];
-      var start = Filter.getTime() + 250, end = start + 500;
+      var start = Filter.getTime(), end = start;
+      if (this.shouldFadeIn) {
+        start += 250;
+        end += 750;
+      }
       for (var i = 0, il = this.items.length; i < il; i++) {
         item = this.items[i];
         item.filter = [start, end, 0, 1];
