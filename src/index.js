@@ -292,6 +292,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
+   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
    * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    */
   addGeoJSON: function(url, options) {
@@ -309,6 +310,7 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
    */
   addGeoJSONTiles: function(url, options) {
     options = options || {};
