@@ -80,21 +80,16 @@
 </div>
 
 <script>
-  var map = new GLMap('map', {
-    position: { latitude:52.52000, longitude:13.41000 },
-    zoom: 16,
-    minZoom: 12,
-    maxZoom: 20,
-    state: true // stores map position/rotation in url
-  });
-
   var osmb = new OSMBuildings({
     baseURL: './OSMBuildings',
-    minZoom: 15,
-    maxZoom: 22,
+    minZoom: 13,
+    maxZoom: 20,
+    position: { latitude:52.52000, longitude:13.41000 },
+    zoom: 16,
+    state: true, // stores map position/rotation in url
     effects: ['shadows'],
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
-  }).addTo(map);
+  }).appendTo('map');
 
   osmb.addMapTiles(
     'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
@@ -107,8 +102,8 @@
 
   //***************************************************************************
 
-  map.on('pointermove', function(e) {
-    var id = osmb.getTarget(e.x, e.y, function(id) {
+  osmb.on('pointermove', function(e) {
+    var id = osmb.getTarget(e.detail.x, e.detaily, function(id) {
       if (id) {
         document.body.style.cursor = 'pointer';
         osmb.highlight(id, '#f08000');
@@ -144,7 +139,7 @@
         increment = direction*1;
       }
       if (property) {
-        map['set'+ property](map['get'+ property]()+increment);
+        osmb['set'+ property](osmb['get'+ property]()+increment);
       }
     });
   }
