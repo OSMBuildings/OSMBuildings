@@ -150,7 +150,7 @@ var w3cColors = {
   yellowgreen: '#9acd32'
 };
 
-var parseColor = exports = function(str) {
+function parseColor(str) {
   str = str || '';
   str = str.toLowerCase();
   str = w3cColors[str] || str;
@@ -168,9 +168,9 @@ var parseColor = exports = function(str) {
       parseInt(m[1], 10)/255,
       parseInt(m[2], 10)/255,
       parseInt(m[3], 10)/255
-    ]
+    ];
   }
-};
+}
 
 
 var earcut = (function() {
@@ -765,10 +765,11 @@ var earcut = (function() {
   earcut.deviation = function(data, holeIndices, dim, triangles) {
     var hasHoles = holeIndices && holeIndices.length;
     var outerLen = hasHoles ? holeIndices[0]*dim : data.length;
+    var i, len;
 
     var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
     if (hasHoles) {
-      for (var i = 0, len = holeIndices.length; i<len; i++) {
+      for (i = 0, len = holeIndices.length; i<len; i++) {
         var start = holeIndices[i]*dim;
         var end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
         polygonArea -= Math.abs(signedArea(data, start, end, dim));
@@ -776,7 +777,7 @@ var earcut = (function() {
     }
 
     var trianglesArea = 0;
-    for (i = 0; i<triangles.length; i += 3) {
+    for (i = 0, len = triangles.length; i < len; i += 3) {
       var a = triangles[i]*dim;
       var b = triangles[i + 1]*dim;
       var c = triangles[i + 2]*dim;
@@ -1866,7 +1867,7 @@ GLX.getContext = function(canvas) {
     console.warn('context restored');
   });
 
-  GL.viewport(0, 0, canvas.width, canvas.height);
+  GL.viewport(0, 0, APP.width, APP.height);
   GL.cullFace(GL.BACK);
   GL.enable(GL.CULL_FACE);
   GL.enable(GL.DEPTH_TEST);
@@ -3573,23 +3574,27 @@ OSMBuildings.prototype = {
    * @public
    * @param {HTMLElement|String} DOM container or its id to append the map to
    */
-  appendTo: function(container) {
+  appendTo: function(container, width, height) {
     if (typeof container === 'string') {
       container = document.getElementById(container);
     }
 
-    APP.width = container.offsetWidth;
-    APP.height = container.offsetHeight;
+    APP.container = document.createElement('DIV');
+    APP.container.className = 'osmb';
+    container.appendChild(APP.container);
+
+    APP.width  = width  !== undefined ? width  : container.offsetWidth;
+    APP.height = height !== undefined ? height : container.offsetHeight;
     
     var canvas = document.createElement('CANVAS');
     canvas.className = 'osmb-viewport';
-    canvas.width = container.offsetWidth;
-    canvas.height = container.offsetHeight;
-    container.appendChild(canvas);
+    canvas.width = APP.width;
+    canvas.height = APP.width;
+    APP.container.appendChild(canvas);
 
     GL = GLX.getContext(canvas);
 
-    Events.init(container);
+    Events.init(canvas);
 
     APP.getStateFromUrl();
     if (APP.options.state) {
@@ -3597,10 +3602,10 @@ OSMBuildings.prototype = {
       APP.on('change', APP.setStateToUrl);
     }
 
-    APP.attributionContainer = document.createElement('DIV');
-    APP.attributionContainer.className = 'osmb-attribution';
-    container.appendChild(APP.attributionContainer);
-    APP.updateAttribution();
+    APP._attribution = document.createElement('DIV');
+    APP._attribution.className = 'osmb-attribution';
+    APP.container.appendChild(APP._attribution);
+    APP._updateAttribution();
 
     APP.setDate(new Date());
     render.start();
@@ -3872,7 +3877,7 @@ OSMBuildings.prototype = {
   /**
    * @private
    */
-  updateAttribution: function() {
+  _updateAttribution: function() {
     var attribution = [];
     if (APP.attribution) {
       attribution.push(APP.attribution);
@@ -3882,7 +3887,7 @@ OSMBuildings.prototype = {
         attribution.push(APP.layers[i].attribution);
       }
     }
-    APP.attributionContainer.innerHTML = attribution.join(' · ');
+    APP._attribution.innerHTML = attribution.join(' · ');
   },
 
   /**
@@ -3901,8 +3906,8 @@ OSMBuildings.prototype = {
     }
 
     APP.setPosition((state.lat !== undefined && state.lon !== undefined) ? { latitude:state.lat, longitude:state.lon } : APP.position);
-    APP.setRotation(state.zoom !== undefined ? state.zoom : APP.zoom);
-    APP.setZoom(state.rotation !== undefined ? state.rotation : APP.rotation);
+    APP.setZoom(state.zoom !== undefined ? state.zoom : APP.zoom);
+    APP.setRotation(state.rotation !== undefined ? state.rotation : APP.rotation);
     APP.setTilt(state.tilt !== undefined ? state.tilt : APP.tilt);
   },
 
@@ -3970,7 +3975,8 @@ OSMBuildings.prototype = {
    * @fires OSMBuildings#change
    */
   setZoom: function(zoom, e) {
-    zoom = clamp(parseFloat(zoom), APP.minZoom, APP.maxZoom);
+    // not clamping anymore. notice zoomlevel but perhaps don't render
+    zoom = parseFloat(zoom);
 
     if (APP.zoom !== zoom) {
       APP.zoom = zoom;
@@ -4129,7 +4135,7 @@ OSMBuildings.prototype = {
    */
   addLayer: function(layer) {
     APP.layers.push(layer);
-    APP.updateAttribution();
+    APP._updateAttribution();
     return APP;
   },
 
@@ -4141,7 +4147,7 @@ OSMBuildings.prototype = {
     APP.layers = APP.layers.filter(function(item) {
       return (item !== layer);
     });
-    APP.updateAttribution();
+    APP._updateAttribution();
   },
 
   /**
@@ -5043,7 +5049,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (var i = 0, il = data.Index.items.length; i<il; i++) {
@@ -5079,7 +5085,7 @@ var Filter = {
     var item;
     var j, jl;
 
-    var start = this.time();
+    var start = this.getTime();
     var end = start+duration;
 
     for (i = 0, il = data.Index.items.length; i<il; i++) {
@@ -6487,7 +6493,7 @@ var render = {
   
   onChange: function() {
     var
-      scale = 1.38*Math.pow(2, APP.zoom-17),
+      scale = 1.3567 * Math.pow(2, APP.zoom-17),
       width = APP.width,
       height = APP.height,
       refHeight = 1024,
@@ -6498,10 +6504,34 @@ var render = {
     this.viewMatrix = new GLX.Matrix()
       .rotateZ(APP.rotation)
       .rotateX(APP.tilt)
+      .translate(0, 8/scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
       .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
     this.viewDirOnMap = [ Math.sin(APP.rotation / 180* Math.PI),
                          -Math.cos(APP.rotation / 180* Math.PI)];
+
+    // First, we need to determine the field-of-view so that our map scale does
+    // not change when the viewport size changes. The map scale is given by the
+    // 'refFOV' (e.g. 45°) at a WebGL viewport height of 'refHeight' pixels.
+    // Since our viewport will not usually be 1024 pixels high, we'll need to
+    // find the FOV that corresponds to our viewport height.
+    // The half viewport height and half FOV form a leg and the opposite angle
+    // of a right triangle (see sketch below). Since the relation between the
+    // two is non-linear, we cannot simply scale the reference FOV by the ratio
+    // of reference height to actual height to get the desired FOV.
+    // But be can use the reference height and reference FOV to determine the
+    // virtual distance to the camera and then use that virtual distance to
+    // compute the FOV corresponding to the actual height.
+    //
+    //                   ____/|
+    //              ____/     |
+    //         ____/          | refHeight/2
+    //    ____/  \            |
+    //   /refFOV/2|           |
+    //  ----------------------|
+    //     "virtual distance"
+    var virtualDistance = refHeight/ (2 * Math.tan( (refVFOV/2) / 180 * Math.PI));
+    var verticalFOV = 2* Math.atan((height/2.0)/virtualDistance) / Math.PI * 180;
 
     // OSMBuildings' perspective camera is ... special: The reference point for
     // camera movement, rotation and zoom is at the screen center (as usual). 
@@ -6521,7 +6551,7 @@ var render = {
     this.projMatrix = new GLX.Matrix()
       .translate(0, -height/(2.0*scale), 0) // 0, APP y offset to neutralize camera y offset, 
       .scale(1, -1, 1) // flip Y
-      .multiply(new GLX.Matrix.Perspective(refVFOV * height / refHeight, width/height, 1, 7500))
+      .multiply(new GLX.Matrix.Perspective(verticalFOV, width/height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
@@ -6790,7 +6820,7 @@ render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
     vRightArc +=1;
   //console.log(vLeftArc, vRightArc);
 
-  var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
+  // var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
   var tcLeft = vLeftArc;//APP.rotation/360.0;
   var tcRight =vRightArc;//APP.rotation/360.0 + visibleSkyDiameterFraction*3;
         
