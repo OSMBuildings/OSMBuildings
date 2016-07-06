@@ -7,8 +7,9 @@ mesh.GeoJSON = (function() {
   function constructor(url, options) {
     options = options || {};
 
-    this.id = options.id;
-    this.color = options.color;
+    this.forcedId = options.id;
+    // no Color.toArray() needed as Triangulation does it internally
+    this.forcedColor = options.color;
     this.modifier = options.modifier;
 
     this.replace      = !!options.replace;
@@ -51,9 +52,8 @@ mesh.GeoJSON = (function() {
         colors: []
       };
 
-      var resPickingColors = [];
-
       var
+        resPickingColors = [],
         position = Triangulate.getPosition(collection.features[0].geometry),
         feature, id, properties,
         vertexCountBefore, vertexCount, pickingColor,
@@ -67,7 +67,7 @@ mesh.GeoJSON = (function() {
         for (var i = startIndex; i < endIndex; i++) {
           feature = collection.features[i];
           properties = feature.properties;
-          id = this.id || properties.relationId || feature.id || properties.id;
+          id = this.forcedId || properties.relationId || feature.id || properties.id;
 
           //let user-defined hook modify the entity properties
           if (this.modifier) {
@@ -76,7 +76,7 @@ mesh.GeoJSON = (function() {
 
           vertexCountBefore = res.vertices.length;
 
-          Triangulate.split(res, id, feature, position, this.color);
+          Triangulate.split(res, id, feature, position, this.forcedColor);
 
           vertexCount = (res.vertices.length - vertexCountBefore)/3;
 

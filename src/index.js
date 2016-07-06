@@ -41,6 +41,7 @@ var APP, GL; // TODO: make them local references
  * @param {Boolean} [options.showBackfaces=false] - Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
  * @param {String} [options.fogColor='#e8e0d8'] - Color to be used for sky gradients and distance fog
  * @param {String} [options.backgroundColor='#efe8e0'] - Overall background color
+ * @param {String} [options.highlightColor='#f08000'] - Default color for highlighting features
  * @param {Boolean} [options.fastMode=false] - Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
  * @param {Array} [options.effects=[]] - Which effects to enable. The only effect at the moment is 'shadows'
  * @param {Object} [options.style={ color: 'rgb(220, 210, 200)' }] - Sets the default building style
@@ -55,14 +56,20 @@ var OSMBuildings = function(options) {
   APP.options = (options || {});
 
   if (APP.options.style) {
-    APP.setStyle(APP.options.style);
+    var style = APP.options.style;
+    if (style.color || style.wallColor) {
+      DEFAULT_COLOR = new Color(style.color || style.wallColor).toArray();
+    }
   }
 
   APP.baseURL = APP.options.baseURL || '.';
 
   render.backgroundColor = new Color(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
   render.fogColor        = new Color(APP.options.fogColor        || FOG_COLOR).toArray();
-  render.highlightColor  = new Color(APP.options.highlightColor  || HIGHLIGHT_COLOR).toArray();
+
+  if (APP.options.highlightColor) {
+    HIGHLIGHT_COLOR = new Color(APP.options.highlightColor).toArray();
+  }
 
   render.Buildings.showBackfaces = APP.options.showBackfaces;
 
@@ -182,19 +189,9 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Sets the map style
-   * @param {Object} style
-   * @param {String} [style.color] - The color for buildings
+   * DEPRECATED. This should be done initially or on feature basis
    */
-  setStyle: function(style) {
-    // TODO
-    //render.backgroundColor = new Color(options.backgroundColor || BACKGROUND_COLOR).toArray();
-    //render.fogColor        = new Color(options.fogColor        || FOG_COLOR).toArray();
-    //render.highlightColor  = new Color(options.highlightColor  || HIGHLIGHT_COLOR).toArray();
-
-    DEFAULT_COLOR = style.color || style.wallColor || DEFAULT_COLOR;
-    // TODO: is color valid?
-    // DEFAULT_COLOR = color.toArray();
+  setStyle: function() {
     return APP;
   },
 
@@ -336,11 +333,13 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Highlight a given feature by id. Currently, the highlight can only be applied to one feature. Set color = `null` in order to un-highlight
-   * @param {String} id - The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever's defined in the options passed to it.
+   * Highlight a given feature by id. Currently, the highlight can only be applied to one feature. Set id = `null` in order to un-highlight
+   * @param {String} id - The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever is defined in the options passed to it.
+   * @param {String} highlightColor - An optional color string to be used for highlighting
    */
-  highlight: function(id) {
-    render.Buildings.highlightID = id ? render.Picking.idToColor(id) : null;
+  highlight: function(id, highlightColor) {
+    render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
+    render.Buildings.highlightColor = id && highlightColor ? new Color(highlightColor).toArray() : HIGHLIGHT_COLOR;
     return APP;
   },
 

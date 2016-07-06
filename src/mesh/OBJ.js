@@ -140,9 +140,10 @@ mesh.OBJ = (function() {
   function constructor(url, position, options) {
     options = options || {};
 
-    this.id = options.id;
+    this.forcedId = options.id;
+
     if (options.color) {
-      this.color = new Color(options.color).toArray();
+      this.forcedColor = new Color(options.color).toArray();
     }
 
     this.replace      = !!options.replace;
@@ -191,8 +192,7 @@ mesh.OBJ = (function() {
     addItems: function(items) {
       var
         feature, color, idColor, j, jl,
-        id, colorVariance,
-        defaultColor = new Color(DEFAULT_COLOR).toArray();
+        id, colorVariance;
 
       for (var i = 0, il = items.length; i < il; i++) {
         feature = items[i];
@@ -201,11 +201,11 @@ mesh.OBJ = (function() {
         [].push.apply(this.data.normals,   feature.normals);
         [].push.apply(this.data.texCoords, feature.texCoords);
 
-        id = this.id || feature.id;
+        id = this.forcedId || feature.id;
         idColor = render.Picking.idToColor(id);
 
         colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
-        color = this.color || feature.color || defaultColor;
+        color = this.forcedColor || feature.color || DEFAULT_COLOR;
         for (j = 0, jl = feature.vertices.length - 2; j<jl; j += 3) {
           [].push.apply(this.data.colors, add3scalar(color, colorVariance));
           [].push.apply(this.data.ids, idColor);

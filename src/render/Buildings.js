@@ -8,7 +8,7 @@ render.Buildings = {
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aID'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId'],
         uniforms: [
           'uModelMatrix',
           'uViewDirOnMap',
@@ -20,7 +20,7 @@ render.Buildings = {
           'uFogDistance',
           'uFogBlurDistance',
           'uHighlightColor',
-          'uHighlightID',
+          'uHighlightId',
           'uTime',
           'uWallTexIndex'
         ]
@@ -28,12 +28,12 @@ render.Buildings = {
         vertexShader: Shaders['buildings.shadows'].vertex,
         fragmentShader: Shaders['buildings.shadows'].fragment,
         shaderName: 'quality building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aID'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId'],
         uniforms: [
           'uFogDistance',
           'uFogBlurDistance',
           'uHighlightColor',
-          'uHighlightID',
+          'uHighlightId',
           'uLightColor',
           'uLightDirection',
           'uLowerEdgePoint',
@@ -62,15 +62,11 @@ render.Buildings = {
       GL.disable(GL.CULL_FACE);
     }
 
-    if (!this.highlightID) {
-      this.highlightID = [0, 0, 0];
-    }
-
     shader.setUniforms([
       ['uFogDistance',     '1f',  render.fogDistance],
       ['uFogBlurDistance', '1f',  render.fogBlurDistance],
-      ['uHighlightColor',  '3fv', render.highlightColor],
-      ['uHighlightID',     '3fv', this.highlightID],
+      ['uHighlightColor',  '3fv', this.highlightColor || [0, 0, 0]],
+      ['uHighlightId',     '3fv', this.highlightId || [0, 0, 0]],
       ['uLightColor',      '3fv', [0.5, 0.5, 0.5]],
       ['uLightDirection',  '3fv', Sun.direction],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
@@ -117,7 +113,7 @@ render.Buildings = {
       shader.bindBuffer(item.normalBuffer,   'aNormal');
       shader.bindBuffer(item.colorBuffer,    'aColor');
       shader.bindBuffer(item.filterBuffer,   'aFilter');
-      shader.bindBuffer(item.idBuffer,       'aID');
+      shader.bindBuffer(item.idBuffer,       'aId');
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }

@@ -11,7 +11,7 @@ render.Picking = {
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
-      attributes: ['aPosition', 'aID', 'aFilter'],
+      attributes: ['aPosition', 'aId', 'aFilter'],
       uniforms: [
         'uModelMatrix',
         'uMatrix',
@@ -64,7 +64,7 @@ render.Picking = {
       ]);
 
       shader.bindBuffer(item.vertexBuffer, 'aPosition');
-      shader.bindBuffer(item.idBuffer, 'aID');
+      shader.bindBuffer(item.idBuffer, 'aId');
       shader.bindBuffer(item.filterBuffer, 'aFilter');
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
