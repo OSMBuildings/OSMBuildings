@@ -7,7 +7,7 @@ attribute vec2 aTexCoord;
 attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec4 aFilter;
-attribute vec3 aID;
+attribute vec3 aId;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
@@ -17,7 +17,7 @@ uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 
 uniform vec3 uHighlightColor;
-uniform vec3 uHighlightID;
+uniform vec3 uHighlightId;
 uniform vec2 uViewDirOnMap;
 uniform vec2 uLowerEdgePoint;
 
@@ -46,7 +46,7 @@ void main() {
     //*** highlight object ******************************************************
 
     vec3 color = aColor;
-    if (uHighlightID == aID) {
+    if (uHighlightId == aId) {
       color = mix(aColor, uHighlightColor, 0.5);
     }
 
