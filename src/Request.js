@@ -5,21 +5,13 @@ var Request = {};
 
 (function() {
 
-  var queue = {};
-
   function load(url, callback) {
-    if (queue[url]) {
-      return queue[url];
-    }
-
     var req = new XMLHttpRequest();
 
     req.onreadystatechange = function() {
       if (req.readyState !== 4) {
         return;
       }
-
-      delete queue[url];
 
       if (!req.status || req.status<200 || req.status>299) {
         return;
@@ -28,16 +20,12 @@ var Request = {};
       callback(req);
     };
 
-    queue[url] = req;
     req.open('GET', url);
     req.send(null);
 
     return {
       abort: function() {
-        if (queue[url]) {
-          req.abort();
-          delete queue[url];
-        }
+        req.abort();
       }
     };
   }
@@ -74,15 +62,6 @@ var Request = {};
     });
   };
 
-  Request.abortAll = function() {
-    for (var url in queue) {
-      queue[url].abort();
-    }
-    queue = {};
-  };
-
-  Request.destroy = function() {
-    this.abortAll();
-  };
+  Request.destroy = function() {};
 
 }());
