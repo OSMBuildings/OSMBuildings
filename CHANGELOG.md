@@ -1,4 +1,19 @@
 
+# 3.0.0 @ 2016-06-24
+
+## Changed
+
+- all OSM id's now have a prefix for their type to make them truly unique (breaking compatibility)
+- GLMap and OSMBuildings are now integrated to one package (breaking compatibility)
+- added 'fadeIn' option for adding GeoJSON or OBJ
+- aligned pointer event positioning
+
+## Fixed
+
+- animation timing
+- FOV calculation
+
+
 # 2.4.3 @ 2016-05-09
 
 ## New
