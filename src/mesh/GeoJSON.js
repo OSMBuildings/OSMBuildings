@@ -54,7 +54,7 @@ mesh.GeoJSON = (function() {
 
       var
         resPickingColors = [],
-        position = Triangulate.getPosition(collection.features[0].geometry),
+        position = this.getOrigin(collection.features[0].geometry),
         feature, id, properties,
         vertexCountBefore, vertexCount, pickingColor,
         startIndex = 0,
@@ -76,7 +76,7 @@ mesh.GeoJSON = (function() {
 
           vertexCountBefore = res.vertices.length;
 
-          Triangulate.split(res, id, feature, position, this.forcedColor);
+          triangulate(res, feature, position, this.forcedColor);
 
           vertexCount = (res.vertices.length - vertexCountBefore)/3;
 
@@ -172,6 +172,25 @@ mesh.GeoJSON = (function() {
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
 
       return matrix;
+    },
+
+    getOrigin: function(geometry) {
+      var coordinates = geometry.coordinates;
+      switch (geometry.type) {
+        case 'Point':
+          return coordinates;
+
+        case 'MultiPoint':
+        case 'LineString':
+          return coordinates[0];
+
+        case 'MultiLineString':
+        case 'Polygon':
+          return coordinates[0][0];
+
+        case 'MultiPolygon':
+          return coordinates[0][0][0];
+      }
     },
 
     destroy: function() {
