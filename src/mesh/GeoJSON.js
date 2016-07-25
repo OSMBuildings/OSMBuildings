@@ -10,7 +10,6 @@ mesh.GeoJSON = (function() {
     this.forcedId = options.id;
     // no Color.toArray() needed as Triangulation does it internally
     this.forcedColor = options.color;
-    this.modifier = options.modifier;
 
     this.replace      = !!options.replace;
     this.scale        = options.scale     || 1;
@@ -66,13 +65,15 @@ mesh.GeoJSON = (function() {
       var process = function() {
         for (var i = startIndex; i < endIndex; i++) {
           feature = collection.features[i];
+
+          /**
+           * Fired when a 3d object has been loaded
+           * @event OSMBuildings#loadfeature
+           */
+          APP.emit('loadfeature', feature);
+          
           properties = feature.properties;
           id = this.forcedId || properties.relationId || feature.id || properties.id;
-
-          //let user-defined hook modify the entity properties
-          if (this.modifier) {
-            this.modifier(id, properties);
-          }
 
           vertexCountBefore = res.vertices.length;
 
@@ -86,12 +87,6 @@ mesh.GeoJSON = (function() {
           }
 
           this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
-
-          /**
-           * Fired when a 3d object has been loaded
-           * @event OSMBuildings#loadfeature
-           */
-          APP.emit('loadfeature', feature);
         }
 
         if (endIndex === numFeatures) {
