@@ -197,6 +197,12 @@ mesh.OBJ = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         feature = items[i];
 
+        /**
+         * Fired when a 3d object has been loaded
+         * @event OSMBuildings#loadfeature
+         */
+        APP.emit('loadfeature', feature);
+
         [].push.apply(this.data.vertices,  feature.vertices);
         [].push.apply(this.data.normals,   feature.normals);
         [].push.apply(this.data.texCoords, feature.texCoords);
@@ -212,8 +218,6 @@ mesh.OBJ = (function() {
         }
 
         this.items.push({ id:id, vertexCount:feature.vertices.length/3, data:feature.data });
-
-        APP.emit('loadfeature', feature);
       }
     },
 

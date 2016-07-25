@@ -290,7 +290,6 @@ OSMBuildings.prototype = {
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    */
   addGeoJSON: function(url, options) {
     return new mesh.GeoJSON(url, options);
@@ -304,7 +303,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.fixedZoom=15]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
    * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
@@ -323,7 +322,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
    * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */

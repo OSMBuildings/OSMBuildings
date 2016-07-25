@@ -10,7 +10,6 @@ mesh.GeoJSON = (function() {
     this.forcedId = options.id;
     // no Color.toArray() needed as Triangulation does it internally
     this.forcedColor = options.color;
-    this.modifier = options.modifier;
 
     this.replace      = !!options.replace;
     this.scale        = options.scale     || 1;
@@ -54,7 +53,7 @@ mesh.GeoJSON = (function() {
 
       var
         resPickingColors = [],
-        position = Triangulate.getPosition(collection.features[0].geometry),
+        position = this.getOrigin(collection.features[0].geometry),
         feature, id, properties,
         vertexCountBefore, vertexCount, pickingColor,
         startIndex = 0,
@@ -66,13 +65,15 @@ mesh.GeoJSON = (function() {
       var process = function() {
         for (var i = startIndex; i < endIndex; i++) {
           feature = collection.features[i];
+
+          /**
+           * Fired when a 3d object has been loaded
+           * @event OSMBuildings#loadfeature
+           */
+          APP.emit('loadfeature', feature);
+          
           properties = feature.properties;
           id = this.forcedId || properties.relationId || feature.id || properties.id;
-
-          //let user-defined hook modify the entity properties
-          if (this.modifier) {
-            this.modifier(id, properties);
-          }
 
           vertexCountBefore = res.vertices.length;
 
@@ -86,12 +87,6 @@ mesh.GeoJSON = (function() {
           }
 
           this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
-
-          /**
-           * Fired when a 3d object has been loaded
-           * @event OSMBuildings#loadfeature
-           */
-          APP.emit('loadfeature', feature);
         }
 
         if (endIndex === numFeatures) {
@@ -172,6 +167,25 @@ mesh.GeoJSON = (function() {
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
 
       return matrix;
+    },
+
+    getOrigin: function(geometry) {
+      var coordinates = geometry.coordinates;
+      switch (geometry.type) {
+        case 'Point':
+          return coordinates;
+
+        case 'MultiPoint':
+        case 'LineString':
+          return coordinates[0];
+
+        case 'MultiLineString':
+        case 'Polygon':
+          return coordinates[0][0];
+
+        case 'MultiPolygon':
+          return coordinates[0][0][0];
+      }
     },
 
     destroy: function() {

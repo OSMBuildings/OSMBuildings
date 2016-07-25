@@ -128,34 +128,34 @@
     }
   );
 
-  var colorByHeightAvailable = function(id, properties) {
-    if (!properties.levels && !properties.height) {
-      properties.color = "red";
-    } else if (!properties.height) {
-      properties.color = "lime";
+  var colorByHeightAvailable = function(feature) {
+    if (!feature.properties.levels && !feature.properties.height) {
+      feature.properties.color = "red";
+    } else if (!feature.properties.height) {
+      feature.properties.color = "lime";
     } else {
-      properties.color = "green";
+      feature.properties.color = "green";
     }
     
-    properties.roofColor = properties.color;
+    feature.properties.roofColor = feature.properties.color;
   };
 
-  var colorByHeight = function(id, properties) {
-    var height = parseFloat(properties.height) || (parseFloat(properties.levels)* 3.5) || 0;
+  var colorByHeight = function(feature) {
+    var height = parseFloat(feature.properties.height) || (parseFloat(feature.properties.levels)* 3.5) || 0;
 
     if (height < 20)
-      properties.color = "#CCCCCC";
+      feature.properties.color = "#CCCCCC";
     else if (height < 30)
-      properties.color = "purple";
+      feature.properties.color = "purple";
     else if (height < 60)
-      properties.color = "#CC4444";
+      feature.properties.color = "#CC4444";
     else 
-      properties.color = "orange";
+      feature.properties.color = "orange";
       
-    properties.roofColor = properties.color;
+    feature.properties.roofColor = feature.properties.color;
   };
   
-  var colorLandmarks = function(id, properties) {
+  var colorLandmarks = function(feature) {
     var landmarkIDs = {
       "r3074565": true,  // Rotes Rathaus
       "w313675136": true, // Rotes Rathaus
@@ -175,16 +175,17 @@
       "w304987173": true
     };
 
-    properties.color = (id in landmarkIDs) ? "#CC4444" : "#DDDDDD";
-      
-    properties.roofColor = properties.color;
+    feature.properties.color = (id in landmarkIDs) ? "#CC4444" : "#DDDDDD";
   };
+      
+//  osmb.on('loadfeature', function(e) {
+//    colorByHeightAvailable(e.detail);
+//  });
 
   osmb.addGeoJSONTiles(
 //  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
     'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
-//    modifier: colorByHeightAvailable,
       fixedZoom: 15
       // bounds
     });

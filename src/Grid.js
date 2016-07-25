@@ -10,7 +10,7 @@ var Grid = function(source, tileClass, options) {
   this.bounds = options.bounds;
   this.fixedZoom = options.fixedZoom;
 
-  this.tileOptions = { color:options.color, modifier:options.modifier };
+  this.tileOptions = { color:options.color };
 
   this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
   this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
