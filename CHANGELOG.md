@@ -1,4 +1,17 @@
 
+# 3.1.0 @ 2016-07-27
+
+## Changed
+
+- protocol changes to https
+- check for currently loading files removed - enables duplicates
+- enabled 'loadfeature' event to act like 'modifier' option of objects (breaking compatibility)
+
+## Fixed
+
+- dynamic highlightColor restored for 'highlight(id, color)''
+
+
 # 3.0.0 @ 2016-06-24
 
 ## Changed
