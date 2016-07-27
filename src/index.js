@@ -48,7 +48,6 @@ var APP, GL; // TODO: make them local references
  */
 
 // TODO: check minZoom, maxZoom, attribution for duplicate meaning
-// <a href="http://osmbuildings.org">© OSM Buildings</a>'
 
 var OSMBuildings = function(options) {
   APP = this; // refers to 'this'. Should make other globals obsolete.
@@ -102,7 +101,7 @@ var OSMBuildings = function(options) {
 };
 
 OSMBuildings.VERSION = '{{VERSION}}';
-OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</a>';
+OSMBuildings.ATTRIBUTION = '<a href="https://osmbuildings.org/">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
 
