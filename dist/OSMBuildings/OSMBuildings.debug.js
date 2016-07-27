@@ -1,4 +1,5 @@
-(function() {var w3cColors = {
+(function() {var Triangulate = (function() {
+var w3cColors = {
   aliceblue: '#f0f8ff',
   antiquewhite: '#faebd7',
   aqua: '#00ffff',
@@ -826,24 +827,8 @@ var vec2 = {
     return Math.sqrt(a[0]*a[0] + a[1]*a[1]);
   },
 
-  add: function(a, b) {
-    return [a[0]+b[0], a[1]+b[1]];
-  },
-
   sub: function(a, b) {
     return [a[0]-b[0], a[1]-b[1]];
-  },
-
-  dot: function(a, b) {
-    return a[1]*b[0] - a[0]*b[1];
-  },
-
-  scale: function(a, f) {
-    return [a[0]*f, a[1]*f];
-  },
-
-  equals: function(a, b) {
-    return (a[0] === b[0] && a[1] === b[1]);
   }
 };
 
@@ -884,38 +869,38 @@ var split = {
   //  return Math.abs(normal(a, b, c)[2]) < 1/5000;
   //}
 
-  quad: function(buffers, a, b, c, d, color) {
-    this.triangle(buffers, a, b, c, color);
-    this.triangle(buffers, c, d, a, color);
+  quad: function(data, a, b, c, d, color) {
+    this.triangle(data, a, b, c, color);
+    this.triangle(data, c, d, a, color);
   },
 
-  triangle: function(buffers, a, b, c, color) {
+  triangle: function(data, a, b, c, color) {
     var n = vec3.normal(a, b, c);
-    [].push.apply(buffers.vertices, [].concat(a, c, b));
-    [].push.apply(buffers.normals,  [].concat(n, n, n));
-    [].push.apply(buffers.colors,   [].concat(color, color, color));
-    buffers.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    [].push.apply(data.vertices, [].concat(a, c, b));
+    [].push.apply(data.normals,  [].concat(n, n, n));
+    [].push.apply(data.colors,   [].concat(color, color, color));
+    data.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   },
 
-  circle: function(buffers, center, radius, zPos, color) {
-    zPos = zPos || 0;
+  circle: function(data, center, radius, Z, color) {
+    Z = Z || 0;
     var u, v;
     for (var i = 0; i < this.NUM_X_SEGMENTS; i++) {
       u = i/this.NUM_X_SEGMENTS;
       v = (i+1)/this.NUM_X_SEGMENTS;
       this.triangle(
-        buffers,
-        [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), zPos ],
-        [ center[0],                                  center[1],                                  zPos ],
-        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), zPos ],
+        data,
+        [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), Z ],
+        [ center[0],                                  center[1],                                  Z ],
+        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), Z ],
         color
       );
     }
   },
 
-  polygon: function(buffers, rings, zPos, color) {
-    zPos = zPos || 0;
-    // flatten buffers
+  polygon: function(data, rings, Z, color) {
+    Z = Z || 0;
+    // flatten data
     var
       inVertices = [], inHoleIndex = [],
       index = 0,
@@ -934,16 +919,16 @@ var split = {
 
     for (i = 0, il = vertices.length-2; i < il; i+=3) {
       this.triangle(
-        buffers,
-        [ inVertices[ vertices[i  ]*2 ], inVertices[ vertices[i  ]*2+1 ], zPos ],
-        [ inVertices[ vertices[i+1]*2 ], inVertices[ vertices[i+1]*2+1 ], zPos ],
-        [ inVertices[ vertices[i+2]*2 ], inVertices[ vertices[i+2]*2+1 ], zPos ],
+        data,
+        [ inVertices[ vertices[i  ]*2 ], inVertices[ vertices[i  ]*2+1 ], Z ],
+        [ inVertices[ vertices[i+1]*2 ], inVertices[ vertices[i+1]*2+1 ], Z ],
+        [ inVertices[ vertices[i+2]*2 ], inVertices[ vertices[i+2]*2+1 ], Z ],
         color
       );
     }
   },
 
-  //polygon3d: function(buffers, rings, color) {
+  //polygon3d: function(data, rings, color) {
   //  var ring = rings[0];
   //  var ringLength = ring.length;
   //  var vertices, t, tl;
@@ -952,7 +937,7 @@ var split = {
 //
   //  if (ringLength <= 4) { // 3: a triangle
   //    this.triangle(
-  //      buffers,
+  //      data,
   //      ring[0],
   //      ring[2],
   //      ring[1], color
@@ -960,7 +945,7 @@ var split = {
   //
   //    if (ringLength === 4) { // 4: a quad (2 triangles)
   //      this.triangle(
-  //        buffers,
+  //        data,
   //        ring[0],
   //        ring[3],
   //        ring[2], color
@@ -981,7 +966,7 @@ var split = {
   //    vertices = earcut(rings);
   //    for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
   //      this.triangle(
-  //        buffers,
+  //        data,
   //        [ vertices[t  ][2], vertices[t  ][1], vertices[t  ][0] ],
   //        [ vertices[t+1][2], vertices[t+1][1], vertices[t+1][0] ],
   //        [ vertices[t+2][2], vertices[t+2][1], vertices[t+2][0] ], color
@@ -993,7 +978,7 @@ var split = {
   //  vertices = earcut(rings);
   //  for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
   //    this.triangle(
-  //      buffers,
+  //      data,
   //      [ vertices[t  ][0], vertices[t  ][1], vertices[t  ][2] ],
   //      [ vertices[t+1][0], vertices[t+1][1], vertices[t+1][2] ],
   //      [ vertices[t+2][0], vertices[t+2][1], vertices[t+2][2] ], color
@@ -1001,31 +986,31 @@ var split = {
   //  }
   //},
 
-  cube: function(buffers, sizeX, sizeY, sizeZ, X, Y, zPos, color) {
+  cube: function(data, sizeX, sizeY, sizeZ, X, Y, Z, color) {
     X = X || 0;
     Y = Y || 0;
-    zPos = zPos || 0;
+    Z = Z || 0;
 
-    var a = [X,       Y,       zPos];
-    var b = [X+sizeX, Y,       zPos];
-    var c = [X+sizeX, Y+sizeY, zPos];
-    var d = [X,       Y+sizeY, zPos];
+    var a = [X,       Y,       Z];
+    var b = [X+sizeX, Y,       Z];
+    var c = [X+sizeX, Y+sizeY, Z];
+    var d = [X,       Y+sizeY, Z];
 
-    var A = [X,       Y,       zPos+sizeZ];
-    var B = [X+sizeX, Y,       zPos+sizeZ];
-    var C = [X+sizeX, Y+sizeY, zPos+sizeZ];
-    var D = [X,       Y+sizeY, zPos+sizeZ];
+    var A = [X,       Y,       Z+sizeZ];
+    var B = [X+sizeX, Y,       Z+sizeZ];
+    var C = [X+sizeX, Y+sizeY, Z+sizeZ];
+    var D = [X,       Y+sizeY, Z+sizeZ];
 
-    this.quad(buffers, b, a, d, c, color);
-    this.quad(buffers, A, B, C, D, color);
-    this.quad(buffers, a, b, B, A, color);
-    this.quad(buffers, b, c, C, B, color);
-    this.quad(buffers, c, d, D, C, color);
-    this.quad(buffers, d, a, A, D, color);
+    this.quad(data, b, a, d, c, color);
+    this.quad(data, A, B, C, D, color);
+    this.quad(data, a, b, B, A, color);
+    this.quad(data, b, c, C, B, color);
+    this.quad(data, c, d, D, C, color);
+    this.quad(data, d, a, A, D, color);
   },
 
-  cylinder: function(buffers, center, radius1, radius2, height, zPos, color) {
-    zPos = zPos || 0;
+  cylinder: function(data, center, radius1, radius2, height, Z, color) {
+    Z = Z || 0;
     var
       currAngle, nextAngle,
       currSin, currCos,
@@ -1044,27 +1029,27 @@ var split = {
       nextCos = Math.cos(nextAngle);
 
       this.triangle(
-        buffers,
-        [ center[0] + radius1*currSin, center[1] + radius1*currCos, zPos ],
-        [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, zPos+height ],
-        [ center[0] + radius1*nextSin, center[1] + radius1*nextCos, zPos ],
+        data,
+        [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ],
+        [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
+        [ center[0] + radius1*nextSin, center[1] + radius1*nextCos, Z ],
         color
       );
 
       if (radius2 !== 0) {
         this.triangle(
-          buffers,
-          [ center[0] + radius2*currSin, center[1] + radius2*currCos, zPos+height ],
-          [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, zPos+height ],
-          [ center[0] + radius1*currSin, center[1] + radius1*currCos, zPos ],
+          data,
+          [ center[0] + radius2*currSin, center[1] + radius2*currCos, Z+height ],
+          [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
+          [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ],
           color
         );
       }
     }
   },
 
-  dome: function(buffers, center, radius, height, zPos, color) {
-    zPos = zPos || 0;
+  dome: function(data, center, radius, height, Z, color) {
+    Z = Z || 0;
     var
       currAngle, nextAngle,
       currSin, currCos,
@@ -1088,40 +1073,40 @@ var split = {
       nextRadius = nextCos*radius;
 
       nextHeight = (nextSin-currSin)*height;
-      nextZ = zPos - nextSin*height;
+      nextZ = Z - nextSin*height;
 
-      this.cylinder(buffers, center, nextRadius, currRadius, nextHeight, nextZ, color);
+      this.cylinder(data, center, nextRadius, currRadius, nextHeight, nextZ, color);
     }
   },
 
   // TODO
-  sphere: function(buffers, center, radius, height, zPos, color) {
-    zPos = zPos || 0;
-    return this.cylinder(buffers, center, radius, radius, height, zPos, color);
+  sphere: function(data, center, radius, height, Z, color) {
+    Z = Z || 0;
+    return this.cylinder(data, center, radius, radius, height, Z, color);
   },
 
-  pyramid: function(buffers, polygon, center, height, zPos, color) {
-    zPos = zPos || 0;
+  pyramid: function(data, polygon, center, height, Z, color) {
+    Z = Z || 0;
     polygon = polygon[0];
     for (var i = 0, il = polygon.length-1; i < il; i++) {
       this.triangle(
-        buffers,
-        [ polygon[i  ][0], polygon[i  ][1], zPos ],
-        [ polygon[i+1][0], polygon[i+1][1], zPos ],
-        [ center[0], center[1], zPos+height ],
+        data,
+        [ polygon[i  ][0], polygon[i  ][1], Z ],
+        [ polygon[i+1][0], polygon[i+1][1], Z ],
+        [ center[0], center[1], Z+height ],
         color
       );
     }
   },
 
-  extrusion: function(buffers, polygon, height, zPos, color, texCoord) {
-    zPos = zPos || 0;
+  extrusion: function(data, polygon, height, Z, color, tx) {
+    Z = Z || 0;
     var
       ring, last, a, b,
       L,
       v0, v1, v2, v3, n,
       tx1, tx2,
-      ty1 = texCoord[2]*height, ty2 = texCoord[3]*height;
+      ty1 = tx[2]*height, ty2 = tx[3]*height;
 
     for (var i = 0, il = polygon.length; i < il; i++) {
       ring = polygon[i];
@@ -1137,20 +1122,20 @@ var split = {
         b = ring[r+1];
         L = vec2.len(vec2.sub(a, b));
 
-        tx1 = (texCoord[0]*L) <<0;
-        tx2 = (texCoord[1]*L) <<0;
+        tx1 = (tx[0]*L) <<0;
+        tx2 = (tx[1]*L) <<0;
 
-        v0 = [ a[0], a[1], zPos];
-        v1 = [ b[0], b[1], zPos];
-        v2 = [ b[0], b[1], zPos+height];
-        v3 = [ a[0], a[1], zPos+height];
+        v0 = [ a[0], a[1], Z];
+        v1 = [ b[0], b[1], Z];
+        v2 = [ b[0], b[1], Z+height];
+        v3 = [ a[0], a[1], Z+height];
 
         n = vec3.normal(v0, v1, v2);
-        [].push.apply(buffers.vertices, [].concat(v0, v2, v1, v0, v3, v2));
-        [].push.apply(buffers.normals,  [].concat(n, n, n, n, n, n));
-        [].push.apply(buffers.colors,   [].concat(color, color, color, color, color, color));
+        [].push.apply(data.vertices, [].concat(v0, v2, v1, v0, v3, v2));
+        [].push.apply(data.normals,  [].concat(n, n, n, n, n, n));
+        [].push.apply(data.colors,   [].concat(color, color, color, color, color, color));
 
-        buffers.texCoords.push(
+        data.texCoords.push(
           tx1, ty2,
           tx2, ty1,
           tx2, ty2,
@@ -1164,12 +1149,23 @@ var split = {
 };
 
 
-var parseGeoJSON = (function() {
+var Triangulate = {};
 
-  var
-    DEFAULT_HEIGHT = 10,
-    DEFAULT_COLOR = parseColor('rgb(220, 210, 200)'),
-    METERS_PER_LEVEL = 3;
+(function() {
+
+  //var EARTH_RADIUS_IN_METERS = 6378137;
+  //var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
+  //var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+
+  var METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
+
+  var DEFAULT_HEIGHT = 10;
+  var DEFAULT_ROOF_HEIGHT = 3;
+  var DEFAULT_COLOR = parseColor('rgb(220, 210, 200)');
+
+  // number of windows per horizontal meter of building wall
+  var WINDOWS_PER_METER = 0.5;
+  var METERS_PER_LEVEL = 3;
 
   var MATERIAL_COLORS = {
     brick: '#cc7755',
@@ -1224,44 +1220,154 @@ var parseGeoJSON = (function() {
     // straw
   };
 
-  // TODO: handle GeometryCollection
-  function alignGeometry(geometry) {
+  Triangulate.getPosition = function(geometry) {
+    var coordinates = geometry.coordinates;
     switch (geometry.type) {
-      case 'MultiPolygon': return geometry.coordinates;
-      case 'Polygon': return [geometry.coordinates];
-      default: return [];
+      case 'Point':
+        return coordinates;
+
+      case 'MultiPoint':
+      case 'LineString':
+        return coordinates[0];
+
+      case 'MultiLineString':
+      case 'Polygon':
+        return coordinates[0][0];
+
+      case 'MultiPolygon':
+        return coordinates[0][0][0];
     }
+  };
+
+  Triangulate.split = function(res, id, feature, position, color) {
+    var geometries = flattenGeometry(feature.geometry);
+    for (var i = 0, il = geometries.length; i<il; i++) {
+      process(res, id, feature.properties, geometries[i], position, color);
+    }
+  };
+
+  function isClockWise(ring) {
+    return 0 < ring.reduce(function(a, b, c, d) {
+      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
+    }, 0);
   }
 
-  function alignProperties(properties, geometry, forcedColor, colorVariance) {
-    properties.height     = properties.height      || (properties.levels     ? properties.levels*METERS_PER_LEVEL : DEFAULT_HEIGHT);
-    properties.minHeight  = properties.minHeight   || (properties.minLevel   ? properties.minLevel*METERS_PER_LEVEL : 0);
-    properties.roofHeight = properties.roofHeight  || (properties.roofLevels ? properties.roofLevels*METERS_PER_LEVEL : 0);
-    properties.wallColor  = varyColor((forcedColor || properties.wallColor || properties.color || getMaterialColor(properties.material)), colorVariance);
-    properties.roofColor  = varyColor((forcedColor || properties.roofColor || getMaterialColor(properties.roofMaterial)), colorVariance);
+  function process(res, id, properties, geom, position, color) {
+    var geometry = transform(geom, position),
+      bbox = getBBox(geometry[0]),
+      radius = (bbox.maxX - bbox.minX)/2,
+      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2],
 
+      height = properties.height || (properties.levels ? properties.levels*METERS_PER_LEVEL : DEFAULT_HEIGHT),
+      minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0),
+      roofHeight = properties.roofHeight || DEFAULT_ROOF_HEIGHT,
+
+      colorVariance = (id/2%2 ? -1 : +1)*(id%2 ? 0.03 : 0.06),
+      wallColor = randomizeColor(color || properties.wallColor || properties.color || getMaterialColor(properties.material), colorVariance),
+      roofColor = randomizeColor(color || properties.roofColor || getMaterialColor(properties.roofMaterial), colorVariance);
+
+    // flat roofs or roofs we can't handle should not affect building's height
     switch (properties.roofShape) {
       case 'cone':
       case 'dome':
-      case 'pyramid':
       case 'onion':
-      case 'skillion':
+      case 'pyramid':
+      case 'pyramidal':
+        height = Math.max(0, height-roofHeight);
         break;
-      // flat:
       default:
-        // flat roofs or roofs we can't handle should not affect building height
-        properties.roofHeight = 0;
+        roofHeight = 0;
     }
 
-    properties.height = Math.max(0, properties.height-properties.roofHeight);
-
-    return {
-      properties: properties,
-      geometry: geometry
-    };
+    addWalls(res, properties, geometry, center, radius, height-minHeight, minHeight, wallColor);
+    addRoof(res, properties, geometry, center, radius, roofHeight, height, roofColor);
   }
 
-  // TODO: colorVariance = (id/2%2 ? -1 : +1)*(id%2 ? 0.03 : 0.06)
+  function addWalls(res, properties, geometry, center, radius, H, Z, color) {
+    switch (properties.shape) {
+      case 'cylinder':
+        split.cylinder(res, center, radius, radius, H, Z, color);
+      break;
+
+      case 'cone':
+        split.cylinder(res, center, radius, 0, H, Z, color);
+      break;
+
+      case 'dome':
+        split.dome(res, center, radius, (H || radius), Z, color);
+      break;
+
+      case 'sphere':
+        split.sphere(res, center, radius, (H || 2*radius), Z, color);
+      break;
+
+      case 'pyramid':
+      case 'pyramidal':
+        split.pyramid(res, geometry, center, H, Z, color);
+      break;
+
+      case 'none':
+        // skip walls entirely
+        return;
+
+      default:
+        var ty1 = 0.2;
+        var ty2 = 0.4;
+
+        // non-continuous windows
+        if (properties.material !== 'glass') {
+          ty1 = 0;
+          ty2 = 0;
+          if (properties.levels) {
+            ty2 = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0))<<0;
+          }
+        }
+
+        split.extrusion(res, geometry, H, Z, color, [0, WINDOWS_PER_METER, ty1/H, ty2/H]);
+    }
+  }
+
+  function addRoof(res, properties, geometry, center, radius, H, Z, color) {
+    // skip roof entirely
+    switch (properties.shape) {
+      case 'cone':
+      case 'pyramid':
+      case 'pyramidal':
+        return;
+    }
+
+    switch (properties.roofShape) {
+      case 'cone':
+        split.cylinder(res, center, radius, 0, H, Z, color);
+        break;
+
+      case 'dome':
+      case 'onion':
+        split.dome(res, center, radius, (H || radius), Z, color);
+        break;
+
+      case 'pyramid':
+      case 'pyramidal':
+        if (properties.shape === 'cylinder') {
+          split.cylinder(res, center, radius, 0, H, Z, color);
+        } else {
+          split.pyramid(res, geometry, center, H, Z, color);
+        }
+        break;
+
+      default:
+        if (properties.shape === 'cylinder') {
+          split.circle(res, center, radius, Z, color);
+        } else {
+          split.polygon(res, geometry, Z, color);
+        }
+    }
+  }
+
+  function randomizeColor(color, variance) {
+    var c = parseColor(color) || DEFAULT_COLOR;
+    return [c[0]+variance, c[1]+variance, c[2]+variance];
+  }
 
   function getMaterialColor(str) {
     if (typeof str !== 'string') {
@@ -1274,70 +1380,19 @@ var parseGeoJSON = (function() {
     return MATERIAL_COLORS[BASE_MATERIALS[str] || str] || null;
   }
 
-  function varyColor(color, variance) {
-    variance = variance || 0;
-    var c = parseColor(color);
-    if (c === undefined) {
-      c = DEFAULT_COLOR;
-    }
-    return [c[0]+variance, c[1]+variance, c[2]+variance];
-  }
-
-  return function(feature, forcedColor, colorVariance) {
-    var
-      geometries = alignGeometry(feature.geometry),
-      res = [];
-    for (var i = 0, il = geometries.length; i<il; i++) {
-      res[i] = alignProperties(feature.properties, geometries[i], forcedColor, colorVariance);
-    }
-    return res;
-  };
-
-}());
-
-
-var triangulate = (function() {
-
-  // number of windows per horizontal meter of building wall
-  var WINDOWS_PER_METER = 0.5;
-
-  //***************************************************************************
-
-  // var EARTH_RADIUS_IN_METERS = 6378137;
-  // var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
-  // var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
-  var METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
-
-  function triangulate(buffers, feature, origin, forcedColor, colorVariance) {
-    var
-      scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE],
-      items = parseGeoJSON(feature, forcedColor, colorVariance), // a single feature might split into several items
-      properties,
-      geometry,
-      bbox,
-      radius,
-      center;
-
-    for (var i = 0, il = items.length; i < il; i++) {
-      properties = items[i].properties;
-      geometry = transform(items[i].geometry, origin, scale);
-      bbox = getBBox(geometry[0]);
-      // radius = (bbox.maxX - bbox.minX)/2 * scale[0];
-      // center = [
-      //   (bbox.minX + (bbox.maxX - bbox.minX)/2 - origin[0]) * scale[0],
-      //   (bbox.minY + (bbox.maxY - bbox.minY)/2 - origin[1]) * scale[1]
-      // ];
-      radius = (bbox.maxX - bbox.minX)/2;
-      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
-      addWalls(buffers, properties, geometry, center, radius);
-      addRoof( buffers, properties, geometry, center, radius);
+  function flattenGeometry(geometry) {
+    // TODO: handle GeometryCollection
+    switch (geometry.type) {
+      case 'MultiPolygon': return geometry.coordinates;
+      case 'Polygon': return [geometry.coordinates];
+      default: return [];
     }
   }
 
-  //***************************************************************************
+  // converts all coordinates of all rings in 'polygonRings' from lat/lon pairs to meters-from-position
+  function transform(polygon, position) {
+    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE*Math.cos(position[1]/180*Math.PI);
 
-  // converts all coordinates of all rings in 'polygonRings' from lat/lon pairs to offsets from origin
-  function transform(polygon, origin, scale) {
     return polygon.map(function(ring, i) {
       // outer ring (first ring) needs to be clockwise, inner rings
       // counter-clockwise. If they are not, make them by reverting order.
@@ -1347,171 +1402,37 @@ var triangulate = (function() {
 
       return ring.map(function(point) {
         return [
-          (point[0]-origin[0])*scale[0],
-          -(point[1]-origin[1])*scale[1]
+           (point[0]-position[0])*metersPerDegreeLongitude,
+          -(point[1]-position[1])*METERS_PER_DEGREE_LATITUDE
         ];
       });
     });
   }
 
-  function isClockWise(ring) {
-    return 0 < ring.reduce(function(a, b, c, d) {
-        return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-      }, 0);
-  }
-
-  function getBBox(ring) {
+  function getBBox(polygon) {
     var
       x =  Infinity, y =  Infinity,
       X = -Infinity, Y = -Infinity;
 
-    for (var i = 0; i < ring.length; i++) {
-      x = Math.min(x, ring[i][0]);
-      y = Math.min(y, ring[i][1]);
+    for (var i = 0; i < polygon.length; i++) {
+      x = Math.min(x, polygon[i][0]);
+      y = Math.min(y, polygon[i][1]);
 
-      X = Math.max(X, ring[i][0]);
-      Y = Math.max(Y, ring[i][1]);
+      X = Math.max(X, polygon[i][0]);
+      Y = Math.max(Y, polygon[i][1]);
     }
 
     return { minX:x, minY:y, maxX:X, maxY:Y };
   }
 
-  //***************************************************************************
+}());
 
-  function addWalls(buffers, properties, geometry, center, radius) {
-    var
-      height = properties.height-properties.minHeight,
-      zPos = properties.minHeight,
-      color = properties.wallColor;
-
-    switch (properties.shape) {
-      case 'cylinder':
-        split.cylinder(buffers, center, radius, radius, height, zPos, color);
-        return;
-
-      case 'cone':
-        split.cylinder(buffers, center, radius, 0, height, zPos, color);
-        return;
-
-      case 'dome':
-        split.dome(buffers, center, radius, (height || radius), zPos, color);
-        return;
-
-      case 'sphere':
-        split.sphere(buffers, center, radius, (height || 2*radius), zPos, color);
-        return;
-
-      case 'pyramid':
-      case 'pyramidal':
-        split.pyramid(buffers, geometry, center, height, zPos, color);
-        return;
-
-      case 'none':
-        // skip walls entirely
-        return;
-
-      default:
-        var ty1 = 0.2;
-        var ty2 = 0.4;
-        // non-continuous windows
-        if (properties.material !== 'glass') {
-          ty1 = 0;
-          ty2 = 0;
-          if (properties.levels) {
-            ty2 = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0))<<0;
-          }
-        }
-        split.extrusion(buffers, geometry, height, zPos, color, [0, WINDOWS_PER_METER, ty1/height, ty2/height]);
-    }
-  }
-
-  function addRoof(buffers, properties, geometry, center, radius) {
-    var
-      height = properties.roofHeight,
-      zPos = properties.height,
-      color = properties.roofColor;
-
-    // skip if building shape tops in a point
-    if (properties.shape === 'cone' || properties.shape === 'pyramid') {
-      return;
-    }
-
-    switch (properties.roofShape) {
-      case 'cone':
-        split.cylinder(buffers, center, radius, 0, height, zPos, color);
-        return;
-
-      case 'dome':
-        split.dome(buffers, center, radius, (height || radius), zPos, color);
-        return;
-
-      case 'onion':
-        var rings = [
-          { rScale: 1.0, hScale: 0.00 },
-          { rScale: 0.8, hScale: 0.15 },
-          { rScale: 1.0, hScale: 0.50 },
-          { rScale: 0.8, hScale: 0.70 },
-          { rScale: 0.4, hScale: 0.80 },
-          { rScale: 0.0, hScale: 1.00 }
-        ];
-
-        var h = (height || radius*2), h1, h2;
-
-        for (var i = 0, il = rings.length-1; i < il; i++) {
-          h1 = h*rings[i].hScale;
-          h2 = h*rings[i+1].hScale;
-          split.cylinder(buffers, center, radius*rings[i].rScale, radius*rings[i+1].rScale, h2-h1, zPos + h1, color);
-        }
-        return;
-
-      case 'pyramid':
-        if (properties.shape === 'cylinder') {
-          split.cylinder(buffers, center, radius, 0, height, zPos, color);
-        } else {
-          split.pyramid(buffers, geometry, center, height, zPos, color);
-        }
-        return;
-
-      case 'skillion':
-        SkillionRoof(properties, polygon, buffers, geometry, center, height, zPos, color);
-        return;
-
-      default:
-        if (properties.shape === 'cylinder') {
-          split.circle(buffers, center, radius, zPos, color);
-        } else {
-          split.polygon(buffers, geometry, zPos, color);
-        }
-    }
-  }
-
-  return triangulate;
+return Triangulate;
 
 }());
 
+if (typeof module === 'object') { module.exports = Triangulate; }
 
-// //  var explicitRoofTagging = true;
-// //  if ((!properties.roofLines || properties.roofLines !== 'no') && this.building.hasComplexRoof) {
-// //    return new ComplexRoof();
-// //  }
-//
-//   switch (roofShape) {
-//     // case 'gabled': // TODO: provide ridge segment, perhaps cap segments too or split geometry (individual roof line on client side)
-//     //   var Roof = require('./GabledRoof.js');
-//     //   var roof = new Roof(properties, geometry);
-//     //   return roof.getProperties();
-//
-//     // case 'hipped': // TODO: provide ridge segment and minor segments
-//     //   return new HippedRoof(properties, geometry);
-//     // case 'half-hipped': // TODO: provide ridge segment and minor segments
-//     //   return new HalfHippedRoof(properties, geometry);
-//     // case 'gambrel': // TODO: provide ridge segment and minor segments (individual roof line on client side)
-//     //   return new GambrelRoof(properties, geometry);
-//     // case 'mansard':  // TODO: provide ridge segments and their minor segments
-//     //   return new MansardRoof(properties, geometry);
-//     // case 'round': // TODO: extended version of gambrel for now. there should be a specific mechanism for lying cylinders
-//     //   return new RoundRoof(properties, geometry);
-//   }
 var Color = (function() {
 var w3cColors = {
   aliceblue: '#f0f8ff',

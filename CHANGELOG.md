@@ -9,7 +9,7 @@
 
 ## Fixed
 
-- dynamic highlightColor restored for 'highlight(id, color)''
+- dynamic highlightColor restored for 'highlight(id, color)'
 
 
 # 3.0.0 @ 2016-06-24
