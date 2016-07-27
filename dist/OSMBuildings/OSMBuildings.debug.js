@@ -2708,6 +2708,754 @@ return GLX;
 }());
 
 //
+var GLMap = (function() {
+/**
+ * This is the base map engine for standalone OSM Buildings
+ * @class GLMap
+ */
+
+/**
+ * @private
+ */
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(value, min));
+}
+
+/**
+ * GLMap
+ * @GLMap
+ * @param {HTMLElement} DOM container
+ * @param {Object} options
+ */
+/**
+ * OSMBuildings basemap
+ * @constructor
+ * @param {String} container - The id of the html element to display the map in
+ * @param {Object} options
+ * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
+ * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Object} [options.bounds] - A bounding box to restrict the map to
+ * @param {Boolean} [options.state=false] - Store the map state in the URL
+ * @param {Boolean} [options.disabled=false] - Disable user input
+ * @param {String} [options.attribution] - An attribution string
+ * @param {Float} [options.zoom=minZoom] - Initial zoom
+ * @param {Float} [options.rotation=0] - Initial rotation
+ * @param {Float} [options.tilt=0] - Initial tilt
+ * @param {Object} [options.position] - Initial position
+ * @param {Float} [options.position.latitude=52.520000]
+ * @param {Float} [options.position.latitude=13.410000]
+ */
+var GLMap = function(container, options) {
+  this.container = typeof container === 'string' ? document.getElementById(container) : container;
+  options = options || {};
+
+  this.container.classList.add('osmb-container');
+  this.width = this.container.offsetWidth;
+  this.height = this.container.offsetHeight;
+
+  this.minZoom = parseFloat(options.minZoom) || 10;
+  this.maxZoom = parseFloat(options.maxZoom) || 20;
+
+  if (this.maxZoom < this.minZoom) {
+    this.maxZoom = this.minZoom;
+  }
+
+  this.bounds = options.bounds;
+
+  this.position = {};
+  this.zoom = 0;
+
+  this.listeners = {};
+  this.layers = [];
+
+  this.initState(options);
+
+  if (options.state) {
+    this.persistState();
+    this.on('change', function() {
+      this.persistState();
+    }.bind(this));
+  }
+
+  Events.init(this);
+
+  if (options.disabled) {
+    this.setDisabled(true);
+  }
+
+  this.attribution = options.attribution;
+  this.attributionDiv = document.createElement('DIV');
+  this.attributionDiv.className = 'osmb-attribution';
+  this.container.appendChild(this.attributionDiv);
+  this.updateAttribution();
+};
+
+GLMap.prototype = {
+
+  /**
+   * @private
+   */
+  updateAttribution: function() {
+    var attribution = [];
+    for (var i = 0; i < this.layers.length; i++) {
+      if (this.layers[i].attribution) {
+        attribution.push(this.layers[i].attribution);
+      }
+    }
+    if (this.attribution) {
+      attribution.unshift(this.attribution);
+    }
+    this.attributionDiv.innerHTML = attribution.join(' · ');
+  },
+
+  /**
+   * @private
+   */
+  initState: function(options) {
+    var
+      query = location.search,
+      state = {};
+    if (query) {
+      query.substring(1).replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function($0, $1, $2) {
+        if ($1) {
+          state[$1] = $2;
+        }
+      });
+    }
+
+    var position;
+    if (state.lat !== undefined && state.lon !== undefined) {
+      position = { latitude: parseFloat(state.lat), longitude: parseFloat(state.lon) };
+    }
+    if (!position && state.latitude !== undefined && state.longitude !== undefined) {
+      position = { latitude: state.latitude, longitude: state.longitude };
+    }
+
+    var zoom = (state.zoom !== undefined) ? state.zoom : options.zoom;
+    var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
+    var tilt = (state.tilt !== undefined) ? state.tilt : options.tilt;
+
+    this.setPosition(position || options.position || { latitude: 52.520000, longitude: 13.410000 });
+    this.setZoom(zoom || this.minZoom);
+    this.setRotation(rotation || 0);
+    this.setTilt(tilt || 0);
+  },
+
+  /**
+   * @private
+   */
+  persistState: function() {
+    if (!history.replaceState || this.stateDebounce) {
+      return;
+    }
+
+    this.stateDebounce = setTimeout(function() {
+      this.stateDebounce = null;
+      var params = [];
+      params.push('lat=' + this.position.latitude.toFixed(6));
+      params.push('lon=' + this.position.longitude.toFixed(6));
+      params.push('zoom=' + this.zoom.toFixed(1));
+      params.push('tilt=' + this.tilt.toFixed(1));
+      params.push('rotation=' + this.rotation.toFixed(1));
+      history.replaceState({}, '', '?' + params.join('&'));
+    }.bind(this), 1000);
+  },
+
+  emit: function(type, detail) {
+    var event = new CustomEvent(type, { detail:detail });
+    this.container.dispatchEvent(event);
+  },
+
+  //***************************************************************************
+
+  on: function(type, fn) {
+    this.container.addEventListener(type, fn, false);
+    return this;
+  },
+
+  off: function(type, fn) {
+    this.container.removeEventListener(type, fn, false);
+  },
+
+  setDisabled: function(flag) {
+    Events.disabled = !!flag;
+    return this;
+  },
+
+  isDisabled: function() {
+    return !!Events.disabled;
+  },
+
+  /* returns the geographical bounds of the current view.
+   * notes:
+   * - since the bounds are always axis-aligned they will contain areas that are
+  /**
+   * Returns the geographical bounds of the current view.
+   * Notes:
+   * - Since the bounds are always axis-aligned they will contain areas that are
+   *   not currently visible if the current view is not also axis-aligned.
+   * - The bounds only contain the map area that OSMBuildings considers for rendering.
+   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
+   *   never extend beyond that, even if the horizon is visible (in which case the
+   *   bounds would mathematically be infinite).
+   * - the bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
+   * - The bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
+   *   of the current view below the lower edge do not contribute to the bounds.
+   *   so their top may be visible and they may still be out of bounds.
+   */
+  getBounds: function() {
+    var viewQuad = render.getViewQuad(), res = [];
+    for (var i in viewQuad) {
+      res[i] = getPositionFromLocal(viewQuad[i]);
+    }
+    return res;
+  },
+
+  /**
+   * Sets the zoom level
+   * @param {Float} zoom - The new zoom level
+   * @param {Object} e - **Not currently used**
+   * @fires GLMap#zoom
+   * @fires GLMap#change
+   */
+  setZoom: function(zoom, e) {
+    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
+
+    if (this.zoom !== zoom) {
+      this.zoom = zoom;
+
+      /* if a screen position was given for which the geographic position displayed
+       * should not change under the zoom */
+      if (e) {
+        //FIXME: add code; this needs to take the current camera (rotation and
+        //       perspective) into account
+        //NOTE:  the old code (comment out below) only works for north-up
+        //       non-perspective views
+        /*
+         var dx = this.container.offsetWidth/2  - e.clientX;
+         var dy = this.container.offsetHeight/2 - e.clientY;
+         this.center.x -= dx;
+         this.center.y -= dy;
+         this.center.x *= ratio;
+         this.center.y *= ratio;
+         this.center.x += dx;
+         this.center.y += dy;*/
+      }
+      /**
+       * Fired when the map is zoomed (in either direction)
+       * @event GLMap#zoom
+       */
+      this.emit('zoom', { zoom: zoom });
+
+      /**
+       * Fired when the map is zoomed, tilted or panned
+       * @event GLMap#change
+       */
+      this.emit('change');
+    }
+    return this;
+  },
+
+  /**
+   * Returns the current zoom level
+   */
+  getZoom: function() {
+    return this.zoom;
+  },
+
+  /**
+   * Sets the map's geographic position
+   * @param {Object} pos - The new position
+   * @param {Float} pos.latitude
+   * @param {Float} pos.longitude
+   * @fires GLMap#change
+   */
+  setPosition: function(pos) {
+    var lat = parseFloat(pos.latitude);
+    var lon = parseFloat(pos.longitude);
+    if (isNaN(lat) || isNaN(lon)) {
+      return;
+    }
+    this.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+    this.emit('change');
+    return this;
+  },
+
+  /**
+   * Returns the map's current geographic position
+   */
+  getPosition: function() {
+    return this.position;
+  },
+
+  /**
+   * Sets the map's size
+   * @param {Object} size
+   * @param {Integer} size.width
+   * @param {Integer} size.height
+   * @fires GLMap#resize
+   */
+  setSize: function(size) {
+    if (size.width !== this.width || size.height !== this.height) {
+      this.width = size.width;
+      this.height = size.height;
+
+      /**
+       * Fired when the map is resized
+       * @event GLMap#resize
+       */
+      this.emit('resize', { width: this.width, height: this.height });
+    }
+    return this;
+  },
+
+  /**
+   * Returns the map's current size
+   */
+  getSize: function() {
+    return { width: this.width, height: this.height };
+  },
+
+  /**
+   * Set's the maps rotation
+   * @param {Float} rotation - The new rotation angle
+   * @fires GLMap#rotate
+   * @fires GLMap#change
+   */
+  setRotation: function(rotation) {
+    rotation = parseFloat(rotation)%360;
+    if (this.rotation !== rotation) {
+      this.rotation = rotation;
+
+      /**
+       * Fired when the map is rotated
+       * @event GLMap#rotate
+       */
+      this.emit('rotate', { rotation: rotation });
+      this.emit('change');
+    }
+    return this;
+  },
+
+  /**
+   * Returns the maps current rotation
+   */
+  getRotation: function() {
+    return this.rotation;
+  },
+
+  /**
+   * Sets the map's tilt
+   * @param {Float} tilt - The new tilt
+   * @fires GLMap#tilt
+   * @fires GLMap#change
+   */
+  setTilt: function(tilt) {
+    tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
+    if (this.tilt !== tilt) {
+      this.tilt = tilt;
+
+      /**
+       * Fired when the map is tilted
+       * @event GLMap#tilt
+       */
+      this.emit('tilt', { tilt: tilt });
+      this.emit('change');
+    }
+    return this;
+  },
+
+  /**
+   * Returns the map's current tilt
+   */
+  getTilt: function() {
+    return this.tilt;
+  },
+
+  /**
+   * Adds a layer to the map
+   * @param {Object} layer - The layer to add
+   */
+  addLayer: function(layer) {
+    this.layers.push(layer);
+    this.updateAttribution();
+    return this;
+  },
+
+  /**
+   * Removes a layer from the map
+   * @param {Object} layer - The layer to remove
+   */
+  removeLayer: function(layer) {
+    this.layers = this.layers.filter(function(item) {
+      return (item !== layer);
+    });
+    this.updateAttribution();
+  },
+
+  /**
+   * Destroys the map
+   */
+  destroy: function() {
+    this.listeners = [];
+    this.layers = [];
+    this.container.innerHTML = '';
+  }
+};
+
+
+// TODO: detect pointerleave from map.container
+// TODO: continue drag/gesture even when off map.container
+// TODO: allow two finger swipe for tilt
+
+// gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
+// MIT License
+
+/**
+ * @private
+ */
+function add2(a, b) {
+  return [a[0] + b[0], a[1] + b[1]];
+}
+
+/**
+ * @private
+ */
+function mul2scalar(a, f) {
+  return [a[0]*f, a[1]*f];
+}
+
+/**
+ * @private
+ */
+function getEventPosition(e, offset) {
+  return {
+    x: e.clientX - offset.x,
+    y: e.clientY - offset.y
+  };
+}
+
+/**
+ * @private
+ */
+function getElementOffset(el) {
+  if (el.getBoundingClientRect) {
+    var box = el.getBoundingClientRect();
+    return { x:box.left, y:box.top };
+  }
+
+  var res = { x:0, y:0 };
+  while(el.nodeType === 1) {
+    res.x += el.offsetLeft;
+    res.y += el.offsetTop;
+    el = el.parentNode;
+  }
+  return res;
+}
+
+/**
+ * @private
+ */
+function cancelEvent(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  //if (e.stopPropagation) {
+  //  e.stopPropagation();
+  //}
+  e.returnValue = false;
+}
+
+/**
+ * @private
+ */
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn, false);
+}
+
+/**
+ * @private
+ */
+var Events = {};
+
+/**
+ * @private
+ */
+Events.disabled = false;
+
+/**
+ * @private
+ */
+Events.init = function(map) {
+
+  if ('ontouchstart' in window) {
+    addListener(map.container, 'touchstart', onTouchStart);
+    addListener(document, 'touchmove', onTouchMove);
+    addListener(document, 'touchend', onTouchEnd);
+    addListener(document, 'gesturechange', onGestureChange);
+  } else {
+    addListener(map.container, 'mousedown', onMouseDown);
+    addListener(document, 'mousemove', onMouseMove);
+    addListener(document, 'mouseup', onMouseUp);
+    addListener(map.container, 'dblclick', onDoubleClick);
+    addListener(map.container, 'mousewheel', onMouseWheel);
+    addListener(map.container, 'DOMMouseScroll', onMouseWheel);
+  }
+
+  var resizeDebounce;
+  addListener(window, 'resize', function() {
+    if (resizeDebounce) {
+      return;
+    }
+    resizeDebounce = setTimeout(function() {
+      resizeDebounce = null;
+        map.setSize({ width:map.container.offsetWidth, height:map.container.offsetHeight });
+    }, 250);
+  });
+
+  //***************************************************************************
+
+  var
+    prevX = 0,
+    prevY = 0,
+    startX = 0,
+    startY = 0,
+    startZoom = 0,
+    startOffset,
+    prevRotation = 0,
+    prevTilt = 0,
+    pointerIsDown = false;
+
+  function onDoubleClick(e) {
+    cancelEvent(e);
+    if (!Events.disabled) {
+      map.setZoom(map.zoom + 1, e);
+    }
+    var pos = getEventPosition(e, getElementOffset(e.target));
+      map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+  }
+
+  function onMouseDown(e) {
+    cancelEvent(e);
+
+    if (e.button > 1) {
+      return;
+    }
+
+    startZoom = map.zoom;
+    prevRotation = map.rotation;
+    prevTilt = map.tilt;
+
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, startOffset);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    pointerIsDown = true;
+
+    map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onMouseMove(e) {
+    var pos;
+    if (!pointerIsDown) {
+      pos = getEventPosition(e, getElementOffset(e.target));
+    } else {
+      if (e.button === 0 && !e.altKey) {
+        moveMap(e, startOffset);
+      } else {
+        rotateMap(e, startOffset);
+      }
+
+      pos = getEventPosition(e, startOffset);
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+
+    map.emit('pointermove', { x: pos.x, y: pos.y });
+  }
+
+  function onMouseUp(e) {
+    // prevents clicks on other page elements
+    if (!pointerIsDown) {
+      return;
+    }
+
+    var pos = getEventPosition(e, startOffset);
+
+    if (e.button === 0 && !e.altKey) {
+      if (Math.abs(pos.x - startX)>5 || Math.abs(pos.y - startY)>5) {
+        moveMap(e, startOffset);
+      }
+    } else {
+      rotateMap(e, startOffset);
+    }
+
+    pointerIsDown = false;
+
+    map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onMouseWheel(e) {
+    cancelEvent(e);
+
+    var delta = 0;
+    if (e.wheelDeltaY) {
+      delta = e.wheelDeltaY;
+    } else if (e.wheelDelta) {
+      delta = e.wheelDelta;
+    } else if (e.detail) {
+      delta = -e.detail;
+    }
+
+    if (!Events.disabled) {
+      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+      map.setZoom(map.zoom + adjust, e);
+    }
+
+    // we don't emit mousewheel here as we don't want to run into a loop of death
+  }
+
+  //***************************************************************************
+
+  function moveMap(e, offset) {
+    if (Events.disabled) {
+      return;
+    }
+
+    // FIXME: make movement exact, i.e. make the position that
+    // appeared at (prevX, prevY) before appear at (e.offsetX, e.offsetY) now.
+    // the constant 0.86 was chosen experimentally for the map movement to be
+    // "pinned" to the cursor movement when the map is shown top-down
+    var
+      scale = 0.86 * Math.pow(2, -map.zoom),
+      lonScale = 1/Math.cos( map.position.latitude/ 180 * Math.PI),
+      pos = getEventPosition(e, offset),
+      dx = pos.x - prevX,
+      dy = pos.y - prevY,
+      angle = map.rotation * Math.PI/180,
+      vRight   = [ Math.cos(angle),             Math.sin(angle)],
+      vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
+      dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
+
+    var newPosition = {
+      longitude: map.position.longitude - dir[0] * scale*lonScale,
+      latitude:  map.position.latitude  + dir[1] * scale };
+
+    map.setPosition(newPosition);
+    map.emit('move', newPosition);
+  }
+
+  function rotateMap(e, offset) {
+    if (Events.disabled) {
+      return;
+    }
+    var pos = getEventPosition(e, offset);
+    prevRotation += (pos.x - prevX)*(360/innerWidth);
+    prevTilt -= (pos.y - prevY)*(360/innerHeight);
+    map.setRotation(prevRotation);
+    map.setTilt(prevTilt);
+  }
+
+  //***************************************************************************
+
+  var
+    dist1 = 0,
+    angle1 = 0,
+    gestureStarted = false;
+
+  function emitGestureChange(e) {
+    var
+      t1 = e.touches[0],
+      t2 = e.touches[1],
+      dx = t1.clientX - t2.clientX,
+      dy = t1.clientY - t2.clientY,
+      dist2 = dx*dx + dy*dy,
+      angle2 = Math.atan2(dy, dx);
+
+    onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
+  }
+
+  function onTouchStart(e) {
+    cancelEvent(e);
+
+    // gesturechange polyfill
+    if (e.touches.length === 2 && !('ongesturechange' in window)) {
+      var t1 = e.touches[0];
+      var t2 = e.touches[1];
+      var dx = t1.clientX - t2.clientX;
+      var dy = t1.clientY - t2.clientY;
+      dist1 = dx*dx + dy*dy;
+      angle1 = Math.atan2(dy,dx);
+      gestureStarted = true;
+    }
+
+    startZoom = map.zoom;
+    prevRotation = map.rotation;
+    prevTilt = map.tilt;
+
+    if (e.touches.length) {
+      e = e.touches[0];
+    }
+
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, offset);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    map.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
+  }
+
+  function onTouchMove(e) {
+    var pos = getEventPosition(e.touches[0], startOffset);
+    if (e.touches.length > 1) {
+      map.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
+      prevTilt = map.tilt;
+      // gesturechange polyfill
+      if (!('ongesturechange' in window)) {
+        emitGestureChange(e);
+      }
+    } else {
+      moveMap(e.touches[0], startOffset);
+      map.emit('pointermove', { x: pos.x, y: pos.y });
+    }
+    prevX = pos.x;
+    prevY = pos.y;
+  }
+
+  function onTouchEnd(e) {
+    // gesturechange polyfill
+    gestureStarted = false;
+
+    if (e.touches.length === 0) {
+      map.emit('pointerup', { x: prevX, y: prevY, button: 0 });
+    } else if (e.touches.length === 1) {
+      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
+      var pos = getEventPosition(e.touches[0], startOffset);
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+  }
+
+  function onGestureChange(e) {
+    cancelEvent(e);
+
+    if (!Events.disabled) {
+      map.setZoom(startZoom + (e.scale - 1));
+      map.setRotation(prevRotation - e.rotation);
+    }
+
+    map.emit('gesture', e);
+  }
+};
+
+return GLMap;
+}());
+window.GLMap = GLMap;
+
+//
 
 if (CustomEvent === undefined) {
   var CustomEvent = function(type, params) {
@@ -2823,7 +3571,7 @@ var OSMBuildings = function(options) {
   }
 };
 
-OSMBuildings.VERSION = '3.0.0';
+OSMBuildings.VERSION = '3.1.0';
 OSMBuildings.ATTRIBUTION = '<a href="http://osmbuildings.org">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
@@ -3012,7 +3760,6 @@ OSMBuildings.prototype = {
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
    */
   addGeoJSON: function(url, options) {
     return new mesh.GeoJSON(url, options);
@@ -3026,7 +3773,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.fixedZoom=15]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
    * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
@@ -3045,7 +3792,7 @@ OSMBuildings.prototype = {
    * @param {Integer} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - A function that will get called on each feature, for modification before rendering
+   * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
    * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
    * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
@@ -3882,21 +4629,13 @@ var Request = {};
 
 (function() {
 
-  var queue = {};
-
   function load(url, callback) {
-    if (queue[url]) {
-      return queue[url];
-    }
-
     var req = new XMLHttpRequest();
 
     req.onreadystatechange = function() {
       if (req.readyState !== 4) {
         return;
       }
-
-      delete queue[url];
 
       if (!req.status || req.status<200 || req.status>299) {
         return;
@@ -3905,16 +4644,12 @@ var Request = {};
       callback(req);
     };
 
-    queue[url] = req;
     req.open('GET', url);
     req.send(null);
 
     return {
       abort: function() {
-        if (queue[url]) {
-          req.abort();
-          delete queue[url];
-        }
+        req.abort();
       }
     };
   }
@@ -3951,16 +4686,7 @@ var Request = {};
     });
   };
 
-  Request.abortAll = function() {
-    for (var url in queue) {
-      queue[url].abort();
-    }
-    queue = {};
-  };
-
-  Request.destroy = function() {
-    this.abortAll();
-  };
+  Request.destroy = function() {};
 
 }());
 
@@ -4020,7 +4746,7 @@ var Grid = function(source, tileClass, options) {
   this.bounds = options.bounds;
   this.fixedZoom = options.fixedZoom;
 
-  this.tileOptions = { color:options.color, modifier:options.modifier };
+  this.tileOptions = { color:options.color };
 
   this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
   this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
@@ -4458,7 +5184,6 @@ mesh.GeoJSON = (function() {
     this.forcedId = options.id;
     // no Color.toArray() needed as Triangulation does it internally
     this.forcedColor = options.color;
-    this.modifier = options.modifier;
 
     this.replace      = !!options.replace;
     this.scale        = options.scale     || 1;
@@ -4502,7 +5227,7 @@ mesh.GeoJSON = (function() {
 
       var
         resPickingColors = [],
-        position = Triangulate.getPosition(collection.features[0].geometry),
+        position = this.getOrigin(collection.features[0].geometry),
         feature, id, properties,
         vertexCountBefore, vertexCount, pickingColor,
         startIndex = 0,
@@ -4514,13 +5239,15 @@ mesh.GeoJSON = (function() {
       var process = function() {
         for (var i = startIndex; i < endIndex; i++) {
           feature = collection.features[i];
+
+          /**
+           * Fired when a 3d object has been loaded
+           * @event OSMBuildings#loadfeature
+           */
+          APP.emit('loadfeature', feature);
+          
           properties = feature.properties;
           id = this.forcedId || properties.relationId || feature.id || properties.id;
-
-          //let user-defined hook modify the entity properties
-          if (this.modifier) {
-            this.modifier(id, properties);
-          }
 
           vertexCountBefore = res.vertices.length;
 
@@ -4534,12 +5261,6 @@ mesh.GeoJSON = (function() {
           }
 
           this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
-
-          /**
-           * Fired when a 3d object has been loaded
-           * @event OSMBuildings#loadfeature
-           */
-          APP.emit('loadfeature', feature);
         }
 
         if (endIndex === numFeatures) {
@@ -4620,6 +5341,25 @@ mesh.GeoJSON = (function() {
       matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
 
       return matrix;
+    },
+
+    getOrigin: function(geometry) {
+      var coordinates = geometry.coordinates;
+      switch (geometry.type) {
+        case 'Point':
+          return coordinates;
+
+        case 'MultiPoint':
+        case 'LineString':
+          return coordinates[0];
+
+        case 'MultiLineString':
+        case 'Polygon':
+          return coordinates[0][0];
+
+        case 'MultiPolygon':
+          return coordinates[0][0][0];
+      }
     },
 
     destroy: function() {
@@ -5059,6 +5799,12 @@ mesh.OBJ = (function() {
       for (var i = 0, il = items.length; i < il; i++) {
         feature = items[i];
 
+        /**
+         * Fired when a 3d object has been loaded
+         * @event OSMBuildings#loadfeature
+         */
+        APP.emit('loadfeature', feature);
+
         [].push.apply(this.data.vertices,  feature.vertices);
         [].push.apply(this.data.normals,   feature.normals);
         [].push.apply(this.data.texCoords, feature.texCoords);
@@ -5074,8 +5820,6 @@ mesh.OBJ = (function() {
         }
 
         this.items.push({ id:id, vertexCount:feature.vertices.length/3, data:feature.data });
-
-        APP.emit('loadfeature', feature);
       }
     },
 
