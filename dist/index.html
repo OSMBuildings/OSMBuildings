@@ -94,7 +94,7 @@
   osmb.addMapTiles(
     'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
     {
-      attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">Mapbox</a>'
+      attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="https://mapbox.com/">Mapbox</a>'
     }
   );
 
@@ -103,7 +103,7 @@
   //***************************************************************************
 
   osmb.on('pointermove', function(e) {
-    var id = osmb.getTarget(e.detail.x, e.detaily, function(id) {
+    var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
       if (id) {
         document.body.style.cursor = 'pointer';
         osmb.highlight(id, '#f08000');
