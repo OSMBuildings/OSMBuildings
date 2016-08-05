@@ -24,8 +24,8 @@ var APP, GL; // TODO: make them local references
  * OSMBuildings
  * @constructor
  * @param {Object} [options] - OSMBuildings options
- * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
- * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Number} [options.minZoom=10] - Minimum allowed zoom
+ * @param {Number} [options.maxZoom=20] - Maxiumum allowed zoom
  * @param {Object} [options.bounds] - A bounding box to restrict the map to
  * @param {Boolean} [options.state=false] - Store the map state in the URL
  * @param {Boolean} [options.disabled=false] - Disable user input
@@ -93,8 +93,6 @@ var OSMBuildings = function(options) {
   APP.rotation = APP.options.rotation || 0;
   APP.tilt = APP.options.tilt || 0;
 
-  APP.layers = [];
-
   if (APP.options.disabled) {
     APP.setDisabled(true);
   }
@@ -121,7 +119,7 @@ OSMBuildings.prototype = {
 
     APP.width  = width  !== undefined ? width  : container.offsetWidth;
     APP.height = height !== undefined ? height : container.offsetHeight;
-    
+
     var canvas = document.createElement('CANVAS');
     canvas.className = 'osmb-viewport';
     canvas.width = APP.width;
@@ -132,10 +130,10 @@ OSMBuildings.prototype = {
 
     Events.init(canvas);
 
-    APP.getStateFromUrl();
+    APP._getStateFromUrl();
     if (APP.options.state) {
-      APP.setStateToUrl();
-      APP.on('change', APP.setStateToUrl);
+      APP._setStateToUrl();
+      APP.on('change', APP._setStateToUrl);
     }
 
     APP._attribution = document.createElement('DIV');
@@ -150,21 +148,19 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Removes the OSMBuildings object from the map
+   * DEPRECATED
    */
-  // TODO: test this
-  remove: function() {
-    render.stop();
-    GLX.destroy();
-  },
+  remove: function() {},
 
   /**
    * A function that will be called when an event is fired. The parameters passed to the function
    * depend on what type of event it is
    * @callback OSMBuildings~eventListenerFunction
    */
+
   /**
    * Adds an event listener
+   * @public
    * @param {String} event - An event identifier to listen for
    * @param {OSMBuildings~eventListenerFunction} callback
    */
@@ -175,6 +171,7 @@ OSMBuildings.prototype = {
 
   /**
    * Removes event listeners
+   * @public
    * @param {String} event - An event identifier to listen for
    * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
    */
@@ -182,6 +179,12 @@ OSMBuildings.prototype = {
     GL.canvas.removeEventListener(type, fn);
   },
 
+  /**
+   * Trigger a specific event
+   * @public
+   * @param {String} event - An event identifier to listen for
+   * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
+   */
   emit: function(type, detail) {
     var event = new CustomEvent(type, { detail:detail });
     GL.canvas.dispatchEvent(event);
@@ -196,6 +199,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the date for shadow calculations
+   * @public
    * @param {Date} date
    */
   setDate: function(date) {
@@ -206,24 +210,26 @@ OSMBuildings.prototype = {
   // TODO: this should be part of the underlying map engine
   /**
    * Returns the screen position of the point
+   * @public
    * @param {Float} latitude - Latitude of the point
    * @param {Float} longitude - Longitude of the point
    * @param {Float} elevation - Elevation of the point
+   * @returns {Object} Screen position in pixels {x,y}
    */
   project: function(latitude, longitude, elevation) {
     var
       metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-                                 Math.cos(APP.position.latitude / 180 * Math.PI),
+        Math.cos(APP.position.latitude / 180 * Math.PI),
       worldPos = [ (longitude- APP.position.longitude) * metersPerDegreeLongitude,
-                  -(latitude - APP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
-                    elevation                          * HEIGHT_SCALE ];
+        -(latitude - APP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
+        elevation                          * HEIGHT_SCALE ];
     // takes current cam pos into account.
     var posNDC = transformVec3( render.viewProjMatrix.data, worldPos);
     posNDC = mul3scalar( add3(posNDC, [1, 1, 1]), 1/2); // from [-1..1] to [0..1]
 
     return { x:    posNDC[0]  * APP.width,
-             y: (1-posNDC[1]) * APP.height,
-             z:    posNDC[2]
+      y: (1-posNDC[1]) * APP.height,
+      z:    posNDC[2]
     };
   },
 
@@ -232,8 +238,10 @@ OSMBuildings.prototype = {
    * Returns the geographic position (latitude/longitude) of the map layer
    * (elevation==0) at viewport position (x,y), or 'undefined' if no part of the
    * map plane would be rendered at (x,y) - e.g. if (x,y) lies above the horizon.
-   * @param {Integer} x - the x position in the viewport
-   * @param {Integer} y - the y position in the viewport
+   * @public
+   * @param {Number} x - the x position in the viewport
+   * @param {Number} y - the y position in the viewport
+   * @returns {Object} Geographic position {latitude,longitude}
    */
   unproject: function(x, y) {
     var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
@@ -247,7 +255,7 @@ OSMBuildings.prototype = {
       return;
     }
     metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-                               Math.cos(APP.position.latitude / 180 * Math.PI);
+      Math.cos(APP.position.latitude / 180 * Math.PI);
 
     return {
       latitude:  APP.position.latitude - worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
@@ -257,15 +265,16 @@ OSMBuildings.prototype = {
 
   /**
    * Adds an OBJ (3D object) file to the map
-   * Important: objects with same url are cached and only loaded once
+   * Important: objects with exactly the same url are cached and only loaded once
+   * @public
    * @param {String} url - URL of the OBJ file
    * @param {Object} position - Where to render the OBJ
    * @param {Float} position.latitude - Latitude for the OBJ
    * @param {Float} position.longitude - Longitude for the OBJ
    * @param {Object} [options] - Options for rendering the OBJ
-   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
-   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
-   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {Number} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    */
@@ -279,13 +288,15 @@ OSMBuildings.prototype = {
    * @param {String} id - The feature's id
    * @param {Object} properties - The feature's properties
    */
+
   /**
    * Adds a GeoJSON layer to the map
+   * @public
    * @param {String} url - URL of the GeoJSON file
    * @param {Object} options - Options to apply to the GeoJSON being rendered
-   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
-   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
-   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {Number} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
@@ -296,15 +307,16 @@ OSMBuildings.prototype = {
 
   // TODO: allow more data layers later on
   /**
-   * Adds a GeoJSON tile base layer, for rendering the 3D buildings
+   * Adds a GeoJSON tile layer, for rendering the 3D buildings
+   * @public
    * @param {String} url - The URL of the GeoJSON tile server, in {@link https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md the correct format}
    * @param {Object} options
-   * @param {Integer} [options.fixedZoom=15]
+   * @param {Number} [options.fixedZoom=15]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
-   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Number} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
+   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
    */
   addGeoJSONTiles: function(url, options) {
@@ -316,14 +328,15 @@ OSMBuildings.prototype = {
 
   /**
    * Adds a 2D map source, to render below the 3D buildings
+   * @public
    * @param {String} url - The URL of the map server. This could be Mapbox, or {@link https://wiki.openstreetmap.org/wiki/Tiles any other tile server} that supports the right format
    * @param {Object} options
-   * @param {Integer} [options.fixedZoom]
+   * @param {Number} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
-   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Number} [options.minZoom] - The minimum zoom level to show features from this layer
+   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
   addMapTiles: function(url, options) {
     APP.basemapGrid = new Grid(url, basemap.Tile, options);
@@ -332,6 +345,7 @@ OSMBuildings.prototype = {
 
   /**
    * Highlight a given feature by id. Currently, the highlight can only be applied to one feature. Set id = `null` in order to un-highlight
+   * @public
    * @param {String} id - The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever is defined in the options passed to it.
    * @param {String} highlightColor - An optional color string to be used for highlighting
    */
@@ -341,15 +355,18 @@ OSMBuildings.prototype = {
     return APP;
   },
 
-  // TODO: check naming. show() suggests it affects the layer rather than objects on it
   /**
    * A function that will be called on each feature, for modification before rendering
    * @callback OSMBuildings~selectorFunction
    * @param {String} id - The feature's id
    * @param {Object} data - The feature's data
    */
+
+  // TODO: check naming. show() suggests it affects the layer rather than objects on it
+
   /**
    * Sets a function that defines which objects to show on this layer
+   * @public
    * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to show the feature
    * @param {Integer} [duration=0] - How long to show the feature for
    */
@@ -359,11 +376,13 @@ OSMBuildings.prototype = {
   },
 
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
- /**
-  * Sets a function that defines which objects to hide on this layer
-  * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
-  * @param {Integer} [duration=0] - How long to hide the feature for
-  */
+
+  /**
+   * Sets a function that defines which objects to hide on this layer
+   * @public
+   * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
+   * @param {Integer} [duration=0] - How long to hide the feature for
+   */
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
     return APP;
@@ -374,8 +393,10 @@ OSMBuildings.prototype = {
    * @callback OSMBuildings~getTargetCallback
    * @param {Object} feature - The feature
    */
+
   /**
-   * Returns the feature from a position on the screen
+   * Returns the feature from a position on the screen. Works asynchronous.
+   * @public
    * @param {Integer} x - The x coordinate (in pixels) of position on the screen
    * @param {Integer} y - The y coordinate (in pixels) of position on the screen
    * @param {OSMBuildings~getTargetCallback} callback - A callback function that receives the object
@@ -391,8 +412,10 @@ OSMBuildings.prototype = {
    * @callback OSMBuildings~screenshotCallback
    * @param screenshot - The screenshot
    */
+
   /**
-   * Take a screenshot
+   * Take a screenshot. Works asynchronous.
+   * @public
    * @param {OSMBuildings~screenshotCallback} callback - A callback function that receives the screenshot
    */
   screenshot: function(callback) {
@@ -409,18 +432,18 @@ OSMBuildings.prototype = {
     if (APP.attribution) {
       attribution.push(APP.attribution);
     }
-    for (var i = 0; i < APP.layers.length; i++) {
-      if (APP.layers[i].attribution) {
-        attribution.push(APP.layers[i].attribution);
-      }
-    }
+    // for (var i = 0; i < APP.layers.length; i++) {
+    //   if (APP.layers[i].attribution) {
+    //     attribution.push(APP.layers[i].attribution);
+    //   }
+    // }
     APP._attribution.innerHTML = attribution.join(' · ');
   },
 
   /**
    * @private
    */
-  getStateFromUrl: function() {
+  _getStateFromUrl: function() {
     var
       query = location.search,
       state = {};
@@ -441,7 +464,7 @@ OSMBuildings.prototype = {
   /**
    * @private
    */
-  setStateToUrl: function() {
+  _setStateToUrl: function() {
     if (!history.replaceState || APP.stateDebounce) {
       return;
     }
@@ -467,13 +490,9 @@ OSMBuildings.prototype = {
     return !!Events.disabled;
   },
 
-  /* returns the geographical bounds of the current view.
-   * notes:
+  /**
+   * Returns geographical bounds of the current view
    * - since the bounds are always axis-aligned they will contain areas that are
-   /**
-   * Returns the geographical bounds of the current view.
-   * Notes:
-   * - Since the bounds are always axis-aligned they will contain areas that are
    *   not currently visible if the current view is not also axis-aligned.
    * - The bounds only contain the map area that OSMBuildings considers for rendering.
    *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
@@ -485,6 +504,8 @@ OSMBuildings.prototype = {
    *   is seen at the lower edge of the screen, but whose footprint is outside
    *   of the current view below the lower edge do not contribute to the bounds.
    *   so their top may be visible and they may still be out of bounds.
+   * @public
+   * @returns {Array} bounding coordinates in unspecific order [{latitude,longitude},...]
    */
   getBounds: function() {
     var viewQuad = render.getViewQuad(), res = [];
@@ -496,6 +517,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the zoom level
+   * @public
    * @param {Float} zoom - The new zoom level
    * @param {Object} e - **Not currently used**
    * @fires OSMBuildings#zoom
@@ -527,12 +549,14 @@ OSMBuildings.prototype = {
       }
       /**
        * Fired when the map is zoomed (in either direction)
+       * @public
        * @event OSMBuildings#zoom
        */
       APP.emit('zoom', { zoom: zoom });
 
       /**
        * Fired when the map is zoomed, tilted or panned
+       * @public
        * @event OSMBuildings#change
        */
       APP.emit('change');
@@ -541,7 +565,9 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Returns the current zoom level
+   * Gets current zoom level
+   * @public
+   * @returns {Number} zoom level
    */
   getZoom: function() {
     return APP.zoom;
@@ -549,6 +575,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the map's geographic position
+   * @public
    * @param {Object} pos - The new position
    * @param {Float} pos.latitude
    * @param {Float} pos.longitude
@@ -567,13 +594,16 @@ OSMBuildings.prototype = {
 
   /**
    * Returns the map's current geographic position
+   * @public
+   * @returns {Object} Geographic position {latitude,longitude}
    */
   getPosition: function() {
     return APP.position;
   },
 
   /**
-   * Sets the map's size
+   * Sets the map view's size in pixels
+   * @public
    * @param {Object} size
    * @param {Integer} size.width
    * @param {Integer} size.height
@@ -586,6 +616,7 @@ OSMBuildings.prototype = {
 
       /**
        * Fired when the map is resized
+       * @public
        * @event OSMBuildings#resize
        */
       APP.emit('resize', { width: APP.width, height: APP.height });
@@ -594,14 +625,17 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Returns the map's current size
+   * Returns the map's current view size in pixels
+   * @public
+   * @returns {Object} View size {width,height}
    */
   getSize: function() {
     return { width: APP.width, height: APP.height };
   },
 
   /**
-   * Set's the maps rotation
+   * Set's the map's rotation
+   * @public
    * @param {Float} rotation - The new rotation angle
    * @fires OSMBuildings#rotate
    * @fires OSMBuildings#change
@@ -613,6 +647,7 @@ OSMBuildings.prototype = {
 
       /**
        * Fired when the map is rotated
+       * @public
        * @event OSMBuildings#rotate
        */
       APP.emit('rotate', { rotation: rotation });
@@ -622,7 +657,9 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Returns the maps current rotation
+   * Returns the map's current rotation
+   * @public
+   * @returns {Number} Rotation in degree
    */
   getRotation: function() {
     return APP.rotation;
@@ -630,6 +667,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the map's tilt
+   * @public
    * @param {Float} tilt - The new tilt
    * @fires OSMBuildings#tilt
    * @fires OSMBuildings#change
@@ -641,6 +679,7 @@ OSMBuildings.prototype = {
 
       /**
        * Fired when the map is tilted
+       * @public
        * @event OSMBuildings#tilt
        */
       APP.emit('tilt', { tilt: tilt });
@@ -651,45 +690,22 @@ OSMBuildings.prototype = {
 
   /**
    * Returns the map's current tilt
+   * @public
+   * @returns {Number} Tilt in degree
    */
   getTilt: function() {
     return APP.tilt;
   },
 
   /**
-   * Adds a layer to the map
-   * @param {Object} layer - The layer to add
-   */
-  addLayer: function(layer) {
-    APP.layers.push(layer);
-    APP._updateAttribution();
-    return APP;
-  },
-
-  /**
-   * Removes a layer from the map
-   * @param {Object} layer - The layer to remove
-   */
-  removeLayer: function(layer) {
-    APP.layers = APP.layers.filter(function(item) {
-      return (item !== layer);
-    });
-    APP._updateAttribution();
-  },
-
-  /**
    * Destroys the map
+   * @public
    */
   destroy: function() {
     render.destroy();
 
     // APP.basemapGrid.destroy();
     // APP.dataGrid.destroy();
-    for (var i = 0; i < APP.layers.length; i++) {
-      APP.layers[i].destroy();
-    }
-
-    APP.layers = [];
 
     // TODO: when taking over an existing canvas, better don't destroy it here
     GLX.destroy();
