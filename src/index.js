@@ -24,8 +24,8 @@ var APP, GL; // TODO: make them local references
  * OSMBuildings
  * @constructor
  * @param {Object} [options] - OSMBuildings options
- * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
- * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Number} [options.minZoom=10] - Minimum allowed zoom
+ * @param {Number} [options.maxZoom=20] - Maxiumum allowed zoom
  * @param {Object} [options.bounds] - A bounding box to restrict the map to
  * @param {Boolean} [options.state=false] - Store the map state in the URL
  * @param {Boolean} [options.disabled=false] - Disable user input
@@ -119,7 +119,7 @@ OSMBuildings.prototype = {
 
     APP.width  = width  !== undefined ? width  : container.offsetWidth;
     APP.height = height !== undefined ? height : container.offsetHeight;
-    
+
     var canvas = document.createElement('CANVAS');
     canvas.className = 'osmb-viewport';
     canvas.width = APP.width;
@@ -239,8 +239,8 @@ OSMBuildings.prototype = {
    * (elevation==0) at viewport position (x,y), or 'undefined' if no part of the
    * map plane would be rendered at (x,y) - e.g. if (x,y) lies above the horizon.
    * @public
-   * @param {Integer} x - the x position in the viewport
-   * @param {Integer} y - the y position in the viewport
+   * @param {Number} x - the x position in the viewport
+   * @param {Number} y - the y position in the viewport
    * @returns {Object} Geographic position {latitude,longitude}
    */
   unproject: function(x, y) {
@@ -272,9 +272,9 @@ OSMBuildings.prototype = {
    * @param {Float} position.latitude - Latitude for the OBJ
    * @param {Float} position.longitude - Longitude for the OBJ
    * @param {Object} [options] - Options for rendering the OBJ
-   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
-   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
-   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {Number} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    */
@@ -294,9 +294,9 @@ OSMBuildings.prototype = {
    * @public
    * @param {String} url - URL of the GeoJSON file
    * @param {Object} options - Options to apply to the GeoJSON being rendered
-   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
-   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
-   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {Number} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
@@ -311,12 +311,12 @@ OSMBuildings.prototype = {
    * @public
    * @param {String} url - The URL of the GeoJSON tile server, in {@link https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md the correct format}
    * @param {Object} options
-   * @param {Integer} [options.fixedZoom=15]
+   * @param {Number} [options.fixedZoom=15]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
-   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Number} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
+   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
    */
   addGeoJSONTiles: function(url, options) {
@@ -331,12 +331,12 @@ OSMBuildings.prototype = {
    * @public
    * @param {String} url - The URL of the map server. This could be Mapbox, or {@link https://wiki.openstreetmap.org/wiki/Tiles any other tile server} that supports the right format
    * @param {Object} options
-   * @param {Integer} [options.fixedZoom]
+   * @param {Number} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
-   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Number} [options.minZoom] - The minimum zoom level to show features from this layer
+   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
   addMapTiles: function(url, options) {
     APP.basemapGrid = new Grid(url, basemap.Tile, options);
@@ -377,12 +377,12 @@ OSMBuildings.prototype = {
 
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
 
- /**
-  * Sets a function that defines which objects to hide on this layer
-  * @public
-  * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
-  * @param {Integer} [duration=0] - How long to hide the feature for
-  */
+  /**
+   * Sets a function that defines which objects to hide on this layer
+   * @public
+   * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
+   * @param {Integer} [duration=0] - How long to hide the feature for
+   */
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
     return APP;
