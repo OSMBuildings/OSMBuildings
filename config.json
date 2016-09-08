@@ -15,7 +15,6 @@
   ],
 
   "modules": [
-    "node_modules/Triangulate/dist/Triangulate.js",
     "node_modules/Color/dist/Color.debug.js",
     "node_modules/suncalc/suncalc.js"
   ],
@@ -33,6 +32,12 @@
   ],
 
   "src": [
+    "src/triangulate/geometry/vec2.js",
+    "src/triangulate/geometry/vec3.js",
+    "src/triangulate/earcut.custom.js",
+    "src/triangulate/split.js",
+    "src/triangulate/index.js",
+
     "src/polyfills.js",
 
     "src/index.js",

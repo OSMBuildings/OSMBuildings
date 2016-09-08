@@ -18,7 +18,6 @@
   "scripts": {},
   "dependencies": {
     "Color": "git://github.com/kekscom/Color.git",
-    "Triangulate": "git://github.com/OSMBuildings/Triangulate.git",
     "suncalc": "git://github.com/OSMBuildings/suncalc.git"
   },
   "devDependencies": {
