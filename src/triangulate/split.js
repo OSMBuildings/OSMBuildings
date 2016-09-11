@@ -230,7 +230,11 @@ var split = {
   // TODO
   sphere: function(buffers, center, radius, height, zPos, color) {
     zPos = zPos || 0;
-    return this.cylinder(buffers, center, radius, radius, height, zPos, color);
+    var vertexCount = 0;
+    vertexCount += this.circle(buffers, center, radius, zPos, color);
+    vertexCount += this.cylinder(buffers, center, radius, radius, height, zPos, color);
+    vertexCount += this.circle(buffers, center, radius, zPos+height, color);
+    return vertexCount;
   },
 
   pyramid: function(buffers, polygon, center, height, zPos, color) {
@@ -254,8 +258,7 @@ var split = {
       L,
       v0, v1, v2, v3, n,
       tx1, tx2,
-      ty1 = texCoord[2]*height,
-      ty2a, ty2b,
+      ty1 = texCoord[2]*height, ty2 = texCoord[3]*height,
       i, il,
       r, rl;
 
@@ -268,8 +271,8 @@ var split = {
 
         v0 = [ a[0], a[1], zPos];
         v1 = [ b[0], b[1], zPos];
-        v2 = [ b[0], b[1], zPos+height+(b[2] || 0)];
-        v3 = [ a[0], a[1], zPos+height+(a[2] || 0)];
+        v2 = [ b[0], b[1], zPos+height];
+        v3 = [ a[0], a[1], zPos+height];
 
         n = vec3.normal(v0, v1, v2);
         [].push.apply(buffers.vertices, [].concat(v0, v2, v1, v0, v3, v2));
@@ -278,20 +281,35 @@ var split = {
 
         tx1 = (texCoord[0]*L) <<0;
         tx2 = (texCoord[1]*L) <<0;
-        // TODO: this shears widnwos for skillion roofs
-        ty2a = texCoord[3]*(height+(a[2] || 0));
-        ty2b = texCoord[3]*(height+(b[2] || 0));
 
         buffers.texCoords.push(
-          tx1, ty2a,
+          tx1, ty2,
           tx2, ty1,
-          tx2, ty2b,
+          tx2, ty2,
 
-          tx1, ty2b,
+          tx1, ty2,
           tx1, ty1,
           tx2, ty1
         );
       }
     }
-  }
+  }//,
+
+  // extrusionXX: function(buffers, a, b, height, zPos, color) {
+  //   zPos = zPos || 0;
+  //   var v0, v1, v2, v3, n;
+  //
+  //   v0 = [ a[0], a[1], zPos];
+  //   v1 = [ b[0], b[1], zPos];
+  //   v2 = [ b[0], b[1], zPos+height+(b[2] || 0)];
+  //   v3 = [ a[0], a[1], zPos+height+(a[2] || 0)];
+  //
+  //   n = vec3.normal(v0, v1, v2);
+  //   [].push.apply(buffers.vertices, [].concat(v0, v2, v1, v0, v3, v2));
+  //   [].push.apply(buffers.normals,  [].concat(n, n, n, n, n, n));
+  //   [].push.apply(buffers.colors,   [].concat(color, color, color, color, color, color));
+  //
+  //   buffers.texCoords.push(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  // }
+
 };

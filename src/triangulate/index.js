@@ -72,19 +72,19 @@ var triangulate = (function() {
     var
       scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE],
       geometries = alignGeometry(feature.geometry),
-      geometry;
+      polygon;
 
     for (var i = 0, il = geometries.length; i<il; i++) {
-      geometry = transform(geometries[i], origin, scale);
-      addBuilding(buffers, feature.properties, geometry, forcedColor, colorVariance);
+      polygon = transform(geometries[i], origin, scale);
+      addBuilding(buffers, feature.properties, polygon, forcedColor, colorVariance);
     }
   }
 
   //***************************************************************************
 
   // converts all coordinates of all rings in 'polygonRings' from lat/lon pairs to offsets from origin
-  function transform(polygon, origin, scale) {
-    return polygon.map(function(ring, i) {
+  function transform(geometry, origin, scale) {
+    return geometry.map(function(ring, i) {
       // outer ring (first ring) needs to be clockwise, inner rings
       // counter-clockwise. If they are not, make them by reverting order.
       if ((i === 0) !== isClockWise(ring)) {
@@ -156,99 +156,86 @@ var triangulate = (function() {
   //***************************************************************************
 
   // TODO: add floor polygons if items have a minHeight (or better: minHeight is greater than threshold)
-  function addBuilding(buffers, properties, geometry, forcedColor, colorVariance) {
+  function addBuilding(buffers, properties, polygon, forcedColor, colorVariance) {
     var
-      bbox = getBBox(geometry[0]),
-      // radius = (bbox.maxX - bbox.minX)/2 * scale[0];
-      // center = [
-      //   (bbox.minX + (bbox.maxX - bbox.minX)/2 - origin[0]) * scale[0],
-      //   (bbox.minY + (bbox.maxY - bbox.minY)/2 - origin[1]) * scale[1]
-      // ];
-      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2],
-      radius = (bbox.maxX - bbox.minX)/2,
-
-      vp = getVerticalParameters(properties),
-
+      dim = getDimensions(properties, getBBox(polygon[0])),
       wallColor = varyColor((forcedColor || properties.wallColor || properties.color || getMaterialColor(properties.material)), colorVariance),
       roofColor = varyColor((forcedColor || properties.roofColor || getMaterialColor(properties.roofMaterial)), colorVariance);
-
 
     //*** process buildings that don't require a roof *************************
 
     switch (properties.shape) {
       case 'cone':
-        split.cylinder(buffers, center, radius, 0, vp.wallHeight, vp.wallZ, wallColor);
+        split.cylinder(buffers, dim.center, dim.radius, 0, dim.wallHeight, dim.wallZ, wallColor);
         return;
 
       case 'dome':
-        split.dome(buffers, center, radius, vp.wallHeight, vp.wallZ, wallColor);
+        split.dome(buffers, dim.center, dim.radius, dim.wallHeight, dim.wallZ, wallColor);
         return;
 
       case 'pyramid':
-        split.pyramid(buffers, geometry, center, vp.wallHeight, vp.wallZ, wallColor);
+        split.pyramid(buffers, polygon, dim.center, dim.wallHeight, dim.wallZ, wallColor);
         return;
 
       case 'sphere':
-        split.sphere(buffers, center, radius, vp.wallHeight, vp.wallZ, wallColor);
+        split.sphere(buffers, dim.center, dim.radius, dim.wallHeight, dim.wallZ, wallColor);
         return;
     }
 
-    //*** process roofs which modify walls and don't require further processing
+    //*** process roofs *******************************************************
+
+    switch (properties.roofShape) {
+      case 'cone':
+        split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
+        break;
+
+      case 'dome':
+        split.dome(buffers, dim.center, dim.radius, dim.roofHeight, dim.roofZ, roofColor);
+        break;
+
+      case 'pyramid':
+        if (properties.shape === 'cylinder') {
+          split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
+        } else {
+          split.pyramid(buffers, polygon, dim.center, dim.roofHeight, dim.roofZ, roofColor);
+        }
+        break;
+
 
 //  var explicitRoofTagging = true;
 //  if ((!properties.roofLines || properties.roofLines !== 'no') && this.building.hasComplexRoof) {
 //    return new ComplexRoof();
 //  }
 
-    switch (properties.roofShape) {
-      case 'skillion':
-        // TODO: modify inner rings too
-        var roof = SkillionRoof(properties, geometry, center, vp.roofHeight);
-        geometry = roof.geometry;
-        split.polygon(buffers, roof.geometry, vp.roofZ, roofColor);
-        return; // no further processing
+      // case 'skillion':
+        // addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+        // break; // no further processing
 
       case 'gabled':
-        //   // TODO: modify inner rings too
-        //   var roof = GabledRoof(properties, geometry, center, vp.roofHeight);
-        //   split.polygon(buffers, roof, vp.roofZ, roofColor);
-        //// geometry = SkillionRoof(properties, geometry, center, properties.vp.roofHeight);
-        return;
-
-      // case 'hipped': // TODO: provide ridge segment and minor segments
-      //   return new HippedRoof(properties, geometry);
-
-      // case 'half-hipped': // TODO: provide ridge segment and minor segments
-      //   return new HalfHippedRoof(properties, geometry);
-
-      // case 'gambrel': // TODO: provide ridge segment and minor segments (individual roof line on client side)
-      //   return new GambrelRoof(properties, geometry);
-
-      // case 'mansard':  // TODO: provide ridge segments and their minor segments
-      //   return new MansardRoof(properties, geometry);
-
-      // case 'round': // TODO: extended version of gambrel for now. there should be a specific mechanism for lying cylinders
-      //   return new RoundRoof(properties, geometry);
-    }
-
-    //*** process remaining roofs *********************************************
-
-    switch (properties.roofShape) {
-      case 'cone':
-        split.cylinder(buffers, center, radius, 0, vp.roofHeight, vp.roofZ, roofColor);
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
         break;
 
-      case 'dome':
-        split.dome(buffers, center, radius, vp.roofHeight, vp.roofZ, roofColor);
+      case 'hipped':
+        addRidgedRoof(buffers, properties, polygon, 1/3, dim, wallColor, roofColor);
         break;
 
-      case 'pyramid':
-        if (properties.shape === 'cylinder') {
-          split.cylinder(buffers, center, radius, 0, vp.roofHeight, vp.roofZ, roofColor);
-        } else {
-          split.pyramid(buffers, geometry, center, vp.roofHeight, vp.roofZ, roofColor);
-        }
+      case 'half-hipped':
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
         break;
+
+      case 'gambrel':
+     // addGambrelRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
+        break;
+
+      case 'mansard':
+     // addMansardRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
+        break;
+
+      // case 'round':
+      //   addRoundRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+      //   break;
 
       case 'onion':
         var rings = [
@@ -262,18 +249,18 @@ var triangulate = (function() {
 
         var h1, h2;
         for (var i = 0, il = rings.length - 1; i<il; i++) {
-          h1 = vp.roofHeight*rings[i].hScale;
-          h2 = vp.roofHeight*rings[i + 1].hScale;
-          split.cylinder(buffers, center, radius*rings[i].rScale, radius*rings[i + 1].rScale, h2 - h1, vp.roofZ + h1, roofColor);
+          h1 = dim.roofHeight*rings[i].hScale;
+          h2 = dim.roofHeight*rings[i + 1].hScale;
+          split.cylinder(buffers, dim.center, dim.radius*rings[i].rScale, dim.radius*rings[i + 1].rScale, h2 - h1, dim.roofZ + h1, roofColor);
         }
         break;
 
       case 'flat':
       default:
         if (properties.shape === 'cylinder') {
-          split.circle(buffers, center, radius, vp.roofZ, roofColor);
+          split.circle(buffers, dim.center, dim.radius, dim.roofZ, roofColor);
         } else {
-          split.polygon(buffers, geometry, vp.roofZ, roofColor);
+          split.polygon(buffers, polygon, dim.roofZ, roofColor);
         }
     }
 
@@ -285,7 +272,7 @@ var triangulate = (function() {
         return;
 
       case 'cylinder':
-        split.cylinder(buffers, center, radius, radius, vp.wallHeight, vp.wallZ, wallColor);
+        split.cylinder(buffers, dim.center, dim.radius, dim.radius, dim.wallHeight, dim.wallZ, wallColor);
         return;
 
       default: // extruded polygon
@@ -299,71 +286,82 @@ var triangulate = (function() {
             ty2 = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0))<<0;
           }
         }
-        split.extrusion(buffers, geometry, vp.wallHeight, vp.wallZ, wallColor, [0, WINDOWS_PER_METER, ty1/vp.wallHeight, ty2/vp.wallHeight]);
+        split.extrusion(buffers, polygon, dim.wallHeight, dim.wallZ, wallColor, [0, WINDOWS_PER_METER, ty1/dim.wallHeight, ty2/dim.wallHeight]);
     }
   }
 
-  function getVerticalParameters(properties) {
-    var vp = {};
-    var totalHeight = properties.height || (properties.levels ? properties.levels*METERS_PER_LEVEL : 0);
+  function getDimensions(properties, bbox) {
+    var
+      dim = {},
+      totalHeight = properties.height || (properties.levels ? properties.levels*METERS_PER_LEVEL : 0);
+
+    // dim.center = [
+    //   (bbox.minX + (bbox.maxX - bbox.minX)/2 - origin[0]) * scale[0],
+    //   (bbox.minY + (bbox.maxY - bbox.minY)/2 - origin[1]) * scale[1]
+    // ]
+    // dim.radius = (bbox.maxX - bbox.minX)/2 * scale[0]
+
+    dim.center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+    dim.radius = (bbox.maxX - bbox.minX)/2;
 
     //*** wall height *********************************************************
 
-    vp.wallZ = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
-    vp.wallHeight = Math.max(0, totalHeight - vp.wallZ);
+    dim.wallZ = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
+    dim.wallHeight = Math.max(0, totalHeight - dim.wallZ);
 
     switch (properties.shape) {
       case 'cone':
       case 'dome':
       case 'pyramid':
-        vp.wallHeight = vp.wallHeight || 2*radius;
+        dim.wallHeight = dim.wallHeight || 2*dim.radius;
         break;
 
       case 'sphere':
-        vp.wallHeight = vp.wallHeight || 4*radius;
+        dim.wallHeight = dim.wallHeight || 4*dim.radius;
         break;
 
       case 'none': // no walls at all
       case 'cylinder':
       default:
-        vp.wallHeight = vp.wallHeight || DEFAULT_HEIGHT;
+        dim.wallHeight = dim.wallHeight || DEFAULT_HEIGHT;
     }
 
     //*** roof height and update wall height **********************************
 
-    vp.roofHeight = properties.roofHeight || (properties.roofLevels ? properties.roofLevels*METERS_PER_LEVEL : 0);
+    dim.roofHeight = properties.roofHeight || (properties.roofLevels ? properties.roofLevels*METERS_PER_LEVEL : 0);
 
     switch (properties.roofShape) {
       case 'cone':
-      case 'dome':
       case 'pyramid':
+      case 'dome':
       case 'onion':
-        vp.roofHeight = vp.roofHeight || 2*radius;
+        dim.roofHeight = dim.roofHeight || 1*dim.radius;
         break;
 
-      case 'sphere':
-        vp.roofHeight = vp.roofHeight || 4*radius;
-        break;
-
-      case 'skillion':
-        vp.roofHeight = vp.roofHeight || 1*METERS_PER_LEVEL;
-        break;
+      case 'gabled':
+      case 'hipped':
+      case 'half-hipped':
+case 'skillion':
+case 'gambrel':
+case 'mansard':
+case 'round':
+         dim.roofHeight = dim.roofHeight || 1*METERS_PER_LEVEL;
+         break;
 
       case 'flat':
-        vp.roofHeight = 0;
+        dim.roofHeight = 0;
         break;
 
       default:
-        // roofs we can't handle should not affect wallHeight
-        vp.roofHeight = 0;
+        // roofs we don't handle should not affect wallHeight
+        dim.roofHeight = 0;
     }
 
-    vp.roofHeight = Math.min(vp.roofHeight, vp.wallHeight);
-    vp.wallHeight = vp.wallHeight - vp.roofHeight;
+    dim.roofHeight = Math.min(dim.roofHeight, dim.wallHeight);
+    dim.wallHeight = dim.wallHeight - dim.roofHeight;
+    dim.roofZ = dim.wallHeight + dim.wallZ;
 
-    vp.roofZ = vp.wallHeight + vp.wallZ;
-
-    return vp;
+    return dim;
   }
 
   return triangulate;

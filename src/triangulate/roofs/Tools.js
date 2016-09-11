@@ -1,11 +1,46 @@
 
+function getSqDist(p1, p2) {
+  var dx = p1[0] - p2[0], dy = p1[1] - p2[1];
+  return dx * dx + dy * dy;
+}
+
+function simplify(polygon, sqTolerance) {
+  var prevPoint = polygon[0],
+    newPoints = [prevPoint],
+    point;
+
+  for (var i = 1, len = polygon.length; i < len; i++) {
+    point = polygon[i];
+    if (getSqDist(point, prevPoint) > sqTolerance) {
+      newPoints.push(point);
+      prevPoint = point;
+    }
+  }
+
+  if (prevPoint !== point) {
+    newPoints.push(point);
+  }
+
+  return newPoints;
+}
+
 function getRoofDirection(properties, polygon) {
   var direction;
 
-  var angle = parseFloat(properties.roofSlopeDirection || properties.roofDirection);
-  if (!isNaN(angle)) {
-    var rad = angle*Math.PI/180;
-    direction = [Math.sin(rad), Math.cos(rad)];
+  // TODO: skillion: properties.roofSlopeDirection
+
+  if (properties.roofRidgeDirection !== undefined) {
+    var angle = parseFloat(properties.roofRidgeDirection);
+    if (!isNaN(angle)) {
+      var rad = angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else if (properties.roofDirection !== undefined) {
+    var angle = parseFloat(properties.roofDirection);
+    if (!isNaN(angle)) {
+      var rad = 90+angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
   } else {
     var
       d,
@@ -13,20 +48,22 @@ function getRoofDirection(properties, polygon) {
       maxSegmentLength = 0,
       maxSegment;
 
-    for (var i = 0, il = polygon.length - 1; i<il; i++) {
-      segmentLength = vec2.len(vec2.sub(polygon[i+1], polygon[i]));
+    var simplePolygon = simplify(polygon, 10);
+
+    for (var i = 0, il = simplePolygon.length - 1; i<il; i++) {
+      segmentLength = vec2.len(vec2.sub(simplePolygon[i+1], simplePolygon[i]));
       if (segmentLength>maxSegmentLength) {
         maxSegmentLength = segmentLength;
-        maxSegment = [polygon[i], polygon[i + 1]];
+        maxSegment = [simplePolygon[i], simplePolygon[i + 1]];
       }
     }
 
     d = vec2.sub(maxSegment[1], maxSegment[0]);
     direction = [d[0]/maxSegmentLength, d[1]/maxSegmentLength];
-  }
 
-  if (properties.roofOrientation && properties.roofOrientation === 'across') {
-    direction = [-direction[1], direction[0]];
+    if (properties.roofOrientation && properties.roofOrientation === 'across') {
+      direction = [-direction[1], direction[0]];
+    }
   }
 
   return direction;
@@ -38,12 +75,11 @@ function getPolygonIntersections(polygon, line) {
     segment = [polygon[i], polygon[i+1]];
     intersection = getLineIntersection(segment, line);
     if (intersection !== undefined) {
-      res.push(i);
+      res.push({ index:i, segment:segment });
     }
   }
   return res;
 }
-
 
 function getLineIntersection(line1, line2) {
   if (vec2.equals(line1[0], line2[0]) || vec2.equals(line1[0], line2[1]) || vec2.equals(line1[1], line2[0]) || vec2.equals(line1[1], line2[1])) {
