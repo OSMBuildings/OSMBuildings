@@ -1,3 +1,4 @@
+
 // TODO: handle inner rings
 
 function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roofColor) {
@@ -5,7 +6,28 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 
   var
     outerPolygon = polygon[0],
-    direction = vec2.scale(getRoofDirection(properties, outerPolygon), 1000); // => normal();
+    direction;
+
+  if (properties.roofRidgeDirection !== undefined) {
+    var angle = parseFloat(properties.roofRidgeDirection);
+    if (!isNaN(angle)) {
+      var rad = 90+angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else if (properties.roofDirection !== undefined) {
+    var angle = parseFloat(properties.roofDirection);
+    if (!isNaN(angle)) {
+      var rad = angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else {
+    direction = getPolygonDirection(outerPolygon);
+    if (properties.roofOrientation && properties.roofOrientation === 'across') {
+      direction = [-direction[1], direction[0]];
+    }
+  }
+
+  direction = vec2.scale(direction, 1000);
 
   // calculate the two outermost intersection indices of the
   // quasi-infinite ridge line with segments of the polygon
@@ -53,6 +75,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
     cap2.center[2] = dim.roofHeight;
 
     // create roof faces
+
     var roofFace1 = [cap1.center];
     roofFace1 = roofFace1.concat(outerPolygon.slice(cap1.index+1, cap2.index+1));
     roofFace1.push(cap2.center, cap1.center);
@@ -84,30 +107,50 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 // // absolute distance of ridge to outline
 // var ridgeOffset = vec2.scale(vec2.sub(c2, c1), offset);
 // return [vec2.add(c1, ridgeOffset), vec2.sub(c2, ridgeOffset)];
+
 }
 
-/***
- *
- *
-
- function SkillionRoof(properties, coordinates, center, height) {
+function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor) {
 
   var
     i, il,
-    outerRing = coordinates[0],
-    direction = vec2.scale(getRoofDirection(properties, outerRing), 1000),
-    // get farthest intersection of polygon and slope line
-    intersections = getPolygonIntersections(outerRing, [vec2.sub(center, direction), vec2.add(center, direction)]),
-    segment,
+    outerPolygon = polygon[0],
+    direction;
+
+  if (properties.roofSlopeDirection !== undefined) {
+    var angle = parseFloat(properties.roofSlopeDirection);
+    if (!isNaN(angle)) {
+      var rad = angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else if (properties.roofDirection !== undefined) {
+    var angle = parseFloat(properties.roofDirection);
+    if (!isNaN(angle)) {
+      var rad = angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else {
+    direction = getPolygonDirection(outerPolygon);
+    direction = [-direction[1], direction[0]];
+    if (properties.roofOrientation && properties.roofOrientation === 'across') {
+      direction = [-direction[1], direction[0]];
+    }
+  }
+
+  direction = vec2.scale(direction, 1000);
+
+  // get farthest intersection of polygon and slope line
+
+  var
+    intersections = getPolygonIntersections(outerPolygon, [vec2.sub(dim.center, direction), vec2.add(dim.center, direction)]),
     ridge,
     distance = 0,
-    maxDistance = -1;
+    maxDistance = 0;
 
   for (i = 0, il = intersections.length; i<il; i++) {
-    segment = [outerRing[intersections[i]], outerRing[intersections[i]+1]]
-    distance = getDistanceToLine(center, segment);
+    distance = getDistanceToLine(dim.center, intersections[i].segment);
     if (distance > maxDistance) {
-      ridge = segment;
+      ridge = intersections[i].segment;
       maxDistance = distance;
     }
   }
@@ -116,26 +159,38 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
     return;
   }
 
-  maxDistance = 0.01;
-  var distances = [];
-  for (i = 0, il = outerRing.length; i<il; i++) {
-    distances[i] = getDistanceToLine(outerRing[i], ridge);
-    if (distances[i] > maxDistance) {
-      maxDistance = distances[i];
-    }
+  var
+    maxDistance = 0,
+    distances = [];
+  for (var i = 0; i < outerPolygon.length; i++) {
+    distances[i] = getDistanceToLine(outerPolygon[i], ridge);
+    maxDistance = Math.max(maxDistance, distances[i]);
   }
 
-  // TODO: modify inner rings too
-  var relativeDistance = 0;
-  for (i = 0, il = outerRing.length; i<il; i++) {
-    outerRing[i][2] = (1-distances[i]/maxDistance) * height;
+  // modify vertical position of all points
+  for (var i = 0; i < outerPolygon.length; i++) {
+    outerPolygon[i][2] = (1-distances[i]/maxDistance) * dim.roofHeight;
   }
 
-  return [outerRing];
+  // create roof face
+
+  split.polygon(buffers, [outerPolygon], dim.roofZ, roofColor);
+
+  // create extra wall faces
+
+  for (var i = 0; i < outerPolygon.length-1; i++) {
+    split.quad(
+      buffers,
+      [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ+outerPolygon[i  ][2]],
+      [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ],
+      [outerPolygon[i+1][0], outerPolygon[i+1][1],dim.roofZ],
+      [outerPolygon[i+1][0], outerPolygon[i+1][1],dim.roofZ+outerPolygon[i+1][2]],
+      wallColor
+    );
+  }
 }
 
-
- 
+/***
 function HalfHippedRoof(tags, polygon) {
   RidgedRoof.call(this, tags, polygon, 1/6);
 
@@ -175,26 +230,6 @@ HalfHippedRoof.prototype.getInnerSegments = function() {
     [this.ridge[1], this.cap2part[1]]
   ];
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -346,7 +381,5 @@ HalfHippedRoof.prototype.getInnerSegments = function() {
     [this.mansardEdge1[1], this.mansardEdge2[1]]
   ];
 };
-
-
 
  ***/

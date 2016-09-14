@@ -207,9 +207,9 @@ var triangulate = (function() {
 //    return new ComplexRoof();
 //  }
 
-      // case 'skillion':
-        // addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor);
-        // break; // no further processing
+      case 'skillion':
+        addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+        break; // no further processing
 
       case 'gabled':
         addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);

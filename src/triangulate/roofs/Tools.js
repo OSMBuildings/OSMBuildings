@@ -24,49 +24,25 @@ function simplify(polygon, sqTolerance) {
   return newPoints;
 }
 
-function getRoofDirection(properties, polygon) {
-  var direction;
+function getPolygonDirection(polygon) {
+  var
+    d,
+    segmentLength = 0,
+    maxSegmentLength = 0,
+    maxSegment;
 
-  // TODO: skillion: properties.roofSlopeDirection
+  var simplePolygon = simplify(polygon, 10);
 
-  if (properties.roofRidgeDirection !== undefined) {
-    var angle = parseFloat(properties.roofRidgeDirection);
-    if (!isNaN(angle)) {
-      var rad = angle*Math.PI/180;
-      direction = [Math.sin(rad), Math.cos(rad)];
-    }
-  } else if (properties.roofDirection !== undefined) {
-    var angle = parseFloat(properties.roofDirection);
-    if (!isNaN(angle)) {
-      var rad = 90+angle*Math.PI/180;
-      direction = [Math.sin(rad), Math.cos(rad)];
-    }
-  } else {
-    var
-      d,
-      segmentLength = 0,
-      maxSegmentLength = 0,
-      maxSegment;
-
-    var simplePolygon = simplify(polygon, 10);
-
-    for (var i = 0, il = simplePolygon.length - 1; i<il; i++) {
-      segmentLength = vec2.len(vec2.sub(simplePolygon[i+1], simplePolygon[i]));
-      if (segmentLength>maxSegmentLength) {
-        maxSegmentLength = segmentLength;
-        maxSegment = [simplePolygon[i], simplePolygon[i + 1]];
-      }
-    }
-
-    d = vec2.sub(maxSegment[1], maxSegment[0]);
-    direction = [d[0]/maxSegmentLength, d[1]/maxSegmentLength];
-
-    if (properties.roofOrientation && properties.roofOrientation === 'across') {
-      direction = [-direction[1], direction[0]];
+  for (var i = 0, il = simplePolygon.length - 1; i<il; i++) {
+    segmentLength = vec2.len(vec2.sub(simplePolygon[i+1], simplePolygon[i]));
+    if (segmentLength>maxSegmentLength) {
+      maxSegmentLength = segmentLength;
+      maxSegment = [simplePolygon[i], simplePolygon[i + 1]];
     }
   }
 
-  return direction;
+  d = vec2.sub(maxSegment[1], maxSegment[0]);
+  return [d[0]/maxSegmentLength, d[1]/maxSegmentLength];
 }
 
 function getPolygonIntersections(polygon, line) {
