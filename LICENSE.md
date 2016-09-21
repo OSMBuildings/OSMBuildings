@@ -90,13 +90,19 @@ SOFTWARE.
 
 ===============================================================================
 
-several code fragments from osmstreetview
+Code fragments from osmstreetview
 https://github.com/rbuch703/osmstreetview/
 Robert Buchholz
 
 Copyright 2014, Robert Buchholz <rbuch703@gmail.com>.
 
 Licensed under the GNU General Public License version 3.
+
+===============================================================================
+
+Inspiration of roof processing from OSM2World
+https://github.com/tordanik/OSM2World
+Tobias Knerr
 
 ===============================================================================
 
