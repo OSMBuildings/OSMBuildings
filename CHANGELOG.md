@@ -10,6 +10,7 @@
 
 - fixed fadeIn option for GeoJSON tiles
 - minZoom/maxZoom behavior fixed
+- fix for touchmove positioning
 
 
 # 3.1.0 @ 2016-07-27
