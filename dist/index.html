@@ -82,10 +82,10 @@
 <script>
   var osmb = new OSMBuildings({
     baseURL: './OSMBuildings',
-    minZoom: 13,
-    maxZoom: 20,
-    position: { latitude:52.52000, longitude:13.41000 },
     zoom: 16,
+    minZoom: 16,
+    maxZoom: 19,
+    position: { latitude:52.52000, longitude:13.41000 },
     state: true, // stores map position/rotation in url
     effects: ['shadows'],
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
@@ -103,7 +103,7 @@
   //***************************************************************************
 
   osmb.on('pointermove', function(e) {
-    var id = osmb.getTarget(e.detail.x, e.detail.y, function(id) {
+    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
       if (id) {
         document.body.style.cursor = 'pointer';
         osmb.highlight(id, '#f08000');

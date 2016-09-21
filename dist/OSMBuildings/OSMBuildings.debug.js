@@ -3985,13 +3985,13 @@ var APP, GL; // TODO: make them local references
  * OSMBuildings
  * @constructor
  * @param {Object} [options] - OSMBuildings options
- * @param {Number} [options.minZoom=10] - Minimum allowed zoom
- * @param {Number} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Number} [options.minZoom=14.5] - Global minimum allowed zoom
+ * @param {Number} [options.maxZoom=20] - Global maximum allowed zoom
  * @param {Object} [options.bounds] - A bounding box to restrict the map to
  * @param {Boolean} [options.state=false] - Store the map state in the URL
  * @param {Boolean} [options.disabled=false] - Disable user input
  * @param {String} [options.attribution] - An attribution string
- * @param {Float} [options.zoom=minZoom] - Initial zoom
+ * @param {Float} [options.zoom=minZoom..maxZoom] - Initial zoom, default is middle between global minZoom and maxZoom
  * @param {Float} [options.rotation=0] - Initial rotation
  * @param {Float} [options.tilt=0] - Initial tilt
  * @param {Object} [options.position] - Initial position
@@ -4007,8 +4007,6 @@ var APP, GL; // TODO: make them local references
  * @param {Array} [options.effects=[]] - Which effects to enable. The only effect at the moment is 'shadows'
  * @param {Object} [options.style={ color: 'rgb(220, 210, 200)' }] - Sets the default building style
  */
-
-// TODO: check minZoom, maxZoom, attribution for duplicate meaning
 
 var OSMBuildings = function(options) {
   APP = this; // refers to 'this'. Should make other globals obsolete.
@@ -4041,16 +4039,17 @@ var OSMBuildings = function(options) {
 
   APP.attribution = APP.options.attribution || OSMBuildings.ATTRIBUTION;
 
-  APP.minZoom = parseFloat(APP.options.minZoom) || 10;
-  APP.maxZoom = parseFloat(APP.options.maxZoom) || 20;
+  APP.minZoom = Math.max(parseFloat(APP.options.minZoom || 14.5), 14.5);
+  APP.maxZoom = Math.min(parseFloat(APP.options.maxZoom || 20), 20);
   if (APP.maxZoom < APP.minZoom) {
-    APP.maxZoom = APP.minZoom;
+    APP.minZoom = 14.5;
+    APP.maxZoom = 20;
   }
 
   APP.bounds = APP.options.bounds;
 
   APP.position = APP.options.position || { latitude: 52.520000, longitude: 13.410000 };
-  APP.zoom = APP.options.zoom || APP.minZoom;
+  APP.zoom = APP.options.zoom || (APP.minZoom + (APP.maxZoom-APP.minZoom)/2);
   APP.rotation = APP.options.rotation || 0;
   APP.tilt = APP.options.tilt || 0;
 
@@ -4059,7 +4058,7 @@ var OSMBuildings = function(options) {
   }
 };
 
-OSMBuildings.VERSION = '3.2.0';
+OSMBuildings.VERSION = '3.2.1';
 OSMBuildings.ATTRIBUTION = '<a href="https://osmbuildings.org/">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
@@ -4260,7 +4259,9 @@ OSMBuildings.prototype = {
    * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
-   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
+   * @param {Number} [options.minZoom=14.5] - Minimum zoom level to show this feature, defaults to and limited by global minZoom
+   * @param {Number} [options.maxZoom=maxZoom] - Maximum zoom level to show this feature, defaults to and limited by global maxZoom
+   * @param {Boolean} [options.fadeIn=true] - Fade GeoJSON features; if `false`, then display immediately.
    */
   addGeoJSON: function(url, options) {
     return new mesh.GeoJSON(url, options);
@@ -4276,13 +4277,13 @@ OSMBuildings.prototype = {
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Number} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
-   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
-   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
+   * @param {Number} [options.minZoom=14.5] - Minimum zoom level to show features from this layer, defaults to and limited by global minZoom
+   * @param {Number} [options.maxZoom=maxZoom] - Maximum zoom level to show features from this layer, defaults to and limited by global maxZoom
+   * @param {Boolean} [options.fadeIn=true] - Fade GeoJSON features; if `false`, then display immediately.
    */
   addGeoJSONTiles: function(url, options) {
     options = options || {};
-    options.fixedZoom = options.fixedZoom || 14.5;
+    options.fixedZoom = options.fixedZoom || 15;
     APP.dataGrid = new Grid(url, data.Tile, options);
     return APP.dataGrid;
   },
@@ -4295,9 +4296,6 @@ OSMBuildings.prototype = {
    * @param {Number} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Number} [options.minZoom] - The minimum zoom level to show features from this layer
-   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
   addMapTiles: function(url, options) {
     APP.basemapGrid = new Grid(url, basemap.Tile, options);
@@ -4485,8 +4483,10 @@ OSMBuildings.prototype = {
    * @fires OSMBuildings#change
    */
   setZoom: function(zoom, e) {
-    // not clamping anymore. notice zoomlevel but perhaps don't render
     zoom = parseFloat(zoom);
+
+    zoom = Math.max(zoom, APP.minZoom);
+    zoom = Math.min(zoom, APP.maxZoom);
 
     if (APP.zoom !== zoom) {
       APP.zoom = zoom;
@@ -4977,7 +4977,7 @@ Events.init = function(container) {
     }
 
     startOffset = getElementOffset(e.target);
-    var pos = getEventPosition(e, offset);
+    var pos = getEventPosition(e, startOffset);
     startX = prevX = pos.x;
     startY = prevY = pos.y;
 
@@ -5254,10 +5254,11 @@ var Grid = function(source, tileClass, options) {
 
   this.tileOptions = { color:options.color, fadeIn:options.fadeIn };
 
-  this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-  this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+  this.minZoom = Math.max(parseFloat(options.minZoom || 14.5), APP.minZoom);
+  this.maxZoom = Math.min(parseFloat(options.maxZoom || 20), APP.maxZoom);
   if (this.maxZoom < this.minZoom) {
-    this.maxZoom = this.minZoom;
+    this.minZoom = 14.5;
+    this.maxZoom = 20;
   }
 
   APP.on('change', this._onChange = function() {
@@ -5271,7 +5272,7 @@ var Grid = function(source, tileClass, options) {
 
 Grid.prototype = {
 
-  // strategy: start loading after {delay}ms, skip any attempts until then
+  // strategy: start loading after delay (ms), skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
     if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
@@ -5337,7 +5338,7 @@ Grid.prototype = {
     var tileList = [];
     var key;
     
-    //if there is no parent zoom level
+    // if there is no parent zoom level
     if (zoom === 0 || zoom <= this.minZoom) {
       for (key in tiles) {
         tiles[key][2] = zoom;
@@ -5697,10 +5698,11 @@ mesh.GeoJSON = (function() {
     this.elevation    = options.elevation || 0;
     this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
 
-    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    this.minZoom = Math.max(parseFloat(options.minZoom || 14.5), APP.minZoom);
+    this.maxZoom = Math.min(parseFloat(options.maxZoom || 20), APP.maxZoom);
     if (this.maxZoom < this.minZoom) {
-      this.maxZoom = this.minZoom;
+      this.minZoom = 14.5;
+      this.maxZoom = 20;
     }
 
     this.items = [];
@@ -5913,10 +5915,6 @@ mesh.MapPlane = (function() {
     options = options || {};
 
     this.id = options.id;
-    /*if (options.color) {
-      this.color = new Color(options.color).toArray(true);
-    }*/
-
     this.radius = options.radius || 5000;
     this.createGlGeometry();
 
@@ -5939,13 +5937,10 @@ mesh.MapPlane = (function() {
       var normals = [].concat(normal, normal, normal, normal, normal, normal);
 
       var filterEntry = [0, 1, 1, 1];
-      var filterEntries = [].concat(filterEntry, filterEntry, filterEntry,
-                                    filterEntry, filterEntry, filterEntry);
+      var filterEntries = [].concat(filterEntry, filterEntry, filterEntry, filterEntry, filterEntry, filterEntry);
       
       for (var x = 0; x < NUM_SEGMENTS; x++)
         for (var y = 0; y < NUM_SEGMENTS; y++) {
-          
-          
           var baseX = -this.radius + x*segmentSize;
           var baseY = -this.radius + y*segmentSize;
           this.vertexBuffer.push( baseX,               baseY, 0,
@@ -5974,7 +5969,6 @@ mesh.MapPlane = (function() {
       this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
       this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
       this.filterBuffer = new GLX.Buffer(4, new Float32Array(this.filterBuffer));
-       
     },
 
     // TODO: switch to a notation like mesh.transform
@@ -6017,23 +6011,26 @@ mesh.DebugQuad = (function() {
     this.maxZoom = APP.maxZoom;
   }
 
-
   constructor.prototype = {
 
     updateGeometry: function(v1, v2, v3, v4) {
-      if ( equal3(v1, this.v1) &&
-           equal3(v2, this.v2) &&
-           equal3(v3, this.v3) &&
-           equal3(v4, this.v4))
-         return; //still up-to-date
+      if (
+        equal3(v1, this.v1) &&
+        equal3(v2, this.v2) &&
+        equal3(v3, this.v3) &&
+        equal3(v4, this.v4)
+      ) {
+        return; //still up-to-date
+      }
 
       this.v1 = v1;
       this.v2 = v2;
       this.v3 = v3;
       this.v4 = v4;
       
-      if (this.vertexBuffer)
+      if (this.vertexBuffer) {
         this.vertexBuffer.destroy();
+      }
 
       var vertices = [].concat(v1, v2, v3, v1, v3, v4);
       this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
@@ -6048,9 +6045,10 @@ mesh.DebugQuad = (function() {
           1,   1,
         0.0,   1]));*/
 
-      if (this.normalBuffer)
+      if (this.normalBuffer) {
         this.normalBuffer.destroy();
-        
+      }
+
       this.normalBuffer = new GLX.Buffer(3, new Float32Array([
         0, 0, 1,
         0, 0, 1,
@@ -6261,10 +6259,11 @@ mesh.OBJ = (function() {
     this.position     = position;
     this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
 
-    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    this.minZoom = Math.max(parseFloat(options.minZoom || 14.5), APP.minZoom);
+    this.maxZoom = Math.min(parseFloat(options.maxZoom || 20), APP.maxZoom);
     if (this.maxZoom < this.minZoom) {
-      this.maxZoom = this.minZoom;
+      this.minZoom = 14.5;
+      this.maxZoom = 20;
     }
 
     this.data = {
@@ -7154,7 +7153,7 @@ render.Picking = {
     for (var i = 0, il = dataItems.length; i<il; i++) {
       item = dataItems[i];
 
-      if (APP.zoom<item.minZoom || APP.zoom>item.maxZoom) {
+      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
         continue;
       }
 
