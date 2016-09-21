@@ -2010,6 +2010,10 @@ function simplify(polygon, sqTolerance) {
     newPoints.push(point);
   }
 
+  if (newPoints.length < 3) {
+    return polygon;
+  }
+
   return newPoints;
 }
 
