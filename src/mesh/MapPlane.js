@@ -17,10 +17,6 @@ mesh.MapPlane = (function() {
     options = options || {};
 
     this.id = options.id;
-    /*if (options.color) {
-      this.color = new Color(options.color).toArray(true);
-    }*/
-
     this.radius = options.radius || 5000;
     this.createGlGeometry();
 
@@ -43,13 +39,10 @@ mesh.MapPlane = (function() {
       var normals = [].concat(normal, normal, normal, normal, normal, normal);
 
       var filterEntry = [0, 1, 1, 1];
-      var filterEntries = [].concat(filterEntry, filterEntry, filterEntry,
-                                    filterEntry, filterEntry, filterEntry);
+      var filterEntries = [].concat(filterEntry, filterEntry, filterEntry, filterEntry, filterEntry, filterEntry);
       
       for (var x = 0; x < NUM_SEGMENTS; x++)
         for (var y = 0; y < NUM_SEGMENTS; y++) {
-          
-          
           var baseX = -this.radius + x*segmentSize;
           var baseY = -this.radius + y*segmentSize;
           this.vertexBuffer.push( baseX,               baseY, 0,
@@ -78,7 +71,6 @@ mesh.MapPlane = (function() {
       this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
       this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
       this.filterBuffer = new GLX.Buffer(4, new Float32Array(this.filterBuffer));
-       
     },
 
     // TODO: switch to a notation like mesh.transform

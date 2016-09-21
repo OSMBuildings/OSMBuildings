@@ -12,10 +12,11 @@ var Grid = function(source, tileClass, options) {
 
   this.tileOptions = { color:options.color, fadeIn:options.fadeIn };
 
-  this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-  this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+  this.minZoom = Math.max(parseFloat(options.minZoom || 10), APP.minZoom);
+  this.maxZoom = Math.min(parseFloat(options.maxZoom || 20), APP.maxZoom);
   if (this.maxZoom < this.minZoom) {
-    this.maxZoom = this.minZoom;
+    this.minZoom = 10;
+    this.maxZoom = 20;
   }
 
   APP.on('change', this._onChange = function() {
@@ -29,7 +30,7 @@ var Grid = function(source, tileClass, options) {
 
 Grid.prototype = {
 
-  // strategy: start loading after {delay}ms, skip any attempts until then
+  // strategy: start loading after delay (ms), skip any attempts until then
   // effectively loads in intervals during movement
   update: function(delay) {
     if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
@@ -95,7 +96,7 @@ Grid.prototype = {
     var tileList = [];
     var key;
     
-    //if there is no parent zoom level
+    // if there is no parent zoom level
     if (zoom === 0 || zoom <= this.minZoom) {
       for (key in tiles) {
         tiles[key][2] = zoom;

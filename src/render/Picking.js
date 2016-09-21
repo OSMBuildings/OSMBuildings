@@ -50,7 +50,7 @@ render.Picking = {
     for (var i = 0, il = dataItems.length; i<il; i++) {
       item = dataItems[i];
 
-      if (APP.zoom<item.minZoom || APP.zoom>item.maxZoom) {
+      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
         continue;
       }
 

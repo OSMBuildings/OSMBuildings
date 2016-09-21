@@ -17,10 +17,11 @@ mesh.GeoJSON = (function() {
     this.elevation    = options.elevation || 0;
     this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
 
-    this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
-    this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
+    this.minZoom = Math.max(parseFloat(options.minZoom || 14.5), APP.minZoom);
+    this.maxZoom = Math.min(parseFloat(options.maxZoom || 20), APP.maxZoom);
     if (this.maxZoom < this.minZoom) {
-      this.maxZoom = this.minZoom;
+      this.minZoom = 14.5;
+      this.maxZoom = 20;
     }
 
     this.items = [];

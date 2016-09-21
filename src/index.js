@@ -24,13 +24,13 @@ var APP, GL; // TODO: make them local references
  * OSMBuildings
  * @constructor
  * @param {Object} [options] - OSMBuildings options
- * @param {Number} [options.minZoom=10] - Minimum allowed zoom
- * @param {Number} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Number} [options.minZoom=10] - Global minimum allowed zoom
+ * @param {Number} [options.maxZoom=20] - Global maximum allowed zoom
  * @param {Object} [options.bounds] - A bounding box to restrict the map to
  * @param {Boolean} [options.state=false] - Store the map state in the URL
  * @param {Boolean} [options.disabled=false] - Disable user input
  * @param {String} [options.attribution] - An attribution string
- * @param {Float} [options.zoom=minZoom] - Initial zoom
+ * @param {Float} [options.zoom=minZoom..maxZoom] - Initial zoom, default is middle between global minZoom and maxZoom
  * @param {Float} [options.rotation=0] - Initial rotation
  * @param {Float} [options.tilt=0] - Initial tilt
  * @param {Object} [options.position] - Initial position
@@ -46,8 +46,6 @@ var APP, GL; // TODO: make them local references
  * @param {Array} [options.effects=[]] - Which effects to enable. The only effect at the moment is 'shadows'
  * @param {Object} [options.style={ color: 'rgb(220, 210, 200)' }] - Sets the default building style
  */
-
-// TODO: check minZoom, maxZoom, attribution for duplicate meaning
 
 var OSMBuildings = function(options) {
   APP = this; // refers to 'this'. Should make other globals obsolete.
@@ -80,16 +78,17 @@ var OSMBuildings = function(options) {
 
   APP.attribution = APP.options.attribution || OSMBuildings.ATTRIBUTION;
 
-  APP.minZoom = parseFloat(APP.options.minZoom) || 10;
-  APP.maxZoom = parseFloat(APP.options.maxZoom) || 20;
+  APP.minZoom = Math.max(parseFloat(APP.options.minZoom), 10);
+  APP.maxZoom = Math.min(parseFloat(APP.options.maxZoom), 20);
   if (APP.maxZoom < APP.minZoom) {
-    APP.maxZoom = APP.minZoom;
+    APP.minZoom = 10;
+    APP.maxZoom = 20;
   }
 
   APP.bounds = APP.options.bounds;
 
   APP.position = APP.options.position || { latitude: 52.520000, longitude: 13.410000 };
-  APP.zoom = APP.options.zoom || APP.minZoom;
+  APP.zoom = APP.options.zoom || APP.minZoom + (APP.maxZoom-APP.minZoom)/2;
   APP.rotation = APP.options.rotation || 0;
   APP.tilt = APP.options.tilt || 0;
 
@@ -299,7 +298,9 @@ OSMBuildings.prototype = {
    * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
-   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
+   * @param {Number} [options.minZoom=14.5] - Minimum zoom level to show this feature, starts from 14.5
+   * @param {Number} [options.maxZoom=maxZoom] - Maximum zoom level to show this feature, defaults to and limited by global maxZoom
+   * @param {Boolean} [options.fadeIn=true] - Fade GeoJSON features; if `false`, then display immediately.
    */
   addGeoJSON: function(url, options) {
     return new mesh.GeoJSON(url, options);
@@ -315,13 +316,14 @@ OSMBuildings.prototype = {
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Number} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
-   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
-   * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
+   * @param {Number} [options.minZoom=14.5] - Minimum zoom level to show features from this layer, starts from 14.5
+   * @param {Number} [options.maxZoom=maxZoom] - Maximum zoom level to show features from this layer, defaults to and limited by global maxZoom
+   * @param {Boolean} [options.fadeIn=true] - Fade GeoJSON features; if `false`, then display immediately.
    */
   addGeoJSONTiles: function(url, options) {
     options = options || {};
-    options.fixedZoom = options.fixedZoom || 14.5;
+    options.fixedZoom = options.fixedZoom || 15;
+    options.minZoom = Math.max(parseFloat(options.minZoom || 14.5), 14.5);
     APP.dataGrid = new Grid(url, data.Tile, options);
     return APP.dataGrid;
   },
@@ -334,9 +336,6 @@ OSMBuildings.prototype = {
    * @param {Number} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
-   * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Number} [options.minZoom] - The minimum zoom level to show features from this layer
-   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
   addMapTiles: function(url, options) {
     APP.basemapGrid = new Grid(url, basemap.Tile, options);
@@ -524,8 +523,10 @@ OSMBuildings.prototype = {
    * @fires OSMBuildings#change
    */
   setZoom: function(zoom, e) {
-    // not clamping anymore. notice zoomlevel but perhaps don't render
     zoom = parseFloat(zoom);
+
+    zoom = Math.max(zoom, APP.minZoom);
+    zoom = Math.min(zoom, APP.maxZoom);
 
     if (APP.zoom !== zoom) {
       APP.zoom = zoom;

@@ -16,23 +16,26 @@ mesh.DebugQuad = (function() {
     this.maxZoom = APP.maxZoom;
   }
 
-
   constructor.prototype = {
 
     updateGeometry: function(v1, v2, v3, v4) {
-      if ( equal3(v1, this.v1) &&
-           equal3(v2, this.v2) &&
-           equal3(v3, this.v3) &&
-           equal3(v4, this.v4))
-         return; //still up-to-date
+      if (
+        equal3(v1, this.v1) &&
+        equal3(v2, this.v2) &&
+        equal3(v3, this.v3) &&
+        equal3(v4, this.v4)
+      ) {
+        return; //still up-to-date
+      }
 
       this.v1 = v1;
       this.v2 = v2;
       this.v3 = v3;
       this.v4 = v4;
       
-      if (this.vertexBuffer)
+      if (this.vertexBuffer) {
         this.vertexBuffer.destroy();
+      }
 
       var vertices = [].concat(v1, v2, v3, v1, v3, v4);
       this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
@@ -47,9 +50,10 @@ mesh.DebugQuad = (function() {
           1,   1,
         0.0,   1]));*/
 
-      if (this.normalBuffer)
+      if (this.normalBuffer) {
         this.normalBuffer.destroy();
-        
+      }
+
       this.normalBuffer = new GLX.Buffer(3, new Float32Array([
         0, 0, 1,
         0, 0, 1,
