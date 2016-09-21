@@ -290,7 +290,7 @@ Events.init = function(container) {
     }
 
     startOffset = getElementOffset(e.target);
-    var pos = getEventPosition(e, offset);
+    var pos = getEventPosition(e, startOffset);
     startX = prevX = pos.x;
     startY = prevY = pos.y;
 
