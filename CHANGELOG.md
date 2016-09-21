@@ -9,6 +9,7 @@
 ## Fixed
 
 - fixed fadeIn option for GeoJSON tiles
+- minZoom/maxZoom behavior fixed
 
 
 # 3.1.0 @ 2016-07-27
