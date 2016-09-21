@@ -6,18 +6,19 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 
   var
     outerPolygon = polygon[0],
-    direction;
+    direction,
+    angle, rad;
 
   if (properties.roofRidgeDirection !== undefined) {
-    var angle = parseFloat(properties.roofRidgeDirection);
+    angle = parseFloat(properties.roofRidgeDirection);
     if (!isNaN(angle)) {
-      var rad = 90+angle*Math.PI/180;
+      rad = 90+angle*Math.PI/180;
       direction = [Math.sin(rad), Math.cos(rad)];
     }
   } else if (properties.roofDirection !== undefined) {
-    var angle = parseFloat(properties.roofDirection);
+    angle = parseFloat(properties.roofDirection);
     if (!isNaN(angle)) {
-      var rad = angle*Math.PI/180;
+      rad = angle*Math.PI/180;
       direction = [Math.sin(rad), Math.cos(rad)];
     }
   } else {
@@ -55,19 +56,21 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
   cap2.center = getSegmentCenter(cap2.segment);
 
   if (offset === 0) {
+    var i;
+
     var ridge = [cap1.center, cap2.center];
 
     var
       maxDistance = 0,
       distances = [];
 
-    for (var i = 0; i < outerPolygon.length; i++) {
+    for (i = 0; i < outerPolygon.length; i++) {
       distances[i] = getDistanceToLine(outerPolygon[i], ridge);
       maxDistance = Math.max(maxDistance, distances[i]);
     }
 
     // modify vertical position of all points
-    for (var i = 0; i < outerPolygon.length; i++) {
+    for (i = 0; i < outerPolygon.length; i++) {
       outerPolygon[i][2] = (1-distances[i]/maxDistance) * dim.roofHeight;
     }
 
@@ -92,7 +95,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
     outerPolygon.splice(cap1.index+1, 0, cap1.center);
     outerPolygon.splice(cap2.index+2, 0, cap2.center);
 
-    for (var i = 0; i < outerPolygon.length-1; i++) {
+    for (i = 0; i < outerPolygon.length-1; i++) {
       split.quad(
         buffers,
         [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ+outerPolygon[i  ][2]],
@@ -107,7 +110,6 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 // // absolute distance of ridge to outline
 // var ridgeOffset = vec2.scale(vec2.sub(c2, c1), offset);
 // return [vec2.add(c1, ridgeOffset), vec2.sub(c2, ridgeOffset)];
-
 }
 
 function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor) {
@@ -115,18 +117,19 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
   var
     i, il,
     outerPolygon = polygon[0],
-    direction;
+    direction,
+    angle, rad;
 
   if (properties.roofSlopeDirection !== undefined) {
-    var angle = parseFloat(properties.roofSlopeDirection);
+    angle = parseFloat(properties.roofSlopeDirection);
     if (!isNaN(angle)) {
-      var rad = angle*Math.PI/180;
+      rad = angle*Math.PI/180;
       direction = [Math.sin(rad), Math.cos(rad)];
     }
   } else if (properties.roofDirection !== undefined) {
-    var angle = parseFloat(properties.roofDirection);
+    angle = parseFloat(properties.roofDirection);
     if (!isNaN(angle)) {
-      var rad = angle*Math.PI/180;
+      rad = angle*Math.PI/180;
       direction = [Math.sin(rad), Math.cos(rad)];
     }
   } else {
@@ -159,16 +162,15 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
     return;
   }
 
-  var
-    maxDistance = 0,
-    distances = [];
-  for (var i = 0; i < outerPolygon.length; i++) {
+  maxDistance = 0;
+  var distances = [];
+  for (i = 0; i < outerPolygon.length; i++) {
     distances[i] = getDistanceToLine(outerPolygon[i], ridge);
     maxDistance = Math.max(maxDistance, distances[i]);
   }
 
   // modify vertical position of all points
-  for (var i = 0; i < outerPolygon.length; i++) {
+  for (i = 0; i < outerPolygon.length; i++) {
     outerPolygon[i][2] = (1-distances[i]/maxDistance) * dim.roofHeight;
   }
 
@@ -178,7 +180,7 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
 
   // create extra wall faces
 
-  for (var i = 0; i < outerPolygon.length-1; i++) {
+  for (i = 0; i < outerPolygon.length-1; i++) {
     split.quad(
       buffers,
       [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ+outerPolygon[i  ][2]],

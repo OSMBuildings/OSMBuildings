@@ -1,1439 +1,4 @@
-(function() {var Triangulate = (function() {
-var w3cColors = {
-  aliceblue: '#f0f8ff',
-  antiquewhite: '#faebd7',
-  aqua: '#00ffff',
-  aquamarine: '#7fffd4',
-  azure: '#f0ffff',
-  beige: '#f5f5dc',
-  bisque: '#ffe4c4',
-  black: '#000000',
-  blanchedalmond: '#ffebcd',
-  blue: '#0000ff',
-  blueviolet: '#8a2be2',
-  brown: '#a52a2a',
-  burlywood: '#deb887',
-  cadetblue: '#5f9ea0',
-  chartreuse: '#7fff00',
-  chocolate: '#d2691e',
-  coral: '#ff7f50',
-  cornflowerblue: '#6495ed',
-  cornsilk: '#fff8dc',
-  crimson: '#dc143c',
-  cyan: '#00ffff',
-  darkblue: '#00008b',
-  darkcyan: '#008b8b',
-  darkgoldenrod: '#b8860b',
-  darkgray: '#a9a9a9',
-  darkgrey: '#a9a9a9',
-  darkgreen: '#006400',
-  darkkhaki: '#bdb76b',
-  darkmagenta: '#8b008b',
-  darkolivegreen: '#556b2f',
-  darkorange: '#ff8c00',
-  darkorchid: '#9932cc',
-  darkred: '#8b0000',
-  darksalmon: '#e9967a',
-  darkseagreen: '#8fbc8f',
-  darkslateblue: '#483d8b',
-  darkslategray: '#2f4f4f',
-  darkslategrey: '#2f4f4f',
-  darkturquoise: '#00ced1',
-  darkviolet: '#9400d3',
-  deeppink: '#ff1493',
-  deepskyblue: '#00bfff',
-  dimgray: '#696969',
-  dimgrey: '#696969',
-  dodgerblue: '#1e90ff',
-  firebrick: '#b22222',
-  floralwhite: '#fffaf0',
-  forestgreen: '#228b22',
-  fuchsia: '#ff00ff',
-  gainsboro: '#dcdcdc',
-  ghostwhite: '#f8f8ff',
-  gold: '#ffd700',
-  goldenrod: '#daa520',
-  gray: '#808080',
-  grey: '#808080',
-  green: '#008000',
-  greenyellow: '#adff2f',
-  honeydew: '#f0fff0',
-  hotpink: '#ff69b4',
-  indianred: '#cd5c5c',
-  indigo: '#4b0082',
-  ivory: '#fffff0',
-  khaki: '#f0e68c',
-  lavender: '#e6e6fa',
-  lavenderblush: '#fff0f5',
-  lawngreen: '#7cfc00',
-  lemonchiffon: '#fffacd',
-  lightblue: '#add8e6',
-  lightcoral: '#f08080',
-  lightcyan: '#e0ffff',
-  lightgoldenrodyellow: '#fafad2',
-  lightgray: '#d3d3d3',
-  lightgrey: '#d3d3d3',
-  lightgreen: '#90ee90',
-  lightpink: '#ffb6c1',
-  lightsalmon: '#ffa07a',
-  lightseagreen: '#20b2aa',
-  lightskyblue: '#87cefa',
-  lightslategray: '#778899',
-  lightslategrey: '#778899',
-  lightsteelblue: '#b0c4de',
-  lightyellow: '#ffffe0',
-  lime: '#00ff00',
-  limegreen: '#32cd32',
-  linen: '#faf0e6',
-  magenta: '#ff00ff',
-  maroon: '#800000',
-  mediumaquamarine: '#66cdaa',
-  mediumblue: '#0000cd',
-  mediumorchid: '#ba55d3',
-  mediumpurple: '#9370db',
-  mediumseagreen: '#3cb371',
-  mediumslateblue: '#7b68ee',
-  mediumspringgreen: '#00fa9a',
-  mediumturquoise: '#48d1cc',
-  mediumvioletred: '#c71585',
-  midnightblue: '#191970',
-  mintcream: '#f5fffa',
-  mistyrose: '#ffe4e1',
-  moccasin: '#ffe4b5',
-  navajowhite: '#ffdead',
-  navy: '#000080',
-  oldlace: '#fdf5e6',
-  olive: '#808000',
-  olivedrab: '#6b8e23',
-  orange: '#ffa500',
-  orangered: '#ff4500',
-  orchid: '#da70d6',
-  palegoldenrod: '#eee8aa',
-  palegreen: '#98fb98',
-  paleturquoise: '#afeeee',
-  palevioletred: '#db7093',
-  papayawhip: '#ffefd5',
-  peachpuff: '#ffdab9',
-  peru: '#cd853f',
-  pink: '#ffc0cb',
-  plum: '#dda0dd',
-  powderblue: '#b0e0e6',
-  purple: '#800080',
-  rebeccapurple: '#663399',
-  red: '#ff0000',
-  rosybrown: '#bc8f8f',
-  royalblue: '#4169e1',
-  saddlebrown: '#8b4513',
-  salmon: '#fa8072',
-  sandybrown: '#f4a460',
-  seagreen: '#2e8b57',
-  seashell: '#fff5ee',
-  sienna: '#a0522d',
-  silver: '#c0c0c0',
-  skyblue: '#87ceeb',
-  slateblue: '#6a5acd',
-  slategray: '#708090',
-  slategrey: '#708090',
-  snow: '#fffafa',
-  springgreen: '#00ff7f',
-  steelblue: '#4682b4',
-  tan: '#d2b48c',
-  teal: '#008080',
-  thistle: '#d8bfd8',
-  tomato: '#ff6347',
-  turquoise: '#40e0d0',
-  violet: '#ee82ee',
-  wheat: '#f5deb3',
-  white: '#ffffff',
-  whitesmoke: '#f5f5f5',
-  yellow: '#ffff00',
-  yellowgreen: '#9acd32'
-};
-
-function parseColor(str) {
-  str = str || '';
-  str = str.toLowerCase();
-  str = w3cColors[str] || str;
-  var m;
-  if ((m = str.match(/^#?(\w{2})(\w{2})(\w{2})$/))) {
-    return [
-      parseInt(m[1], 16)/255,
-      parseInt(m[2], 16)/255,
-      parseInt(m[3], 16)/255
-    ];
-  }
-
-  if ((m = str.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)(\D+([\d.]+))?\)/))) {
-    return [
-      parseInt(m[1], 10)/255,
-      parseInt(m[2], 10)/255,
-      parseInt(m[3], 10)/255
-    ];
-  }
-}
-
-
-var earcut = (function() {
-
-  function earcut(data, holeIndices, dim) {
-
-    dim = dim || 2;
-
-    var hasHoles = holeIndices && holeIndices.length,
-      outerLen = hasHoles ? holeIndices[0]*dim : data.length,
-      outerNode = linkedList(data, 0, outerLen, dim, true),
-      triangles = [];
-
-    if (!outerNode) return triangles;
-
-    var minX, minY, maxX, maxY, x, y, size;
-
-    if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
-
-    // if the shape is not too simple, we'll use z-order curve hash later; calculate polygon bbox
-    if (data.length>80*dim) {
-      minX = maxX = data[0];
-      minY = maxY = data[1];
-
-      for (var i = dim; i<outerLen; i += dim) {
-        x = data[i];
-        y = data[i + 1];
-        if (x<minX) minX = x;
-        if (y<minY) minY = y;
-        if (x>maxX) maxX = x;
-        if (y>maxY) maxY = y;
-      }
-
-      // minX, minY and size are later used to transform coords into integers for z-order calculation
-      size = Math.max(maxX - minX, maxY - minY);
-    }
-
-    earcutLinked(outerNode, triangles, dim, minX, minY, size);
-
-    return triangles;
-  }
-
-// create a circular doubly linked list from polygon points in the specified winding order
-  function linkedList(data, start, end, dim, clockwise) {
-    var i, last;
-
-    if (clockwise === (signedArea(data, start, end, dim)>0)) {
-      for (i = start; i<end; i += dim) last = insertNode(i, data[i], data[i + 1], last);
-    } else {
-      for (i = end - dim; i>=start; i -= dim) last = insertNode(i, data[i], data[i + 1], last);
-    }
-
-    if (last && equals(last, last.next)) {
-      removeNode(last);
-      last = last.next;
-    }
-
-    return last;
-  }
-
-// eliminate colinear or duplicate points
-  function filterPoints(start, end) {
-    if (!start) return start;
-    if (!end) end = start;
-
-    var p = start,
-      again;
-    do {
-      again = false;
-
-      if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
-        removeNode(p);
-        p = end = p.prev;
-        if (p === p.next) return null;
-        again = true;
-
-      } else {
-        p = p.next;
-      }
-    } while (again || p !== end);
-
-    return end;
-  }
-
-// main ear slicing loop which triangulates a polygon (given as a linked list)
-  function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
-    if (!ear) return;
-
-    // interlink polygon nodes in z-order
-    if (!pass && size) indexCurve(ear, minX, minY, size);
-
-    var stop = ear,
-      prev, next;
-
-    // iterate through ears, slicing them one by one
-    while (ear.prev !== ear.next) {
-      prev = ear.prev;
-      next = ear.next;
-
-      if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
-        // cut off the triangle
-        triangles.push(prev.i/dim);
-        triangles.push(ear.i/dim);
-        triangles.push(next.i/dim);
-
-        removeNode(ear);
-
-        // skipping the next vertice leads to less sliver triangles
-        ear = next.next;
-        stop = next.next;
-
-        continue;
-      }
-
-      ear = next;
-
-      // if we looped through the whole remaining polygon and can't find any more ears
-      if (ear === stop) {
-        // try filtering points and slicing again
-        if (!pass) {
-          earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
-
-          // if this didn't work, try curing all small self-intersections locally
-        } else if (pass === 1) {
-          ear = cureLocalIntersections(ear, triangles, dim);
-          earcutLinked(ear, triangles, dim, minX, minY, size, 2);
-
-          // as a last resort, try splitting the remaining polygon into two
-        } else if (pass === 2) {
-          splitEarcut(ear, triangles, dim, minX, minY, size);
-        }
-
-        break;
-      }
-    }
-  }
-
-// check whether a polygon node forms a valid ear with adjacent nodes
-  function isEar(ear) {
-    var a = ear.prev,
-      b = ear,
-      c = ear.next;
-
-    if (area(a, b, c)>=0) return false; // reflex, can't be an ear
-
-    // now make sure we don't have other points inside the potential ear
-    var p = ear.next.next;
-
-    while (p !== ear.prev) {
-      if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
-        area(p.prev, p, p.next)>=0) return false;
-      p = p.next;
-    }
-
-    return true;
-  }
-
-  function isEarHashed(ear, minX, minY, size) {
-    var a = ear.prev,
-      b = ear,
-      c = ear.next;
-
-    if (area(a, b, c)>=0) return false; // reflex, can't be an ear
-
-    // triangle bbox; min & max are calculated like this for speed
-    var minTX = a.x<b.x ? (a.x<c.x ? a.x : c.x) : (b.x<c.x ? b.x : c.x),
-      minTY = a.y<b.y ? (a.y<c.y ? a.y : c.y) : (b.y<c.y ? b.y : c.y),
-      maxTX = a.x>b.x ? (a.x>c.x ? a.x : c.x) : (b.x>c.x ? b.x : c.x),
-      maxTY = a.y>b.y ? (a.y>c.y ? a.y : c.y) : (b.y>c.y ? b.y : c.y);
-
-    // z-order range for the current triangle bbox;
-    var minZ = zOrder(minTX, minTY, minX, minY, size),
-      maxZ = zOrder(maxTX, maxTY, minX, minY, size);
-
-    // first look for points inside the triangle in increasing z-order
-    var p = ear.nextZ;
-
-    while (p && p.z<=maxZ) {
-      if (p !== ear.prev && p !== ear.next &&
-        pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
-        area(p.prev, p, p.next)>=0) return false;
-      p = p.nextZ;
-    }
-
-    // then look for points in decreasing z-order
-    p = ear.prevZ;
-
-    while (p && p.z>=minZ) {
-      if (p !== ear.prev && p !== ear.next &&
-        pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
-        area(p.prev, p, p.next)>=0) return false;
-      p = p.prevZ;
-    }
-
-    return true;
-  }
-
-// go through all polygon nodes and cure small local self-intersections
-  function cureLocalIntersections(start, triangles, dim) {
-    var p = start;
-    do {
-      var a = p.prev,
-        b = p.next.next;
-
-      if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
-
-        triangles.push(a.i/dim);
-        triangles.push(p.i/dim);
-        triangles.push(b.i/dim);
-
-        // remove two nodes involved
-        removeNode(p);
-        removeNode(p.next);
-
-        p = start = b;
-      }
-      p = p.next;
-    } while (p !== start);
-
-    return p;
-  }
-
-// try splitting polygon into two and triangulate them independently
-  function splitEarcut(start, triangles, dim, minX, minY, size) {
-    // look for a valid diagonal that divides the polygon into two
-    var a = start;
-    do {
-      var b = a.next.next;
-      while (b !== a.prev) {
-        if (a.i !== b.i && isValidDiagonal(a, b)) {
-          // split the polygon in two by the diagonal
-          var c = splitPolygon(a, b);
-
-          // filter colinear points around the cuts
-          a = filterPoints(a, a.next);
-          c = filterPoints(c, c.next);
-
-          // run earcut on each half
-          earcutLinked(a, triangles, dim, minX, minY, size);
-          earcutLinked(c, triangles, dim, minX, minY, size);
-          return;
-        }
-        b = b.next;
-      }
-      a = a.next;
-    } while (a !== start);
-  }
-
-// link every hole into the outer loop, producing a single-ring polygon without holes
-  function eliminateHoles(data, holeIndices, outerNode, dim) {
-    var queue = [],
-      i, len, start, end, list;
-
-    for (i = 0, len = holeIndices.length; i<len; i++) {
-      start = holeIndices[i]*dim;
-      end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
-      list = linkedList(data, start, end, dim, false);
-      if (list === list.next) list.steiner = true;
-      queue.push(getLeftmost(list));
-    }
-
-    queue.sort(compareX);
-
-    // process holes from left to right
-    for (i = 0; i<queue.length; i++) {
-      eliminateHole(queue[i], outerNode);
-      outerNode = filterPoints(outerNode, outerNode.next);
-    }
-
-    return outerNode;
-  }
-
-  function compareX(a, b) {
-    return a.x - b.x;
-  }
-
-// find a bridge between vertices that connects hole with an outer ring and and link it
-  function eliminateHole(hole, outerNode) {
-    outerNode = findHoleBridge(hole, outerNode);
-    if (outerNode) {
-      var b = splitPolygon(outerNode, hole);
-      filterPoints(b, b.next);
-    }
-  }
-
-// David Eberly's algorithm for finding a bridge between hole and outer polygon
-  function findHoleBridge(hole, outerNode) {
-    var p = outerNode,
-      hx = hole.x,
-      hy = hole.y,
-      qx = -Infinity,
-      m;
-
-    // find a segment intersected by a ray from the hole's leftmost point to the left;
-    // segment's endpoint with lesser x will be potential connection point
-    do {
-      if (hy<=p.y && hy>=p.next.y) {
-        var x = p.x + (hy - p.y)*(p.next.x - p.x)/(p.next.y - p.y);
-        if (x<=hx && x>qx) {
-          qx = x;
-          if (x === hx) {
-            if (hy === p.y) return p;
-            if (hy === p.next.y) return p.next;
-          }
-          m = p.x<p.next.x ? p : p.next;
-        }
-      }
-      p = p.next;
-    } while (p !== outerNode);
-
-    if (!m) return null;
-
-    if (hx === qx) return m.prev; // hole touches outer segment; pick lower endpoint
-
-    // look for points inside the triangle of hole point, segment intersection and endpoint;
-    // if there are no points found, we have a valid connection;
-    // otherwise choose the point of the minimum angle with the ray as connection point
-
-    var stop = m,
-      mx = m.x,
-      my = m.y,
-      tanMin = Infinity,
-      tan;
-
-    p = m.next;
-
-    while (p !== stop) {
-      if (hx>=p.x && p.x>=mx &&
-        pointInTriangle(hy<my ? hx : qx, hy, mx, my, hy<my ? qx : hx, hy, p.x, p.y)) {
-
-        tan = Math.abs(hy - p.y)/(hx - p.x); // tangential
-
-        if ((tan<tanMin || (tan === tanMin && p.x>m.x)) && locallyInside(p, hole)) {
-          m = p;
-          tanMin = tan;
-        }
-      }
-
-      p = p.next;
-    }
-
-    return m;
-  }
-
-// interlink polygon nodes in z-order
-  function indexCurve(start, minX, minY, size) {
-    var p = start;
-    do {
-      if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
-      p.prevZ = p.prev;
-      p.nextZ = p.next;
-      p = p.next;
-    } while (p !== start);
-
-    p.prevZ.nextZ = null;
-    p.prevZ = null;
-
-    sortLinked(p);
-  }
-
-// Simon Tatham's linked list merge sort algorithm
-// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
-  function sortLinked(list) {
-    var i, p, q, e, tail, numMerges, pSize, qSize,
-      inSize = 1;
-
-    do {
-      p = list;
-      list = null;
-      tail = null;
-      numMerges = 0;
-
-      while (p) {
-        numMerges++;
-        q = p;
-        pSize = 0;
-        for (i = 0; i<inSize; i++) {
-          pSize++;
-          q = q.nextZ;
-          if (!q) break;
-        }
-
-        qSize = inSize;
-
-        while (pSize>0 || (qSize>0 && q)) {
-
-          if (pSize === 0) {
-            e = q;
-            q = q.nextZ;
-            qSize--;
-          } else if (qSize === 0 || !q) {
-            e = p;
-            p = p.nextZ;
-            pSize--;
-          } else if (p.z<=q.z) {
-            e = p;
-            p = p.nextZ;
-            pSize--;
-          } else {
-            e = q;
-            q = q.nextZ;
-            qSize--;
-          }
-
-          if (tail) tail.nextZ = e;
-          else list = e;
-
-          e.prevZ = tail;
-          tail = e;
-        }
-
-        p = q;
-      }
-
-      tail.nextZ = null;
-      inSize *= 2;
-
-    } while (numMerges>1);
-
-    return list;
-  }
-
-// z-order of a point given coords and size of the data bounding box
-  function zOrder(x, y, minX, minY, size) {
-    // coords are transformed into non-negative 15-bit integer range
-    x = 32767*(x - minX)/size;
-    y = 32767*(y - minY)/size;
-
-    x = (x | (x<<8)) & 0x00FF00FF;
-    x = (x | (x<<4)) & 0x0F0F0F0F;
-    x = (x | (x<<2)) & 0x33333333;
-    x = (x | (x<<1)) & 0x55555555;
-
-    y = (y | (y<<8)) & 0x00FF00FF;
-    y = (y | (y<<4)) & 0x0F0F0F0F;
-    y = (y | (y<<2)) & 0x33333333;
-    y = (y | (y<<1)) & 0x55555555;
-
-    return x | (y<<1);
-  }
-
-// find the leftmost node of a polygon ring
-  function getLeftmost(start) {
-    var p = start,
-      leftmost = start;
-    do {
-      if (p.x<leftmost.x) leftmost = p;
-      p = p.next;
-    } while (p !== start);
-
-    return leftmost;
-  }
-
-// check if a point lies within a convex triangle
-  function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
-    return (cx - px)*(ay - py) - (ax - px)*(cy - py)>=0 &&
-      (ax - px)*(by - py) - (bx - px)*(ay - py)>=0 &&
-      (bx - px)*(cy - py) - (cx - px)*(by - py)>=0;
-  }
-
-// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
-  function isValidDiagonal(a, b) {
-    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
-      locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
-  }
-
-// signed area of a triangle
-  function area(p, q, r) {
-    return (q.y - p.y)*(r.x - q.x) - (q.x - p.x)*(r.y - q.y);
-  }
-
-// check if two points are equal
-  function equals(p1, p2) {
-    return p1.x === p2.x && p1.y === p2.y;
-  }
-
-// check if two segments intersect
-  function intersects(p1, q1, p2, q2) {
-    if ((equals(p1, q1) && equals(p2, q2)) ||
-      (equals(p1, q2) && equals(p2, q1))) return true;
-    return area(p1, q1, p2)>0 !== area(p1, q1, q2)>0 &&
-      area(p2, q2, p1)>0 !== area(p2, q2, q1)>0;
-  }
-
-// check if a polygon diagonal intersects any polygon segments
-  function intersectsPolygon(a, b) {
-    var p = a;
-    do {
-      if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
-        intersects(p, p.next, a, b)) return true;
-      p = p.next;
-    } while (p !== a);
-
-    return false;
-  }
-
-// check if a polygon diagonal is locally inside the polygon
-  function locallyInside(a, b) {
-    return area(a.prev, a, a.next)<0 ?
-    area(a, b, a.next)>=0 && area(a, a.prev, b)>=0 :
-    area(a, b, a.prev)<0 || area(a, a.next, b)<0;
-  }
-
-// check if the middle point of a polygon diagonal is inside the polygon
-  function middleInside(a, b) {
-    var p = a,
-      inside = false,
-      px = (a.x + b.x)/2,
-      py = (a.y + b.y)/2;
-    do {
-      if (((p.y>py) !== (p.next.y>py)) && (px<(p.next.x - p.x)*(py - p.y)/(p.next.y - p.y) + p.x))
-        inside = !inside;
-      p = p.next;
-    } while (p !== a);
-
-    return inside;
-  }
-
-// link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
-// if one belongs to the outer ring and another to a hole, it merges it into a single ring
-  function splitPolygon(a, b) {
-    var a2 = new Node(a.i, a.x, a.y),
-      b2 = new Node(b.i, b.x, b.y),
-      an = a.next,
-      bp = b.prev;
-
-    a.next = b;
-    b.prev = a;
-
-    a2.next = an;
-    an.prev = a2;
-
-    b2.next = a2;
-    a2.prev = b2;
-
-    bp.next = b2;
-    b2.prev = bp;
-
-    return b2;
-  }
-
-// create a node and optionally link it with previous one (in a circular doubly linked list)
-  function insertNode(i, x, y, last) {
-    var p = new Node(i, x, y);
-
-    if (!last) {
-      p.prev = p;
-      p.next = p;
-
-    } else {
-      p.next = last.next;
-      p.prev = last;
-      last.next.prev = p;
-      last.next = p;
-    }
-    return p;
-  }
-
-  function removeNode(p) {
-    p.next.prev = p.prev;
-    p.prev.next = p.next;
-
-    if (p.prevZ) p.prevZ.nextZ = p.nextZ;
-    if (p.nextZ) p.nextZ.prevZ = p.prevZ;
-  }
-
-  function Node(i, x, y) {
-    // vertice index in coordinates array
-    this.i = i;
-
-    // vertex coordinates
-    this.x = x;
-    this.y = y;
-
-    // previous and next vertice nodes in a polygon ring
-    this.prev = null;
-    this.next = null;
-
-    // z-order curve value
-    this.z = null;
-
-    // previous and next nodes in z-order
-    this.prevZ = null;
-    this.nextZ = null;
-
-    // indicates whether this is a steiner point
-    this.steiner = false;
-  }
-
-// return a percentage difference between the polygon area and its triangulation area;
-// used to verify correctness of triangulation
-  earcut.deviation = function(data, holeIndices, dim, triangles) {
-    var hasHoles = holeIndices && holeIndices.length;
-    var outerLen = hasHoles ? holeIndices[0]*dim : data.length;
-    var i, len;
-
-    var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
-    if (hasHoles) {
-      for (i = 0, len = holeIndices.length; i<len; i++) {
-        var start = holeIndices[i]*dim;
-        var end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
-        polygonArea -= Math.abs(signedArea(data, start, end, dim));
-      }
-    }
-
-    var trianglesArea = 0;
-    for (i = 0, len = triangles.length; i < len; i += 3) {
-      var a = triangles[i]*dim;
-      var b = triangles[i + 1]*dim;
-      var c = triangles[i + 2]*dim;
-      trianglesArea += Math.abs(
-        (data[a] - data[c])*(data[b + 1] - data[a + 1]) -
-        (data[a] - data[b])*(data[c + 1] - data[a + 1]));
-    }
-
-    return polygonArea === 0 && trianglesArea === 0 ? 0 :
-      Math.abs((trianglesArea - polygonArea)/polygonArea);
-  };
-
-  function signedArea(data, start, end, dim) {
-    var sum = 0;
-    for (var i = start, j = end - dim; i<end; i += dim) {
-      sum += (data[j] - data[i])*(data[i + 1] + data[j + 1]);
-      j = i;
-    }
-    return sum;
-  }
-
-// turn a polygon in a multi-dimensional array form (e.g. as in GeoJSON) into a form Earcut accepts
-  earcut.flatten = function(data) {
-    var dim = data[0][0].length,
-      result = { vertices: [], holes: [], dimensions: dim },
-      holeIndex = 0;
-
-    for (var i = 0; i<data.length; i++) {
-      for (var j = 0; j<data[i].length; j++) {
-        for (var d = 0; d<dim; d++) result.vertices.push(data[i][j][d]);
-      }
-      if (i>0) {
-        holeIndex += data[i - 1].length;
-        result.holes.push(holeIndex);
-      }
-    }
-    return result;
-  };
-
-  return earcut;
-
-}(this));
-
-
-var vec2 = {
-  len: function(a) {
-    return Math.sqrt(a[0]*a[0] + a[1]*a[1]);
-  },
-
-  sub: function(a, b) {
-    return [a[0]-b[0], a[1]-b[1]];
-  }
-};
-
-
-var vec3 = {
-  len: function(a) {
-    return Math.sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
-  },
-
-  sub: function(a, b) {
-    return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
-  },
-
-  unit: function(a) {
-    var l = this.len(a);
-    return [a[0]/l, a[1]/l, a[2]/l];
-  },
-
-  normal: function(a, b, c) {
-    var d1 = this.sub(a, b);
-    var d2 = this.sub(b, c);
-    // normalized cross product of d1 and d2
-    return this.unit([
-      d1[1]*d2[2] - d1[2]*d2[1],
-      d1[2]*d2[0] - d1[0]*d2[2],
-      d1[0]*d2[1] - d1[1]*d2[0]
-    ]);
-  }
-};
-
-
-var split = {
-
-  NUM_Y_SEGMENTS: 24,
-  NUM_X_SEGMENTS: 32,
-
-  //function isVertical(a, b, c) {
-  //  return Math.abs(normal(a, b, c)[2]) < 1/5000;
-  //}
-
-  quad: function(data, a, b, c, d, color) {
-    this.triangle(data, a, b, c, color);
-    this.triangle(data, c, d, a, color);
-  },
-
-  triangle: function(data, a, b, c, color) {
-    var n = vec3.normal(a, b, c);
-    [].push.apply(data.vertices, [].concat(a, c, b));
-    [].push.apply(data.normals,  [].concat(n, n, n));
-    [].push.apply(data.colors,   [].concat(color, color, color));
-    data.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  },
-
-  circle: function(data, center, radius, Z, color) {
-    Z = Z || 0;
-    var u, v;
-    for (var i = 0; i < this.NUM_X_SEGMENTS; i++) {
-      u = i/this.NUM_X_SEGMENTS;
-      v = (i+1)/this.NUM_X_SEGMENTS;
-      this.triangle(
-        data,
-        [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), Z ],
-        [ center[0],                                  center[1],                                  Z ],
-        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), Z ],
-        color
-      );
-    }
-  },
-
-  polygon: function(data, rings, Z, color) {
-    Z = Z || 0;
-    // flatten data
-    var
-      inVertices = [], inHoleIndex = [],
-      index = 0,
-      i, il;
-    for (i = 0, il = rings.length; i < il; i++) {
-      for (var j = 0; j < rings[i].length; j++) {
-        inVertices.push(rings[i][j][0], rings[i][j][1]);
-      }
-      if (i) {
-        index += rings[i - 1].length;
-        inHoleIndex.push(index);
-      }
-    }
-
-    var vertices = earcut(inVertices, inHoleIndex, 2);
-
-    for (i = 0, il = vertices.length-2; i < il; i+=3) {
-      this.triangle(
-        data,
-        [ inVertices[ vertices[i  ]*2 ], inVertices[ vertices[i  ]*2+1 ], Z ],
-        [ inVertices[ vertices[i+1]*2 ], inVertices[ vertices[i+1]*2+1 ], Z ],
-        [ inVertices[ vertices[i+2]*2 ], inVertices[ vertices[i+2]*2+1 ], Z ],
-        color
-      );
-    }
-  },
-
-  //polygon3d: function(data, rings, color) {
-  //  var ring = rings[0];
-  //  var ringLength = ring.length;
-  //  var vertices, t, tl;
-  //
-////  { r:255, g:0, b:0 }
-//
-  //  if (ringLength <= 4) { // 3: a triangle
-  //    this.triangle(
-  //      data,
-  //      ring[0],
-  //      ring[2],
-  //      ring[1], color
-  //    );
-  //
-  //    if (ringLength === 4) { // 4: a quad (2 triangles)
-  //      this.triangle(
-  //        data,
-  //        ring[0],
-  //        ring[3],
-  //        ring[2], color
-  //      );
-  //    }
-//      return;
-  //  }
-  //
-  //  if (isVertical(ring[0], ring[1], ring[2])) {
-  //    for (var i = 0, il = rings[0].length; i < il; i++) {
-  //      rings[0][i] = [
-  //        rings[0][i][2],
-  //        rings[0][i][1],
-  //        rings[0][i][0]
-  //      ];
-  //    }
-  //
-  //    vertices = earcut(rings);
-  //    for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
-  //      this.triangle(
-  //        data,
-  //        [ vertices[t  ][2], vertices[t  ][1], vertices[t  ][0] ],
-  //        [ vertices[t+1][2], vertices[t+1][1], vertices[t+1][0] ],
-  //        [ vertices[t+2][2], vertices[t+2][1], vertices[t+2][0] ], color
-  //      );
-  //    }
-//      return;
-  //  }
-  //
-  //  vertices = earcut(rings);
-  //  for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
-  //    this.triangle(
-  //      data,
-  //      [ vertices[t  ][0], vertices[t  ][1], vertices[t  ][2] ],
-  //      [ vertices[t+1][0], vertices[t+1][1], vertices[t+1][2] ],
-  //      [ vertices[t+2][0], vertices[t+2][1], vertices[t+2][2] ], color
-  //    );
-  //  }
-  //},
-
-  cube: function(data, sizeX, sizeY, sizeZ, X, Y, Z, color) {
-    X = X || 0;
-    Y = Y || 0;
-    Z = Z || 0;
-
-    var a = [X,       Y,       Z];
-    var b = [X+sizeX, Y,       Z];
-    var c = [X+sizeX, Y+sizeY, Z];
-    var d = [X,       Y+sizeY, Z];
-
-    var A = [X,       Y,       Z+sizeZ];
-    var B = [X+sizeX, Y,       Z+sizeZ];
-    var C = [X+sizeX, Y+sizeY, Z+sizeZ];
-    var D = [X,       Y+sizeY, Z+sizeZ];
-
-    this.quad(data, b, a, d, c, color);
-    this.quad(data, A, B, C, D, color);
-    this.quad(data, a, b, B, A, color);
-    this.quad(data, b, c, C, B, color);
-    this.quad(data, c, d, D, C, color);
-    this.quad(data, d, a, A, D, color);
-  },
-
-  cylinder: function(data, center, radius1, radius2, height, Z, color) {
-    Z = Z || 0;
-    var
-      currAngle, nextAngle,
-      currSin, currCos,
-      nextSin, nextCos,
-      num = this.NUM_X_SEGMENTS,
-      doublePI = Math.PI*2;
-
-    for (var i = 0; i < num; i++) {
-      currAngle = ( i   /num) * doublePI;
-      nextAngle = ((i+1)/num) * doublePI;
-
-      currSin = Math.sin(currAngle);
-      currCos = Math.cos(currAngle);
-
-      nextSin = Math.sin(nextAngle);
-      nextCos = Math.cos(nextAngle);
-
-      this.triangle(
-        data,
-        [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ],
-        [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
-        [ center[0] + radius1*nextSin, center[1] + radius1*nextCos, Z ],
-        color
-      );
-
-      if (radius2 !== 0) {
-        this.triangle(
-          data,
-          [ center[0] + radius2*currSin, center[1] + radius2*currCos, Z+height ],
-          [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, Z+height ],
-          [ center[0] + radius1*currSin, center[1] + radius1*currCos, Z ],
-          color
-        );
-      }
-    }
-  },
-
-  dome: function(data, center, radius, height, Z, color) {
-    Z = Z || 0;
-    var
-      currAngle, nextAngle,
-      currSin, currCos,
-      nextSin, nextCos,
-      currRadius, nextRadius,
-      nextHeight, nextZ,
-      num = this.NUM_Y_SEGMENTS/2,
-      halfPI = Math.PI/2;
-
-    for (var i = 0; i < num; i++) {
-      currAngle = ( i   /num) * halfPI - halfPI;
-      nextAngle = ((i+1)/num) * halfPI - halfPI;
-
-      currSin = Math.sin(currAngle);
-      currCos = Math.cos(currAngle);
-
-      nextSin = Math.sin(nextAngle);
-      nextCos = Math.cos(nextAngle);
-
-      currRadius = currCos*radius;
-      nextRadius = nextCos*radius;
-
-      nextHeight = (nextSin-currSin)*height;
-      nextZ = Z - nextSin*height;
-
-      this.cylinder(data, center, nextRadius, currRadius, nextHeight, nextZ, color);
-    }
-  },
-
-  // TODO
-  sphere: function(data, center, radius, height, Z, color) {
-    Z = Z || 0;
-    return this.cylinder(data, center, radius, radius, height, Z, color);
-  },
-
-  pyramid: function(data, polygon, center, height, Z, color) {
-    Z = Z || 0;
-    polygon = polygon[0];
-    for (var i = 0, il = polygon.length-1; i < il; i++) {
-      this.triangle(
-        data,
-        [ polygon[i  ][0], polygon[i  ][1], Z ],
-        [ polygon[i+1][0], polygon[i+1][1], Z ],
-        [ center[0], center[1], Z+height ],
-        color
-      );
-    }
-  },
-
-  extrusion: function(data, polygon, height, Z, color, tx) {
-    Z = Z || 0;
-    var
-      ring, last, a, b,
-      L,
-      v0, v1, v2, v3, n,
-      tx1, tx2,
-      ty1 = tx[2]*height, ty2 = tx[3]*height;
-
-    for (var i = 0, il = polygon.length; i < il; i++) {
-      ring = polygon[i];
-      last = ring.length-1;
-
-      if (ring[0][0] !== ring[last][0] || ring[0][1] !== ring[last][1]) {
-        ring.push(ring[0]);
-        last++;
-      }
-
-      for (var r = 0; r < last; r++) {
-        a = ring[r];
-        b = ring[r+1];
-        L = vec2.len(vec2.sub(a, b));
-
-        tx1 = (tx[0]*L) <<0;
-        tx2 = (tx[1]*L) <<0;
-
-        v0 = [ a[0], a[1], Z];
-        v1 = [ b[0], b[1], Z];
-        v2 = [ b[0], b[1], Z+height];
-        v3 = [ a[0], a[1], Z+height];
-
-        n = vec3.normal(v0, v1, v2);
-        [].push.apply(data.vertices, [].concat(v0, v2, v1, v0, v3, v2));
-        [].push.apply(data.normals,  [].concat(n, n, n, n, n, n));
-        [].push.apply(data.colors,   [].concat(color, color, color, color, color, color));
-
-        data.texCoords.push(
-          tx1, ty2,
-          tx2, ty1,
-          tx2, ty2,
-          tx1, ty2,
-          tx1, ty1,
-          tx2, ty1
-        );
-      }
-    }
-  }
-};
-
-
-var Triangulate = {};
-
-(function() {
-
-  //var EARTH_RADIUS_IN_METERS = 6378137;
-  //var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
-  //var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
-
-  var METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
-
-  var DEFAULT_HEIGHT = 10;
-  var DEFAULT_ROOF_HEIGHT = 3;
-  var DEFAULT_COLOR = parseColor('rgb(220, 210, 200)');
-
-  // number of windows per horizontal meter of building wall
-  var WINDOWS_PER_METER = 0.5;
-  var METERS_PER_LEVEL = 3;
-
-  var MATERIAL_COLORS = {
-    brick: '#cc7755',
-    bronze: '#ffeecc',
-    canvas: '#fff8f0',
-    concrete: '#999999',
-    copper: '#a0e0d0',
-    glass: '#e8f8f8',
-    gold: '#ffcc00',
-    plants: '#009933',
-    metal: '#aaaaaa',
-    panel: '#fff8f0',
-    plaster: '#999999',
-    roof_tiles: '#f08060',
-    silver: '#cccccc',
-    slate: '#666666',
-    stone: '#996666',
-    tar_paper: '#333333',
-    wood: '#deb887'
-  };
-
-  var BASE_MATERIALS = {
-    asphalt: 'tar_paper',
-    bitumen: 'tar_paper',
-    block: 'stone',
-    bricks: 'brick',
-    glas: 'glass',
-    glassfront: 'glass',
-    grass: 'plants',
-    masonry: 'stone',
-    granite: 'stone',
-    panels: 'panel',
-    paving_stones: 'stone',
-    plastered: 'plaster',
-    rooftiles: 'roof_tiles',
-    roofingfelt: 'tar_paper',
-    sandstone: 'stone',
-    sheet: 'canvas',
-    sheets: 'canvas',
-    shingle: 'tar_paper',
-    shingles: 'tar_paper',
-    slates: 'slate',
-    steel: 'metal',
-    tar: 'tar_paper',
-    tent: 'canvas',
-    thatch: 'plants',
-    tile: 'roof_tiles',
-    tiles: 'roof_tiles'
-    // cardboard
-    // eternit
-    // limestone
-    // straw
-  };
-
-  Triangulate.getPosition = function(geometry) {
-    var coordinates = geometry.coordinates;
-    switch (geometry.type) {
-      case 'Point':
-        return coordinates;
-
-      case 'MultiPoint':
-      case 'LineString':
-        return coordinates[0];
-
-      case 'MultiLineString':
-      case 'Polygon':
-        return coordinates[0][0];
-
-      case 'MultiPolygon':
-        return coordinates[0][0][0];
-    }
-  };
-
-  Triangulate.split = function(res, id, feature, position, color) {
-    var geometries = flattenGeometry(feature.geometry);
-    for (var i = 0, il = geometries.length; i<il; i++) {
-      process(res, id, feature.properties, geometries[i], position, color);
-    }
-  };
-
-  function isClockWise(ring) {
-    return 0 < ring.reduce(function(a, b, c, d) {
-      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
-    }, 0);
-  }
-
-  function process(res, id, properties, geom, position, color) {
-    var geometry = transform(geom, position),
-      bbox = getBBox(geometry[0]),
-      radius = (bbox.maxX - bbox.minX)/2,
-      center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2],
-
-      height = properties.height || (properties.levels ? properties.levels*METERS_PER_LEVEL : DEFAULT_HEIGHT),
-      minHeight = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0),
-      roofHeight = properties.roofHeight || DEFAULT_ROOF_HEIGHT,
-
-      colorVariance = (id/2%2 ? -1 : +1)*(id%2 ? 0.03 : 0.06),
-      wallColor = randomizeColor(color || properties.wallColor || properties.color || getMaterialColor(properties.material), colorVariance),
-      roofColor = randomizeColor(color || properties.roofColor || getMaterialColor(properties.roofMaterial), colorVariance);
-
-    // flat roofs or roofs we can't handle should not affect building's height
-    switch (properties.roofShape) {
-      case 'cone':
-      case 'dome':
-      case 'onion':
-      case 'pyramid':
-      case 'pyramidal':
-        height = Math.max(0, height-roofHeight);
-        break;
-      default:
-        roofHeight = 0;
-    }
-
-    addWalls(res, properties, geometry, center, radius, height-minHeight, minHeight, wallColor);
-    addRoof(res, properties, geometry, center, radius, roofHeight, height, roofColor);
-  }
-
-  function addWalls(res, properties, geometry, center, radius, H, Z, color) {
-    switch (properties.shape) {
-      case 'cylinder':
-        split.cylinder(res, center, radius, radius, H, Z, color);
-      break;
-
-      case 'cone':
-        split.cylinder(res, center, radius, 0, H, Z, color);
-      break;
-
-      case 'dome':
-        split.dome(res, center, radius, (H || radius), Z, color);
-      break;
-
-      case 'sphere':
-        split.sphere(res, center, radius, (H || 2*radius), Z, color);
-      break;
-
-      case 'pyramid':
-      case 'pyramidal':
-        split.pyramid(res, geometry, center, H, Z, color);
-      break;
-
-      case 'none':
-        // skip walls entirely
-        return;
-
-      default:
-        var ty1 = 0.2;
-        var ty2 = 0.4;
-
-        // non-continuous windows
-        if (properties.material !== 'glass') {
-          ty1 = 0;
-          ty2 = 0;
-          if (properties.levels) {
-            ty2 = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0))<<0;
-          }
-        }
-
-        split.extrusion(res, geometry, H, Z, color, [0, WINDOWS_PER_METER, ty1/H, ty2/H]);
-    }
-  }
-
-  function addRoof(res, properties, geometry, center, radius, H, Z, color) {
-    // skip roof entirely
-    switch (properties.shape) {
-      case 'cone':
-      case 'pyramid':
-      case 'pyramidal':
-        return;
-    }
-
-    switch (properties.roofShape) {
-      case 'cone':
-        split.cylinder(res, center, radius, 0, H, Z, color);
-        break;
-
-      case 'dome':
-      case 'onion':
-        split.dome(res, center, radius, (H || radius), Z, color);
-        break;
-
-      case 'pyramid':
-      case 'pyramidal':
-        if (properties.shape === 'cylinder') {
-          split.cylinder(res, center, radius, 0, H, Z, color);
-        } else {
-          split.pyramid(res, geometry, center, H, Z, color);
-        }
-        break;
-
-      default:
-        if (properties.shape === 'cylinder') {
-          split.circle(res, center, radius, Z, color);
-        } else {
-          split.polygon(res, geometry, Z, color);
-        }
-    }
-  }
-
-  function randomizeColor(color, variance) {
-    var c = parseColor(color) || DEFAULT_COLOR;
-    return [c[0]+variance, c[1]+variance, c[2]+variance];
-  }
-
-  function getMaterialColor(str) {
-    if (typeof str !== 'string') {
-      return null;
-    }
-    str = str.toLowerCase();
-    if (str[0] === '#') {
-      return str;
-    }
-    return MATERIAL_COLORS[BASE_MATERIALS[str] || str] || null;
-  }
-
-  function flattenGeometry(geometry) {
-    // TODO: handle GeometryCollection
-    switch (geometry.type) {
-      case 'MultiPolygon': return geometry.coordinates;
-      case 'Polygon': return [geometry.coordinates];
-      default: return [];
-    }
-  }
-
-  // converts all coordinates of all rings in 'polygonRings' from lat/lon pairs to meters-from-position
-  function transform(polygon, position) {
-    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE*Math.cos(position[1]/180*Math.PI);
-
-    return polygon.map(function(ring, i) {
-      // outer ring (first ring) needs to be clockwise, inner rings
-      // counter-clockwise. If they are not, make them by reverting order.
-      if ((i === 0) !== isClockWise(ring)) {
-        ring.reverse();
-      }
-
-      return ring.map(function(point) {
-        return [
-           (point[0]-position[0])*metersPerDegreeLongitude,
-          -(point[1]-position[1])*METERS_PER_DEGREE_LATITUDE
-        ];
-      });
-    });
-  }
-
-  function getBBox(polygon) {
-    var
-      x =  Infinity, y =  Infinity,
-      X = -Infinity, Y = -Infinity;
-
-    for (var i = 0; i < polygon.length; i++) {
-      x = Math.min(x, polygon[i][0]);
-      y = Math.min(y, polygon[i][1]);
-
-      X = Math.max(X, polygon[i][0]);
-      Y = Math.max(Y, polygon[i][1]);
-    }
-
-    return { minX:x, minY:y, maxX:X, maxY:Y };
-  }
-
-}());
-
-return Triangulate;
-
-}());
-
-if (typeof module === 'object') { module.exports = Triangulate; }
-
-var Color = (function() {
+(function() {var Color = (function() {
 var w3cColors = {
   aliceblue: '#f0f8ff',
   antiquewhite: '#faebd7',
@@ -1631,6 +196,10 @@ var Color = function(str) {
 Color.prototype = {
 
   toHSL: function() {
+    if (this.r === undefined || this.g === undefined || this.b === undefined) {
+      return;
+    }
+
     var
       max = Math.max(this.r, this.g, this.b),
       min = Math.min(this.r, this.g, this.b),
@@ -1682,6 +251,10 @@ Color.prototype = {
   },
 
   toString: function() {
+    if (this.r === undefined || this.g === undefined || this.b === undefined) {
+      return '';
+    }
+
     if (this.a === 1) {
       return '#' + ((1<<24) + (Math.round(this.r*255)<<16) + (Math.round(this.g*255)<<8) + Math.round(this.b*255)).toString(16).slice(1, 7);
     }
@@ -1689,6 +262,9 @@ Color.prototype = {
   },
 
   toArray: function() {
+    if (this.r === undefined || this.g === undefined || this.b === undefined) {
+      return;
+    }
     return [this.r, this.g, this.b];
   },
 
@@ -2708,6 +1284,2669 @@ return GLX;
 }());
 
 //
+var GLMap = (function() {
+/**
+ * This is the base map engine for standalone OSM Buildings
+ * @class GLMap
+ */
+
+/**
+ * @private
+ */
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(value, min));
+}
+
+/**
+ * GLMap
+ * @GLMap
+ * @param {HTMLElement} DOM container
+ * @param {Object} options
+ */
+/**
+ * OSMBuildings basemap
+ * @constructor
+ * @param {String} container - The id of the html element to display the map in
+ * @param {Object} options
+ * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
+ * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Object} [options.bounds] - A bounding box to restrict the map to
+ * @param {Boolean} [options.state=false] - Store the map state in the URL
+ * @param {Boolean} [options.disabled=false] - Disable user input
+ * @param {String} [options.attribution] - An attribution string
+ * @param {Float} [options.zoom=minZoom] - Initial zoom
+ * @param {Float} [options.rotation=0] - Initial rotation
+ * @param {Float} [options.tilt=0] - Initial tilt
+ * @param {Object} [options.position] - Initial position
+ * @param {Float} [options.position.latitude=52.520000]
+ * @param {Float} [options.position.latitude=13.410000]
+ */
+var GLMap = function(container, options) {
+  this.container = typeof container === 'string' ? document.getElementById(container) : container;
+  options = options || {};
+
+  this.container.classList.add('osmb-container');
+  this.width = this.container.offsetWidth;
+  this.height = this.container.offsetHeight;
+
+  this.minZoom = parseFloat(options.minZoom) || 10;
+  this.maxZoom = parseFloat(options.maxZoom) || 20;
+
+  if (this.maxZoom < this.minZoom) {
+    this.maxZoom = this.minZoom;
+  }
+
+  this.bounds = options.bounds;
+
+  this.position = {};
+  this.zoom = 0;
+
+  this.listeners = {};
+  this.layers = [];
+
+  this.initState(options);
+
+  if (options.state) {
+    this.persistState();
+    this.on('change', function() {
+      this.persistState();
+    }.bind(this));
+  }
+
+  Events.init(this);
+
+  if (options.disabled) {
+    this.setDisabled(true);
+  }
+
+  this.attribution = options.attribution;
+  this.attributionDiv = document.createElement('DIV');
+  this.attributionDiv.className = 'osmb-attribution';
+  this.container.appendChild(this.attributionDiv);
+  this.updateAttribution();
+};
+
+GLMap.prototype = {
+
+  /**
+   * @private
+   */
+  updateAttribution: function() {
+    var attribution = [];
+    for (var i = 0; i < this.layers.length; i++) {
+      if (this.layers[i].attribution) {
+        attribution.push(this.layers[i].attribution);
+      }
+    }
+    if (this.attribution) {
+      attribution.unshift(this.attribution);
+    }
+    this.attributionDiv.innerHTML = attribution.join(' · ');
+  },
+
+  /**
+   * @private
+   */
+  initState: function(options) {
+    var
+      query = location.search,
+      state = {};
+    if (query) {
+      query.substring(1).replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function($0, $1, $2) {
+        if ($1) {
+          state[$1] = $2;
+        }
+      });
+    }
+
+    var position;
+    if (state.lat !== undefined && state.lon !== undefined) {
+      position = { latitude: parseFloat(state.lat), longitude: parseFloat(state.lon) };
+    }
+    if (!position && state.latitude !== undefined && state.longitude !== undefined) {
+      position = { latitude: state.latitude, longitude: state.longitude };
+    }
+
+    var zoom = (state.zoom !== undefined) ? state.zoom : options.zoom;
+    var rotation = (state.rotation !== undefined) ? state.rotation : options.rotation;
+    var tilt = (state.tilt !== undefined) ? state.tilt : options.tilt;
+
+    this.setPosition(position || options.position || { latitude: 52.520000, longitude: 13.410000 });
+    this.setZoom(zoom || this.minZoom);
+    this.setRotation(rotation || 0);
+    this.setTilt(tilt || 0);
+  },
+
+  /**
+   * @private
+   */
+  persistState: function() {
+    if (!history.replaceState || this.stateDebounce) {
+      return;
+    }
+
+    this.stateDebounce = setTimeout(function() {
+      this.stateDebounce = null;
+      var params = [];
+      params.push('lat=' + this.position.latitude.toFixed(6));
+      params.push('lon=' + this.position.longitude.toFixed(6));
+      params.push('zoom=' + this.zoom.toFixed(1));
+      params.push('tilt=' + this.tilt.toFixed(1));
+      params.push('rotation=' + this.rotation.toFixed(1));
+      history.replaceState({}, '', '?' + params.join('&'));
+    }.bind(this), 1000);
+  },
+
+  emit: function(type, detail) {
+    var event = new CustomEvent(type, { detail:detail });
+    this.container.dispatchEvent(event);
+  },
+
+  //***************************************************************************
+
+  on: function(type, fn) {
+    this.container.addEventListener(type, fn, false);
+    return this;
+  },
+
+  off: function(type, fn) {
+    this.container.removeEventListener(type, fn, false);
+  },
+
+  setDisabled: function(flag) {
+    Events.disabled = !!flag;
+    return this;
+  },
+
+  isDisabled: function() {
+    return !!Events.disabled;
+  },
+
+  /* returns the geographical bounds of the current view.
+   * notes:
+   * - since the bounds are always axis-aligned they will contain areas that are
+  /**
+   * Returns the geographical bounds of the current view.
+   * Notes:
+   * - Since the bounds are always axis-aligned they will contain areas that are
+   *   not currently visible if the current view is not also axis-aligned.
+   * - The bounds only contain the map area that OSMBuildings considers for rendering.
+   *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
+   *   never extend beyond that, even if the horizon is visible (in which case the
+   *   bounds would mathematically be infinite).
+   * - the bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
+   * - The bounds only consider ground level. For example, buildings whose top
+   *   is seen at the lower edge of the screen, but whose footprint is outside
+   *   of the current view below the lower edge do not contribute to the bounds.
+   *   so their top may be visible and they may still be out of bounds.
+   */
+  getBounds: function() {
+    var viewQuad = render.getViewQuad(), res = [];
+    for (var i in viewQuad) {
+      res[i] = getPositionFromLocal(viewQuad[i]);
+    }
+    return res;
+  },
+
+  /**
+   * Sets the zoom level
+   * @param {Float} zoom - The new zoom level
+   * @param {Object} e - **Not currently used**
+   * @fires GLMap#zoom
+   * @fires GLMap#change
+   */
+  setZoom: function(zoom, e) {
+    zoom = clamp(parseFloat(zoom), this.minZoom, this.maxZoom);
+
+    if (this.zoom !== zoom) {
+      this.zoom = zoom;
+
+      /* if a screen position was given for which the geographic position displayed
+       * should not change under the zoom */
+      if (e) {
+        //FIXME: add code; this needs to take the current camera (rotation and
+        //       perspective) into account
+        //NOTE:  the old code (comment out below) only works for north-up
+        //       non-perspective views
+        /*
+         var dx = this.container.offsetWidth/2  - e.clientX;
+         var dy = this.container.offsetHeight/2 - e.clientY;
+         this.center.x -= dx;
+         this.center.y -= dy;
+         this.center.x *= ratio;
+         this.center.y *= ratio;
+         this.center.x += dx;
+         this.center.y += dy;*/
+      }
+      /**
+       * Fired when the map is zoomed (in either direction)
+       * @event GLMap#zoom
+       */
+      this.emit('zoom', { zoom: zoom });
+
+      /**
+       * Fired when the map is zoomed, tilted or panned
+       * @event GLMap#change
+       */
+      this.emit('change');
+    }
+    return this;
+  },
+
+  /**
+   * Returns the current zoom level
+   */
+  getZoom: function() {
+    return this.zoom;
+  },
+
+  /**
+   * Sets the map's geographic position
+   * @param {Object} pos - The new position
+   * @param {Float} pos.latitude
+   * @param {Float} pos.longitude
+   * @fires GLMap#change
+   */
+  setPosition: function(pos) {
+    var lat = parseFloat(pos.latitude);
+    var lon = parseFloat(pos.longitude);
+    if (isNaN(lat) || isNaN(lon)) {
+      return;
+    }
+    this.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+    this.emit('change');
+    return this;
+  },
+
+  /**
+   * Returns the map's current geographic position
+   */
+  getPosition: function() {
+    return this.position;
+  },
+
+  /**
+   * Sets the map's size
+   * @param {Object} size
+   * @param {Integer} size.width
+   * @param {Integer} size.height
+   * @fires GLMap#resize
+   */
+  setSize: function(size) {
+    if (size.width !== this.width || size.height !== this.height) {
+      this.width = size.width;
+      this.height = size.height;
+
+      /**
+       * Fired when the map is resized
+       * @event GLMap#resize
+       */
+      this.emit('resize', { width: this.width, height: this.height });
+    }
+    return this;
+  },
+
+  /**
+   * Returns the map's current size
+   */
+  getSize: function() {
+    return { width: this.width, height: this.height };
+  },
+
+  /**
+   * Set's the maps rotation
+   * @param {Float} rotation - The new rotation angle
+   * @fires GLMap#rotate
+   * @fires GLMap#change
+   */
+  setRotation: function(rotation) {
+    rotation = parseFloat(rotation)%360;
+    if (this.rotation !== rotation) {
+      this.rotation = rotation;
+
+      /**
+       * Fired when the map is rotated
+       * @event GLMap#rotate
+       */
+      this.emit('rotate', { rotation: rotation });
+      this.emit('change');
+    }
+    return this;
+  },
+
+  /**
+   * Returns the maps current rotation
+   */
+  getRotation: function() {
+    return this.rotation;
+  },
+
+  /**
+   * Sets the map's tilt
+   * @param {Float} tilt - The new tilt
+   * @fires GLMap#tilt
+   * @fires GLMap#change
+   */
+  setTilt: function(tilt) {
+    tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
+    if (this.tilt !== tilt) {
+      this.tilt = tilt;
+
+      /**
+       * Fired when the map is tilted
+       * @event GLMap#tilt
+       */
+      this.emit('tilt', { tilt: tilt });
+      this.emit('change');
+    }
+    return this;
+  },
+
+  /**
+   * Returns the map's current tilt
+   */
+  getTilt: function() {
+    return this.tilt;
+  },
+
+  /**
+   * Adds a layer to the map
+   * @param {Object} layer - The layer to add
+   */
+  addLayer: function(layer) {
+    this.layers.push(layer);
+    this.updateAttribution();
+    return this;
+  },
+
+  /**
+   * Removes a layer from the map
+   * @param {Object} layer - The layer to remove
+   */
+  removeLayer: function(layer) {
+    this.layers = this.layers.filter(function(item) {
+      return (item !== layer);
+    });
+    this.updateAttribution();
+  },
+
+  /**
+   * Destroys the map
+   */
+  destroy: function() {
+    this.listeners = [];
+    this.layers = [];
+    this.container.innerHTML = '';
+  }
+};
+
+
+// TODO: detect pointerleave from map.container
+// TODO: continue drag/gesture even when off map.container
+// TODO: allow two finger swipe for tilt
+
+// gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
+// MIT License
+
+/**
+ * @private
+ */
+function add2(a, b) {
+  return [a[0] + b[0], a[1] + b[1]];
+}
+
+/**
+ * @private
+ */
+function mul2scalar(a, f) {
+  return [a[0]*f, a[1]*f];
+}
+
+/**
+ * @private
+ */
+function getEventPosition(e, offset) {
+  return {
+    x: e.clientX - offset.x,
+    y: e.clientY - offset.y
+  };
+}
+
+/**
+ * @private
+ */
+function getElementOffset(el) {
+  if (el.getBoundingClientRect) {
+    var box = el.getBoundingClientRect();
+    return { x:box.left, y:box.top };
+  }
+
+  var res = { x:0, y:0 };
+  while(el.nodeType === 1) {
+    res.x += el.offsetLeft;
+    res.y += el.offsetTop;
+    el = el.parentNode;
+  }
+  return res;
+}
+
+/**
+ * @private
+ */
+function cancelEvent(e) {
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  //if (e.stopPropagation) {
+  //  e.stopPropagation();
+  //}
+  e.returnValue = false;
+}
+
+/**
+ * @private
+ */
+function addListener(target, type, fn) {
+  target.addEventListener(type, fn, false);
+}
+
+/**
+ * @private
+ */
+var Events = {};
+
+/**
+ * @private
+ */
+Events.disabled = false;
+
+/**
+ * @private
+ */
+Events.init = function(map) {
+
+  if ('ontouchstart' in window) {
+    addListener(map.container, 'touchstart', onTouchStart);
+    addListener(document, 'touchmove', onTouchMove);
+    addListener(document, 'touchend', onTouchEnd);
+    addListener(document, 'gesturechange', onGestureChange);
+  } else {
+    addListener(map.container, 'mousedown', onMouseDown);
+    addListener(document, 'mousemove', onMouseMove);
+    addListener(document, 'mouseup', onMouseUp);
+    addListener(map.container, 'dblclick', onDoubleClick);
+    addListener(map.container, 'mousewheel', onMouseWheel);
+    addListener(map.container, 'DOMMouseScroll', onMouseWheel);
+  }
+
+  var resizeDebounce;
+  addListener(window, 'resize', function() {
+    if (resizeDebounce) {
+      return;
+    }
+    resizeDebounce = setTimeout(function() {
+      resizeDebounce = null;
+        map.setSize({ width:map.container.offsetWidth, height:map.container.offsetHeight });
+    }, 250);
+  });
+
+  //***************************************************************************
+
+  var
+    prevX = 0,
+    prevY = 0,
+    startX = 0,
+    startY = 0,
+    startZoom = 0,
+    startOffset,
+    prevRotation = 0,
+    prevTilt = 0,
+    pointerIsDown = false;
+
+  function onDoubleClick(e) {
+    cancelEvent(e);
+    if (!Events.disabled) {
+      map.setZoom(map.zoom + 1, e);
+    }
+    var pos = getEventPosition(e, getElementOffset(e.target));
+      map.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+  }
+
+  function onMouseDown(e) {
+    cancelEvent(e);
+
+    if (e.button > 1) {
+      return;
+    }
+
+    startZoom = map.zoom;
+    prevRotation = map.rotation;
+    prevTilt = map.tilt;
+
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, startOffset);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    pointerIsDown = true;
+
+    map.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onMouseMove(e) {
+    var pos;
+    if (!pointerIsDown) {
+      pos = getEventPosition(e, getElementOffset(e.target));
+    } else {
+      if (e.button === 0 && !e.altKey) {
+        moveMap(e, startOffset);
+      } else {
+        rotateMap(e, startOffset);
+      }
+
+      pos = getEventPosition(e, startOffset);
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+
+    map.emit('pointermove', { x: pos.x, y: pos.y });
+  }
+
+  function onMouseUp(e) {
+    // prevents clicks on other page elements
+    if (!pointerIsDown) {
+      return;
+    }
+
+    var pos = getEventPosition(e, startOffset);
+
+    if (e.button === 0 && !e.altKey) {
+      if (Math.abs(pos.x - startX)>5 || Math.abs(pos.y - startY)>5) {
+        moveMap(e, startOffset);
+      }
+    } else {
+      rotateMap(e, startOffset);
+    }
+
+    pointerIsDown = false;
+
+    map.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
+  }
+
+  function onMouseWheel(e) {
+    cancelEvent(e);
+
+    var delta = 0;
+    if (e.wheelDeltaY) {
+      delta = e.wheelDeltaY;
+    } else if (e.wheelDelta) {
+      delta = e.wheelDelta;
+    } else if (e.detail) {
+      delta = -e.detail;
+    }
+
+    if (!Events.disabled) {
+      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+      map.setZoom(map.zoom + adjust, e);
+    }
+
+    // we don't emit mousewheel here as we don't want to run into a loop of death
+  }
+
+  //***************************************************************************
+
+  function moveMap(e, offset) {
+    if (Events.disabled) {
+      return;
+    }
+
+    // FIXME: make movement exact, i.e. make the position that
+    // appeared at (prevX, prevY) before appear at (e.offsetX, e.offsetY) now.
+    // the constant 0.86 was chosen experimentally for the map movement to be
+    // "pinned" to the cursor movement when the map is shown top-down
+    var
+      scale = 0.86 * Math.pow(2, -map.zoom),
+      lonScale = 1/Math.cos( map.position.latitude/ 180 * Math.PI),
+      pos = getEventPosition(e, offset),
+      dx = pos.x - prevX,
+      dy = pos.y - prevY,
+      angle = map.rotation * Math.PI/180,
+      vRight   = [ Math.cos(angle),             Math.sin(angle)],
+      vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
+      dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
+
+    var newPosition = {
+      longitude: map.position.longitude - dir[0] * scale*lonScale,
+      latitude:  map.position.latitude  + dir[1] * scale };
+
+    map.setPosition(newPosition);
+    map.emit('move', newPosition);
+  }
+
+  function rotateMap(e, offset) {
+    if (Events.disabled) {
+      return;
+    }
+    var pos = getEventPosition(e, offset);
+    prevRotation += (pos.x - prevX)*(360/innerWidth);
+    prevTilt -= (pos.y - prevY)*(360/innerHeight);
+    map.setRotation(prevRotation);
+    map.setTilt(prevTilt);
+  }
+
+  //***************************************************************************
+
+  var
+    dist1 = 0,
+    angle1 = 0,
+    gestureStarted = false;
+
+  function emitGestureChange(e) {
+    var
+      t1 = e.touches[0],
+      t2 = e.touches[1],
+      dx = t1.clientX - t2.clientX,
+      dy = t1.clientY - t2.clientY,
+      dist2 = dx*dx + dy*dy,
+      angle2 = Math.atan2(dy, dx);
+
+    onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
+  }
+
+  function onTouchStart(e) {
+    cancelEvent(e);
+
+    // gesturechange polyfill
+    if (e.touches.length === 2 && !('ongesturechange' in window)) {
+      var t1 = e.touches[0];
+      var t2 = e.touches[1];
+      var dx = t1.clientX - t2.clientX;
+      var dy = t1.clientY - t2.clientY;
+      dist1 = dx*dx + dy*dy;
+      angle1 = Math.atan2(dy,dx);
+      gestureStarted = true;
+    }
+
+    startZoom = map.zoom;
+    prevRotation = map.rotation;
+    prevTilt = map.tilt;
+
+    if (e.touches.length) {
+      e = e.touches[0];
+    }
+
+    startOffset = getElementOffset(e.target);
+    var pos = getEventPosition(e, offset);
+    startX = prevX = pos.x;
+    startY = prevY = pos.y;
+
+    map.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
+  }
+
+  function onTouchMove(e) {
+    var pos = getEventPosition(e.touches[0], startOffset);
+    if (e.touches.length > 1) {
+      map.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
+      prevTilt = map.tilt;
+      // gesturechange polyfill
+      if (!('ongesturechange' in window)) {
+        emitGestureChange(e);
+      }
+    } else {
+      moveMap(e.touches[0], startOffset);
+      map.emit('pointermove', { x: pos.x, y: pos.y });
+    }
+    prevX = pos.x;
+    prevY = pos.y;
+  }
+
+  function onTouchEnd(e) {
+    // gesturechange polyfill
+    gestureStarted = false;
+
+    if (e.touches.length === 0) {
+      map.emit('pointerup', { x: prevX, y: prevY, button: 0 });
+    } else if (e.touches.length === 1) {
+      // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
+      var pos = getEventPosition(e.touches[0], startOffset);
+      prevX = pos.x;
+      prevY = pos.y;
+    }
+  }
+
+  function onGestureChange(e) {
+    cancelEvent(e);
+
+    if (!Events.disabled) {
+      map.setZoom(startZoom + (e.scale - 1));
+      map.setRotation(prevRotation - e.rotation);
+    }
+
+    map.emit('gesture', e);
+  }
+};
+
+return GLMap;
+}());
+window.GLMap = GLMap;
+
+//
+
+var vec2 = {
+  len: function(a) {
+    return Math.sqrt(a[0]*a[0] + a[1]*a[1]);
+  },
+
+  add: function(a, b) {
+    return [a[0]+b[0], a[1]+b[1]];
+  },
+
+  sub: function(a, b) {
+    return [a[0]-b[0], a[1]-b[1]];
+  },
+
+  dot: function(a, b) {
+    return a[1]*b[0] - a[0]*b[1];
+  },
+
+  scale: function(a, f) {
+    return [a[0]*f, a[1]*f];
+  },
+
+  equals: function(a, b) {
+    return (a[0] === b[0] && a[1] === b[1]);
+  }
+};
+
+
+var vec3 = {
+  len: function(a) {
+    return Math.sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
+  },
+
+  sub: function(a, b) {
+    return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+  },
+
+  unit: function(a) {
+    var l = this.len(a);
+    return [a[0]/l, a[1]/l, a[2]/l];
+  },
+
+  normal: function(a, b, c) {
+    var d1 = this.sub(a, b);
+    var d2 = this.sub(b, c);
+    // normalized cross product of d1 and d2
+    return this.unit([
+      d1[1]*d2[2] - d1[2]*d2[1],
+      d1[2]*d2[0] - d1[0]*d2[2],
+      d1[0]*d2[1] - d1[1]*d2[0]
+    ]);
+  }
+};
+
+
+var earcut = (function() {
+
+  function earcut(data, holeIndices, dim) {
+
+    dim = dim || 2;
+
+    var hasHoles = holeIndices && holeIndices.length,
+      outerLen = hasHoles ? holeIndices[0]*dim : data.length,
+      outerNode = linkedList(data, 0, outerLen, dim, true),
+      triangles = [];
+
+    if (!outerNode) return triangles;
+
+    var minX, minY, maxX, maxY, x, y, size;
+
+    if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
+
+    // if the shape is not too simple, we'll use z-order curve hash later; calculate polygon bbox
+    if (data.length>80*dim) {
+      minX = maxX = data[0];
+      minY = maxY = data[1];
+
+      for (var i = dim; i<outerLen; i += dim) {
+        x = data[i];
+        y = data[i + 1];
+        if (x<minX) minX = x;
+        if (y<minY) minY = y;
+        if (x>maxX) maxX = x;
+        if (y>maxY) maxY = y;
+      }
+
+      // minX, minY and size are later used to transform coords into integers for z-order calculation
+      size = Math.max(maxX - minX, maxY - minY);
+    }
+
+    earcutLinked(outerNode, triangles, dim, minX, minY, size);
+
+    return triangles;
+  }
+
+// create a circular doubly linked list from polygon points in the specified winding order
+  function linkedList(data, start, end, dim, clockwise) {
+    var i, last;
+
+    if (clockwise === (signedArea(data, start, end, dim)>0)) {
+      for (i = start; i<end; i += dim) last = insertNode(i, data[i], data[i + 1], last);
+    } else {
+      for (i = end - dim; i>=start; i -= dim) last = insertNode(i, data[i], data[i + 1], last);
+    }
+
+    if (last && equals(last, last.next)) {
+      removeNode(last);
+      last = last.next;
+    }
+
+    return last;
+  }
+
+// eliminate colinear or duplicate points
+  function filterPoints(start, end) {
+    if (!start) return start;
+    if (!end) end = start;
+
+    var p = start,
+      again;
+    do {
+      again = false;
+
+      if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
+        removeNode(p);
+        p = end = p.prev;
+        if (p === p.next) return null;
+        again = true;
+
+      } else {
+        p = p.next;
+      }
+    } while (again || p !== end);
+
+    return end;
+  }
+
+// main ear slicing loop which triangulates a polygon (given as a linked list)
+  function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
+    if (!ear) return;
+
+    // interlink polygon nodes in z-order
+    if (!pass && size) indexCurve(ear, minX, minY, size);
+
+    var stop = ear,
+      prev, next;
+
+    // iterate through ears, slicing them one by one
+    while (ear.prev !== ear.next) {
+      prev = ear.prev;
+      next = ear.next;
+
+      if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
+        // cut off the triangle
+        triangles.push(prev.i/dim);
+        triangles.push(ear.i/dim);
+        triangles.push(next.i/dim);
+
+        removeNode(ear);
+
+        // skipping the next vertice leads to less sliver triangles
+        ear = next.next;
+        stop = next.next;
+
+        continue;
+      }
+
+      ear = next;
+
+      // if we looped through the whole remaining polygon and can't find any more ears
+      if (ear === stop) {
+        // try filtering points and slicing again
+        if (!pass) {
+          earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
+
+          // if this didn't work, try curing all small self-intersections locally
+        } else if (pass === 1) {
+          ear = cureLocalIntersections(ear, triangles, dim);
+          earcutLinked(ear, triangles, dim, minX, minY, size, 2);
+
+          // as a last resort, try splitting the remaining polygon into two
+        } else if (pass === 2) {
+          splitEarcut(ear, triangles, dim, minX, minY, size);
+        }
+
+        break;
+      }
+    }
+  }
+
+// check whether a polygon node forms a valid ear with adjacent nodes
+  function isEar(ear) {
+    var a = ear.prev,
+      b = ear,
+      c = ear.next;
+
+    if (area(a, b, c)>=0) return false; // reflex, can't be an ear
+
+    // now make sure we don't have other points inside the potential ear
+    var p = ear.next.next;
+
+    while (p !== ear.prev) {
+      if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+        area(p.prev, p, p.next)>=0) return false;
+      p = p.next;
+    }
+
+    return true;
+  }
+
+  function isEarHashed(ear, minX, minY, size) {
+    var a = ear.prev,
+      b = ear,
+      c = ear.next;
+
+    if (area(a, b, c)>=0) return false; // reflex, can't be an ear
+
+    // triangle bbox; min & max are calculated like this for speed
+    var minTX = a.x<b.x ? (a.x<c.x ? a.x : c.x) : (b.x<c.x ? b.x : c.x),
+      minTY = a.y<b.y ? (a.y<c.y ? a.y : c.y) : (b.y<c.y ? b.y : c.y),
+      maxTX = a.x>b.x ? (a.x>c.x ? a.x : c.x) : (b.x>c.x ? b.x : c.x),
+      maxTY = a.y>b.y ? (a.y>c.y ? a.y : c.y) : (b.y>c.y ? b.y : c.y);
+
+    // z-order range for the current triangle bbox;
+    var minZ = zOrder(minTX, minTY, minX, minY, size),
+      maxZ = zOrder(maxTX, maxTY, minX, minY, size);
+
+    // first look for points inside the triangle in increasing z-order
+    var p = ear.nextZ;
+
+    while (p && p.z<=maxZ) {
+      if (p !== ear.prev && p !== ear.next &&
+        pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+        area(p.prev, p, p.next)>=0) return false;
+      p = p.nextZ;
+    }
+
+    // then look for points in decreasing z-order
+    p = ear.prevZ;
+
+    while (p && p.z>=minZ) {
+      if (p !== ear.prev && p !== ear.next &&
+        pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+        area(p.prev, p, p.next)>=0) return false;
+      p = p.prevZ;
+    }
+
+    return true;
+  }
+
+// go through all polygon nodes and cure small local self-intersections
+  function cureLocalIntersections(start, triangles, dim) {
+    var p = start;
+    do {
+      var a = p.prev,
+        b = p.next.next;
+
+      if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
+
+        triangles.push(a.i/dim);
+        triangles.push(p.i/dim);
+        triangles.push(b.i/dim);
+
+        // remove two nodes involved
+        removeNode(p);
+        removeNode(p.next);
+
+        p = start = b;
+      }
+      p = p.next;
+    } while (p !== start);
+
+    return p;
+  }
+
+// try splitting polygon into two and triangulate them independently
+  function splitEarcut(start, triangles, dim, minX, minY, size) {
+    // look for a valid diagonal that divides the polygon into two
+    var a = start;
+    do {
+      var b = a.next.next;
+      while (b !== a.prev) {
+        if (a.i !== b.i && isValidDiagonal(a, b)) {
+          // split the polygon in two by the diagonal
+          var c = splitPolygon(a, b);
+
+          // filter colinear points around the cuts
+          a = filterPoints(a, a.next);
+          c = filterPoints(c, c.next);
+
+          // run earcut on each half
+          earcutLinked(a, triangles, dim, minX, minY, size);
+          earcutLinked(c, triangles, dim, minX, minY, size);
+          return;
+        }
+        b = b.next;
+      }
+      a = a.next;
+    } while (a !== start);
+  }
+
+// link every hole into the outer loop, producing a single-ring polygon without holes
+  function eliminateHoles(data, holeIndices, outerNode, dim) {
+    var queue = [],
+      i, len, start, end, list;
+
+    for (i = 0, len = holeIndices.length; i<len; i++) {
+      start = holeIndices[i]*dim;
+      end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
+      list = linkedList(data, start, end, dim, false);
+      if (list === list.next) list.steiner = true;
+      queue.push(getLeftmost(list));
+    }
+
+    queue.sort(compareX);
+
+    // process holes from left to right
+    for (i = 0; i<queue.length; i++) {
+      eliminateHole(queue[i], outerNode);
+      outerNode = filterPoints(outerNode, outerNode.next);
+    }
+
+    return outerNode;
+  }
+
+  function compareX(a, b) {
+    return a.x - b.x;
+  }
+
+// find a bridge between vertices that connects hole with an outer ring and and link it
+  function eliminateHole(hole, outerNode) {
+    outerNode = findHoleBridge(hole, outerNode);
+    if (outerNode) {
+      var b = splitPolygon(outerNode, hole);
+      filterPoints(b, b.next);
+    }
+  }
+
+// David Eberly's algorithm for finding a bridge between hole and outer polygon
+  function findHoleBridge(hole, outerNode) {
+    var p = outerNode,
+      hx = hole.x,
+      hy = hole.y,
+      qx = -Infinity,
+      m;
+
+    // find a segment intersected by a ray from the hole's leftmost point to the left;
+    // segment's endpoint with lesser x will be potential connection point
+    do {
+      if (hy<=p.y && hy>=p.next.y) {
+        var x = p.x + (hy - p.y)*(p.next.x - p.x)/(p.next.y - p.y);
+        if (x<=hx && x>qx) {
+          qx = x;
+          if (x === hx) {
+            if (hy === p.y) return p;
+            if (hy === p.next.y) return p.next;
+          }
+          m = p.x<p.next.x ? p : p.next;
+        }
+      }
+      p = p.next;
+    } while (p !== outerNode);
+
+    if (!m) return null;
+
+    if (hx === qx) return m.prev; // hole touches outer segment; pick lower endpoint
+
+    // look for points inside the triangle of hole point, segment intersection and endpoint;
+    // if there are no points found, we have a valid connection;
+    // otherwise choose the point of the minimum angle with the ray as connection point
+
+    var stop = m,
+      mx = m.x,
+      my = m.y,
+      tanMin = Infinity,
+      tan;
+
+    p = m.next;
+
+    while (p !== stop) {
+      if (hx>=p.x && p.x>=mx &&
+        pointInTriangle(hy<my ? hx : qx, hy, mx, my, hy<my ? qx : hx, hy, p.x, p.y)) {
+
+        tan = Math.abs(hy - p.y)/(hx - p.x); // tangential
+
+        if ((tan<tanMin || (tan === tanMin && p.x>m.x)) && locallyInside(p, hole)) {
+          m = p;
+          tanMin = tan;
+        }
+      }
+
+      p = p.next;
+    }
+
+    return m;
+  }
+
+// interlink polygon nodes in z-order
+  function indexCurve(start, minX, minY, size) {
+    var p = start;
+    do {
+      if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
+      p.prevZ = p.prev;
+      p.nextZ = p.next;
+      p = p.next;
+    } while (p !== start);
+
+    p.prevZ.nextZ = null;
+    p.prevZ = null;
+
+    sortLinked(p);
+  }
+
+// Simon Tatham's linked list merge sort algorithm
+// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+  function sortLinked(list) {
+    var i, p, q, e, tail, numMerges, pSize, qSize,
+      inSize = 1;
+
+    do {
+      p = list;
+      list = null;
+      tail = null;
+      numMerges = 0;
+
+      while (p) {
+        numMerges++;
+        q = p;
+        pSize = 0;
+        for (i = 0; i<inSize; i++) {
+          pSize++;
+          q = q.nextZ;
+          if (!q) break;
+        }
+
+        qSize = inSize;
+
+        while (pSize>0 || (qSize>0 && q)) {
+
+          if (pSize === 0) {
+            e = q;
+            q = q.nextZ;
+            qSize--;
+          } else if (qSize === 0 || !q) {
+            e = p;
+            p = p.nextZ;
+            pSize--;
+          } else if (p.z<=q.z) {
+            e = p;
+            p = p.nextZ;
+            pSize--;
+          } else {
+            e = q;
+            q = q.nextZ;
+            qSize--;
+          }
+
+          if (tail) tail.nextZ = e;
+          else list = e;
+
+          e.prevZ = tail;
+          tail = e;
+        }
+
+        p = q;
+      }
+
+      tail.nextZ = null;
+      inSize *= 2;
+
+    } while (numMerges>1);
+
+    return list;
+  }
+
+// z-order of a point given coords and size of the data bounding box
+  function zOrder(x, y, minX, minY, size) {
+    // coords are transformed into non-negative 15-bit integer range
+    x = 32767*(x - minX)/size;
+    y = 32767*(y - minY)/size;
+
+    x = (x | (x<<8)) & 0x00FF00FF;
+    x = (x | (x<<4)) & 0x0F0F0F0F;
+    x = (x | (x<<2)) & 0x33333333;
+    x = (x | (x<<1)) & 0x55555555;
+
+    y = (y | (y<<8)) & 0x00FF00FF;
+    y = (y | (y<<4)) & 0x0F0F0F0F;
+    y = (y | (y<<2)) & 0x33333333;
+    y = (y | (y<<1)) & 0x55555555;
+
+    return x | (y<<1);
+  }
+
+// find the leftmost node of a polygon ring
+  function getLeftmost(start) {
+    var p = start,
+      leftmost = start;
+    do {
+      if (p.x<leftmost.x) leftmost = p;
+      p = p.next;
+    } while (p !== start);
+
+    return leftmost;
+  }
+
+// check if a point lies within a convex triangle
+  function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
+    return (cx - px)*(ay - py) - (ax - px)*(cy - py)>=0 &&
+      (ax - px)*(by - py) - (bx - px)*(ay - py)>=0 &&
+      (bx - px)*(cy - py) - (cx - px)*(by - py)>=0;
+  }
+
+// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
+  function isValidDiagonal(a, b) {
+    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
+      locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
+  }
+
+// signed area of a triangle
+  function area(p, q, r) {
+    return (q.y - p.y)*(r.x - q.x) - (q.x - p.x)*(r.y - q.y);
+  }
+
+// check if two points are equal
+  function equals(p1, p2) {
+    return p1.x === p2.x && p1.y === p2.y;
+  }
+
+// check if two segments intersect
+  function intersects(p1, q1, p2, q2) {
+    if ((equals(p1, q1) && equals(p2, q2)) ||
+      (equals(p1, q2) && equals(p2, q1))) return true;
+    return area(p1, q1, p2)>0 !== area(p1, q1, q2)>0 &&
+      area(p2, q2, p1)>0 !== area(p2, q2, q1)>0;
+  }
+
+// check if a polygon diagonal intersects any polygon segments
+  function intersectsPolygon(a, b) {
+    var p = a;
+    do {
+      if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
+        intersects(p, p.next, a, b)) return true;
+      p = p.next;
+    } while (p !== a);
+
+    return false;
+  }
+
+// check if a polygon diagonal is locally inside the polygon
+  function locallyInside(a, b) {
+    return area(a.prev, a, a.next)<0 ?
+    area(a, b, a.next)>=0 && area(a, a.prev, b)>=0 :
+    area(a, b, a.prev)<0 || area(a, a.next, b)<0;
+  }
+
+// check if the middle point of a polygon diagonal is inside the polygon
+  function middleInside(a, b) {
+    var p = a,
+      inside = false,
+      px = (a.x + b.x)/2,
+      py = (a.y + b.y)/2;
+    do {
+      if (((p.y>py) !== (p.next.y>py)) && (px<(p.next.x - p.x)*(py - p.y)/(p.next.y - p.y) + p.x))
+        inside = !inside;
+      p = p.next;
+    } while (p !== a);
+
+    return inside;
+  }
+
+// link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
+// if one belongs to the outer ring and another to a hole, it merges it into a single ring
+  function splitPolygon(a, b) {
+    var a2 = new Node(a.i, a.x, a.y),
+      b2 = new Node(b.i, b.x, b.y),
+      an = a.next,
+      bp = b.prev;
+
+    a.next = b;
+    b.prev = a;
+
+    a2.next = an;
+    an.prev = a2;
+
+    b2.next = a2;
+    a2.prev = b2;
+
+    bp.next = b2;
+    b2.prev = bp;
+
+    return b2;
+  }
+
+// create a node and optionally link it with previous one (in a circular doubly linked list)
+  function insertNode(i, x, y, last) {
+    var p = new Node(i, x, y);
+
+    if (!last) {
+      p.prev = p;
+      p.next = p;
+
+    } else {
+      p.next = last.next;
+      p.prev = last;
+      last.next.prev = p;
+      last.next = p;
+    }
+    return p;
+  }
+
+  function removeNode(p) {
+    p.next.prev = p.prev;
+    p.prev.next = p.next;
+
+    if (p.prevZ) p.prevZ.nextZ = p.nextZ;
+    if (p.nextZ) p.nextZ.prevZ = p.prevZ;
+  }
+
+  function Node(i, x, y) {
+    // vertice index in coordinates array
+    this.i = i;
+
+    // vertex coordinates
+    this.x = x;
+    this.y = y;
+
+    // previous and next vertice nodes in a polygon ring
+    this.prev = null;
+    this.next = null;
+
+    // z-order curve value
+    this.z = null;
+
+    // previous and next nodes in z-order
+    this.prevZ = null;
+    this.nextZ = null;
+
+    // indicates whether this is a steiner point
+    this.steiner = false;
+  }
+
+// return a percentage difference between the polygon area and its triangulation area;
+// used to verify correctness of triangulation
+  earcut.deviation = function(data, holeIndices, dim, triangles) {
+    var hasHoles = holeIndices && holeIndices.length;
+    var outerLen = hasHoles ? holeIndices[0]*dim : data.length;
+    var i, len;
+
+    var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
+    if (hasHoles) {
+      for (i = 0, len = holeIndices.length; i<len; i++) {
+        var start = holeIndices[i]*dim;
+        var end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
+        polygonArea -= Math.abs(signedArea(data, start, end, dim));
+      }
+    }
+
+    var trianglesArea = 0;
+    for (i = 0, len = triangles.length; i < len; i += 3) {
+      var a = triangles[i]*dim;
+      var b = triangles[i + 1]*dim;
+      var c = triangles[i + 2]*dim;
+      trianglesArea += Math.abs(
+        (data[a] - data[c])*(data[b + 1] - data[a + 1]) -
+        (data[a] - data[b])*(data[c + 1] - data[a + 1]));
+    }
+
+    return polygonArea === 0 && trianglesArea === 0 ? 0 :
+      Math.abs((trianglesArea - polygonArea)/polygonArea);
+  };
+
+  function signedArea(data, start, end, dim) {
+    var sum = 0;
+    for (var i = start, j = end - dim; i<end; i += dim) {
+      sum += (data[j] - data[i])*(data[i + 1] + data[j + 1]);
+      j = i;
+    }
+    return sum;
+  }
+
+// turn a polygon in a multi-dimensional array form (e.g. as in GeoJSON) into a form Earcut accepts
+  earcut.flatten = function(data) {
+    var dim = data[0][0].length,
+      result = { vertices: [], holes: [], dimensions: dim },
+      holeIndex = 0;
+
+    for (var i = 0; i<data.length; i++) {
+      for (var j = 0; j<data[i].length; j++) {
+        for (var d = 0; d<dim; d++) result.vertices.push(data[i][j][d]);
+      }
+      if (i>0) {
+        holeIndex += data[i - 1].length;
+        result.holes.push(holeIndex);
+      }
+    }
+    return result;
+  };
+
+  return earcut;
+
+}(this));
+
+
+function getSqDist(p1, p2) {
+  var dx = p1[0] - p2[0], dy = p1[1] - p2[1];
+  return dx * dx + dy * dy;
+}
+
+function simplify(polygon, sqTolerance) {
+  var prevPoint = polygon[0],
+    newPoints = [prevPoint],
+    point;
+
+  for (var i = 1, len = polygon.length; i < len; i++) {
+    point = polygon[i];
+    if (getSqDist(point, prevPoint) > sqTolerance) {
+      newPoints.push(point);
+      prevPoint = point;
+    }
+  }
+
+  if (prevPoint !== point) {
+    newPoints.push(point);
+  }
+
+  return newPoints;
+}
+
+function getPolygonDirection(polygon) {
+  var
+    d,
+    segmentLength = 0,
+    maxSegmentLength = 0,
+    maxSegment;
+
+  var simplePolygon = simplify(polygon, 10);
+
+  for (var i = 0, il = simplePolygon.length - 1; i<il; i++) {
+    segmentLength = vec2.len(vec2.sub(simplePolygon[i+1], simplePolygon[i]));
+    if (segmentLength>maxSegmentLength) {
+      maxSegmentLength = segmentLength;
+      maxSegment = [simplePolygon[i], simplePolygon[i + 1]];
+    }
+  }
+
+  d = vec2.sub(maxSegment[1], maxSegment[0]);
+  return [d[0]/maxSegmentLength, d[1]/maxSegmentLength];
+}
+
+function getPolygonIntersections(polygon, line) {
+  var res = [], segment, intersection;
+  for (var i = 0, il = polygon.length-1; i < il; i++) {
+    segment = [polygon[i], polygon[i+1]];
+    intersection = getLineIntersection(segment, line);
+    if (intersection !== undefined) {
+      res.push({ index:i, segment:segment });
+    }
+  }
+  return res;
+}
+
+function getLineIntersection(line1, line2) {
+  if (vec2.equals(line1[0], line2[0]) || vec2.equals(line1[0], line2[1]) || vec2.equals(line1[1], line2[0]) || vec2.equals(line1[1], line2[1])) {
+    return;
+  }
+
+  var d1 = vec2.sub(line1[1], line1[0]), d2 = vec2.sub(line2[1], line2[0]);
+
+  // calculate dot product;
+  // if dot product is close to 0, the lines are parallel
+  var denom = vec2.dot(d1, d2);
+  if (Math.abs(denom) < 1e-10) {
+    return;
+  }
+
+  // calculate vector for connection between line1[0] and line2[0]
+  var amc = vec2.sub(line2[0], line1[0]);
+
+  // calculate t so that intersection is at line1[0]+t*v
+  var t = vec2.dot(amc, d2)/denom;
+  if (t<0 || t>1) {
+    return;
+  }
+
+  // calculate s so that intersection is at line2[0]+t*q
+  var s = vec2.dot(amc, d1)/denom;
+  if (s<0 || s>1) {
+    return;
+  }
+
+  return vec2.add(line1[0], vec2.scale(d1, t));
+}
+
+// function getDistanceToSegment(point, line) {
+//   var length = vec2.len(vec2.sub(line[1], line[0]));
+//   if (length === 0) {
+//     return vec2.len(vec2.sub(point, line[0]));
+//   }
+//
+//   var t = ((point[0]-line[0][0]) * (line[1][0]-line[0][0]) + (point[1]-line[0][1]) * (line[1][1]-line[0][1])) / length;
+//   t = Math.max(0, Math.min(1, t));
+//
+//   var d = vec2.len(vec2.sub(point, vec2.add(line[0], vec2.sub(line[1], vec2.scale(point, t)))));
+//   return Math.sqrt(d);
+// }
+
+function getDistanceToLine(a, line) {
+  var r1 = line[0];
+  var r2 = line[1];
+  if (r1[0] === r2[0] && r1[1] === r2[1]) {
+    return;
+  }
+
+  var m1 = (r2[1] - r1[1]) / (r2[0] - r1[0]);
+  var b1 = r1[1] - (m1*r1[0]);
+
+  if (m1 === 0) {
+    return Math.abs(b1-a[1]);
+  }
+
+  if (m1 === Infinity){
+    return Math.abs(r1[0]-a[0]);
+  }
+
+  var m2 =- 1.0/m1;
+  var b2 = a[1] - (m2*a[0]);
+
+  var xs = (b2-b1)/(m1-m2);
+  var ys = m1*xs+b1;
+
+  var c1 = a[0]-xs;
+  var c2 = a[1]-ys;
+
+  return Math.sqrt(c1*c1+c2*c2);
+}
+
+function getSegmentCenter(seg) {
+  return vec2.add(seg[0], vec2.scale(vec2.sub(seg[1], seg[0]), 0.5) );
+}
+
+
+// TODO: handle inner rings
+
+function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roofColor) {
+  offset = 0; // TODO
+
+  var
+    outerPolygon = polygon[0],
+    direction,
+    angle, rad;
+
+  if (properties.roofRidgeDirection !== undefined) {
+    angle = parseFloat(properties.roofRidgeDirection);
+    if (!isNaN(angle)) {
+      rad = 90+angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else if (properties.roofDirection !== undefined) {
+    angle = parseFloat(properties.roofDirection);
+    if (!isNaN(angle)) {
+      rad = angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else {
+    direction = getPolygonDirection(outerPolygon);
+    if (properties.roofOrientation && properties.roofOrientation === 'across') {
+      direction = [-direction[1], direction[0]];
+    }
+  }
+
+  direction = vec2.scale(direction, 1000);
+
+  // calculate the two outermost intersection indices of the
+  // quasi-infinite ridge line with segments of the polygon
+
+  var intersections = getPolygonIntersections(outerPolygon, [vec2.sub(dim.center, direction), vec2.add(dim.center, direction)]);
+
+  if (intersections.length < 2) {
+    throw new Error('can\'t handle ridged roof geometry');
+  }
+
+  // roof caps that are close to first and second vertex of the ridge
+  var
+    cap1 = intersections[0],
+    cap2 = intersections[1];
+
+  // make sure, indices are in ascending order
+  if (cap1.index > cap2.index) {
+    var tmp = cap1;
+    cap1 = cap2;
+    cap2 = tmp;
+  }
+
+  // put ridge to the centers of the intersected segments
+  cap1.center = getSegmentCenter(cap1.segment);
+  cap2.center = getSegmentCenter(cap2.segment);
+
+  if (offset === 0) {
+    var i;
+
+    var ridge = [cap1.center, cap2.center];
+
+    var
+      maxDistance = 0,
+      distances = [];
+
+    for (i = 0; i < outerPolygon.length; i++) {
+      distances[i] = getDistanceToLine(outerPolygon[i], ridge);
+      maxDistance = Math.max(maxDistance, distances[i]);
+    }
+
+    // modify vertical position of all points
+    for (i = 0; i < outerPolygon.length; i++) {
+      outerPolygon[i][2] = (1-distances[i]/maxDistance) * dim.roofHeight;
+    }
+
+    cap1.center[2] = dim.roofHeight;
+    cap2.center[2] = dim.roofHeight;
+
+    // create roof faces
+
+    var roofFace1 = [cap1.center];
+    roofFace1 = roofFace1.concat(outerPolygon.slice(cap1.index+1, cap2.index+1));
+    roofFace1.push(cap2.center, cap1.center);
+    split.polygon(buffers, [roofFace1], dim.roofZ, roofColor);
+
+    var roofFace2 = [cap2.center];
+    roofFace2 = roofFace2.concat(outerPolygon.slice(cap2.index+1, outerPolygon.length-1));
+    roofFace2 = roofFace2.concat(outerPolygon.slice(0, cap1.index+1));
+    roofFace2.push(cap1.center, cap2.center);
+    split.polygon(buffers, [roofFace2], dim.roofZ, roofColor);
+
+    // create extra wall faces
+
+    outerPolygon.splice(cap1.index+1, 0, cap1.center);
+    outerPolygon.splice(cap2.index+2, 0, cap2.center);
+
+    for (i = 0; i < outerPolygon.length-1; i++) {
+      split.quad(
+        buffers,
+        [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ+outerPolygon[i  ][2]],
+        [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ],
+        [outerPolygon[i+1][0], outerPolygon[i+1][1],dim.roofZ],
+        [outerPolygon[i+1][0], outerPolygon[i+1][1],dim.roofZ+outerPolygon[i+1][2]],
+        wallColor
+      );
+    }
+  }
+
+// // absolute distance of ridge to outline
+// var ridgeOffset = vec2.scale(vec2.sub(c2, c1), offset);
+// return [vec2.add(c1, ridgeOffset), vec2.sub(c2, ridgeOffset)];
+}
+
+function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor) {
+
+  var
+    i, il,
+    outerPolygon = polygon[0],
+    direction,
+    angle, rad;
+
+  if (properties.roofSlopeDirection !== undefined) {
+    angle = parseFloat(properties.roofSlopeDirection);
+    if (!isNaN(angle)) {
+      rad = angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else if (properties.roofDirection !== undefined) {
+    angle = parseFloat(properties.roofDirection);
+    if (!isNaN(angle)) {
+      rad = angle*Math.PI/180;
+      direction = [Math.sin(rad), Math.cos(rad)];
+    }
+  } else {
+    direction = getPolygonDirection(outerPolygon);
+    direction = [-direction[1], direction[0]];
+    if (properties.roofOrientation && properties.roofOrientation === 'across') {
+      direction = [-direction[1], direction[0]];
+    }
+  }
+
+  direction = vec2.scale(direction, 1000);
+
+  // get farthest intersection of polygon and slope line
+
+  var
+    intersections = getPolygonIntersections(outerPolygon, [vec2.sub(dim.center, direction), vec2.add(dim.center, direction)]),
+    ridge,
+    distance = 0,
+    maxDistance = 0;
+
+  for (i = 0, il = intersections.length; i<il; i++) {
+    distance = getDistanceToLine(dim.center, intersections[i].segment);
+    if (distance > maxDistance) {
+      ridge = intersections[i].segment;
+      maxDistance = distance;
+    }
+  }
+
+  if (ridge === undefined) {
+    return;
+  }
+
+  maxDistance = 0;
+  var distances = [];
+  for (i = 0; i < outerPolygon.length; i++) {
+    distances[i] = getDistanceToLine(outerPolygon[i], ridge);
+    maxDistance = Math.max(maxDistance, distances[i]);
+  }
+
+  // modify vertical position of all points
+  for (i = 0; i < outerPolygon.length; i++) {
+    outerPolygon[i][2] = (1-distances[i]/maxDistance) * dim.roofHeight;
+  }
+
+  // create roof face
+
+  split.polygon(buffers, [outerPolygon], dim.roofZ, roofColor);
+
+  // create extra wall faces
+
+  for (i = 0; i < outerPolygon.length-1; i++) {
+    split.quad(
+      buffers,
+      [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ+outerPolygon[i  ][2]],
+      [outerPolygon[i  ][0], outerPolygon[i  ][1],dim.roofZ],
+      [outerPolygon[i+1][0], outerPolygon[i+1][1],dim.roofZ],
+      [outerPolygon[i+1][0], outerPolygon[i+1][1],dim.roofZ+outerPolygon[i+1][2]],
+      wallColor
+    );
+  }
+}
+
+/***
+function HalfHippedRoof(tags, polygon) {
+  RidgedRoof.call(this, tags, polygon, 1/6);
+
+  this.cap1part = [
+    interpolateBetween(this.cap1[0], this.cap1[1], 0.5 - this.ridgeOffset/this.cap1.getLength()),
+    interpolateBetween(this.cap1[0], this.cap1[1], 0.5 + this.ridgeOffset/this.cap1.getLength())
+  ];
+
+  this.cap2part = [
+    interpolateBetween(this.cap2[0], this.cap2[1], 0.5 - this.ridgeOffset/this.cap1.getLength()),
+    interpolateBetween(this.cap2[0], this.cap2[1], 0.5 + this.ridgeOffset/this.cap1.getLength())
+  ];
+}
+
+HalfHippedRoof.prototype = Object.create(RidgedRoof.prototype);
+
+HalfHippedRoof.prototype.getPolygon = function() {
+  var outerPoly = this.polygon[0];
+
+  outerPoly = insertIntoPolygon(outerPoly, this.cap1part[0], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.cap1part[1], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.cap2part[0], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.cap2part[1], 0.2);
+
+  return new PolygonWithHolesXZ(outerPoly.asSimplePolygon(), this.polygon.getHoles());
+};
+
+HalfHippedRoof.prototype.getInnerPoints = function() {
+  return [];
+};
+
+HalfHippedRoof.prototype.getInnerSegments = function() {
+  return [this.ridge,
+    [this.ridge[0], this.cap1part[0]],
+    [this.ridge[0], this.cap1part[1]],
+    [this.ridge[1], this.cap2part[0]],
+    [this.ridge[1], this.cap2part[1]]
+  ];
+};
+
+
+
+ function GambrelRoof(tags, polygon) {
+  RidgedRoof.call(this, tags, polygon, 0);
+
+  this.cap1part = [
+    interpolateBetween(this.cap1[0], this.cap1[1], 1/6.0),
+    interpolateBetween(this.cap1[0], this.cap1[1], 5/6.0)
+  ];
+
+  this.cap2part = [
+    interpolateBetween(this.cap2[0], this.cap2[1], 1/6.0),
+    interpolateBetween(this.cap2[0], this.cap2[1], 5/6.0)
+  ];
+}
+
+ GambrelRoof.prototype = Object.create(RidgedRoof.prototype);
+
+ GambrelRoof.prototype.getPolygon = function() {
+  var outerPoly = this.polygon[0];
+
+  outerPoly = insertIntoPolygon(outerPoly, this.ridge[0], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.ridge[1], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.cap1part[0], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.cap1part[1], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.cap2part[0], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.cap2part[1], 0.2);
+
+  // TODO: add intersections of additional edges with outline?
+
+  return new PolygonWithHolesXZ(
+    outerPoly.asSimplePolygon(),
+    this.polygon.getHoles()
+  );
+};
+
+ GambrelRoof.prototype.getInnerPoints = function() {
+  return [];
+};
+
+ GambrelRoof.prototype.getInnerSegments = function() {
+  return [this.ridge,
+    [this.cap1part[0], this.cap2part[1]],
+    [this.cap1part[1], this.cap2part[0]]
+  ];
+};
+
+ //*************************************************************************************************
+
+ function RoundRoof() {
+  RidgedRoof.call(this, 0);
+
+  if (this.roofHeight<this.maxDistanceToRidge) {
+    var squaredHeight = this.roofHeight*this.roofHeight;
+    var squaredDist = this.maxDistanceToRidge*this.maxDistanceToRidge;
+    var centerY = (squaredDist - squaredHeight)/(2*this.roofHeight);
+    this.radius = Math.sqrt(squaredDist + centerY*centerY);
+  } else {
+    this.radius = 0;
+  }
+
+  this.rings = Math.max(3, this.roofHeight/RoundRoof.ROOF_SUBDIVISION_METER);
+  this.capParts = [];
+  // TODO: would be good to vary step size with slope
+  var step = 0.5/(this.rings + 1);
+  for (var i = 1; i<=this.rings; i++) {
+    this.capParts.push([
+      interpolateBetween(this.cap1[0], this.cap1[1], i*step),
+      interpolateBetween(this.cap1[0], this.cap1[1], 1 - i*step)
+    ]);
+
+    this.capParts.push([
+      interpolateBetween(this.cap2[0], this.cap2[1], i*step),
+      interpolateBetween(this.cap2[0], this.cap2[1], 1 - i*step)
+    ]);
+  }
+}
+
+ RoundRoof.prototype = Object.create(RidgedRoof.prototype);
+
+ RoundRoof.ROOF_SUBDIVISION_METER = 2.5;
+
+ RoundRoof.prototype.getPolygon = function() {
+  var outerPoly = this.polygon[0];
+  outerPoly = insertIntoPolygon(outerPoly, this.ridge[0], 0.2);
+  outerPoly = insertIntoPolygon(outerPoly, this.ridge[1], 0.2);
+
+  for (var capPart in this.capParts) {
+    outerPoly = insertIntoPolygon(this.outerPoly, capPart[0], 0.2);
+    outerPoly = insertIntoPolygon(this.outerPoly, capPart[1], 0.2);
+  }
+
+  //TODO: add intersections of additional edges with outline?
+  return new PolygonWithHolesXZ(outerPoly.asSimplePolygon(), this.polygon.getHoles());
+};
+
+ RoundRoof.prototype.getInnerPoints = function() {
+  return [];
+};
+
+ RoundRoof.prototype.getInnerSegments = function() {
+  var innerSegments = [];
+  innerSegments.push(this.ridge);
+  for (var i = 0; i<this.rings*2; i += 2) {
+    var cap1part = this.capParts[i];
+    var cap2part = this.capParts[i + 1];
+    innerSegments.push([cap1part[0], cap2part[1]]);
+    innerSegments.push([cap1part[1], cap2part[0]]);
+  }
+  return innerSegments;
+};
+
+ //*************************************************************************************************
+
+ function MansardRoof(tags, polygon) {
+  RidgedRoof.call(this, tags, polygon, 1/3);
+
+  this.mansardEdge1 = [
+    interpolateBetween(this.cap1[0], this.ridge[0], 1/3.0),
+    interpolateBetween(this.cap2[1], this.ridge[1], 1/3.0)
+  ];
+
+  this.mansardEdge2 = [
+    interpolateBetween(this.cap1[1], this.ridge[0], 1/3.0),
+    interpolateBetween(this.cap2[0], this.ridge[1], 1/3.0)
+  ];
+}
+
+ MansardRoof.prototype = Object.create(RidgedRoof.prototype);
+
+ MansardRoof.prototype.getInnerPoints = function() {
+  return [];
+};
+
+ MansardRoof.prototype.getInnerSegments = function() {
+  return [this.ridge,
+    this.mansardEdge1,
+    this.mansardEdge2,
+    [this.ridge[0], this.mansardEdge1[0]],
+    [this.ridge[0], this.mansardEdge2[0]],
+    [this.ridge[1], this.mansardEdge1[1]],
+    [this.ridge[1], this.mansardEdge2[1]],
+    [this.cap1[0], this.mansardEdge1[0]],
+    [this.cap2[1], this.mansardEdge1[1]],
+    [this.cap1[1], this.mansardEdge2[0]],
+    [this.cap2[0], this.mansardEdge2[1]],
+    [this.mansardEdge1[0], this.mansardEdge2[0]],
+    [this.mansardEdge1[1], this.mansardEdge2[1]]
+  ];
+};
+
+ ***/
+
+
+var split = {
+
+  NUM_Y_SEGMENTS: 24,
+  NUM_X_SEGMENTS: 32,
+
+  //function isVertical(a, b, c) {
+  //  return Math.abs(normal(a, b, c)[2]) < 1/5000;
+  //}
+
+  quad: function(buffers, a, b, c, d, color) {
+    this.triangle(buffers, a, b, c, color);
+    this.triangle(buffers, c, d, a, color);
+  },
+
+  triangle: function(buffers, a, b, c, color) {
+    var n = vec3.normal(a, b, c);
+    [].push.apply(buffers.vertices, [].concat(a, c, b));
+    [].push.apply(buffers.normals,  [].concat(n, n, n));
+    [].push.apply(buffers.colors,   [].concat(color, color, color));
+    buffers.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  },
+
+  circle: function(buffers, center, radius, zPos, color) {
+    zPos = zPos || 0;
+    var u, v;
+    for (var i = 0; i < this.NUM_X_SEGMENTS; i++) {
+      u = i/this.NUM_X_SEGMENTS;
+      v = (i+1)/this.NUM_X_SEGMENTS;
+      this.triangle(
+        buffers,
+        [ center[0] + radius * Math.sin(u*Math.PI*2), center[1] + radius * Math.cos(u*Math.PI*2), zPos ],
+        [ center[0],                                  center[1],                                  zPos ],
+        [ center[0] + radius * Math.sin(v*Math.PI*2), center[1] + radius * Math.cos(v*Math.PI*2), zPos ],
+        color
+      );
+    }
+  },
+
+  polygon: function(buffers, rings, zPos, color) {
+    zPos = zPos || 0;
+    var
+      vertexBuffer = [], ringIndex = [],
+      index = 0,
+      i, il,
+      j, jl,
+      ri, rij;
+
+    for (i = 0, il = rings.length; i < il; i++) {
+      ri = rings[i];
+      for (j = 0; j < ri.length; j++) {
+        rij = ri[j];
+        vertexBuffer.push(rij[0], rij[1], zPos + (rij[2] || 0));
+      }
+      if (i) {
+        index += rings[i-1].length;
+        ringIndex.push(index);
+      }
+    }
+
+    var
+      vertices = earcut(vertexBuffer, ringIndex, 3),
+      v1, v2, v3;
+
+    for (i = 0, il = vertices.length-2; i < il; i+=3) {
+      v1 = vertices[i  ]*3;
+      v2 = vertices[i+1]*3;
+      v3 = vertices[i+2]*3;
+      this.triangle(
+        buffers,
+        [ vertexBuffer[v1], vertexBuffer[v1+1], vertexBuffer[v1+2] ],
+        [ vertexBuffer[v2], vertexBuffer[v2+1], vertexBuffer[v2+2] ],
+        [ vertexBuffer[v3], vertexBuffer[v3+1], vertexBuffer[v3+2] ],
+        color
+      );
+    }
+  },
+
+  //polygon3d: function(buffers, rings, color) {
+  //  var ring = rings[0];
+  //  var ringLength = ring.length;
+  //  var vertices, t, tl;
+  //
+////  { r:255, g:0, b:0 }
+//
+  //  if (ringLength <= 4) { // 3: a triangle
+  //    this.triangle(
+  //      buffers,
+  //      ring[0],
+  //      ring[2],
+  //      ring[1], color
+  //    );
+  //
+  //    if (ringLength === 4) { // 4: a quad (2 triangles)
+  //      this.triangle(
+  //        buffers,
+  //        ring[0],
+  //        ring[3],
+  //        ring[2], color
+  //      );
+  //    }
+//      return;
+  //  }
+  //
+  //  if (isVertical(ring[0], ring[1], ring[2])) {
+  //    for (var i = 0, il = rings[0].length; i < il; i++) {
+  //      rings[0][i] = [
+  //        rings[0][i][2],
+  //        rings[0][i][1],
+  //        rings[0][i][0]
+  //      ];
+  //    }
+  //
+  //    vertices = earcut(rings);
+  //    for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
+  //      this.triangle(
+  //        buffers,
+  //        [ vertices[t  ][2], vertices[t  ][1], vertices[t  ][0] ],
+  //        [ vertices[t+1][2], vertices[t+1][1], vertices[t+1][0] ],
+  //        [ vertices[t+2][2], vertices[t+2][1], vertices[t+2][0] ], color
+  //      );
+  //    }
+//      return;
+  //  }
+  //
+  //  vertices = earcut(rings);
+  //  for (t = 0, tl = vertices.length-2; t < tl; t+=3) {
+  //    this.triangle(
+  //      buffers,
+  //      [ vertices[t  ][0], vertices[t  ][1], vertices[t  ][2] ],
+  //      [ vertices[t+1][0], vertices[t+1][1], vertices[t+1][2] ],
+  //      [ vertices[t+2][0], vertices[t+2][1], vertices[t+2][2] ], color
+  //    );
+  //  }
+  //},
+
+  cube: function(buffers, sizeX, sizeY, sizeZ, X, Y, zPos, color) {
+    X = X || 0;
+    Y = Y || 0;
+    zPos = zPos || 0;
+
+    var a = [X,       Y,       zPos];
+    var b = [X+sizeX, Y,       zPos];
+    var c = [X+sizeX, Y+sizeY, zPos];
+    var d = [X,       Y+sizeY, zPos];
+
+    var A = [X,       Y,       zPos+sizeZ];
+    var B = [X+sizeX, Y,       zPos+sizeZ];
+    var C = [X+sizeX, Y+sizeY, zPos+sizeZ];
+    var D = [X,       Y+sizeY, zPos+sizeZ];
+
+    this.quad(buffers, b, a, d, c, color);
+    this.quad(buffers, A, B, C, D, color);
+    this.quad(buffers, a, b, B, A, color);
+    this.quad(buffers, b, c, C, B, color);
+    this.quad(buffers, c, d, D, C, color);
+    this.quad(buffers, d, a, A, D, color);
+  },
+
+  cylinder: function(buffers, center, radius1, radius2, height, zPos, color) {
+    zPos = zPos || 0;
+    var
+      currAngle, nextAngle,
+      currSin, currCos,
+      nextSin, nextCos,
+      num = this.NUM_X_SEGMENTS,
+      doublePI = Math.PI*2;
+
+    for (var i = 0; i < num; i++) {
+      currAngle = ( i   /num) * doublePI;
+      nextAngle = ((i+1)/num) * doublePI;
+
+      currSin = Math.sin(currAngle);
+      currCos = Math.cos(currAngle);
+
+      nextSin = Math.sin(nextAngle);
+      nextCos = Math.cos(nextAngle);
+
+      this.triangle(
+        buffers,
+        [ center[0] + radius1*currSin, center[1] + radius1*currCos, zPos ],
+        [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, zPos+height ],
+        [ center[0] + radius1*nextSin, center[1] + radius1*nextCos, zPos ],
+        color
+      );
+
+      if (radius2 !== 0) {
+        this.triangle(
+          buffers,
+          [ center[0] + radius2*currSin, center[1] + radius2*currCos, zPos+height ],
+          [ center[0] + radius2*nextSin, center[1] + radius2*nextCos, zPos+height ],
+          [ center[0] + radius1*currSin, center[1] + radius1*currCos, zPos ],
+          color
+        );
+      }
+    }
+  },
+
+  dome: function(buffers, center, radius, height, zPos, color) {
+    zPos = zPos || 0;
+    var
+      currAngle, nextAngle,
+      currSin, currCos,
+      nextSin, nextCos,
+      currRadius, nextRadius,
+      nextHeight, nextZ,
+      num = this.NUM_Y_SEGMENTS/2,
+      halfPI = Math.PI/2;
+
+    for (var i = 0; i < num; i++) {
+      currAngle = ( i   /num) * halfPI - halfPI;
+      nextAngle = ((i+1)/num) * halfPI - halfPI;
+
+      currSin = Math.sin(currAngle);
+      currCos = Math.cos(currAngle);
+
+      nextSin = Math.sin(nextAngle);
+      nextCos = Math.cos(nextAngle);
+
+      currRadius = currCos*radius;
+      nextRadius = nextCos*radius;
+
+      nextHeight = (nextSin-currSin)*height;
+      nextZ = zPos - nextSin*height;
+
+      this.cylinder(buffers, center, nextRadius, currRadius, nextHeight, nextZ, color);
+    }
+  },
+
+  // TODO
+  sphere: function(buffers, center, radius, height, zPos, color) {
+    zPos = zPos || 0;
+    var vertexCount = 0;
+    vertexCount += this.circle(buffers, center, radius, zPos, color);
+    vertexCount += this.cylinder(buffers, center, radius, radius, height, zPos, color);
+    vertexCount += this.circle(buffers, center, radius, zPos+height, color);
+    return vertexCount;
+  },
+
+  pyramid: function(buffers, polygon, center, height, zPos, color) {
+    zPos = zPos || 0;
+    polygon = polygon[0];
+    for (var i = 0, il = polygon.length-1; i < il; i++) {
+      this.triangle(
+        buffers,
+        [ polygon[i  ][0], polygon[i  ][1], zPos ],
+        [ polygon[i+1][0], polygon[i+1][1], zPos ],
+        [ center[0], center[1], zPos+height ],
+        color
+      );
+    }
+  },
+
+  extrusion: function(buffers, polygon, height, zPos, color, texCoord) {
+    zPos = zPos || 0;
+    var
+      ring, a, b,
+      L,
+      v0, v1, v2, v3, n,
+      tx1, tx2,
+      ty1 = texCoord[2]*height, ty2 = texCoord[3]*height,
+      i, il,
+      r, rl;
+
+    for (i = 0, il = polygon.length; i < il; i++) {
+      ring = polygon[i];
+        for (r = 0, rl = ring.length-1; r < rl; r++) {
+        a = ring[r];
+        b = ring[r+1];
+        L = vec2.len(vec2.sub(a, b));
+
+        v0 = [ a[0], a[1], zPos];
+        v1 = [ b[0], b[1], zPos];
+        v2 = [ b[0], b[1], zPos+height];
+        v3 = [ a[0], a[1], zPos+height];
+
+        n = vec3.normal(v0, v1, v2);
+        [].push.apply(buffers.vertices, [].concat(v0, v2, v1, v0, v3, v2));
+        [].push.apply(buffers.normals,  [].concat(n, n, n, n, n, n));
+        [].push.apply(buffers.colors,   [].concat(color, color, color, color, color, color));
+
+        tx1 = (texCoord[0]*L) <<0;
+        tx2 = (texCoord[1]*L) <<0;
+
+        buffers.texCoords.push(
+          tx1, ty2,
+          tx2, ty1,
+          tx2, ty2,
+
+          tx1, ty2,
+          tx1, ty1,
+          tx2, ty1
+        );
+      }
+    }
+  }//,
+
+  // extrusionXX: function(buffers, a, b, height, zPos, color) {
+  //   zPos = zPos || 0;
+  //   var v0, v1, v2, v3, n;
+  //
+  //   v0 = [ a[0], a[1], zPos];
+  //   v1 = [ b[0], b[1], zPos];
+  //   v2 = [ b[0], b[1], zPos+height+(b[2] || 0)];
+  //   v3 = [ a[0], a[1], zPos+height+(a[2] || 0)];
+  //
+  //   n = vec3.normal(v0, v1, v2);
+  //   [].push.apply(buffers.vertices, [].concat(v0, v2, v1, v0, v3, v2));
+  //   [].push.apply(buffers.normals,  [].concat(n, n, n, n, n, n));
+  //   [].push.apply(buffers.colors,   [].concat(color, color, color, color, color, color));
+  //
+  //   buffers.texCoords.push(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  // }
+
+};
+
+
+var triangulate = (function() {
+
+  var
+    DEFAULT_HEIGHT = 10,
+    DEFAULT_COLOR = new Color('rgb(220, 210, 200)').toArray(),
+    METERS_PER_LEVEL = 3;
+
+  var MATERIAL_COLORS = {
+    brick: '#cc7755',
+    bronze: '#ffeecc',
+    canvas: '#fff8f0',
+    concrete: '#999999',
+    copper: '#a0e0d0',
+    glass: '#e8f8f8',
+    gold: '#ffcc00',
+    plants: '#009933',
+    metal: '#aaaaaa',
+    panel: '#fff8f0',
+    plaster: '#999999',
+    roof_tiles: '#f08060',
+    silver: '#cccccc',
+    slate: '#666666',
+    stone: '#996666',
+    tar_paper: '#333333',
+    wood: '#deb887'
+  };
+
+  var BASE_MATERIALS = {
+    asphalt: 'tar_paper',
+    bitumen: 'tar_paper',
+    block: 'stone',
+    bricks: 'brick',
+    glas: 'glass',
+    glassfront: 'glass',
+    grass: 'plants',
+    masonry: 'stone',
+    granite: 'stone',
+    panels: 'panel',
+    paving_stones: 'stone',
+    plastered: 'plaster',
+    rooftiles: 'roof_tiles',
+    roofingfelt: 'tar_paper',
+    sandstone: 'stone',
+    sheet: 'canvas',
+    sheets: 'canvas',
+    shingle: 'tar_paper',
+    shingles: 'tar_paper',
+    slates: 'slate',
+    steel: 'metal',
+    tar: 'tar_paper',
+    tent: 'canvas',
+    thatch: 'plants',
+    tile: 'roof_tiles',
+    tiles: 'roof_tiles'
+    // cardboard
+    // eternit
+    // limestone
+    // straw
+  };
+
+  // number of windows per horizontal meter of building wall
+  var WINDOWS_PER_METER = 0.5;
+
+  // var EARTH_RADIUS_IN_METERS = 6378137;
+  // var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
+  // var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+  var METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
+
+  function triangulate(buffers, feature, origin, forcedColor, colorVariance) {
+    // a single feature might split into several items
+    var
+      scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE],
+      geometries = alignGeometry(feature.geometry),
+      polygon;
+
+    for (var i = 0, il = geometries.length; i<il; i++) {
+      polygon = transform(geometries[i], origin, scale);
+      addBuilding(buffers, feature.properties, polygon, forcedColor, colorVariance);
+    }
+  }
+
+  //***************************************************************************
+
+  // converts all coordinates of all rings in 'polygonRings' from lat/lon pairs to offsets from origin
+  function transform(geometry, origin, scale) {
+    return geometry.map(function(ring, i) {
+      // outer ring (first ring) needs to be clockwise, inner rings
+      // counter-clockwise. If they are not, make them by reverting order.
+      if ((i === 0) !== isClockWise(ring)) {
+        ring.reverse();
+      }
+
+      return ring.map(function(point) {
+        return [
+          (point[0]-origin[0])*scale[0],
+          -(point[1]-origin[1])*scale[1]
+        ];
+      });
+    });
+  }
+
+  function isClockWise(ring) {
+    return 0 < ring.reduce(function(a, b, c, d) {
+      return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
+    }, 0);
+  }
+
+  function getBBox(ring) {
+    var
+      x =  Infinity, y =  Infinity,
+      X = -Infinity, Y = -Infinity;
+
+    for (var i = 0; i < ring.length; i++) {
+      x = Math.min(x, ring[i][0]);
+      y = Math.min(y, ring[i][1]);
+
+      X = Math.max(X, ring[i][0]);
+      Y = Math.max(Y, ring[i][1]);
+    }
+
+    return { minX:x, minY:y, maxX:X, maxY:Y };
+  }
+
+  // TODO: handle GeometryCollection
+  function alignGeometry(geometry) {
+    switch (geometry.type) {
+      case 'MultiPolygon': return geometry.coordinates;
+      case 'Polygon': return [geometry.coordinates];
+      default: return [];
+    }
+  }
+
+  // TODO: colorVariance = (id/2%2 ? -1 : +1)*(id%2 ? 0.03 : 0.06)
+
+  function getMaterialColor(str) {
+    if (typeof str !== 'string') {
+      return null;
+    }
+    str = str.toLowerCase();
+    if (str[0] === '#') {
+      return str;
+    }
+    return MATERIAL_COLORS[BASE_MATERIALS[str] || str] || null;
+  }
+
+  function varyColor(color, variance) {
+    variance = variance || 0;
+    var c = new Color(color).toArray();
+    if (c === undefined) {
+      c = DEFAULT_COLOR;
+    }
+    return [c[0]+variance, c[1]+variance, c[2]+variance];
+  }
+
+  //***************************************************************************
+
+  // TODO: add floor polygons if items have a minHeight (or better: minHeight is greater than threshold)
+  function addBuilding(buffers, properties, polygon, forcedColor, colorVariance) {
+    var
+      dim = getDimensions(properties, getBBox(polygon[0])),
+      wallColor = varyColor((forcedColor || properties.wallColor || properties.color || getMaterialColor(properties.material)), colorVariance),
+      roofColor = varyColor((forcedColor || properties.roofColor || getMaterialColor(properties.roofMaterial)), colorVariance);
+
+    //*** process buildings that don't require a roof *************************
+
+    switch (properties.shape) {
+      case 'cone':
+        split.cylinder(buffers, dim.center, dim.radius, 0, dim.wallHeight, dim.wallZ, wallColor);
+        return;
+
+      case 'dome':
+        split.dome(buffers, dim.center, dim.radius, dim.wallHeight, dim.wallZ, wallColor);
+        return;
+
+      case 'pyramid':
+        split.pyramid(buffers, polygon, dim.center, dim.wallHeight, dim.wallZ, wallColor);
+        return;
+
+      case 'sphere':
+        split.sphere(buffers, dim.center, dim.radius, dim.wallHeight, dim.wallZ, wallColor);
+        return;
+    }
+
+    //*** process roofs *******************************************************
+
+    switch (properties.roofShape) {
+      case 'cone':
+        split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
+        break;
+
+      case 'dome':
+        split.dome(buffers, dim.center, dim.radius, dim.roofHeight, dim.roofZ, roofColor);
+        break;
+
+      case 'pyramid':
+        if (properties.shape === 'cylinder') {
+          split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
+        } else {
+          split.pyramid(buffers, polygon, dim.center, dim.roofHeight, dim.roofZ, roofColor);
+        }
+        break;
+
+
+//  var explicitRoofTagging = true;
+//  if ((!properties.roofLines || properties.roofLines !== 'no') && this.building.hasComplexRoof) {
+//    return new ComplexRoof();
+//  }
+
+      case 'skillion':
+        addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+        break; // no further processing
+
+      case 'gabled':
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
+        break;
+
+      case 'hipped':
+        addRidgedRoof(buffers, properties, polygon, 1/3, dim, wallColor, roofColor);
+        break;
+
+      case 'half-hipped':
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
+        break;
+
+      case 'gambrel':
+     // addGambrelRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
+        break;
+
+      case 'mansard':
+     // addMansardRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
+        break;
+
+      // case 'round':
+      //   addRoundRoof(buffers, properties, polygon, dim, wallColor, roofColor);
+      //   break;
+
+      case 'onion':
+        var rings = [
+          { rScale: 1.0, hScale: 0.00 },
+          { rScale: 0.8, hScale: 0.15 },
+          { rScale: 1.0, hScale: 0.50 },
+          { rScale: 0.8, hScale: 0.70 },
+          { rScale: 0.4, hScale: 0.80 },
+          { rScale: 0.0, hScale: 1.00 }
+        ];
+
+        var h1, h2;
+        for (var i = 0, il = rings.length - 1; i<il; i++) {
+          h1 = dim.roofHeight*rings[i].hScale;
+          h2 = dim.roofHeight*rings[i + 1].hScale;
+          split.cylinder(buffers, dim.center, dim.radius*rings[i].rScale, dim.radius*rings[i + 1].rScale, h2 - h1, dim.roofZ + h1, roofColor);
+        }
+        break;
+
+      // case 'flat':
+      default:
+        if (properties.shape === 'cylinder') {
+          split.circle(buffers, dim.center, dim.radius, dim.roofZ, roofColor);
+        } else {
+          split.polygon(buffers, polygon, dim.roofZ, roofColor);
+        }
+    }
+
+    //*** process remaining buildings *****************************************
+
+    switch(properties.roofShape) {
+      case 'none':
+        // no walls at all
+        return;
+
+      case 'cylinder':
+        split.cylinder(buffers, dim.center, dim.radius, dim.radius, dim.wallHeight, dim.wallZ, wallColor);
+        return;
+
+      default: // extruded polygon
+        var ty1 = 0.2;
+        var ty2 = 0.4;
+        // non-continuous windows
+        if (properties.material !== 'glass') {
+          ty1 = 0;
+          ty2 = 0;
+          if (properties.levels) {
+            ty2 = (parseFloat(properties.levels) - parseFloat(properties.minLevel || 0))<<0;
+          }
+        }
+        split.extrusion(buffers, polygon, dim.wallHeight, dim.wallZ, wallColor, [0, WINDOWS_PER_METER, ty1/dim.wallHeight, ty2/dim.wallHeight]);
+    }
+  }
+
+  function getDimensions(properties, bbox) {
+    var
+      dim = {},
+      totalHeight = properties.height || (properties.levels ? properties.levels*METERS_PER_LEVEL : 0);
+
+    // dim.center = [
+    //   (bbox.minX + (bbox.maxX - bbox.minX)/2 - origin[0]) * scale[0],
+    //   (bbox.minY + (bbox.maxY - bbox.minY)/2 - origin[1]) * scale[1]
+    // ]
+    // dim.radius = (bbox.maxX - bbox.minX)/2 * scale[0]
+
+    dim.center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
+    dim.radius = (bbox.maxX - bbox.minX)/2;
+
+    //*** wall height *********************************************************
+
+    dim.wallZ = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
+    dim.wallHeight = Math.max(0, totalHeight - dim.wallZ);
+
+    switch (properties.shape) {
+      case 'cone':
+      case 'dome':
+      case 'pyramid':
+        dim.wallHeight = dim.wallHeight || 2*dim.radius;
+        break;
+
+      case 'sphere':
+        dim.wallHeight = dim.wallHeight || 4*dim.radius;
+        break;
+
+      // case 'none': // no walls at all
+      // case 'cylinder':
+      default:
+        dim.wallHeight = dim.wallHeight || DEFAULT_HEIGHT;
+    }
+
+    //*** roof height and update wall height **********************************
+
+    dim.roofHeight = properties.roofHeight || (properties.roofLevels ? properties.roofLevels*METERS_PER_LEVEL : 0);
+
+    switch (properties.roofShape) {
+      case 'cone':
+      case 'pyramid':
+      case 'dome':
+      case 'onion':
+        dim.roofHeight = dim.roofHeight || 1*dim.radius;
+        break;
+
+      case 'gabled':
+      case 'hipped':
+      case 'half-hipped':
+case 'skillion':
+case 'gambrel':
+case 'mansard':
+case 'round':
+         dim.roofHeight = dim.roofHeight || 1*METERS_PER_LEVEL;
+         break;
+
+      case 'flat':
+        dim.roofHeight = 0;
+        break;
+
+      default:
+        // roofs we don't handle should not affect wallHeight
+        dim.roofHeight = 0;
+    }
+
+    dim.roofHeight = Math.min(dim.roofHeight, dim.wallHeight);
+    dim.wallHeight = dim.wallHeight - dim.roofHeight;
+    dim.roofZ = dim.wallHeight + dim.wallZ;
+
+    return dim;
+  }
+
+  return triangulate;
+
+}());
+
 
 if (CustomEvent === undefined) {
   var CustomEvent = function(type, params) {
@@ -2746,8 +3985,8 @@ var APP, GL; // TODO: make them local references
  * OSMBuildings
  * @constructor
  * @param {Object} [options] - OSMBuildings options
- * @param {Integer} [options.minZoom=10] - Minimum allowed zoom
- * @param {Integer} [options.maxZoom=20] - Maxiumum allowed zoom
+ * @param {Number} [options.minZoom=10] - Minimum allowed zoom
+ * @param {Number} [options.maxZoom=20] - Maxiumum allowed zoom
  * @param {Object} [options.bounds] - A bounding box to restrict the map to
  * @param {Boolean} [options.state=false] - Store the map state in the URL
  * @param {Boolean} [options.disabled=false] - Disable user input
@@ -2815,14 +4054,12 @@ var OSMBuildings = function(options) {
   APP.rotation = APP.options.rotation || 0;
   APP.tilt = APP.options.tilt || 0;
 
-  APP.layers = [];
-
   if (APP.options.disabled) {
     APP.setDisabled(true);
   }
 };
 
-OSMBuildings.VERSION = '3.1.0';
+OSMBuildings.VERSION = '3.2.0';
 OSMBuildings.ATTRIBUTION = '<a href="https://osmbuildings.org/">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
@@ -2843,7 +4080,7 @@ OSMBuildings.prototype = {
 
     APP.width  = width  !== undefined ? width  : container.offsetWidth;
     APP.height = height !== undefined ? height : container.offsetHeight;
-    
+
     var canvas = document.createElement('CANVAS');
     canvas.className = 'osmb-viewport';
     canvas.width = APP.width;
@@ -2854,10 +4091,10 @@ OSMBuildings.prototype = {
 
     Events.init(canvas);
 
-    APP.getStateFromUrl();
+    APP._getStateFromUrl();
     if (APP.options.state) {
-      APP.setStateToUrl();
-      APP.on('change', APP.setStateToUrl);
+      APP._setStateToUrl();
+      APP.on('change', APP._setStateToUrl);
     }
 
     APP._attribution = document.createElement('DIV');
@@ -2872,21 +4109,19 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Removes the OSMBuildings object from the map
+   * DEPRECATED
    */
-  // TODO: test this
-  remove: function() {
-    render.stop();
-    GLX.destroy();
-  },
+  remove: function() {},
 
   /**
    * A function that will be called when an event is fired. The parameters passed to the function
    * depend on what type of event it is
    * @callback OSMBuildings~eventListenerFunction
    */
+  
   /**
    * Adds an event listener
+   * @public
    * @param {String} event - An event identifier to listen for
    * @param {OSMBuildings~eventListenerFunction} callback
    */
@@ -2897,6 +4132,7 @@ OSMBuildings.prototype = {
 
   /**
    * Removes event listeners
+   * @public
    * @param {String} event - An event identifier to listen for
    * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
    */
@@ -2904,6 +4140,12 @@ OSMBuildings.prototype = {
     GL.canvas.removeEventListener(type, fn);
   },
 
+  /**
+   * Trigger a specific event
+   * @public
+   * @param {String} event - An event identifier to listen for
+   * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
+   */
   emit: function(type, detail) {
     var event = new CustomEvent(type, { detail:detail });
     GL.canvas.dispatchEvent(event);
@@ -2918,6 +4160,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the date for shadow calculations
+   * @public
    * @param {Date} date
    */
   setDate: function(date) {
@@ -2928,9 +4171,11 @@ OSMBuildings.prototype = {
   // TODO: this should be part of the underlying map engine
   /**
    * Returns the screen position of the point
+   * @public
    * @param {Float} latitude - Latitude of the point
    * @param {Float} longitude - Longitude of the point
    * @param {Float} elevation - Elevation of the point
+   * @returns {Object} Screen position in pixels {x,y}
    */
   project: function(latitude, longitude, elevation) {
     var
@@ -2954,8 +4199,10 @@ OSMBuildings.prototype = {
    * Returns the geographic position (latitude/longitude) of the map layer
    * (elevation==0) at viewport position (x,y), or 'undefined' if no part of the
    * map plane would be rendered at (x,y) - e.g. if (x,y) lies above the horizon.
-   * @param {Integer} x - the x position in the viewport
-   * @param {Integer} y - the y position in the viewport
+   * @public
+   * @param {Number} x - the x position in the viewport
+   * @param {Number} y - the y position in the viewport
+   * @returns {Object} Geographic position {latitude,longitude}
    */
   unproject: function(x, y) {
     var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
@@ -2979,15 +4226,16 @@ OSMBuildings.prototype = {
 
   /**
    * Adds an OBJ (3D object) file to the map
-   * Important: objects with same url are cached and only loaded once
+   * Important: objects with exactly the same url are cached and only loaded once
+   * @public
    * @param {String} url - URL of the OBJ file
    * @param {Object} position - Where to render the OBJ
    * @param {Float} position.latitude - Latitude for the OBJ
    * @param {Float} position.longitude - Longitude for the OBJ
    * @param {Object} [options] - Options for rendering the OBJ
-   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
-   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
-   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {Number} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    */
@@ -3001,13 +4249,15 @@ OSMBuildings.prototype = {
    * @param {String} id - The feature's id
    * @param {Object} properties - The feature's properties
    */
+
   /**
    * Adds a GeoJSON layer to the map
+   * @public
    * @param {String} url - URL of the GeoJSON file
    * @param {Object} options - Options to apply to the GeoJSON being rendered
-   * @param {Integer} [options.scale=1] - Scale the model by this value before rendering
-   * @param {Integer} [options.rotation=0] - Rotate the model by this much before rendering
-   * @param {Integer} [options.elevation=<ground height>] - The height above ground to place the model at
+   * @param {Number} [options.scale=1] - Scale the model by this value before rendering
+   * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering
+   * @param {Number} [options.elevation=<ground height>] - The height above ground to place the model at
    * @param {String} [options.id] - An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] - A color to apply to the model
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
@@ -3018,15 +4268,16 @@ OSMBuildings.prototype = {
 
   // TODO: allow more data layers later on
   /**
-   * Adds a GeoJSON tile base layer, for rendering the 3D buildings
+   * Adds a GeoJSON tile layer, for rendering the 3D buildings
+   * @public
    * @param {String} url - The URL of the GeoJSON tile server, in {@link https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md the correct format}
    * @param {Object} options
-   * @param {Integer} [options.fixedZoom=15]
+   * @param {Number} [options.fixedZoom=15]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Integer} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
-   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Number} [options.minZoom=14.5] - The minimum zoom level to show features from this layer
+   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    * @param {Boolean} [options.fadeIn=true] - Fade the geojson features into view; if `false`, then display immediately.
    */
   addGeoJSONTiles: function(url, options) {
@@ -3038,14 +4289,15 @@ OSMBuildings.prototype = {
 
   /**
    * Adds a 2D map source, to render below the 3D buildings
+   * @public
    * @param {String} url - The URL of the map server. This could be Mapbox, or {@link https://wiki.openstreetmap.org/wiki/Tiles any other tile server} that supports the right format
    * @param {Object} options
-   * @param {Integer} [options.fixedZoom]
+   * @param {Number} [options.fixedZoom]
    * @param {Object} [options.bounds] - Currently not used
    * @param {String} [options.color] - A color to apply to all features on this layer
    * @param {OSMBuildings~modifierFunction} [options.modifier] - DISCONTINUED. Use 'loadfeature' event instead.
-   * @param {Integer} [options.minZoom] - The minimum zoom level to show features from this layer
-   * @param {Integer} [options.maxZoom] - The maxiumum zoom level to show features from this layer
+   * @param {Number} [options.minZoom] - The minimum zoom level to show features from this layer
+   * @param {Number} [options.maxZoom] - The maxiumum zoom level to show features from this layer
    */
   addMapTiles: function(url, options) {
     APP.basemapGrid = new Grid(url, basemap.Tile, options);
@@ -3054,6 +4306,7 @@ OSMBuildings.prototype = {
 
   /**
    * Highlight a given feature by id. Currently, the highlight can only be applied to one feature. Set id = `null` in order to un-highlight
+   * @public
    * @param {String} id - The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever is defined in the options passed to it.
    * @param {String} highlightColor - An optional color string to be used for highlighting
    */
@@ -3063,15 +4316,18 @@ OSMBuildings.prototype = {
     return APP;
   },
 
-  // TODO: check naming. show() suggests it affects the layer rather than objects on it
   /**
    * A function that will be called on each feature, for modification before rendering
    * @callback OSMBuildings~selectorFunction
    * @param {String} id - The feature's id
    * @param {Object} data - The feature's data
    */
+
+  // TODO: check naming. show() suggests it affects the layer rather than objects on it
+
   /**
    * Sets a function that defines which objects to show on this layer
+   * @public
    * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to show the feature
    * @param {Integer} [duration=0] - How long to show the feature for
    */
@@ -3081,11 +4337,13 @@ OSMBuildings.prototype = {
   },
 
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
- /**
-  * Sets a function that defines which objects to hide on this layer
-  * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
-  * @param {Integer} [duration=0] - How long to hide the feature for
-  */
+
+  /**
+   * Sets a function that defines which objects to hide on this layer
+   * @public
+   * @param {OSMBuildings~selectorFunction} selector - A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
+   * @param {Integer} [duration=0] - How long to hide the feature for
+   */
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
     return APP;
@@ -3096,8 +4354,10 @@ OSMBuildings.prototype = {
    * @callback OSMBuildings~getTargetCallback
    * @param {Object} feature - The feature
    */
+
   /**
-   * Returns the feature from a position on the screen
+   * Returns the feature from a position on the screen. Works asynchronous.
+   * @public
    * @param {Integer} x - The x coordinate (in pixels) of position on the screen
    * @param {Integer} y - The y coordinate (in pixels) of position on the screen
    * @param {OSMBuildings~getTargetCallback} callback - A callback function that receives the object
@@ -3113,8 +4373,10 @@ OSMBuildings.prototype = {
    * @callback OSMBuildings~screenshotCallback
    * @param screenshot - The screenshot
    */
+
   /**
-   * Take a screenshot
+   * Take a screenshot. Works asynchronous.
+   * @public
    * @param {OSMBuildings~screenshotCallback} callback - A callback function that receives the screenshot
    */
   screenshot: function(callback) {
@@ -3131,18 +4393,18 @@ OSMBuildings.prototype = {
     if (APP.attribution) {
       attribution.push(APP.attribution);
     }
-    for (var i = 0; i < APP.layers.length; i++) {
-      if (APP.layers[i].attribution) {
-        attribution.push(APP.layers[i].attribution);
-      }
-    }
+    // for (var i = 0; i < APP.layers.length; i++) {
+    //   if (APP.layers[i].attribution) {
+    //     attribution.push(APP.layers[i].attribution);
+    //   }
+    // }
     APP._attribution.innerHTML = attribution.join(' · ');
   },
 
   /**
    * @private
    */
-  getStateFromUrl: function() {
+  _getStateFromUrl: function() {
     var
       query = location.search,
       state = {};
@@ -3163,7 +4425,7 @@ OSMBuildings.prototype = {
   /**
    * @private
    */
-  setStateToUrl: function() {
+  _setStateToUrl: function() {
     if (!history.replaceState || APP.stateDebounce) {
       return;
     }
@@ -3189,13 +4451,9 @@ OSMBuildings.prototype = {
     return !!Events.disabled;
   },
 
-  /* returns the geographical bounds of the current view.
-   * notes:
+  /**
+   * Returns geographical bounds of the current view
    * - since the bounds are always axis-aligned they will contain areas that are
-   /**
-   * Returns the geographical bounds of the current view.
-   * Notes:
-   * - Since the bounds are always axis-aligned they will contain areas that are
    *   not currently visible if the current view is not also axis-aligned.
    * - The bounds only contain the map area that OSMBuildings considers for rendering.
    *   OSMBuildings has a rendering distance of about 3.5km, so the bounds will
@@ -3207,6 +4465,8 @@ OSMBuildings.prototype = {
    *   is seen at the lower edge of the screen, but whose footprint is outside
    *   of the current view below the lower edge do not contribute to the bounds.
    *   so their top may be visible and they may still be out of bounds.
+   * @public
+   * @returns {Array} bounding coordinates in unspecific order [{latitude,longitude},...]
    */
   getBounds: function() {
     var viewQuad = render.getViewQuad(), res = [];
@@ -3218,6 +4478,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the zoom level
+   * @public
    * @param {Float} zoom - The new zoom level
    * @param {Object} e - **Not currently used**
    * @fires OSMBuildings#zoom
@@ -3249,12 +4510,14 @@ OSMBuildings.prototype = {
       }
       /**
        * Fired when the map is zoomed (in either direction)
+       * @public
        * @event OSMBuildings#zoom
        */
       APP.emit('zoom', { zoom: zoom });
 
       /**
        * Fired when the map is zoomed, tilted or panned
+       * @public
        * @event OSMBuildings#change
        */
       APP.emit('change');
@@ -3263,7 +4526,9 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Returns the current zoom level
+   * Gets current zoom level
+   * @public
+   * @returns {Number} zoom level
    */
   getZoom: function() {
     return APP.zoom;
@@ -3271,6 +4536,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the map's geographic position
+   * @public
    * @param {Object} pos - The new position
    * @param {Float} pos.latitude
    * @param {Float} pos.longitude
@@ -3289,13 +4555,16 @@ OSMBuildings.prototype = {
 
   /**
    * Returns the map's current geographic position
+   * @public
+   * @returns {Object} Geographic position {latitude,longitude}
    */
   getPosition: function() {
     return APP.position;
   },
 
   /**
-   * Sets the map's size
+   * Sets the map view's size in pixels
+   * @public
    * @param {Object} size
    * @param {Integer} size.width
    * @param {Integer} size.height
@@ -3308,6 +4577,7 @@ OSMBuildings.prototype = {
 
       /**
        * Fired when the map is resized
+       * @public
        * @event OSMBuildings#resize
        */
       APP.emit('resize', { width: APP.width, height: APP.height });
@@ -3316,14 +4586,17 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Returns the map's current size
+   * Returns the map's current view size in pixels
+   * @public
+   * @returns {Object} View size {width,height}
    */
   getSize: function() {
     return { width: APP.width, height: APP.height };
   },
 
   /**
-   * Set's the maps rotation
+   * Set's the map's rotation
+   * @public
    * @param {Float} rotation - The new rotation angle
    * @fires OSMBuildings#rotate
    * @fires OSMBuildings#change
@@ -3335,6 +4608,7 @@ OSMBuildings.prototype = {
 
       /**
        * Fired when the map is rotated
+       * @public
        * @event OSMBuildings#rotate
        */
       APP.emit('rotate', { rotation: rotation });
@@ -3344,7 +4618,9 @@ OSMBuildings.prototype = {
   },
 
   /**
-   * Returns the maps current rotation
+   * Returns the map's current rotation
+   * @public
+   * @returns {Number} Rotation in degree
    */
   getRotation: function() {
     return APP.rotation;
@@ -3352,6 +4628,7 @@ OSMBuildings.prototype = {
 
   /**
    * Sets the map's tilt
+   * @public
    * @param {Float} tilt - The new tilt
    * @fires OSMBuildings#tilt
    * @fires OSMBuildings#change
@@ -3363,6 +4640,7 @@ OSMBuildings.prototype = {
 
       /**
        * Fired when the map is tilted
+       * @public
        * @event OSMBuildings#tilt
        */
       APP.emit('tilt', { tilt: tilt });
@@ -3373,45 +4651,22 @@ OSMBuildings.prototype = {
 
   /**
    * Returns the map's current tilt
+   * @public
+   * @returns {Number} Tilt in degree
    */
   getTilt: function() {
     return APP.tilt;
   },
 
   /**
-   * Adds a layer to the map
-   * @param {Object} layer - The layer to add
-   */
-  addLayer: function(layer) {
-    APP.layers.push(layer);
-    APP._updateAttribution();
-    return APP;
-  },
-
-  /**
-   * Removes a layer from the map
-   * @param {Object} layer - The layer to remove
-   */
-  removeLayer: function(layer) {
-    APP.layers = APP.layers.filter(function(item) {
-      return (item !== layer);
-    });
-    APP._updateAttribution();
-  },
-
-  /**
    * Destroys the map
+   * @public
    */
   destroy: function() {
     render.destroy();
 
     // APP.basemapGrid.destroy();
     // APP.dataGrid.destroy();
-    for (var i = 0; i < APP.layers.length; i++) {
-      APP.layers[i].destroy();
-    }
-
-    APP.layers = [];
 
     // TODO: when taking over an existing canvas, better don't destroy it here
     GLX.destroy();
@@ -3997,7 +5252,7 @@ var Grid = function(source, tileClass, options) {
   this.bounds = options.bounds;
   this.fixedZoom = options.fixedZoom;
 
-  this.tileOptions = { color:options.color };
+  this.tileOptions = { color:options.color, fadeIn:options.fadeIn };
 
   this.minZoom = parseFloat(options.minZoom) || APP.minZoom;
   this.maxZoom = parseFloat(options.maxZoom) || APP.maxZoom;
@@ -4502,7 +5757,7 @@ mesh.GeoJSON = (function() {
 
           vertexCountBefore = res.vertices.length;
 
-          Triangulate.split(res, id, feature, position, this.forcedColor);
+          triangulate(res, feature, position, this.forcedColor);
 
           vertexCount = (res.vertices.length - vertexCountBefore)/3;
 

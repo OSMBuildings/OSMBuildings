@@ -255,7 +255,7 @@ var triangulate = (function() {
         }
         break;
 
-      case 'flat':
+      // case 'flat':
       default:
         if (properties.shape === 'cylinder') {
           split.circle(buffers, dim.center, dim.radius, dim.roofZ, roofColor);
@@ -320,8 +320,8 @@ var triangulate = (function() {
         dim.wallHeight = dim.wallHeight || 4*dim.radius;
         break;
 
-      case 'none': // no walls at all
-      case 'cylinder':
+      // case 'none': // no walls at all
+      // case 'cylinder':
       default:
         dim.wallHeight = dim.wallHeight || DEFAULT_HEIGHT;
     }

@@ -37,7 +37,7 @@
     "src/triangulate/earcut.custom.js",
 
     "src/triangulate/roofs/Tools.js",
-    "src/triangulate/roofs/RidgedRoof.js",
+    "src/triangulate/roofs/index.js",
 
     "src/triangulate/split.js",
     "src/triangulate/index.js",
