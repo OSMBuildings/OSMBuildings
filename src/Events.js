@@ -143,7 +143,6 @@ Events.init = function(container) {
     startY = prevY = pos.y;
 
     pointerIsDown = true;
-
     APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
   }
 
@@ -183,7 +182,6 @@ Events.init = function(container) {
     }
 
     pointerIsDown = false;
-
     APP.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
   }
 
@@ -268,6 +266,8 @@ Events.init = function(container) {
   }
 
   function onTouchStart(e) {
+    pointerIsDown = true;
+
     cancelEvent(e);
 
     // gesturechange polyfill
@@ -298,9 +298,12 @@ Events.init = function(container) {
   }
 
   function onTouchMove(e) {
+if (!pointerIsDown) {
+  return;
+}
     var pos = getEventPosition(e.touches[0], startOffset);
-    if (e.touches.length > 1) {
-      APP.setTilt(prevTilt + (prevY - pos.y) * (360/innerHeight));
+    if (e.touches.length>1) {
+      APP.setTilt(prevTilt + (prevY - pos.y)*(360/innerHeight));
       prevTilt = APP.tilt;
       // gesturechange polyfill
       if (!('ongesturechange' in window)) {
@@ -315,10 +318,15 @@ Events.init = function(container) {
   }
 
   function onTouchEnd(e) {
+if (!pointerIsDown) {
+  return;
+}
+
     // gesturechange polyfill
     gestureStarted = false;
 
     if (e.touches.length === 0) {
+pointerIsDown = false;
       APP.emit('pointerup', { x: prevX, y: prevY, button: 0 });
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
@@ -329,6 +337,10 @@ Events.init = function(container) {
   }
 
   function onGestureChange(e) {
+if (!pointerIsDown) {
+  return;
+}
+
     cancelEvent(e);
 
     if (!Events.disabled) {

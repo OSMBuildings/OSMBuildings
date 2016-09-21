@@ -31,7 +31,6 @@ module.exports = function(grunt) {
           '<%=cfg.modules%>',
           'build/temp/Shaders.js',
           'build/temp/GLX.debug.js',
-          'build/temp/GLMap.debug.js',
           '<%=cfg.src%>'
         ],
         dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
