@@ -105,16 +105,6 @@
 
   osmb.appendTo('map');
 
-  osmb.on('busy', function() {
-    console.log('busy');
-  });
-
-  osmb.on('idle', function() {
-    console.log('idle');
-  });
-
-
-
   var selector = function(id, data) {
     return id % 2 === 0;
   };
