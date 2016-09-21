@@ -12,10 +12,10 @@ var Grid = function(source, tileClass, options) {
 
   this.tileOptions = { color:options.color, fadeIn:options.fadeIn };
 
-  this.minZoom = Math.max(parseFloat(options.minZoom || 10), APP.minZoom);
+  this.minZoom = Math.max(parseFloat(options.minZoom || 14.5), APP.minZoom);
   this.maxZoom = Math.min(parseFloat(options.maxZoom || 20), APP.maxZoom);
   if (this.maxZoom < this.minZoom) {
-    this.minZoom = 10;
+    this.minZoom = 14.5;
     this.maxZoom = 20;
   }
 
