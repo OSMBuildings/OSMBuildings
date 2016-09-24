@@ -3126,42 +3126,12 @@ var triangulate = (function() {
   }
 
   function getDimensions(properties, bbox) {
-    var
-      dim = {},
-      totalHeight = properties.height || (properties.levels ? properties.levels*METERS_PER_LEVEL : 0);
-
-    // dim.center = [
-    //   (bbox.minX + (bbox.maxX - bbox.minX)/2 - origin[0]) * scale[0],
-    //   (bbox.minY + (bbox.maxY - bbox.minY)/2 - origin[1]) * scale[1]
-    // ]
-    // dim.radius = (bbox.maxX - bbox.minX)/2 * scale[0]
+    var dim = {};
 
     dim.center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
     dim.radius = (bbox.maxX - bbox.minX)/2;
 
-    //*** wall height *********************************************************
-
-    dim.wallZ = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
-    dim.wallHeight = Math.max(0, totalHeight - dim.wallZ);
-
-    switch (properties.shape) {
-      case 'cone':
-      case 'dome':
-      case 'pyramid':
-        dim.wallHeight = dim.wallHeight || 2*dim.radius;
-        break;
-
-      case 'sphere':
-        dim.wallHeight = dim.wallHeight || 4*dim.radius;
-        break;
-
-      // case 'none': // no walls at all
-      // case 'cylinder':
-      default:
-        dim.wallHeight = dim.wallHeight || DEFAULT_HEIGHT;
-    }
-
-    //*** roof height and update wall height **********************************
+    //*** roof height *********************************************************
 
     dim.roofHeight = properties.roofHeight || (properties.roofLevels ? properties.roofLevels*METERS_PER_LEVEL : 0);
 
@@ -3176,10 +3146,10 @@ var triangulate = (function() {
       case 'gabled':
       case 'hipped':
       case 'half-hipped':
-case 'skillion':
-case 'gambrel':
-case 'mansard':
-case 'round':
+      case 'skillion':
+      case 'gambrel':
+      case 'mansard':
+      case 'round':
          dim.roofHeight = dim.roofHeight || 1*METERS_PER_LEVEL;
          break;
 
@@ -3192,9 +3162,43 @@ case 'round':
         dim.roofHeight = 0;
     }
 
-    dim.roofHeight = Math.min(dim.roofHeight, dim.wallHeight);
-    dim.wallHeight = dim.wallHeight - dim.roofHeight;
-    dim.roofZ = dim.wallHeight + dim.wallZ;
+    //*** wall height *********************************************************
+
+    var maxHeight;
+    dim.wallZ = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
+
+    if (properties.height !== undefined) {
+      maxHeight = properties.height;
+      dim.roofHeight = Math.min(dim.roofHeight, maxHeight); // we don't want negative wall heights after subtraction
+      dim.roofZ = maxHeight-dim.roofHeight;
+      dim.wallHeight = maxHeight - dim.roofHeight - dim.wallZ;
+    } else if (properties.levels !== undefined) {
+      maxHeight = properties.levels*METERS_PER_LEVEL;
+      // dim.roofHeight remains unchanged
+      dim.roofZ = maxHeight;
+      dim.wallHeight = maxHeight - dim.wallZ;
+    } else {
+      switch (properties.shape) {
+        case 'cone':
+        case 'dome':
+        case 'pyramid':
+          maxHeight = 2*dim.radius;
+          dim.roofHeight = 0;
+          break;
+
+        case 'sphere':
+          maxHeight = 4*dim.radius;
+          dim.roofHeight = 0;
+          break;
+
+        // case 'none': // no walls at all
+        // case 'cylinder':
+        default:
+          maxHeight = DEFAULT_HEIGHT;
+      }
+      dim.roofZ = maxHeight;
+      dim.wallHeight = maxHeight - dim.wallZ;
+    }
 
     return dim;
   }
