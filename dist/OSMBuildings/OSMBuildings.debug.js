@@ -2028,10 +2028,14 @@ function getPolygonDirection(polygon) {
 
   for (var i = 0, il = simplePolygon.length - 1; i<il; i++) {
     segmentLength = vec2.len(vec2.sub(simplePolygon[i+1], simplePolygon[i]));
-    if (segmentLength>maxSegmentLength) {
+    if (segmentLength > maxSegmentLength) {
       maxSegmentLength = segmentLength;
       maxSegment = [simplePolygon[i], simplePolygon[i + 1]];
     }
+  }
+
+  if (maxSegment === undefined) {
+    return;
   }
 
   d = vec2.sub(maxSegment[1], maxSegment[0]);
@@ -2136,6 +2140,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
   offset = 0; // TODO
 
   var
+    i,
     outerPolygon = polygon[0],
     direction,
     angle, rad;
@@ -2159,6 +2164,10 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
     }
   }
 
+  if (direction === undefined) {
+    return;
+  }
+
   direction = vec2.scale(direction, 1000);
 
   // calculate the two outermost intersection indices of the
@@ -2166,8 +2175,9 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 
   var intersections = getPolygonIntersections(outerPolygon, [vec2.sub(dim.center, direction), vec2.add(dim.center, direction)]);
 
+  // need at least two intersections
   if (intersections.length < 2) {
-    throw new Error('can\'t handle ridged roof geometry');
+    return;
   }
 
   // roof caps that are close to first and second vertex of the ridge
@@ -2187,11 +2197,8 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
   cap2.center = getSegmentCenter(cap2.segment);
 
   if (offset === 0) {
-    var i;
-
-    var ridge = [cap1.center, cap2.center];
-
     var
+      ridge = [cap1.center, cap2.center],
       maxDistance = 0,
       distances = [];
 
@@ -2246,7 +2253,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor) {
 
   var
-    i, il,
+    i,
     outerPolygon = polygon[0],
     direction,
     angle, rad;
@@ -2271,6 +2278,10 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
     }
   }
 
+  if (direction === undefined) {
+    return;
+  }
+
   direction = vec2.scale(direction, 1000);
 
   // get farthest intersection of polygon and slope line
@@ -2281,7 +2292,7 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
     distance = 0,
     maxDistance = 0;
 
-  for (i = 0, il = intersections.length; i<il; i++) {
+  for (i = 0; i < intersections.length; i++) {
     distance = getDistanceToLine(dim.center, intersections[i].segment);
     if (distance > maxDistance) {
       ridge = intersections[i].segment;
@@ -3512,7 +3523,7 @@ OSMBuildings.prototype = {
   /**
    * Adds a GeoJSON layer to the map
    * @public
-   * @param {String} url - URL of the GeoJSON file
+   * @param {String} url - URL of the GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
    * @param {Object} options - Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] - Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering
