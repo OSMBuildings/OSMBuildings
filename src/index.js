@@ -291,7 +291,7 @@ OSMBuildings.prototype = {
   /**
    * Adds a GeoJSON layer to the map
    * @public
-   * @param {String} url - URL of the GeoJSON file
+   * @param {String} url - URL of the GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
    * @param {Object} options - Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] - Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] - Rotate the model by this much before rendering

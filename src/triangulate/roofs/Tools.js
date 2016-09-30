@@ -39,10 +39,14 @@ function getPolygonDirection(polygon) {
 
   for (var i = 0, il = simplePolygon.length - 1; i<il; i++) {
     segmentLength = vec2.len(vec2.sub(simplePolygon[i+1], simplePolygon[i]));
-    if (segmentLength>maxSegmentLength) {
+    if (segmentLength > maxSegmentLength) {
       maxSegmentLength = segmentLength;
       maxSegment = [simplePolygon[i], simplePolygon[i + 1]];
     }
+  }
+
+  if (maxSegment === undefined) {
+    return;
   }
 
   d = vec2.sub(maxSegment[1], maxSegment[0]);

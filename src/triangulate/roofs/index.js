@@ -5,6 +5,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
   offset = 0; // TODO
 
   var
+    i,
     outerPolygon = polygon[0],
     direction,
     angle, rad;
@@ -28,6 +29,10 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
     }
   }
 
+  if (direction === undefined) {
+    return;
+  }
+
   direction = vec2.scale(direction, 1000);
 
   // calculate the two outermost intersection indices of the
@@ -35,8 +40,9 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 
   var intersections = getPolygonIntersections(outerPolygon, [vec2.sub(dim.center, direction), vec2.add(dim.center, direction)]);
 
+  // need at least two intersections
   if (intersections.length < 2) {
-    throw new Error('can\'t handle ridged roof geometry');
+    return;
   }
 
   // roof caps that are close to first and second vertex of the ridge
@@ -56,11 +62,8 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
   cap2.center = getSegmentCenter(cap2.segment);
 
   if (offset === 0) {
-    var i;
-
-    var ridge = [cap1.center, cap2.center];
-
     var
+      ridge = [cap1.center, cap2.center],
       maxDistance = 0,
       distances = [];
 
@@ -115,7 +118,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor) {
 
   var
-    i, il,
+    i,
     outerPolygon = polygon[0],
     direction,
     angle, rad;
@@ -140,6 +143,10 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
     }
   }
 
+  if (direction === undefined) {
+    return;
+  }
+
   direction = vec2.scale(direction, 1000);
 
   // get farthest intersection of polygon and slope line
@@ -150,7 +157,7 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
     distance = 0,
     maxDistance = 0;
 
-  for (i = 0, il = intersections.length; i<il; i++) {
+  for (i = 0; i < intersections.length; i++) {
     distance = getDistanceToLine(dim.center, intersections[i].segment);
     if (distance > maxDistance) {
       ridge = intersections[i].segment;
