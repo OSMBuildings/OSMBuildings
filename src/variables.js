@@ -4,6 +4,9 @@ var TILE_SIZE = 256;
 var DEFAULT_HEIGHT = 10;
 var HEIGHT_SCALE = 1.0;
 
+var MIN_ZOOM = 14.5;
+var MAX_ZOOM = 22;
+
 var MAX_USED_ZOOM_LEVEL = 25;
 var DEFAULT_COLOR = new Color('rgb(220, 210, 200)').toArray();
 var HIGHLIGHT_COLOR = new Color('#f08000').toArray();

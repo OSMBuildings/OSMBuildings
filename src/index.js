@@ -78,11 +78,11 @@ var OSMBuildings = function(options) {
 
   APP.attribution = APP.options.attribution || OSMBuildings.ATTRIBUTION;
 
-  APP.minZoom = Math.max(parseFloat(APP.options.minZoom || 14.5), 14.5);
-  APP.maxZoom = Math.min(parseFloat(APP.options.maxZoom || 20), 20);
+  APP.minZoom = Math.max(parseFloat(APP.options.minZoom || MIN_ZOOM), MIN_ZOOM);
+  APP.maxZoom = Math.min(parseFloat(APP.options.maxZoom || MAX_ZOOM), MAX_ZOOM);
   if (APP.maxZoom < APP.minZoom) {
-    APP.minZoom = 14.5;
-    APP.maxZoom = 20;
+    APP.minZoom = MIN_ZOOM;
+    APP.maxZoom = MAX_ZOOM;
   }
 
   APP.bounds = APP.options.bounds;
