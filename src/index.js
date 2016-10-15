@@ -114,6 +114,10 @@ OSMBuildings.prototype = {
 
     APP.container = document.createElement('DIV');
     APP.container.className = 'osmb';
+    if (container.offsetHeight === 0) {
+      container.style.height = '100%';
+      console.warn('Map container height should be set. Now defaults to 100%.');
+    }
     container.appendChild(APP.container);
 
     APP.width  = width  !== undefined ? width  : container.offsetWidth;
