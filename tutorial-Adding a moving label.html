@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OSMBuildings Tutorial: Adding a moving label</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.dark.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.united.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top ">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OSMBuildings</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="OSMBuildings.html">OSMBuildings</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="OSMBuildings.html#event:busy">OSMBuildings#event:busy</a></li><li><a href="OSMBuildings.html#event:change">OSMBuildings#event:change</a></li><li><a href="OSMBuildings.html#event:idle">OSMBuildings#event:idle</a></li><li><a href="OSMBuildings.html#event:loadfeature">OSMBuildings#event:loadfeature</a></li><li><a href="OSMBuildings.html#event:resize">OSMBuildings#event:resize</a></li><li><a href="OSMBuildings.html#event:rotate">OSMBuildings#event:rotate</a></li><li><a href="OSMBuildings.html#event:tilt">OSMBuildings#event:tilt</a></li><li><a href="OSMBuildings.html#event:zoom">OSMBuildings#event:zoom</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Tutorials<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-Adding a 3D model.html">Adding a 3D model</a></li><li><a href="tutorial-Adding a moving label.html">Adding a moving label</a></li><li><a href="tutorial-Adding control buttons.html">Adding control buttons</a></li><li><a href="tutorial-Calculate a Bounding Box.html">Calculate a Bounding Box</a></li><li><a href="tutorial-Fetching details.html">Fetching details</a></li><li><a href="tutorial-GeoJSON.html">GeoJSON</a></li><li><a href="tutorial-Highlighting Buildings.html">Highlighting Buildings</a></li><li><a href="tutorial-Highlighting Multiple Buildings.html">Highlighting Multiple Buildings</a></li><li><a href="tutorial-Positioning a map object.html">Positioning a map object</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			<section class="tutorial-section">
+
+<header>
+    
+
+    <h2>Adding a moving label</h2>
+</header>
+
+<article>
+    <p><link rel="stylesheet" href="https://raw.githubusercontent.com/OSMBuildings/OSMBuildings/master/dist/OSMBuildings/OSMBuildings.css"></p>
+<p><link rel=stylesheet href=assets/tutorial_prep.css></p>
+<script src=https://rawgit.com/OSMBuildings/OSMBuildings/master/dist/OSMBuildings/OSMBuildings.js></script>
+
+<div id='map'></div>
+<div id="label">Label</div>
+
+<script src=assets/tutorial_prep.js></script>
+
+<style>
+  #label {
+    width:10px;
+    height:10px;
+    position:absolute;
+    z-Index:10;
+    border:3px solid red;
+  }
+</style>
+
+<script>
+  osmb.setPosition({latitude: 52.52, longitude: 13.37});
+
+  var label = document.getElementById('label');
+  osmb.on('change', function() {
+    var pos = osmb.project(52.52, 13.37, 50);
+    label.style.left = Math.round(pos.x) + 'px';
+    label.style.top = Math.round(pos.y) + 'px';
+  });
+</script>
+
+<p>This label moves virtually in space.</p>
+<pre class="prettyprint source lang-xml"><code>&lt;div id=&quot;label&quot;>Label&lt;/div></code></pre><pre class="prettyprint source lang-css"><code>#label {
+  width:100px;
+  height:10px;
+  position:absolute;
+  z-Index:10;
+  border:3px solid red;
+}</code></pre><pre class="prettyprint source lang-javascript"><code>var label = document.getElementById('label');
+osmb.on('change', function() {
+  var pos = osmb.project(52.52, 13.37, 50);
+  label.style.left = Math.round(pos.x) + 'px';
+  label.style.top = Math.round(pos.y) + 'px';
+});</code></pre>
+</article>
+
+</section>
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+
+	<span class="copyright">
+	© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.2</a>
+	
+		on 2016-11-02T22:21:32+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

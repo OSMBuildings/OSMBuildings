@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>OSMBuildings Index</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.dark.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.united.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top ">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">OSMBuildings</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="OSMBuildings.html">OSMBuildings</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="events.list.html" class="dropdown-toggle" data-toggle="dropdown">Events<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="OSMBuildings.html#event:busy">OSMBuildings#event:busy</a></li><li><a href="OSMBuildings.html#event:change">OSMBuildings#event:change</a></li><li><a href="OSMBuildings.html#event:idle">OSMBuildings#event:idle</a></li><li><a href="OSMBuildings.html#event:loadfeature">OSMBuildings#event:loadfeature</a></li><li><a href="OSMBuildings.html#event:resize">OSMBuildings#event:resize</a></li><li><a href="OSMBuildings.html#event:rotate">OSMBuildings#event:rotate</a></li><li><a href="OSMBuildings.html#event:tilt">OSMBuildings#event:tilt</a></li><li><a href="OSMBuildings.html#event:zoom">OSMBuildings#event:zoom</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Tutorials<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="tutorial-Adding a 3D model.html">Adding a 3D model</a></li><li><a href="tutorial-Adding a moving label.html">Adding a moving label</a></li><li><a href="tutorial-Adding control buttons.html">Adding control buttons</a></li><li><a href="tutorial-Calculate a Bounding Box.html">Calculate a Bounding Box</a></li><li><a href="tutorial-Fetching details.html">Fetching details</a></li><li><a href="tutorial-GeoJSON.html">GeoJSON</a></li><li><a href="tutorial-Highlighting Buildings.html">Highlighting Buildings</a></li><li><a href="tutorial-Highlighting Multiple Buildings.html">Highlighting Multiple Buildings</a></li><li><a href="tutorial-Positioning a map object.html">Positioning a map object</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-8">
+	
+		<div id="main">
+			
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+
+
+
+
+
+    <section class="readme-section">
+        <article><h1><img src="http://osmbuildings.org/logo.svg" width="100" height="88"/> OSM Buildings</h1><p>OSM Buildings is a JavaScript library for visualizing OpenStreetMap building geometry on 2D and 3D maps.</p>
+<p><img src='http://i.imgur.com/pxh2Cpt.png' width='100%' /></p>
+<ul>
+<li><a href="http://osmbuildings.github.io/OSMBuildings">Documentation</a></li>
+<li><a href="http://github.com/OSMBuildings/OSMBuildings">Github</a></li>
+<li><a href="http://osmbuildings.org">Example</a></li>
+</ul>
+<h2>Info</h2><p>The library version in this repository is a WebGL only variant of OSM Buildings.
+At some point it will fully integrate the Classic 2.5D version.</p>
+<p>For the latest information about the project <a href="https://twitter.com/osmbuildings">follow us on Twitter</a>, read <a href="http://blog.osmbuildings.org">our blog</a>, or just mail us at mail@osmbuildings.org.</p>
+<h3>Not sure which version to use?</h3><h4>Classic 2.5D</h4><p>Source: https://github.com/kekscom/osmbuildings</p>
+<p>Best for:</p>
+<ul>
+<li>great device compatibility</li>
+<li>good performance on older hardware</li>
+<li>shadow simulation</li>
+<li>full integration with Leaflet or OpenLayers 2</li>
+</ul>
+<h4>Modern 3D</h4><p>Best for:</p>
+<ul>
+<li>great performance on modern graphics hardware</li>
+<li>huge amounts of objects</li>
+<li>combining various data sources</li>
+</ul>
+<p>This version uses GLMap for any events and layers logic.</p>
+<h5>Compatibility</h5><p>Runs likely on earlier versons than listed below, but this is our baseline for tests.</p>
+<ul>
+<li>Win7: latest Chrome (MSIE11 not running, Firefox TBD)</li>
+<li>Win10: TBD</li>
+<li>OSX: latest Crome, Safari, Firefox</li>
+<li>Linux: TBD</li>
+<li>Android 5.0</li>
+<li>iOS 9.3</li>
+</ul>
+<h2>Get the files</h2><p>Checking in built versions causes a lot of trouble during development. So we decided to use the Github release system instead.</p>
+<p>Just pick the latest version from here: https://github.com/OSMBuildings/OSMBuildings/releases</p>
+<h2>Documentation</h2><p>All geo coordinates are in EPSG:4326.</p>
+<h3>Quick integration</h3><p>Link all required libraries in your HTML head section. Files are provided in folder <code>/dist</code>.</p>
+<pre class="prettyprint source lang-html"><code>&lt;head>
+  &lt;link rel=&quot;stylesheet&quot; href=&quot;OSMBuildings/OSMBuildings.css&quot;>
+  &lt;script src=&quot;OSMBuildings/OSMBuildings.js&quot;>&lt;/script>
+&lt;/head>
+
+&lt;body>
+  &lt;div id=&quot;map&quot;>&lt;/div></code></pre><p>In a script section initialize OSM Buildings and add it to a DOM container.</p>
+<pre class="prettyprint source lang-javascript"><code>  var osmb = new OSMBuildings({
+    position: { latitude:52.52000, longitude:13.41000 },
+    zoom: 16,
+    minZoom: 15,
+    maxZoom: 22
+  });
+
+  osmb.appendTo('map');
+
+  osmb.addMapTiles(
+    'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    {
+      attribution: '© Data &lt;a href=&quot;http://openstreetmap.org/copyright/&quot;>OpenStreetMap&lt;/a> · © Map &lt;a href=&quot;http://mapbox.com&quot;>Mapbox&lt;/a>'
+    }
+  );
+
+  osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');</code></pre><h3>OSM Buildings server</h3><p>There is also documentation of OSM Buildings Server side. See https://github.com/OSMBuildings/OSMBuildings/blob/master/docs/server.md</p>
+<h1>Contributing</h1><p><strong>Please note: We are a very small team with little time for the project and limited funds.
+You could help us a lot in advancing the project with spreading the word, donations, code contributions and testing.</strong>
+We are happy to receive pull requests and issues</p>
+<h2>Development environment</h2><p>Here's how to get your development environment set up:</p>
+<ol>
+<li>Clone the repo (<code>git clone git@github.com:OSMBuildings/OSMBuildings.git</code>)</li>
+<li>Install dependencies with <code>npm install</code></li>
+<li>After making changes, you can try them out by running <code>grunt release</code>, which will output a <code>dist/OSMBuildings/OSMBuildings.debug.js</code> file that you can include like normal</li>
+</ol></article>
+    </section>
+
+
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+		<div class="col-md-3">
+			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
+		</div>
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+
+	<span class="copyright">
+	© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>
+	</span>
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.2</a>
+	
+		on 2016-11-02T22:21:32+00:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>
