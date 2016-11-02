@@ -189,8 +189,10 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
    */
   emit: function(type, detail) {
-    var event = new CustomEvent(type, { detail:detail });
-    GL.canvas.dispatchEvent(event);
+    if (GL !== undefined) {
+      var event = new CustomEvent(type, { detail:detail });
+      GL.canvas.dispatchEvent(event);
+    }
   },
 
   /**
