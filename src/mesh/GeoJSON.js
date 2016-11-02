@@ -47,16 +47,14 @@ mesh.GeoJSON = (function() {
 
       var res = {
         vertices: [],
-        texCoords: [],
         normals: [],
-        colors: []
+        colors: [],
+        texCoords: []
       };
 
       var
         resPickingColors = [],
         position = this.getOrigin(collection.features[0].geometry),
-        feature, id, properties,
-        vertexCountBefore, vertexCount, pickingColor,
         startIndex = 0,
         numFeatures = collection.features.length,
         endIndex = startIndex + Math.min(numFeatures, FEATURES_PER_CHUNK);
@@ -64,6 +62,10 @@ mesh.GeoJSON = (function() {
       this.position = { latitude:position[1], longitude:position[0] };
 
       var process = function() {
+        var
+          feature, properties, id,
+          vertexCountBefore, vertexCount, pickingColor;
+
         for (var i = startIndex; i < endIndex; i++) {
           feature = collection.features[i];
 
@@ -87,16 +89,16 @@ mesh.GeoJSON = (function() {
             [].push.apply(resPickingColors, pickingColor);
           }
 
-          this.items.push({ id:id, vertexCount:vertexCount, data:properties.data });
+          this.items.push({ id:id, vertexCount:vertexCount, height:properties.height, data:properties.data });
         }
 
         if (endIndex === numFeatures) {
           this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(res.vertices));
           this.normalBuffer   = new GLX.Buffer(3, new Float32Array(res.normals));
-          this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(res.texCoords));
           this.colorBuffer    = new GLX.Buffer(3, new Float32Array(res.colors));
+          this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(res.texCoords));
           this.idBuffer       = new GLX.Buffer(3, new Float32Array(resPickingColors));
-          this.fadeIn();
+          this._initItemBuffers();
 
           Filter.apply(this);
           data.Index.add(this);
@@ -116,31 +118,40 @@ mesh.GeoJSON = (function() {
       process();
     },
 
-    fadeIn: function() {
-      var item, filters = [];
-      var start = Filter.getTime(), end = start;
+    _initItemBuffers: function() {
+      var
+        start = Filter.getTime(),
+        end = start;
+
       if (this.shouldFadeIn) {
         start += 250;
         end += 750;
       }
-      for (var i = 0, il = this.items.length; i < il; i++) {
-        item = this.items[i];
+
+      var
+        filters = [],
+        heights = [];
+
+      this.items.map(function(item) {
         item.filter = [start, end, 0, 1];
-        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+        for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
+          heights.push(item.height);
         }
-      }
+      });
+
       this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
+      this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
     },
 
     applyFilter: function() {
-      var item, filters = [];
-      for (var i = 0, il = this.items.length; i < il; i++) {
-        item = this.items[i];
-        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+      var filters = [];
+      this.items.map(function(item) {
+        for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
         }
-      }
+      });
+
       this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
@@ -206,7 +217,9 @@ mesh.GeoJSON = (function() {
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();
+        this.texCoordBuffer.destroy();
         this.idBuffer.destroy();
+        this.heightBuffer.destroy();
       }
     }
   };

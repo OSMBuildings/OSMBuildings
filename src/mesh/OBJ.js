@@ -90,11 +90,12 @@ mesh.OBJ = (function() {
     if (faces.length) {
       var geometry = createGeometry(vertexIndex, faces);
       meshes.push({
-        id: id,
-        color: color,
         vertices: geometry.vertices,
         normals: geometry.normals,
-        texCoords: geometry.texCoords
+        color: color,
+        texCoords: geometry.texCoords,
+        id: id,
+        height: geometry.height
       });
     }
   }
@@ -103,7 +104,10 @@ mesh.OBJ = (function() {
     var
       v0, v1, v2,
       nor,
-      geometry = { vertices:[], normals:[], texCoords:[] };
+      vertices = [],
+      normals = [],
+      texCoords = [],
+      height = -Infinity;
 
     for (var i = 0, il = faces.length; i < il; i++) {
       v0 = vertexIndex[ faces[i][0] ];
@@ -112,27 +116,28 @@ mesh.OBJ = (function() {
 
       nor = normal(v0, v1, v2);
 
-      geometry.vertices.push(
+      vertices.push(
         v0[0], v0[2], v0[1],
         v1[0], v1[2], v1[1],
         v2[0], v2[2], v2[1]
       );
 
-      geometry.normals.push(
+      normals.push(
         nor[0], nor[1], nor[2],
         nor[0], nor[1], nor[2],
         nor[0], nor[1], nor[2]
       );
 
-      geometry.texCoords.push(
+      texCoords.push(
         0.0, 0.0,
         0.0, 0.0,
         0.0, 0.0
       );
 
+      height = Math.max(height, v0[1], v1[1], v2[1]);
     }
 
-    return geometry;
+    return { vertices:vertices, normals:normals, texCoords:texCoords, height:height };
   }
 
   //***************************************************************************
@@ -161,11 +166,11 @@ mesh.OBJ = (function() {
     }
 
     this.data = {
-      colors: [],
-      ids: [],
       vertices: [],
       normals: [],
-      texCoords: []
+      colors: [],
+      texCoords: [],
+      ids: []
     };
 
     Activity.setBusy();
@@ -191,13 +196,7 @@ mesh.OBJ = (function() {
     },
 
     addItems: function(items) {
-      var
-        feature, color, idColor, j, jl,
-        id, colorVariance;
-
-      for (var i = 0, il = items.length; i < il; i++) {
-        feature = items[i];
-
+      items.map(function(feature) {
         /**
          * Fired when a 3d object has been loaded
          * @event OSMBuildings#loadfeature
@@ -208,55 +207,66 @@ mesh.OBJ = (function() {
         [].push.apply(this.data.normals,   feature.normals);
         [].push.apply(this.data.texCoords, feature.texCoords);
 
-        id = this.forcedId || feature.id;
-        idColor = render.Picking.idToColor(id);
+        var
+          id = this.forcedId || feature.id,
+          idColor = render.Picking.idToColor(id),
+          colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
+          color = this.forcedColor || feature.color || DEFAULT_COLOR;
 
-        colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06);
-        color = this.forcedColor || feature.color || DEFAULT_COLOR;
-        for (j = 0, jl = feature.vertices.length - 2; j<jl; j += 3) {
+        for (var i = 0; i < feature.vertices.length-2; i += 3) {
           [].push.apply(this.data.colors, add3scalar(color, colorVariance));
           [].push.apply(this.data.ids, idColor);
         }
 
-        this.items.push({ id:id, vertexCount:feature.vertices.length/3, data:feature.data });
-      }
+        this.items.push({ id:id, vertexCount:feature.vertices.length/3, height:feature.height, data:feature.data });
+      }.bind(this));
     },
 
-    fadeIn: function() {
-      var item, filters = [];
-      var start = Filter.getTime(), end = start;
+    _initItemBuffers: function() {
+      var
+        start = Filter.getTime(),
+        end = start;
+
       if (this.shouldFadeIn) {
         start += 250;
         end += 750;
       }
-      for (var i = 0, il = this.items.length; i < il; i++) {
-        item = this.items[i];
+
+      var
+        filters = [],
+        heights = [];
+
+      this.items.map(function(item) {
         item.filter = [start, end, 0, 1];
-        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+        for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
+          heights.push(item.height);
         }
-      }
+      });
+
       this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
+      this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
     },
 
     applyFilter: function() {
-      var item, filters = [];
-      for (var i = 0, il = this.items.length; i < il; i++) {
-        item = this.items[i];
-        for (var j = 0, jl = item.vertexCount; j < jl; j++) {
+      var filters = [];
+      this.items.map(function(item) {
+        for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
         }
-      }
+      });
+
       this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
     },
 
     onReady: function() {
       this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(this.data.vertices));
       this.normalBuffer   = new GLX.Buffer(3, new Float32Array(this.data.normals));
-      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(this.data.texCoords));
       this.colorBuffer    = new GLX.Buffer(3, new Float32Array(this.data.colors));
+      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(this.data.texCoords));
       this.idBuffer       = new GLX.Buffer(3, new Float32Array(this.data.ids));
-      this.fadeIn();
+      this._initItemBuffers();
+
       this.data = null;
 
       Filter.apply(this);
@@ -305,7 +315,9 @@ mesh.OBJ = (function() {
         this.vertexBuffer.destroy();
         this.normalBuffer.destroy();
         this.colorBuffer.destroy();
+        this.texCoordBuffer.destroy();
         this.idBuffer.destroy();
+        this.heightBuffer.destroy();
       }
     }
   };

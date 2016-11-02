@@ -6,8 +6,9 @@ attribute vec4 aPosition;
 attribute vec2 aTexCoord;
 attribute vec3 aNormal;
 attribute vec3 aColor;
-attribute vec4 aFilter;
 attribute vec3 aId;
+attribute vec4 aFilter;
+attribute float aHeight;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
@@ -27,7 +28,6 @@ varying vec3 vColor;
 varying vec2 vTexCoord;
 varying float verticalDistanceToLowerEdge;
 
-const float gradientHeight = 90.0;
 const float gradientStrength = 0.4;
 
 void main() {
@@ -56,9 +56,10 @@ void main() {
     float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
     color = color + uLightColor * lightIntensity;
     vTexCoord = aTexCoord;
+
     //*** vertical shading ******************************************************
 
-    float verticalShading = clamp((gradientHeight-pos.z) / (gradientHeight/gradientStrength), 0.0, gradientStrength);
+    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / aHeight), 0.0, gradientStrength);
 
     //***************************************************************************
 

@@ -70,16 +70,21 @@ mesh.DebugQuad = (function() {
       this.colorBuffer = new GLX.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
 
+      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
+        [0,0,0,0,0,0,0,0,0,0,0,0]));
 
       if (this.idBuffer)
         this.idBuffer.destroy();
 
       this.idBuffer = new GLX.Buffer(3, new Float32Array(
         [].concat(color, color, color, color, color, color)));
-        
-      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
-        [0,0,0,0,0,0,0,0,0,0,0,0]));
-        
+
+      if (this.heightBuffer)
+        this.heightBuffer.destroy();
+
+      this.heightBuffer = new GLX.Buffer(1, new Float32Array(
+        [].concat(0, 0)));
+
       var filter = [0,1,1,1];
       
       this.filterBuffer = new GLX.Buffer(4, new Float32Array(
@@ -101,7 +106,9 @@ mesh.DebugQuad = (function() {
       this.vertexBuffer.destroy();
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
+      this.texCoordBuffer.destroy();
       this.idBuffer.destroy();
+      this.heightBuffer.destroy();
     }
   };
 

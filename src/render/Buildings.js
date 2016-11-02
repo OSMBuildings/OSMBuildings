@@ -8,7 +8,7 @@ render.Buildings = {
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId', 'aHeight'],
         uniforms: [
           'uModelMatrix',
           'uViewDirOnMap',
@@ -28,7 +28,7 @@ render.Buildings = {
         vertexShader: Shaders['buildings.shadows'].vertex,
         fragmentShader: Shaders['buildings.shadows'].fragment,
         shaderName: 'quality building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId', 'aHeight'],
         uniforms: [
           'uFogDistance',
           'uFogBlurDistance',
@@ -112,8 +112,9 @@ render.Buildings = {
       shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');
       shader.bindBuffer(item.normalBuffer,   'aNormal');
       shader.bindBuffer(item.colorBuffer,    'aColor');
-      shader.bindBuffer(item.filterBuffer,   'aFilter');
       shader.bindBuffer(item.idBuffer,       'aId');
+      shader.bindBuffer(item.filterBuffer,   'aFilter');
+      shader.bindBuffer(item.heightBuffer,   'aHeight');
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     }
