@@ -12,16 +12,13 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 
   if (properties.roofRidgeDirection !== undefined) {
     angle = parseFloat(properties.roofRidgeDirection);
-    if (!isNaN(angle)) {
-      rad = 90+angle*Math.PI/180;
-      direction = [Math.sin(rad), Math.cos(rad)];
-    }
   } else if (properties.roofDirection !== undefined) {
     angle = parseFloat(properties.roofDirection);
-    if (!isNaN(angle)) {
-      rad = angle*Math.PI/180;
-      direction = [Math.sin(rad), Math.cos(rad)];
-    }
+  }
+
+  if (!isNaN(angle)) {
+    rad = angle*Math.PI/180;
+    direction = [Math.sin(rad), Math.cos(rad)];
   } else {
     direction = getPolygonDirection(outerPolygon);
     if (properties.roofOrientation && properties.roofOrientation === 'across') {
@@ -30,7 +27,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
   }
 
   if (direction === undefined) {
-    return;
+    return FlatRoof(buffers, properties, polygon, dim, roofColor);
   }
 
   direction = vec2.scale(direction, 1000);
@@ -42,7 +39,7 @@ function addRidgedRoof(buffers, properties, polygon, offset, dim, wallColor, roo
 
   // need at least two intersections
   if (intersections.length < 2) {
-    return;
+    return FlatRoof(buffers, properties, polygon, dim, roofColor);
   }
 
   // roof caps that are close to first and second vertex of the ridge
@@ -144,7 +141,7 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
   }
 
   if (direction === undefined) {
-    return;
+    return FlatRoof(buffers, properties, polygon, dim, roofColor);
   }
 
   direction = vec2.scale(direction, 1000);
@@ -166,7 +163,7 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
   }
 
   if (ridge === undefined) {
-    return;
+    return FlatRoof(buffers, properties, polygon, dim, roofColor);
   }
 
   maxDistance = 0;
@@ -198,6 +195,16 @@ function addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor
     );
   }
 }
+
+// this is also a fallback for failing roof calculation
+function FlatRoof(buffers, properties, polygon, dim, roofColor) {
+  if (properties.shape === 'cylinder') {
+    split.circle(buffers, dim.center, dim.radius, dim.roofZ, roofColor);
+  } else {
+    split.polygon(buffers, polygon, dim.roofZ, roofColor);
+  }
+}
+
 
 /***
 function HalfHippedRoof(tags, polygon) {
