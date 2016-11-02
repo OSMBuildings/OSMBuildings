@@ -3421,8 +3421,10 @@ OSMBuildings.prototype = {
    * @param {OSMBuildings~eventListenerFunction} [fn] - If given, only remove the given function
    */
   emit: function(type, detail) {
-    var event = new CustomEvent(type, { detail:detail });
-    GL.canvas.dispatchEvent(event);
+    if (GL !== undefined) {
+      var event = new CustomEvent(type, { detail:detail });
+      GL.canvas.dispatchEvent(event);
+    }
   },
 
   /**
@@ -6176,6 +6178,9 @@ var render = {
   },
   
   renderFrame: function() {
+    if (GL === undefined) {
+      return;
+    }
     Filter.nextTick();
     requestAnimationFrame( this.renderFrame.bind(this));
 
@@ -6277,10 +6282,6 @@ var render = {
     }  
   },
 
-  stop: function() {
-    clearInterval(this.loop);
-  },
-  
   onChange: function() {
     var
       scale = 1.3567 * Math.pow(2, APP.zoom-17),
@@ -6371,7 +6372,6 @@ var render = {
     APP.off('change', this._onChange);
     APP.off('resize', this._onResize);
 
-    this.stop();
     render.Picking.destroy();
     render.sky.destroy();
     render.Buildings.destroy();
