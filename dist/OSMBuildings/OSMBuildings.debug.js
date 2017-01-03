@@ -2872,7 +2872,7 @@ var triangulate = (function() {
 
   var
     DEFAULT_HEIGHT = 10,
-    DEFAULT_COLOR = new Color('rgb(220, 210, 200)').toArray(),
+    DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toArray(),
     METERS_PER_LEVEL = 3;
 
   var MATERIAL_COLORS = {
@@ -3015,7 +3015,7 @@ var triangulate = (function() {
 
   function varyColor(color, variance) {
     variance = variance || 0;
-    var c = new Color(color).toArray();
+    var c = Color.parse(color).toArray();
     if (c === undefined) {
       c = DEFAULT_COLOR;
     }
@@ -3310,17 +3310,17 @@ var OSMBuildings = function(options) {
   if (APP.options.style) {
     var style = APP.options.style;
     if (style.color || style.wallColor) {
-      DEFAULT_COLOR = new Color(style.color || style.wallColor).toArray();
+      DEFAULT_COLOR = Color.parse(style.color || style.wallColor).toArray();
     }
   }
 
   APP.baseURL = APP.options.baseURL || '.';
 
-  render.backgroundColor = new Color(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
-  render.fogColor        = new Color(APP.options.fogColor        || FOG_COLOR).toArray();
+  render.backgroundColor = Color.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
+  render.fogColor        = Color.parse(APP.options.fogColor        || FOG_COLOR).toArray();
 
   if (APP.options.highlightColor) {
-    HIGHLIGHT_COLOR = new Color(APP.options.highlightColor).toArray();
+    HIGHLIGHT_COLOR = Color.parse(APP.options.highlightColor).toArray();
   }
 
   render.Buildings.showBackfaces = APP.options.showBackfaces;
@@ -3610,7 +3610,7 @@ OSMBuildings.prototype = {
    */
   highlight: function(id, highlightColor) {
     render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
-    render.Buildings.highlightColor = id && highlightColor ? new Color(highlightColor).toArray() : HIGHLIGHT_COLOR;
+    render.Buildings.highlightColor = id && highlightColor ? Color.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
     return APP;
   },
 
@@ -3970,6 +3970,8 @@ OSMBuildings.prototype = {
 
     // TODO: when taking over an existing canvas, better don't destroy it here
     GLX.destroy();
+
+    data.Index.destroy();
 
     APP.container.innerHTML = '';
   }
@@ -4405,8 +4407,8 @@ var MIN_ZOOM = 14.5;
 var MAX_ZOOM = 22;
 
 var MAX_USED_ZOOM_LEVEL = 25;
-var DEFAULT_COLOR = new Color('rgb(220, 210, 200)').toArray();
-var HIGHLIGHT_COLOR = new Color('#f08000').toArray();
+var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toArray();
+var HIGHLIGHT_COLOR = Color.parse('#f08000').toArray();
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to the horizont into
 var FOG_COLOR = '#e8e0d8';
@@ -5329,7 +5331,7 @@ mesh.DebugQuad = (function() {
 
     this.id = options.id;
     /*if (options.color) {
-      this.color = new Color(options.color).toArray();
+      this.color = Color.parse(options.color).toArray();
     }*/
 
     this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
@@ -5589,7 +5591,7 @@ mesh.OBJ = (function() {
     this.forcedId = options.id;
 
     if (options.color) {
-      this.forcedColor = new Color(options.color).toArray();
+      this.forcedColor = Color.parse(options.color).toArray();
     }
 
     this.replace      = !!options.replace;
@@ -7508,10 +7510,9 @@ basemap.Tile = function(x, y, zoom) {
   this.zoom = zoom;
   this.key = [x, y, zoom].join(',');
 
-  // note: due to the Mercator projection the tile width in meters is equal
-  //       to the tile height in meters.
-  var size = getTileSizeInMeters( this.latitude, zoom);
-  
+  // note: due to Mercator projection the tile width in meters is equal to tile height in meters.
+  var size = getTileSizeInMeters(this.latitude, zoom);
+
   var vertices = [
     size, size, 0,
     size,    0, 0,
