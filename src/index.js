@@ -55,17 +55,17 @@ var OSMBuildings = function(options) {
   if (APP.options.style) {
     var style = APP.options.style;
     if (style.color || style.wallColor) {
-      DEFAULT_COLOR = new Color(style.color || style.wallColor).toArray();
+      DEFAULT_COLOR = Color.parse(style.color || style.wallColor).toArray();
     }
   }
 
   APP.baseURL = APP.options.baseURL || '.';
 
-  render.backgroundColor = new Color(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
-  render.fogColor        = new Color(APP.options.fogColor        || FOG_COLOR).toArray();
+  render.backgroundColor = Color.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
+  render.fogColor        = Color.parse(APP.options.fogColor        || FOG_COLOR).toArray();
 
   if (APP.options.highlightColor) {
-    HIGHLIGHT_COLOR = new Color(APP.options.highlightColor).toArray();
+    HIGHLIGHT_COLOR = Color.parse(APP.options.highlightColor).toArray();
   }
 
   render.Buildings.showBackfaces = APP.options.showBackfaces;
@@ -355,7 +355,7 @@ OSMBuildings.prototype = {
    */
   highlight: function(id, highlightColor) {
     render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
-    render.Buildings.highlightColor = id && highlightColor ? new Color(highlightColor).toArray() : HIGHLIGHT_COLOR;
+    render.Buildings.highlightColor = id && highlightColor ? Color.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
     return APP;
   },
 

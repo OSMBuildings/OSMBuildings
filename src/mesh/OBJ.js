@@ -148,7 +148,7 @@ mesh.OBJ = (function() {
     this.forcedId = options.id;
 
     if (options.color) {
-      this.forcedColor = new Color(options.color).toArray();
+      this.forcedColor = Color.parse(options.color).toArray();
     }
 
     this.replace      = !!options.replace;
