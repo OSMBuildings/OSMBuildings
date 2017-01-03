@@ -716,6 +716,8 @@ OSMBuildings.prototype = {
     // TODO: when taking over an existing canvas, better don't destroy it here
     GLX.destroy();
 
+    data.Index.destroy();
+
     APP.container.innerHTML = '';
   }
 };
