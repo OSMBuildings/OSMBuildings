@@ -35,7 +35,7 @@ var APP, GL; // TODO: make them local references
  * @param {Float} [options.tilt=0] - Initial tilt
  * @param {Object} [options.position] - Initial position
  * @param {Float} [options.position.latitude=52.520000]
- * @param {Float} [options.position.latitude=13.410000]
+ * @param {Float} [options.position.longitude=13.410000]
 
  * @param {String} [options.baseURL='.'] - For locating assets. This is relative to calling page
  * @param {Boolean} [options.showBackfaces=false] - Render front and backsides of polygons. false increases performance, true might be needed for bad geometries

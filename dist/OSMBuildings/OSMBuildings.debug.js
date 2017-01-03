@@ -166,31 +166,60 @@ function clamp(v, max) {
 /**
  * @param str, object can be in any of these: 'red', '#0099ff', 'rgb(64, 128, 255)', 'rgba(64, 128, 255, 0.5)', { r:0.2, g:0.3, b:0.9, a:1 }
  */
-var Color = function(str) {
-  str = str || '';
+var Color = function(r, g, b, a) {
+  this.r = clamp(r, 1);
+  this.g = clamp(g, 1);
+  this.b = clamp(b, 1);
+  this.a = (a !== undefined ? clamp(a, 1) : 1);
+};
 
-  if (typeof str === 'object') {
-    var rgba = str;
-    this.r = clamp(rgba.r, 1);
-    this.g = clamp(rgba.g, 1);
-    this.b = clamp(rgba.b, 1);
-    this.a = (rgba.a !== undefined ? clamp(rgba.a, 1) : 1);
-  } else if (typeof str === 'string') {
+/**
+ * @param str, object can be in any of these: 'red', '#0099ff', 'rgb(64, 128, 255)', 'rgba(64, 128, 255, 0.5)'
+ */
+Color.parse = function(str) {
+  if (typeof str === 'string') {
     str = str.toLowerCase();
     str = w3cColors[str] || str;
+
     var m;
+
     if ((m = str.match(/^#?(\w{2})(\w{2})(\w{2})$/))) {
-      this.r = parseInt(m[1], 16)/255;
-      this.g = parseInt(m[2], 16)/255;
-      this.b = parseInt(m[3], 16)/255;
-      this.a = 1;
-    } else if ((m = str.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)(\D+([\d.]+))?\)/))) {
-      this.r = parseInt(m[1], 10)/255;
-      this.g = parseInt(m[2], 10)/255;
-      this.b = parseInt(m[3], 10)/255;
-      this.a = m[4] ? parseFloat(m[5]) : 1;
+      return new Color(parseInt(m[1], 16)/255, parseInt(m[2], 16)/255, parseInt(m[3], 16)/255);
+    }
+
+    if ((m = str.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)(\D+([\d.]+))?\)/))) {
+      return new Color(
+        parseFloat(m[1])/255,
+        parseFloat(m[2])/255,
+        parseFloat(m[3])/255,
+        m[4] ? parseFloat(m[5]) : 1
+      );
     }
   }
+};
+
+Color.fromHSL = function(h, s, l, a) {
+  // h = clamp(h, 360),
+  // s = clamp(s, 1),
+  // l = clamp(l, 1),
+
+  // achromatic
+  if (s === 0) {
+    return new Color(l, l, l, a);
+  }
+
+  var
+    q = l<0.5 ? l*(1 + s) : l + s - l*s,
+    p = 2*l - q;
+
+  h /= 360;
+
+  return new Color(
+    hue2rgb(p, q, h + 1/3),
+    hue2rgb(p, q, h),
+    hue2rgb(p, q, h - 1/3),
+    a
+  );
 };
 
 Color.prototype = {
@@ -224,30 +253,7 @@ Color.prototype = {
       h *= 60;
     }
 
-    return { h: h, s: s, l: l };
-  },
-
-  fromHSL: function(hsl) {
-    // h = clamp(hsl.h, 360),
-    // s = clamp(hsl.s, 1),
-    // l = clamp(hsl.l, 1),
-
-    // achromatic
-    if (hsl.s === 0) {
-      this.r = hsl.l;
-      this.g = hsl.l;
-      this.b = hsl.l;
-    } else {
-      var
-        q = hsl.l<0.5 ? hsl.l*(1 + hsl.s) : hsl.l + hsl.s - hsl.l*hsl.s,
-        p = 2*hsl.l - q;
-      hsl.h /= 360;
-      this.r = hue2rgb(p, q, hsl.h + 1/3);
-      this.g = hue2rgb(p, q, hsl.h);
-      this.b = hue2rgb(p, q, hsl.h - 1/3);
-    }
-
-    return this;
+    return { h: h, s: s, l: l, a: this.a };
   },
 
   toString: function() {
@@ -270,29 +276,39 @@ Color.prototype = {
 
   hue: function(h) {
     var hsl = this.toHSL();
-    hsl.h *= h;
-    this.fromHSL(hsl);
-    return this;
+    return Color.fromHSL(hsl.h+h, hsl.s, hsl.l);
   },
 
   saturation: function(s) {
     var hsl = this.toHSL();
-    hsl.s *= s;
-    this.fromHSL(hsl);
-    return this;
+    return Color.fromHSL(hsl.h, hsl.s*s, hsl.l);
   },
 
   lightness: function(l) {
     var hsl = this.toHSL();
-    hsl.l *= l;
-    this.fromHSL(hsl);
-    return this;
+    return Color.fromHSL(hsl.h, hsl.s, hsl.l*l);
+  },
+
+  red: function(r) {
+    return new Color(this.r*r, this.g, this.b, this.a);
+  },
+
+  green: function(g) {
+    return new Color(this.r, this.g*g, this.b, this.a);
+  },
+
+  blue: function(b) {
+    return new Color(this.r, this.g, this.b*b, this.a);
   },
 
   alpha: function(a) {
-    this.a *= a;
-    return this;
+    return new Color(this.r, this.g, this.b, this.a*a);
+  },
+
+  copy: function(l) {
+    return new Color(this.r, this.g, this.b, this.a);
   }
+
 };
 
 return Color;
@@ -3274,7 +3290,7 @@ var APP, GL; // TODO: make them local references
  * @param {Float} [options.tilt=0] - Initial tilt
  * @param {Object} [options.position] - Initial position
  * @param {Float} [options.position.latitude=52.520000]
- * @param {Float} [options.position.latitude=13.410000]
+ * @param {Float} [options.position.longitude=13.410000]
 
  * @param {String} [options.baseURL='.'] - For locating assets. This is relative to calling page
  * @param {Boolean} [options.showBackfaces=false] - Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
