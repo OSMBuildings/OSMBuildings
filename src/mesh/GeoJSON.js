@@ -71,7 +71,7 @@ mesh.GeoJSON = (function() {
 
           /**
            * Fired when a 3d object has been loaded
-           * @event OSMBuildings#loadfeature
+           * @fires OSMBuildings#loadfeature
            */
           APP.emit('loadfeature', feature);
           

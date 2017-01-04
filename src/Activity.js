@@ -19,7 +19,7 @@ var Activity = {};
       } else {
         /**
          * Fired when data loading starts
-         * @event OSMBuildings#busy
+         * @fires OSMBuildings#busy
          */
         APP.emit('busy');
       }
@@ -39,7 +39,7 @@ var Activity = {};
         
         /**
          * Fired when data loading ends
-         * @event OSMBuildings#idle
+         * @fires OSMBuildings#idle
          */
         APP.emit('idle');
       }, 33);

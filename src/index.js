@@ -556,14 +556,14 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is zoomed (in either direction)
        * @public
-       * @event OSMBuildings#zoom
+       * @fires OSMBuildings#zoom
        */
       APP.emit('zoom', { zoom: zoom });
 
       /**
        * Fired when the map is zoomed, tilted or panned
        * @public
-       * @event OSMBuildings#change
+       * @fires OSMBuildings#change
        */
       APP.emit('change');
     }
@@ -623,7 +623,7 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is resized
        * @public
-       * @event OSMBuildings#resize
+       * @fires OSMBuildings#resize
        */
       APP.emit('resize', { width: APP.width, height: APP.height });
     }
@@ -654,7 +654,7 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is rotated
        * @public
-       * @event OSMBuildings#rotate
+       * @fires OSMBuildings#rotate
        */
       APP.emit('rotate', { rotation: rotation });
       APP.emit('change');
@@ -686,7 +686,7 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is tilted
        * @public
-       * @event OSMBuildings#tilt
+       * @fires OSMBuildings#tilt
        */
       APP.emit('tilt', { tilt: tilt });
       APP.emit('change');
