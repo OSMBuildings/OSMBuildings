@@ -3811,14 +3811,14 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is zoomed (in either direction)
        * @public
-       * @event OSMBuildings#zoom
+       * @fires OSMBuildings#zoom
        */
       APP.emit('zoom', { zoom: zoom });
 
       /**
        * Fired when the map is zoomed, tilted or panned
        * @public
-       * @event OSMBuildings#change
+       * @fires OSMBuildings#change
        */
       APP.emit('change');
     }
@@ -3878,7 +3878,7 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is resized
        * @public
-       * @event OSMBuildings#resize
+       * @fires OSMBuildings#resize
        */
       APP.emit('resize', { width: APP.width, height: APP.height });
     }
@@ -3909,7 +3909,7 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is rotated
        * @public
-       * @event OSMBuildings#rotate
+       * @fires OSMBuildings#rotate
        */
       APP.emit('rotate', { rotation: rotation });
       APP.emit('change');
@@ -3941,7 +3941,7 @@ OSMBuildings.prototype = {
       /**
        * Fired when the map is tilted
        * @public
-       * @event OSMBuildings#tilt
+       * @fires OSMBuildings#tilt
        */
       APP.emit('tilt', { tilt: tilt });
       APP.emit('change');
@@ -4362,7 +4362,7 @@ var Activity = {};
       } else {
         /**
          * Fired when data loading starts
-         * @event OSMBuildings#busy
+         * @fires OSMBuildings#busy
          */
         APP.emit('busy');
       }
@@ -4382,7 +4382,7 @@ var Activity = {};
         
         /**
          * Fired when data loading ends
-         * @event OSMBuildings#idle
+         * @fires OSMBuildings#idle
          */
         APP.emit('idle');
       }, 33);
@@ -5069,7 +5069,7 @@ mesh.GeoJSON = (function() {
 
           /**
            * Fired when a 3d object has been loaded
-           * @event OSMBuildings#loadfeature
+           * @fires OSMBuildings#loadfeature
            */
           APP.emit('loadfeature', feature);
           
@@ -5642,7 +5642,7 @@ mesh.OBJ = (function() {
       items.map(function(feature) {
         /**
          * Fired when a 3d object has been loaded
-         * @event OSMBuildings#loadfeature
+         * @fires OSMBuildings#loadfeature
          */
         APP.emit('loadfeature', feature);
 
