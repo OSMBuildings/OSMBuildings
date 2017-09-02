@@ -17,7 +17,7 @@
   },
   "scripts": {},
   "dependencies": {
-    "Color": "git://github.com/kekscom/Color.git",
+    "qolor": "^2.1.0",
     "suncalc": "git://github.com/OSMBuildings/suncalc.git"
   },
   "devDependencies": {

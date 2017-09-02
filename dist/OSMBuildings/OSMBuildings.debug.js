@@ -1,4 +1,4 @@
-(function() {var Color = (function() {
+(function() {var Qolor = (function() {
 var w3cColors = {
   aliceblue: '#f0f8ff',
   antiquewhite: '#faebd7',
@@ -160,23 +160,28 @@ function hue2rgb(p, q, t) {
 }
 
 function clamp(v, max) {
+  if (v === undefined) {
+    return;
+  }
   return Math.min(max, Math.max(0, v || 0));
 }
 
 /**
  * @param str, object can be in any of these: 'red', '#0099ff', 'rgb(64, 128, 255)', 'rgba(64, 128, 255, 0.5)', { r:0.2, g:0.3, b:0.9, a:1 }
  */
-var Color = function(r, g, b, a) {
+var Qolor = function(r, g, b, a) {
   this.r = clamp(r, 1);
   this.g = clamp(g, 1);
   this.b = clamp(b, 1);
-  this.a = (a !== undefined ? clamp(a, 1) : 1);
+  this.a = clamp(a, 1) || 1;
+
+  this.isValid = this.r !== undefined && this.g !== undefined && this.b !== undefined;
 };
 
 /**
  * @param str, object can be in any of these: 'red', '#0099ff', 'rgb(64, 128, 255)', 'rgba(64, 128, 255, 0.5)'
  */
-Color.parse = function(str) {
+Qolor.parse = function(str) {
   if (typeof str === 'string') {
     str = str.toLowerCase();
     str = w3cColors[str] || str;
@@ -184,11 +189,15 @@ Color.parse = function(str) {
     var m;
 
     if ((m = str.match(/^#?(\w{2})(\w{2})(\w{2})$/))) {
-      return new Color(parseInt(m[1], 16)/255, parseInt(m[2], 16)/255, parseInt(m[3], 16)/255);
+      return new Qolor(parseInt(m[1], 16)/255, parseInt(m[2], 16)/255, parseInt(m[3], 16)/255);
+    }
+
+    if ((m = str.match(/^#?(\w)(\w)(\w)$/))) {
+      return new Qolor(parseInt(m[1]+m[1], 16)/255, parseInt(m[2]+m[2], 16)/255, parseInt(m[3]+m[3], 16)/255);
     }
 
     if ((m = str.match(/rgba?\((\d+)\D+(\d+)\D+(\d+)(\D+([\d.]+))?\)/))) {
-      return new Color(
+      return new Qolor(
         parseFloat(m[1])/255,
         parseFloat(m[2])/255,
         parseFloat(m[3])/255,
@@ -196,16 +205,18 @@ Color.parse = function(str) {
       );
     }
   }
+
+  return new Qolor();
 };
 
-Color.fromHSL = function(h, s, l, a) {
+Qolor.fromHSL = function(h, s, l, a) {
   // h = clamp(h, 360),
   // s = clamp(s, 1),
   // l = clamp(l, 1),
 
   // achromatic
   if (s === 0) {
-    return new Color(l, l, l, a);
+    return new Qolor(l, l, l, a);
   }
 
   var
@@ -214,7 +225,7 @@ Color.fromHSL = function(h, s, l, a) {
 
   h /= 360;
 
-  return new Color(
+  return new Qolor(
     hue2rgb(p, q, h + 1/3),
     hue2rgb(p, q, h),
     hue2rgb(p, q, h - 1/3),
@@ -222,10 +233,10 @@ Color.fromHSL = function(h, s, l, a) {
   );
 };
 
-Color.prototype = {
+Qolor.prototype = {
 
   toHSL: function() {
-    if (this.r === undefined || this.g === undefined || this.b === undefined) {
+    if (!this.isValid) {
       return;
     }
 
@@ -257,8 +268,8 @@ Color.prototype = {
   },
 
   toString: function() {
-    if (this.r === undefined || this.g === undefined || this.b === undefined) {
-      return '';
+    if (!this.isValid) {
+      return;
     }
 
     if (this.a === 1) {
@@ -268,54 +279,55 @@ Color.prototype = {
   },
 
   toArray: function() {
-    if (this.r === undefined || this.g === undefined || this.b === undefined) {
+    if (!this.isValid) {
       return;
     }
+    
     return [this.r, this.g, this.b];
   },
 
   hue: function(h) {
     var hsl = this.toHSL();
-    return Color.fromHSL(hsl.h+h, hsl.s, hsl.l);
+    return Qolor.fromHSL(hsl.h+h, hsl.s, hsl.l);
   },
 
   saturation: function(s) {
     var hsl = this.toHSL();
-    return Color.fromHSL(hsl.h, hsl.s*s, hsl.l);
+    return Qolor.fromHSL(hsl.h, hsl.s*s, hsl.l);
   },
 
   lightness: function(l) {
     var hsl = this.toHSL();
-    return Color.fromHSL(hsl.h, hsl.s, hsl.l*l);
+    return Qolor.fromHSL(hsl.h, hsl.s, hsl.l*l);
   },
 
   red: function(r) {
-    return new Color(this.r*r, this.g, this.b, this.a);
+    return new Qolor(this.r*r, this.g, this.b, this.a);
   },
 
   green: function(g) {
-    return new Color(this.r, this.g*g, this.b, this.a);
+    return new Qolor(this.r, this.g*g, this.b, this.a);
   },
 
   blue: function(b) {
-    return new Color(this.r, this.g, this.b*b, this.a);
+    return new Qolor(this.r, this.g, this.b*b, this.a);
   },
 
   alpha: function(a) {
-    return new Color(this.r, this.g, this.b, this.a*a);
+    return new Qolor(this.r, this.g, this.b, this.a*a);
   },
 
-  copy: function(l) {
-    return new Color(this.r, this.g, this.b, this.a);
+  copy: function() {
+    return new Qolor(this.r, this.g, this.b, this.a);
   }
 
 };
 
-return Color;
+return Qolor;
 
 }());
 
-if (typeof module === 'object') { module.exports = Color; }
+if (typeof module === 'object') { module.exports = Qolor; }
 
 /*
  (c) 2011-2015, Vladimir Agafonkin
@@ -2872,7 +2884,7 @@ var triangulate = (function() {
 
   var
     DEFAULT_HEIGHT = 10,
-    DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toArray(),
+    DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray(),
     METERS_PER_LEVEL = 3;
 
   var MATERIAL_COLORS = {
@@ -2937,16 +2949,13 @@ var triangulate = (function() {
   var METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
 
   function triangulate(buffers, feature, origin, forcedColor, colorVariance) {
-    // a single feature might split into several items
-    var
-      scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE],
-      geometries = alignGeometry(feature.geometry),
-      polygon;
+    var scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE];
 
-    for (var i = 0, il = geometries.length; i<il; i++) {
-      polygon = transform(geometries[i], origin, scale);
+    // a single feature might split into several items
+    alignGeometry(feature.geometry).map(function(geometry) {
+      var polygon = transform(geometry, origin, scale);
       addBuilding(buffers, feature.properties, polygon, forcedColor, colorVariance);
-    }
+    });
   }
 
   //***************************************************************************
@@ -3013,13 +3022,17 @@ var triangulate = (function() {
     return MATERIAL_COLORS[BASE_MATERIALS[str] || str] || null;
   }
 
-  function varyColor(color, variance) {
+  function varyColor(col, variance) {
     variance = variance || 0;
-    var c = Color.parse(color).toArray();
-    if (c === undefined) {
-      c = DEFAULT_COLOR;
+    var
+      color = Qolor.parse(col),
+      rgb;
+    if (!color.isValid) {
+      rgb = DEFAULT_COLOR;
+    } else {
+      rgb = color.toArray();
     }
-    return [c[0]+variance, c[1]+variance, c[2]+variance];
+    return [rgb[0]+variance, rgb[1]+variance, rgb[2]+variance];
   }
 
   //***************************************************************************
@@ -3055,10 +3068,12 @@ var triangulate = (function() {
 
     switch (properties.roofShape) {
       case 'cone':
+        split.polygon(buffers, polygon, dim.roofZ, roofColor);
         split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
         break;
 
       case 'dome':
+        split.polygon(buffers, polygon, dim.roofZ, roofColor);
         split.dome(buffers, dim.center, dim.radius, dim.roofHeight, dim.roofZ, roofColor);
         break;
 
@@ -3107,6 +3122,8 @@ var triangulate = (function() {
       //   break;
 
       case 'onion':
+        split.polygon(buffers, polygon, dim.roofZ, roofColor);
+
         var rings = [
           { rScale: 1.0, hScale: 0.00 },
           { rScale: 0.8, hScale: 0.15 },
@@ -3135,7 +3152,7 @@ var triangulate = (function() {
 
     //*** process remaining buildings *****************************************
 
-    switch(properties.roofShape) {
+    switch(properties.shape) {
       case 'none':
         // no walls at all
         return;
@@ -3310,17 +3327,17 @@ var OSMBuildings = function(options) {
   if (APP.options.style) {
     var style = APP.options.style;
     if (style.color || style.wallColor) {
-      DEFAULT_COLOR = Color.parse(style.color || style.wallColor).toArray();
+      DEFAULT_COLOR = Qolor.parse(style.color || style.wallColor).toArray();
     }
   }
 
   APP.baseURL = APP.options.baseURL || '.';
 
-  render.backgroundColor = Color.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
-  render.fogColor        = Color.parse(APP.options.fogColor        || FOG_COLOR).toArray();
+  render.backgroundColor = Qolor.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
+  render.fogColor        = Qolor.parse(APP.options.fogColor        || FOG_COLOR).toArray();
 
   if (APP.options.highlightColor) {
-    HIGHLIGHT_COLOR = Color.parse(APP.options.highlightColor).toArray();
+    HIGHLIGHT_COLOR = Qolor.parse(APP.options.highlightColor).toArray();
   }
 
   render.Buildings.showBackfaces = APP.options.showBackfaces;
@@ -3610,7 +3627,7 @@ OSMBuildings.prototype = {
    */
   highlight: function(id, highlightColor) {
     render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
-    render.Buildings.highlightColor = id && highlightColor ? Color.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
+    render.Buildings.highlightColor = id && highlightColor ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
     return APP;
   },
 
@@ -4407,8 +4424,8 @@ var MIN_ZOOM = 14.5;
 var MAX_ZOOM = 22;
 
 var MAX_USED_ZOOM_LEVEL = 25;
-var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toArray();
-var HIGHLIGHT_COLOR = Color.parse('#f08000').toArray();
+var DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
+var HIGHLIGHT_COLOR = Qolor.parse('#f08000').toArray();
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to the horizont into
 var FOG_COLOR = '#e8e0d8';
@@ -5006,7 +5023,7 @@ mesh.GeoJSON = (function() {
     options = options || {};
 
     this.forcedId = options.id;
-    // no Color.toArray() needed as Triangulation does it internally
+    // no Qolor.toArray() needed as Triangulation does it internally
     this.forcedColor = options.color;
 
     this.replace      = !!options.replace;
@@ -5130,7 +5147,7 @@ mesh.GeoJSON = (function() {
         filters = [],
         heights = [];
 
-      this.items.map(function(item) {
+      this.items.forEach(function(item) {
         item.filter = [start, end, 0, 1];
         for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
@@ -5144,7 +5161,7 @@ mesh.GeoJSON = (function() {
 
     applyFilter: function() {
       var filters = [];
-      this.items.map(function(item) {
+      this.items.forEach(function(item) {
         for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
         }
@@ -5331,7 +5348,7 @@ mesh.DebugQuad = (function() {
 
     this.id = options.id;
     /*if (options.color) {
-      this.color = Color.parse(options.color).toArray();
+      this.color = Qolor.parse(options.color).toArray();
     }*/
 
     this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
@@ -5591,7 +5608,7 @@ mesh.OBJ = (function() {
     this.forcedId = options.id;
 
     if (options.color) {
-      this.forcedColor = Color.parse(options.color).toArray();
+      this.forcedColor = Qolor.parse(options.color).toArray();
     }
 
     this.replace      = !!options.replace;
@@ -5639,7 +5656,7 @@ mesh.OBJ = (function() {
     },
 
     addItems: function(items) {
-      items.map(function(feature) {
+      items.forEach(function(feature) {
         /**
          * Fired when a 3d object has been loaded
          * @fires OSMBuildings#loadfeature
@@ -5679,7 +5696,7 @@ mesh.OBJ = (function() {
         filters = [],
         heights = [];
 
-      this.items.map(function(item) {
+      this.items.forEach(function(item) {
         item.filter = [start, end, 0, 1];
         for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
@@ -5693,7 +5710,7 @@ mesh.OBJ = (function() {
 
     applyFilter: function() {
       var filters = [];
-      this.items.map(function(item) {
+      this.items.forEach(function(item) {
         for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
         }

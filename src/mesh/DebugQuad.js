@@ -6,7 +6,7 @@ mesh.DebugQuad = (function() {
 
     this.id = options.id;
     /*if (options.color) {
-      this.color = Color.parse(options.color).toArray();
+      this.color = Qolor.parse(options.color).toArray();
     }*/
 
     this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];

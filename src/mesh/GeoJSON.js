@@ -8,7 +8,7 @@ mesh.GeoJSON = (function() {
     options = options || {};
 
     this.forcedId = options.id;
-    // no Color.toArray() needed as Triangulation does it internally
+    // no Qolor.toArray() needed as Triangulation does it internally
     this.forcedColor = options.color;
 
     this.replace      = !!options.replace;

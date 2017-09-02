@@ -15,7 +15,7 @@
   ],
 
   "modules": [
-    "node_modules/Color/dist/Color.debug.js",
+    "node_modules/qolor/dist/Qolor.debug.js",
     "node_modules/suncalc/suncalc.js"
   ],
 

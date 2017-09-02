@@ -3,7 +3,7 @@ var triangulate = (function() {
 
   var
     DEFAULT_HEIGHT = 10,
-    DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toArray(),
+    DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray(),
     METERS_PER_LEVEL = 3;
 
   var MATERIAL_COLORS = {
@@ -141,12 +141,12 @@ var triangulate = (function() {
     return MATERIAL_COLORS[BASE_MATERIALS[str] || str] || null;
   }
 
-  function varyColor(color, variance) {
+  function varyColor(col, variance) {
     variance = variance || 0;
     var
-      color = Color.parse(color),
+      color = Qolor.parse(col),
       rgb;
-    if (!color) {
+    if (!color.isValid) {
       rgb = DEFAULT_COLOR;
     } else {
       rgb = color.toArray();

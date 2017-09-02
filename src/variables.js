@@ -8,8 +8,8 @@ var MIN_ZOOM = 14.5;
 var MAX_ZOOM = 22;
 
 var MAX_USED_ZOOM_LEVEL = 25;
-var DEFAULT_COLOR = Color.parse('rgb(220, 210, 200)').toArray();
-var HIGHLIGHT_COLOR = Color.parse('#f08000').toArray();
+var DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
+var HIGHLIGHT_COLOR = Qolor.parse('#f08000').toArray();
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to the horizont into
 var FOG_COLOR = '#e8e0d8';
