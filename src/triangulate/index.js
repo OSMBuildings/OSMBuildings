@@ -68,16 +68,13 @@ var triangulate = (function() {
   var METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
 
   function triangulate(buffers, feature, origin, forcedColor, colorVariance) {
-    // a single feature might split into several items
-    var
-      scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE],
-      geometries = alignGeometry(feature.geometry),
-      polygon;
+    var scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE];
 
-    for (var i = 0, il = geometries.length; i<il; i++) {
-      polygon = transform(geometries[i], origin, scale);
+    // a single feature might split into several items
+    alignGeometry(feature.geometry).map(function(geometry) {
+      var polygon = transform(geometry, origin, scale);
       addBuilding(buffers, feature.properties, polygon, forcedColor, colorVariance);
-    }
+    });
   }
 
   //***************************************************************************
@@ -190,10 +187,12 @@ var triangulate = (function() {
 
     switch (properties.roofShape) {
       case 'cone':
+        split.polygon(buffers, polygon, dim.roofZ, roofColor);
         split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
         break;
 
       case 'dome':
+        split.polygon(buffers, polygon, dim.roofZ, roofColor);
         split.dome(buffers, dim.center, dim.radius, dim.roofHeight, dim.roofZ, roofColor);
         break;
 
@@ -242,6 +241,8 @@ var triangulate = (function() {
       //   break;
 
       case 'onion':
+        split.polygon(buffers, polygon, dim.roofZ, roofColor);
+
         var rings = [
           { rScale: 1.0, hScale: 0.00 },
           { rScale: 0.8, hScale: 0.15 },
@@ -270,7 +271,7 @@ var triangulate = (function() {
 
     //*** process remaining buildings *****************************************
 
-    switch(properties.roofShape) {
+    switch(properties.shape) {
       case 'none':
         // no walls at all
         return;

@@ -94,7 +94,9 @@
     // effects: ['shadows', 'outlines'],
     effects: ['shadows'],
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>',
-    position: { latitude:52.52000, longitude:13.41000 },
+//    position: { latitude:52.52000, longitude:13.41000 },
+    position: { latitude:53.405019, longitude:-2.967899 }, // Liverpool
+
     // bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
     zoom: 17,
     rotation: 0,
@@ -181,8 +183,8 @@
 //  });
 
   osmb.addGeoJSONTiles(
-//  'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
-    'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+    'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
+//  'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
       // bounds
@@ -205,7 +207,8 @@
     }
   ] };
 
-  osmb.addGeoJSON(gj);
+  osmb.addGeoJSON('data/test.geo.json');
+//  osmb.addGeoJSON(gj);
 
   //var obj = osmb.addOBJ('../../OBJ2GeoJSON/data/2015-09/o4/o4-nach90.obj', { latitude:52.51941, longitude:13.50445 }, { color: '#00ccff' });
   //osmb.addGeoJSON('../../OBJ2GeoJSON/data/geojson C/o2-nach90.geo.json', { color: '#00ccff' });

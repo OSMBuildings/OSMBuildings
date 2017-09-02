@@ -132,7 +132,7 @@ mesh.GeoJSON = (function() {
         filters = [],
         heights = [];
 
-      this.items.map(function(item) {
+      this.items.forEach(function(item) {
         item.filter = [start, end, 0, 1];
         for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
@@ -146,7 +146,7 @@ mesh.GeoJSON = (function() {
 
     applyFilter: function() {
       var filters = [];
-      this.items.map(function(item) {
+      this.items.forEach(function(item) {
         for (var i = 0; i < item.vertexCount; i++) {
           filters.push.apply(filters, item.filter);
         }
