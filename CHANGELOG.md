@@ -1,16 +1,35 @@
 
+# 3.2.4 @ 2017-09-03
+
+## Changed
+
+- rotation is now controlled by mouse button 2
+- global min/max zoom enabled
+
+## Fixed
+
+- mouse event position
+- better color validation
+- low buildings were too dark
+- better fallback for bad roof tagging
+- destroy() was causing endless errors
+- handling missing container height
+- roof height calculation
+- min/max zoom fixes
+
+
 # 3.2.2 @ 2016-09-21
 
 ## Changed
 
 - extended OSM roof shape support: Skillion, Gabled, Onion + Gabled as fallback for Hipped, Half-Hipped, Gambrel
-- triangulatuion integrated from external module
+- triangulation integrated from external module
 
 ## Fixed
 
-- fixed fadeIn option for GeoJSON tiles
-- minZoom/maxZoom behavior fixed
-- fix for touchmove positioning
+- fadeIn option for GeoJSON tiles
+- minZoom/maxZoom behavior
+- touchmove positioning
 
 
 # 3.1.0 @ 2016-07-27
