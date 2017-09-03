@@ -4004,7 +4004,6 @@ if (typeof define === 'function') {
   window.OSMBuildings = OSMBuildings;
 }
 
-
 // gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
 // MIT License
 
@@ -4022,32 +4021,23 @@ function mul2scalar(a, f) {
   return [a[0]*f, a[1]*f];
 }
 
-/**
- * @private
- */
-function getEventPosition(e, offset) {
-  return {
-    x: e.clientX - offset.x,
-    y: e.clientY - offset.y
-  };
-}
+function getPos(e) {
+  var el = e.target;
 
-/**
- * @private
- */
-function getElementOffset(el) {
   if (el.getBoundingClientRect) {
     var box = el.getBoundingClientRect();
-    return { x:box.left, y:box.top };
+    if (box !== undefined) {
+      return { x: e.x-box.left, y: e.y-box.top };
+    }
   }
 
-  var res = { x:0, y:0 };
-  while(el.nodeType === 1) {
+  var res = { x: 0, y: 0 };
+  while (el.nodeType === 1) {
     res.x += el.offsetLeft;
     res.y += el.offsetTop;
     el = el.parentNode;
   }
-  return res;
+  return { x: e.x-res.s, y: e.y-res.y };
 }
 
 /**
@@ -4087,16 +4077,19 @@ Events.init = function(container) {
 
   if ('ontouchstart' in window) {
     addListener(container, 'touchstart', onTouchStart);
-    addListener(document, 'touchmove', onTouchMove);
+    addListener(document, 'touchmove', onTouchMoveDocument);
+    addListener(container, 'touchmove', onTouchMove);
     addListener(document, 'touchend', onTouchEnd);
     addListener(document, 'gesturechange', onGestureChange);
   } else {
     addListener(container, 'mousedown', onMouseDown);
-    addListener(document, 'mousemove', onMouseMove);
+    addListener(document, 'mousemove', onMouseMoveDocument);
+    addListener(container, 'mousemove', onMouseMove);
     addListener(document, 'mouseup', onMouseUp);
     addListener(container, 'dblclick', onDoubleClick);
     addListener(container, 'mousewheel', onMouseWheel);
     addListener(container, 'DOMMouseScroll', onMouseWheel);
+    addListener(container, 'contextmenu', onContextMenu);
   }
 
   var resizeDebounce;
@@ -4106,22 +4099,21 @@ Events.init = function(container) {
     }
     resizeDebounce = setTimeout(function() {
       resizeDebounce = null;
-        APP.setSize({ width:container.offsetWidth, height:container.offsetHeight });
+      APP.setSize({ width: container.offsetWidth, height: container.offsetHeight });
     }, 250);
   });
 
   //***************************************************************************
 
   var
-    prevX = 0,
-    prevY = 0,
     startX = 0,
     startY = 0,
+    prevX = 0,
+    prevY = 0,
     startZoom = 0,
-    startOffset,
     prevRotation = 0,
     prevTilt = 0,
-    pointerIsDown = false;
+    button = 0;
 
   function onDoubleClick(e) {
     cancelEvent(e);
@@ -4129,66 +4121,58 @@ Events.init = function(container) {
       APP.setZoom(APP.zoom + 1, e);
     }
     var pos = getEventPosition(e, getElementOffset(e.target));
-      APP.emit('doubleclick', { x:pos.x, y:pos.y, button:e.button });
+    APP.emit('doubleclick', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
   }
 
   function onMouseDown(e) {
     cancelEvent(e);
 
-    if (e.button > 1) {
-      return;
-    }
-
     startZoom = APP.zoom;
     prevRotation = APP.rotation;
     prevTilt = APP.tilt;
 
-    startOffset = getElementOffset(e.target);
-    var pos = getEventPosition(e, startOffset);
-    startX = prevX = pos.x;
-    startY = prevY = pos.y;
+    startX = prevX = e.clientX;
+    startY = prevY = e.clientY;
 
-    pointerIsDown = true;
-    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button });
+    if (e.buttons === 1) {
+      button = 1;
+    } else if ((e.buttons === 1 && !e.altKey) || e.buttons === 2) {
+      button = 2;
+    }
+
+    var pos = getPos(e);
+    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
+  }
+
+  function onMouseMoveDocument(e) {
+    if (button === 1) {
+      moveMap(e);
+    } else if (button === 2) {
+      rotateMap(e);
+    }
+
+    prevX = e.clientX;
+    prevY = e.clientY;
   }
 
   function onMouseMove(e) {
-    var pos;
-    if (!pointerIsDown) {
-      pos = getEventPosition(e, getElementOffset(e.target));
-    } else {
-      if (e.button === 0 && !e.altKey) {
-        moveMap(e, startOffset);
-      } else {
-        rotateMap(e, startOffset);
-      }
-
-      pos = getEventPosition(e, startOffset);
-      prevX = pos.x;
-      prevY = pos.y;
-    }
-
-    APP.emit('pointermove', { x: pos.x, y: pos.y });
+    APP.emit('pointermove', getPos(e));
   }
 
   function onMouseUp(e) {
     // prevents clicks on other page elements
-    if (!pointerIsDown) {
+    if (!button) {
       return;
     }
 
-    var pos = getEventPosition(e, startOffset);
-
-    if (e.button === 0 && !e.altKey) {
-      if (Math.abs(pos.x - startX)>5 || Math.abs(pos.y - startY)>5) {
-        moveMap(e, startOffset);
-      }
-    } else {
-      rotateMap(e, startOffset);
+    if (button === 1) {
+      moveMap(e);
+    } else if (button === 2) {
+      rotateMap(e);
     }
 
-    pointerIsDown = false;
-    APP.emit('pointerup', { x: pos.x, y: pos.y, button: e.button });
+    button = 0;
+    APP.emit('pointerup', { button: e.button, buttons: e.buttons });
   }
 
   function onMouseWheel(e) {
@@ -4211,43 +4195,45 @@ Events.init = function(container) {
     // we don't emit mousewheel here as we don't want to run into a loop of death
   }
 
+  function onContextMenu(e) {
+    e.preventDefault();
+  }
+
   //***************************************************************************
 
-  function moveMap(e, offset) {
+  function moveMap(e) {
     if (Events.disabled) {
       return;
     }
 
-    // FIXME: make movement exact, i.e. make the position that
-    // appeared at (prevX, prevY) before appear at (e.offsetX, e.offsetY) now.
+    // FIXME: make movement exact
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
     var
-      scale = 0.86 * Math.pow(2, -APP.zoom),
-      lonScale = 1/Math.cos( APP.position.latitude/ 180 * Math.PI),
-      pos = getEventPosition(e, offset),
-      dx = pos.x - prevX,
-      dy = pos.y - prevY,
-      angle = APP.rotation * Math.PI/180,
-      vRight   = [ Math.cos(angle),             Math.sin(angle)],
-      vForward = [ Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
+      scale = 0.86*Math.pow(2, -APP.zoom),
+      lonScale = 1/Math.cos(APP.position.latitude/180*Math.PI),
+      dx = e.clientX - prevX,
+      dy = e.clientY - prevY,
+      angle = APP.rotation*Math.PI/180,
+      vRight = [Math.cos(angle), Math.sin(angle)],
+      vForward = [Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
       dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
 
     var newPosition = {
-      longitude: APP.position.longitude - dir[0] * scale*lonScale,
-      latitude:  APP.position.latitude  + dir[1] * scale };
+      longitude: APP.position.longitude - dir[0]*scale*lonScale,
+      latitude: APP.position.latitude + dir[1]*scale
+    };
 
     APP.setPosition(newPosition);
     APP.emit('move', newPosition);
   }
 
-  function rotateMap(e, offset) {
+  function rotateMap(e) {
     if (Events.disabled) {
       return;
     }
-    var pos = getEventPosition(e, offset);
-    prevRotation += (pos.x - prevX)*(360/innerWidth);
-    prevTilt -= (pos.y - prevY)*(360/innerHeight);
+    prevRotation += (e.clientX - prevX)*(360/innerWidth);
+    prevTilt -= (e.clientY - prevY)*(360/innerHeight);
     APP.setRotation(prevRotation);
     APP.setTilt(prevTilt);
   }
@@ -4272,7 +4258,7 @@ Events.init = function(container) {
   }
 
   function onTouchStart(e) {
-    pointerIsDown = true;
+    button = 0;
 
     cancelEvent(e);
 
@@ -4283,7 +4269,7 @@ Events.init = function(container) {
       var dx = t1.clientX - t2.clientX;
       var dy = t1.clientY - t2.clientY;
       dist1 = dx*dx + dy*dy;
-      angle1 = Math.atan2(dy,dx);
+      angle1 = Math.atan2(dy, dx);
       gestureStarted = true;
     }
 
@@ -4295,57 +4281,59 @@ Events.init = function(container) {
       e = e.touches[0];
     }
 
-    startOffset = getElementOffset(e.target);
-    var pos = getEventPosition(e, startOffset);
-    startX = prevX = pos.x;
-    startY = prevY = pos.y;
+    startX = prevX = e.clientX;
+    startY = prevY = e.clientY;
 
-    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: 0 });
+    APP.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1 });
   }
 
-  function onTouchMove(e) {
-if (!pointerIsDown) {
-  return;
-}
-    var pos = getEventPosition(e.touches[0], startOffset);
+  function onTouchMoveDocument(e) {
+    if (!button) {
+      return;
+    }
     if (e.touches.length>1) {
-      APP.setTilt(prevTilt + (prevY - pos.y)*(360/innerHeight));
+      APP.setTilt(prevTilt + (prevY - e.clientY)*(360/innerHeight));
       prevTilt = APP.tilt;
       // gesturechange polyfill
       if (!('ongesturechange' in window)) {
         emitGestureChange(e);
       }
     } else {
-      moveMap(e.touches[0], startOffset);
-      APP.emit('pointermove', { x: pos.x, y: pos.y });
+      moveMap(e.touches[0]);
     }
-    prevX = pos.x;
-    prevY = pos.y;
+    prevX = e.clientX;
+    prevY = e.clientY;
+  }
+
+  function onTouchMove(e) {
+    if (e.touches.length === 1) {
+      var pos = getPos(e.touches[0]);
+      APP.emit('pointermove', { x: pos.x, y: pos.y, button: 0, buttons: 1 });
+    }
   }
 
   function onTouchEnd(e) {
-if (!pointerIsDown) {
-  return;
-}
+    if (!button) {
+      return;
+    }
 
     // gesturechange polyfill
     gestureStarted = false;
 
     if (e.touches.length === 0) {
-pointerIsDown = false;
-      APP.emit('pointerup', { x: prevX, y: prevY, button: 0 });
+      button = 0;
+      APP.emit('pointerup', { button: 0, buttons: 1 });
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
-      var pos = getEventPosition(e.touches[0], startOffset);
-      prevX = pos.x;
-      prevY = pos.y;
+      prevX = e.clientX;
+      prevY = e.clientY;
     }
   }
 
   function onGestureChange(e) {
-if (!pointerIsDown) {
-  return;
-}
+    if (!button) {
+      return;
+    }
 
     cancelEvent(e);
 
