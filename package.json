@@ -2,7 +2,7 @@
   "name": "OSMBuildings",
   "private": false,
   "description": "OSM Buildings",
-  "version": "3.2.4",
+  "version": "3.2.5",
   "homepage": "http://osmbuildings.org",
   "author": "@kekscom",
   "contributors": [],
@@ -15,12 +15,15 @@
     "type": "git",
     "url": "git@github.com:OSMBuildings/OSMBuildings.git"
   },
-  "scripts": {},
+  "scripts": {
+    "docs": "documentation build src/**.js -f html -o docs/test"
+  },
   "dependencies": {
     "qolor": "^2.1.0",
     "suncalc": "git://github.com/OSMBuildings/suncalc.git"
   },
   "devDependencies": {
+    "documentation": "^5.3.0",
     "grunt": "^0.4.4",
     "grunt-contrib-compress": "^1.0.0",
     "grunt-contrib-concat": "~0.5.1",

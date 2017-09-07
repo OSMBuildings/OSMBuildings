@@ -3369,7 +3369,7 @@ var OSMBuildings = function(options) {
   }
 };
 
-OSMBuildings.VERSION = '3.2.4';
+OSMBuildings.VERSION = '3.2.5';
 OSMBuildings.ATTRIBUTION = '<a href="https://osmbuildings.org/">© OSM Buildings</a>';
 
 OSMBuildings.prototype = {
@@ -4258,13 +4258,13 @@ Events.init = function(container) {
   }
 
   function onTouchStart(e) {
-    button = 0;
-
+    button = 1;
     cancelEvent(e);
+
+    var t1 = e.touches[0];
 
     // gesturechange polyfill
     if (e.touches.length === 2 && !('ongesturechange' in window)) {
-      var t1 = e.touches[0];
       var t2 = e.touches[1];
       var dx = t1.clientX - t2.clientX;
       var dy = t1.clientY - t2.clientY;
@@ -4277,12 +4277,8 @@ Events.init = function(container) {
     prevRotation = APP.rotation;
     prevTilt = APP.tilt;
 
-    if (e.touches.length) {
-      e = e.touches[0];
-    }
-
-    startX = prevX = e.clientX;
-    startY = prevY = e.clientY;
+    startX = prevX = t1.clientX;
+    startY = prevY = t1.clientY;
 
     APP.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1 });
   }
@@ -4291,18 +4287,21 @@ Events.init = function(container) {
     if (!button) {
       return;
     }
+
+    var t1 = e.touches[0];
+
     if (e.touches.length>1) {
-      APP.setTilt(prevTilt + (prevY - e.clientY)*(360/innerHeight));
+      APP.setTilt(prevTilt + (prevY - t1.clientY)*(360/innerHeight));
       prevTilt = APP.tilt;
       // gesturechange polyfill
       if (!('ongesturechange' in window)) {
         emitGestureChange(e);
       }
     } else {
-      moveMap(e.touches[0]);
+      moveMap(t1);
     }
-    prevX = e.clientX;
-    prevY = e.clientY;
+    prevX = t1.clientX;
+    prevY = t1.clientY;
   }
 
   function onTouchMove(e) {
@@ -4320,13 +4319,15 @@ Events.init = function(container) {
     // gesturechange polyfill
     gestureStarted = false;
 
+    var t1 = e.touches[1];
+
     if (e.touches.length === 0) {
       button = 0;
       APP.emit('pointerup', { button: 0, buttons: 1 });
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
-      prevX = e.clientX;
-      prevY = e.clientY;
+      prevX = t1.clientX;
+      prevY = t1.clientY;
     }
   }
 
