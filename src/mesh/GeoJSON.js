@@ -69,10 +69,6 @@ mesh.GeoJSON = (function() {
         for (var i = startIndex; i < endIndex; i++) {
           feature = collection.features[i];
 
-          /**
-           * Fired when a 3d object has been loaded
-           * @fires OSMBuildings#loadfeature
-           */
           APP.emit('loadfeature', feature);
           
           properties = feature.properties;

@@ -313,7 +313,7 @@ Events.init = function(container) {
     // gesturechange polyfill
     gestureStarted = false;
 
-    var t1 = e.touches[1];
+    var t1 = e.touches[0];
 
     if (e.touches.length === 0) {
       button = 0;
