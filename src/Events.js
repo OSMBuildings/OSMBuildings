@@ -128,10 +128,10 @@ Events.init = function(container) {
     startX = prevX = e.clientX;
     startY = prevY = e.clientY;
 
-    if (e.buttons === 1) {
-      button = 1;
-    } else if ((e.buttons === 1 && !e.altKey) || e.buttons === 2) {
+    if ((e.buttons === 1 && e.altKey) || e.buttons === 2) {
       button = 2;
+    } else if (e.buttons === 1) {
+      button = 1;
     }
 
     var pos = getPos(e);
