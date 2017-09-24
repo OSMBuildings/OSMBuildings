@@ -114,7 +114,7 @@ Events.init = function(container) {
     if (!Events.disabled) {
       APP.setZoom(APP.zoom + 1, e);
     }
-    var pos = getEventPosition(e, getElementOffset(e.target));
+    var pos = getPos(e);
     APP.emit('doubleclick', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
   }
 
