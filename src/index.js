@@ -23,7 +23,7 @@ var APP, GL; // TODO: make them local references
 /**
  * User defined callback function for screenshot()
  * @callback screenshotCallback
- * @param {Image} The screenshot
+ * @param {Image} screenshot The screenshot
  */
 
 /*
@@ -380,7 +380,7 @@ OSMBuildings.prototype = {
   /**
    * Adds a GeoJSON tile layer to the map.<br>
    * This is for continuous building coverage.<br>
-   * In order to remove the lay use myLayer.destroy()
+   * In order to remove the layer use myLayer.destroy()
    * @param {String} [url=https://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json] url The URL of the GeoJSON tile server
    * @param {Object} [options]
    * @param {Number} [options.fixedZoom=15] Tiles are fetched for this zoom level only. Other zoom levels are scaled up/down to this value
@@ -399,7 +399,7 @@ OSMBuildings.prototype = {
 
   /**
    * Adds a 2d base map source. This renders below the buildings.<br>
-   * In order to remove the lay use myLayer.destroy()
+   * In order to remove the layer use myLayer.destroy()
    * @param {String} url The URL of the map server. This could be from Mapbox or other tile servers
    * @return {Object} The added layer object
    */

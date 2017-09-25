@@ -97,18 +97,6 @@ module.exports = function(grunt) {
           { expand: true, cwd: 'dist/', src: ['<%=pkg.name%>/*', 'index.html'] }
         ]
       }
-    },
-
-    jsdoc : {
-      dist : {
-        src: ['./src/index.js'],
-        jsdoc: './node_modules/.bin/jsdoc',
-        options: {
-          destination: 'docs',
-          configure: '.jsdoc.json',
-          private: false
-        }
-      }
     }
   });
 
@@ -117,7 +105,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-compress');
-  grunt.loadNpmTasks('grunt-jsdoc');
 
   function safeMkdir(dir) {
     try {
