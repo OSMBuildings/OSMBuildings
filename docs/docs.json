@@ -2873,7 +2873,7 @@
                   },
                   {
                     "type": "text",
-                    "value": "\nIn order to remove the lay use myLayer.destroy()",
+                    "value": "\nIn order to remove the layer use myLayer.destroy()",
                     "position": {
                       "start": {
                         "line": 2,
@@ -2882,8 +2882,8 @@
                       },
                       "end": {
                         "line": 3,
-                        "column": 49,
-                        "offset": 136
+                        "column": 51,
+                        "offset": 138
                       },
                       "indent": [
                         1
@@ -2899,8 +2899,8 @@
                   },
                   "end": {
                     "line": 3,
-                    "column": 49,
-                    "offset": 136
+                    "column": 51,
+                    "offset": 138
                   },
                   "indent": [
                     1,
@@ -2917,8 +2917,8 @@
               },
               "end": {
                 "line": 3,
-                "column": 49,
-                "offset": 136
+                "column": 51,
+                "offset": 138
               }
             }
           },
@@ -3610,7 +3610,7 @@
                   },
                   {
                     "type": "text",
-                    "value": "\nIn order to remove the lay use myLayer.destroy()",
+                    "value": "\nIn order to remove the layer use myLayer.destroy()",
                     "position": {
                       "start": {
                         "line": 1,
@@ -3619,8 +3619,8 @@
                       },
                       "end": {
                         "line": 2,
-                        "column": 49,
-                        "offset": 113
+                        "column": 51,
+                        "offset": 115
                       },
                       "indent": [
                         1
@@ -3636,8 +3636,8 @@
                   },
                   "end": {
                     "line": 2,
-                    "column": 49,
-                    "offset": 113
+                    "column": 51,
+                    "offset": 115
                   },
                   "indent": [
                     1
@@ -3653,8 +3653,8 @@
               },
               "end": {
                 "line": 2,
-                "column": 49,
-                "offset": 113
+                "column": 51,
+                "offset": 115
               }
             }
           },
@@ -13039,13 +13039,13 @@
       },
       {
         "title": "param",
-        "description": "screenshot",
+        "description": "The screenshot",
         "lineNumber": 3,
         "type": {
           "type": "NameExpression",
           "name": "Image"
         },
-        "name": "The"
+        "name": "screenshot"
       }
     ],
     "loc": {
@@ -13076,7 +13076,7 @@
     "params": [
       {
         "title": "param",
-        "name": "The",
+        "name": "screenshot",
         "lineNumber": 3,
         "description": {
           "type": "root",
@@ -13086,7 +13086,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "screenshot",
+                  "value": "The screenshot",
                   "position": {
                     "start": {
                       "line": 1,
@@ -13095,8 +13095,8 @@
                     },
                     "end": {
                       "line": 1,
-                      "column": 11,
-                      "offset": 10
+                      "column": 15,
+                      "offset": 14
                     },
                     "indent": []
                   }
@@ -13110,8 +13110,8 @@
                 },
                 "end": {
                   "line": 1,
-                  "column": 11,
-                  "offset": 10
+                  "column": 15,
+                  "offset": 14
                 },
                 "indent": []
               }
@@ -13125,8 +13125,8 @@
             },
             "end": {
               "line": 1,
-              "column": 11,
-              "offset": 10
+              "column": 15,
+              "offset": 14
             }
           }
         },
