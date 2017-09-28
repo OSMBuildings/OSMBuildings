@@ -196,44 +196,44 @@ var split = {
     }
   },
 
-  dome: function(buffers, center, radius, height, zPos, color) {
+  dome: function(buffers, center, radius, height, zPos, color, flip) {
     zPos = zPos || 0;
     var
-      currAngle, nextAngle,
-      currSin, currCos,
-      nextSin, nextCos,
-      currRadius, nextRadius,
-      nextHeight, nextZ,
-      num = this.NUM_Y_SEGMENTS/2,
-      halfPI = Math.PI/2;
+      currYAngle, nextYAngle,
+      x1, y1,
+      x2, y2,
+      radius1, radius2,
+      newHeight, newZPos,
+      yNum = this.NUM_Y_SEGMENTS/2,
+      quarterCircle = Math.PI/2,
+      circleOffset = flip ? 0 : -quarterCircle;
 
-    for (var i = 0; i < num; i++) {
-      currAngle = ( i   /num) * halfPI - halfPI;
-      nextAngle = ((i+1)/num) * halfPI - halfPI;
+    // goes top-down
+    for (var i = 0; i < yNum; i++) {
+      currYAngle = ( i/yNum)*quarterCircle + circleOffset;
+      nextYAngle = ((i + 1)/yNum)*quarterCircle + circleOffset;
 
-      currSin = Math.sin(currAngle);
-      currCos = Math.cos(currAngle);
+      x1 = Math.cos(currYAngle);
+      y1 = Math.sin(currYAngle);
 
-      nextSin = Math.sin(nextAngle);
-      nextCos = Math.cos(nextAngle);
+      x2 = Math.cos(nextYAngle);
+      y2 = Math.sin(nextYAngle);
 
-      currRadius = currCos*radius;
-      nextRadius = nextCos*radius;
+      radius1 = x1*radius;
+      radius2 = x2*radius;
 
-      nextHeight = (nextSin-currSin)*height;
-      nextZ = zPos - nextSin*height;
+      newHeight = (y2-y1)*height;
+      newZPos = zPos - y2*height;
 
-      this.cylinder(buffers, center, nextRadius, currRadius, nextHeight, nextZ, color);
+      this.cylinder(buffers, center, radius2, radius1, newHeight, newZPos, color);
     }
   },
 
-  // TODO
   sphere: function(buffers, center, radius, height, zPos, color) {
     zPos = zPos || 0;
     var vertexCount = 0;
-    vertexCount += this.circle(buffers, center, radius, zPos, color);
-    vertexCount += this.cylinder(buffers, center, radius, radius, height, zPos, color);
-    vertexCount += this.circle(buffers, center, radius, zPos+height, color);
+    vertexCount += this.dome(buffers, center, radius, height/2, zPos+height/2, color, true);
+    vertexCount += this.dome(buffers, center, radius, height/2, zPos+height/2, color);
     return vertexCount;
   },
 

@@ -41,7 +41,6 @@ var APP, GL; // TODO: make them local references
  *       can accurately be represented within the limited accuracy of IEEE floats. */
 
 /**
- * OSMBuildings
  * @class OSMBuildings
  * @param {Object} [options] OSMBuildings options
  * @param {Number} [options.minZoom=14.5] Global minimum allowed zoom
@@ -56,7 +55,7 @@ var APP, GL; // TODO: make them local references
  * @param {Object} [options.position] Initial position
  * @param {Number} [options.position.latitude=52.520000] position latitude
  * @param {Number} [options.position.longitude=13.410000] Position longitude
- * @param {String} [options.baseURL='.'] For locating assets. This is relative to calling page
+ * @param {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
  * @param {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
  * @param {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
  * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
