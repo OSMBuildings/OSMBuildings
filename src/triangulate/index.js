@@ -158,9 +158,6 @@ var triangulate = (function() {
 
   // TODO: add floor polygons if items have minHeight
   function addBuilding(buffers, properties, polygon, forcedColor, colorVariance) {
-    polygon[0] = simplify(polygon[0], 0.1); // clean up (almost) colinear points
-    // TODO: perhaps simplify other rings too, ideally on server side
-
     var
       dim = getDimensions(properties, getBBox(polygon[0])),
       wallColor = varyColor((forcedColor || properties.wallColor || properties.color || getMaterialColor(properties.material)), colorVariance),

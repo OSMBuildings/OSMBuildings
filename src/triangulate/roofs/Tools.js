@@ -1,34 +1,4 @@
 
-function getDistance(p1, p2) {
-  var dx = p1[0] - p2[0], dy = p1[1] - p2[1];
-  return dx * dx + dy * dy;
-}
-
-function simplify(polygon, sqTolerance) {
-  if (polygon.length < 4) {
-    return polygon;
-  }
-
-  var
-    prevPoint = polygon[0],
-    newPoints = [prevPoint],
-    point;
-
-  for (var i = 1, len = polygon.length; i < len; i++) {
-    point = polygon[i];
-    if (getDistance(point, prevPoint) > sqTolerance) {
-      newPoints.push(point);
-      prevPoint = point;
-    }
-  }
-
-  if (prevPoint !== point) {
-    newPoints.push(point);
-  }
-
-  return newPoints;
-}
-
 function pointOnSegment(point, segment) {
   return (
     point[0] >= Math.min(segment[0][0], segment[1][0]) &&
