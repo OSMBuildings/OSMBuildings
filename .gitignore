@@ -3,6 +3,7 @@
 _scratch
 node_modules
 test/data
+dist/OSMBuildings-*.zip
 
 src/Shaders.min.js
 lib/GLX.debug.js
