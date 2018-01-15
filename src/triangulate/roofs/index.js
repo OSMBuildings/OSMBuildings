@@ -29,7 +29,7 @@ var createRoof;
         return RoundRoof(triangles, properties, polygon, dim, roofColor, wallColor);
       case 'onion':
         return OnionRoof(triangles, polygon, dim, roofColor);
-      case 'flat':
+      // case 'flat':
       default:
         return FlatRoof(triangles, properties, polygon, dim, roofColor);
     }
