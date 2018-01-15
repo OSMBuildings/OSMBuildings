@@ -156,8 +156,11 @@ var triangulate = (function() {
 
   //***************************************************************************
 
-  // TODO: add floor polygons if items have a minHeight (or better: minHeight is greater than threshold)
+  // TODO: add floor polygons if items have minHeight
   function addBuilding(buffers, properties, polygon, forcedColor, colorVariance) {
+    polygon[0] = simplify(polygon[0], 0.1); // clean up (almost) colinear points
+    // TODO: perhaps simplify other rings too, ideally on server side
+
     var
       dim = getDimensions(properties, getBBox(polygon[0])),
       wallColor = varyColor((forcedColor || properties.wallColor || properties.color || getMaterialColor(properties.material)), colorVariance),
@@ -185,90 +188,8 @@ var triangulate = (function() {
 
     //*** process roofs *******************************************************
 
-    switch (properties.roofShape) {
-      case 'cone':
-        split.polygon(buffers, polygon, dim.roofZ, roofColor);
-        split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
-        break;
-
-      case 'dome':
-        split.polygon(buffers, polygon, dim.roofZ, roofColor);
-        split.dome(buffers, dim.center, dim.radius, dim.roofHeight, dim.roofZ, roofColor);
-        break;
-
-      case 'pyramid':
-        if (properties.shape === 'cylinder') {
-          split.cylinder(buffers, dim.center, dim.radius, 0, dim.roofHeight, dim.roofZ, roofColor);
-        } else {
-          split.pyramid(buffers, polygon, dim.center, dim.roofHeight, dim.roofZ, roofColor);
-        }
-        break;
-
-
-//  var explicitRoofTagging = true;
-//  if ((!properties.roofLines || properties.roofLines !== 'no') && this.building.hasComplexRoof) {
-//    return new ComplexRoof();
-//  }
-
-      case 'skillion':
-        addSkillionRoof(buffers, properties, polygon, dim, wallColor, roofColor);
-        break; // no further processing
-
-      case 'gabled':
-        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
-        break;
-
-      case 'hipped':
-        addRidgedRoof(buffers, properties, polygon, 1/3, dim, wallColor, roofColor);
-        break;
-
-      case 'half-hipped':
-        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
-        break;
-
-      case 'gambrel':
-     // addGambrelRoof(buffers, properties, polygon, dim, wallColor, roofColor);
-        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
-        break;
-
-      case 'mansard':
-     // addMansardRoof(buffers, properties, polygon, dim, wallColor, roofColor);
-        addRidgedRoof(buffers, properties, polygon, 0, dim, wallColor, roofColor);
-        break;
-
-      // case 'round':
-      //   addRoundRoof(buffers, properties, polygon, dim, wallColor, roofColor);
-      //   break;
-
-      case 'onion':
-        split.polygon(buffers, polygon, dim.roofZ, roofColor);
-
-        var rings = [
-          { rScale: 1.0, hScale: 0.00 },
-          { rScale: 0.8, hScale: 0.15 },
-          { rScale: 1.0, hScale: 0.50 },
-          { rScale: 0.8, hScale: 0.70 },
-          { rScale: 0.4, hScale: 0.80 },
-          { rScale: 0.0, hScale: 1.00 }
-        ];
-
-        var h1, h2;
-        for (var i = 0, il = rings.length - 1; i<il; i++) {
-          h1 = dim.roofHeight*rings[i].hScale;
-          h2 = dim.roofHeight*rings[i + 1].hScale;
-          split.cylinder(buffers, dim.center, dim.radius*rings[i].rScale, dim.radius*rings[i + 1].rScale, h2 - h1, dim.roofZ + h1, roofColor);
-        }
-        break;
-
-      // case 'flat':
-      default:
-        if (properties.shape === 'cylinder') {
-          split.circle(buffers, dim.center, dim.radius, dim.roofZ, roofColor);
-        } else {
-          split.polygon(buffers, polygon, dim.roofZ, roofColor);
-        }
-    }
-
+    createRoof(buffers, properties, polygon, dim, roofColor, wallColor);
+    
     //*** process remaining buildings *****************************************
 
     switch(properties.shape) {
