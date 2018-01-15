@@ -2016,36 +2016,6 @@ var earcut = (function() {
 }(this));
 
 
-function getDistance(p1, p2) {
-  var dx = p1[0] - p2[0], dy = p1[1] - p2[1];
-  return dx * dx + dy * dy;
-}
-
-function simplify(polygon, sqTolerance) {
-  if (polygon.length < 4) {
-    return polygon;
-  }
-
-  var
-    prevPoint = polygon[0],
-    newPoints = [prevPoint],
-    point;
-
-  for (var i = 1, len = polygon.length; i < len; i++) {
-    point = polygon[i];
-    if (getDistance(point, prevPoint) > sqTolerance) {
-      newPoints.push(point);
-      prevPoint = point;
-    }
-  }
-
-  if (prevPoint !== point) {
-    newPoints.push(point);
-  }
-
-  return newPoints;
-}
-
 function pointOnSegment(point, segment) {
   return (
     point[0] >= Math.min(segment[0][0], segment[1][0]) &&
@@ -2291,7 +2261,11 @@ var createRoof;
       return FlatRoof(triangles, properties, polygon, dim, roofColor);
     }
 
-    var closestPoint, farthestPoint, minY = Infinity, maxY = -Infinity;
+    var
+      rad = properties.roofDirection*Math.PI/180,
+      closestPoint, farthestPoint,
+      minY = Infinity, maxY = -Infinity;
+
     polygon[0].forEach(function(point) {
       var y = point[1]*Math.cos(-rad) + point[0]*Math.sin(-rad);
       if (y < minY) {
@@ -2306,7 +2280,6 @@ var createRoof;
 
     var
       outerPolygon = polygon[0],
-      rad = properties.roofDirection*Math.PI/180,
       roofDirection = [Math.cos(rad), Math.sin(rad)],
       ridge = [closestPoint, [closestPoint[0]+roofDirection[0], closestPoint[1]+roofDirection[1]]],
       maxDistance = getDistanceToLine(farthestPoint, ridge);
@@ -2936,9 +2909,6 @@ var triangulate = (function() {
 
   // TODO: add floor polygons if items have minHeight
   function addBuilding(buffers, properties, polygon, forcedColor, colorVariance) {
-    polygon[0] = simplify(polygon[0], 0.1); // clean up (almost) colinear points
-    // TODO: perhaps simplify other rings too, ideally on server side
-
     var
       dim = getDimensions(properties, getBBox(polygon[0])),
       wallColor = varyColor((forcedColor || properties.wallColor || properties.color || getMaterialColor(properties.material)), colorVariance),

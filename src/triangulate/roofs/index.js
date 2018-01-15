@@ -135,7 +135,11 @@ var createRoof;
       return FlatRoof(triangles, properties, polygon, dim, roofColor);
     }
 
-    var closestPoint, farthestPoint, minY = Infinity, maxY = -Infinity;
+    var
+      rad = properties.roofDirection*Math.PI/180,
+      closestPoint, farthestPoint,
+      minY = Infinity, maxY = -Infinity;
+
     polygon[0].forEach(function(point) {
       var y = point[1]*Math.cos(-rad) + point[0]*Math.sin(-rad);
       if (y < minY) {
@@ -150,7 +154,6 @@ var createRoof;
 
     var
       outerPolygon = polygon[0],
-      rad = properties.roofDirection*Math.PI/180,
       roofDirection = [Math.cos(rad), Math.sin(rad)],
       ridge = [closestPoint, [closestPoint[0]+roofDirection[0], closestPoint[1]+roofDirection[1]]],
       maxDistance = getDistanceToLine(farthestPoint, ridge);
