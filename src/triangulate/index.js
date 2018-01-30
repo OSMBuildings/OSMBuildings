@@ -149,7 +149,7 @@ var triangulate = (function() {
     if (!color.isValid) {
       rgb = DEFAULT_COLOR;
     } else {
-      rgb = color.toArray();
+      rgb = color.lightness(1.2).saturation(0.66).toArray();
     }
     return [rgb[0]+variance, rgb[1]+variance, rgb[2]+variance];
   }

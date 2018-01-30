@@ -1,4 +1,18 @@
 
+# 3.2.7 @ 2018-01-30
+
+## Changed
+
+- client side simplification removed
+- improved roof creation
+- sphere support added
+
+## Fixed
+
+- skillion roof direction
+- touch event fix
+
+
 # 3.2.4 @ 2017-09-03
 
 ## Changed

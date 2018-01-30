@@ -99,9 +99,10 @@
     // effects: ['shadows', 'outlines'],
     effects: ['shadows'],
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>',
-    position: { latitude:52.52000, longitude:13.41000 },
+//  position: { latitude:52.52000, longitude:13.41000 }, // Berlin
 //  position: { latitude:53.405019, longitude:-2.967899 }, // Liverpool
 //  position: { latitude:31.23638, longitude:121.49513 }, // Shanghai
+    position: { latitude:55.7528, longitude:37.62035 }, // Moskau
 
     // bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
     zoom: 17,
@@ -129,7 +130,9 @@
     //'https://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
     //'https://tile.stamen.com/toner/{z}/{x}/{y}.png',
     'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-    {
+//    'https://a.tiles.mapbox.com/v4/digitalglobe.316c9a2e/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZGlnaXRhbGdsb2JlIiwiYSI6ImNqOGRmNXltOTBucm0yd3BtY3E5czl6NmYifQ.qJJsPgCjyzMCm3YG3YWQBQ',
+
+  {
       attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="https://mapbox.com/">Mapbox</a>'
     }
   );
@@ -189,8 +192,8 @@
 //  });
 
   osmb.addGeoJSONTiles(
-// 'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
-   'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+ // 'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
+  'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
       // bounds
