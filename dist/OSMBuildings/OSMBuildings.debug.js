@@ -166,6 +166,8 @@ function clamp(v, max) {
   return Math.min(max, Math.max(0, v || 0));
 }
 
+//*****************************************************************************
+
 /**
  * @param str, object can be in any of these: 'red', '#0099ff', 'rgb(64, 128, 255)', 'rgba(64, 128, 255, 0.5)', { r:0.2, g:0.3, b:0.9, a:1 }
  */
@@ -174,8 +176,6 @@ var Qolor = function(r, g, b, a) {
   this.g = clamp(g, 1);
   this.b = clamp(b, 1);
   this.a = clamp(a, 1) || 1;
-
-  this.isValid = this.r !== undefined && this.g !== undefined && this.b !== undefined;
 };
 
 /**
@@ -209,34 +209,22 @@ Qolor.parse = function(str) {
   return new Qolor();
 };
 
-Qolor.fromHSL = function(h, s, l, a) {
-  // h = clamp(h, 360),
-  // s = clamp(s, 1),
-  // l = clamp(l, 1),
-
-  // achromatic
-  if (s === 0) {
-    return new Qolor(l, l, l, a);
-  }
-
-  var
-    q = l<0.5 ? l*(1 + s) : l + s - l*s,
-    p = 2*l - q;
-
-  h /= 360;
-
-  return new Qolor(
-    hue2rgb(p, q, h + 1/3),
-    hue2rgb(p, q, h),
-    hue2rgb(p, q, h - 1/3),
-    a
-  );
+Qolor.fromHSL = function(h, s, l) {
+  var qolor = new Qolor().fromHSL(h, s, l);
+  qolor.a = a;
+  return qolor;
 };
+
+//*****************************************************************************
 
 Qolor.prototype = {
 
+  isValid: function() {
+    return this.r !== undefined && this.g !== undefined && this.b !== undefined;
+  },
+
   toHSL: function() {
-    if (!this.isValid) {
+    if (!this.isValid()) {
       return;
     }
 
@@ -264,11 +252,35 @@ Qolor.prototype = {
       h *= 60;
     }
 
-    return { h: h, s: s, l: l, a: this.a };
+    return { h: h, s: s, l: l };
+  },
+
+  fromHSL: function(h, s, l) {
+    // h = clamp(h, 360),
+    // s = clamp(s, 1),
+    // l = clamp(l, 1),
+
+    // achromatic
+    if (s === 0) {
+      this.r = this.g = this.b = l;
+      return this;
+    }
+
+    var
+      q = l<0.5 ? l*(1 + s) : l + s - l*s,
+      p = 2*l - q;
+
+    h /= 360;
+
+    this.r = hue2rgb(p, q, h + 1/3);
+    this.g = hue2rgb(p, q, h);
+    this.b = hue2rgb(p, q, h - 1/3);
+
+    return this;
   },
 
   toString: function() {
-    if (!this.isValid) {
+    if (!this.isValid()) {
       return;
     }
 
@@ -288,39 +300,22 @@ Qolor.prototype = {
 
   hue: function(h) {
     var hsl = this.toHSL();
-    return Qolor.fromHSL(hsl.h+h, hsl.s, hsl.l);
+    return this.fromHSL(hsl.h+h, hsl.s, hsl.l);
   },
 
   saturation: function(s) {
     var hsl = this.toHSL();
-    return Qolor.fromHSL(hsl.h, hsl.s*s, hsl.l);
+    return this.fromHSL(hsl.h, hsl.s*s, hsl.l);
   },
 
   lightness: function(l) {
     var hsl = this.toHSL();
-    return Qolor.fromHSL(hsl.h, hsl.s, hsl.l*l);
+    return this.fromHSL(hsl.h, hsl.s, hsl.l*l);
   },
 
-  red: function(r) {
-    return new Qolor(this.r*r, this.g, this.b, this.a);
-  },
-
-  green: function(g) {
-    return new Qolor(this.r, this.g*g, this.b, this.a);
-  },
-
-  blue: function(b) {
-    return new Qolor(this.r, this.g, this.b*b, this.a);
-  },
-
-  alpha: function(a) {
-    return new Qolor(this.r, this.g, this.b, this.a*a);
-  },
-
-  copy: function() {
+  clone: function() {
     return new Qolor(this.r, this.g, this.b, this.a);
   }
-
 };
 
 return Qolor;
@@ -2894,13 +2889,12 @@ var triangulate = (function() {
 
   function varyColor(col, variance) {
     variance = variance || 0;
-    var
-      color = Qolor.parse(col),
-      rgb;
-    if (!color.isValid) {
+    var color = Qolor.parse(col), hsl, rgb;
+    if (!color.isValid()) {
       rgb = DEFAULT_COLOR;
     } else {
-      rgb = color.lightness(1.2).saturation(0.66).toArray();
+      // desaturate colors
+      rgb = color.saturation(0.7).toArray();
     }
     return [rgb[0]+variance, rgb[1]+variance, rgb[2]+variance];
   }
@@ -3179,7 +3173,7 @@ var OSMBuildings = function(options) {
  * (String) OSMBuildings version
  * @static
  */
-OSMBuildings.VERSION = '3.2.7';
+OSMBuildings.VERSION = '3.2.8';
 
 /**
  * (String) OSMBuildings attribution

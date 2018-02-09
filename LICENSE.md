@@ -1,15 +1,15 @@
 
 OSM Buildings
 https://github.com/OSMBuildings/OSMBuildings
-Copyright (c) 2017, OSM Buildings
+Copyright (c) 2018, OSM Buildings
 
 Qolor
 https://github.com/kekscom/Color.js
-Copyright (c) 2017, Jan Marsch
+Copyright (c) 2018, Jan Marsch
 
 Triangulate.js
 https://github.com/OSMBuildings/Triangulation
-Copyright (c) 2016, Jan Marsch, OSM Buildings
+Copyright (c) 2018, Jan Marsch, OSM Buildings
 
 
 All rights reserved.

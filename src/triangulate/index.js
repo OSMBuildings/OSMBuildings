@@ -143,13 +143,12 @@ var triangulate = (function() {
 
   function varyColor(col, variance) {
     variance = variance || 0;
-    var
-      color = Qolor.parse(col),
-      rgb;
-    if (!color.isValid) {
+    var color = Qolor.parse(col), rgb;
+    if (!color.isValid()) {
       rgb = DEFAULT_COLOR;
     } else {
-      rgb = color.lightness(1.2).saturation(0.66).toArray();
+      // desaturate colors
+      rgb = color.saturation(0.7).toArray();
     }
     return [rgb[0]+variance, rgb[1]+variance, rgb[2]+variance];
   }

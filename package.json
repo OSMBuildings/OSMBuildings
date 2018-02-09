@@ -2,7 +2,7 @@
   "name": "OSMBuildings",
   "private": false,
   "description": "OSM Buildings",
-  "version": "3.2.7",
+  "version": "3.2.8",
   "homepage": "http://osmbuildings.org",
   "author": "@kekscom",
   "contributors": [],
@@ -19,7 +19,7 @@
     "docs": "documentation build src/index.js -f json -o docs/docs.json --sort-order 'alpha'"
   },
   "dependencies": {
-    "qolor": "^2.1.0",
+    "qolor": "^2.2.0",
     "suncalc": "git://github.com/OSMBuildings/suncalc.git"
   },
   "devDependencies": {
