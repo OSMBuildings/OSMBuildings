@@ -68,7 +68,7 @@ var createRoof;
     }
 
     var
-      rad = properties.roofDirection*Math.PI/180,
+      rad = (properties.roofDirection / 180 - 0.5) * Math.PI,
       roofDirection = [Math.cos(rad), Math.sin(rad)];
 
     var ridge = getRidgeIntersections(dim.center, roofDirection, polygon[0]);
