@@ -2189,7 +2189,7 @@ var createRoof;
     }
 
     var
-      rad = properties.roofDirection*Math.PI/180,
+      rad = (properties.roofDirection / 180 - 0.5) * Math.PI,
       roofDirection = [Math.cos(rad), Math.sin(rad)];
 
     var ridge = getRidgeIntersections(dim.center, roofDirection, polygon[0]);
@@ -3173,7 +3173,7 @@ var OSMBuildings = function(options) {
  * (String) OSMBuildings version
  * @static
  */
-OSMBuildings.VERSION = '3.2.9';
+OSMBuildings.VERSION = '3.2.10';
 
 /**
  * (String) OSMBuildings attribution
