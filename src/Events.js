@@ -68,22 +68,23 @@ Events.disabled = false;
  * @private
  */
 Events.init = function(container) {
+  var win = top || window;
 
-  if ('ontouchstart' in window) {
-    addListener(container, 'touchstart', onTouchStart);
-    addListener(document, 'touchmove', onTouchMoveDocument);
-    addListener(container, 'touchmove', onTouchMove);
-    addListener(document, 'touchend', onTouchEnd);
-    addListener(document, 'gesturechange', onGestureChange);
+  if ('ontouchstart' in win) {
+    addListener(container,    'touchstart', onTouchStart);
+    addListener(win.document, 'touchmove', onTouchMoveDocument);
+    addListener(container,    'touchmove', onTouchMove);
+    addListener(win.document, 'touchend', onTouchEnd);
+    addListener(win.document, 'gesturechange', onGestureChange);
   } else {
-    addListener(container, 'mousedown', onMouseDown);
-    addListener(document, 'mousemove', onMouseMoveDocument);
-    addListener(container, 'mousemove', onMouseMove);
-    addListener(document, 'mouseup', onMouseUp);
-    addListener(container, 'dblclick', onDoubleClick);
-    addListener(container, 'mousewheel', onMouseWheel);
-    addListener(container, 'DOMMouseScroll', onMouseWheel);
-    addListener(container, 'contextmenu', onContextMenu);
+    addListener(container,    'mousedown', onMouseDown);
+    addListener(win.document, 'mousemove', onMouseMoveDocument);
+    addListener(container,    'mousemove', onMouseMove);
+    addListener(win.document, 'mouseup', onMouseUp);
+    addListener(container,    'dblclick', onDoubleClick);
+    addListener(container,    'mousewheel', onMouseWheel);
+    addListener(container,    'DOMMouseScroll', onMouseWheel);
+    addListener(container,    'contextmenu', onContextMenu);
   }
 
   var resizeDebounce;
@@ -258,7 +259,7 @@ Events.init = function(container) {
     var t1 = e.touches[0];
 
     // gesturechange polyfill
-    if (e.touches.length === 2 && !('ongesturechange' in window)) {
+    if (e.touches.length === 2 && !('ongesturechange' in win)) {
       var t2 = e.touches[1];
       var dx = t1.clientX - t2.clientX;
       var dy = t1.clientY - t2.clientY;
@@ -288,7 +289,7 @@ Events.init = function(container) {
       APP.setTilt(prevTilt + (prevY - t1.clientY)*(360/innerHeight));
       prevTilt = APP.tilt;
       // gesturechange polyfill
-      if (!('ongesturechange' in window)) {
+      if (!('ongesturechange' in win)) {
         emitGestureChange(e);
       }
     } else {
