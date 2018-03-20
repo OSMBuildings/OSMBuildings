@@ -1,4 +1,19 @@
-var APP, GL; // TODO: make them local references
+/*
+ * NOTE: OSMBuildings cannot use a single global world coordinate system.
+ *       The numerical accuracy required for such a system would be about
+ *       32bits to represent world-wide geometry faithfully within a few
+ *       centimeters of accuracy. Most computations in OSMBuildings, however,
+ *       are performed on a GPU where only IEEE floats with 23bits of accuracy
+ *       (plus 8 bits of range) are available.
+ *       Instead, OSMBuildings' coordinate system has a reference point
+ *       (APP.position) at the viewport center, and all world positions are
+ *       expressed as distances in meters from that reference point. The
+ *       reference point itself shifts with map panning so that all world
+ *       positions relevant to the part of the world curently rendered on-screen
+ *       can accurately be represented within the limited accuracy of IEEE floats.
+ */
+
+var APP, GL;
 
 /**
  * User defined function that will be called when an event is fired
@@ -26,20 +41,6 @@ var APP, GL; // TODO: make them local references
  * @param {Image} screenshot The screenshot
  */
 
-/*
- * NOTE: OSMBuildings cannot use a single global world coordinate system.
- *       The numerical accuracy required for such a system would be about
- *       32bits to represent world-wide geometry faithfully within a few
- *       centimeters of accuracy. Most computations in OSMBuildings, however,
- *       are performed on a GPU where only IEEE floats with 23bits of accuracy
- *       (plus 8 bits of range) are available.
- *       Instead, OSMBuildings' coordinate system has a reference point
- *       (APP.position) at the viewport center, and all world positions are
- *       expressed as distances in meters from that reference point. The
- *       reference point itself shifts with map panning so that all world
- *       positions relevant to the part of the world curently rendered on-screen
- *       can accurately be represented within the limited accuracy of IEEE floats. */
-
 /**
  * @class OSMBuildings
  * @param {Object} [options] OSMBuildings options
@@ -66,7 +67,7 @@ var APP, GL; // TODO: make them local references
  * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
  */
 var OSMBuildings = function(options) {
-  APP = this; // refers to 'this'. Should make other globals obsolete.
+  APP = this; // refers to 'this' (current instance). Should make other globals obsolete.
 
   APP.options = (options || {});
 
@@ -77,7 +78,7 @@ var OSMBuildings = function(options) {
     }
   }
 
-  APP.baseURL = APP.options.baseURL || '.';
+  APP.baseURL = APP.options.baseURL || '.'; // TODO OSMB4 lets get rid of this dependency
 
   render.backgroundColor = Qolor.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
   render.fogColor        = Qolor.parse(APP.options.fogColor        || FOG_COLOR).toArray();
@@ -86,7 +87,7 @@ var OSMBuildings = function(options) {
     HIGHLIGHT_COLOR = Qolor.parse(APP.options.highlightColor).toArray();
   }
 
-  render.Buildings.showBackfaces = APP.options.showBackfaces;
+  render.Buildings.showBackfaces = APP.options.showBackfaces; // TODO OSMB4 lets get rid of this
 
   render.effects = {};
   var effects = APP.options.effects || [];
@@ -240,8 +241,6 @@ OSMBuildings.prototype = {
 
     APP.setDate(new Date());
     render.start();
-
-    return APP;
   },
 
   /**
@@ -251,7 +250,6 @@ OSMBuildings.prototype = {
    */
   on: function(type, fn) {
     GL.canvas.addEventListener(type, fn);
-    return APP; // DEPRECATED
   },
 
   /**
@@ -281,7 +279,6 @@ OSMBuildings.prototype = {
    */
   setDate: function(date) {
     Sun.setDate(typeof date === 'string' ? new Date(date) : date);
-    return APP; // DEPRECATED
   },
 
   // TODO: this should be part of the underlying map engine
@@ -417,7 +414,6 @@ OSMBuildings.prototype = {
   highlight: function(id, highlightColor) {
     render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
     render.Buildings.highlightColor = id && highlightColor ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
-    return APP; // DEPRECATED
   },
 
   // TODO: check naming. show() suggests it affects the layer rather than objects on it
@@ -429,7 +425,6 @@ OSMBuildings.prototype = {
    */
   show: function(selector, duration) {
     Filter.remove('hidden', selector, duration);
-    return APP; // DEPRECATED
   },
 
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
@@ -441,7 +436,6 @@ OSMBuildings.prototype = {
    */
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
-    return APP; // DEPRECATED
   },
 
   /**
@@ -453,7 +447,6 @@ OSMBuildings.prototype = {
   getTarget: function(x, y, callback) {
     // TODO: use promises here
     render.Picking.getTarget(x, y, callback);
-    return APP; // DEPRECATED
   },
 
   /**
@@ -463,7 +456,6 @@ OSMBuildings.prototype = {
   screenshot: function(callback) {
     // TODO: use promises here
     render.screenshotCallback = callback;
-    return APP; // DEPRECATED
   },
 
   /**
@@ -525,7 +517,6 @@ OSMBuildings.prototype = {
 
   setDisabled: function(flag) {
     Events.disabled = !!flag;
-    return APP;
   },
 
   isDisabled: function() {
@@ -592,8 +583,6 @@ OSMBuildings.prototype = {
       APP.emit('zoom', { zoom: zoom });
       APP.emit('change');
     }
-
-    return APP; // DEPRECATED
   },
 
   /**
@@ -619,7 +608,6 @@ OSMBuildings.prototype = {
     }
     APP.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
     APP.emit('change');
-    return APP; // DEPRECATED
   },
 
   /**
@@ -644,8 +632,6 @@ OSMBuildings.prototype = {
       APP.height = size.height;
       APP.emit('resize', { width: APP.width, height: APP.height });
     }
-
-    return APP; // DEPRECATED
   },
 
   /**
@@ -669,8 +655,6 @@ OSMBuildings.prototype = {
       APP.emit('rotate', { rotation: rotation });
       APP.emit('change');
     }
-
-    return APP; // DEPRECATED
   },
 
   /**
@@ -694,7 +678,6 @@ OSMBuildings.prototype = {
       APP.emit('tilt', { tilt: tilt });
       APP.emit('change');
     }
-    return APP; // DEPRECATED
   },
 
   /**
