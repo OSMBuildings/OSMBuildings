@@ -136,7 +136,7 @@ var createRoof;
     }
 
     var
-      rad = properties.roofDirection*Math.PI/180,
+      rad = properties.roofDirection / 180 * Math.PI,
       closestPoint, farthestPoint,
       minY = Infinity, maxY = -Infinity;
 
