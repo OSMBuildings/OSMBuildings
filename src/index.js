@@ -67,6 +67,19 @@ var APP, GL; // TODO: make them local references
  */
 var OSMBuildings = function(options) {
   APP = this; // refers to 'this'. Should make other globals obsolete.
+   
+      APP.worker = new Worker('./../src/worker.js');
+      /*
+      APP.worker.onmessage = function(e) {
+         console.log("wieder da"); 
+         //console.log(e.data); 
+         
+      }
+      */
+     
+
+
+      
 
   APP.options = (options || {});
 
@@ -721,6 +734,13 @@ OSMBuildings.prototype = {
 
     APP.container.innerHTML = '';
   }
+/*
+  ,
+  destroyWorker: function() {
+    APP._worker.terminate();
+  }
+  */
+
 };
 
 //*****************************************************************************

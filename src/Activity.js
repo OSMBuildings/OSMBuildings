@@ -17,6 +17,7 @@ var Activity = {};
         clearTimeout(debounce);
         debounce = null;
       } else {
+
         APP.emit('busy');
       }
     }
