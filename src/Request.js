@@ -7,7 +7,7 @@ var Request = {};
 
   function load(url, callback) {
     var req = new XMLHttpRequest();
-
+     
     req.onreadystatechange = function() {
       if (req.readyState !== 4) {
         return;
@@ -48,11 +48,12 @@ var Request = {};
     });
   };
 
-  Request.getJSON = function(url, callback) {
-    return load(url, function(res) {
+  Request.getJSON = function(url, callback) {    
+    return load(url, function(res) {     
       if (res.responseText) {
         var json;
         try {
+
           json = JSON.parse(res.responseText);
         } catch(ex) {
           console.warn('Could not parse JSON from '+ url +'\n'+ ex.message);

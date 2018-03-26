@@ -69,6 +69,12 @@ var APP, GL;
 var OSMBuildings = function(options) {
   APP = this; // refers to 'this' (current instance). Should make other globals obsolete.
 
+  APP.worker = new Worker('./../src/worker.js');
+
+  // APP.worker.onmessage = function(e) {
+  //  console.log(e.data);
+  // }
+
   APP.options = (options || {});
 
   if (APP.options.style) {
@@ -704,6 +710,11 @@ OSMBuildings.prototype = {
 
     APP.container.innerHTML = '';
   }
+
+  // ,
+  // destroyWorker: function() {
+  //   APP._worker.terminate();
+  // }
 };
 
 //*****************************************************************************

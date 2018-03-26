@@ -30,17 +30,73 @@ mesh.GeoJSON = (function() {
     if (typeof url === 'object') {
       var collection = url;
       this.setData(collection);
-    } else {
+    } else {  
+      console.log("start worker")
+
+      //var worker = new Worker('./../src/worker.js');
+
+
+/*
+      APP.worker.addEventListener('message', function(e){
+          console.log("worker finished")         
+          this.items = e.data.items;
+          this.position = e.data.position;
+          
+          this.request = null;
+          this.setData(e.data.res, e.data.resPickingColors);
+      }.bind(this), false)
+*/
+
+      var workerWork = function(e){
+          APP.worker.removeEventListener('message', workerWork, false);
+
+          console.log(e.data.res)         
+          this.items = e.data.items;
+          this.position = e.data.position;
+          
+          this.request = null;
+          this.setData(e.data.res, e.data.resPickingColors);
+
+      }.bind(this);
+
+      APP.worker.addEventListener('message', workerWork, false);
+
+      APP.worker.postMessage({url: url, options: options, object: this}); 
+
+
+ 
+/*
+      var workerWork = (function(scope) {
+        return function (e){
+          console.log("worker finished")         
+          scope.items = e.data.items;
+          scope.position = e.data.position;          
+          scope.request = null;
+          scope.setData(e.data.res, e.data.resPickingColors);
+          // remove event listener
+        };
+      }(this));
+*/
+     
+
+   /*
       this.request = Request.getJSON(url, function(collection) {
+      //console.log(collection)
         this.request = null;
         this.setData(collection);
       }.bind(this));
+*/
+     
     }
   }
 
   constructor.prototype = {
 
-    setData: function(collection) {
+    setData: function(res, resPickingColors) {
+
+      //console.log(res)
+
+/*
       if (!collection || !collection.features.length) {
         return;
       }
@@ -61,12 +117,10 @@ mesh.GeoJSON = (function() {
 
       this.position = { latitude:position[1], longitude:position[0] };
 
-      var process = function() {
-        var
-          feature, properties, id,
-          vertexCountBefore, vertexCount, pickingColor;
+      
+      var feature, properties, id, vertexCountBefore, vertexCount, pickingColor;
 
-        for (var i = startIndex; i < endIndex; i++) {
+      for (var i = 0; i < numFeatures; i++) {
           feature = collection.features[i];
 
           APP.emit('loadfeature', feature);
@@ -86,7 +140,69 @@ mesh.GeoJSON = (function() {
           }
 
           this.items.push({ id:id, vertexCount:vertexCount, height:properties.height, data:properties.data });
+      }
+
+      */
+       /*
+          this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(res.vertices));
+          this.normalBuffer   = new GLX.Buffer(3, new Float32Array(res.normals));
+          this.colorBuffer    = new GLX.Buffer(3, new Float32Array(res.colors));
+          this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(res.texCoords));
+          this.idBuffer       = new GLX.Buffer(3, new Float32Array(resPickingColors));
+          */
+
+          this.vertexBuffer   = new GLX.Buffer(3, res.vertices);
+          this.normalBuffer   = new GLX.Buffer(3, res.normals);
+          this.colorBuffer    = new GLX.Buffer(3, res.colors);
+          this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
+          this.idBuffer       = new GLX.Buffer(3, resPickingColors);
+
+
+
+
+
+          //console.log(this.items);
+          this._initItemBuffers();
+
+          Filter.apply(this);
+          data.Index.add(this);
+
+          this.isReady = true;
+          Activity.setIdle();
+
+          return;
+        
+
+       
+
+/*
+      var process = function() {
+        var feature, properties, id,
+          vertexCountBefore, vertexCount, pickingColor;
+
+        for (var i = startIndex; i < endIndex; i++) {
+          feature = collection.features[i];
+
+          //APP.emit('loadfeature', feature);
+          
+          properties = feature.properties;
+          id = this.forcedId || properties.relationId || feature.id || properties.id;
+
+          vertexCountBefore = res.vertices.length;
+
+          triangulate(res, feature, position, this.forcedColor);
+
+          vertexCount = (res.vertices.length - vertexCountBefore)/3;
+
+          pickingColor = render.Picking.idToColor(id);
+          for (var j = 0; j < vertexCount; j++) {
+            [].push.apply(resPickingColors, pickingColor);
+          }
+
+          this.items.push({ id:id, vertexCount:vertexCount, height:properties.height, data:properties.data });
         }
+
+
 
         if (endIndex === numFeatures) {
           this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(res.vertices));
@@ -112,6 +228,9 @@ mesh.GeoJSON = (function() {
       }.bind(this);
 
       process();
+      */
+
+
     },
 
     _initItemBuffers: function() {
