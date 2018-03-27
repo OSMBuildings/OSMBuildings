@@ -24,12 +24,14 @@ function onMessage(e) {
   if (e.data.action === 'load') {
     Request.getJSON(e.data.url, geojson => {
       const res = process(geojson, e.data.options);
+      res.number = e.data.number;
       postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.idColors.buffer]);
     });
   }
 
   if (e.data.action === 'process') {
     const res = process(e.data.geojson, e.data.options);
+    res.number = e.data.number;
     postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.idColors.buffer]);
   }
 }

@@ -70,10 +70,17 @@ var OSMBuildings = function(options) {
   APP = this; // refers to 'this' (current instance). Should make other globals obsolete.
 
   APP.worker = new Worker('./../src/worker.js');
+  APP.tiles = [];
 
-  // APP.worker.onmessage = function(e) {
-  //  console.log(e.data);
-  // }
+  APP.worker.addEventListener('message', function(e){     
+    for (let i = 0; i < APP.tiles.length; i++) {
+      if(APP.tiles[i].number === e.data.number){        
+        const that = APP.tiles[i];
+        that.setData(e);
+      }     
+    };
+  }, false);
+
 
   APP.options = (options || {});
 

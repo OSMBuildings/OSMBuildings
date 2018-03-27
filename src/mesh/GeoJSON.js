@@ -4,6 +4,7 @@ mesh.GeoJSON = class {
   constructor(url, options) {
     options = options || {};
     this.options = options;
+    this.number = Math.floor((Math.random() * 100000) + 1);
 
     this.forcedId = options.id;
     // no Qolor.toArray() needed as Triangulation does it internally
@@ -24,20 +25,19 @@ mesh.GeoJSON = class {
 
     this.items = [];
 
-    // const worker = new Worker('./../src/worker.js');
-
-    APP.worker.addEventListener('message', e => this.setData(e), false);
+    // const worker = new Worker('./../src/worker.js');   
+    //APP.worker.addEventListener('message', e => this.setData(e), false);
 
     Activity.setBusy();
     if (typeof url === 'object') {
-      APP.worker.postMessage({ action: 'process', geojson: url, options: this.options });
+      APP.worker.postMessage({number: this.number, action: 'process', geojson: url, options: this.options });
     } else {
-      APP.worker.postMessage({ action: 'load', url: url, options: this.options });
+      APP.worker.postMessage({number: this.number, action: 'load', url: url, options: this.options });
     }
   }
 
   setData(e) {
-    APP.worker.removeEventListener('message', this.setData, false);
+    //APP.worker.removeEventListener('message', this.setData, false);
 
     const res = e.data;
 
@@ -57,6 +57,13 @@ mesh.GeoJSON = class {
 
     this.isReady = true;
     Activity.setIdle();
+    
+    for (var i = 0; i < APP.tiles.length; i++) {      
+      if (APP.tiles[i].number === this.number) {       
+        APP.tiles.splice(i,1)
+      };
+    };
+    
   }
 
   initBuffers() {
