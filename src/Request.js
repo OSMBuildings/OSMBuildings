@@ -53,7 +53,6 @@ var Request = {};
       if (res.responseText) {
         var json;
         try {
-
           json = JSON.parse(res.responseText);
         } catch(ex) {
           console.warn('Could not parse JSON from '+ url +'\n'+ ex.message);
