@@ -25,19 +25,17 @@ mesh.GeoJSON = class {
 
     this.items = [];
 
-    // const worker = new Worker('./../src/worker.js');   
-    //APP.worker.addEventListener('message', e => this.setData(e), false);
-
     Activity.setBusy();
-    if (typeof url === 'object') {
+    if (typeof url === 'object') {     
       APP.worker.postMessage({number: this.number, action: 'process', geojson: url, options: this.options });
     } else {
       APP.worker.postMessage({number: this.number, action: 'load', url: url, options: this.options });
+      console.log("send to worker")
+       console.log(String(APP.worker.getFreeIds().length))
     }
   }
 
-  setData(e) {
-    //APP.worker.removeEventListener('message', this.setData, false);
+  setData(e) {    
 
     const res = e.data;
 
@@ -58,7 +56,7 @@ mesh.GeoJSON = class {
     this.isReady = true;
     Activity.setIdle();
     
-    for (var i = 0; i < APP.tiles.length; i++) {      
+    for (let i = 0; i < APP.tiles.length; i++) {      
       if (APP.tiles[i].number === this.number) {       
         APP.tiles.splice(i,1)
       };

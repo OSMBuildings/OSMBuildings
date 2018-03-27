@@ -6,6 +6,7 @@ var Request = {};
 (function() {
 
   function load(url, callback) {
+
     var req = new XMLHttpRequest();
      
     req.onreadystatechange = function() {
@@ -13,7 +14,7 @@ var Request = {};
         return;
       }
 
-      if (!req.status || req.status<200 || req.status>299) {
+      if (!req.status || req.status<200 || req.status>299) {      
         return;
       }
 
@@ -49,7 +50,7 @@ var Request = {};
   };
 
   Request.getJSON = function(url, callback) {    
-    return load(url, function(res) {     
+    return load(url, function(res) {          
       if (res.responseText) {
         var json;
         try {
@@ -58,7 +59,7 @@ var Request = {};
           console.warn('Could not parse JSON from '+ url +'\n'+ ex.message);
         }
         callback(json);
-      }
+      }      
     });
   };
 

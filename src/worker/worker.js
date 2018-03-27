@@ -1,18 +1,18 @@
 
 importScripts(
-  'Request.js',
-  './mesh/index.js',
-  './mesh/GeoJSON.js',
-  './triangulate/index.js',
-  '../node_modules/qolor/dist/Qolor.js',
-  './triangulate/roofs/index.js',
-  './triangulate/roofs/Tools.js',
-  './triangulate/split.js',
-  './triangulate/earcut.custom.js',
-  './triangulate/geometry/vec3.js',
-  './triangulate/geometry/vec2.js',
-  './render/index.js',
-  './render/Picking.js'
+  './../Request.js',
+  './../mesh/index.js',
+  './../mesh/GeoJSON.js',
+  './../triangulate/index.js',
+  './../../node_modules/qolor/dist/Qolor.js',
+  './../triangulate/roofs/index.js',
+  './../triangulate/roofs/Tools.js',
+  './../triangulate/split.js',
+  './../triangulate/earcut.custom.js',
+  './../triangulate/geometry/vec3.js',
+  './../triangulate/geometry/vec2.js',
+  './../render/index.js',
+  './../render/Picking.js'
 );
 // importScripts('./variables.js');
 // importScripts('./Activity.js');
@@ -20,9 +20,10 @@ importScripts(
 
 addEventListener('message', onMessage, false);
 
-function onMessage(e) {
-  if (e.data.action === 'load') {
-    Request.getJSON(e.data.url, geojson => {
+function onMessage(e) {   
+ 
+  if (e.data.action === 'load') { 
+    Request.getJSON(e.data.url, geojson => {     
       const res = process(geojson, e.data.options);
       res.number = e.data.number;
       postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.idColors.buffer]);
@@ -38,6 +39,7 @@ function onMessage(e) {
 
 function process(geojson, options) {
   if (!geojson || !geojson.features.length) {
+
     return;
   }
 
