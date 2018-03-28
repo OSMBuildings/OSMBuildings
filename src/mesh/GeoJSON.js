@@ -26,19 +26,28 @@ mesh.GeoJSON = class {
     this.items = [];
 
     Activity.setBusy();
-    if (typeof url === 'object') {     
-      APP.worker.postMessage({number: this.number, action: 'process', geojson: url, options: this.options });
-    } else {
-      APP.worker.postMessage({number: this.number, action: 'load', url: url, options: this.options });
-      console.log("send to worker")
-       console.log(String(APP.worker.getFreeIds().length))
-    }
+    APP.workers.get(worker => {
+      this.worker = worker;
+
+      // TODO: if loading fails, a worker should be returned to pool
+
+      const onResult = function(e) {
+        this.setData(e.data);
+        worker.removeEventListener('message', onResult, false); // remove this listener
+        APP.workers.free(worker); // return worker to pool
+      }.bind(this);
+
+      this.worker.addEventListener('message', onResult, false);
+
+      if (typeof url === 'object') {
+        worker.postMessage({ action: 'process', geojson: url, options: this.options });
+      } else {
+        worker.postMessage({ action: 'load', url: url, options: this.options });
+      }
+    });
   }
 
-  setData(e) {    
-
-    const res = e.data;
-
+  setData(res) {
     this.items = res.items;
     this.position = res.position;
 
@@ -55,13 +64,6 @@ mesh.GeoJSON = class {
 
     this.isReady = true;
     Activity.setIdle();
-    
-    for (let i = 0; i < APP.tiles.length; i++) {      
-      if (APP.tiles[i].number === this.number) {       
-        APP.tiles.splice(i,1)
-      };
-    };
-    
   }
 
   initBuffers() {

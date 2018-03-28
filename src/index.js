@@ -66,41 +66,8 @@ var APP, GL;
  * @param {Object} [options.style] Sets the default building style
  * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
  */
-var OSMBuildings = function(options) {
+const OSMBuildings = function(options) {
   APP = this; // refers to 'this' (current instance). Should make other globals obsolete.
-
-
-  APP.worker = new WorkerPool('./../src/worker/worker.js', 8);
-  APP.tiles = [];
-  console.log(APP)
-  console.log(String(APP.worker.getFreeIds().length))
-
-  APP.worker.registerOnMessage(function (e) {
-    console.log(String(APP.worker.getFreeIds().length))
-    
-    for (let i = 0; i < APP.tiles.length; i++) {
-        if(APP.tiles[i].number === e.data.number){        
-        const that = APP.tiles[i];
-        that.setData(e);
-      }
-
-    };
-    
-  });
-
-/*
-  APP.worker = new Worker('./../src/worker/worker.js');
-  APP.tiles = [];
-
-  APP.worker.addEventListener('message', function(e){     
-    for (let i = 0; i < APP.tiles.length; i++) {
-      if(APP.tiles[i].number === e.data.number){        
-        const that = APP.tiles[i];
-        that.setData(e);
-      }     
-    };
-  }, false);
-*/
 
   APP.options = (options || {});
 
@@ -147,6 +114,9 @@ var OSMBuildings = function(options) {
   if (APP.options.disabled) {
     APP.setDisabled(true);
   }
+
+  const numProc = window.navigator.hardwareConcurrency;
+  APP.workers = new Workers('./../src/workers/worker.js', numProc*4);
 };
 
 /**

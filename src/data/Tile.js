@@ -11,7 +11,6 @@ data.Tile = function(x, y, zoom, options) {
 data.Tile.prototype = {
   load: function(url) {  
     this.mesh = new mesh.GeoJSON(url, this.options);
-    APP.tiles.push(this.mesh);   
   },
 
   destroy: function() {

@@ -32,7 +32,7 @@
   ],
 
   "src": [
-    "src/worker/workerPool.js",
+    "src/workers/index.js",
     "src/triangulate/geometry/vec2.js",
     "src/triangulate/geometry/vec3.js",
     "src/triangulate/earcut.custom.js",

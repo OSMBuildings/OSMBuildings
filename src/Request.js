@@ -1,20 +1,18 @@
 
 // TODO: introduce promises
 
-var Request = {};
+class Request {
 
-(function() {
+  static load(url, callback) {
 
-  function load(url, callback) {
+    const req = new XMLHttpRequest();
 
-    var req = new XMLHttpRequest();
-     
-    req.onreadystatechange = function() {
+    req.onreadystatechange = () => {
       if (req.readyState !== 4) {
         return;
       }
 
-      if (!req.status || req.status<200 || req.status>299) {      
+      if (!req.status || req.status<200 || req.status>299) {
         return;
       }
 
@@ -25,44 +23,39 @@ var Request = {};
     req.send(null);
 
     return {
-      abort: function() {
+      abort: () => {
         req.abort();
       }
     };
   }
 
-  //***************************************************************************
-
-  Request.getText = function(url, callback) {
-    return load(url, function(res) {
+  static getText(url, callback) {
+    return this.load(url, res => {
       if (res.responseText !== undefined) {
         callback(res.responseText);
       }
     });
-  };
+  }
 
-  Request.getXML = function(url, callback) {
-    return load(url, function(res) {
+  static getXML(url, callback) {
+    return this.load(url, res => {
       if (res.responseXML !== undefined) {
         callback(res.responseXML);
       }
     });
-  };
+  }
 
-  Request.getJSON = function(url, callback) {    
-    return load(url, function(res) {          
+  static getJSON(url, callback) {
+    return this.load(url, res => {
       if (res.responseText) {
-        var json;
+        let json;
         try {
           json = JSON.parse(res.responseText);
         } catch(ex) {
-          console.warn('Could not parse JSON from '+ url +'\n'+ ex.message);
+          console.warn(`Could not parse JSON from {url}\n{ex.message}`);
         }
         callback(json);
       }      
     });
-  };
-
-  Request.destroy = function() {};
-
-}());
+  }
+}

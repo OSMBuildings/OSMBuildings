@@ -1,18 +1,18 @@
 
 importScripts(
-  './../Request.js',
-  './../mesh/index.js',
-  './../mesh/GeoJSON.js',
-  './../triangulate/index.js',
-  './../../node_modules/qolor/dist/Qolor.js',
-  './../triangulate/roofs/index.js',
-  './../triangulate/roofs/Tools.js',
-  './../triangulate/split.js',
-  './../triangulate/earcut.custom.js',
-  './../triangulate/geometry/vec3.js',
-  './../triangulate/geometry/vec2.js',
-  './../render/index.js',
-  './../render/Picking.js'
+  '../Request.js',
+  '../mesh/index.js',
+  '../mesh/GeoJSON.js',
+  '../triangulate/index.js',
+  '../../node_modules/qolor/dist/Qolor.js',
+  '../triangulate/roofs/index.js',
+  '../triangulate/roofs/Tools.js',
+  '../triangulate/split.js',
+  '../triangulate/earcut.custom.js',
+  '../triangulate/geometry/vec3.js',
+  '../triangulate/geometry/vec2.js',
+  '../render/index.js',
+  '../render/Picking.js'
 );
 // importScripts('./variables.js');
 // importScripts('./Activity.js');
@@ -39,7 +39,6 @@ function onMessage(e) {
 
 function process(geojson, options) {
   if (!geojson || !geojson.features.length) {
-
     return;
   }
 
