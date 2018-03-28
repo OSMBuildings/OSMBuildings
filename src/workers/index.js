@@ -35,10 +35,8 @@ class Workers {
   }
 
   status() {
-    const res = [];
-    for (let i = 0; i < this.items.length; i++) {
-      res[i] = this.items[i].busy ? 'A' : '_';
-    }
-    console.log(res.join(''));
+    console.log(this.items.map(item => {
+      return item.busy ? 'A' : '_';
+    }).join(''));
   }
 }
