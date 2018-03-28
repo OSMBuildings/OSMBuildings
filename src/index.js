@@ -57,7 +57,7 @@ var APP, GL;
  * @param {Number} [options.position.latitude=52.520000] position latitude
  * @param {Number} [options.position.longitude=13.410000] Position longitude
  * @param {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
- * @param {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+ * @deprecated {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
  * @param {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
  * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
  * @param {String} [options.highlightColor='#f08000'] Default color for highlighting features
@@ -86,8 +86,6 @@ const OSMBuildings = function(options) {
   if (APP.options.highlightColor) {
     HIGHLIGHT_COLOR = Qolor.parse(APP.options.highlightColor).toArray();
   }
-
-  render.Buildings.showBackfaces = APP.options.showBackfaces; // TODO OSMB4 lets get rid of this
 
   render.effects = {};
   var effects = APP.options.effects || [];
@@ -228,6 +226,7 @@ OSMBuildings.prototype = {
     APP.container.appendChild(canvas);
 
     GL = GLX.getContext(canvas);
+    GL.disable(GL.CULL_FACE);
 
     Events.init(canvas);
 

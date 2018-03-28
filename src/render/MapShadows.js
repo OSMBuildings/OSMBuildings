@@ -34,9 +34,7 @@ render.MapShadows = {
     var shader = this.shader;
     shader.enable();
 
-    if (this.showBackfaces) {
-      GL.disable(GL.CULL_FACE);
-    }
+    GL.disable(GL.CULL_FACE);
 
     shader.setUniforms([
       ['uDirToSun', '3fv', Sun.direction],
@@ -70,10 +68,6 @@ render.MapShadows = {
     shader.bindBuffer(item.normalBuffer, 'aNormal');
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-
-    if (this.showBackfaces) {
-      GL.enable(GL.CULL_FACE);
-    }
 
     shader.disable();
   },
