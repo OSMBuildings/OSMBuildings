@@ -7,7 +7,7 @@ class Workers {
       this.items[i] = { busy: false, worker: new Worker(path) };
     }
     this.status();
-  }
+      }
 
   get(callback) {
     for (let i = 0; i < this.items.length; i++) {
@@ -21,7 +21,7 @@ class Workers {
 
     setTimeout(() => {
       this.get(callback);
-    }, 100);
+    }, 20);
   }
 
   free(worker) {
