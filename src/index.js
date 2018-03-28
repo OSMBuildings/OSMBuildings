@@ -224,7 +224,6 @@ OSMBuildings.prototype = {
     APP.container.appendChild(canvas);
 
     GL = GLX.getContext(canvas);
-    GL.disable(GL.CULL_FACE);
 
     Events.init(canvas);
 

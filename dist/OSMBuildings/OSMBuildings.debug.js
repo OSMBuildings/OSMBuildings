@@ -3223,7 +3223,7 @@ const OSMBuildings = function(options) {
  * (String) OSMBuildings version
  * @static
  */
-OSMBuildings.VERSION = '3.2.10';
+OSMBuildings.VERSION = '4.0.0';
 
 /**
  * (String) OSMBuildings attribution
@@ -3328,7 +3328,6 @@ OSMBuildings.prototype = {
     APP.container.appendChild(canvas);
 
     GL = GLX.getContext(canvas);
-    GL.disable(GL.CULL_FACE);
 
     Events.init(canvas);
 
@@ -5927,8 +5926,8 @@ var render = {
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
     if (!GL.depthTextureExtension) {
-      console.log('[WARN] effects "shadows" and "outlines" disabled in OSMBuildings, because your GPU does not support WEBGL_depth_texture');
-      //both effects rely on depth textures
+      console.log('Shadows and ground shading are disabled, because your GPU does not support WEBGL_depth_texture');
+      // both effects rely on depth textures
       delete render.effects.shadows;
       delete render.effects.outlines;
     }
