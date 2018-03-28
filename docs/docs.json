@@ -189,20 +189,6 @@
       },
       {
         "title": "param",
-        "description": "For locating assets. This is relative to calling html page",
-        "lineNumber": 15,
-        "type": {
-          "type": "OptionalType",
-          "expression": {
-            "type": "NameExpression",
-            "name": "String"
-          }
-        },
-        "name": "options.baseURL",
-        "default": "'.'"
-      },
-      {
-        "title": "param",
         "description": "Render front and backsides of polygons. false increases performance, true might be needed for bad geometries",
         "lineNumber": 16,
         "type": {
@@ -1154,70 +1140,7 @@
                 "default": "13.410000"
               }
             ]
-          },
-          {
-            "title": "param",
-            "name": "options.baseURL",
-            "lineNumber": 15,
-            "description": {
-              "type": "root",
-              "children": [
-                {
-                  "type": "paragraph",
-                  "children": [
-                    {
-                      "type": "text",
-                      "value": "For locating assets. This is relative to calling html page",
-                      "position": {
-                        "start": {
-                          "line": 1,
-                          "column": 1,
-                          "offset": 0
-                        },
-                        "end": {
-                          "line": 1,
-                          "column": 59,
-                          "offset": 58
-                        },
-                        "indent": []
-                      }
-                    }
-                  ],
-                  "position": {
-                    "start": {
-                      "line": 1,
-                      "column": 1,
-                      "offset": 0
-                    },
-                    "end": {
-                      "line": 1,
-                      "column": 59,
-                      "offset": 58
-                    },
-                    "indent": []
-                  }
-                }
-              ],
-              "position": {
-                "start": {
-                  "line": 1,
-                  "column": 1,
-                  "offset": 0
-                },
-                "end": {
-                  "line": 1,
-                  "column": 59,
-                  "offset": 58
-                }
-              }
-            },
-            "type": {
-              "type": "NameExpression",
-              "name": "String"
-            },
-            "default": "'.'"
-          },
-          {
+          }, {
             "title": "param",
             "name": "options.showBackfaces",
             "lineNumber": 16,

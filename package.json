@@ -2,14 +2,14 @@
   "name": "OSMBuildings",
   "private": false,
   "description": "OSM Buildings",
-  "version": "3.2.10",
+  "version": "4.0.0",
   "homepage": "http://osmbuildings.org",
   "author": "@kekscom",
   "contributors": [],
   "maintainers": [
     "Jan Marsch (@kekscom)",
     "Robert Buchholz (@rbuch703)",
-    "Derek Kniffin (@dkniffin)"
+    "Sebastian Settgast (@setti84)"
   ],
   "repository": {
     "type": "git",

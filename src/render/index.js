@@ -26,7 +26,6 @@ var render = {
     GL.enable(GL.DEPTH_TEST);
 
     render.Picking.init(); // renders only on demand
-    render.sky = new render.SkyWall();
     render.Buildings.init();
     render.Basemap.init();
     render.Overlay.init();
@@ -75,7 +74,6 @@ var render = {
                         [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
     Sun.updateView(viewTrapezoid);
-    render.sky.updateGeometry(viewTrapezoid);
     var viewSize = [APP.width, APP.height];
 
     if (!render.effects.shadows) {
@@ -100,7 +98,6 @@ var render = {
 
       GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
       GL.disable(GL.DEPTH_TEST);
-      render.sky.render();
       GL.disable(GL.BLEND);
       GL.enable(GL.DEPTH_TEST);
     } else {
@@ -122,6 +119,7 @@ var render = {
       }
 
       GL.enable(GL.BLEND);
+
       {
         // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
         // this aplies the shadow and SSAO effects (which selectively darken the scene)
@@ -144,9 +142,9 @@ var render = {
         // over its background.
         GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
         GL.disable(GL.DEPTH_TEST);
-        render.sky.render();
         GL.enable(GL.DEPTH_TEST);
       }
+
       GL.disable(GL.BLEND);
 
       //render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
@@ -249,7 +247,6 @@ var render = {
     APP.off('resize', this._onResize);
 
     render.Picking.destroy();
-    render.sky.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
 

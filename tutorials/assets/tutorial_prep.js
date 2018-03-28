@@ -4,7 +4,6 @@ var osmb = new OSMBuildings({
   zoom: 15,
   tilt: 30,
   state: false,
-  baseURL: './OSMBuildings',
   minZoom: 14,
   maxZoom: 20,
   effects: ['shadows'],

@@ -38,10 +38,6 @@ module.exports = function(grunt) {
     },
 
     copy: {
-      'assets': {
-        src: 'src/skydome.jpg',
-        dest: 'dist/OSMBuildings/skydome.jpg'
-      },
       'css': {
         src: 'src/style.css',
         dest: 'dist/OSMBuildings/<%=pkg.name%>.css'
@@ -188,7 +184,6 @@ module.exports = function(grunt) {
 
     grunt.task.run('osmb');
 
-    grunt.task.run('copy:assets');
     grunt.task.run('copy:css');
 
     grunt.task.run('compress'); // zip a release bundle

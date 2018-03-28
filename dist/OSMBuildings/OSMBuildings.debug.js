@@ -431,7 +431,7 @@ var suncalc = (function () {
 }());
 
 
-var Shaders = {"picking":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aId;\nattribute vec4 aFilter;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nuniform float uTime;\nvarying vec4 vColor;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vec4 mPosition = vec4(uModelMatrix * pos);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aId, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aId;\nattribute vec4 aFilter;\nattribute float aHeight;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightId;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightId == aId) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    vTexCoord = aTexCoord;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / aHeight), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n    \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"},"buildings.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec2 aTexCoord;\nattribute vec3 aId;\nattribute vec4 aFilter;\nattribute float aHeight;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightId;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightId == aId) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vNormal = aNormal;\n    vTexCoord = aTexCoord;\n    //vec3 transformedNormal = aNormal * uNormalTransform;\n    //float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n    //color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / aHeight), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n    \n    // *** shadow mapping ********\n    vec4 sunRelPosition = uSunMatrix * pos;\n    vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  }\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  vec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\n  float diffuse = dot(uLightDirection, normal);\n  diffuse = max(diffuse, 0.0);\n  // reduce shadow strength with:\n  // - lowering sun positions, to be consistent with the shadows on the basemap (there,\n  //   shadows are faded out with lowering sun positions to hide shadow artifacts caused\n  //   when sun direction and map surface are almost perpendicular\n  // - large angles between the sun direction and the surface normal, to hide shadow\n  //   artifacts that occur when surface normal and sun direction are almost perpendicular\n  float shadowStrength = pow( max( min(\n    dot(uLightDirection, vec3(0.0, 0.0, 1.0)),\n    dot(uLightDirection, normal)\n  ), 0.0), 1.5);\n  if (diffuse > 0.0 && shadowStrength > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float occludedBySun = mix( \n                            mix(tlVal, trVal, pos.x), \n                            mix(blVal, brVal, pos.x),\n                            pos.y);\n    diffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n  }\n  vec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n              (diffuse/1.5) * uLightColor;\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\n  gl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"},"flatColor":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\n  gl_FragColor = uColor;\n}\n"},"skywall":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nuniform float uAbsoluteHeight;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nconst float gradientHeight = 10.0;\nconst float gradientStrength = 1.0;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vRelativeHeight = aPosition.z / uAbsoluteHeight;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nvoid main() {\n  float blendFactor = min(100.0 * vRelativeHeight, 1.0);\n  vec4 texColor = texture2D(uTexIndex, vTexCoord);\n  gl_FragColor = mix( vec4(uFogColor, 1.0), texColor,  blendFactor);\n}\n"},"basemap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vec4 worldPos = uModelMatrix * aPosition;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"},"texture":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"fogNormal":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec4 aFilter;\nattribute vec3 aNormal;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nuniform float uTime;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    verticalDistanceToLowerEdge = 0.0;\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vNormal = uNormalMatrix * aNormal;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  gl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"},"ambientFromDepth":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset)\n{\n    float depthThere = getDepth(pos, offset);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    float depthDiff = abs(depthThere - depthHere) * uFarPlane;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we do not consider all \n * texels in the sampling area, but only 16. This causes some sampling artifacts\n * that are later removed by blurring the ambient occlusion texture (this is \n * done in a separate shader).\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord, ivec2(0, 0));\n  float fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4(1.0);\n    return;\n  }\n  float occlusionFactor = 1.0;\n  \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\n  occlusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"},"blur":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n/* Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, vec2 offset)\n{\n  return texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2(+1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, -1.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, +1.0));\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, vec2(-1.0, -1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(-1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, -1.0));\n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"},"basemap.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  vec4 pos = vec4(aPosition.xyz, 1.0);\n  gl_Position = uMatrix * pos;\n  vec4 sunRelPosition = uSunMatrix * pos;\n  vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  vNormal = aNormal;\n  vec4 worldPos = uModelMatrix * pos;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not* \n * render the map texture itself, but is instead intended to be blended on top\n * of an already rendered map.\n * Note: this shader is not (and does not attempt to) be physically correct.\n *       It is intented to be a blend between a useful illustration of cast\n *       shadows and a mitigation of shadow casting artifacts occuring at\n *       low angles on incidence.\n *       Map brightness is only affected by shadows, not by light direction.\n *       Shadows are darkest when light comes from straight above (and thus\n *       shadows can be computed reliably) and become less and less visible\n *       with the light source close to the horizont (where moirC) and offset\n *       artifacts would otherwise be visible).\n */\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  //vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n  //gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n  //return;\n  float diffuse = dot(uDirToSun, normalize(vNormal));\n  diffuse = max(diffuse, 0.0);\n  \n  float shadowStrength = uShadowStrength * pow(diffuse, 1.5);\n  if (diffuse > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    \n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    diffuse = mix( mix(tlVal, trVal, pos.x), \n                   mix(blVal, brVal, pos.x),\n                   pos.y);\n  }\n  diffuse = mix(1.0, diffuse, shadowStrength);\n  \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  float darkness = (1.0 - diffuse);\n  darkness *=  (1.0 - fogIntensity);\n  gl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"},"outlineMap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogNormalTexIndex;\nuniform sampler2D uIdTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, vec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + offset * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\nvec3 getNormal(vec2 pos, vec2 offset)\n{\n  return normalize(texture2D(uFogNormalTexIndex, pos + offset * uInverseTexSize).xyz * 2.0 - 1.0);\n}\nvec3 getEncodedId(vec2 pos, vec2 offset)\n{\n  return texture2D(uIdTexIndex, pos + offset * uInverseTexSize).xyz;\n}\nvoid main() {\n  float fogIntensity = texture2D(uFogNormalTexIndex, vTexCoord).w;\n  vec3 normalHere =  getNormal(vTexCoord, vec2(0, 0));\n  vec3 normalRight = getNormal(vTexCoord, vec2(1, 0));\n  vec3 normalAbove = getNormal(vTexCoord, vec2(0,-1));\n  \n  float edgeStrengthFromNormal = \n    step( dot(normalHere, normalRight), 0.9) +\n    step( dot(normalHere, normalAbove), 0.9);\n  float depthHere =  getDepth(vTexCoord, vec2(0,  0));\n  float depthRight = getDepth(vTexCoord, vec2(1,  0));\n  float depthAbove = getDepth(vTexCoord, vec2(0, -1));\n  float depthDiffRight = abs(depthHere - depthRight) * 7500.0;\n  float depthDiffAbove = abs(depthHere - depthAbove) * 7500.0;\n  float edgeStrengthFromDepth = step(10.0, depthDiffRight) + \n                                step(10.0, depthDiffAbove);\n  \n  vec3 idHere = getEncodedId(vTexCoord, vec2(0,0));\n  vec3 idRight = getEncodedId(vTexCoord, vec2(1,0));\n  vec3 idAbove = getEncodedId(vTexCoord, vec2(0,-1));\n  float edgeStrengthFromId = (idHere != idRight || idHere != idAbove) ? 1.0 : 0.0;\n  \n  float edgeStrength = max( edgeStrengthFromId, max( edgeStrengthFromNormal, edgeStrengthFromDepth));\n  float occlusionFactor = 1.0 - (edgeStrength * uEffectStrength);\n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"}};
+var Shaders = {"picking":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aId;\nattribute vec4 aFilter;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogRadius;\nuniform float uTime;\nvarying vec4 vColor;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec4(0.0, 0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vec4 mPosition = vec4(uModelMatrix * pos);\n    float distance = length(mPosition);\n    if (distance > uFogRadius) {\n      vColor = vec4(0.0, 0.0, 0.0, 0.0);\n    } else {\n      vColor = vec4(aId, 1.0);\n    }\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\n  gl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec3 aId;\nattribute vec4 aFilter;\nattribute float aHeight;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightId;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightId == aId) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vec3 transformedNormal = aNormal * uNormalTransform;\n    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\n    color = color + uLightColor * lightIntensity;\n    vTexCoord = aTexCoord;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / aHeight), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n    \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"},"buildings.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec2 aTexCoord;\nattribute vec3 aId;\nattribute vec4 aFilter;\nattribute float aHeight;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uHighlightColor;\nuniform vec3 uHighlightId;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uTime;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientStrength = 0.4;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    vColor = vec3(0.0, 0.0, 0.0);\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    //*** highlight object ******************************************************\n    vec3 color = aColor;\n    if (uHighlightId == aId) {\n      color = mix(aColor, uHighlightColor, 0.5);\n    }\n    //*** light intensity, defined by light direction on surface ****************\n    vNormal = aNormal;\n    vTexCoord = aTexCoord;\n    //vec3 transformedNormal = aNormal * uNormalTransform;\n    //float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n    //color = color + uLightColor * lightIntensity;\n    //*** vertical shading ******************************************************\n    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / aHeight), 0.0, gradientStrength);\n    //***************************************************************************\n    vColor = color-verticalShading;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n    \n    // *** shadow mapping ********\n    vec4 sunRelPosition = uSunMatrix * pos;\n    vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  }\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  vec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\n  float diffuse = dot(uLightDirection, normal);\n  diffuse = max(diffuse, 0.0);\n  // reduce shadow strength with:\n  // - lowering sun positions, to be consistent with the shadows on the basemap (there,\n  //   shadows are faded out with lowering sun positions to hide shadow artifacts caused\n  //   when sun direction and map surface are almost perpendicular\n  // - large angles between the sun direction and the surface normal, to hide shadow\n  //   artifacts that occur when surface normal and sun direction are almost perpendicular\n  float shadowStrength = pow( max( min(\n    dot(uLightDirection, vec3(0.0, 0.0, 1.0)),\n    dot(uLightDirection, normal)\n  ), 0.0), 1.5);\n  if (diffuse > 0.0 && shadowStrength > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float occludedBySun = mix( \n                            mix(tlVal, trVal, pos.x), \n                            mix(blVal, brVal, pos.x),\n                            pos.y);\n    diffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n  }\n  vec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n              (diffuse/1.5) * uLightColor;\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  //gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\n  gl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"},"flatColor":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\n  gl_FragColor = uColor;\n}\n"},"basemap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uModelMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n  vec4 worldPos = uModelMatrix * aPosition;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  gl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"},"texture":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"fogNormal":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec4 aFilter;\nattribute vec3 aNormal;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nuniform float uTime;\nvoid main() {\n  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);\n  float f = aFilter.b + (aFilter.a-aFilter.b) * t;\n  if (f == 0.0) {\n    gl_Position = vec4(0.0, 0.0, 0.0, 0.0);\n    verticalDistanceToLowerEdge = 0.0;\n  } else {\n    vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\n    gl_Position = uMatrix * pos;\n    vNormal = uNormalMatrix * aNormal;\n    vec4 worldPos = uModelMatrix * pos;\n    vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n    verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n  }\n}\n","fragment":"\n#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  gl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"},"ambientFromDepth":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how \n * much the fragment at 'pos' with depth 'depthHere'is occluded by the \n * fragment that is (dx, dy) texels away from it.\n */\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset)\n{\n    float depthThere = getDepth(pos, offset);\n    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), \n     * then 'here' is not occluded (result 1.0) */\n    if (depthThere == 0.0)\n      return 1.0;\n    /* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n     * 'here is not occluded' */\n    if (depthHere < depthThere )\n      return 1.0;\n      \n    float relDepthDiff = depthThere / depthHere;\n    float depthDiff = abs(depthThere - depthHere) * uFarPlane;\n    /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n     * 'here'. The occlusion is the higher the bigger the depth difference between the two\n     * locations is.\n     * However, if the depth difference is too high, we assume that 'there' lies in a\n     * completely different depth region of the scene than 'here' and thus cannot occlude\n     * 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n     */\n    return depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO). \n * It is based on the assumption that a pixel will be occluded by neighboring \n * pixels iff. those have a depth value closer to the camera than the original\n * pixel itself (the function getOcclusionFactor() computes this occlusion \n * by a single other pixel).\n *\n * A naive approach would sample all pixels within a given distance. For an\n * interesting-looking effect, the sampling area needs to be at least 9 pixels \n * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n * This overburdens many GPUs.\n * To make the ambient occlusion computation faster, we do not consider all \n * texels in the sampling area, but only 16. This causes some sampling artifacts\n * that are later removed by blurring the ambient occlusion texture (this is \n * done in a separate shader).\n */\nvoid main() {\n  float depthHere = getDepth(vTexCoord, ivec2(0, 0));\n  float fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\n  if (depthHere == 0.0)\n  {\n\t//there was nothing rendered 'here' --> it can't be occluded\n    gl_FragColor = vec4(1.0);\n    return;\n  }\n  float occlusionFactor = 1.0;\n  \n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4,  0));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\n  occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\n  occlusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\n  occlusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"},"blur":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\n  precision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n/* Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'. */\nvec4 getTexel(vec2 pos, vec2 offset)\n{\n  return texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\n  vec4 center = texture2D(uTexIndex, vTexCoord);\n  vec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2(+1.0,  0.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, -1.0)) +\n                              getTexel(vTexCoord, vec2( 0.0, +1.0));\n  vec4 diagonalNeighbors =    getTexel(vTexCoord, vec2(-1.0, -1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(-1.0, +1.0)) +\n                              getTexel(vTexCoord, vec2(+1.0, -1.0));\n  \n  //approximate Gaussian blur (mean 0.0, stdev 1.0)\n  gl_FragColor = 0.2/1.0 * center + \n                 0.5/4.0 * nonDiagonalNeighbors + \n                 0.3/4.0 * diagonalNeighbors;\n}\n"},"basemap.shadows":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\n  vec4 pos = vec4(aPosition.xyz, 1.0);\n  gl_Position = uMatrix * pos;\n  vec4 sunRelPosition = uSunMatrix * pos;\n  vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n  vNormal = aNormal;\n  vec4 worldPos = uModelMatrix * pos;\n  vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\n  verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\n  precision highp float;\n#else\n  precision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not* \n * render the map texture itself, but is instead intended to be blended on top\n * of an already rendered map.\n * Note: this shader is not (and does not attempt to) be physically correct.\n *       It is intented to be a blend between a useful illustration of cast\n *       shadows and a mitigation of shadow casting artifacts occuring at\n *       low angles on incidence.\n *       Map brightness is only affected by shadows, not by light direction.\n *       Shadows are darkest when light comes from straight above (and thus\n *       shadows can be computed reliably) and become less and less visible\n *       with the light source close to the horizont (where moirC) and offset\n *       artifacts would otherwise be visible).\n */\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\n  if ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC)  //not inside sun's viewport\n    return 1.0;\n  \n  float depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n  \n  //compare depth values not in reciprocal but in linear depth\n  return step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n  //vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n  //gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n  //return;\n  float diffuse = dot(uDirToSun, normalize(vNormal));\n  diffuse = max(diffuse, 0.0);\n  \n  float shadowStrength = uShadowStrength * pow(diffuse, 1.5);\n  if (diffuse > 0.0) {\n    // note: the diffuse term is also the cosine between the surface normal and the\n    // light direction\n    float bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n    \n    vec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n    \n    vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n    float tlVal = isSeenBySun( tl,                           vSunRelPosition.z, bias);\n    float trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    float brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\n    diffuse = mix( mix(tlVal, trVal, pos.x), \n                   mix(blVal, brVal, pos.x),\n                   pos.y);\n  }\n  diffuse = mix(1.0, diffuse, shadowStrength);\n  \n  float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\n  fogIntensity = clamp(fogIntensity, 0.0, 1.0);\n  float darkness = (1.0 - diffuse);\n  darkness *=  (1.0 - fogIntensity);\n  gl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"},"outlineMap":{"vertex":"precision highp float;  //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\n  gl_Position = uMatrix * aPosition;\n  vTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n  // we need high precision for the depth values\n  precision highp float;\n#else\n  precision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogNormalTexIndex;\nuniform sampler2D uIdTexIndex;\nuniform vec2 uInverseTexSize;   //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, vec2 offset)\n{\n  float z = texture2D(uDepthTexIndex, pos + offset * uInverseTexSize).x;\n  return (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\nvec3 getNormal(vec2 pos, vec2 offset)\n{\n  return normalize(texture2D(uFogNormalTexIndex, pos + offset * uInverseTexSize).xyz * 2.0 - 1.0);\n}\nvec3 getEncodedId(vec2 pos, vec2 offset)\n{\n  return texture2D(uIdTexIndex, pos + offset * uInverseTexSize).xyz;\n}\nvoid main() {\n  float fogIntensity = texture2D(uFogNormalTexIndex, vTexCoord).w;\n  vec3 normalHere =  getNormal(vTexCoord, vec2(0, 0));\n  vec3 normalRight = getNormal(vTexCoord, vec2(1, 0));\n  vec3 normalAbove = getNormal(vTexCoord, vec2(0,-1));\n  \n  float edgeStrengthFromNormal = \n    step( dot(normalHere, normalRight), 0.9) +\n    step( dot(normalHere, normalAbove), 0.9);\n  float depthHere =  getDepth(vTexCoord, vec2(0,  0));\n  float depthRight = getDepth(vTexCoord, vec2(1,  0));\n  float depthAbove = getDepth(vTexCoord, vec2(0, -1));\n  float depthDiffRight = abs(depthHere - depthRight) * 7500.0;\n  float depthDiffAbove = abs(depthHere - depthAbove) * 7500.0;\n  float edgeStrengthFromDepth = step(10.0, depthDiffRight) + \n                                step(10.0, depthDiffAbove);\n  \n  vec3 idHere = getEncodedId(vTexCoord, vec2(0,0));\n  vec3 idRight = getEncodedId(vTexCoord, vec2(1,0));\n  vec3 idAbove = getEncodedId(vTexCoord, vec2(0,-1));\n  float edgeStrengthFromId = (idHere != idRight || idHere != idAbove) ? 1.0 : 0.0;\n  \n  float edgeStrength = max( edgeStrengthFromId, max( edgeStrengthFromNormal, edgeStrengthFromDepth));\n  float occlusionFactor = 1.0 - (edgeStrength * uEffectStrength);\n  occlusionFactor = 1.0 - ((1.0- occlusionFactor) * (1.0-fogIntensity));\n  gl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"}};
 
 var GLX = (function() {
 //var ext = GL.getExtension('WEBGL_lose_context');
@@ -544,21 +544,27 @@ GLX.util.calcUnit = function(x, y, z) {
 };
 
 
-GLX.Buffer = function(itemSize, data) {
-  this.id = GL.createBuffer();
-  this.itemSize = itemSize;
-  this.numItems = data.length/itemSize;
-  GL.bindBuffer(GL.ARRAY_BUFFER, this.id);
-  GL.bufferData(GL.ARRAY_BUFFER, data, GL.STATIC_DRAW);
-  data = null;
-};
+GLX.Buffer = class {
 
-GLX.Buffer.prototype = {
-  enable: function() {
+  constructor(itemSize, data) {
+    this.id = GL.createBuffer();
+    this.itemSize = itemSize;
+    this.numItems = data.length/itemSize;
     GL.bindBuffer(GL.ARRAY_BUFFER, this.id);
-  },
+    GL.bufferData(GL.ARRAY_BUFFER, data, GL.STATIC_DRAW);
+    data = null; // gc
+  }
 
-  destroy: function() {
+  // DEPRECATED
+  enable() {
+    GL.bindBuffer(GL.ARRAY_BUFFER, this.id);
+  }
+
+  use() {
+    GL.bindBuffer(GL.ARRAY_BUFFER, this.id);
+  }
+
+  destroy() {
     GL.deleteBuffer(this.id);
     this.id = null;
   }
@@ -1307,6 +1313,49 @@ return GLX;
 }());
 
 //
+
+class Workers {
+
+  constructor(path, num) {
+    this.items = [];
+    for (let i = 0; i < num; i++) {
+      this.items[i] = { busy: false, worker: new Worker(path) };
+    }
+    this.status();
+      }
+
+  get(callback) {
+    for (let i = 0; i < this.items.length; i++) {
+      if (!this.items[i].busy) {
+        this.items[i].busy = true;
+        callback(this.items[i].worker);
+        this.status();
+        return;
+      }
+    }
+
+    setTimeout(() => {
+      this.get(callback);
+    }, 20);
+  }
+
+  free(worker) {
+    for (let i = 0; i < this.items.length; i++) {
+      if (this.items[i].worker === worker) {
+        this.items[i].busy = false;
+        this.status();
+        return;
+      }
+    }
+  }
+
+  status() {
+    console.log(this.items.map(item => {
+      return item.busy ? 'A' : '_';
+    }).join(''));
+  }
+}
+
 
 var vec2 = {
   len: function(a) {
@@ -2257,7 +2306,7 @@ var createRoof;
     }
 
     var
-      rad = properties.roofDirection*Math.PI/180,
+      rad = properties.roofDirection / 180 * Math.PI,
       closestPoint, farthestPoint,
       minY = Infinity, maxY = -Infinity;
 
@@ -2749,8 +2798,9 @@ var triangulate = (function() {
 
   var
     DEFAULT_HEIGHT = 10,
-    DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray(),
+    DEFAULT_COLOR = [ 0.8627450980392157, 0.8235294117647058, 0.7843137254901961 ]; //Qolor.parse('rgb(220, 210, 200)').toArray(),
     METERS_PER_LEVEL = 3;
+
 
   var MATERIAL_COLORS = {
     brick: '#cc7755',
@@ -3052,7 +3102,22 @@ if (CustomEvent === undefined) {
   CustomEvent.prototype = window.Event.prototype;
 }
 
-var APP, GL; // TODO: make them local references
+/*
+ * NOTE: OSMBuildings cannot use a single global world coordinate system.
+ *       The numerical accuracy required for such a system would be about
+ *       32bits to represent world-wide geometry faithfully within a few
+ *       centimeters of accuracy. Most computations in OSMBuildings, however,
+ *       are performed on a GPU where only IEEE floats with 23bits of accuracy
+ *       (plus 8 bits of range) are available.
+ *       Instead, OSMBuildings' coordinate system has a reference point
+ *       (APP.position) at the viewport center, and all world positions are
+ *       expressed as distances in meters from that reference point. The
+ *       reference point itself shifts with map panning so that all world
+ *       positions relevant to the part of the world curently rendered on-screen
+ *       can accurately be represented within the limited accuracy of IEEE floats.
+ */
+
+var APP, GL;
 
 /**
  * User defined function that will be called when an event is fired
@@ -3080,20 +3145,6 @@ var APP, GL; // TODO: make them local references
  * @param {Image} screenshot The screenshot
  */
 
-/*
- * NOTE: OSMBuildings cannot use a single global world coordinate system.
- *       The numerical accuracy required for such a system would be about
- *       32bits to represent world-wide geometry faithfully within a few
- *       centimeters of accuracy. Most computations in OSMBuildings, however,
- *       are performed on a GPU where only IEEE floats with 23bits of accuracy
- *       (plus 8 bits of range) are available.
- *       Instead, OSMBuildings' coordinate system has a reference point
- *       (APP.position) at the viewport center, and all world positions are
- *       expressed as distances in meters from that reference point. The
- *       reference point itself shifts with map panning so that all world
- *       positions relevant to the part of the world curently rendered on-screen
- *       can accurately be represented within the limited accuracy of IEEE floats. */
-
 /**
  * @class OSMBuildings
  * @param {Object} [options] OSMBuildings options
@@ -3109,9 +3160,9 @@ var APP, GL; // TODO: make them local references
  * @param {Object} [options.position] Initial position
  * @param {Number} [options.position.latitude=52.520000] position latitude
  * @param {Number} [options.position.longitude=13.410000] Position longitude
- * @param {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
- * @param {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
- * @param {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
+ * @deprecated {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
+ * @deprecated {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+ * @deprecated {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
  * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
  * @param {String} [options.highlightColor='#f08000'] Default color for highlighting features
  * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
@@ -3119,8 +3170,8 @@ var APP, GL; // TODO: make them local references
  * @param {Object} [options.style] Sets the default building style
  * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
  */
-var OSMBuildings = function(options) {
-  APP = this; // refers to 'this'. Should make other globals obsolete.
+const OSMBuildings = function(options) {
+  APP = this; // refers to 'this' (current instance). Should make other globals obsolete.
 
   APP.options = (options || {});
 
@@ -3131,16 +3182,12 @@ var OSMBuildings = function(options) {
     }
   }
 
-  APP.baseURL = APP.options.baseURL || '.';
-
   render.backgroundColor = Qolor.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
   render.fogColor        = Qolor.parse(APP.options.fogColor        || FOG_COLOR).toArray();
 
   if (APP.options.highlightColor) {
     HIGHLIGHT_COLOR = Qolor.parse(APP.options.highlightColor).toArray();
   }
-
-  render.Buildings.showBackfaces = APP.options.showBackfaces;
 
   render.effects = {};
   var effects = APP.options.effects || [];
@@ -3167,6 +3214,9 @@ var OSMBuildings = function(options) {
   if (APP.options.disabled) {
     APP.setDisabled(true);
   }
+
+  const numProc = window.navigator.hardwareConcurrency;
+  APP.workers = new Workers('./../src/workers/worker.js', numProc*4);
 };
 
 /**
@@ -3278,6 +3328,7 @@ OSMBuildings.prototype = {
     APP.container.appendChild(canvas);
 
     GL = GLX.getContext(canvas);
+    GL.disable(GL.CULL_FACE);
 
     Events.init(canvas);
 
@@ -3294,8 +3345,6 @@ OSMBuildings.prototype = {
 
     APP.setDate(new Date());
     render.start();
-
-    return APP;
   },
 
   /**
@@ -3305,7 +3354,6 @@ OSMBuildings.prototype = {
    */
   on: function(type, fn) {
     GL.canvas.addEventListener(type, fn);
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3335,7 +3383,6 @@ OSMBuildings.prototype = {
    */
   setDate: function(date) {
     Sun.setDate(typeof date === 'string' ? new Date(date) : date);
-    return APP; // DEPRECATED
   },
 
   // TODO: this should be part of the underlying map engine
@@ -3471,7 +3518,6 @@ OSMBuildings.prototype = {
   highlight: function(id, highlightColor) {
     render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
     render.Buildings.highlightColor = id && highlightColor ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
-    return APP; // DEPRECATED
   },
 
   // TODO: check naming. show() suggests it affects the layer rather than objects on it
@@ -3483,7 +3529,6 @@ OSMBuildings.prototype = {
    */
   show: function(selector, duration) {
     Filter.remove('hidden', selector, duration);
-    return APP; // DEPRECATED
   },
 
   // TODO: check naming. hide() suggests it affects the layer rather than objects on it
@@ -3495,7 +3540,6 @@ OSMBuildings.prototype = {
    */
   hide: function(selector, duration) {
     Filter.add('hidden', selector, duration);
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3507,7 +3551,6 @@ OSMBuildings.prototype = {
   getTarget: function(x, y, callback) {
     // TODO: use promises here
     render.Picking.getTarget(x, y, callback);
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3517,7 +3560,6 @@ OSMBuildings.prototype = {
   screenshot: function(callback) {
     // TODO: use promises here
     render.screenshotCallback = callback;
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3579,7 +3621,6 @@ OSMBuildings.prototype = {
 
   setDisabled: function(flag) {
     Events.disabled = !!flag;
-    return APP;
   },
 
   isDisabled: function() {
@@ -3646,8 +3687,6 @@ OSMBuildings.prototype = {
       APP.emit('zoom', { zoom: zoom });
       APP.emit('change');
     }
-
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3673,7 +3712,6 @@ OSMBuildings.prototype = {
     }
     APP.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
     APP.emit('change');
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3698,8 +3736,6 @@ OSMBuildings.prototype = {
       APP.height = size.height;
       APP.emit('resize', { width: APP.width, height: APP.height });
     }
-
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3723,8 +3759,6 @@ OSMBuildings.prototype = {
       APP.emit('rotate', { rotation: rotation });
       APP.emit('change');
     }
-
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3748,7 +3782,6 @@ OSMBuildings.prototype = {
       APP.emit('tilt', { tilt: tilt });
       APP.emit('change');
     }
-    return APP; // DEPRECATED
   },
 
   /**
@@ -3775,6 +3808,11 @@ OSMBuildings.prototype = {
 
     APP.container.innerHTML = '';
   }
+
+  // ,
+  // destroyWorker: function() {
+  //   APP._worker.terminate();
+  // }
 };
 
 //*****************************************************************************
@@ -4202,9 +4240,6 @@ var EARTH_RADIUS_IN_METERS = 6378137;
 var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
 var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 
-/* the height of the skywall in meters */
-var SKYWALL_HEIGHT = 2000.0;
-
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
  * to cover everything that's also visible to the user. For this to work 
  * reliably, we have to make assumptions on how high (in [m]) the buildings 
@@ -4229,14 +4264,13 @@ var BUILDING_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQ
 
 // TODO: introduce promises
 
-var Request = {};
+class Request {
 
-(function() {
+  static load(url, callback) {
 
-  function load(url, callback) {
-    var req = new XMLHttpRequest();
+    const req = new XMLHttpRequest();
 
-    req.onreadystatechange = function() {
+    req.onreadystatechange = () => {
       if (req.readyState !== 4) {
         return;
       }
@@ -4252,47 +4286,42 @@ var Request = {};
     req.send(null);
 
     return {
-      abort: function() {
+      abort: () => {
         req.abort();
       }
     };
   }
 
-  //***************************************************************************
-
-  Request.getText = function(url, callback) {
-    return load(url, function(res) {
+  static getText(url, callback) {
+    return this.load(url, res => {
       if (res.responseText !== undefined) {
         callback(res.responseText);
       }
     });
-  };
+  }
 
-  Request.getXML = function(url, callback) {
-    return load(url, function(res) {
+  static getXML(url, callback) {
+    return this.load(url, res => {
       if (res.responseXML !== undefined) {
         callback(res.responseXML);
       }
     });
-  };
+  }
 
-  Request.getJSON = function(url, callback) {
-    return load(url, function(res) {
+  static getJSON(url, callback) {
+    return this.load(url, res => {
       if (res.responseText) {
-        var json;
+        let json;
         try {
           json = JSON.parse(res.responseText);
         } catch(ex) {
-          console.warn('Could not parse JSON from '+ url +'\n'+ ex.message);
+          console.warn(`Could not parse JSON from {url}\n{ex.message}`);
         }
         callback(json);
-      }
+      }      
     });
-  };
-
-  Request.destroy = function() {};
-
-}());
+  }
+}
 
 /*function project(latitude, longitude, worldSize) {
   var
@@ -4763,7 +4792,7 @@ data.Tile = function(x, y, zoom, options) {
 };
 
 data.Tile.prototype = {
-  load: function(url) {
+  load: function(url) {  
     this.mesh = new mesh.GeoJSON(url, this.options);
   },
 
@@ -4778,13 +4807,12 @@ data.Tile.prototype = {
 var mesh = {};
 
 
-mesh.GeoJSON = (function() {
+mesh.GeoJSON = class {
 
-  var FEATURES_PER_CHUNK = 90;
-  var DELAY_PER_CHUNK = 75;
-
-  function constructor(url, options) {
+  constructor(url, options) {
     options = options || {};
+    this.options = options;
+    this.number = Math.floor((Math.random() * 100000) + 1);
 
     this.forcedId = options.id;
     // no Qolor.toArray() needed as Triangulation does it internally
@@ -4806,202 +4834,132 @@ mesh.GeoJSON = (function() {
     this.items = [];
 
     Activity.setBusy();
-    if (typeof url === 'object') {
-      var collection = url;
-      this.setData(collection);
-    } else {
-      this.request = Request.getJSON(url, function(collection) {
-        this.request = null;
-        this.setData(collection);
-      }.bind(this));
-    }
-  }
+    APP.workers.get(worker => {
+      this.worker = worker;
 
-  constructor.prototype = {
+      // TODO: if loading fails, a worker should be returned to pool
 
-    setData: function(collection) {
-      if (!collection || !collection.features.length) {
-        return;
-      }
-
-      var res = {
-        vertices: [],
-        normals: [],
-        colors: [],
-        texCoords: []
-      };
-
-      var
-        resPickingColors = [],
-        position = this.getOrigin(collection.features[0].geometry),
-        startIndex = 0,
-        numFeatures = collection.features.length,
-        endIndex = startIndex + Math.min(numFeatures, FEATURES_PER_CHUNK);
-
-      this.position = { latitude:position[1], longitude:position[0] };
-
-      var process = function() {
-        var
-          feature, properties, id,
-          vertexCountBefore, vertexCount, pickingColor;
-
-        for (var i = startIndex; i < endIndex; i++) {
-          feature = collection.features[i];
-
-          APP.emit('loadfeature', feature);
-          
-          properties = feature.properties;
-          id = this.forcedId || properties.relationId || feature.id || properties.id;
-
-          vertexCountBefore = res.vertices.length;
-
-          triangulate(res, feature, position, this.forcedColor);
-
-          vertexCount = (res.vertices.length - vertexCountBefore)/3;
-
-          pickingColor = render.Picking.idToColor(id);
-          for (var j = 0; j < vertexCount; j++) {
-            [].push.apply(resPickingColors, pickingColor);
-          }
-
-          this.items.push({ id:id, vertexCount:vertexCount, height:properties.height, data:properties.data });
-        }
-
-        if (endIndex === numFeatures) {
-          this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(res.vertices));
-          this.normalBuffer   = new GLX.Buffer(3, new Float32Array(res.normals));
-          this.colorBuffer    = new GLX.Buffer(3, new Float32Array(res.colors));
-          this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(res.texCoords));
-          this.idBuffer       = new GLX.Buffer(3, new Float32Array(resPickingColors));
-          this._initItemBuffers();
-
-          Filter.apply(this);
-          data.Index.add(this);
-
-          this.isReady = true;
-          Activity.setIdle();
-
-          return;
-        }
-
-        startIndex = endIndex;
-        endIndex = startIndex + Math.min((numFeatures-startIndex), FEATURES_PER_CHUNK);
-
-        this.relaxTimer = setTimeout(process, DELAY_PER_CHUNK);
+      const onResult = function(e) {
+        this.setData(e.data);
+        worker.removeEventListener('message', onResult, false); // remove this listener
+        APP.workers.free(worker); // return worker to pool
       }.bind(this);
 
-      process();
-    },
+      this.worker.addEventListener('message', onResult, false);
 
-    _initItemBuffers: function() {
-      var
-        start = Filter.getTime(),
-        end = start;
-
-      if (this.shouldFadeIn) {
-        start += 250;
-        end += 750;
+      if (typeof url === 'object') {
+        worker.postMessage({ action: 'process', geojson: url, options: this.options });
+      } else {
+        worker.postMessage({ action: 'load', url: url, options: this.options });
       }
+    });
+  }
 
-      var
-        filters = [],
-        heights = [];
+  setData(res) {
+    this.items = res.items;
+    this.position = res.position;
 
-      this.items.forEach(function(item) {
-        item.filter = [start, end, 0, 1];
-        for (var i = 0; i < item.vertexCount; i++) {
-          filters.push.apply(filters, item.filter);
-          heights.push(item.height);
-        }
-      });
+    this.vertexBuffer   = new GLX.Buffer(3, res.vertices);
+    this.normalBuffer   = new GLX.Buffer(3, res.normals);
+    this.colorBuffer    = new GLX.Buffer(3, res.colors);
+    this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
+    this.idBuffer       = new GLX.Buffer(3, res.idColors);
 
-      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
-      this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
-    },
+    this.initBuffers();
 
-    applyFilter: function() {
-      var filters = [];
-      this.items.forEach(function(item) {
-        for (var i = 0; i < item.vertexCount; i++) {
-          filters.push.apply(filters, item.filter);
-        }
-      });
+    Filter.apply(this);
+    data.Index.add(this);
 
-      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
-    },
+    this.isReady = true;
+    Activity.setIdle();
+  }
 
-    // TODO: switch to a notation like mesh.transform
-    getMatrix: function() {
-      var matrix = new GLX.Matrix();
+  initBuffers() {
+    let
+      start = Filter.getTime(),
+      end = start;
 
-      if (this.elevation) {
-        matrix.translate(0, 0, this.elevation);
-      }
-
-      matrix.scale(this.scale, this.scale, this.scale*HEIGHT_SCALE);
-
-      if (this.rotation) {
-        matrix.rotateZ(-this.rotation);
-      }
-
-      // this position is available once geometry processing is complete.
-      // should not be failing before because of this.isReady
-      var dLat = this.position.latitude - APP.position.latitude;
-      var dLon = this.position.longitude - APP.position.longitude;
-
-      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
-
-      matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
-
-      return matrix;
-    },
-
-    getOrigin: function(geometry) {
-      var coordinates = geometry.coordinates;
-      switch (geometry.type) {
-        case 'Point':
-          return coordinates;
-
-        case 'MultiPoint':
-        case 'LineString':
-          return coordinates[0];
-
-        case 'MultiLineString':
-        case 'Polygon':
-          return coordinates[0][0];
-
-        case 'MultiPolygon':
-          return coordinates[0][0][0];
-      }
-    },
-
-    destroy: function() {
-      this.isReady = false;
-
-      clearTimeout(this.relaxTimer);
-
-      data.Index.remove(this);
-
-      if (this.request) {
-        this.request.abort();
-      }
-
-      this.items = [];
-
-      if (this.isReady) {
-        this.vertexBuffer.destroy();
-        this.normalBuffer.destroy();
-        this.colorBuffer.destroy();
-        this.texCoordBuffer.destroy();
-        this.idBuffer.destroy();
-        this.heightBuffer.destroy();
-      }
+    if (this.shouldFadeIn) {
+      start += 250;
+      end += 750;
     }
-  };
 
-  return constructor;
+    const
+      filters = [],
+      heights = [];
 
-}());
+    this.items.forEach(item => {
+      item.filter = [start, end, 0, 1];
+      for (let i = 0; i < item.vertexCount; i++) {
+        filters.push.apply(filters, item.filter);
+        heights.push(item.height);
+      }
+    });
+
+    this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
+    this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
+  }
+
+  applyFilter() {
+    const filters = [];
+    this.items.forEach(item => {
+      for (let i = 0; i < item.vertexCount; i++) {
+        filters.push.apply(filters, item.filter);
+      }
+    });
+
+    this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
+  }
+
+  // TODO: switch to a notation like mesh.transform
+  getMatrix() {
+    const matrix = new GLX.Matrix();
+
+    if (this.elevation) {
+      matrix.translate(0, 0, this.elevation);
+    }
+
+    matrix.scale(this.scale, this.scale, this.scale*HEIGHT_SCALE);
+
+    if (this.rotation) {
+      matrix.rotateZ(-this.rotation);
+    }
+
+    // this position is available once geometry processing is complete.
+    // should not be failing before because of this.isReady
+    const dLat = this.position.latitude - APP.position.latitude;
+    const dLon = this.position.longitude - APP.position.longitude;
+
+    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
+
+    matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
+
+    return matrix;
+  }
+
+  destroy() {
+    this.isReady = false;
+
+    clearTimeout(this.relaxTimer);
+
+    data.Index.remove(this);
+
+    if (this.request) {
+      this.request.abort(); // TODO: signal to workers
+    }
+
+    this.items = [];
+
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.texCoordBuffer.destroy();
+      this.idBuffer.destroy();
+      this.heightBuffer.destroy();
+    }
+  }
+};
 
 
 /* A 'MapPlane' object is a rectangular mesh in the X/Y plane (Z=0) that is
@@ -5984,7 +5942,6 @@ var render = {
     GL.enable(GL.DEPTH_TEST);
 
     render.Picking.init(); // renders only on demand
-    render.sky = new render.SkyWall();
     render.Buildings.init();
     render.Basemap.init();
     render.Overlay.init();
@@ -6033,7 +5990,6 @@ var render = {
                         [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
     Sun.updateView(viewTrapezoid);
-    render.sky.updateGeometry(viewTrapezoid);
     var viewSize = [APP.width, APP.height];
 
     if (!render.effects.shadows) {
@@ -6058,7 +6014,6 @@ var render = {
 
       GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
       GL.disable(GL.DEPTH_TEST);
-      render.sky.render();
       GL.disable(GL.BLEND);
       GL.enable(GL.DEPTH_TEST);
     } else {
@@ -6080,6 +6035,7 @@ var render = {
       }
 
       GL.enable(GL.BLEND);
+
       {
         // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
         // this aplies the shadow and SSAO effects (which selectively darken the scene)
@@ -6102,9 +6058,9 @@ var render = {
         // over its background.
         GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
         GL.disable(GL.DEPTH_TEST);
-        render.sky.render();
         GL.enable(GL.DEPTH_TEST);
       }
+
       GL.disable(GL.BLEND);
 
       //render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
@@ -6207,7 +6163,6 @@ var render = {
     APP.off('resize', this._onResize);
 
     render.Picking.destroy();
-    render.sky.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
 
@@ -6373,137 +6328,6 @@ var Sun = {
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
   }
 };
-
-
-render.SkyWall = function() {
-    
-  this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
-  this.updateGeometry( [[0,0,0], [0,0,0], [0,0,0], [0,0,0]]);
-
-  this.shader = new GLX.Shader({
-    vertexShader: Shaders.skywall.vertex,
-    fragmentShader: Shaders.skywall.fragment,
-    shaderName: 'sky wall shader',
-    attributes: ['aPosition', 'aTexCoord'],
-    uniforms: ['uAbsoluteHeight', 'uMatrix', 'uTexIndex', 'uFogColor']
-  });
-  
-  this.floorShader = new GLX.Shader({
-    vertexShader:   Shaders.flatColor.vertex,
-    fragmentShader: Shaders.flatColor.fragment,
-    attributes: ['aPosition'],
-    uniforms:   ['uColor', 'uMatrix']
-  });
-  
-  Activity.setBusy();
-  var url = APP.baseURL + '/skydome.jpg';
-  this.texture = new GLX.texture.Image().load(url, function(image) {
-    Activity.setIdle();
-    if (image) {
-      this.isReady = true;
-    }
-  }.bind(this));
-};
-
-render.SkyWall.prototype.updateGeometry = function(viewTrapezoid) {
-  
-  var v1 = [viewTrapezoid[3][0], viewTrapezoid[3][1], 0.0];
-  var v2 = [viewTrapezoid[2][0], viewTrapezoid[2][1], 0.0];
-  var v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], SKYWALL_HEIGHT];
-  var v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], SKYWALL_HEIGHT];
-
-  if ( equal3(v1, this.v1) &&
-       equal3(v2, this.v2) &&
-       equal3(v3, this.v3) &&
-       equal3(v4, this.v4))
-     return; //still up-to-date
-
-  this.v1 = v1;
-  this.v2 = v2;
-  this.v3 = v3;
-  this.v4 = v4;
-
-  if (this.vertexBuffer)
-    this.vertexBuffer.destroy();
-
-  var vertices = [].concat(v1, v2, v3, v1, v3, v4);
-  this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
-
-  if (this.texCoordBuffer)
-    this.texCoordBuffer.destroy();
-
-  var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
-  var vBottomCenter = getIntersectionWithXYPlane(0, -1, inverse);
-  
-  var vLeftDir = norm2(sub2( v1, vBottomCenter));
-  var vRightDir =norm2(sub2( v2, vBottomCenter));
-  var vLeftArc = Math.atan2(vLeftDir[1],  vLeftDir[0])/  (2*Math.PI);
-  var vRightArc= Math.atan2(vRightDir[1], vRightDir[0])/ (2*Math.PI);
-  
-  if (vLeftArc > vRightArc)
-    vRightArc +=1;
-  //console.log(vLeftArc, vRightArc);
-
-  // var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
-  var tcLeft = vLeftArc;//APP.rotation/360.0;
-  var tcRight =vRightArc;//APP.rotation/360.0 + visibleSkyDiameterFraction*3;
-        
-  this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(
-    [tcLeft, 1, tcRight, 1, tcRight, 0, tcLeft, 1, tcRight, 0, tcLeft, 0]));
-    
-  v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0];
-  v2 = [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0];
-  v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0];
-  v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0];
-  
-  if (this.floorVertexBuffer)
-    this.floorVertexBuffer.destroy();
-    
-  this.floorVertexBuffer = new GLX.Buffer(3, new Float32Array(
-    [].concat( v1, v2, v3, v4)));
-};
-
-render.SkyWall.prototype.render = function() {
-  if (!this.isReady) {
-    return;
-  }
-
-  var
-    fogColor = render.fogColor,
-    shader = this.shader;
-
-  shader.enable();
-
-  shader.setUniforms([
-    ['uFogColor',       '3fv', fogColor],
-    ['uAbsoluteHeight', '1f',  SKYWALL_HEIGHT*10.0]
-  ]);
-
-  shader.setUniformMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
-
-  shader.bindBuffer( this.vertexBuffer,   'aPosition');
-  shader.bindBuffer( this.texCoordBuffer, 'aTexCoord');
-
-  shader.bindTexture('uTexIndex', 0, this.texture);
-
-  GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
-  shader.disable();
-  
-
-  this.floorShader.enable();
-  this.floorShader.setUniform('uColor', '4fv', fogColor.concat([1.0]));
-  this.floorShader.setUniformMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
-  this.floorShader.bindBuffer(this.floorVertexBuffer, 'aPosition');
-  GL.drawArrays(GL.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
-  
-  this.floorShader.disable();
-  
-};
-
-render.SkyWall.prototype.destroy = function() {
-  this.texture.destroy();
-};
-
 
 
 render.Buildings = {
@@ -6672,9 +6496,7 @@ render.MapShadows = {
     var shader = this.shader;
     shader.enable();
 
-    if (this.showBackfaces) {
-      GL.disable(GL.CULL_FACE);
-    }
+    GL.disable(GL.CULL_FACE);
 
     shader.setUniforms([
       ['uDirToSun', '3fv', Sun.direction],
@@ -6708,10 +6530,6 @@ render.MapShadows = {
     shader.bindBuffer(item.normalBuffer, 'aNormal');
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-
-    if (this.showBackfaces) {
-      GL.enable(GL.CULL_FACE);
-    }
 
     shader.disable();
   },

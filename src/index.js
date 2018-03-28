@@ -56,9 +56,9 @@ var APP, GL;
  * @param {Object} [options.position] Initial position
  * @param {Number} [options.position.latitude=52.520000] position latitude
  * @param {Number} [options.position.longitude=13.410000] Position longitude
- * @param {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
+ * @deprecated {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
  * @deprecated {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
- * @param {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
+ * @deprecated {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
  * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
  * @param {String} [options.highlightColor='#f08000'] Default color for highlighting features
  * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
@@ -77,8 +77,6 @@ const OSMBuildings = function(options) {
       DEFAULT_COLOR = Qolor.parse(style.color || style.wallColor).toArray();
     }
   }
-
-  APP.baseURL = APP.options.baseURL || '.'; // TODO OSMB4 lets get rid of this dependency
 
   render.backgroundColor = Qolor.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
   render.fogColor        = Qolor.parse(APP.options.fogColor        || FOG_COLOR).toArray();

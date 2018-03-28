@@ -22,9 +22,6 @@ var EARTH_RADIUS_IN_METERS = 6378137;
 var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
 var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 
-/* the height of the skywall in meters */
-var SKYWALL_HEIGHT = 2000.0;
-
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
  * to cover everything that's also visible to the user. For this to work 
  * reliably, we have to make assumptions on how high (in [m]) the buildings 
