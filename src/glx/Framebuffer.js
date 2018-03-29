@@ -53,7 +53,7 @@ GLX.Framebuffer = class {
       this.renderTexture.destroy();
     }
 
-    this.renderTexture = new GLX.texture.Data(width, height);
+    this.renderTexture = new GLX.texture.Data(GL, width, height);
     GL.bindTexture(GL.TEXTURE_2D, this.renderTexture.id);
 
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE); //necessary for NPOT textures

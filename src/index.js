@@ -217,15 +217,16 @@ OSMBuildings.prototype = {
     APP.width  = width  !== undefined ? width  : container.offsetWidth;
     APP.height = height !== undefined ? height : container.offsetHeight;
 
-    const canvas = document.createElement('CANVAS');
-    canvas.className = 'osmb-viewport';
-    canvas.width = APP.width;
-    canvas.height = APP.width;
-    APP.container.appendChild(canvas);
+    this.canvas = document.createElement('CANVAS');
+    this.canvas.className = 'osmb-viewport';
+    this.canvas.width = APP.width;
+    this.canvas.height = APP.width;
+    APP.container.appendChild(this.canvas);
 
-    GL = GLX.getContext(canvas, APP.options.fastMode);
+    this.glx = new GLX(this.canvas, APP.options.fastMode);
+    GL = this.glx.GL;
 
-    Events.init(canvas);
+    Events.init(this.canvas);
 
     APP._getStateFromUrl();
     if (APP.options.state) {
@@ -248,7 +249,7 @@ OSMBuildings.prototype = {
    * @param {eventCallback} fn Callback function
    */
   on: function(type, fn) {
-    GL.canvas.addEventListener(type, fn);
+    this.canvas.addEventListener(type, fn);
   },
 
   /**
@@ -257,7 +258,7 @@ OSMBuildings.prototype = {
    * @param {eventCallback} [fn] If callback is given, only remove that particular listener
    */
   off: function(type, fn) {
-    GL.canvas.removeEventListener(type, fn);
+    this.canvas.removeEventListener(type, fn);
   },
 
   /**
@@ -266,10 +267,8 @@ OSMBuildings.prototype = {
    * @param {any} [payload] Any kind of payload
    */
   emit: function(type, payload) {
-    if (GL !== undefined) {
-      var event = new CustomEvent(type, { detail: payload });
-      GL.canvas.dispatchEvent(event);
-    }
+    const e = new CustomEvent(type, { detail: payload });
+    this.canvas.dispatchEvent(e);
   },
 
   /**
@@ -696,8 +695,8 @@ OSMBuildings.prototype = {
     // APP.basemapGrid.destroy();
     // APP.dataGrid.destroy();
 
-    // TODO: when taking over an existing canvas, better don't destroy it here
-    GLX.destroy();
+    this.glx.destroy();
+    this.canvas.parentNode.removeChild(this.canvas);
 
     data.Index.destroy();
 

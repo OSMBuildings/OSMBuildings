@@ -1,10 +1,9 @@
 
-// const ext = GL.getExtension('WEBGL_lose_context');
-// ext.loseContext();
-
 class GLX {
 
-  static getContext (canvas, quickRender) {
+  constructor(canvas, quickRender) {
+    let GL;
+
     const canvasOptions = {
       antialias: !quickRender,
       depth: true,
@@ -33,7 +32,7 @@ class GLX {
       console.warn('context restored');
     });
 
-    GL.viewport(0, 0, APP.width, APP.height);
+    GL.viewport(0, 0, canvas.width, canvas.height);
     GL.cullFace(GL.BACK);
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
@@ -42,14 +41,12 @@ class GLX {
     if (!quickRender) { // TODO OSMB4 always activate but use dynamically
       GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
       if (GL.anisotropyExtension) {
-        GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(
-          GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT
-        );
+        GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
       }
       GL.depthTextureExtension = GL.getExtension('WEBGL_depth_texture');
     }
 
-    return GL;
+    this.GL = GL;
   }
 
   static start (render) {
@@ -63,9 +60,8 @@ class GLX {
   }
 
   static destroy () {
-    if (GL) {
-      GL.canvas.parentNode.removeChild(GL.canvas);
-      GL = null;
-    }
+    const ext = this.GL.getExtension('WEBGL_lose_context');
+    ext.loseContext();
+    this.GL = null;
   }
 }
