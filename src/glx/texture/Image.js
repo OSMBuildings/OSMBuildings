@@ -76,7 +76,7 @@ GLX.texture.Image.prototype = {
     GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
     GL.generateMipmap(GL.TEXTURE_2D);
 
-    if (GL.anisotropyExtension) {
+    if (GL.anisotropyExtension) { // TODO OSMB4 use this dynamically
       GL.texParameterf(GL.TEXTURE_2D, GL.anisotropyExtension.TEXTURE_MAX_ANISOTROPY_EXT, GL.anisotropyExtension.maxAnisotropyLevel);
     }
 

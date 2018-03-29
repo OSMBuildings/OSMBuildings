@@ -217,13 +217,13 @@ OSMBuildings.prototype = {
     APP.width  = width  !== undefined ? width  : container.offsetWidth;
     APP.height = height !== undefined ? height : container.offsetHeight;
 
-    var canvas = document.createElement('CANVAS');
+    const canvas = document.createElement('CANVAS');
     canvas.className = 'osmb-viewport';
     canvas.width = APP.width;
     canvas.height = APP.width;
     APP.container.appendChild(canvas);
 
-    GL = GLX.getContext(canvas);
+    GL = GLX.getContext(canvas, APP.options.fastMode);
 
     Events.init(canvas);
 
