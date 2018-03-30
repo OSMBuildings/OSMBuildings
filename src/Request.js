@@ -3,13 +3,13 @@ class Request {
   static load (url, callback) {
     const req = new XMLHttpRequest();
 
-    let time = setTimeout(function () {
+    const time = setTimeout(function () {
 
-      if (req.onreadystatechange !== 4) {
+      if (req.readyState !== 4) {
         req.abort();
         callback('status');
       }
-    }, 2000);
+    }, 10000);
 
     req.onreadystatechange = () => {
       if (req.readyState !== 4) {
@@ -81,7 +81,12 @@ class Request {
           console.warn(`Could not parse JSON from {url}\n{ex.message}`);
           callback('content');
         }
+
       }
+      else{
+        callback('content');
+      }
+
     });
   }
 }
