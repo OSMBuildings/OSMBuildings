@@ -2,12 +2,14 @@
 class Promise {
 
   resolve(val) {
+
     if (this.state !== Promise.STATE_PENDING) {
       return;
     }
 
     if (val && (typeof val === 'function' || typeof val === 'object')) {
       let firstTime = true;
+
 
       try {
         const then = val.then;

@@ -1,8 +1,9 @@
 
 importScripts(
+    '../Promise.js',
   '../Request.js',
   '../mesh/index.js',
-  '../mesh/GeoJSON.js',
+//  '../mesh/GeoJSON.js',
   '../triangulate/index.js',
   '../../node_modules/qolor/dist/Qolor.js',
   '../triangulate/roofs/index.js',
@@ -14,20 +15,28 @@ importScripts(
   '../render/index.js',
   '../render/Picking.js'
 );
-// importScripts('./variables.js');
-// importScripts('./Activity.js');
-// importScripts('./glx/index.js', './glx/Buffer.js');
 
 addEventListener('message', onMessage, false);
 
 function onMessage(e) {   
  
-  if (e.data.action === 'load') { 
-    Request.getJSON(e.data.url, geojson => {     
+  if (e.data.action === 'load') {
+
+    Request.getJSON(e.data.url, (error,geojson) => {
+
+      if(error){
+          postMessage('error');
+          return;
+      }
+
       const res = process(geojson, e.data.options);
       res.number = e.data.number;
+
       postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.idColors.buffer]);
     });
+
+
+
   }
 
   if (e.data.action === 'process') {

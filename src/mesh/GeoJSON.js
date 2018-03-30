@@ -4,7 +4,6 @@ mesh.GeoJSON = class {
   constructor(url, options) {
     options = options || {};
     this.options = options;
-    this.number = Math.floor((Math.random() * 100000) + 1);
 
     this.forcedId = options.id;
     // no Qolor.toArray() needed as Triangulation does it internally
@@ -32,7 +31,10 @@ mesh.GeoJSON = class {
       // TODO: if loading fails, a worker should be returned to pool
 
       const onResult = function(e) {
-        this.setData(e.data);
+        if(e.data !== 'error'){
+            this.setData(e.data);
+        }
+
         worker.removeEventListener('message', onResult, false); // remove this listener
         APP.workers.free(worker); // return worker to pool
       }.bind(this);

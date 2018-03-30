@@ -174,12 +174,20 @@ mesh.OBJ = (function() {
     };
 
     Activity.setBusy();
-    this.request = Request.getText(url, function(obj) {
+    this.request = Request.getText(url, function(error, obj) {
       this.request = null;
+      if(error){
+        return;
+      }
+
       var match;
       if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
-        this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(mtl) {
+        this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(error,mtl) {
           this.request = null;
+          if(error){
+            return;
+          }
+
           this.onLoad(obj, parseMTL(mtl));
         }.bind(this));
       } else {
