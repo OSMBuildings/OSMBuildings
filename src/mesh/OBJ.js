@@ -151,12 +151,11 @@ mesh.OBJ = (function() {
       this.forcedColor = Qolor.parse(options.color).toArray();
     }
 
-    this.replace      = !!options.replace;
-    this.scale        = options.scale     || 1;
-    this.rotation     = options.rotation  || 0;
-    this.elevation    = options.elevation || 0;
-    this.position     = position;
-    this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
+    this.replace   = !!options.replace;
+    this.scale     = options.scale     || 1;
+    this.rotation  = options.rotation  || 0;
+    this.elevation = options.elevation || 0;
+    this.position  = position;
 
     this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
     this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
@@ -235,37 +234,22 @@ mesh.OBJ = (function() {
         start = Filter.getTime(),
         end = start;
 
-      if (this.shouldFadeIn) {
         start += 250;
         end += 750;
-      }
 
       var
-        filters = [],
         heights = [];
 
       this.items.forEach(function(item) {
-        item.filter = [start, end, 0, 1];
         for (var i = 0; i < item.vertexCount; i++) {
-          filters.push.apply(filters, item.filter);
           heights.push(item.height);
         }
       });
 
-      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
       this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
     },
 
-    applyFilter: function() {
-      var filters = [];
-      this.items.forEach(function(item) {
-        for (var i = 0; i < item.vertexCount; i++) {
-          filters.push.apply(filters, item.filter);
-        }
-      });
-
-      this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
-    },
+    applyFilter: function() {}, // TODO
 
     onReady: function() {
       this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(this.data.vertices));

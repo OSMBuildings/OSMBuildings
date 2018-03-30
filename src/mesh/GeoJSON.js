@@ -9,11 +9,10 @@ mesh.GeoJSON = class {
     // no Qolor.toArray() needed as Triangulation does it internally
     this.forcedColor = options.color;
 
-    this.replace      = !!options.replace;
-    this.scale        = options.scale     || 1;
-    this.rotation     = options.rotation  || 0;
-    this.elevation    = options.elevation || 0;
-    this.shouldFadeIn = 'fadeIn' in options ? !!options.fadeIn : true;
+    this.replace   = !!options.replace;
+    this.scale     = options.scale     || 1;
+    this.rotation  = options.rotation  || 0;
+    this.elevation = options.elevation || 0;
 
     this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
     this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
@@ -57,6 +56,7 @@ mesh.GeoJSON = class {
     this.normalBuffer   = new GLX.Buffer(3, res.normals);
     this.colorBuffer    = new GLX.Buffer(3, res.colors);
     this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
+    this.heightBuffer   = new GLX.Buffer(1, res.heights);
 
     const idColors = [];
     res.items.forEach(item => {
@@ -67,51 +67,18 @@ mesh.GeoJSON = class {
     });
     this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
 
-    this.initBuffers();
-
     Filter.apply(this);
     data.Index.add(this);
 
     this.isReady = true;
+
+    this.fadeStart = Date.now() + 50;
+    this.fadeEnd = this.fadeStart + 1000;
+
     Activity.setIdle();
   }
 
-  initBuffers() {
-    let
-      start = Filter.getTime(),
-      end = start;
-
-    if (this.shouldFadeIn) {
-      start += 250;
-      end += 750;
-    }
-
-    const
-      filters = [],
-      heights = [];
-
-    this.items.forEach(item => {
-      item.filter = [start, end, 0, 1];
-      for (let i = 0; i < item.vertexCount; i++) {
-        filters.push.apply(filters, item.filter);
-        heights.push(item.height);
-      }
-    });
-
-    this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
-    this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
-  }
-
-  applyFilter() {
-    const filters = [];
-    this.items.forEach(item => {
-      for (let i = 0; i < item.vertexCount; i++) {
-        filters.push.apply(filters, item.filter);
-      }
-    });
-
-    this.filterBuffer = new GLX.Buffer(4, new Float32Array(filters));
-  }
+  applyFilter() {} // TODO
 
   // TODO: switch to a notation like mesh.transform
   getMatrix() {

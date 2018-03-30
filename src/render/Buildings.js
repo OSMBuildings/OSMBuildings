@@ -8,7 +8,7 @@ render.Buildings = {
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId', 'aHeight'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
         uniforms: [
           'uModelMatrix',
           'uViewDirOnMap',
@@ -28,7 +28,7 @@ render.Buildings = {
         vertexShader: Shaders['buildings.shadows'].vertex,
         fragmentShader: Shaders['buildings.shadows'].fragment,
         shaderName: 'quality building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aFilter', 'aNormal', 'aId', 'aHeight'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
         uniforms: [
           'uFogDistance',
           'uFogBlurDistance',
@@ -58,10 +58,6 @@ render.Buildings = {
     var shader = this.shader;
     shader.enable();
 
-    if (this.showBackfaces) {
-      GL.disable(GL.CULL_FACE);
-    }
-
     shader.setUniforms([
       ['uFogDistance',     '1f',  render.fogDistance],
       ['uFogBlurDistance', '1f',  render.fogBlurDistance],
@@ -70,7 +66,6 @@ render.Buildings = {
       ['uLightColor',      '3fv', [0.5, 0.5, 0.5]],
       ['uLightDirection',  '3fv', Sun.direction],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
-      ['uTime',            '1f',  Filter.getTime()],
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
     ]);
 
@@ -87,17 +82,16 @@ render.Buildings = {
 
     var
       dataItems = data.Index.items,
-      item,
       modelMatrix;
 
-    for (var i = 0, il = dataItems.length; i < il; i++) {
+    dataItems.forEach(item => {
       // no visibility check needed, Grid.purge() is taking care
 
-      item = dataItems[i];
-
       if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
-        continue;
+        return;
       }
+
+      shader.setUniform('uTime', '1f', 1.0);
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
@@ -113,15 +107,10 @@ render.Buildings = {
       shader.bindBuffer(item.normalBuffer,   'aNormal');
       shader.bindBuffer(item.colorBuffer,    'aColor');
       shader.bindBuffer(item.idBuffer,       'aId');
-      shader.bindBuffer(item.filterBuffer,   'aFilter');
       shader.bindBuffer(item.heightBuffer,   'aHeight');
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-    }
-
-    if (this.showBackfaces) {
-      GL.enable(GL.CULL_FACE);
-    }
+    });
 
     shader.disable();
   },

@@ -7,7 +7,6 @@ attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec2 aTexCoord;
 attribute vec3 aId;
-attribute vec4 aFilter;
 attribute float aHeight;
 
 uniform mat4 uModelMatrix;
@@ -33,8 +32,8 @@ float gradientStrength = 0.4;
 
 void main() {
 
-  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
-  float f = aFilter.b + (aFilter.a-aFilter.b) * t;
+  # float f = clamp(uTime, 0.0, 1.0);
+  float f = 1.0;
 
   if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);

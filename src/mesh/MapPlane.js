@@ -33,14 +33,10 @@ mesh.MapPlane = (function() {
       var segmentSize = 2*this.radius / NUM_SEGMENTS;
       this.vertexBuffer = [];
       this.normalBuffer = [];
-      this.filterBuffer = [];
 
       var normal = [0,0,1];
       var normals = [].concat(normal, normal, normal, normal, normal, normal);
 
-      var filterEntry = [0, 1, 1, 1];
-      var filterEntries = [].concat(filterEntry, filterEntry, filterEntry, filterEntry, filterEntry, filterEntry);
-      
       for (var x = 0; x < NUM_SEGMENTS; x++)
         for (var y = 0; y < NUM_SEGMENTS; y++) {
           var baseX = -this.radius + x*segmentSize;
@@ -63,14 +59,10 @@ mesh.MapPlane = (function() {
 
           [].push.apply(this.normalBuffer, normals);
           [].push.apply(this.normalBuffer, normals);
-
-          [].push.apply(this.filterBuffer, filterEntries);
-          [].push.apply(this.filterBuffer, filterEntries);
       }
        
       this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
       this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
-      this.filterBuffer = new GLX.Buffer(4, new Float32Array(this.filterBuffer));
     },
 
     // TODO: switch to a notation like mesh.transform

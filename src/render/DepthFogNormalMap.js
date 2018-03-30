@@ -13,7 +13,7 @@ render.DepthFogNormalMap = function() {
     vertexShader: Shaders.fogNormal.vertex,
     fragmentShader: Shaders.fogNormal.fragment,
     shaderName: 'fog/normal shader',
-    attributes: ['aPosition', 'aFilter', 'aNormal'],
+    attributes: ['aPosition', 'aNormal'],
     uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
   
@@ -48,30 +48,27 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
   GL.clearColor(0.0, 0.0, 0.0, 1);
   GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-  var item, modelMatrix;
-
-  shader.setUniform('uTime', '1f', Filter.getTime());
+  var modelMatrix;
 
   // render all actual data items, but also a dummy map plane
   // Note: SSAO on the map plane has been disabled temporarily
   var dataItems = data.Index.items.concat([this.mapPlane]);
 
-  for (var i = 0; i < dataItems.length; i++) {
-    item = dataItems[i];
-
+  dataItems.forEach(item => {
     if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
-      continue;
+      return;
     }
 
     if (!(modelMatrix = item.getMatrix())) {
-      continue;
+      return;
     }
 
     shader.setUniforms([
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
       ['uFogDistance',     '1f',  render.fogDistance],
-      ['uFogBlurDistance', '1f',  render.fogBlurDistance]
+      ['uFogBlurDistance', '1f',  render.fogBlurDistance],
+      ['uTime',            '1f',  1.0]
     ]);
 
     shader.setUniformMatrices([
@@ -82,10 +79,9 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
     
     shader.bindBuffer(item.vertexBuffer, 'aPosition');
     shader.bindBuffer(item.normalBuffer, 'aNormal');
-    shader.bindBuffer(item.filterBuffer, 'aFilter');
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-  }
+  });
 
   shader.disable();
   framebuffer.disable();

@@ -29,14 +29,14 @@ function onMessage (e) {
       const res = process(geojson, e.data.options);
       res.number = e.data.number;
 
-      postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer]);
+      postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer]);
     });
   }
 
   if (e.data.action === 'process') {
     const res = process(e.data.geojson, e.data.options);
     res.number = e.data.number;
-    postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer]);
+    postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer]);
   }
 }
 
@@ -50,8 +50,10 @@ function process (geojson, options) {
       vertices: [],
       normals: [],
       colors: [],
-      texCoords: []
+      texCoords: [],
+      heights: []
     },
+
     items = [],
     origin = getOrigin(geojson.features[0].geometry),
     position = { latitude: origin[1], longitude: origin[0] };
@@ -68,7 +70,7 @@ function process (geojson, options) {
     triangulate(buffers, feature, origin);
     vertexCount = (buffers.vertices.length - vertexCount) / 3;
 
-    items.push({ id: id, vertexCount: vertexCount, height: properties.height, data: properties.data });
+    items.push({ id: id, vertexCount: vertexCount, data: properties.data });
   });
 
   return {
@@ -77,7 +79,8 @@ function process (geojson, options) {
     vertices: new Float32Array(buffers.vertices),
     normals: new Float32Array(buffers.normals),
     colors: new Float32Array(buffers.colors),
-    texCoords: new Float32Array(buffers.texCoords)
+    texCoords: new Float32Array(buffers.texCoords),
+    heights: new Float32Array(buffers.heights)
   };
 }
 

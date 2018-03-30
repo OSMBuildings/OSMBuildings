@@ -84,13 +84,6 @@ mesh.DebugQuad = (function() {
 
       this.heightBuffer = new GLX.Buffer(1, new Float32Array(
         [].concat(0, 0)));
-
-      var filter = [0,1,1,1];
-      
-      this.filterBuffer = new GLX.Buffer(4, new Float32Array(
-        [].concat(filter, filter, filter, filter, filter, filter)));
-        
-      //this.numDummyVertices = 6;
     },
 
     // TODO: switch to a notation like mesh.transform

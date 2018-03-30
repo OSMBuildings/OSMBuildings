@@ -11,7 +11,7 @@ render.Picking = {
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
-      attributes: ['aPosition', 'aId', 'aFilter'],
+      attributes: ['aPosition', 'aId'],
       uniforms: [
         'uModelMatrix',
         'uMatrix',
@@ -37,26 +37,22 @@ render.Picking = {
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setUniforms([
-      ['uFogRadius', '1f', render.fogDistance],
-      ['uTime',      '1f', Filter.getTime()]
-    ]);
+    shader.setUniform('uFogRadius', '1f', render.fogDistance);
 
     var
       dataItems = data.Index.items,
-      item,
       modelMatrix;
 
-    for (var i = 0, il = dataItems.length; i<il; i++) {
-      item = dataItems[i];
-
+    dataItems.forEach(item => {
       if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
-        continue;
+        return;
       }
 
       if (!(modelMatrix = item.getMatrix())) {
-        continue;
+        return;
       }
+
+      shader.setUniform('uTime', '1f', 1.0);
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
@@ -65,10 +61,9 @@ render.Picking = {
 
       shader.bindBuffer(item.vertexBuffer, 'aPosition');
       shader.bindBuffer(item.idBuffer, 'aId');
-      shader.bindBuffer(item.filterBuffer, 'aFilter');
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-    }
+    });
 
     this.shader.disable();
     this.framebuffer.disable();
