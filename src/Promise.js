@@ -101,22 +101,6 @@ Promise.all = function(tasks) {
     promise = new Promise(); // results and resolved count
 
   let done = 0;
-
-  // function resolve(p, i) {
-  //   if (!p || typeof p.then !== 'function')
-  //     p = Promise.resolve(p);
-  //   p.then(
-  //     function(yv) {
-  //       res[i] = yv;
-  //       rc++;
-  //       if (rc == tasks.length) promise.resolve(results);
-  //     },
-  //     function(nv) {
-  //       promise.reject(nv);
-  //     }
-  //   );
-  // }
-
   if (!tasks.length) {
     promise.resolve(res);
   } else {

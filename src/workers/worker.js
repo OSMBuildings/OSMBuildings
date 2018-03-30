@@ -1,9 +1,8 @@
 
 importScripts(
-    '../Promise.js',
   '../Request.js',
-  '../mesh/index.js',
-//  '../mesh/GeoJSON.js',
+// '../mesh/index.js',
+// '../mesh/GeoJSON.js',
   '../triangulate/index.js',
   '../../node_modules/qolor/dist/Qolor.js',
   '../triangulate/roofs/index.js',
@@ -11,42 +10,37 @@ importScripts(
   '../triangulate/split.js',
   '../triangulate/earcut.custom.js',
   '../triangulate/geometry/vec3.js',
-  '../triangulate/geometry/vec2.js',
-  '../render/index.js',
-  '../render/Picking.js'
+  '../triangulate/geometry/vec2.js'
 );
 
 addEventListener('message', onMessage, false);
 
-function onMessage(e) {   
- 
+function onMessage (e) {
+
   if (e.data.action === 'load') {
 
-    Request.getJSON(e.data.url, (error,geojson) => {
+    Request.getJSON(e.data.url, (error, geojson) => {
 
-      if(error){
-          postMessage('error');
-          return;
+      if (error) {
+        postMessage('error');
+        return;
       }
 
       const res = process(geojson, e.data.options);
       res.number = e.data.number;
 
-      postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.idColors.buffer]);
+      postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer]);
     });
-
-
-
   }
 
   if (e.data.action === 'process') {
     const res = process(e.data.geojson, e.data.options);
     res.number = e.data.number;
-    postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.idColors.buffer]);
+    postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer]);
   }
 }
 
-function process(geojson, options) {
+function process (geojson, options) {
   if (!geojson || !geojson.features.length) {
     return;
   }
@@ -56,29 +50,23 @@ function process(geojson, options) {
       vertices: [],
       normals: [],
       colors: [],
-      texCoords: [],
-      idColors: []
+      texCoords: []
     },
     items = [],
     origin = getOrigin(geojson.features[0].geometry),
     position = { latitude: origin[1], longitude: origin[0] };
 
-  geojson.features.forEach(function(feature) {
+  geojson.features.forEach(feature => {
     // APP.emit('loadfeature', feature); // TODO
 
     const
       properties = feature.properties,
-      id = options.forcedId || properties.relationId || feature.id || properties.id,
-      idColor = render.Picking.idToColor(id);
-      // TODO: forcedColor
+      id = options.forcedId || properties.relationId || feature.id || properties.id;
+    // TODO: forcedColor
 
     let vertexCount = buffers.vertices.length;
     triangulate(buffers, feature, origin);
     vertexCount = (buffers.vertices.length - vertexCount) / 3;
-
-    for (let i = 0; i < vertexCount; i++) {
-      [].push.apply(buffers.idColors, idColor);
-    }
 
     items.push({ id: id, vertexCount: vertexCount, height: properties.height, data: properties.data });
   });
@@ -89,12 +77,11 @@ function process(geojson, options) {
     vertices: new Float32Array(buffers.vertices),
     normals: new Float32Array(buffers.normals),
     colors: new Float32Array(buffers.colors),
-    texCoords: new Float32Array(buffers.texCoords),
-    idColors: new Float32Array(buffers.idColors)
+    texCoords: new Float32Array(buffers.texCoords)
   };
 }
 
-function getOrigin(geometry) {
+function getOrigin (geometry) {
   const coordinates = geometry.coordinates;
   switch (geometry.type) {
     case 'Point':

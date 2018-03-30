@@ -1,20 +1,15 @@
-// TODO: introduce promises
-
 class Request {
 
-  static load(url, callback) {
+  static load (url, callback) {
     const req = new XMLHttpRequest();
 
     let time = setTimeout(function () {
 
-      if (req.onreadystatechange != 4) {
-
+      if (req.onreadystatechange !== 4) {
         req.abort();
         callback('status');
-
       }
     }, 2000);
-
 
     req.onreadystatechange = () => {
       if (req.readyState !== 4) {
@@ -40,10 +35,9 @@ class Request {
         req.abort();
       }
     };
-
   }
 
-  static getText(url, callback) {
+  static getText (url, callback) {
     return this.load(url, (error, res) => {
       if (error) {
         callback();
@@ -57,7 +51,7 @@ class Request {
     });
   }
 
-  static getXML(url, callback) {
+  static getXML (url, callback) {
     return this.load(url, (error, res) => {
       if (error) {
         callback();
@@ -71,7 +65,7 @@ class Request {
     });
   }
 
-  static getJSON(url, callback) {
+  static getJSON (url, callback) {
     return this.load(url, (error, res) => {
       if (error) {
         callback('content');
@@ -87,7 +81,6 @@ class Request {
           console.warn(`Could not parse JSON from {url}\n{ex.message}`);
           callback('content');
         }
-
       }
     });
   }
