@@ -66,7 +66,8 @@ render.Buildings = {
       ['uLightColor',      '3fv', [0.5, 0.5, 0.5]],
       ['uLightDirection',  '3fv', Sun.direction],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
-      ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
+      ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
+      ['uTime', '1f', 1.0]
     ]);
 
     if (!render.effects.shadows) {
@@ -91,7 +92,7 @@ render.Buildings = {
         return;
       }
 
-      shader.setUniform('uTime', '1f', 1.0);
+      // shader.setUniform('uTime', '1f', 1.0);
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
