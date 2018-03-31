@@ -8,14 +8,14 @@ uniform mat4 uModelMatrix;
 uniform mat3 uNormalMatrix;
 uniform vec2 uViewDirOnMap;
 uniform vec2 uLowerEdgePoint;
+uniform float uTime;
 
 varying float verticalDistanceToLowerEdge;
 varying vec3 vNormal;
-uniform float uTime;
 
 void main() {
 
-  # float f = clamp(uTime, 0.0, 1.0);
+  // float f = clamp(uTime, 0.0, 1.0);
   float f = 1.0;
 
   if (f == 0.0) {

@@ -31,7 +31,7 @@ const float gradientStrength = 0.4;
 
 void main() {
 
-  # float f = clamp(uTime, 0.0, 1.0);
+  // float f = clamp(uTime, 0.0, 1.0);
   float f = 1.0;
 
   if (f == 0.0) {
