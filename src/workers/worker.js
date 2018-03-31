@@ -69,6 +69,10 @@ function process (geojson, options) {
     triangulate(buffers, feature, origin);
     vertexCount = (buffers.vertices.length - vertexCount) / 3;
 
+    for (let i = 0; i < vertexCount; i++) {
+      buffers.heights.push(properties.height);
+    }
+
     items.push({ id: id, vertexCount: vertexCount, data: properties.data });
   });
 

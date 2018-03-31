@@ -70,7 +70,6 @@ render.Buildings = {
       ['uLightColor',      '3fv', [0.5, 0.5, 0.5]],
       ['uLightDirection',  '3fv', Sun.direction],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
-      ['uTime',            '1f',  1.0],
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
     ]);
 
@@ -95,6 +94,8 @@ render.Buildings = {
       if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
         return;
       }
+
+      shader.setUniform('uTime', '1f', item.getFade());
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],

@@ -255,8 +255,18 @@ mesh.OBJ = (function() {
       Filter.apply(this);
       data.Index.add(this);
 
+      this.fade = 0;
       this.isReady = true;
       Activity.setIdle();
+    },
+
+    getFade: function() {
+      if (this.fade >= 1) {
+        return 1;
+      }
+      const fade = this.fade;
+      this.fade += 1 / (1 * 60); // (duration * fps)
+      return fade;
     },
 
     // TODO: switch to a notation like mesh.transform

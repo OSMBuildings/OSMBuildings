@@ -86,6 +86,10 @@ mesh.DebugQuad = (function() {
         [].concat(0, 0)));
     },
 
+    getFade: function() {
+      return 1;
+    },
+
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       //var scale = render.fogRadius/this.radius;

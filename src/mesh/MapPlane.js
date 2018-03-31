@@ -65,6 +65,10 @@ mesh.MapPlane = (function() {
       this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
     },
 
+    getFade: function() {
+      return 1;
+    },
+
     // TODO: switch to a notation like mesh.transform
     getMatrix: function() {
       //var scale = Math.pow(2, APP.zoom - 16);

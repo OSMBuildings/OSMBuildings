@@ -37,10 +37,7 @@ render.Picking = {
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setUniforms([
-      ['uFogRadius', '1f', render.fogDistance],
-      ['uTime',      '1f', 1.0]
-    ]);
+    shader.setUniform('uFogRadius', '1f', render.fogDistance);
 
     var
       dataItems = data.Index.items,
@@ -54,6 +51,8 @@ render.Picking = {
       if (!(modelMatrix = item.getMatrix())) {
         return;
       }
+
+      shader.setUniform('uTime', '1f', item.getFade());
 
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
