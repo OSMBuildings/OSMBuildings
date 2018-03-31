@@ -27,7 +27,6 @@ function onMessage (e) {
       }
 
       const res = process(geojson, e.data.options);
-      res.number = e.data.number;
 
       postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer]);
     });
