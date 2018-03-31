@@ -230,16 +230,7 @@ mesh.OBJ = (function() {
     },
 
     _initItemBuffers: function() {
-      var
-        start = Filter.getTime(),
-        end = start;
-
-        start += 250;
-        end += 750;
-
-      var
-        heights = [];
-
+      var heights = [];
       this.items.forEach(function(item) {
         for (var i = 0; i < item.vertexCount; i++) {
           heights.push(item.height);

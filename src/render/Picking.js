@@ -55,8 +55,6 @@ render.Picking = {
         return;
       }
 
-      // shader.setUniform('uTime', '1f', 1.0);
-
       shader.setUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
         ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]

@@ -56,7 +56,7 @@ mesh.GeoJSON = class {
     this.normalBuffer   = new GLX.Buffer(3, res.normals);
     this.colorBuffer    = new GLX.Buffer(3, res.colors);
     this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
-    this.heightBuffer   = new GLX.Buffer(1, res.heights);
+//  this.heightBuffer   = new GLX.Buffer(1, res.heights);
 
     const idColors = [];
     res.items.forEach(item => {
@@ -67,14 +67,18 @@ mesh.GeoJSON = class {
     });
     this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
 
+    const heights = [];
+    this.items.forEach(item => {
+      for (let i = 0; i < item.vertexCount; i++) {
+        heights.push(item.height);
+      }
+    });
+    this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
+
     Filter.apply(this);
     data.Index.add(this);
 
     this.isReady = true;
-
-    this.fadeStart = Date.now() + 50;
-    this.fadeEnd = this.fadeStart + 1000;
-
     Activity.setIdle();
   }
 
