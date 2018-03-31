@@ -69,7 +69,7 @@ class Request {
         callback(err);
         return;
       }
-      if (res.responseText) {
+      if (!res.responseText) {
         callback('content');
         return;
       }
