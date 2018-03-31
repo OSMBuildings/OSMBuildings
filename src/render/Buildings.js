@@ -58,6 +58,10 @@ render.Buildings = {
     var shader = this.shader;
     shader.enable();
 
+    if (this.showBackfaces) {
+      GL.disable(GL.CULL_FACE);
+    }
+
     shader.setUniforms([
       ['uFogDistance',     '1f',  render.fogDistance],
       ['uFogBlurDistance', '1f',  render.fogBlurDistance],
@@ -66,8 +70,8 @@ render.Buildings = {
       ['uLightColor',      '3fv', [0.5, 0.5, 0.5]],
       ['uLightDirection',  '3fv', Sun.direction],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
-      ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
-      ['uTime', '1f', 1.0]
+      ['uTime',            '1f',  1.0],
+      ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
     ]);
 
     if (!render.effects.shadows) {
@@ -112,6 +116,10 @@ render.Buildings = {
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });
+
+    if (this.showBackfaces) {
+      GL.enable(GL.CULL_FACE);
+    }
 
     shader.disable();
   },

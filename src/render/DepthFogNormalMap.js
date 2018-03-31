@@ -50,6 +50,8 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
 
   var modelMatrix;
 
+  shader.setUniform('uTime', '1f', 1.0);
+
   // render all actual data items, but also a dummy map plane
   // Note: SSAO on the map plane has been disabled temporarily
   var dataItems = data.Index.items.concat([this.mapPlane]);
@@ -67,8 +69,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
       ['uFogDistance',     '1f',  render.fogDistance],
-      ['uFogBlurDistance', '1f',  render.fogBlurDistance],
-      ['uTime',            '1f',  1.0]
+      ['uFogBlurDistance', '1f',  render.fogBlurDistance]
     ]);
 
     shader.setUniformMatrices([

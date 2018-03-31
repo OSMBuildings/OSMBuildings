@@ -37,8 +37,10 @@ render.Picking = {
     GL.clearColor(0, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setUniform('uFogRadius', '1f', render.fogDistance);
-    shader.setUniform('uTime', '1f', 1.0);
+    shader.setUniforms([
+      ['uFogRadius', '1f', render.fogDistance],
+      ['uTime',      '1f', 1.0]
+    ]);
 
     var
       dataItems = data.Index.items,
