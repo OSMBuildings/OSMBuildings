@@ -1,6 +1,8 @@
-mesh.OBJ = (function() {
+var OBJ = {};
 
-  function parseMTL(str) {
+(function () {
+
+  OBJ.parseMTL = function (str) {
     var
       lines = str.split(/[\r\n]/g),
       cols,
@@ -13,7 +15,7 @@ mesh.OBJ = (function() {
       switch (cols[0]) {
         case 'newmtl':
           storeMaterial(materials, data);
-          data = { id:cols[1], color:{} };
+          data = { id: cols[1], color: {} };
           break;
 
         case 'Kd':
@@ -36,13 +38,13 @@ mesh.OBJ = (function() {
     return materials;
   }
 
-  function storeMaterial(materials, data) {
+  function storeMaterial (materials, data) {
     if (data !== null) {
-      materials[ data.id ] = data.color;
+      materials[data.id] = data.color;
     }
   }
 
-  function parseOBJ(str, materials) {
+  OBJ.parse = function(str, materials) {
     var
       vertexIndex = [],
       lines = str.split(/[\r\n]/g), cols,
@@ -64,8 +66,8 @@ mesh.OBJ = (function() {
 
         case 'usemtl':
           storeOBJ(vertexIndex, meshes, id, color, faces);
-          if (materials[ cols[1] ]) {
-            color = materials[ cols[1] ];
+          if (materials[cols[1]]) {
+            color = materials[cols[1]];
           }
           faces = [];
           break;
@@ -75,7 +77,7 @@ mesh.OBJ = (function() {
           break;
 
         case 'f':
-          faces.push([ parseFloat(cols[1])-1, parseFloat(cols[2])-1, parseFloat(cols[3])-1 ]);
+          faces.push([parseFloat(cols[1]) - 1, parseFloat(cols[2]) - 1, parseFloat(cols[3]) - 1]);
           break;
       }
     }
@@ -86,7 +88,7 @@ mesh.OBJ = (function() {
     return meshes;
   }
 
-  function storeOBJ(vertexIndex, meshes, id, color, faces) {
+  function storeOBJ (vertexIndex, meshes, id, color, faces) {
     if (faces.length) {
       var geometry = createGeometry(vertexIndex, faces);
       meshes.push({
@@ -100,7 +102,7 @@ mesh.OBJ = (function() {
     }
   }
 
-  function createGeometry(vertexIndex, faces) {
+  function createGeometry (vertexIndex, faces) {
     var
       v0, v1, v2,
       nor,
@@ -110,9 +112,9 @@ mesh.OBJ = (function() {
       height = -Infinity;
 
     for (var i = 0, il = faces.length; i < il; i++) {
-      v0 = vertexIndex[ faces[i][0] ];
-      v1 = vertexIndex[ faces[i][1] ];
-      v2 = vertexIndex[ faces[i][2] ];
+      v0 = vertexIndex[faces[i][0]];
+      v1 = vertexIndex[faces[i][1]];
+      v2 = vertexIndex[faces[i][2]];
 
       nor = normal(v0, v1, v2);
 
@@ -137,12 +139,15 @@ mesh.OBJ = (function() {
       height = Math.max(height, v0[1], v1[1], v2[1]);
     }
 
-    return { vertices:vertices, normals:normals, texCoords:texCoords, height:height };
+    return { vertices: vertices, normals: normals, texCoords: texCoords, height: height };
   }
+}());
 
-  //***************************************************************************
+//*****************************************************************************
 
-  function constructor(url, position, options) {
+mesh.OBJ = class {
+
+  constructor (url, position, options) {
     options = options || {};
 
     this.forcedId = options.id;
@@ -151,11 +156,11 @@ mesh.OBJ = (function() {
       this.forcedColor = Qolor.parse(options.color).toArray();
     }
 
-    this.replace   = !!options.replace;
-    this.scale     = options.scale     || 1;
-    this.rotation  = options.rotation  || 0;
+    this.replace = !!options.replace;
+    this.scale = options.scale || 1;
+    this.rotation = options.rotation || 0;
     this.elevation = options.elevation || 0;
-    this.position  = position;
+    this.position = position;
 
     this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
     this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
@@ -173,148 +178,139 @@ mesh.OBJ = (function() {
     };
 
     Activity.setBusy();
-    this.request = Request.getText(url, function(error, obj) {
+    this.request = Request.getText(url, (error, obj) => {
       this.request = null;
-      if(error){
+      if (error) {
         return;
       }
 
-      var match;
+      let match;
       if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
-        this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], function(error,mtl) {
+        this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], (error, mtl) => {
           this.request = null;
-          if(error){
+          if (error) {
             return;
           }
 
-          this.onLoad(obj, parseMTL(mtl));
-        }.bind(this));
+          this.onLoad(obj, OBJ.parseMTL(mtl));
+        });
       } else {
         this.onLoad(obj, null);
       }
-    }.bind(this));
+    });
   }
 
-  constructor.prototype = {
-    onLoad: function(obj, mtl) {
-      this.items = [];
-      this.addItems( parseOBJ(obj, mtl) );
-      this.onReady();
-    },
+  onLoad (obj, mtl) {
+    this.items = [];
+    this.addItems(OBJ.parse(obj, mtl));
+    this.onReady();
+  }
 
-    addItems: function(items) {
-      items.forEach(function(feature) {
-        /**
-         * Fired when a 3d object has been loaded
-         * @fires OSMBuildings#loadfeature
-         */
-        APP.emit('loadfeature', feature);
+  addItems (items) {
+    items.forEach(feature => {
+      /**
+       * Fired when a 3d object has been loaded
+       * @fires OSMBuildings#loadfeature
+       */
+      APP.emit('loadfeature', feature);
 
-        [].push.apply(this.data.vertices,  feature.vertices);
-        [].push.apply(this.data.normals,   feature.normals);
-        [].push.apply(this.data.texCoords, feature.texCoords);
+      [].push.apply(this.data.vertices, feature.vertices);
+      [].push.apply(this.data.normals, feature.normals);
+      [].push.apply(this.data.texCoords, feature.texCoords);
 
-        var
-          id = this.forcedId || feature.id,
-          idColor = render.Picking.idToColor(id),
-          colorVariance = (id/2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
-          color = this.forcedColor || feature.color || DEFAULT_COLOR;
+      const
+        id = this.forcedId || feature.id,
+        idColor = render.Picking.idToColor(id),
+        colorVariance = (id / 2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
+        color = this.forcedColor || feature.color || DEFAULT_COLOR;
 
-        for (var i = 0; i < feature.vertices.length-2; i += 3) {
-          [].push.apply(this.data.colors, add3scalar(color, colorVariance));
-          [].push.apply(this.data.ids, idColor);
-        }
-
-        this.items.push({ id:id, vertexCount:feature.vertices.length/3, height:feature.height, data:feature.data });
-      }.bind(this));
-    },
-
-    _initItemBuffers: function() {
-      var heights = [];
-      this.items.forEach(function(item) {
-        for (var i = 0; i < item.vertexCount; i++) {
-          heights.push(item.height);
-        }
-      });
-
-      this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
-    },
-
-    applyFilter: function() {}, // TODO
-
-    onReady: function() {
-      this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(this.data.vertices));
-      this.normalBuffer   = new GLX.Buffer(3, new Float32Array(this.data.normals));
-      this.colorBuffer    = new GLX.Buffer(3, new Float32Array(this.data.colors));
-      this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(this.data.texCoords));
-      this.idBuffer       = new GLX.Buffer(3, new Float32Array(this.data.ids));
-      this._initItemBuffers();
-
-      this.data = null;
-
-      Filter.apply(this);
-      data.Index.add(this);
-
-      this.fade = 0;
-      this.isReady = true;
-      Activity.setIdle();
-    },
-
-    getFade: function() {
-      if (this.fade >= 1) {
-        return 1;
-      }
-      const fade = this.fade;
-      this.fade += 1 / (1 * 60); // (duration * fps)
-      return fade;
-    },
-
-    // TODO: switch to a notation like mesh.transform
-    getMatrix: function() {
-      var matrix = new GLX.Matrix();
-
-      if (this.elevation) {
-        matrix.translate(0, 0, this.elevation);
+      for (let i = 0; i < feature.vertices.length - 2; i += 3) {
+        [].push.apply(this.data.colors, add3scalar(color, colorVariance));
+        [].push.apply(this.data.ids, idColor);
       }
 
-      matrix.scale(this.scale, this.scale, this.scale);
+      this.items.push({ id: id, vertexCount: feature.vertices.length / 3, height: feature.height, data: feature.data });
+    });
+  }
 
-      if (this.rotation) {
-        matrix.rotateZ(-this.rotation);
+  onReady () {
+    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.data.vertices));
+    this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.data.normals));
+    this.colorBuffer = new GLX.Buffer(3, new Float32Array(this.data.colors));
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(this.data.texCoords));
+    this.idBuffer = new GLX.Buffer(3, new Float32Array(this.data.ids));
+
+    const heights = [];
+    this.items.forEach(item => {
+      for (let i = 0; i < item.vertexCount; i++) {
+        heights.push(item.height);
       }
+    });
+    this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
 
-      var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                     Math.cos(APP.position.latitude / 180 * Math.PI);
+    this.data = null;
 
-      var dLat = this.position.latitude - APP.position.latitude;
-      var dLon = this.position.longitude- APP.position.longitude;
-      
-      matrix.translate( dLon * metersPerDegreeLongitude,
-                       -dLat * METERS_PER_DEGREE_LATITUDE, 0);
-      
-      return matrix;
-    },
+    Filter.apply(this);
+    data.Index.add(this);
 
-    destroy: function() {
-      data.Index.remove(this);
+    this.fade = 0;
+    this.isReady = true;
+    Activity.setIdle();
+  }
 
-      if (this.request) {
-        this.request.abort();
-      }
+  applyFilter () {} // TODO
 
-      this.items = [];
-
-      if (this.isReady) {
-        this.vertexBuffer.destroy();
-        this.normalBuffer.destroy();
-        this.colorBuffer.destroy();
-        this.texCoordBuffer.destroy();
-        this.idBuffer.destroy();
-        this.heightBuffer.destroy();
-      }
+  getFade () {
+    if (this.fade >= 1) {
+      return 1;
     }
-  };
+    const fade = this.fade;
+    this.fade += 1 / (1 * 60); // (duration * fps)
+    return fade;
+  }
 
-  return constructor;
+  // TODO: switch to a notation like mesh.transform
+  getMatrix () {
+    const matrix = new GLX.Matrix();
 
-}());
+    if (this.elevation) {
+      matrix.translate(0, 0, this.elevation);
+    }
+
+    matrix.scale(this.scale, this.scale, this.scale);
+
+    if (this.rotation) {
+      matrix.rotateZ(-this.rotation);
+    }
+
+    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
+      Math.cos(APP.position.latitude / 180 * Math.PI);
+
+    const dLat = this.position.latitude - APP.position.latitude;
+    const dLon = this.position.longitude - APP.position.longitude;
+
+    matrix.translate(dLon * metersPerDegreeLongitude,
+      -dLat * METERS_PER_DEGREE_LATITUDE, 0);
+
+    return matrix;
+  }
+
+  destroy () {
+    data.Index.remove(this);
+
+    if (this.request) {
+      this.request.abort();
+    }
+
+    this.items = [];
+
+    if (this.isReady) {
+      this.vertexBuffer.destroy();
+      this.normalBuffer.destroy();
+      this.colorBuffer.destroy();
+      this.texCoordBuffer.destroy();
+      this.idBuffer.destroy();
+      this.heightBuffer.destroy();
+    }
+  }
+};
