@@ -3,8 +3,10 @@ importScripts(
   '../Request.js',
 // '../mesh/index.js',
 // '../mesh/GeoJSON.js',
-  '../triangulate/index.js',
+  '../render/index.js',
+  '../render/Picking.js',
   '../../node_modules/qolor/dist/Qolor.js',
+  '../triangulate/index.js',
   '../triangulate/roofs/index.js',
   '../triangulate/roofs/Tools.js',
   '../triangulate/split.js',
@@ -28,14 +30,14 @@ function onMessage (e) {
 
       const res = process(geojson, e.data.options);
 
-      postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer]);
+      postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer, res.idColors.buffer]);
     });
   }
 
   if (e.data.action === 'process') {
     const res = process(e.data.geojson, e.data.options);
     res.number = e.data.number;
-    postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer]);
+    postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer, res.idColors.buffer]);
   }
 }
 
@@ -50,7 +52,8 @@ function process (geojson, options) {
       normals: [],
       colors: [],
       texCoords: [],
-      heights: []
+      heights: [],
+      idColors: []
     },
 
     items = [],
@@ -76,6 +79,13 @@ function process (geojson, options) {
     items.push({ id: id, vertexCount: vertexCount, data: properties.data });
   });
 
+  items.forEach(item => {
+    const idColor = render.Picking.idToColor(item.id);
+    for (let i = 0; i < item.vertexCount; i++) {
+      buffers.idColors.push(idColor[0], idColor[1], idColor[2]);
+    }
+  });
+
   return {
     items: items,
     position: position,
@@ -83,7 +93,8 @@ function process (geojson, options) {
     normals: new Float32Array(buffers.normals),
     colors: new Float32Array(buffers.colors),
     texCoords: new Float32Array(buffers.texCoords),
-    heights: new Float32Array(buffers.heights)
+    heights: new Float32Array(buffers.heights),
+    idColors: new Float32Array(buffers.idColors)
   };
 }
 
