@@ -49,17 +49,17 @@ class GLX {
     this.GL = GL;
   }
 
-  static start (render) {
+  start (render) {
     return setInterval(() => {
       requestAnimationFrame(render);
     }, 17); // TODO OSMB4 set interval dynamically
   }
 
-  static stop (loop) {
+  stop (loop) {
     clearInterval(loop);
   }
 
-  static destroy () {
+  destroy () {
     const ext = this.GL.getExtension('WEBGL_lose_context');
     ext.loseContext();
     this.GL = null;

@@ -6,7 +6,6 @@ var osmb = new OSMBuildings({
   state: false,
   minZoom: 14,
   maxZoom: 20,
-  effects: ['shadows'],
   attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
 });
 

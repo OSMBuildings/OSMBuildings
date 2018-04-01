@@ -1,6 +1,8 @@
 
 var render = {
 
+  effects: { shadows: true },
+
   getViewQuad: function() {
     return getViewQuad( this.viewProjMatrix.data,
                        (this.fogDistance + this.fogBlurDistance),
@@ -11,10 +13,8 @@ var render = {
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
     if (!GL.depthTextureExtension) {
-      console.log('Shadows and ground shading are disabled, because your GPU does not support WEBGL_depth_texture');
-      // both effects rely on depth textures
-      delete render.effects.shadows;
-      delete render.effects.outlines;
+      console.warn('Shadows are disabled because your GPU does not support WEBGL_depth_texture');
+      render.effects.shadows = false;
     }
 
     APP.on('change', this._onChange = this.onChange.bind(this));
@@ -30,17 +30,12 @@ var render = {
     render.Basemap.init();
     render.Overlay.init();
     render.AmbientMap.init();
-    render.OutlineMap.init();
     render.blurredAmbientMap = new render.Blur();
-    render.blurredOutlineMap = new render.Blur();
     //render.HudRect.init();
     //render.NormalMap.init();
     render.MapShadows.init();
-    if (render.effects.shadows || render.effects.outlines) {
-      render.cameraGBuffer = new render.DepthFogNormalMap();
-    }
-    
     if (render.effects.shadows) {
+      render.cameraGBuffer = new render.DepthFogNormalMap();
       render.sunGBuffer    = new render.DepthFogNormalMap();
       render.sunGBuffer.framebufferSize = [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE];
     }
@@ -53,54 +48,38 @@ var render = {
   },
   
   renderFrame: function() {
-    if (GL === undefined) {
-      return;
-    }
-    Filter.nextTick();
-    requestAnimationFrame( this.renderFrame.bind(this));
-
-    this.onChange();    
-    GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
-
     if (APP.zoom < APP.minZoom || APP.zoom > APP.maxZoom) {
       return;
     }
-    var viewTrapezoid = this.getViewQuad();
-    /*
-    quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
-                        [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
-                        [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
-                        [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
-    Sun.updateView(viewTrapezoid);
+    requestAnimationFrame( this.renderFrame.bind(this)); // TODO OSMB4: interference with global loop?
+
+    this.onChange();
+    GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+
     var viewSize = [APP.width, APP.height];
 
     if (!render.effects.shadows) {
       render.Buildings.render();
       render.Basemap.render();
 
-      if (render.effects.outlines) {
-        render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
-        render.Picking.render(viewSize);
-        render.OutlineMap.render(
-          render.cameraGBuffer.getDepthTexture(), 
-          render.cameraGBuffer.getFogNormalTexture(), 
-          render.Picking.framebuffer.renderTexture, viewSize, 1.0);
-          render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
-      }
-
       GL.enable(GL.BLEND);
-      if (render.effects.outlines) {
-        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
-        render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
-      }
 
       GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
       GL.disable(GL.DEPTH_TEST);
       GL.disable(GL.BLEND);
       GL.enable(GL.DEPTH_TEST);
     } else {
+      var viewTrapezoid = this.getViewQuad();
+      /*
+      quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
+                          [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
+                          [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
+                          [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
+
+      Sun.updateView(viewTrapezoid);
+
       render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
       render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
       render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), viewSize, 2.0);
@@ -108,27 +87,14 @@ var render = {
       render.Buildings.render(render.sunGBuffer.framebuffer, 0.5);
       render.Basemap.render();
 
-      if (render.effects.outlines) {
-        render.Picking.render(viewSize);
-        render.OutlineMap.render(
-          render.cameraGBuffer.getDepthTexture(), 
-          render.cameraGBuffer.getFogNormalTexture(), 
-          render.Picking.framebuffer.renderTexture, viewSize, 1.0
-        );
-        render.blurredOutlineMap.render(render.OutlineMap.framebuffer.renderTexture, viewSize);
-      }
-
       GL.enable(GL.BLEND);
 
       {
         // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
-        // this aplies the shadow and SSAO effects (which selectively darken the scene)
+        // this applies the shadow and SSAO effects (which selectively darken the scene)
         // while keeping the alpha channel (that corresponds to how much the
         // geometry should be blurred into the background in the next step) intact
         GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
-        if (render.effects.outlines) {
-          render.Overlay.render(render.blurredOutlineMap.framebuffer.renderTexture, viewSize);
-        }
 
         render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
         render.Overlay.render( render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
@@ -260,6 +226,5 @@ var render = {
     
     render.AmbientMap.destroy();
     render.blurredAmbientMap.destroy();
-    render.blurredOutlineMap.destroy();
   }
 };

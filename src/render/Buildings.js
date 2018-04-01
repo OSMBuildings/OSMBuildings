@@ -3,7 +3,28 @@ render.Buildings = {
 
   init: function() {
   
-    this.shader = new GLX.Shader({
+    this.shader = !render.effects.shadows ?
+      new GLX.Shader({
+        vertexShader: Shaders.buildings.vertex,
+        fragmentShader: Shaders.buildings.fragment,
+        shaderName: 'building shader',
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
+        uniforms: [
+          'uModelMatrix',
+          'uViewDirOnMap',
+          'uMatrix',
+          'uNormalTransform',
+          'uLightColor',
+          'uLightDirection',
+          'uLowerEdgePoint',
+          'uFogDistance',
+          'uFogBlurDistance',
+          'uHighlightColor',
+          'uHighlightId',
+          'uFade',
+          'uWallTexIndex'
+        ]
+      }) : new GLX.Shader({
       vertexShader: Shaders['buildings.shadows'].vertex,
       fragmentShader: Shaders['buildings.shadows'].fragment,
       shaderName: 'quality building shader',
@@ -21,7 +42,7 @@ render.Buildings = {
         'uSunMatrix',
         'uShadowTexIndex',
         'uShadowTexDimensions',
-        'uTime',
+        'uFade',
         'uViewDirOnMap',
         'uWallTexIndex'
       ]
@@ -41,7 +62,7 @@ render.Buildings = {
     //   GL.disable(GL.CULL_FACE);
     // }
 
-    shader.setUniforms([
+    shader.setAllUniforms([
       ['uFogDistance',     '1f',  render.fogDistance],
       ['uFogBlurDistance', '1f',  render.fogBlurDistance],
       ['uHighlightColor',  '3fv', this.highlightColor || [0, 0, 0]],
@@ -51,6 +72,10 @@ render.Buildings = {
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
     ]);
+
+    if (!render.effects.shadows) {
+      shader.setUniformMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);
+    }
 
     shader.bindTexture('uWallTexIndex', 0, this.wallTexture);
     
@@ -70,14 +95,16 @@ render.Buildings = {
         return;
       }
 
-      shader.setUniform('uTime', '1f', item.getFade());
+      shader.setUniform('uFade', '1f', item.getFade());
 
-      shader.setUniformMatrices([
+      shader.setAllUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
         ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
       
-      shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+      if (render.effects.shadows) {
+        shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+      }
 
       shader.bindBuffer(item.vertexBuffer,   'aPosition');
       shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');

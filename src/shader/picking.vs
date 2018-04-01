@@ -9,13 +9,13 @@ uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
 
 uniform float uFogRadius;
-uniform float uTime;
+uniform float uFade;
 
 varying vec4 vColor;
 
 void main() {
 
-  float f = clamp(uTime, 0.0, 1.0);
+  float f = clamp(uFade, 0.0, 1.0);
 
   if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);

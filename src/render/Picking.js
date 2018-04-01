@@ -16,7 +16,7 @@ render.Picking = {
         'uModelMatrix',
         'uMatrix',
         'uFogRadius',
-        'uTime'
+        'uFade'
       ]
     });
 
@@ -52,9 +52,9 @@ render.Picking = {
         return;
       }
 
-      shader.setUniform('uTime', '1f', item.getFade());
+      shader.setUniform('uFade', '1f', item.getFade());
 
-      shader.setUniformMatrices([
+      shader.setAllUniformMatrices([
         ['uModelMatrix', '4fv', modelMatrix.data],
         ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);

@@ -50,7 +50,7 @@ render.AmbientMap = {
     GL.clearColor(1.0, 0.0, 0.0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setUniforms([
+    shader.setAllUniforms([
       ['uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]],
       ['uEffectStrength', '1f',  effectStrength],
       ['uNearPlane',      '1f',  1.0], //FIXME: use actual near and far planes of the projection matrix

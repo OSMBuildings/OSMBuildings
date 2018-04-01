@@ -61,8 +61,8 @@ var APP, GL;
  * @deprecated {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
  * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
  * @param {String} [options.highlightColor='#f08000'] Default color for highlighting features
- * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality. If performance is an issue, consider also removing effects
- * @param {Array} [options.effects=[]] Which effects to enable. The only effect at the moment is 'shadows'
+ * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality.
+ * @deprecated {Array} [options.effects=[]] Which effects to enable. The only effect at the moment is 'shadows'
  * @param {Object} [options.style] Sets the default building style
  * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
  */
@@ -83,12 +83,6 @@ const OSMBuildings = function(options) {
 
   if (APP.options.highlightColor) {
     HIGHLIGHT_COLOR = Qolor.parse(APP.options.highlightColor).toArray();
-  }
-
-  render.effects = {};
-  var effects = APP.options.effects || [];
-  for (var i = 0; i < effects.length; i++) {
-    render.effects[ effects[i] ] = true;
   }
 
   APP.attribution = APP.options.attribution || OSMBuildings.ATTRIBUTION;

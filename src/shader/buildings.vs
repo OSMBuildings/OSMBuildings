@@ -3,17 +3,18 @@ precision highp float;  //is default in vertex shaders anyway, using highp fixes
 #define halfPi 1.57079632679
 
 attribute vec4 aPosition;
+attribute vec2 aTexCoord;
 attribute vec3 aNormal;
 attribute vec3 aColor;
-attribute vec2 aTexCoord;
 attribute vec3 aId;
 attribute float aHeight;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
-uniform mat4 uSunMatrix;
 
 uniform mat3 uNormalTransform;
+uniform vec3 uLightDirection;
+uniform vec3 uLightColor;
 
 uniform vec3 uHighlightColor;
 uniform vec3 uHighlightId;
@@ -24,11 +25,9 @@ uniform float uFade;
 
 varying vec3 vColor;
 varying vec2 vTexCoord;
-varying vec3 vNormal;
-varying vec3 vSunRelPosition;
 varying float verticalDistanceToLowerEdge;
 
-float gradientStrength = 0.4;
+const float gradientStrength = 0.4;
 
 void main() {
 
@@ -51,11 +50,10 @@ void main() {
 
     //*** light intensity, defined by light direction on surface ****************
 
-    vNormal = aNormal;
+    vec3 transformedNormal = aNormal * uNormalTransform;
+    float lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;
+    color = color + uLightColor * lightIntensity;
     vTexCoord = aTexCoord;
-    //vec3 transformedNormal = aNormal * uNormalTransform;
-    //float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;
-    //color = color + uLightColor * lightIntensity;
 
     //*** vertical shading ******************************************************
 
@@ -67,10 +65,5 @@ void main() {
     vec4 worldPos = uModelMatrix * pos;
     vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
     verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
-    
-    // *** shadow mapping ********
-
-    vec4 sunRelPosition = uSunMatrix * pos;
-    vSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;
   }
 }

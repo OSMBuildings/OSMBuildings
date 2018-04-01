@@ -29,7 +29,7 @@ render.Basemap = {
 
     shader.enable();
     
-    shader.setUniforms([
+    shader.setAllUniforms([
       ['uFogDistance',     '1f',  render.fogDistance],
       ['uFogBlurDistance', '1f',  render.fogBlurDistance],
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
@@ -80,12 +80,12 @@ render.Basemap = {
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,
                      MAX_USED_ZOOM_LEVEL - tile.zoom);
                      
-    shader.setUniforms([
+    shader.setAllUniforms([
       ['uViewDirOnMap', '2fv',   render.viewDirOnMap],
       ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap]
     ]);
 
-    shader.setUniformMatrices([
+    shader.setAllUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
       ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
     ]);

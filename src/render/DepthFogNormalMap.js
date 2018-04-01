@@ -14,7 +14,7 @@ render.DepthFogNormalMap = function() {
     fragmentShader: Shaders.fogNormal.fragment,
     shaderName: 'fog/normal shader',
     attributes: ['aPosition', 'aNormal'],
-    uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uTime', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
+    uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uFade', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
   });
   
   this.framebuffer = new GLX.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
@@ -63,15 +63,15 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
       return;
     }
 
-    shader.setUniforms([
+    shader.setAllUniforms([
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
       ['uFogDistance',     '1f',  render.fogDistance],
       ['uFogBlurDistance', '1f',  render.fogBlurDistance],
-      ['uTime',            '1f',  item.getFade()]
+      ['uFade',            '1f',  item.getFade()]
     ]);
 
-    shader.setUniformMatrices([
+    shader.setAllUniformMatrices([
       ['uMatrix',       '4fv', GLX.Matrix.multiply(modelMatrix, viewProjMatrix)],
       ['uModelMatrix',  '4fv', modelMatrix.data],
       ['uNormalMatrix', '3fv', GLX.Matrix.transpose3(GLX.Matrix.invert3(GLX.Matrix.multiply(modelMatrix, viewMatrix)))]

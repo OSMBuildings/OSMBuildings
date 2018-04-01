@@ -36,7 +36,7 @@ render.MapShadows = {
 
     GL.disable(GL.CULL_FACE);
 
-    shader.setUniforms([
+    shader.setAllUniforms([
       ['uDirToSun', '3fv', Sun.direction],
       ['uViewDirOnMap', '2fv',   render.viewDirOnMap],
       ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap],
@@ -58,7 +58,7 @@ render.MapShadows = {
       return;
     }
 
-    shader.setUniformMatrices([
+    shader.setAllUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
       ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
       ['uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
