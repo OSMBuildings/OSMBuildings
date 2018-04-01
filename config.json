@@ -1,7 +1,6 @@
 {
   "shaders": [
     "picking",
-    "buildings",
     "buildings.shadows",
     "flatColor",
     "basemap",

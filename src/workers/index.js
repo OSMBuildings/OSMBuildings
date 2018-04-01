@@ -36,7 +36,7 @@ class Workers {
 
   status() {
     console.log(this.items.map(item => {
-      return item.busy ? 'A' : '_';
+      return item.busy ? '▪' : '▫';
     }).join(''));
   }
 }

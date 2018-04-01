@@ -3,49 +3,28 @@ render.Buildings = {
 
   init: function() {
   
-    this.shader = !render.effects.shadows ?
-      new GLX.Shader({
-        vertexShader: Shaders.buildings.vertex,
-        fragmentShader: Shaders.buildings.fragment,
-        shaderName: 'building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
-        uniforms: [
-          'uModelMatrix',
-          'uViewDirOnMap',
-          'uMatrix',
-          'uNormalTransform',
-          'uLightColor',
-          'uLightDirection',
-          'uLowerEdgePoint',
-          'uFogDistance',
-          'uFogBlurDistance',
-          'uHighlightColor',
-          'uHighlightId',
-          'uTime',
-          'uWallTexIndex'
-        ]
-      }) : new GLX.Shader({
-        vertexShader: Shaders['buildings.shadows'].vertex,
-        fragmentShader: Shaders['buildings.shadows'].fragment,
-        shaderName: 'quality building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
-        uniforms: [
-          'uFogDistance',
-          'uFogBlurDistance',
-          'uHighlightColor',
-          'uHighlightId',
-          'uLightColor',
-          'uLightDirection',
-          'uLowerEdgePoint',
-          'uMatrix',
-          'uModelMatrix',
-          'uSunMatrix',
-          'uShadowTexIndex',
-          'uShadowTexDimensions',
-          'uTime',
-          'uViewDirOnMap',
-          'uWallTexIndex'
-        ]
+    this.shader = new GLX.Shader({
+      vertexShader: Shaders['buildings.shadows'].vertex,
+      fragmentShader: Shaders['buildings.shadows'].fragment,
+      shaderName: 'quality building shader',
+      attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
+      uniforms: [
+        'uFogDistance',
+        'uFogBlurDistance',
+        'uHighlightColor',
+        'uHighlightId',
+        'uLightColor',
+        'uLightDirection',
+        'uLowerEdgePoint',
+        'uMatrix',
+        'uModelMatrix',
+        'uSunMatrix',
+        'uShadowTexIndex',
+        'uShadowTexDimensions',
+        'uTime',
+        'uViewDirOnMap',
+        'uWallTexIndex'
+      ]
     });
     
     this.wallTexture = new GLX.texture.Image();
@@ -58,9 +37,9 @@ render.Buildings = {
     var shader = this.shader;
     shader.enable();
 
-    if (this.showBackfaces) {
-      GL.disable(GL.CULL_FACE);
-    }
+    // if (this.showBackfaces) {
+    //   GL.disable(GL.CULL_FACE);
+    // }
 
     shader.setUniforms([
       ['uFogDistance',     '1f',  render.fogDistance],
@@ -72,10 +51,6 @@ render.Buildings = {
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
     ]);
-
-    if (!render.effects.shadows) {
-      shader.setUniformMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);
-    }
 
     shader.bindTexture('uWallTexIndex', 0, this.wallTexture);
     
@@ -102,9 +77,7 @@ render.Buildings = {
         ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
       
-      if (render.effects.shadows) {
-        shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
-      }
+      shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
 
       shader.bindBuffer(item.vertexBuffer,   'aPosition');
       shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');
@@ -116,9 +89,9 @@ render.Buildings = {
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });
 
-    if (this.showBackfaces) {
-      GL.enable(GL.CULL_FACE);
-    }
+    // if (this.showBackfaces) {
+    //   GL.enable(GL.CULL_FACE);
+    // }
 
     shader.disable();
   },
