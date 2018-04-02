@@ -4,9 +4,11 @@ var render = {
   effects: { shadows: true },
 
   getViewQuad: function() {
-    return getViewQuad( this.viewProjMatrix.data,
-                       (this.fogDistance + this.fogBlurDistance),
-                        this.viewDirOnMap);
+    return getViewQuad(
+      this.viewProjMatrix.data,
+      (this.fogDistance + this.fogBlurDistance),
+      this.viewDirOnMap
+    );
   },
 
   start: function() {
@@ -19,7 +21,7 @@ var render = {
 
     APP.on('change', this._onChange = this.onChange.bind(this));
     APP.on('resize', this._onResize = this.onResize.bind(this));
-    this.onResize();  //initialize view and projection matrix, fog distance, etc.
+    this.onResize(); // initialize view and projection matrix, fog distance, etc.
 
     GL.cullFace(GL.BACK);
     GL.enable(GL.CULL_FACE);
@@ -31,8 +33,8 @@ var render = {
     render.Overlay.init();
     render.AmbientMap.init();
     render.blurredAmbientMap = new render.Blur();
-    //render.HudRect.init();
-    //render.NormalMap.init();
+    // render.HudRect.init();
+    // render.NormalMap.init();
     render.MapShadows.init();
     if (render.effects.shadows) {
       render.cameraGBuffer = new render.DepthFogNormalMap();
@@ -40,9 +42,9 @@ var render = {
       render.sunGBuffer.framebufferSize = [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE];
     }
 
-    //var quad = new mesh.DebugQuad();
-    //quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
-    //data.Index.add(quad);
+    // var quad = new mesh.DebugQuad();
+    // quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
+    // data.Index.add(quad);
 
     requestAnimationFrame( this.renderFrame.bind(this));
   },
@@ -52,12 +54,12 @@ var render = {
       return;
     }
 
-    if(!Activity.isBusy()){
+    if (!Activity.isBusy()) {
       console.log("stop renderFrame")
       requestAnimationFrame( this.renderFrame.bind(this));
       return;
-
     }
+
     console.log("run renderFrame")
     requestAnimationFrame( this.renderFrame.bind(this)); // TODO OSMB4: interference with global loop?
 
