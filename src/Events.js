@@ -122,6 +122,8 @@ Events.init = function(container) {
   function onMouseDown(e) {
     cancelEvent(e);
 
+    Activity.setBusy();
+
     startZoom = APP.zoom;
     prevRotation = APP.rotation;
     prevTilt = APP.tilt;
@@ -155,6 +157,8 @@ Events.init = function(container) {
   }
 
   function onMouseUp(e) {
+    setTimeout(function(){ Activity.setIdle(); }, 200);
+
     // prevents clicks on other page elements
     if (!button) {
       return;

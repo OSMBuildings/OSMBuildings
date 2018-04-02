@@ -52,6 +52,13 @@ var render = {
       return;
     }
 
+    if(!Activity.isBusy()){
+      console.log("stop renderFrame")
+      requestAnimationFrame( this.renderFrame.bind(this));
+      return;
+
+    }
+    console.log("run renderFrame")
     requestAnimationFrame( this.renderFrame.bind(this)); // TODO OSMB4: interference with global loop?
 
     this.onChange();
