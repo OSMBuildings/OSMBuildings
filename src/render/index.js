@@ -51,15 +51,14 @@ var render = {
     if (APP.zoom < APP.minZoom || APP.zoom > APP.maxZoom) {
       return;
     }
-
     if(!Activity.isBusy()){
-      console.log("stop renderFrame")
-      requestAnimationFrame( this.renderFrame.bind(this));
-      return;
-
+      console.log("slow renderFrame")
+      setTimeout(() => {requestAnimationFrame( this.renderFrame.bind(this))}, 250);
+    }else{
+      requestAnimationFrame( this.renderFrame.bind(this)); // TODO OSMB4: interference with global loop?
+      console.log("normal renderFrame")
     }
-    console.log("run renderFrame")
-    requestAnimationFrame( this.renderFrame.bind(this)); // TODO OSMB4: interference with global loop?
+
 
     this.onChange();
     GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
