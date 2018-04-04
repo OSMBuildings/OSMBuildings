@@ -23,7 +23,8 @@ mesh.GeoJSON = class {
 
     this.items = [];
 
-    Activity.setBusy();
+    APP.activity.setBusy("meshloading");
+
     APP.workers.get(worker => {
       this.worker = worker;
 
@@ -37,9 +38,8 @@ mesh.GeoJSON = class {
         worker.removeEventListener('message', onResult, false); // remove this listener
         APP.workers.free(worker); // return worker to pool
 
-        setTimeout(function () {
-          Activity.setIdle();
-        }, 1000);
+        setTimeout(function () { APP.activity.setIdle("meshloading"); }, 3000);
+
       }.bind(this);
 
       this.worker.addEventListener('message', onResult, false);

@@ -51,14 +51,11 @@ var render = {
     if (APP.zoom < APP.minZoom || APP.zoom > APP.maxZoom) {
       return;
     }
-    if(!Activity.isBusy()){
-      console.log("slow renderFrame")
+    if(!APP.activity.isBusy()){
       setTimeout(() => {requestAnimationFrame( this.renderFrame.bind(this))}, 250);
     }else{
       requestAnimationFrame( this.renderFrame.bind(this)); // TODO OSMB4: interference with global loop?
-      console.log("normal renderFrame")
     }
-
 
     this.onChange();
     GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
@@ -90,7 +87,7 @@ var render = {
       render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
       render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), viewSize, 2.0);
       render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
-      render.Buildings.render(render.sunGBuffer.framebuffer, 0.5);
+      render.Buildings.render(render.sunGBuffer.framebuffer);
       render.Basemap.render();
 
       GL.enable(GL.BLEND);

@@ -69,6 +69,8 @@ var APP, GL;
 const OSMBuildings = function(options) {
   APP = this; // refers to 'this' (current instance). Should make other globals obsolete.
 
+  APP.activity = new Activity();
+
   APP.options = (options || {});
 
   if (APP.options.style) {
