@@ -258,6 +258,7 @@ Events.init = function(container) {
   }
 
   function onTouchStart(e) {
+    APP.activity.setBusy("mousedown");
     button = 1;
     cancelEvent(e);
 
@@ -315,6 +316,7 @@ Events.init = function(container) {
     if (!button) {
       return;
     }
+    setTimeout(function(){ APP.activity.setIdle("mousedown"); }, 1000);
 
     // gesturechange polyfill
     gestureStarted = false;
