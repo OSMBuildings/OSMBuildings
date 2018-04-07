@@ -230,7 +230,7 @@ mesh.OBJ = class {
         [].push.apply(this.data.ids, idColor);
       }
 
-      this.items.push({ id: id, vertexCount: feature.vertices.length / 3, height: feature.height, data: feature.data });
+      this.items.push({ id: id, vertexCount: feature.vertices.length / 3, height: feature.height });
     });
   }
 
@@ -256,7 +256,7 @@ mesh.OBJ = class {
 
     this.fade = 0;
     this.isReady = true;
-    setTimeout(function () {
+    setTimeout(() => {
       APP.activity.setIdle("meshloading");
     }, 3000);
   }

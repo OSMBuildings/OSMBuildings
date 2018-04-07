@@ -1,7 +1,6 @@
-
 mesh.GeoJSON = class {
 
-  constructor(url, options) {
+  constructor (url, options) {
     options = options || {};
     this.options = options;
 
@@ -9,9 +8,9 @@ mesh.GeoJSON = class {
     // no Qolor.toArray() needed as Triangulation does it internally
     this.forcedColor = options.color;
 
-    this.replace   = !!options.replace;
-    this.scale     = options.scale     || 1;
-    this.rotation  = options.rotation  || 0;
+    this.replace = !!options.replace;
+    this.scale = options.scale || 1;
+    this.rotation = options.rotation || 0;
     this.elevation = options.elevation || 0;
 
     this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
@@ -30,15 +29,15 @@ mesh.GeoJSON = class {
 
       // TODO: if loading fails, a worker should be returned to pool. Done, right?
 
-      const onResult = function(e) {
-        if(e.data !== 'error'){
-            this.setData(e.data);
+      const onResult = function (e) {
+        if (e.data !== 'error') {
+          this.setData(e.data);
         }
 
         worker.removeEventListener('message', onResult, false); // remove this listener
         APP.workers.free(worker); // return worker to pool
 
-        setTimeout(function () {
+        setTimeout(() => {
           APP.activity.setIdle("meshloading");
         }, 3000);
 
@@ -54,22 +53,22 @@ mesh.GeoJSON = class {
     });
   }
 
-  setData(res) {
+  setData (res) {
     this.items = res.items;
     this.position = res.position;
 
-    this.vertexBuffer   = new GLX.Buffer(3, res.vertices);
-    this.normalBuffer   = new GLX.Buffer(3, res.normals);
-    this.colorBuffer    = new GLX.Buffer(3, res.colors);
+    this.vertexBuffer = new GLX.Buffer(3, res.vertices);
+    this.normalBuffer = new GLX.Buffer(3, res.normals);
+    this.colorBuffer = new GLX.Buffer(3, res.colors);
     this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
-    this.heightBuffer   = new GLX.Buffer(1, res.heights);
+    this.heightBuffer = new GLX.Buffer(1, res.heights);
 
     const idColors = [];
     res.items.forEach(item => {
       const idColor = render.Picking.idToColor(item.id);
 
       for (let i = 0; i < item.vertexCount; i++) {
-         idColors.push(idColor[0], idColor[1], idColor[2]);
+        idColors.push(idColor[0], idColor[1], idColor[2]);
       }
     });
     this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
@@ -82,9 +81,10 @@ mesh.GeoJSON = class {
 
   }
 
-  applyFilter() {} // TODO
+  applyFilter () {
+  } // TODO
 
-  getFade() {
+  getFade () {
     if (this.fade >= 1) {
       return 1;
     }
@@ -94,14 +94,14 @@ mesh.GeoJSON = class {
   }
 
   // TODO: switch to a notation like mesh.transform
-  getMatrix() {
+  getMatrix () {
     const matrix = new GLX.Matrix();
 
     if (this.elevation) {
       matrix.translate(0, 0, this.elevation);
     }
 
-    matrix.scale(this.scale, this.scale, this.scale*HEIGHT_SCALE);
+    matrix.scale(this.scale, this.scale, this.scale * HEIGHT_SCALE);
 
     if (this.rotation) {
       matrix.rotateZ(-this.rotation);
@@ -114,12 +114,12 @@ mesh.GeoJSON = class {
 
     const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
-    matrix.translate( dLon*metersPerDegreeLongitude, -dLat*METERS_PER_DEGREE_LATITUDE, 0);
+    matrix.translate(dLon * metersPerDegreeLongitude, -dLat * METERS_PER_DEGREE_LATITUDE, 0);
 
     return matrix;
   }
 
-  destroy() {
+  destroy () {
     this.isReady = false;
 
     clearTimeout(this.relaxTimer);

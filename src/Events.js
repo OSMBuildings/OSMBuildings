@@ -4,24 +4,24 @@
 /**
  * @private
  */
-function add2(a, b) {
+function add2 (a, b) {
   return [a[0] + b[0], a[1] + b[1]];
 }
 
 /**
  * @private
  */
-function mul2scalar(a, f) {
-  return [a[0]*f, a[1]*f];
+function mul2scalar (a, f) {
+  return [a[0] * f, a[1] * f];
 }
 
-function getPos(e) {
+function getPos (e) {
   var el = e.target;
 
   if (el.getBoundingClientRect) {
     var box = el.getBoundingClientRect();
     if (box !== undefined) {
-      return { x: e.x-box.left, y: e.y-box.top };
+      return { x: e.x - box.left, y: e.y - box.top };
     }
   }
 
@@ -31,13 +31,13 @@ function getPos(e) {
     res.y += el.offsetTop;
     el = el.parentNode;
   }
-  return { x: e.x-res.s, y: e.y-res.y };
+  return { x: e.x - res.s, y: e.y - res.y };
 }
 
 /**
  * @private
  */
-function cancelEvent(e) {
+function cancelEvent (e) {
   if (e.preventDefault) {
     e.preventDefault();
   }
@@ -50,7 +50,7 @@ function cancelEvent(e) {
 /**
  * @private
  */
-function addListener(target, type, fn) {
+function addListener (target, type, fn) {
   target.addEventListener(type, fn, false);
 }
 
@@ -67,32 +67,32 @@ Events.disabled = false;
 /**
  * @private
  */
-Events.init = function(container) {
+Events.init = function (container) {
   var win = top || window;
 
   if ('ontouchstart' in win) {
-    addListener(container,    'touchstart', onTouchStart);
+    addListener(container, 'touchstart', onTouchStart);
     addListener(win.document, 'touchmove', onTouchMoveDocument);
-    addListener(container,    'touchmove', onTouchMove);
+    addListener(container, 'touchmove', onTouchMove);
     addListener(win.document, 'touchend', onTouchEnd);
     addListener(win.document, 'gesturechange', onGestureChange);
   } else {
-    addListener(container,    'mousedown', onMouseDown);
+    addListener(container, 'mousedown', onMouseDown);
     addListener(win.document, 'mousemove', onMouseMoveDocument);
-    addListener(container,    'mousemove', onMouseMove);
+    addListener(container, 'mousemove', onMouseMove);
     addListener(win.document, 'mouseup', onMouseUp);
-    addListener(container,    'dblclick', onDoubleClick);
-    addListener(container,    'mousewheel', onMouseWheel);
-    addListener(container,    'DOMMouseScroll', onMouseWheel);
-    addListener(container,    'contextmenu', onContextMenu);
+    addListener(container, 'dblclick', onDoubleClick);
+    addListener(container, 'mousewheel', onMouseWheel);
+    addListener(container, 'DOMMouseScroll', onMouseWheel);
+    addListener(container, 'contextmenu', onContextMenu);
   }
 
   var resizeDebounce;
-  addListener(window, 'resize', function() {
+  addListener(window, 'resize', function () {
     if (resizeDebounce) {
       return;
     }
-    resizeDebounce = setTimeout(function() {
+    resizeDebounce = setTimeout(function () {
       resizeDebounce = null;
       APP.setSize({ width: container.offsetWidth, height: container.offsetHeight });
     }, 250);
@@ -110,7 +110,7 @@ Events.init = function(container) {
     prevTilt = 0,
     button = 0;
 
-  function onDoubleClick(e) {
+  function onDoubleClick (e) {
     cancelEvent(e);
     if (!Events.disabled) {
       APP.setZoom(APP.zoom + 1, e);
@@ -119,7 +119,7 @@ Events.init = function(container) {
     APP.emit('doubleclick', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
   }
 
-  function onMouseDown(e) {
+  function onMouseDown (e) {
     cancelEvent(e);
 
     APP.activity.setBusy("mousedown");
@@ -141,7 +141,7 @@ Events.init = function(container) {
     APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
   }
 
-  function onMouseMoveDocument(e) {
+  function onMouseMoveDocument (e) {
     if (button === 1) {
       moveMap(e);
     } else if (button === 2) {
@@ -152,12 +152,12 @@ Events.init = function(container) {
     prevY = e.clientY;
   }
 
-  function onMouseMove(e) {
+  function onMouseMove (e) {
     APP.emit('pointermove', getPos(e));
   }
 
-  function onMouseUp(e) {
-    setTimeout(function(){
+  function onMouseUp (e) {
+    setTimeout(() => {
       APP.activity.setIdle("mousedown");
     }, 1000);
 
@@ -176,7 +176,7 @@ Events.init = function(container) {
     APP.emit('pointerup', { button: e.button, buttons: e.buttons });
   }
 
-  function onMouseWheel(e) {
+  function onMouseWheel (e) {
     cancelEvent(e);
 
     var delta = 0;
@@ -189,20 +189,20 @@ Events.init = function(container) {
     }
 
     if (!Events.disabled) {
-      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+      var adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
       APP.setZoom(APP.zoom + adjust, e);
     }
 
     // we don't emit mousewheel here as we don't want to run into a loop of death
   }
 
-  function onContextMenu(e) {
+  function onContextMenu (e) {
     e.preventDefault();
   }
 
   //***************************************************************************
 
-  function moveMap(e) {
+  function moveMap (e) {
     if (Events.disabled) {
       return;
     }
@@ -211,30 +211,30 @@ Events.init = function(container) {
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
     var
-      scale = 0.86*Math.pow(2, -APP.zoom),
-      lonScale = 1/Math.cos(APP.position.latitude/180*Math.PI),
+      scale = 0.86 * Math.pow(2, -APP.zoom),
+      lonScale = 1 / Math.cos(APP.position.latitude / 180 * Math.PI),
       dx = e.clientX - prevX,
       dy = e.clientY - prevY,
-      angle = APP.rotation*Math.PI/180,
+      angle = APP.rotation * Math.PI / 180,
       vRight = [Math.cos(angle), Math.sin(angle)],
-      vForward = [Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
+      vForward = [Math.cos(angle - Math.PI / 2), Math.sin(angle - Math.PI / 2)],
       dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
 
     var newPosition = {
-      longitude: APP.position.longitude - dir[0]*scale*lonScale,
-      latitude: APP.position.latitude + dir[1]*scale
+      longitude: APP.position.longitude - dir[0] * scale * lonScale,
+      latitude: APP.position.latitude + dir[1] * scale
     };
 
     APP.setPosition(newPosition);
     APP.emit('move', newPosition);
   }
 
-  function rotateMap(e) {
+  function rotateMap (e) {
     if (Events.disabled) {
       return;
     }
-    prevRotation += (e.clientX - prevX)*(360/innerWidth);
-    prevTilt -= (e.clientY - prevY)*(360/innerHeight);
+    prevRotation += (e.clientX - prevX) * (360 / innerWidth);
+    prevTilt -= (e.clientY - prevY) * (360 / innerHeight);
     APP.setRotation(prevRotation);
     APP.setTilt(prevTilt);
   }
@@ -246,20 +246,21 @@ Events.init = function(container) {
     angle1 = 0,
     gestureStarted = false;
 
-  function emitGestureChange(e) {
+  function emitGestureChange (e) {
     var
       t1 = e.touches[0],
       t2 = e.touches[1],
       dx = t1.clientX - t2.clientX,
       dy = t1.clientY - t2.clientY,
-      dist2 = dx*dx + dy*dy,
+      dist2 = dx * dx + dy * dy,
       angle2 = Math.atan2(dy, dx);
 
-    onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
+    onGestureChange({ rotation: ((angle2 - angle1) * (180 / Math.PI)) % 360, scale: Math.sqrt(dist2 / dist1) });
   }
 
-  function onTouchStart(e) {
+  function onTouchStart (e) {
     APP.activity.setBusy("mousedown");
+
     button = 1;
     cancelEvent(e);
 
@@ -270,7 +271,7 @@ Events.init = function(container) {
       var t2 = e.touches[1];
       var dx = t1.clientX - t2.clientX;
       var dy = t1.clientY - t2.clientY;
-      dist1 = dx*dx + dy*dy;
+      dist1 = dx * dx + dy * dy;
       angle1 = Math.atan2(dy, dx);
       gestureStarted = true;
     }
@@ -285,15 +286,15 @@ Events.init = function(container) {
     APP.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1 });
   }
 
-  function onTouchMoveDocument(e) {
+  function onTouchMoveDocument (e) {
     if (!button) {
       return;
     }
 
     var t1 = e.touches[0];
 
-    if (e.touches.length>1) {
-      APP.setTilt(prevTilt + (prevY - t1.clientY)*(360/innerHeight));
+    if (e.touches.length > 1) {
+      APP.setTilt(prevTilt + (prevY - t1.clientY) * (360 / innerHeight));
       prevTilt = APP.tilt;
       // gesturechange polyfill
       if (!('ongesturechange' in win)) {
@@ -306,18 +307,18 @@ Events.init = function(container) {
     prevY = t1.clientY;
   }
 
-  function onTouchMove(e) {
+  function onTouchMove (e) {
     if (e.touches.length === 1) {
       var pos = getPos(e.touches[0]);
       APP.emit('pointermove', { x: pos.x, y: pos.y, button: 0, buttons: 1 });
     }
   }
 
-  function onTouchEnd(e) {
+  function onTouchEnd (e) {
     if (!button) {
       return;
     }
-    setTimeout(function(){
+    setTimeout(() => {
       APP.activity.setIdle("mousedown");
     }, 1000);
 
@@ -336,7 +337,7 @@ Events.init = function(container) {
     }
   }
 
-  function onGestureChange(e) {
+  function onGestureChange (e) {
     if (!button) {
       return;
     }

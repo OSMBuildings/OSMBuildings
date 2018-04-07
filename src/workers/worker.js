@@ -73,7 +73,7 @@ function process (geojson, options) {
       buffers.heights.push(properties.height);
     }
 
-    items.push({ id: id, vertexCount: vertexCount, data: properties.data });
+    items.push({ id: id, vertexCount: vertexCount });
   });
 
   return {

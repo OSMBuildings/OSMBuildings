@@ -54,9 +54,11 @@ var render = {
       return;
     }
     if (!APP.activity.isBusy()) {
-      setTimeout(() => {requestAnimationFrame( this.renderFrame.bind(this))}, 250);
+      setTimeout(() => {
+        requestAnimationFrame(this.renderFrame.bind(this));
+      }, 250);
     } else {
-      requestAnimationFrame( this.renderFrame.bind(this));
+      requestAnimationFrame(this.renderFrame.bind(this));
     }
 
     this.onChange();

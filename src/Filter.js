@@ -36,7 +36,7 @@ var Filter = {
 
       for (j = 0, jl = indexItem.items.length; j < jl; j++) {
         item = indexItem.items[j];
-        if (selector(item.id, item.data)) {
+        if (selector(item.id)) {
           item.filter = [start, end, item.filter ? item.filter[3] : 1, 0];
         }
       }
@@ -72,7 +72,7 @@ var Filter = {
 
       for (j = 0, jl = indexItem.items.length; j < jl; j++) {
         item = indexItem.items[j];
-        if (selector(item.id, item.data)) {
+        if (selector(item.id)) {
           item.filter = [start, end, item.filter ? item.filter[3] : 0, 1];
         }
       }
@@ -99,7 +99,7 @@ var Filter = {
 
       for (j = 0, jl = indexItem.items.length; j < jl; j++) {
         item = indexItem.items[j];
-        if (selector(item.id, item.data)) {
+        if (selector(item.id)) {
           item.filter = [0, 0, 0, 0];
         }
       }
