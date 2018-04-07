@@ -3,8 +3,6 @@ importScripts(
   '../Request.js',
 // '../mesh/index.js',
 // '../mesh/GeoJSON.js',
-//  '../render/index.js',
-//  '../render/Picking.js',
   '../../node_modules/qolor/dist/Qolor.js',
   '../triangulate/index.js',
   '../triangulate/roofs/index.js',

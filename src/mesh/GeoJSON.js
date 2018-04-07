@@ -38,7 +38,9 @@ mesh.GeoJSON = class {
         worker.removeEventListener('message', onResult, false); // remove this listener
         APP.workers.free(worker); // return worker to pool
 
-        setTimeout(function () { APP.activity.setIdle("meshloading"); }, 3000);
+        setTimeout(function () {
+          APP.activity.setIdle("meshloading");
+        }, 3000);
 
       }.bind(this);
 
@@ -64,15 +66,12 @@ mesh.GeoJSON = class {
 
     const idColors = [];
     res.items.forEach(item => {
-
       const idColor = render.Picking.idToColor(item.id);
 
       for (let i = 0; i < item.vertexCount; i++) {
          idColors.push(idColor[0], idColor[1], idColor[2]);
       }
-
     });
-
     this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
 
     Filter.apply(this);

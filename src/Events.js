@@ -157,8 +157,9 @@ Events.init = function(container) {
   }
 
   function onMouseUp(e) {
-
-    setTimeout(function(){ APP.activity.setIdle("mousedown"); }, 1000);
+    setTimeout(function(){
+      APP.activity.setIdle("mousedown");
+    }, 1000);
 
     // prevents clicks on other page elements
     if (!button) {
@@ -316,7 +317,9 @@ Events.init = function(container) {
     if (!button) {
       return;
     }
-    setTimeout(function(){ APP.activity.setIdle("mousedown"); }, 1000);
+    setTimeout(function(){
+      APP.activity.setIdle("mousedown");
+    }, 1000);
 
     // gesturechange polyfill
     gestureStarted = false;

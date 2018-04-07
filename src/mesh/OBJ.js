@@ -256,7 +256,9 @@ mesh.OBJ = class {
 
     this.fade = 0;
     this.isReady = true;
-    setTimeout(function () { APP.activity.setIdle("meshloading"); }, 3000);
+    setTimeout(function () {
+      APP.activity.setIdle("meshloading");
+    }, 3000);
   }
 
   applyFilter () {} // TODO

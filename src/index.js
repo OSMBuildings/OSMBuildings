@@ -695,6 +695,7 @@ OSMBuildings.prototype = {
     this.canvas.parentNode.removeChild(this.canvas);
 
     data.Index.destroy();
+    APP.activity.destroy();
 
     APP.container.innerHTML = '';
   }

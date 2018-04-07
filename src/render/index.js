@@ -53,10 +53,10 @@ var render = {
     if (APP.zoom < APP.minZoom || APP.zoom > APP.maxZoom) {
       return;
     }
-    if(!APP.activity.isBusy()){
+    if (!APP.activity.isBusy()) {
       setTimeout(() => {requestAnimationFrame( this.renderFrame.bind(this))}, 250);
-    }else{
-      requestAnimationFrame( this.renderFrame.bind(this)); // TODO OSMB4: interference with global loop?
+    } else {
+      requestAnimationFrame( this.renderFrame.bind(this));
     }
 
     this.onChange();
