@@ -30,9 +30,9 @@ basemap.Tile = function(x, y, zoom) {
 
 basemap.Tile.prototype = {
   load: function(url) {
-    Activity.setBusy();
+    APP.activity.setBusy("basemapTile");
     this.texture = new GLX.texture.Image().load(url, function(image) {
-      Activity.setIdle();
+      setTimeout(function () { APP.activity.setIdle("basemapTile"); }, 3000);
       if (image) {
         this.isReady = true;
         /* The whole texture will be mapped to fit the whole tile exactly. So

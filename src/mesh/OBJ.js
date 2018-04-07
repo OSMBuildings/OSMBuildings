@@ -177,7 +177,8 @@ mesh.OBJ = class {
       ids: []
     };
 
-    Activity.setBusy();
+    APP.activity.setBusy("meshloading");
+
     this.request = Request.getText(url, (error, obj) => {
       this.request = null;
       if (error) {
@@ -255,7 +256,7 @@ mesh.OBJ = class {
 
     this.fade = 0;
     this.isReady = true;
-    Activity.setIdle();
+    setTimeout(function () { APP.activity.setIdle("meshloading"); }, 3000);
   }
 
   applyFilter () {} // TODO

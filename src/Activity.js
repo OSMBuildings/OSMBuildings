@@ -1,46 +1,31 @@
 
-var Activity = {};
-
 // TODO: could turn into a public loading handler
 // OSMB.loader - stop(), start(), isBusy(), events..
 
-(function() {
+Activity = class {
 
-  var count = 0;
-  var debounce;
+  constructor () {
+    this.jobs = [];
+  }
 
-  Activity.setBusy = function() {
-    //console.log('setBusy', count);
-
-    if (!count) {
-      if (debounce) {
-        clearTimeout(debounce);
-        debounce = null;
-      } else {
-        APP.emit('busy');
-      }
+  setBusy(id){
+    if(id !== undefined){
+      this.jobs.push(id);
     }
-    count++;
-  };
+  }
 
-  Activity.setIdle = function() {
-    if (!count) {
-      return;
+  setIdle(id){
+    if(id !== undefined) {
+      this.jobs = this.jobs.filter(job => job !== id);
     }
+  }
 
-    count--;
-    if (!count) {
-      debounce = setTimeout(function() {
-        debounce = null;
-        APP.emit('idle');
-      }, 33);
-    }
+  isBusy(){
+    return this.jobs.length;
+  }
 
-    //console.log('setIdle', count);
-  };
+  destroy(){
+    this.jobs = [];
+  }
 
-  Activity.isBusy = function() {
-    return !!count;
-  };
-
-}());
+}

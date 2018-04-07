@@ -122,7 +122,7 @@ Events.init = function(container) {
   function onMouseDown(e) {
     cancelEvent(e);
 
-    Activity.setBusy();
+    APP.activity.setBusy("mousedown");
 
     startZoom = APP.zoom;
     prevRotation = APP.rotation;
@@ -157,7 +157,8 @@ Events.init = function(container) {
   }
 
   function onMouseUp(e) {
-    setTimeout(function(){ Activity.setIdle(); }, 200);
+
+    setTimeout(function(){ APP.activity.setIdle("mousedown"); }, 1000);
 
     // prevents clicks on other page elements
     if (!button) {
@@ -257,6 +258,7 @@ Events.init = function(container) {
   }
 
   function onTouchStart(e) {
+    APP.activity.setBusy("mousedown");
     button = 1;
     cancelEvent(e);
 
@@ -314,6 +316,7 @@ Events.init = function(container) {
     if (!button) {
       return;
     }
+    setTimeout(function(){ APP.activity.setIdle("mousedown"); }, 1000);
 
     // gesturechange polyfill
     gestureStarted = false;
