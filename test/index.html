@@ -246,11 +246,24 @@
 //  });
 //
 
-//  osmb.on('pointerdown', function(e) {
+// osmb.on('pointerdown', function(e) {
+//
 //    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
-//      console.log(id);
+//      if(id === null) return
+//      if(id.substring(0, 2) === 'w-'){
+//        id = 'rel(id%3A' + id.slice(2, id.length) + ')';
+//      }else{
+//        id = 'way(id%3A' + id.slice(1, id.length) + ')';
+//      }
+//
+//      fetch('http://overpass-api.de/api/interpreter?data=[out%3Ajs/**/on]%3B('+ id + '%3B)%3Bout%20body%3B%3E%3Bout%20skel%20qt%3B')
+//        .then(response => response.json())
+//        .then(parsed => {console.log(parsed); console.log(e.detail.buildingID)});
+//
 //    });
+//
 //  });
+
 
   //*************************************************************************
 
