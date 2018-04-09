@@ -184,7 +184,7 @@
   };
 
 //  osmb.on('loadfeature', function(e) {
-//    colorByHeightAvailable(e.detail);
+//    colorByHeightAvailable(e);
 //  });
 
   osmb.addGeoJSONTiles(
@@ -229,10 +229,8 @@
 //    label.style.top = Math.round(pos.y) + 'px';
 //  });
 
-  osmb.on('pointermove', function(e) {
-
-    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
-
+  osmb.on('pointermove', e => {
+    osmb.getTarget(e.x, e.y, id => {
       if (id) {
         document.body.style.cursor = 'pointer';
         osmb.highlight(id, '#cc0000');
@@ -243,13 +241,13 @@
    });
   });
 
-//  osmb.on('pointermove', function(e) {
-//    obj.position = osmb.unproject(e.detail.x, e.detail.y);
+//  osmb.on('pointermove', e => {
+//    obj.position = osmb.unproject(e.x, e.y);
 //  });
 //
 
-  osmb.on('pointerdown', function(e) {
-    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
+  osmb.on('pointerdown', e => {
+    osmb.getTarget(e.x, e.y, id => {
       if (id === null) return;
       if (id.substring(0, 2) === 'w-') {
         id = 'rel(' + id.slice(2, id.length) + ')';

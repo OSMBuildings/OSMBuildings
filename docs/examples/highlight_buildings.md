@@ -1,8 +1,8 @@
 ### Highlight buildings
 
 ~~~ javascript
-osmb.on('pointermove', function(e) {
-  osmb.getTarget(e.detail.x, e.detail.y, function(id) {
+osmb.on('pointermove', e => {
+  osmb.getTarget(e.x, e.y, id => {
     if (id) {
       osmb.highlight(id, '#f08000');
     } else {

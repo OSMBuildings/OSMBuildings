@@ -58,7 +58,7 @@ function addListener (target, type, fn) {
  * @private
  */
 
-var Events ={};
+var Events = {};
 
 /**
  * @private
@@ -140,11 +140,10 @@ Events.init = function (container) {
     }
 
     var pos = getPos(e);
-    render.Picking.getTarget(e.x, e.y, function(id){
-      Events.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons , buildingID: id });
+    render.Picking.render(e.x, e.y, id => {
+      Events.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons, buildingID: id });
     });
-
-    }
+  }
 
   function onMouseMoveDocument (e) {
     if (button === 1) {
@@ -179,7 +178,7 @@ Events.init = function (container) {
 
     button = 0;
     Events.emit('pointerup', { button: e.button, buttons: e.buttons });
-      }
+  }
 
   function onMouseWheel (e) {
     cancelEvent(e);
@@ -358,28 +357,25 @@ Events.init = function (container) {
   }
 };
 
-
-Events.on = function(type, fn) {
+Events.on = function (type, fn) {
   (Events.listeners[type] || (Events.listeners[type] = [])).push(fn);
 };
 
-Events.off = function(type, fn) {
-  Events.listeners[type] = (Events.listeners[type] || []).filter(function(item) {
+Events.off = function (type, fn) {
+  Events.listeners[type] = (Events.listeners[type] || []).filter(function (item) {
     return item !== fn;
   });
 };
 
-Events.emit = function(type, payload) {
+Events.emit = function (type, payload) {
   if (Events.listeners[type] === undefined) {
     return;
   }
-  setTimeout(function(){
+  setTimeout(function () {
     var typeListeners = Events.listeners[type];
     for (var i = 0, len = typeListeners.length; i < len; i++) {
       typeListeners[i](payload);
     }
-  },0)
-
-
+  }, 0);
 };
 

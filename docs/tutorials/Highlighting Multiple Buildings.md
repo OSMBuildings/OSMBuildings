@@ -16,8 +16,8 @@ function isHighlighted(id) {
 }
 
 // Store the buildings as they are loaded for later use
-osmb.on('loadfeature', function(e) {
-    var b = e.detail;
+osmb.on('loadfeature', e => {
+    var b = e;
     if (b.id.indexOf('highlight_') === -1) {
       var id = b.properties.relationId || b.id || b.properties.id;
       b.properties.color = HIGHLIGHT_COLOR;
@@ -79,14 +79,14 @@ function buildingSelected(id) {
 }
 
 var mousePos;
-map.on('pointerdown', function(e) {
-  mousePos = {x: e.detail.x, y: e.detail.y};
+map.on('pointerdown', e => {
+  mousePos = {x: e.x, y: e.y};
 });
 
-map.on('pointerup', function(e) {
-  if (e.detail.x === mousePos.x && e.detail.y === mousePos.y) {
+map.on('pointerup', e => {
+  if (e.x === mousePos.x && e.y === mousePos.y) {
     // Add highlight if this wasn't a map drag/pan
-    osmb.getTarget(e.detail.x, e.detail.y, buildingSelected);
+    osmb.getTarget(e.x, e.y, buildingSelected);
   }
 });
 </script>
@@ -105,8 +105,8 @@ function isHighlighted(id) {
 }
 
 // Store the buildings as they are loaded for later use
-osmb.on('loadfeature', function(e) {
-    var b = e.detail;
+osmb.on('loadfeature', e => {
+    var b = e;
     if (b.id.indexOf('highlight_') === -1) {
       var id = b.properties.relationId || b.id || b.properties.id;
       b.properties.color = HIGHLIGHT_COLOR;
@@ -168,14 +168,14 @@ function buildingSelected(id) {
 }
 
 var mousePos;
-map.on('pointerdown', function(e) {
-  mousePos = {x: e.detail.x, y: e.detail.y};
+map.on('pointerdown', e => {
+  mousePos = {x: e.x, y: e.y};
 });
 
-map.on('pointerup', function(e) {
-  if (e.detail.x === mousePos.x && e.detail.y === mousePos.y) {
+map.on('pointerup', e => {
+  if (e.x === mousePos.x && e.y === mousePos.y) {
     // Add highlight if this wasn't a map drag/pan
-    osmb.getTarget(e.detail.x, e.detail.y, buildingSelected);
+    osmb.getTarget(e.x, e.y, buildingSelected);
   }
 });
   
