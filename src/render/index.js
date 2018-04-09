@@ -23,7 +23,7 @@ class render {
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
 
-    render.Picking.init(); // renders only on demand
+    render.Picking = new DrawPicking(); // renders only on demand
     render.Buildings.init();
     render.Basemap.init();
     render.Overlay.init();

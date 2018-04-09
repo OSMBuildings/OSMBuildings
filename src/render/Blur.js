@@ -55,8 +55,9 @@ class DrawBlur {
   }
 
   destroy () {
-    if (this.framebuffer) {
-      this.framebuffer.destroy();
-    }
+    this.shader.destroy();
+    this.framebuffer.destroy();
+    this.vertexBuffer.destroy();
+    this.vertexBuffer.destroy();
   }
 }

@@ -432,7 +432,7 @@ OSMBuildings.prototype = {
    */
   getTarget: function(x, y, callback) {
     // TODO: remove
-    render.Picking.getTarget(x, y, callback);
+    render.Picking.render(x, y, callback);
   },
 
   /**

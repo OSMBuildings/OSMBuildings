@@ -1,17 +1,18 @@
-
 // TODO: perhaps render only clicked area
 
-render.Picking = {
+class DrawPicking {
 
-  idMapping: [null],
-  viewportSize: 512,
+  constructor () {
 
-  init: function() {
+    this.idMapping = [null]; // first item is void
+
+    this.size = [512, 512];
+
     this.shader = new GLX.Shader({
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
-      attributes: ['aPosition', 'aId'],
+      attributes: ['aPosition', 'aIdColor'],
       uniforms: [
         'uModelMatrix',
         'uMatrix',
@@ -20,90 +21,78 @@ render.Picking = {
       ]
     });
 
-    this.framebuffer = new GLX.Framebuffer(this.viewportSize, this.viewportSize);
-  },
+    this.framebuffer = new GLX.Framebuffer(this.size[0], this.size[1]);
+  }
 
-  render: function(framebufferSize) {
-    var
-      shader = this.shader,
-      framebuffer = this.framebuffer;
+  render (x, y, callback) {
+    requestAnimationFrame(() => {
+      this.shader.enable();
+      this.framebuffer.enable();
+      GL.viewport(0, 0, this.size[0], this.size[1]);
 
-    framebuffer.setSize(framebufferSize[0], framebufferSize[1]);
-    
-    shader.enable();
-    framebuffer.enable();
-    GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+      GL.clearColor(0, 0, 0, 1);
+      GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    GL.clearColor(0, 0, 0, 1);
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+      this.shader.setUniform('uFogRadius', '1f', render.fogDistance);
 
-    shader.setUniform('uFogRadius', '1f', render.fogDistance);
+      data.Index.items.forEach(item => {
+        if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
+          return;
+        }
 
-    var
-      dataItems = data.Index.items,
-      modelMatrix;
+        let modelMatrix;
+        if (!(modelMatrix = item.getMatrix())) {
+          return;
+        }
 
-    dataItems.forEach(item => {
-      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
-        return;
-      }
+        this.shader.setUniform('uFade', '1f', item.getFade());
 
-      if (!(modelMatrix = item.getMatrix())) {
-        return;
-      }
+        this.shader.setAllUniformMatrices([
+          ['uModelMatrix', '4fv', modelMatrix.data],
+          ['uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+        ]);
 
-      shader.setUniform('uFade', '1f', item.getFade());
+        this.shader.bindBuffer('aPosition', item.vertexBuffer);
+        this.shader.bindBuffer('aIdColor', item.idBuffer);
 
-      shader.setAllUniformMatrices([
-        ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
-      ]);
+        GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
+      });
 
-      shader.bindBuffer('aPosition', item.vertexBuffer);
-      shader.bindBuffer('aId', item.idBuffer);
+      this.shader.disable();
 
-      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-    });
-
-    this.shader.disable();
-    this.framebuffer.disable();
-    GL.viewport(0, 0, APP.width, APP.height);
-  },
-  
-  // TODO: throttle calls
-  getTarget: function(x, y, callback) {
-    requestAnimationFrame(function() {
-      this.render( [this.viewportSize, this.viewportSize] );
-
-      x = x/APP.width *this.viewportSize <<0;
-      y = y/APP.height*this.viewportSize <<0;
+      x = x / APP.width * this.size[0] << 0;
+      y = y / APP.height * this.size[1] << 0;
 
       this.framebuffer.enable();
-      var imageData = this.framebuffer.getPixel(x, this.viewportSize - 1 - y);
+      const imageData = this.framebuffer.getPixel(x, this.size[1] - 1 - y);
       this.framebuffer.disable();
 
+      GL.viewport(0, 0, APP.width, APP.height);
+
       if (imageData === undefined) {
-        callback(undefined);
-        return;
+        callback();
+      } else {
+        const color = imageData[0] | (imageData[1] << 8) | (imageData[2] << 16);
+        callback(this.idMapping[color]);
       }
-      var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
+    }); // end requestAnimationFrame()
+  }
 
-      callback(this.idMapping[color]);
-    }.bind(this));
-  },
-
-  idToColor: function(id) {
-    var index = this.idMapping.indexOf(id);
+  idToColor (id) {
+    let index = this.idMapping.indexOf(id);
     if (index === -1) {
       this.idMapping.push(id);
-      index = this.idMapping.length-1;
+      index = this.idMapping.length - 1;
     }
     return [
-      ( index        & 0xff) / 255,
-      ((index >>  8) & 0xff) / 255,
+      (index & 0xff) / 255,
+      ((index >> 8) & 0xff) / 255,
       ((index >> 16) & 0xff) / 255
     ];
-  },
+  }
 
-  destroy: function() {}
-};
+  destroy () {
+    this.shader.destroy();
+    this.framebuffer.destroy();
+  }
+}
