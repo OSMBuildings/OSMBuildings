@@ -106,12 +106,12 @@ render.Buildings = {
         shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
       }
 
-      shader.bindBuffer(item.vertexBuffer,   'aPosition');
-      shader.bindBuffer(item.texCoordBuffer, 'aTexCoord');
-      shader.bindBuffer(item.normalBuffer,   'aNormal');
-      shader.bindBuffer(item.colorBuffer,    'aColor');
-      shader.bindBuffer(item.idBuffer,       'aId');
-      shader.bindBuffer(item.heightBuffer,   'aHeight');
+      shader.bindBuffer('aPosition', item.vertexBuffer);
+      shader.bindBuffer('aTexCoord', item.texCoordBuffer);
+      shader.bindBuffer('aNormal', item.normalBuffer);
+      shader.bindBuffer('aColor', item.colorBuffer);
+      shader.bindBuffer('aId', item.idBuffer);
+      shader.bindBuffer('aHeight', item.heightBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });

@@ -184,7 +184,7 @@
   };
 
 //  osmb.on('loadfeature', function(e) {
-//    colorByHeightAvailable(e);
+//    colorByHeightAvailable(e.detail);
 //  });
 
   osmb.addGeoJSONTiles(
@@ -222,55 +222,51 @@
 //    }, { color: '#00ccff', scale: 0.1 });
 //  }
 
-  // var label = document.getElementById('label');
-  // osmb.on('change', function() {
-  //
-  //   var pos = osmb.project(55.75065, 37.61771, 100);
-  //   label.style.left = Math.round(pos.x) + 'px';
-  //   label.style.top = Math.round(pos.y) + 'px';
-  // });
+  var label = document.getElementById('label');
+//  osmb.on('change', function() {
+//    var pos = osmb.project(52.52, 13.37, 50);
+//    label.style.left = Math.round(pos.x) + 'px';
+//    label.style.top = Math.round(pos.y) + 'px';
+//  });
 
-  // osmb.on('pointermove', function(e) {
-  //
-  // });
+  osmb.on('pointermove', function(e) {
+
+    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
+
+      if (id) {
+        document.body.style.cursor = 'pointer';
+        osmb.highlight(id, '#cc0000');
+      } else {
+        document.body.style.cursor = 'default';
+        osmb.highlight(null);
+      }
+   });
+  });
 
 //  osmb.on('pointermove', function(e) {
-//    obj.position = osmb.unproject(e.x, e.y);
+//    obj.position = osmb.unproject(e.detail.x, e.detail.y);
 //  });
 //
 
- // osmb.on('pointerdown', function(e) {
- //
- //   let id = e.buildingID;
- //   if (id) {
- //     osmb.highlight(id, '#cc0000');
- //     if(id.substring(0, 2) === 'w-'){
- //       id = 'rel(' + id.slice(2, id.length) + ')';
- //     }else{
- //       id = 'way(' + id.slice(1, id.length) + ')';
- //     }
- //
- //     let query = encodeURI('http://overpass-api.de/api/interpreter?data=[out:json];(' + id + ';);out body;>;out skel qt;')
- //
- //     fetch(query)
- //       .then(response => response.json())
- //       .then(parsed => {console.log(parsed); console.log(id)});
- //   } else {
- //     osmb.highlight(null);
- //   }
- //
- //  });
+  osmb.on('pointerdown', function(e) {
+    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
+      if (id === null) return;
+      if (id.substring(0, 2) === 'w-') {
+        id = 'rel(' + id.slice(2, id.length) + ')';
+      } else {
+        id = 'way(' + id.slice(1, id.length) + ')';
+      }
 
+      let query = 'http://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json];(' + id + ';);out body;');
 
-  //*************************************************************************
-
-  //  osmb.on('idle', function() {
-  //    console.log('IDLE');
-  //  });
-  //
-  //  osmb.on('busy', function() {
-  //    console.log('BUSY');
-  //  });
+      fetch(query)
+        .then(response => response.json())
+        .then(parsed => {
+          const feature = parsed.elements[0];
+          console.log(feature.id, feature.tags);
+        });
+    });
+  });
 
   //*************************************************************************
 

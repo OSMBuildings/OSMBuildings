@@ -57,8 +57,8 @@ render.AmbientMap = {
       ['uFarPlane',       '1f',  7500.0]
     ]);
 
-    shader.bindBuffer(this.vertexBuffer,   'aPosition');
-    shader.bindBuffer(this.texCoordBuffer, 'aTexCoord');
+    shader.bindBuffer('aPosition', this.vertexBuffer);
+    shader.bindBuffer('aTexCoord', this.texCoordBuffer);
 
     shader.bindTexture('uDepthTexIndex', 0, depthTexture);
     shader.bindTexture('uFogTexIndex',   1, fogTexture);

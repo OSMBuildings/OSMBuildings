@@ -1,17 +1,13 @@
 
-var render = {
+class render {
 
-  effects: { shadows: true },
+  static getViewQuad () {
+    return getViewQuad(this.viewProjMatrix.data,  (this.fogDistance + this.fogBlurDistance), this.viewDirOnMap);
+  }
 
-  getViewQuad: function() {
-    return getViewQuad(
-      this.viewProjMatrix.data,
-      (this.fogDistance + this.fogBlurDistance),
-      this.viewDirOnMap
-    );
-  },
+  static start () {
+    render.effects = { shadows: true };
 
-  start: function() {
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
     if (!GL.depthTextureExtension) {
@@ -19,8 +15,8 @@ var render = {
       render.effects.shadows = false;
     }
 
-    APP.on('change', this._onChange = this.onChange.bind(this));
-    APP.on('resize', this._onResize = this.onResize.bind(this));
+    APP.on('change', this.onChange);
+    APP.on('resize', this.onResize);
     this.onResize(); // initialize view and projection matrix, fog distance, etc.
 
     GL.cullFace(GL.BACK);
@@ -32,106 +28,104 @@ var render = {
     render.Basemap.init();
     render.Overlay.init();
     render.AmbientMap.init();
-    render.blurredAmbientMap = new render.Blur();
+    render.blurredAmbientMap = new DrawBlur();
     // render.HudRect.init();
     // render.NormalMap.init();
     render.MapShadows.init();
     if (render.effects.shadows) {
       render.cameraGBuffer = new render.DepthFogNormalMap();
-      render.sunGBuffer    = new render.DepthFogNormalMap();
+      render.sunGBuffer = new render.DepthFogNormalMap();
       render.sunGBuffer.framebufferSize = [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE];
     }
 
-    // var quad = new mesh.DebugQuad();
+    // const quad = new mesh.DebugQuad();
     // quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
     // data.Index.add(quad);
 
-    requestAnimationFrame( this.renderFrame.bind(this));
-  },
-  
-  renderFrame: function() {
-    if (APP.zoom < APP.minZoom || APP.zoom > APP.maxZoom) {
-      return;
+    this.renderFrame();
+  }
+
+  static renderFrame () {
+    if (APP.zoom >= APP.minZoom && APP.zoom <= APP.maxZoom) {
+      requestAnimationFrame(() => {
+
+        this.onChange();
+        GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
+        GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+
+        const viewSize = [APP.width, APP.height];
+
+        if (!render.effects.shadows) {
+          render.Buildings.render();
+          render.Basemap.render();
+
+          GL.enable(GL.BLEND);
+
+          GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+          GL.disable(GL.DEPTH_TEST);
+          GL.disable(GL.BLEND);
+          GL.enable(GL.DEPTH_TEST);
+        } else {
+          const viewTrapezoid = this.getViewQuad();
+          /*
+          quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
+                              [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
+                              [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
+                              [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
+
+          Sun.updateView(viewTrapezoid);
+
+          render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
+          render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
+          render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), viewSize, 2.0);
+          render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
+          render.Buildings.render(render.sunGBuffer.framebuffer);
+          render.Basemap.render();
+
+          GL.enable(GL.BLEND);
+
+          {
+            // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
+            // this applies the shadow and SSAO effects (which selectively darken the scene)
+            // while keeping the alpha channel (that corresponds to how much the
+            // geometry should be blurred into the background in the next step) intact
+            GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
+
+            // render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
+            render.Overlay.render(render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
+
+            // linear interpolation between the colors of the current framebuffer
+            // ( =building geometries) and of the sky. The interpolation factor
+            // is the geometry alpha value, which contains the 'foggyness' of each pixel
+            // the alpha interpolation functions is set to GL.ONE for both operands
+            // to ensure that the alpha channel will become 1.0 for each pixel after this
+            // operation, and thus the whole canvas is not rendered partially transparently
+            // over its background.
+            GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+            GL.disable(GL.DEPTH_TEST);
+            GL.enable(GL.DEPTH_TEST);
+          }
+
+          GL.disable(GL.BLEND);
+
+          // render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
+        }
+
+        if (APP.activity.isBusy()) {
+          this.renderFrame();
+        } else {
+          setTimeout(() => {
+            this.renderFrame();
+          }, 250);
+        }
+
+      }); // end requestAnimationFrame()
     }
-    if (!APP.activity.isBusy()) {
-      setTimeout(() => {
-        requestAnimationFrame(this.renderFrame.bind(this));
-      }, 250);
-    } else {
-      requestAnimationFrame(this.renderFrame.bind(this));
-    }
+  }
 
-    this.onChange();
-    GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
-
-    var viewSize = [APP.width, APP.height];
-
-    if (!render.effects.shadows) {
-      render.Buildings.render();
-      render.Basemap.render();
-
-      GL.enable(GL.BLEND);
-
-      GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
-      GL.disable(GL.DEPTH_TEST);
-      GL.disable(GL.BLEND);
-      GL.enable(GL.DEPTH_TEST);
-    } else {
-      var viewTrapezoid = this.getViewQuad();
-      /*
-      quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
-                          [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
-                          [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
-                          [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
-
-      Sun.updateView(viewTrapezoid);
-
-      render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
-      render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix);
-      render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), viewSize, 2.0);
-      render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
-      render.Buildings.render(render.sunGBuffer.framebuffer);
-      render.Basemap.render();
-
-      GL.enable(GL.BLEND);
-
-      {
-        // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
-        // this applies the shadow and SSAO effects (which selectively darken the scene)
-        // while keeping the alpha channel (that corresponds to how much the
-        // geometry should be blurred into the background in the next step) intact
-        GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
-
-        render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
-        render.Overlay.render( render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
-
-        // linear interpolation between the colors of the current framebuffer 
-        // ( =building geometries) and of the sky. The interpolation factor
-        // is the geometry alpha value, which contains the 'foggyness' of each pixel
-        // the alpha interpolation functions is set to GL.ONE for both operands
-        // to ensure that the alpha channel will become 1.0 for each pixel after this
-        // operation, and thus the whole canvas is not rendered partially transparently
-        // over its background.
-        GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
-        GL.disable(GL.DEPTH_TEST);
-        GL.enable(GL.DEPTH_TEST);
-      }
-
-      GL.disable(GL.BLEND);
-
-      //render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
-    }
-
-    if (this.screenshotCallback) {
-      this.screenshotCallback(GL.canvas.toDataURL());
-      this.screenshotCallback = null;
-    }  
-  },
-
-  onChange: function() {
-    var
-      scale = 1.3567 * Math.pow(2, APP.zoom-17),
+  static onChange () {
+    const
+      scale = 1.3567 * Math.pow(2, APP.zoom - 17),
       width = APP.width,
       height = APP.height,
       refHeight = 1024,
@@ -142,11 +136,11 @@ var render = {
     this.viewMatrix = new GLX.Matrix()
       .rotateZ(APP.rotation)
       .rotateX(APP.tilt)
-      .translate(0, 8/scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
-      .translate(0, 0, -1220/scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
+      .translate(0, 8 / scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
+      .translate(0, 0, -1220 / scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
-    this.viewDirOnMap = [ Math.sin(APP.rotation / 180* Math.PI),
-                         -Math.cos(APP.rotation / 180* Math.PI)];
+    this.viewDirOnMap = [Math.sin(APP.rotation / 180 * Math.PI),
+      -Math.cos(APP.rotation / 180 * Math.PI)];
 
     // First, we need to determine the field-of-view so that our map scale does
     // not change when the viewport size changes. The map scale is given by the
@@ -168,8 +162,8 @@ var render = {
     //   /refFOV/2|           |
     //  ----------------------|
     //     "virtual distance"
-    var virtualDistance = refHeight/ (2 * Math.tan( (refVFOV/2) / 180 * Math.PI));
-    var verticalFOV = 2* Math.atan((height/2.0)/virtualDistance) / Math.PI * 180;
+    const virtualDistance = refHeight / (2 * Math.tan((refVFOV / 2) / 180 * Math.PI));
+    const verticalFOV = 2 * Math.atan((height / 2.0) / virtualDistance) / Math.PI * 180;
 
     // OSMBuildings' perspective camera is ... special: The reference point for
     // camera movement, rotation and zoom is at the screen center (as usual). 
@@ -178,7 +172,7 @@ var render = {
     // reasons so that when the map is seen from straight above, vertical building
     // walls would not be seen to face towards the screen center but would
     // uniformly face downward on the screen.
-    
+
     // To achieve this projection, we need to
     // 1. shift the whole geometry up half a screen (so that the desired
     //    center of projection aligns with the view center) *in world coordinates*.
@@ -187,9 +181,9 @@ var render = {
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
     this.projMatrix = new GLX.Matrix()
-      .translate(0, -height/(2.0*scale), 0) // 0, APP y offset to neutralize camera y offset, 
+      .translate(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
       .scale(1, -1, 1) // flip Y
-      .multiply(new GLX.Matrix.Perspective(verticalFOV, width/height, 1, 7500))
+      .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, 1, 7500))
       .translate(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
@@ -200,24 +194,24 @@ var render = {
       return;
     }
 
-    var lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
+    const lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     /* fogDistance: closest distance at which the fog affects the geometry */
     this.fogDistance = Math.max(3000, lowerLeftDistanceToCenter);
     /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
      *                  completely enclosed in fog. */
     this.fogBlurDistance = 500;
-  },
+  }
 
-  onResize: function() {
-    GL.canvas.width  = APP.width;
+  static onResize () {
+    GL.canvas.width = APP.width;
     GL.canvas.height = APP.height;
     this.onChange();
-  },
+  }
 
-  destroy: function() {
-    APP.off('change', this._onChange);
-    APP.off('resize', this._onResize);
+  static destroy () {
+    APP.off('change', this.onChange);
+    APP.off('resize', this.onResize);
 
     render.Picking.destroy();
     render.Buildings.destroy();
@@ -226,12 +220,12 @@ var render = {
     if (render.cameraGBuffer) {
       render.cameraGBuffer.destroy();
     }
-    
+
     if (render.sunGBuffer) {
-      render.sunGBuffer.destroy();  
+      render.sunGBuffer.destroy();
     }
-    
+
     render.AmbientMap.destroy();
     render.blurredAmbientMap.destroy();
   }
-};
+}

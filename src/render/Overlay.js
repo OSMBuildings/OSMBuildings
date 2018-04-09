@@ -52,8 +52,8 @@ render.Overlay = {
     
     shader.setUniformMatrix('uMatrix', '4fv', GLX.Matrix.identity().data);
 
-    shader.bindBuffer(this.vertexBuffer,  'aPosition');
-    shader.bindBuffer(this.texCoordBuffer,'aTexCoord');
+    shader.bindBuffer('aPosition', this.vertexBuffer);
+    shader.bindBuffer('aTexCoord', this.texCoordBuffer);
     shader.bindTexture('uTexIndex', 0, texture);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);

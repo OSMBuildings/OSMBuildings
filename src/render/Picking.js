@@ -59,8 +59,8 @@ render.Picking = {
         ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
       ]);
 
-      shader.bindBuffer(item.vertexBuffer, 'aPosition');
-      shader.bindBuffer(item.idBuffer, 'aId');
+      shader.bindBuffer('aPosition', item.vertexBuffer);
+      shader.bindBuffer('aId', item.idBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });
