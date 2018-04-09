@@ -248,37 +248,25 @@
 //  });
 //
 
- osmb.on('pointerdown', function(e) {
-
+  osmb.on('pointerdown', function(e) {
     osmb.getTarget(e.detail.x, e.detail.y, function(id) {
-
-      if(id === null) return;
-      if(id.substring(0, 2) === 'w-'){
+      if (id === null) return;
+      if (id.substring(0, 2) === 'w-') {
         id = 'rel(' + id.slice(2, id.length) + ')';
-      }else{
+      } else {
         id = 'way(' + id.slice(1, id.length) + ')';
       }
 
-      let query = encodeURI('http://overpass-api.de/api/interpreter?data=[out:json];(' + id + ';);out body;>;out skel qt;')
+      let query = 'http://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json];(' + id + ';);out body;');
 
       fetch(query)
         .then(response => response.json())
-        .then(parsed => {console.log(parsed); console.log(id)});
-
+        .then(parsed => {
+          const feature = parsed.elements[0];
+          console.log(feature.id, feature.tags);
+        });
     });
-
   });
-
-
-  //*************************************************************************
-
-  //  osmb.on('idle', function() {
-  //    console.log('IDLE');
-  //  });
-  //
-  //  osmb.on('busy', function() {
-  //    console.log('BUSY');
-  //  });
 
   //*************************************************************************
 

@@ -77,8 +77,8 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
       ['uNormalMatrix', '3fv', GLX.Matrix.transpose3(GLX.Matrix.invert3(GLX.Matrix.multiply(modelMatrix, viewMatrix)))]
     ]);
     
-    shader.bindBuffer(item.vertexBuffer, 'aPosition');
-    shader.bindBuffer(item.normalBuffer, 'aNormal');
+    shader.bindBuffer('aPosition', item.vertexBuffer);
+    shader.bindBuffer('aNormal', item.normalBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
   });

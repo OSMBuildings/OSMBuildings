@@ -64,8 +64,8 @@ render.MapShadows = {
       ['uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
     ]);
 
-    shader.bindBuffer(item.vertexBuffer, 'aPosition');
-    shader.bindBuffer(item.normalBuffer, 'aNormal');
+    shader.bindBuffer('aPosition', item.vertexBuffer);
+    shader.bindBuffer('aPosition', item.normalBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 

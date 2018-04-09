@@ -90,8 +90,8 @@ render.Basemap = {
       ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
     ]);
 
-    shader.bindBuffer(tile.vertexBuffer,  'aPosition');
-    shader.bindBuffer(tile.texCoordBuffer,'aTexCoord');
+    shader.bindBuffer('aPosition', tile.vertexBuffer);
+    shader.bindBuffer('aTexCoord', tile.texCoordBuffer);
     shader.bindTexture('uTexIndex', 0, tile.texture);
 
     GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);

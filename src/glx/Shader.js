@@ -73,7 +73,7 @@ GLX.Shader = class {
     }
   }
 
-  bindBuffer(buffer, name) {
+  bindBuffer(name, buffer) {
     if (this.attributes[name] === undefined) {
       throw new Error(`attempt to bind buffer to invalid attribute "${name}" in shader "${this.shaderName}"`);
     }

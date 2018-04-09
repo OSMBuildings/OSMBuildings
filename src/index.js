@@ -36,12 +36,6 @@ var APP, GL;
  */
 
 /**
- * User defined callback function for screenshot()
- * @callback screenshotCallback
- * @param {Image} screenshot The screenshot
- */
-
-/**
  * @class OSMBuildings
  * @param {Object} [options] OSMBuildings options
  * @param {Number} [options.minZoom=14.5] Global minimum allowed zoom
@@ -434,22 +428,20 @@ OSMBuildings.prototype = {
 
   /**
    * Returns the feature from a position on the screen. <em>Works asynchronous.</em>
-   * @param {Integer} x X coordinate (in pixels) of position on the screen
-   * @param {Integer} y Y coordinate (in pixels) of position on the screen
-   * @param {getTargetCallback} callback Callback function that receives the object
+   * @name getTarget()
+   * @deprecated
    */
   getTarget: function(x, y, callback) {
-    // TODO: use promises here
+    // TODO: remove
     render.Picking.getTarget(x, y, callback);
   },
 
   /**
    * Take a screenshot. <em>Works asynchronous.</em>
-   * @param {screenshotCallback} callback Callback function that receives the screenshot
+   * @name screenshot()
+   * @deprecated
    */
-  screenshot: function(callback) {
-    // TODO: use promises here
-    render.screenshotCallback = callback;
+  screenshot: function() {
   },
 
   /**
