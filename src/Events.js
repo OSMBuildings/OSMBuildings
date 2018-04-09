@@ -139,7 +139,7 @@ Events.init = function (container) {
 
     var pos = getPos(e);
     APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
-  }
+    }
 
   function onMouseMoveDocument (e) {
     if (button === 1) {

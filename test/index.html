@@ -15,7 +15,7 @@
     #map {
       width: 100%;
       height: 100%;
-
+      border:3px solid black;
       height: 600px;
       margin-top: 50px;
       /*position: absolute;*/
@@ -230,7 +230,9 @@
 //  });
 
   osmb.on('pointermove', function(e) {
+
     osmb.getTarget(e.detail.x, e.detail.y, function(id) {
+
       if (id) {
         document.body.style.cursor = 'pointer';
         osmb.highlight(id, '#cc0000');
@@ -246,23 +248,26 @@
 //  });
 //
 
-// osmb.on('pointerdown', function(e) {
-//
-//    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
-//      if(id === null) return
-//      if(id.substring(0, 2) === 'w-'){
-//        id = 'rel(id%3A' + id.slice(2, id.length) + ')';
-//      }else{
-//        id = 'way(id%3A' + id.slice(1, id.length) + ')';
-//      }
-//
-//      fetch('http://overpass-api.de/api/interpreter?data=[out%3Ajs/**/on]%3B('+ id + '%3B)%3Bout%20body%3B%3E%3Bout%20skel%20qt%3B')
-//        .then(response => response.json())
-//        .then(parsed => {console.log(parsed); console.log(e.detail.buildingID)});
-//
-//    });
-//
-//  });
+ osmb.on('pointerdown', function(e) {
+
+    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
+
+      if(id === null) return;
+      if(id.substring(0, 2) === 'w-'){
+        id = 'rel(' + id.slice(2, id.length) + ')';
+      }else{
+        id = 'way(' + id.slice(1, id.length) + ')';
+      }
+
+      let query = encodeURI('http://overpass-api.de/api/interpreter?data=[out:json];(' + id + ';);out body;>;out skel qt;')
+
+      fetch(query)
+        .then(response => response.json())
+        .then(parsed => {console.log(parsed); console.log(id)});
+
+    });
+
+  });
 
 
   //*************************************************************************
