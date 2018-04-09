@@ -213,7 +213,7 @@ mesh.OBJ = class {
        * Fired when a 3d object has been loaded
        * @fires OSMBuildings#loadfeature
        */
-      APP.emit('loadfeature', feature);
+      Events.emit('loadfeature', feature);
 
       [].push.apply(this.data.vertices, feature.vertices);
       [].push.apply(this.data.normals, feature.normals);

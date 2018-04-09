@@ -27,7 +27,7 @@ mesh.GeoJSON = class {
     APP.workers.get(worker => {
       this.worker = worker;
 
-      // TODO: if loading fails, a worker should be returned to pool. Done, right?
+
 
       const onResult = function (e) {
         if (e.data !== 'error') {

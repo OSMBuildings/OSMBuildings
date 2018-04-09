@@ -244,8 +244,9 @@ OSMBuildings.prototype = {
    * @param {String} type Event type to listen for
    * @param {eventCallback} fn Callback function
    */
+
   on: function(type, fn) {
-    this.canvas.addEventListener(type, fn);
+    Events.on(type, fn);
   },
 
   /**
@@ -254,7 +255,7 @@ OSMBuildings.prototype = {
    * @param {eventCallback} [fn] If callback is given, only remove that particular listener
    */
   off: function(type, fn) {
-    this.canvas.removeEventListener(type, fn);
+    Events.off(type, fn);
   },
 
   /**
@@ -263,8 +264,7 @@ OSMBuildings.prototype = {
    * @param {any} [payload] Any kind of payload
    */
   emit: function(type, payload) {
-    const e = new CustomEvent(type, { detail: payload });
-    this.canvas.dispatchEvent(e);
+    Events.emit(type, payload);
   },
 
   /**
@@ -437,6 +437,7 @@ OSMBuildings.prototype = {
    * @param {Integer} x X coordinate (in pixels) of position on the screen
    * @param {Integer} y Y coordinate (in pixels) of position on the screen
    * @param {getTargetCallback} callback Callback function that receives the object
+   * @deprecated
    */
   getTarget: function(x, y, callback) {
     // TODO: use promises here
@@ -574,8 +575,8 @@ OSMBuildings.prototype = {
          APP.center.y += dy;*/
       }
 
-      APP.emit('zoom', { zoom: zoom });
-      APP.emit('change');
+      Events.emit('zoom', { zoom: zoom });
+      Events.emit('change');
     }
   },
 
@@ -601,7 +602,7 @@ OSMBuildings.prototype = {
       return;
     }
     APP.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
-    APP.emit('change');
+    Events.emit('change');
   },
 
   /**
@@ -624,7 +625,7 @@ OSMBuildings.prototype = {
     if (size.width !== APP.width || size.height !== APP.height) {
       APP.width = size.width;
       APP.height = size.height;
-      APP.emit('resize', { width: APP.width, height: APP.height });
+      Events.emit('resize', { width: APP.width, height: APP.height });
     }
   },
 
@@ -646,8 +647,8 @@ OSMBuildings.prototype = {
     rotation = parseFloat(rotation)%360;
     if (APP.rotation !== rotation) {
       APP.rotation = rotation;
-      APP.emit('rotate', { rotation: rotation });
-      APP.emit('change');
+      Events.emit('rotate', { rotation: rotation });
+      Events.emit('change');
     }
   },
 
@@ -669,8 +670,8 @@ OSMBuildings.prototype = {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
     if (APP.tilt !== tilt) {
       APP.tilt = tilt;
-      APP.emit('tilt', { tilt: tilt });
-      APP.emit('change');
+      Events.emit('tilt', { tilt: tilt });
+      Events.emit('change');
     }
   },
 

@@ -57,7 +57,8 @@ function addListener (target, type, fn) {
 /**
  * @private
  */
-var Events = {};
+
+var Events ={};
 
 /**
  * @private
@@ -68,6 +69,7 @@ Events.disabled = false;
  * @private
  */
 Events.init = function (container) {
+  Events.listeners = {};
   var win = top || window;
 
   if ('ontouchstart' in win) {
@@ -116,7 +118,7 @@ Events.init = function (container) {
       APP.setZoom(APP.zoom + 1, e);
     }
     var pos = getPos(e);
-    APP.emit('doubleclick', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
+    Events.emit('doubleclick', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
   }
 
   function onMouseDown (e) {
@@ -138,7 +140,10 @@ Events.init = function (container) {
     }
 
     var pos = getPos(e);
-    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
+    render.Picking.getTarget(e.x, e.y, function(id){
+      Events.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons , buildingID: id });
+    });
+
     }
 
   function onMouseMoveDocument (e) {
@@ -153,7 +158,7 @@ Events.init = function (container) {
   }
 
   function onMouseMove (e) {
-    APP.emit('pointermove', getPos(e));
+    Events.emit('pointermove', getPos(e));
   }
 
   function onMouseUp (e) {
@@ -173,8 +178,8 @@ Events.init = function (container) {
     }
 
     button = 0;
-    APP.emit('pointerup', { button: e.button, buttons: e.buttons });
-  }
+    Events.emit('pointerup', { button: e.button, buttons: e.buttons });
+      }
 
   function onMouseWheel (e) {
     cancelEvent(e);
@@ -226,7 +231,7 @@ Events.init = function (container) {
     };
 
     APP.setPosition(newPosition);
-    APP.emit('move', newPosition);
+    Events.emit('move', newPosition);
   }
 
   function rotateMap (e) {
@@ -283,7 +288,7 @@ Events.init = function (container) {
     startX = prevX = t1.clientX;
     startY = prevY = t1.clientY;
 
-    APP.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1 });
+    Events.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1, buildingID: id });
   }
 
   function onTouchMoveDocument (e) {
@@ -310,7 +315,7 @@ Events.init = function (container) {
   function onTouchMove (e) {
     if (e.touches.length === 1) {
       var pos = getPos(e.touches[0]);
-      APP.emit('pointermove', { x: pos.x, y: pos.y, button: 0, buttons: 1 });
+      Events.emit('pointermove', { x: pos.x, y: pos.y, button: 0, buttons: 1 });
     }
   }
 
@@ -329,7 +334,7 @@ Events.init = function (container) {
 
     if (e.touches.length === 0) {
       button = 0;
-      APP.emit('pointerup', { button: 0, buttons: 1 });
+      Events.emit('pointerup', { button: 0, buttons: 1 });
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
       prevX = t1.clientX;
@@ -349,6 +354,32 @@ Events.init = function (container) {
       APP.setRotation(prevRotation - e.rotation);
     }
 
-    APP.emit('gesture', e);
+    Events.emit('gesture', e);
   }
 };
+
+
+Events.on = function(type, fn) {
+  (Events.listeners[type] || (Events.listeners[type] = [])).push(fn);
+};
+
+Events.off = function(type, fn) {
+  Events.listeners[type] = (Events.listeners[type] || []).filter(function(item) {
+    return item !== fn;
+  });
+};
+
+Events.emit = function(type, payload) {
+  if (Events.listeners[type] === undefined) {
+    return;
+  }
+  setTimeout(function(){
+    var typeListeners = Events.listeners[type];
+    for (var i = 0, len = typeListeners.length; i < len; i++) {
+      typeListeners[i](payload);
+    }
+  },0)
+
+
+};
+

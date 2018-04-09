@@ -58,7 +58,8 @@ function process (geojson, options) {
     position = { latitude: origin[1], longitude: origin[0] };
 
   geojson.features.forEach(feature => {
-    // APP.emit('loadfeature', feature); // TODO
+
+    //Events.emit('loadfeature', feature); // TODO
 
     const
       properties = feature.properties,
