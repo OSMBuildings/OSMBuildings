@@ -124,7 +124,7 @@ Events.init = function (container) {
   function onMouseDown (e) {
     cancelEvent(e);
 
-    APP.activity.setBusy("mousedown");
+    APP.activity.setBusy('MOUSE_DOWN');
 
     startZoom = APP.zoom;
     prevRotation = APP.rotation;
@@ -161,10 +161,6 @@ Events.init = function (container) {
   }
 
   function onMouseUp (e) {
-    setTimeout(() => {
-      APP.activity.setIdle("mousedown");
-    }, 1000);
-
     // prevents clicks on other page elements
     if (!button) {
       return;
@@ -178,6 +174,8 @@ Events.init = function (container) {
 
     button = 0;
     Events.emit('pointerup', { button: e.button, buttons: e.buttons });
+
+    APP.activity.setIdle('MOUSE_DOWN');
   }
 
   function onMouseWheel (e) {
@@ -263,7 +261,7 @@ Events.init = function (container) {
   }
 
   function onTouchStart (e) {
-    APP.activity.setBusy("mousedown");
+    APP.activity.setBusy('MOUSE_DOWN');
 
     button = 1;
     cancelEvent(e);
@@ -322,9 +320,7 @@ Events.init = function (container) {
     if (!button) {
       return;
     }
-    setTimeout(() => {
-      APP.activity.setIdle("mousedown");
-    }, 1000);
+
 
     // gesturechange polyfill
     gestureStarted = false;
@@ -339,6 +335,8 @@ Events.init = function (container) {
       prevX = t1.clientX;
       prevY = t1.clientY;
     }
+
+    APP.activity.setIdle('MOUSE_DOWN');
   }
 
   function onGestureChange (e) {

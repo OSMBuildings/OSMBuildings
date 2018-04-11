@@ -22,12 +22,8 @@ mesh.GeoJSON = class {
 
     this.items = [];
 
-    APP.activity.setBusy("meshloading");
-
     APP.workers.get(worker => {
       this.worker = worker;
-
-
 
       const onResult = function (e) {
         if (e.data !== 'error') {
@@ -36,11 +32,6 @@ mesh.GeoJSON = class {
 
         worker.removeEventListener('message', onResult, false); // remove this listener
         APP.workers.free(worker); // return worker to pool
-
-        setTimeout(() => {
-          APP.activity.setIdle("meshloading");
-        }, 3000);
-
       }.bind(this);
 
       this.worker.addEventListener('message', onResult, false);
@@ -76,13 +67,13 @@ mesh.GeoJSON = class {
     Filter.apply(this);
     DataIndex.add(this);
 
+    APP.activity.setBusy('MESH_LOADING');
+
     this.fade = 0;
     this.isReady = true;
-
   }
 
-  applyFilter () {
-  } // TODO
+  applyFilter () {} // TODO
 
   getFade () {
     if (this.fade >= 1) {
@@ -90,6 +81,11 @@ mesh.GeoJSON = class {
     }
     const fade = this.fade;
     this.fade += 1 / (1 * 60); // (duration * fps)
+
+    if (this.fade >= 1) {
+      APP.activity.setIdle('MESH_LOADING');
+    }
+
     return fade;
   }
 

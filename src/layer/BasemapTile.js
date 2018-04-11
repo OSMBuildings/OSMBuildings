@@ -29,11 +29,6 @@ class BasemapTile extends Tile {
 
   load (url) {
     this.texture = new GLX.texture.Image().load(url, image => {
-      APP.activity.setBusy('BASEMAP_TILE');
-      setTimeout(() => {
-        APP.activity.setIdle('BASEMAP_TILE');
-      }, 3000);
-
       if (image) {
         this.isReady = true;
 

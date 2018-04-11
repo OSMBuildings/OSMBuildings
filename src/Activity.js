@@ -1,31 +1,43 @@
-
-// TODO: could turn into a public loading handler
-// OSMB.loader - stop(), start(), isBusy(), events..
-
-Activity = class {
+class Activity {
 
   constructor () {
-    this.jobs = [];
+    this.jobs = {};
+    this.delay = 1000;
   }
 
-  setBusy(id){
-    if(id !== undefined){
-      this.jobs.push(id);
+  setBusy (id) {
+    if (this.jobs[id] && this.jobs[id].timer) {
+      clearTimeout(this.jobs[id].timer);
     }
+    this.jobs[id] = { id: id };
   }
 
-  setIdle(id){
-    if(id !== undefined) {
-      this.jobs = this.jobs.filter(job => job !== id);
+  setIdle (id) {
+    if (!this.jobs[id]) {
+      return;
     }
+    if (this.jobs[id].timer) {
+      clearTimeout(this.jobs[id].timer);
+    }
+    this.jobs[id].timer = setTimeout(() => {
+      delete this.jobs[id];
+    }, this.delay);
   }
 
-  isBusy(){
-    return this.jobs.length;
+  isBusy () {
+    let num = 0;
+    for (let id in this.jobs) {
+      num++;
+    }
+    return num > 0;
   }
 
-  destroy(){
-    this.jobs = [];
+  destroy () {
+    for (let id in this.jobs) {
+      if (this.jobs[id].timer) {
+        clearTimeout(this.jobs[id].timer);
+      }
+    }
+    this.jobs = {};
   }
-
 }

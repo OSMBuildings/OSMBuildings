@@ -177,8 +177,6 @@ mesh.OBJ = class {
       ids: []
     };
 
-    APP.activity.setBusy("meshloading");
-
     this.request = Request.getText(url, (error, obj) => {
       this.request = null;
       if (error) {
@@ -254,11 +252,10 @@ mesh.OBJ = class {
     Filter.apply(this);
     DataIndex.add(this);
 
+    APP.activity.setBusy('MESH_LOADING');
+
     this.fade = 0;
     this.isReady = true;
-    setTimeout(() => {
-      APP.activity.setIdle("meshloading");
-    }, 3000);
   }
 
   applyFilter () {} // TODO
@@ -269,6 +266,11 @@ mesh.OBJ = class {
     }
     const fade = this.fade;
     this.fade += 1 / (1 * 60); // (duration * fps)
+
+    if (this.fade >= 1) {
+      APP.activity.setIdle('MESH_LOADING');
+    }
+
     return fade;
   }
 
