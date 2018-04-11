@@ -122,9 +122,9 @@ Events.init = function (container) {
   }
 
   function onMouseDown (e) {
-    cancelEvent(e);
+    APP.activity.setBusy();
 
-    APP.activity.setBusy('MOUSE_DOWN');
+    cancelEvent(e);
 
     startZoom = APP.zoom;
     prevRotation = APP.rotation;
@@ -175,7 +175,7 @@ Events.init = function (container) {
     button = 0;
     Events.emit('pointerup', { button: e.button, buttons: e.buttons });
 
-    APP.activity.setIdle('MOUSE_DOWN');
+    APP.activity.setIdle();
   }
 
   function onMouseWheel (e) {
@@ -261,7 +261,7 @@ Events.init = function (container) {
   }
 
   function onTouchStart (e) {
-    APP.activity.setBusy('MOUSE_DOWN');
+    APP.activity.setBusy();
 
     button = 1;
     cancelEvent(e);
@@ -336,7 +336,7 @@ Events.init = function (container) {
       prevY = t1.clientY;
     }
 
-    APP.activity.setIdle('MOUSE_DOWN');
+    APP.activity.setIdle();
   }
 
   function onGestureChange (e) {

@@ -67,7 +67,7 @@ mesh.GeoJSON = class {
     Filter.apply(this);
     DataIndex.add(this);
 
-    APP.activity.setBusy('MESH_LOADING');
+    APP.activity.setBusy();
 
     this.fade = 0;
     this.isReady = true;
@@ -79,11 +79,12 @@ mesh.GeoJSON = class {
     if (this.fade >= 1) {
       return 1;
     }
+
     const fade = this.fade;
     this.fade += 1 / (1 * 60); // (duration * fps)
 
     if (this.fade >= 1) {
-      APP.activity.setIdle('MESH_LOADING');
+      APP.activity.setIdle();
     }
 
     return fade;

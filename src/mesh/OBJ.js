@@ -252,7 +252,7 @@ mesh.OBJ = class {
     Filter.apply(this);
     DataIndex.add(this);
 
-    APP.activity.setBusy('MESH_LOADING');
+    APP.activity.setBusy();
 
     this.fade = 0;
     this.isReady = true;
@@ -268,7 +268,7 @@ mesh.OBJ = class {
     this.fade += 1 / (1 * 60); // (duration * fps)
 
     if (this.fade >= 1) {
-      APP.activity.setIdle('MESH_LOADING');
+      APP.activity.setIdle();
     }
 
     return fade;
