@@ -1,38 +1,40 @@
 
-var Grid = function(source, tileClass, options) {
-  this.tiles = {};
-  this.buffer = 1;
+class Grid {
 
-  this.source = source;
-  this.tileClass = tileClass;
-  options = options || {};
+  constructor (source, tileClass, options) {
+    this.source = source;
+    this.tileClass = tileClass;
+    options = options || {};
 
-  this.bounds = options.bounds;
-  this.fixedZoom = options.fixedZoom;
+    this.tiles = {};
+    this.buffer = 1;
 
-  this.tileOptions = { color:options.color, fadeIn:options.fadeIn };
+    this.bounds = options.bounds;
+    this.fixedZoom = options.fixedZoom;
 
-  this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
-  this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
-  if (this.maxZoom < this.minZoom) {
-    this.minZoom = MIN_ZOOM;
-    this.maxZoom = MAX_ZOOM;
+    this.tileOptions = { color: options.color };
+
+    this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
+    this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
+    if (this.maxZoom < this.minZoom) {
+      this.minZoom = MIN_ZOOM;
+      this.maxZoom = MAX_ZOOM;
+    }
+
+    Events.on('change', this._onChange = () => {
+      this.update(500);
+    });
+
+    Events.on('resize', this._onResize = () => {
+      this.update();
+    });
+
+    this.update();
   }
-
-  APP.on('change', this._onChange = function() {
-    this.update(500);
-  }.bind(this));
-
-  APP.on('resize', this._onResize = this.update.bind(this));
-
-  this.update();
-};
-
-Grid.prototype = {
 
   // strategy: start loading after delay (ms), skip any attempts until then
   // effectively loads in intervals during movement
-  update: function(delay) {
+  update (delay) {
     if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
       return;
     }
@@ -43,32 +45,32 @@ Grid.prototype = {
     }
 
     if (!this.debounce) {
-      this.debounce = setTimeout(function() {
+      this.debounce = setTimeout(() => {
         this.debounce = null;
         this.loadTiles();
-      }.bind(this), delay);
+      }, delay);
     }
-  },
+  }
 
-  getURL: function(x, y, z) {
-    var s = 'abcd'[(x+y) % 4];
+  getURL (x, y, z) {
+    const s = 'abcd'[(x+y) % 4];
     return pattern(this.source, { s:s, x:x, y:y, z:z });
-  },
+  }
   
-  getClosestTiles: function(tileList, referencePoint) {
+  getClosestTiles (tileList, referencePoint) {
     tileList.sort(function(a, b) {
       // tile coordinates correspond to the tile's upper left corner, but for
       // the distance computation we should rather use their center; hence the 0.5 offsets
-      var distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
+      const distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
                   Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
 
-      var distB = Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) +
+      const distB = Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) +
                   Math.pow(b[1] + 0.5 - referencePoint[1], 2.0);
       
       return distA > distB;
     });
 
-    var prevX, prevY;
+    let prevX, prevY;
 
     // removes duplicates
     return tileList.filter(function(tile) {
@@ -79,7 +81,7 @@ Grid.prototype = {
       prevY = tile[1];
       return true;
     });
-  },
+  }
   
   /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
    * but with those tiles recursively replaced by their respective parent tile
@@ -90,11 +92,11 @@ Grid.prototype = {
    * The returned tile set is duplicate-free even if there were duplicates in
    * 'tiles' and even if multiple tiles from 'tiles' got replaced by the same parent.
    */
-  mergeTiles: function(tiles, zoom, pixelAreaThreshold) {
-    var parentTiles = {};
-    var tileSet = {};
-    var tileList = [];
-    var key;
+  mergeTiles (tiles, zoom, pixelAreaThreshold) {
+    const parentTiles = {};
+    const tileSet = {};
+    const tileList = [];
+    let key;
     
     // if there is no parent zoom level
     if (zoom === 0 || zoom <= this.minZoom) {
@@ -105,13 +107,13 @@ Grid.prototype = {
     }
     
     for (key in tiles) {
-      var tile = tiles[key];
+      const tile = tiles[key];
 
-      var parentX = (tile[0] <<0) / 2;
-      var parentY = (tile[1] <<0) / 2;
+      const parentX = (tile[0] <<0) / 2;
+      const parentY = (tile[1] <<0) / 2;
       
       if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
-        var numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix);
+        const numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix);
         parentTiles[ [parentX, parentY] ] = (numParentScreenPixels < pixelAreaThreshold);
       }
       
@@ -122,12 +124,12 @@ Grid.prototype = {
         }
       }
     }
-    
-    var parentTileList = [];
+
+    let parentTileList = [];
     
     for (key in parentTiles) {
       if (parentTiles[key]) {
-        var parentTile = key.split(',');
+        const parentTile = key.split(',');
         parentTileList.push( [parseInt(parentTile[0]), parseInt(parentTile[1]), zoom-1]);
       }
     }
@@ -137,18 +139,18 @@ Grid.prototype = {
     }
       
     return tileList.concat(parentTileList);
-  },
+  }
 
-  loadTiles: function() {
-    var zoom = Math.round(this.fixedZoom || APP.zoom);
+  loadTiles () {
+    const zoom = Math.round(this.fixedZoom || APP.zoom);
 
     // TODO: if there are user defined bounds for this layer, respect these too
     //  if (this.fixedBounds) {
-    //    var
+    //    const
     //      min = project(this.bounds.s, this.bounds.w, 1<<zoom),
     //      max = project(this.bounds.n, this.bounds.e, 1<<zoom);
     //
-    //    var bounds = {
+    //    const bounds = {
     //      zoom: zoom,
     //      minX: (min.x <<0) - this.buffer,
     //      minY: (min.y <<0) - this.buffer,
@@ -157,7 +159,7 @@ Grid.prototype = {
     //    };
     //  }
 
-    var
+    let
       tile, tileX, tileY, tileZoom,
       queue = [],
       i,
@@ -169,7 +171,7 @@ Grid.prototype = {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
     }
 
-    var tiles = rasterConvexQuad(viewQuad);
+    let tiles = rasterConvexQuad(viewQuad);
     tiles = ( this.fixedZoom ) ?
       this.getClosestTiles(tiles, mapCenterTile) :
       this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
@@ -182,7 +184,7 @@ Grid.prototype = {
       this.visibleTiles[ tiles[i] ] = true;
     }
 
-    for (var key in this.visibleTiles) {
+    for (let key in this.visibleTiles) {
       tile = key.split(',');
       tileX = parseInt(tile[0]);
       tileY = parseInt(tile[1]);
@@ -197,24 +199,25 @@ Grid.prototype = {
       queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], mapCenterTile) });
     }
 
-    this.purge();
-
     queue.sort(function(a, b) {
       return a.dist-b.dist;
     });
 
-    for (i = 0; i < queue.length; i++) {
-      tile = queue[i].tile;
+    // TODO: perhaps load sequentially during update -> setTimeout()
+    queue.forEach(item => {
+      const tile = item.tile;
       tile.load(this.getURL(tile.x, tile.y, tile.zoom));
-    }
-  },
+    });
 
-  purge: function() {
+    this.purge();
+  }
+
+  purge () {
     var
       zoom = Math.round(APP.zoom),
       tile, parent;
 
-    for (var key in this.tiles) {
+    for (let key in this.tiles) {
       tile = this.tiles[key];
       // tile is visible: keep
       if (this.visibleTiles[key]) {
@@ -250,17 +253,17 @@ Grid.prototype = {
       delete this.tiles[key];
       continue;
     }
-  },
+  }
 
-  destroy: function() {
-    APP.off('change', this._onChange);
-    APP.off('resize', this._onResize);
+  destroy () {
+    Events.off('change', this._onChange);
+    Events.off('resize', this._onResize);
 
     clearTimeout(this.debounce);
-    for (var key in this.tiles) {
+    for (let key in this.tiles) {
       this.tiles[key].destroy();
     }
     this.tiles = [];
     this.visibleTiles = {};
   }
-};
+}

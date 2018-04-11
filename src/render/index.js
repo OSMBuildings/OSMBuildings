@@ -15,8 +15,8 @@ class render {
       render.effects.shadows = false;
     }
 
-    APP.on('change', this.onChange);
-    APP.on('resize', this.onResize);
+    Events.on('change', this._onChange = this.onChange.bind(this));
+    Events.on('resize', this._onResize = this.onResize.bind(this));
     this.onResize(); // initialize view and projection matrix, fog distance, etc.
 
     GL.cullFace(GL.BACK);
@@ -112,7 +112,10 @@ class render {
         }
 
         if (APP.activity.isBusy()) {
-          this.renderFrame();
+          // this.renderFrame();
+          setTimeout(() => {
+            this.renderFrame();
+          }, 5);
         } else {
           setTimeout(() => {
             this.renderFrame();
@@ -210,8 +213,8 @@ class render {
   }
 
   static destroy () {
-    APP.off('change', this.onChange);
-    APP.off('resize', this.onResize);
+    Events.off('change', this._onChange);
+    Events.off('resize', this._onResize);
 
     render.Picking.destroy();
     render.Buildings.destroy();

@@ -221,7 +221,7 @@ OSMBuildings.prototype = {
     APP._getStateFromUrl();
     if (APP.options.state) {
       APP._setStateToUrl();
-      APP.on('change', APP._setStateToUrl);
+      Events.on('change', APP._setStateToUrl);
     }
 
     APP._attribution = document.createElement('DIV');
@@ -352,7 +352,7 @@ OSMBuildings.prototype = {
    * @param {String} [options.color] A color to apply to the model
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show this feature, defaults to and limited by global minZoom
    * @param {Number} [options.maxZoom=maxZoom] Maximum zoom level to show this feature, defaults to and limited by global maxZoom
-   * @param {Boolean} [options.fadeIn=true] Fade GeoJSON features; if `false`, then display immediately
+   * @deprecated {Boolean} [options.fadeIn=true] Fade GeoJSON features; if `false`, then display immediately
    * @return {Object} The added object
    */
   addGeoJSON: function(url, options) {
@@ -370,7 +370,7 @@ OSMBuildings.prototype = {
    * @param {String} [options.color] A color to apply to all features on this layer
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show features from this layer. Defaults to and limited by global minZoom.
    * @param {Number} [options.maxZoom=maxZoom] Maximum zoom level to show features from this layer. Defaults to and limited by global maxZoom.
-   * @param {Boolean} [options.fadeIn=true] Fade GeoJSON features. If `false`, then display immediately.
+   * @deprecated {Boolean} [options.fadeIn=true] Fade GeoJSON features. If `false`, then display immediately.
    * @return {Object} The added layer object
    */
   addGeoJSONTiles: function(url, options) {

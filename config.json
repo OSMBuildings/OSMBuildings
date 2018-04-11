@@ -48,11 +48,11 @@
     "src/Request.js",
     "src/util.js",
 
+    "src/layer/Grid.js",
     "src/layer/Tile.js",
     "src/layer/BasemapTile.js",
     "src/layer/DataTile.js",
 
-    "src/Grid.js",
     "src/Filter.js",
 
     "src/data/index.js",

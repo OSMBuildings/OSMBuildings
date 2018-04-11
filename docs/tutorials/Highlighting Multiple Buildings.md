@@ -50,7 +50,7 @@ function highlightBuildings(buildingsByID) {
             geojson.features.push.apply(geojson.features, buildingsByID[id]);
         }
         // Add your own "highlighted" copies
-        geojsonHighlight = osmb.addGeoJSON(geojson, {fadeIn: false});
+        geojsonHighlight = osmb.addGeoJSON(geojson);
         // Hide the original buildings
         osmb.hide(isHighlighted);
     }
@@ -139,7 +139,7 @@ function highlightBuildings(buildingsByID) {
             geojson.features.push.apply(geojson.features, buildingsByID[id]);
         }
         // Add your own "highlighted" copies
-        geojsonHighlight = osmb.addGeoJSON(geojson, {fadeIn: false});
+        geojsonHighlight = osmb.addGeoJSON(geojson);
         // Hide the original buildings
         osmb.hide(isHighlighted);
     }

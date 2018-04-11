@@ -64,7 +64,6 @@ mesh.GeoJSON = class {
     });
     this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
 
-    Filter.apply(this);
     DataIndex.add(this);
 
     APP.activity.setBusy();
@@ -72,8 +71,6 @@ mesh.GeoJSON = class {
     this.fade = 0;
     this.isReady = true;
   }
-
-  applyFilter () {} // TODO
 
   getFade () {
     if (this.fade >= 1) {

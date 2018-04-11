@@ -1866,20 +1866,6 @@
               "default": "maxZoom"
             },
             {
-              "title": "param",
-              "description": "Fade GeoJSON features; if `false`, then display immediately",
-              "lineNumber": 12,
-              "type": {
-                "type": "OptionalType",
-                "expression": {
-                  "type": "NameExpression",
-                  "name": "Boolean"
-                }
-              },
-              "name": "options.fadeIn",
-              "default": "true"
-            },
-            {
               "title": "return",
               "description": "The added object",
               "lineNumber": 13,
@@ -2876,20 +2862,6 @@
               },
               "name": "options.maxZoom",
               "default": "maxZoom"
-            },
-            {
-              "title": "param",
-              "description": "Fade GeoJSON features. If `false`, then display immediately.",
-              "lineNumber": 10,
-              "type": {
-                "type": "OptionalType",
-                "expression": {
-                  "type": "NameExpression",
-                  "name": "Boolean"
-                }
-              },
-              "name": "options.fadeIn",
-              "default": "true"
             },
             {
               "title": "return",

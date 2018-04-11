@@ -360,20 +360,19 @@ Events.on = function (type, fn) {
 };
 
 Events.off = function (type, fn) {
-  Events.listeners[type] = (Events.listeners[type] || []).filter(function (item) {
-    return item !== fn;
-  });
+  Events.listeners[type] = (Events.listeners[type] || []).filter(item => item !== fn);
 };
+
+// TODO: there should be external emit like APP.emit() with using timeout
+// internal version should be immediately
 
 Events.emit = function (type, payload) {
   if (Events.listeners[type] === undefined) {
     return;
   }
-  setTimeout(function () {
-    var typeListeners = Events.listeners[type];
-    for (var i = 0, len = typeListeners.length; i < len; i++) {
-      typeListeners[i](payload);
-    }
+
+  setTimeout(() => {
+    Events.listeners[type].forEach(listener => listener(payload));
   }, 0);
 };
 
