@@ -85,7 +85,7 @@ render.Buildings = {
     }
 
     var
-      dataItems = data.Index.items,
+      dataItems = DataIndex.items,
       modelMatrix;
 
     dataItems.forEach(item => {

@@ -261,7 +261,9 @@
         .then(response => response.json())
         .then(parsed => {
           const feature = parsed.elements[0];
-          console.log(feature.id, feature.tags);
+          if (feature) {
+            console.log(feature.id, feature.tags);
+          }
         });
     });
   });

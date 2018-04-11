@@ -252,7 +252,7 @@ mesh.OBJ = class {
     this.data = null;
 
     Filter.apply(this);
-    data.Index.add(this);
+    DataIndex.add(this);
 
     this.fade = 0;
     this.isReady = true;
@@ -299,7 +299,7 @@ mesh.OBJ = class {
   }
 
   destroy () {
-    data.Index.remove(this);
+    DataIndex.remove(this);
 
     if (this.request) {
       this.request.abort();

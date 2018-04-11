@@ -376,7 +376,7 @@ OSMBuildings.prototype = {
   addGeoJSONTiles: function(url, options) {
     options = options || {};
     options.fixedZoom = options.fixedZoom || 15;
-    APP.dataGrid = new Grid(url, data.Tile, options);
+    APP.dataGrid = new Grid(url, DataTile, options);
     return APP.dataGrid;
   },
 
@@ -387,7 +387,7 @@ OSMBuildings.prototype = {
    * @return {Object} The added layer object
    */
   addMapTiles: function(url) {
-    APP.basemapGrid = new Grid(url, basemap.Tile);
+    APP.basemapGrid = new Grid(url, BasemapTile);
     return APP.basemapGrid;
   },
 
@@ -685,7 +685,7 @@ OSMBuildings.prototype = {
     this.glx.destroy();
     this.canvas.parentNode.removeChild(this.canvas);
 
-    data.Index.destroy();
+    DataIndex.destroy();
     APP.activity.destroy();
 
     APP.container.innerHTML = '';

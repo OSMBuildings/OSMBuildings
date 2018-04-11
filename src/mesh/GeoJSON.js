@@ -74,7 +74,7 @@ mesh.GeoJSON = class {
     this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
 
     Filter.apply(this);
-    data.Index.add(this);
+    DataIndex.add(this);
 
     this.fade = 0;
     this.isReady = true;
@@ -124,7 +124,7 @@ mesh.GeoJSON = class {
 
     clearTimeout(this.relaxTimer);
 
-    data.Index.remove(this);
+    DataIndex.remove(this);
 
     if (this.request) {
       this.request.abort(); // TODO: signal to workers

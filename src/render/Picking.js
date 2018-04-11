@@ -35,7 +35,7 @@ class DrawPicking {
 
       this.shader.setUniform('uFogRadius', '1f', render.fogDistance);
 
-      data.Index.items.forEach(item => {
+      DataIndex.items.forEach(item => {
         if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
           return;
         }

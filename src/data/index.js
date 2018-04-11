@@ -1,23 +1,24 @@
 
 // TODO: collision check with bounding cylinders
 
-var data = {
-  Index: {
-    items: [],
+const DataIndex = {
 
-    add: function(item) {
-      this.items.push(item);
-    },
+  items: [],
 
-    remove: function(item) {
-      this.items = this.items.filter(function(i) {
-        return (i !== item);
-      });
-    },
+  add: function (item) {
+    this.items.push(item);
+  },
 
-    destroy: function() {
-      // items are destroyed by grid
-      this.items = [];
-    }
+  remove: function (item) {
+    this.items = this.items.filter(i => (i !== item));
+  },
+
+  // forEach: function (fn) {
+  //   this.items.forEach(fn);
+  // },
+
+  destroy: function () {
+    this.items.forEach(item => item.destroy());
+    this.items = [];
   }
 };

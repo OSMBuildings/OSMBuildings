@@ -27,8 +27,8 @@ var Filter = {
     var start = this.getTime();
     var end = start+duration;
 
-    for (var i = 0, il = data.Index.items.length; i<il; i++) {
-      indexItem = data.Index.items[i];
+    for (var i = 0, il = DataIndex.items.length; i<il; i++) {
+      indexItem = DataIndex.items[i];
 
       if (!indexItem.applyFilter) {
         continue;
@@ -63,8 +63,8 @@ var Filter = {
     var start = this.getTime();
     var end = start+duration;
 
-    for (i = 0, il = data.Index.items.length; i<il; i++) {
-      indexItem = data.Index.items[i];
+    for (i = 0, il = DataIndex.items.length; i<il; i++) {
+      indexItem = DataIndex.items[i];
 
       if (!indexItem.applyFilter) {
         continue;

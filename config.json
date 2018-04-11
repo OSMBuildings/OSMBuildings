@@ -48,11 +48,14 @@
     "src/Request.js",
     "src/util.js",
 
+    "src/layer/Tile.js",
+    "src/layer/BasemapTile.js",
+    "src/layer/DataTile.js",
+
     "src/Grid.js",
     "src/Filter.js",
 
     "src/data/index.js",
-    "src/data/Tile.js",
 
     "src/mesh/index.js",
     "src/mesh/GeoJSON.js",
@@ -72,9 +75,6 @@
     "src/render/DepthFogNormalMap.js",
     "src/render/AmbientMap.js",
     "src/render/Overlay.js",
-    "src/render/Blur.js",
-
-    "src/basemap/index.js",
-    "src/basemap/Tile.js"
+    "src/render/Blur.js"
   ]
 }

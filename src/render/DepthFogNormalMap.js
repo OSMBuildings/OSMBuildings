@@ -52,7 +52,7 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
 
   // render all actual data items, but also a dummy map plane
   // Note: SSAO on the map plane has been disabled temporarily
-  var dataItems = data.Index.items.concat([this.mapPlane]);
+  var dataItems = DataIndex.items.concat([this.mapPlane]);
 
   dataItems.forEach(item => {
     if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
