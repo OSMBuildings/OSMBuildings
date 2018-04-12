@@ -192,8 +192,12 @@ Events.init = function (container) {
     }
 
     if (!Events.disabled) {
+      APP.activity.setBusy();
+
       var adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
       APP.setZoom(APP.zoom + adjust, e);
+
+      APP.activity.setIdle();
     }
 
     // we don't emit mousewheel here as we don't want to run into a loop of death
@@ -321,7 +325,6 @@ Events.init = function (container) {
     if (!button) {
       return;
     }
-
 
     // gesturechange polyfill
     gestureStarted = false;

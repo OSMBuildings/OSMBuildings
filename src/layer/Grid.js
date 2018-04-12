@@ -195,12 +195,12 @@ class Grid {
 
     setTimeout(() => {
       this.update();
-    }, 100);
+    }, 250);
   }
 
   queueNext () {
     if (!this.queue.length) {
-      setTimeout(this.queueNext.bind(this), 10);
+      setTimeout(this.queueNext.bind(this), 50);
       return;
     }
 
