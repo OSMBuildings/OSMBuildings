@@ -4,69 +4,44 @@ class Grid {
   constructor (source, tileClass, options) {
     this.source = source;
     this.tileClass = tileClass;
+
     options = options || {};
 
     this.tiles = {};
+    // TODO: respect buffer
     this.buffer = 1;
 
-    this.bounds = options.bounds;
-    this.fixedZoom = options.fixedZoom;
-
-    this.tileOptions = { color: options.color };
-
-    this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
-    this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
-    if (this.maxZoom < this.minZoom) {
-      this.minZoom = MIN_ZOOM;
-      this.maxZoom = MAX_ZOOM;
-    }
-
-    Events.on('change', this._onChange = () => {
-      this.update(500);
-    });
-
-    Events.on('resize', this._onResize = () => {
-      this.update();
-    });
+    this.queue = [];
+    // 2 threads
+    this.queueNext();
+    this.queueNext();
 
     this.update();
-  }
 
-  // strategy: start loading after delay (ms), skip any attempts until then
-  // effectively loads in intervals during movement
-  update (delay) {
-    if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
-      return;
-    }
+    // TODO: get rid
+    this.fixedZoom = options.fixedZoom;
 
-    if (!delay) {
-      this.loadTiles();
-      return;
-    }
+    this.bounds = options.bounds || { w: -180, s: -90, e: 180, n: 90 };
+    this.minZoom = Math.max(parseFloat(options.minZoom), APP.minZoom);
+    this.maxZoom = Math.min(parseFloat(options.maxZoom), APP.maxZoom);
 
-    if (!this.debounce) {
-      this.debounce = setTimeout(() => {
-        this.debounce = null;
-        this.loadTiles();
-      }, delay);
+    if (this.maxZoom < this.minZoom) {
+      this.minZoom = APP.minZoom;
+      this.maxZoom = APP.maxZoom;
     }
   }
 
   getURL (x, y, z) {
     const s = 'abcd'[(x+y) % 4];
-    return pattern(this.source, { s:s, x:x, y:y, z:z });
+    return pattern(this.source, { s: s, x: x, y: y, z: z });
   }
   
   getClosestTiles (tileList, referencePoint) {
     tileList.sort(function(a, b) {
       // tile coordinates correspond to the tile's upper left corner, but for
       // the distance computation we should rather use their center; hence the 0.5 offsets
-      const distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) +
-                  Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
-
-      const distB = Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) +
-                  Math.pow(b[1] + 0.5 - referencePoint[1], 2.0);
-      
+      const distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) + Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
+      const distB = Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) + Math.pow(b[1] + 0.5 - referencePoint[1], 2.0);
       return distA > distB;
     });
 
@@ -141,86 +116,108 @@ class Grid {
     return tileList.concat(parentTileList);
   }
 
-  loadTiles () {
-    const zoom = Math.round(this.fixedZoom || APP.zoom);
+  getDistance(a, b) {
+    const dx = a[0]-b[0], dy = a[1]-b[1];
+    return dx*dx + dy*dy;
+  }
 
-    // TODO: if there are user defined bounds for this layer, respect these too
-    //  if (this.fixedBounds) {
-    //    const
-    //      min = project(this.bounds.s, this.bounds.w, 1<<zoom),
-    //      max = project(this.bounds.n, this.bounds.e, 1<<zoom);
-    //
-    //    const bounds = {
-    //      zoom: zoom,
-    //      minX: (min.x <<0) - this.buffer,
-    //      minY: (min.y <<0) - this.buffer,
-    //      maxX: (max.x <<0) + this.buffer,
-    //      maxY: (max.y <<0) + this.buffer
-    //    };
-    //  }
+  update () {
+    if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
+      return;
+    }
+
+    const zoom = Math.round(this.fixedZoom || APP.zoom);
+    // TODO: respect bounds
+    // min = project(this.bounds.s, this.bounds.w, 1<<zoom),
+    // max = project(this.bounds.n, this.bounds.e, 1<<zoom),
+    // bounds = {
+    //   zoom: zoom,
+    //   minX: min.x <<0,
+    //   minY: min.y <<0,
+    //   maxX: max.x <<0,
+    //   maxY: max.y <<0
+    // };
 
     let
-      tile, tileX, tileY, tileZoom,
-      queue = [],
-      i,
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      mapCenterTile = [ long2tile(APP.position.longitude, zoom),
-                        lat2tile (APP.position.latitude,  zoom)];
+      center = [ lon2tile(APP.position.longitude, zoom), lat2tile (APP.position.latitude,  zoom)];
 
-    for (i = 0; i < 4; i++) {
+    for (let i = 0; i < 4; i++) {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);
     }
 
     let tiles = rasterConvexQuad(viewQuad);
-    tiles = ( this.fixedZoom ) ?
-      this.getClosestTiles(tiles, mapCenterTile) :
-      this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
-    
-    this.visibleTiles = {};
-    for (i = 0; i < tiles.length; i++) {
-      if (tiles[i][2] === undefined) {
-        tiles[i][2] = zoom;
+    tiles = ( this.fixedZoom ) ? this.getClosestTiles(tiles, center) : this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
+
+    const visibleTiles = {};
+    tiles.forEach(pos => {
+      if (pos[2] === undefined) {
+        pos[2] = zoom;
       }
-      this.visibleTiles[ tiles[i] ] = true;
-    }
-
-    for (let key in this.visibleTiles) {
-      tile = key.split(',');
-      tileX = parseInt(tile[0]);
-      tileY = parseInt(tile[1]);
-      tileZoom = parseInt(tile[2]);
-
-      if (this.tiles[key]) {
-        continue;
-      }
-
-      this.tiles[key] = new this.tileClass(tileX, tileY, tileZoom, this.tileOptions, this.tiles);
-
-      queue.push({ tile:this.tiles[key], dist:distance2([tileX, tileY], mapCenterTile) });
-    }
-
-    queue.sort(function(a, b) {
-      return a.dist-b.dist;
+      visibleTiles[pos.join(',')] = true;
     });
 
-    // TODO: perhaps load sequentially during update -> setTimeout()
-    queue.forEach(item => {
-      const tile = item.tile;
-      tile.load(this.getURL(tile.x, tile.y, tile.zoom));
+    //*****************************************************
+    //*****************************************************
+
+    for (let key in visibleTiles) {
+      const
+        pos = key.split(','),
+        x = parseInt(pos[0]),
+        y = parseInt(pos[1]),
+        zoom = parseInt(pos[2]);
+
+      // create tile if it doesn't exist
+      if (!this.tiles[key]) {
+        this.tiles[key] = new this.tileClass(x, y, zoom);
+      }
+
+      const tile = this.tiles[key];
+
+      // add to queue if not loaded yet and if not already in queue
+      if (!tile.loaded && !this.queue.some(t => t.key === key)) {
+        this.queue.push(tile);
+      }
+    }
+
+    this.purge(visibleTiles);
+
+    // update all distances
+    this.queue.forEach(tile => {
+      tile.distance = this.getDistance([tile.x, tile.y], center);
     });
 
-    this.purge();
+    this.queue.sort((a, b) => {
+      return b.distance - a.distance;
+    });
+
+    setTimeout(() => {
+      this.update();
+    }, 100);
   }
 
-  purge () {
-    var
-      zoom = Math.round(APP.zoom),
-      tile, parent;
+  queueNext () {
+    if (!this.queue.length) {
+      setTimeout(this.queueNext.bind(this), 10);
+      return;
+    }
+
+    const tile = this.queue.pop();
+
+    tile.load(this.getURL(tile.x, tile.y, tile.zoom), () => {
+      tile.loaded = true;
+      this.queueNext();
+    });
+  }
+
+  purge (visibleTiles) {
+    const zoom = Math.round(APP.zoom);
 
     for (let key in this.tiles) {
-      tile = this.tiles[key];
+      let tile = this.tiles[key];
+
       // tile is visible: keep
-      if (this.visibleTiles[key]) {
+      if (visibleTiles[key]) {
         continue;
       }
 
@@ -233,37 +230,38 @@ class Grid {
 
       // tile's parent would be visible: keep
       if (tile.zoom === zoom+1) {
-        parent = [tile.x/2<<0, tile.y/2<<0, zoom].join(',');
-        if (this.visibleTiles[parent]) {
+        let parentKey = [tile.x/2<<0, tile.y/2<<0, zoom].join(',');
+        if (visibleTiles[parentKey]) {
           continue;
         }
       }
 
       // any of tile's children would be visible: keep
       if (tile.zoom === zoom-1) {
-        if (this.visibleTiles[[tile.x*2, tile.y*2, zoom].join(',')] ||
-          this.visibleTiles[[tile.x*2 + 1, tile.y*2, zoom].join(',')] ||
-          this.visibleTiles[[tile.x*2, tile.y*2 + 1, zoom].join(',')] ||
-          this.visibleTiles[[tile.x*2 + 1, tile.y*2 + 1, zoom].join(',')]) {
+        if (
+          visibleTiles[[tile.x*2,     tile.y*2,     zoom].join(',')] ||
+          visibleTiles[[tile.x*2 + 1, tile.y*2,     zoom].join(',')] ||
+          visibleTiles[[tile.x*2,     tile.y*2 + 1, zoom].join(',')] ||
+          visibleTiles[[tile.x*2 + 1, tile.y*2 + 1, zoom].join(',')]) {
           continue;
         }
       }
 
       // drop anything else
       delete this.tiles[key];
-      continue;
     }
+
+    // remove dead tiles from queue
+    this.queue = this.queue.filter(tile => !!tile);
   }
 
   destroy () {
-    Events.off('change', this._onChange);
-    Events.off('resize', this._onResize);
-
-    clearTimeout(this.debounce);
     for (let key in this.tiles) {
       this.tiles[key].destroy();
     }
-    this.tiles = [];
-    this.visibleTiles = {};
+    this.tiles = {};
+    this.queue = [];
+
+    // TODO: stop update timer, stop queue timers
   }
 }

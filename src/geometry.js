@@ -1,11 +1,4 @@
 
-function distance2(a, b) {
-  var
-    dx = a[0]-b[0],
-    dy = a[1]-b[1];
-  return dx*dx + dy*dy;
-}
-
 function assert(condition, message) {
   if (!condition) {
     throw message;
@@ -378,11 +371,11 @@ function getPositionFromLocal(localXY) {
 function getTilePositionFromLocal(localXY, zoom) {
   var pos = getPositionFromLocal(localXY);
   
-  return [long2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
+  return [lon2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
 }
 
 //all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-function long2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
+function lon2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
 function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
 function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
 function tile2lat(y,z) { 

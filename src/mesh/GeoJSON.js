@@ -1,6 +1,6 @@
 mesh.GeoJSON = class {
 
-  constructor (url, options) {
+  constructor (url, options, callback) {
     options = options || {};
     this.options = options;
 
@@ -32,6 +32,10 @@ mesh.GeoJSON = class {
 
         worker.removeEventListener('message', onResult, false); // remove this listener
         APP.workers.free(worker); // return worker to pool
+
+        if (callback) {
+          callback();
+        }
       }.bind(this);
 
       this.worker.addEventListener('message', onResult, false);
@@ -49,27 +53,36 @@ mesh.GeoJSON = class {
     this.position = res.position;
 
     this.vertexBuffer = new GLX.Buffer(3, res.vertices);
-    this.normalBuffer = new GLX.Buffer(3, res.normals);
-    this.colorBuffer = new GLX.Buffer(3, res.colors);
-    this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
-    this.heightBuffer = new GLX.Buffer(1, res.heights);
+    setTimeout(() => {
+      this.normalBuffer = new GLX.Buffer(3, res.normals);
+      setTimeout(() => {
+        this.colorBuffer = new GLX.Buffer(3, res.colors);
+        setTimeout(() => {
+          this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
+          setTimeout(() => {
+            this.heightBuffer = new GLX.Buffer(1, res.heights);
+            setTimeout(() => {
+              const idColors = [];
+              res.items.forEach(item => {
+                const idColor = render.Picking.idToColor(item.id);
 
-    const idColors = [];
-    res.items.forEach(item => {
-      const idColor = render.Picking.idToColor(item.id);
+                for (let i = 0; i < item.vertexCount; i++) {
+                  idColors.push(idColor[0], idColor[1], idColor[2]);
+                }
+              });
+              this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
 
-      for (let i = 0; i < item.vertexCount; i++) {
-        idColors.push(idColor[0], idColor[1], idColor[2]);
-      }
-    });
-    this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
+              DataIndex.add(this);
 
-    DataIndex.add(this);
+              APP.activity.setBusy();
 
-    APP.activity.setBusy();
-
-    this.fade = 0;
-    this.isReady = true;
+              this.fade = 0;
+              this.isReady = true;
+            }, 10);
+          }, 10);
+        }, 10);
+      }, 10);
+    }, 10);
   }
 
   getFade () {
@@ -91,7 +104,7 @@ mesh.GeoJSON = class {
   getMatrix () {
     const matrix = new GLX.Matrix();
 
-    if (this.elevation) {
+    if (this.elevation) { // means floating
       matrix.translate(0, 0, this.elevation);
     }
 
@@ -102,7 +115,7 @@ mesh.GeoJSON = class {
     }
 
     // this position is available once geometry processing is complete.
-    // should not be failing before because of this.isReady
+    // should not be failing before (because of this.isReady)
     const dLat = this.position.latitude - APP.position.latitude;
     const dLon = this.position.longitude - APP.position.longitude;
 

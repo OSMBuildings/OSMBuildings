@@ -112,10 +112,10 @@ class render {
         }
 
         if (APP.activity.isBusy()) {
-          // this.renderFrame();
-          setTimeout(() => {
-            this.renderFrame();
-          }, 5);
+          this.renderFrame();
+          // setTimeout(() => {
+          //   this.renderFrame();
+          // }, 5);
         } else {
           setTimeout(() => {
             this.renderFrame();

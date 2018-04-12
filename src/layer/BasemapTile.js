@@ -27,7 +27,7 @@ class BasemapTile extends Tile {
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
   };
 
-  load (url) {
+  load (url, callback) {
     this.texture = new GLX.texture.Image().load(url, image => {
       if (image) {
         this.isReady = true;
@@ -37,6 +37,10 @@ class BasemapTile extends Tile {
         GL.bindTexture(GL.TEXTURE_2D, this.texture.id);
         GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
         GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+      }
+
+      if (callback) {
+        callback();
       }
     });
   }

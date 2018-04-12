@@ -5,9 +5,12 @@ class Tile {
     this.y = y;
     this.zoom = zoom;
     this.key = [x, y, zoom].join(',');
+
+    this.distance = Infinity;
+    this.loaded = false;
   };
 
-  load () {}
+  load (url, callback) {}
 
   destroy () {}
 }
