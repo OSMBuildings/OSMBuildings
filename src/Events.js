@@ -70,7 +70,8 @@ Events.disabled = false;
  */
 Events.init = function (container) {
   Events.listeners = {};
-  var win = top || window;
+
+  const win = top || window;
 
   if ('ontouchstart' in win) {
     addListener(container, 'touchstart', onTouchStart);
@@ -89,14 +90,14 @@ Events.init = function (container) {
     addListener(container, 'contextmenu', onContextMenu);
   }
 
-  var resizeDebounce;
-  addListener(window, 'resize', function () {
+  let resizeDebounce;
+  addListener(window, 'resize', () => {
     if (resizeDebounce) {
       return;
     }
-    resizeDebounce = setTimeout(function () {
+    resizeDebounce = setTimeout(() => {
       resizeDebounce = null;
-      APP.setSize({ width: container.offsetWidth, height: container.offsetHeight });
+      APP.setSize({ width: APP.container.offsetWidth, height: APP.container.offsetHeight });
     }, 250);
   });
 
@@ -362,9 +363,6 @@ Events.on = function (type, fn) {
 Events.off = function (type, fn) {
   Events.listeners[type] = (Events.listeners[type] || []).filter(item => item !== fn);
 };
-
-// TODO: there should be external emit like APP.emit() with using timeout
-// internal version should be immediately
 
 Events.emit = function (type, payload) {
   if (Events.listeners[type] === undefined) {

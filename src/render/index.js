@@ -15,9 +15,7 @@ class render {
       render.effects.shadows = false;
     }
 
-    Events.on('change', this._onChange = this.onChange.bind(this));
-    Events.on('resize', this._onResize = this.onResize.bind(this));
-    this.onResize(); // initialize view and projection matrix, fog distance, etc.
+    this.setupViewport();
 
     GL.cullFace(GL.BACK);
     GL.enable(GL.CULL_FACE);
@@ -49,7 +47,7 @@ class render {
     if (APP.zoom >= APP.minZoom && APP.zoom <= APP.maxZoom) {
       requestAnimationFrame(() => {
 
-        this.onChange();
+        this.setupViewport();
         GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
@@ -126,7 +124,15 @@ class render {
     }
   }
 
-  static onChange () {
+  // initialize view and projection matrix, fog distance, etc.
+  static setupViewport () {
+    if (GL.canvas.width !== APP.width) {
+      GL.canvas.width = APP.width;
+    }
+    if (GL.canvas.height !== APP.height) {
+      GL.canvas.height = APP.height;
+    }
+
     const
       scale = 1.3567 * Math.pow(2, APP.zoom - 17),
       width = APP.width,
@@ -206,16 +212,7 @@ class render {
     this.fogBlurDistance = 500;
   }
 
-  static onResize () {
-    GL.canvas.width = APP.width;
-    GL.canvas.height = APP.height;
-    this.onChange();
-  }
-
   static destroy () {
-    Events.off('change', this._onChange);
-    Events.off('resize', this._onResize);
-
     render.Picking.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();

@@ -188,10 +188,10 @@ OSMBuildings.prototype = {
   /**
    * Adds OSMBuildings to DOM container
    * @param {HTMLElement|String} container A DOM Element or its id to append the map to
-   * @param {Integer} [width] Enforce width of container
-   * @param {Integer} [height] Enforce height of container
+   * @deprecated {Integer} [width] Enforce width of container
+   * @deprecated {Integer} [height] Enforce height of container
    */
-  appendTo: function(container, width, height) {
+  appendTo: function(container) {
     if (typeof container === 'string') {
       container = document.getElementById(container);
     }
@@ -204,13 +204,10 @@ OSMBuildings.prototype = {
     }
     container.appendChild(APP.container);
 
-    APP.width  = width  !== undefined ? width  : container.offsetWidth;
-    APP.height = height !== undefined ? height : container.offsetHeight;
-
     this.canvas = document.createElement('CANVAS');
     this.canvas.className = 'osmb-viewport';
-    this.canvas.width = APP.width;
-    this.canvas.height = APP.width;
+    this.canvas.width  = APP.width  = container.offsetWidth;
+    this.canvas.height = APP.height = container.offsetHeight;
     APP.container.appendChild(this.canvas);
 
     this.glx = new GLX(this.canvas, APP.options.fastMode);
