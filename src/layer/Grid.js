@@ -1,7 +1,7 @@
 
 class Grid {
 
-  constructor (source, tileClass, options) {
+  constructor (source, tileClass, options, maxThreads = 2) {
     this.source = source;
     this.tileClass = tileClass;
 
@@ -12,9 +12,10 @@ class Grid {
     this.buffer = 1;
 
     this.queue = [];
-    // 2 threads
-    this.queueNext();
-    this.queueNext();
+    // TODO: should be more flexible, also connected to # of webworkers, could increase when idle
+    for (let i = 0; i < maxThreads; i++) {
+      this.queueNext();
+    }
 
     this.update();
 
@@ -22,8 +23,8 @@ class Grid {
     this.fixedZoom = options.fixedZoom;
 
     this.bounds = options.bounds || { w: -180, s: -90, e: 180, n: 90 };
-    this.minZoom = Math.max(parseFloat(options.minZoom), APP.minZoom);
-    this.maxZoom = Math.min(parseFloat(options.maxZoom), APP.maxZoom);
+    this.minZoom = Math.max(parseFloat(options.minZoom || APP.minZoom), APP.minZoom);
+    this.maxZoom = Math.min(parseFloat(options.maxZoom || APP.maxZoom), APP.maxZoom);
 
     if (this.maxZoom < this.minZoom) {
       this.minZoom = APP.minZoom;
@@ -157,6 +158,8 @@ class Grid {
       visibleTiles[pos.join(',')] = true;
     });
 
+    this.visibleTiles = visibleTiles; // TODO: remove from this. Currently needed for basemap renderer collecting items
+
     //*****************************************************
     //*****************************************************
 
@@ -167,17 +170,16 @@ class Grid {
         y = parseInt(pos[1]),
         zoom = parseInt(pos[2]);
 
+      // TODO: check: some other zoom levels are loaded!
+
+
+      if (this.tiles[key]) {
+        continue
+      }
+
       // create tile if it doesn't exist
-      if (!this.tiles[key]) {
-        this.tiles[key] = new this.tileClass(x, y, zoom);
-      }
-
-      const tile = this.tiles[key];
-
-      // add to queue if not loaded yet and if not already in queue
-      if (!tile.loaded && !this.queue.some(t => t.key === key)) {
-        this.queue.push(tile);
-      }
+      this.tiles[key] = new this.tileClass(x, y, zoom);
+      this.queue.push(this.tiles[key]);
     }
 
     this.purge(visibleTiles);
@@ -205,7 +207,6 @@ class Grid {
     const tile = this.queue.pop();
 
     tile.load(this.getURL(tile.x, tile.y, tile.zoom), () => {
-      tile.loaded = true;
       this.queueNext();
     });
   }

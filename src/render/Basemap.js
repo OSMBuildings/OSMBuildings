@@ -12,7 +12,7 @@ render.Basemap = {
   },
 
   render: function() {
-    var layer = APP.basemapGrid;
+    const layer = APP.basemapGrid;
 
     if (!layer) {
       return;
@@ -22,21 +22,21 @@ render.Basemap = {
       return;
     }
 
-    var
-      shader = this.shader,
-      tile,
-      zoom = Math.round(APP.zoom);
+    const shader = this.shader;
 
     shader.enable();
-    
+
     shader.setAllUniforms([
       ['uFogDistance',     '1f',  render.fogDistance],
       ['uFogBlurDistance', '1f',  render.fogBlurDistance],
       ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
       ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap]
     ]);
-    
-    for (var key in layer.visibleTiles) {
+
+    const zoom = Math.round(APP.zoom);
+
+    let tile;
+    for (let key in layer.visibleTiles) {
       tile = layer.tiles[key];
 
       if (tile && tile.isReady) {
@@ -44,21 +44,21 @@ render.Basemap = {
         continue;
       }
 
-      var parent = [tile.x/2<<0, tile.y/2<<0, zoom-1].join(',');
-      if (layer.tiles[parent] && layer.tiles[parent].isReady) {
+      const parentKey = [tile.x/2<<0, tile.y/2<<0, zoom-1].join(',');
+      if (layer.tiles[parentKey] && layer.tiles[parentKey].isReady) {
         // TODO: there will be overlap with adjacent tiles or parents of adjacent tiles!
-        this.renderTile(layer.tiles[ parent ], shader);
+        this.renderTile(layer.tiles[parentKey], shader);
         continue;
       }
 
-      var children = [
+      const children = [
         [tile.x*2,   tile.y*2,   tile.zoom+1].join(','),
         [tile.x*2+1, tile.y*2,   tile.zoom+1].join(','),
         [tile.x*2,   tile.y*2+1, tile.zoom+1].join(','),
         [tile.x*2+1, tile.y*2+1, tile.zoom+1].join(',')
       ];
 
-      for (var i = 0; i < 4; i++) {
+      for (let i = 0; i < 4; i++) {
         if (layer.tiles[ children[i] ] && layer.tiles[ children[i] ].isReady) {
           this.renderTile(layer.tiles[ children[i] ], shader);
         }
@@ -69,8 +69,7 @@ render.Basemap = {
   },
 
   renderTile: function(tile, shader) {
-    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                   Math.cos(APP.position.latitude / 180 * Math.PI);
+    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
     var modelMatrix = new GLX.Matrix();
     modelMatrix.translate( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,

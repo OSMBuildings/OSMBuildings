@@ -364,7 +364,7 @@ OSMBuildings.prototype = {
    * @param {String} [url=https://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json] url The URL of the GeoJSON tile server
    * @param {Object} [options]
    * @param {Number} [options.fixedZoom=15] Tiles are fetched for this zoom level only. Other zoom levels are scaled up/down to this value
-   * @param {String} [options.color] A color to apply to all features on this layer
+   * @deprecated {String} [options.color] A color to apply to all features on this layer
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show features from this layer. Defaults to and limited by global minZoom.
    * @param {Number} [options.maxZoom=maxZoom] Maximum zoom level to show features from this layer. Defaults to and limited by global maxZoom.
    * @deprecated {Boolean} [options.fadeIn=true] Fade GeoJSON features. If `false`, then display immediately.
@@ -373,7 +373,7 @@ OSMBuildings.prototype = {
   addGeoJSONTiles: function(url, options) {
     options = options || {};
     options.fixedZoom = options.fixedZoom || 15;
-    APP.dataGrid = new Grid(url, DataTile, options);
+    APP.dataGrid = new Grid(url, DataTile, options, 2);
     return APP.dataGrid;
   },
 
@@ -384,7 +384,7 @@ OSMBuildings.prototype = {
    * @return {Object} The added layer object
    */
   addMapTiles: function(url) {
-    APP.basemapGrid = new Grid(url, BasemapTile);
+    APP.basemapGrid = new Grid(url, BasemapTile, {}, 4);
     return APP.basemapGrid;
   },
 

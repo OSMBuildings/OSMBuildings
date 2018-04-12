@@ -30,13 +30,14 @@ class BasemapTile extends Tile {
   load (url, callback) {
     this.texture = new GLX.texture.Image().load(url, image => {
       if (image) {
-        this.isReady = true;
 
         /* Whole texture will be mapped to fit the tile exactly. So
          * don't attempt to wrap around the texture coordinates. */
         GL.bindTexture(GL.TEXTURE_2D, this.texture.id);
         GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
         GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+
+        this.isReady = true;
       }
 
       if (callback) {
