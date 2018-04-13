@@ -65,7 +65,7 @@ mesh.GeoJSON = class {
               const idColors = [];
               res.items.forEach(item => {
                 const idColor = render.Picking.idToColor(item.id);
-
+                
                 for (let i = 0; i < item.vertexCount; i++) {
                   idColors.push(idColor[0], idColor[1], idColor[2]);
                 }
