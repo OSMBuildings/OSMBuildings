@@ -6,11 +6,13 @@ Marker = class {
     this.div = document.createElement("IMG");
     this.div.setAttribute("src", sourceLink);
     this.div.style.position = "absolute";
+    this.div.style.visibility = 'hidden';
     /*
     this.div.className = ' ' + 'osmb-popup';
     this.div.style.position = "absolute";
     this.div.style.zIndex = 1000;
     */
+    this.screenPosition = {x: 0, y:0};
     this.position= {latlng: {latitude: 0, longitude: 0}, elevation: 0};
 
     if(!isNaN(offsetX)){
@@ -42,18 +44,17 @@ Marker = class {
     let pos = osmb.project(latlng.latitude, latlng.longitude, elevation);
 
     this.position = {latlng: latlng, elevation: elevation};
+    this.screenPosition = pos;
     // use translate
     this.div.style.left = this.offsetX+Math.round(pos.x) + 'px';
     this.div.style.top = this.offsetY+Math.round(pos.y) + 'px';
+    APP.markers.add(this);
 
   }
 
-  // appendHTML(html){
-  //   this.div.append(html);
-  // }
-
   addToMap(){
     APP.markers.div.appendChild(this.div);
+    console.log(APP.markers)
   }
 
   remove(){

@@ -103,7 +103,8 @@ const OSMBuildings = function(options) {
 
   const numProc = window.navigator.hardwareConcurrency;
   APP.workers = new Workers('./../src/workers/worker.js', numProc*4);
-};
+
+  };
 
 /**
  * (String) OSMBuildings version
@@ -209,6 +210,8 @@ OSMBuildings.prototype = {
     this.canvas.width  = APP.width  = container.offsetWidth;
     this.canvas.height = APP.height = container.offsetHeight;
     APP.container.appendChild(this.canvas);
+
+    APP.markers = new Markers();
 
     this.glx = new GLX(this.canvas, APP.options.fastMode);
     GL = this.glx.GL;
@@ -668,6 +671,10 @@ OSMBuildings.prototype = {
    */
   getTilt: function() {
     return APP.tilt;
+  },
+
+  Marker: function(sourceLink, offsetX, offsetY) {
+    return new Marker(sourceLink, offsetX, offsetY);
   },
 
   /**

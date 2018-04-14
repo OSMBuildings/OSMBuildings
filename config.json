@@ -29,6 +29,8 @@
   ],
 
   "src": [
+    "src/Marker/index.js",
+    "src/Marker/Marker.js",
     "src/workers/index.js",
     "src/triangulate/geometry/vec2.js",
     "src/triangulate/geometry/vec3.js",
