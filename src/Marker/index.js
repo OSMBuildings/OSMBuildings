@@ -19,20 +19,17 @@ class Markers {
       this.items.forEach( (obj) => {
 
         let newPos = osmb.project(obj.position.latlng.latitude, obj.position.latlng.longitude, obj.position.elevation);
+        let objStyle = obj.div.style;
 
-        if(obj.offsetX+newPos.x < (APP.canvas.offsetLeft+APP.width) && obj.offsetX+newPos.x > APP.canvas.offsetLeft &&
-          obj.offsetY+newPos.y < APP.height && obj.offsetY+newPos.y > APP.canvas.offsetTop){
+        if((obj.offsetX + newPos.x + obj.div.width) < APP.width && (obj.offsetX + newPos.x) > APP.canvas.offsetLeft &&
+          (obj.offsetY + newPos.y) < APP.height && (obj.offsetY + newPos.y) > APP.canvas.offsetTop){
 
-          if(obj.div.style.visibility === 'hidden') { obj.div.style.visibility = 'visible'}
+          if(objStyle.visibility === 'hidden') objStyle.visibility = 'visible'
 
-          obj.div.style.transform = "translate(" + Math.round((obj.offsetX + newPos.x - obj.screenPosition.x)) + "px,"+ Math.round((obj.offsetY + newPos.y - obj.screenPosition.y)) + "px)";
+          objStyle.transform = "translate(" + Math.round((obj.offsetX + newPos.x - obj.screenPosition.x)) + "px,"+ Math.round((obj.offsetY + newPos.y - obj.screenPosition.y)) + "px)";
 
-          // obj.div.style.left = obj.offsetX+Math.round(newPos.x) + 'px';
-          // obj.div.style.top = obj.offsetY+Math.round(newPos.y) + 'px';
         } else {
-          if(obj.div.style.visibility === 'visible'){
-            obj.div.style.visibility = 'hidden';
-          }
+          if(objStyle.visibility === 'visible') objStyle.visibility = 'hidden'
         }
 
       });
@@ -59,7 +56,9 @@ class Markers {
   }
 
   remove (item){
-    this.items.forEach( (obj) => {if(obj === item){this.items.splice(obj)}});
+    for(let i = 0; i<this.items.length; i++){
+      if(this.items[i] === item){this.items.splice(i,1)}
+    }
   }
 
   destroy (){

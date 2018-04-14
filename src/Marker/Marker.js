@@ -45,7 +45,6 @@ Marker = class {
 
     this.position = {latlng: latlng, elevation: elevation};
     this.screenPosition = pos;
-    // use translate
     this.div.style.left = this.offsetX+Math.round(pos.x) + 'px';
     this.div.style.top = this.offsetY+Math.round(pos.y) + 'px';
     APP.markers.add(this);
@@ -54,11 +53,11 @@ Marker = class {
 
   addToMap(){
     APP.markers.div.appendChild(this.div);
-    console.log(APP.markers)
   }
 
   remove(){
     APP.markers.div.removeChild(this.div);
+    APP.markers.remove(this);
     delete this;
   }
 
