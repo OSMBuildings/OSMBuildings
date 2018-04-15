@@ -17,6 +17,9 @@ class Markers {
 
     requestAnimationFrame(() => {
 
+      // compensate mapoffset
+      let offset = (APP.maxZoom -APP.zoom)*2 ;
+
       this.items.forEach( (obj) => {
 
         let newPos = osmb.project(obj.position.latlng.latitude, obj.position.latlng.longitude, obj.position.elevation);
@@ -29,7 +32,7 @@ class Markers {
             obj.visibility = true;
           }
 
-          obj.div.style.transform = "translate(" + Math.round((obj.offsetX + newPos.x - obj.screenPosition.x)) + "px,"+ Math.round((obj.offsetY + newPos.y - obj.screenPosition.y)) + "px)";
+          obj.div.style.transform = "translate(" + Math.round((obj.offsetX + newPos.x - obj.screenPosition.x - offset)) + "px,"+ Math.round((obj.offsetY + newPos.y - obj.screenPosition.y)) + "px)";
 
         } else {
           if(obj.visibility)obj.removeFromMap()

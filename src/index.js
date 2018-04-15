@@ -673,8 +673,8 @@ OSMBuildings.prototype = {
     return APP.tilt;
   },
 
-  Marker: function(sourceLink, offsetX, offsetY) {
-    return new Marker(sourceLink, offsetX, offsetY);
+  Marker: function(options) {
+    return new Marker(options);
   },
 
   /**
