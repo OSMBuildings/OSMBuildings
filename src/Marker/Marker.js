@@ -1,19 +1,6 @@
 Marker = class {
 
-  constructor (sourceLink, offsetX = 0, offsetY = 0) {
-
-    this.parent = APP.markerPane;
-    this.div = document.createElement("IMG");
-    this.div.setAttribute("src", sourceLink);
-    this.div.style.position = "absolute";
-    this.div.style.visibility = 'hidden';
-    /*
-    this.div.className = ' ' + 'osmb-popup';
-    this.div.style.position = "absolute";
-    this.div.style.zIndex = 1000;
-    */
-    this.screenPosition = {x: 0, y:0};
-    this.position= {latlng: {latitude: 0, longitude: 0}, elevation: 0};
+  constructor ({sourceLink = 0, offsetX = 0, offsetY = 0} = {}) {
 
     if(!isNaN(offsetX)){
       this.offsetX = Math.round(offsetX);
@@ -28,10 +15,26 @@ Marker = class {
       this.offsetY = 0;
     }
 
-    // osmb.on('change', () => {
-    //   this.setPosition({latitude: this.position.latlng.latitude, longitude: this.position.latlng.longitude }, this.position.elevation)
-    // })
+    if(sourceLink === 0){
 
+      this.div = document.createElement("DIV");
+      const icon = this.createPlaceholderIcon();
+      this.div.appendChild(icon.documentElement);
+
+    } else {
+
+      this.div = document.createElement("IMG");
+      this.div.setAttribute("src", sourceLink);
+
+    }
+
+    this.div.style.position = "absolute";
+
+    this.visibility = false;
+    this.screenPosition = {x: 0, y:0};
+    this.position= {latlng: {latitude: 0, longitude: 0}, elevation: 0};
+
+    APP.markers.add(this);
   }
 
   getPosition(){
@@ -40,23 +43,45 @@ Marker = class {
 
   setPosition(latlng, elevation = 0){
     if(isNaN(latlng.latitude || latlng.longitude || elevation)) return;
-
-    let pos = osmb.project(latlng.latitude, latlng.longitude, elevation);
-
     this.position = {latlng: latlng, elevation: elevation};
-    this.screenPosition = pos;
-    this.div.style.left = this.offsetX+Math.round(pos.x) + 'px';
-    this.div.style.top = this.offsetY+Math.round(pos.y) + 'px';
-    APP.markers.add(this);
+  }
 
+  addEventListener(type, callback){
+    this.div.addEventListener(type , callback, false);
+  }
+
+  removeEventListener(type, callback){
+    this.div.removeEventListener(type , callback, false);
   }
 
   addToMap(){
+
+    let pos = osmb.project(this.position.latlng.latitude, this.position.latlng.longitude, this.position.elevation);
+    this.screenPosition = pos;
+
+    this.div.style.left = this.offsetX+Math.round(pos.x) + 'px';
+    this.div.style.top = this.offsetY+Math.round(pos.y) + 'px';
+    this.visibility = true;
     APP.markers.div.appendChild(this.div);
   }
 
-  remove(){
+  removeFromMap(){
     APP.markers.div.removeChild(this.div);
+    this.visibility = false;
+  }
+
+  createPlaceholderIcon(){
+    return new DOMParser().parseFromString('<?xml version="1.0" encoding="utf-8"?> <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"> <svg version="1.1" id="svg4619" inkscape:version="0.91 r13725" sodipodi:docname="marker-15.svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30px" height="30px" viewBox="0 0 15 15" xml:space="preserve"> <path id="path4133" inkscape:connector-curvature="0" d="M7.5,0C5.0676,0,2.2297,1.4865,2.2297,5.2703 C2.2297,7.8378,6.2838,13.5135,7.5,15c1.0811-1.4865,5.2703-7.027,5.2703-9.7297C12.7703,1.4865,9.9324,0,7.5,0z"/> </svg>', 'image/svg+xml');
+  }
+
+  remove(){
+
+    APP.markers.items.forEach( (e) => {
+      if(e.div === this.div && this.visibility){
+        APP.markers.div.removeChild(this.div);
+      }
+    });
+
     APP.markers.remove(this);
     delete this;
   }
