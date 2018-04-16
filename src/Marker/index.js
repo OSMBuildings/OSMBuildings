@@ -10,12 +10,9 @@ class Markers {
     APP.container.appendChild(this.div);
     this.updateMarkerView();
 
-
   }
 
   updateMarkerView () {
-
-    requestAnimationFrame(() => {
 
       // compensate mapoffset
       let offset = (APP.maxZoom -APP.zoom)*2 ;
@@ -39,17 +36,6 @@ class Markers {
         }
 
       });
-
-      if (APP.activity.isBusy()) {
-        this.updateMarkerView();
-
-      } else {
-        setTimeout(() => {
-          this.updateMarkerView();
-        }, 150);
-      }
-
-    }); // end requestAnimationFrame()
 
   }
 

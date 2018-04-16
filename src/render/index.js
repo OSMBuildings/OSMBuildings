@@ -109,6 +109,8 @@ class render {
           // render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
         }
 
+        APP.markers.updateMarkerView();
+
         if (APP.activity.isBusy()) {
           this.renderFrame();
           // setTimeout(() => {
