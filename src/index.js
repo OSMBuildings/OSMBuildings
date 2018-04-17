@@ -60,7 +60,7 @@ var APP, GL;
  * @param {Object} [options.style] Sets the default building style
  * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
  */
-const OSMBuildings = function(options) {
+const OSMBuildings = function (options) {
   APP = this; // refers to 'this' (current instance). Should make other globals obsolete.
 
   APP.activity = new Activity();
@@ -75,7 +75,7 @@ const OSMBuildings = function(options) {
   }
 
   render.backgroundColor = Qolor.parse(APP.options.backgroundColor || BACKGROUND_COLOR).toArray();
-  render.fogColor        = Qolor.parse(APP.options.fogColor        || FOG_COLOR).toArray();
+  render.fogColor = Qolor.parse(APP.options.fogColor || FOG_COLOR).toArray();
 
   if (APP.options.highlightColor) {
     HIGHLIGHT_COLOR = Qolor.parse(APP.options.highlightColor).toArray();
@@ -93,7 +93,7 @@ const OSMBuildings = function(options) {
   APP.bounds = APP.options.bounds;
 
   APP.position = APP.options.position || { latitude: 52.520000, longitude: 13.410000 };
-  APP.zoom = APP.options.zoom || (APP.minZoom + (APP.maxZoom-APP.minZoom)/2);
+  APP.zoom = APP.options.zoom || (APP.minZoom + (APP.maxZoom - APP.minZoom) / 2);
   APP.rotation = APP.options.rotation || 0;
   APP.tilt = APP.options.tilt || 0;
 
@@ -102,9 +102,8 @@ const OSMBuildings = function(options) {
   }
 
   const numProc = window.navigator.hardwareConcurrency;
-  APP.workers = new Workers('./../src/workers/worker.js', numProc*4);
-
-  };
+  APP.workers = new Workers('./../src/workers/worker.js', numProc * 4);
+};
 
 /**
  * (String) OSMBuildings version
@@ -192,7 +191,7 @@ OSMBuildings.prototype = {
    * @deprecated {Integer} [width] Enforce width of container
    * @deprecated {Integer} [height] Enforce height of container
    */
-  appendTo: function(container) {
+  appendTo: function (container) {
     if (typeof container === 'string') {
       container = document.getElementById(container);
     }
@@ -207,7 +206,7 @@ OSMBuildings.prototype = {
 
     this.canvas = document.createElement('CANVAS');
     this.canvas.className = 'osmb-viewport';
-    this.canvas.width  = APP.width  = container.offsetWidth;
+    this.canvas.width = APP.width = container.offsetWidth;
     this.canvas.height = APP.height = container.offsetHeight;
     APP.container.appendChild(this.canvas);
 
@@ -238,7 +237,7 @@ OSMBuildings.prototype = {
    * @param {String} type Event type to listen for
    * @param {eventCallback} fn Callback function
    */
-  on: function(type, fn) {
+  on: function (type, fn) {
     Events.on(type, fn);
   },
 
@@ -247,7 +246,7 @@ OSMBuildings.prototype = {
    * @param {String} type Event type to listen for
    * @param {eventCallback} [fn] If callback is given, only remove that particular listener
    */
-  off: function(type, fn) {
+  off: function (type, fn) {
     Events.off(type, fn);
   },
 
@@ -256,7 +255,7 @@ OSMBuildings.prototype = {
    * @param {String} event Event type to listen for
    * @param {any} [payload] Any kind of payload
    */
-  emit: function(type, payload) {
+  emit: function (type, payload) {
     Events.emit(type, payload);
   },
 
@@ -264,7 +263,7 @@ OSMBuildings.prototype = {
    * Set date for shadow calculations
    * @param {Date} date
    */
-  setDate: function(date) {
+  setDate: function (date) {
     Sun.setDate(typeof date === 'string' ? new Date(date) : date);
   },
 
@@ -276,20 +275,21 @@ OSMBuildings.prototype = {
    * @param {Number} elevation Elevation of the point
    * @return {Object} Screen position in pixels { x, y }
    */
-  project: function(latitude, longitude, elevation) {
+  project: function (latitude, longitude, elevation) {
     var
       metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-                                 Math.cos(APP.position.latitude / 180 * Math.PI),
-      worldPos = [ (longitude- APP.position.longitude) * metersPerDegreeLongitude,
-                  -(latitude - APP.position.latitude)  * METERS_PER_DEGREE_LATITUDE,
-                    elevation                          * HEIGHT_SCALE ];
+        Math.cos(APP.position.latitude / 180 * Math.PI),
+      worldPos = [(longitude - APP.position.longitude) * metersPerDegreeLongitude,
+        -(latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE,
+        elevation * HEIGHT_SCALE];
     // takes current cam pos into account.
-    var posNDC = transformVec3( render.viewProjMatrix.data, worldPos);
-    posNDC = mul3scalar( add3(posNDC, [1, 1, 1]), 1/2); // from [-1..1] to [0..1]
+    var posNDC = transformVec3(render.viewProjMatrix.data, worldPos);
+    posNDC = mul3scalar(add3(posNDC, [1, 1, 1]), 1 / 2); // from [-1..1] to [0..1]
 
-    return { x:    posNDC[0]  * APP.width,
-             y: (1-posNDC[1]) * APP.height,
-             z:    posNDC[2]
+    return {
+      x: posNDC[0] * APP.width,
+      y: (1 - posNDC[1]) * APP.height,
+      z: posNDC[2]
     };
   },
 
@@ -301,13 +301,13 @@ OSMBuildings.prototype = {
    * @param {Number} y Y position om screen
    * @return {Object} Geographic position { latitude, longitude }
    */
-  unproject: function(x, y) {
+  unproject: function (x, y) {
     var inverse = GLX.Matrix.invert(render.viewProjMatrix.data);
     /* convert window/viewport coordinates to NDC [0..1]. Note that the browser
      * screen coordinates are y-down, while the WebGL NDC coordinates are y-up,
      * so we have to invert the y value here */
-    var posNDC = [x/APP.width, 1-y/APP.height];
-    posNDC = add2( mul2scalar(posNDC, 2.0), [-1, -1, -1]); // [0..1] to [-1..1];
+    var posNDC = [x / APP.width, 1 - y / APP.height];
+    posNDC = add2(mul2scalar(posNDC, 2.0), [-1, -1, -1]); // [0..1] to [-1..1];
     var worldPos = getIntersectionWithXYPlane(posNDC[0], posNDC[1], inverse);
     if (worldPos === undefined) {
       return;
@@ -315,8 +315,8 @@ OSMBuildings.prototype = {
     var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
     return {
-      latitude:  APP.position.latitude - worldPos[1]/ METERS_PER_DEGREE_LATITUDE,
-      longitude: APP.position.longitude+ worldPos[0]/ metersPerDegreeLongitude
+      latitude: APP.position.latitude - worldPos[1] / METERS_PER_DEGREE_LATITUDE,
+      longitude: APP.position.longitude + worldPos[0] / metersPerDegreeLongitude
     };
   },
 
@@ -336,7 +336,7 @@ OSMBuildings.prototype = {
    * @param {String} [options.color] A color to apply to the model
    * @return {Object} The added object
    */
-  addOBJ: function(url, position, options) {
+  addOBJ: function (url, position, options) {
     return new mesh.OBJ(url, position, options);
   },
 
@@ -355,7 +355,7 @@ OSMBuildings.prototype = {
    * @deprecated {Boolean} [options.fadeIn=true] Fade GeoJSON features; if `false`, then display immediately
    * @return {Object} The added object
    */
-  addGeoJSON: function(url, options) {
+  addGeoJSON: function (url, options) {
     return new mesh.GeoJSON(url, options);
   },
 
@@ -373,7 +373,7 @@ OSMBuildings.prototype = {
    * @deprecated {Boolean} [options.fadeIn=true] Fade GeoJSON features. If `false`, then display immediately.
    * @return {Object} The added layer object
    */
-  addGeoJSONTiles: function(url, options) {
+  addGeoJSONTiles: function (url, options) {
     options = options || {};
     options.fixedZoom = options.fixedZoom || 15;
     APP.dataGrid = new Grid(url, DataTile, options, 2);
@@ -386,7 +386,7 @@ OSMBuildings.prototype = {
    * @param {String} url The URL of the map server. This could be from Mapbox or other tile servers
    * @return {Object} The added layer object
    */
-  addMapTiles: function(url) {
+  addMapTiles: function (url) {
     APP.basemapGrid = new Grid(url, BasemapTile, {}, 4);
     return APP.basemapGrid;
   },
@@ -398,7 +398,7 @@ OSMBuildings.prototype = {
    * @param {String} id The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever is defined in the options passed to it.
    * @param {String} highlightColor An optional color string to be used for highlighting
    */
-  highlight: function(id, highlightColor) {
+  highlight: function (id, highlightColor) {
     render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
     render.Buildings.highlightColor = id && highlightColor ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
   },
@@ -410,7 +410,7 @@ OSMBuildings.prototype = {
    * @param {selectorCallback} selector A function that will get run on each feature, and returns a boolean indicating whether or not to show the feature
    * @param {Integer} [duration=0] How long to fade out the feature
    */
-  show: function(selector, duration) {
+  show: function (selector, duration) {
     Filter.remove('hidden', selector, duration);
   },
 
@@ -421,7 +421,7 @@ OSMBuildings.prototype = {
    * @param {selectorCallback} selector A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
    * @param {Integer} [duration=0] How long to fade in the feature
    */
-  hide: function(selector, duration) {
+  hide: function (selector, duration) {
     Filter.add('hidden', selector, duration);
   },
 
@@ -430,7 +430,7 @@ OSMBuildings.prototype = {
    * @name getTarget()
    * @deprecated
    */
-  getTarget: function(x, y, callback) {
+  getTarget: function (x, y, callback) {
     // TODO: remove
     render.Picking.render(x, y, callback);
   },
@@ -440,13 +440,13 @@ OSMBuildings.prototype = {
    * @name screenshot()
    * @deprecated
    */
-  screenshot: function() {
+  screenshot: function () {
   },
 
   /**
    * @private
    */
-  _updateAttribution: function() {
+  _updateAttribution: function () {
     var attribution = [];
     if (APP.attribution) {
       attribution.push(APP.attribution);
@@ -462,19 +462,22 @@ OSMBuildings.prototype = {
   /**
    * @private
    */
-  _getStateFromUrl: function() {
+  _getStateFromUrl: function () {
     var
       query = location.search,
       state = {};
     if (query) {
-      query.substring(1).replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function($0, $1, $2) {
+      query.substring(1).replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function ($0, $1, $2) {
         if ($1) {
           state[$1] = $2;
         }
       });
     }
 
-    APP.setPosition((state.lat !== undefined && state.lon !== undefined) ? { latitude:state.lat, longitude:state.lon } : APP.position);
+    APP.setPosition((state.lat !== undefined && state.lon !== undefined) ? {
+      latitude: state.lat,
+      longitude: state.lon
+    } : APP.position);
     APP.setZoom(state.zoom !== undefined ? state.zoom : APP.zoom);
     APP.setRotation(state.rotation !== undefined ? state.rotation : APP.rotation);
     APP.setTilt(state.tilt !== undefined ? state.tilt : APP.tilt);
@@ -483,12 +486,12 @@ OSMBuildings.prototype = {
   /**
    * @private
    */
-  _setStateToUrl: function() {
+  _setStateToUrl: function () {
     if (!history.replaceState || APP.stateDebounce) {
       return;
     }
 
-    APP.stateDebounce = setTimeout(function() {
+    APP.stateDebounce = setTimeout(function () {
       APP.stateDebounce = null;
       var params = [];
       params.push('lat=' + APP.position.latitude.toFixed(6));
@@ -500,11 +503,11 @@ OSMBuildings.prototype = {
     }, 1000);
   },
 
-  setDisabled: function(flag) {
+  setDisabled: function (flag) {
     Events.disabled = !!flag;
   },
 
-  isDisabled: function() {
+  isDisabled: function () {
     return !!Events.disabled;
   },
 
@@ -524,7 +527,7 @@ OSMBuildings.prototype = {
    *   so their top may be visible and they may still be out of bounds.
    * @return {Array} Bounding coordinates in unspecific order [{ latitude, longitude }, ...]
    */
-  getBounds: function() {
+  getBounds: function () {
     var viewQuad = render.getViewQuad(), res = [];
     for (var i in viewQuad) {
       res[i] = getPositionFromLocal(viewQuad[i]);
@@ -538,7 +541,7 @@ OSMBuildings.prototype = {
    * @emits OSMBuildings#change
    * @param {Number} zoom The new zoom level
    */
-  setZoom: function(zoom, e) {
+  setZoom: function (zoom, e) {
     zoom = parseFloat(zoom);
 
     zoom = Math.max(zoom, APP.minZoom);
@@ -574,7 +577,7 @@ OSMBuildings.prototype = {
    * Get current zoom level
    * @return {Number} zoom level
    */
-  getZoom: function() {
+  getZoom: function () {
     return APP.zoom;
   },
 
@@ -585,7 +588,7 @@ OSMBuildings.prototype = {
    * @param {Number} pos.longitude
    * @emits OSMBuildings#change
    */
-  setPosition: function(pos) {
+  setPosition: function (pos) {
     var lat = parseFloat(pos.latitude);
     var lon = parseFloat(pos.longitude);
     if (isNaN(lat) || isNaN(lon)) {
@@ -599,7 +602,7 @@ OSMBuildings.prototype = {
    * Get map's current geographic position
    * @return {Object} Geographic position { latitude, longitude }
    */
-  getPosition: function() {
+  getPosition: function () {
     return APP.position;
   },
 
@@ -611,7 +614,7 @@ OSMBuildings.prototype = {
    * @param {Integer} size.height
    * @emits OSMBuildings#resize
    */
-  setSize: function(size) {
+  setSize: function (size) {
     if (size.width !== APP.width || size.height !== APP.height) {
       APP.width = size.width;
       APP.height = size.height;
@@ -623,7 +626,7 @@ OSMBuildings.prototype = {
    * Get map's current view size in pixels
    * @return {Object} View size { width, height }
    */
-  getSize: function() {
+  getSize: function () {
     return { width: APP.width, height: APP.height };
   },
 
@@ -633,8 +636,8 @@ OSMBuildings.prototype = {
    * @emits OSMBuildings#rotate
    * @emits OSMBuildings#change
    */
-  setRotation: function(rotation) {
-    rotation = parseFloat(rotation)%360;
+  setRotation: function (rotation) {
+    rotation = parseFloat(rotation) % 360;
     if (APP.rotation !== rotation) {
       APP.rotation = rotation;
       Events.emit('rotate', { rotation: rotation });
@@ -646,7 +649,7 @@ OSMBuildings.prototype = {
    * Get map's current rotation
    * @return {Number} Rotation in degrees
    */
-  getRotation: function() {
+  getRotation: function () {
     return APP.rotation;
   },
 
@@ -656,7 +659,7 @@ OSMBuildings.prototype = {
    * @emits OSMBuildings#tilt
    * @emits OSMBuildings#change
    */
-  setTilt: function(tilt) {
+  setTilt: function (tilt) {
     tilt = clamp(parseFloat(tilt), 0, 45); // bigger max increases shadow moire on base map
     if (APP.tilt !== tilt) {
       APP.tilt = tilt;
@@ -669,18 +672,18 @@ OSMBuildings.prototype = {
    * Get map's current tilt
    * @return {Number} Tilt in degrees
    */
-  getTilt: function() {
+  getTilt: function () {
     return APP.tilt;
   },
 
-  Marker: function(options) {
+  addMarker: function (options) {
     return new Marker(options);
   },
 
   /**
    * Destroys the map
    */
-  destroy: function() {
+  destroy: function () {
     render.destroy();
 
     // APP.basemapGrid.destroy();
