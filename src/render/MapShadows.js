@@ -1,10 +1,11 @@
-// TODO
-/* This object renders the shadow for the map layer. It only renders the shadow,
+
+/**
+ * This renders shadow for the map layer. It only renders the shadow,
  * not the map itself. Result is used as a blended overlay
  * so that the map can be rendered independently from the shadows cast on it.
  */
 
-render.MapShadows = class {
+class MapShadows {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -76,4 +77,4 @@ render.MapShadows = class {
   destroy () {
     this.mapPlane.destroy();
   }
-};
+}

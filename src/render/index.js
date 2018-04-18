@@ -29,7 +29,7 @@ class render {
     render.blurredAmbientMap = new DrawBlur();
     // render.HudRect.init();
     // render.NormalMap.init();
-    render.MapShadows.init();
+    render.MapShadows = new MapShadows();
     if (render.effects.shadows) {
       render.cameraGBuffer = new render.DepthFogNormalMap();
       render.sunGBuffer = new render.DepthFogNormalMap();
@@ -85,7 +85,7 @@ class render {
             // geometry should be blurred into the background in the next step) intact
             GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
 
-            // render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
+            render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
             render.Overlay.render(render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
 
             // linear interpolation between the colors of the current framebuffer
@@ -213,6 +213,7 @@ class render {
     render.Picking.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
+    render.MapShadows.destroy();
 
     if (render.cameraGBuffer) {
       render.cameraGBuffer.destroy();
