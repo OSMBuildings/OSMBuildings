@@ -1,6 +1,6 @@
 // TODO: perhaps render only clicked area
 
-class DrawPicking {
+class Picking {
 
   constructor () {
 

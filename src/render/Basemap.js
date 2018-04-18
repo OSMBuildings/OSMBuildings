@@ -1,7 +1,7 @@
 
-render.Basemap = {
+class Basemap {
 
-  init: function() {
+  constructor () {
     this.shader = new GLX.Shader({
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
@@ -9,9 +9,9 @@ render.Basemap = {
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uViewMatrix', 'uModelMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
     });
-  },
+  }
 
-  render: function() {
+  render () {
     const layer = APP.basemapGrid;
 
     if (!layer) {
@@ -36,18 +36,18 @@ render.Basemap = {
     const zoom = Math.round(APP.zoom);
 
     let tile;
-    for (let key in layer.visibleTiles) {
+    for (let key in layer.visibleTiles) { // TODO: do not refer to layer.visibleTiles
       tile = layer.tiles[key];
 
       if (tile && tile.isReady) {
-        this.renderTile(tile, shader);
+        this.renderTile(tile);
         continue;
       }
 
       const parentKey = [tile.x/2<<0, tile.y/2<<0, zoom-1].join(',');
       if (layer.tiles[parentKey] && layer.tiles[parentKey].isReady) {
         // TODO: there will be overlap with adjacent tiles or parents of adjacent tiles!
-        this.renderTile(layer.tiles[parentKey], shader);
+        this.renderTile(layer.tiles[parentKey]);
         continue;
       }
 
@@ -60,18 +60,18 @@ render.Basemap = {
 
       for (let i = 0; i < 4; i++) {
         if (layer.tiles[ children[i] ] && layer.tiles[ children[i] ].isReady) {
-          this.renderTile(layer.tiles[ children[i] ], shader);
+          this.renderTile(layer.tiles[ children[i] ]);
         }
       }
     }
 
     shader.disable();
-  },
+  }
 
-  renderTile: function(tile, shader) {
-    var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
+  renderTile (tile) {
+    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
-    var modelMatrix = new GLX.Matrix();
+    const modelMatrix = new GLX.Matrix();
     modelMatrix.translate( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
                           -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
@@ -79,23 +79,23 @@ render.Basemap = {
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,
                      MAX_USED_ZOOM_LEVEL - tile.zoom);
                      
-    shader.setAllUniforms([
+    this.shader.setAllUniforms([
       ['uViewDirOnMap',   '2fv', render.viewDirOnMap],
       ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap]
     ]);
 
-    shader.setAllUniformMatrices([
+    this.shader.setAllUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
       ['uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
     ]);
 
-    shader.bindBuffer('aPosition', tile.vertexBuffer);
-    shader.bindBuffer('aTexCoord', tile.texCoordBuffer);
-    shader.bindTexture('uTexIndex', 0, tile.texture);
+    this.shader.bindBuffer('aPosition', tile.vertexBuffer);
+    this.shader.bindBuffer('aTexCoord', tile.texCoordBuffer);
+    this.shader.bindTexture('uTexIndex', 0, tile.texture);
 
     GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     GL.disable(GL.POLYGON_OFFSET_FILL);
-  },
+  }
 
-  destroy: function() {}
-};
+  destroy () {}
+}

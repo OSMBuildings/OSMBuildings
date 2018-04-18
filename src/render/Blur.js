@@ -1,5 +1,5 @@
 
-class DrawBlur {
+class Blur {
 
   constructor() {
     this.shader = new GLX.Shader({

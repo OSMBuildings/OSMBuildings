@@ -370,7 +370,7 @@ class OSMBuildings {
    */
   addGeoJSONTiles (url, options = {}) {
     options.fixedZoom = options.fixedZoom || 15;
-    this.dataGrid = new Grid(url, GeoJSONTile, options, 6);
+    this.dataGrid = new Grid(url, GeoJSONTile, options, 2);
     return this.dataGrid;
   }
 
@@ -381,7 +381,7 @@ class OSMBuildings {
    * @return {Object} The added layer object
    */
   addMapTiles (url) {
-    this.basemapGrid = new Grid(url, BitmapTile, {}, 12);
+    this.basemapGrid = new Grid(url, BitmapTile, {}, 4);
     return this.basemapGrid;
   }
 

@@ -21,12 +21,12 @@ class render {
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
 
-    render.Picking = new DrawPicking(); // renders only on demand
+    render.Picking = new Picking(); // renders only on demand
     render.Buildings.init();
-    render.Basemap.init();
+    render.Basemap = new Basemap();
     render.Overlay.init();
     render.AmbientMap.init();
-    render.blurredAmbientMap = new DrawBlur();
+    render.blurredAmbientMap = new Blur();
     // render.HudRect.init();
     // render.NormalMap.init();
     render.MapShadows = new MapShadows();
