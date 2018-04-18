@@ -11,82 +11,78 @@
 
 */
 
-mesh.MapPlane = (function() {
+class MapPlane {
 
-  function constructor(options) {
-    options = options || {};
-
+  constructor (options = {}) {
     this.id = options.id;
     this.radius = options.radius || 5000;
-    this.createGlGeometry();
+    this.createGeometry();
 
     this.minZoom = APP.minZoom;
     this.maxZoom = APP.maxZoom;
   }
 
-  constructor.prototype = {
+  // This method creates front and back faces, in case rendering effect requires both.
+  createGeometry () {
+    const
+      NUM_SEGMENTS = 50,
+      segmentSize = 2*this.radius / NUM_SEGMENTS;
 
-    createGlGeometry: function() {
-      /* This method creates front and back faces, in case rendering 
-       * effect requires both. */
-      var NUM_SEGMENTS = 50;
-      var segmentSize = 2*this.radius / NUM_SEGMENTS;
-      this.vertexBuffer = [];
-      this.normalBuffer = [];
+    this.vertexBuffer = [];
+    this.normalBuffer = [];
 
-      var normal = [0,0,1];
-      var normals = [].concat(normal, normal, normal, normal, normal, normal);
+    const
+      normal = [0, 0, 1],
+      normals = [].concat(normal, normal, normal, normal, normal, normal);
 
-      for (var x = 0; x < NUM_SEGMENTS; x++)
-        for (var y = 0; y < NUM_SEGMENTS; y++) {
-          var baseX = -this.radius + x*segmentSize;
-          var baseY = -this.radius + y*segmentSize;
-          this.vertexBuffer.push( baseX,               baseY, 0,
-                                  baseX + segmentSize, baseY + segmentSize, 0,
-                                  baseX + segmentSize, baseY, 0,
-                                  
-                                  baseX,               baseY, 0,
-                                  baseX,               baseY + segmentSize, 0,
-                                  baseX + segmentSize, baseY + segmentSize, 0);
+    for (let x = 0; x < NUM_SEGMENTS; x++)
+      for (let y = 0; y < NUM_SEGMENTS; y++) {
+        const
+          baseX = -this.radius + x*segmentSize,
+          baseY = -this.radius + y*segmentSize;
 
-          this.vertexBuffer.push( baseX,               baseY, 0,
-                                  baseX + segmentSize, baseY, 0,
-                                  baseX + segmentSize, baseY + segmentSize, 0,
+        this.vertexBuffer.push(
+          baseX,               baseY, 0,
+          baseX + segmentSize, baseY + segmentSize, 0,
+          baseX + segmentSize, baseY, 0,
 
-                                  baseX,               baseY, 0,
-                                  baseX + segmentSize, baseY + segmentSize, 0,
-                                  baseX,               baseY + segmentSize, 0);
+          baseX,               baseY, 0,
+          baseX,               baseY + segmentSize, 0,
+          baseX + segmentSize, baseY + segmentSize, 0);
 
-          [].push.apply(this.normalBuffer, normals);
-          [].push.apply(this.normalBuffer, normals);
-      }
-       
-      this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
-      this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
-    },
+        this.vertexBuffer.push(
+          baseX,               baseY, 0,
+          baseX + segmentSize, baseY, 0,
+          baseX + segmentSize, baseY + segmentSize, 0,
 
-    getFade: function() {
-      return 1;
-    },
+          baseX,               baseY, 0,
+          baseX + segmentSize, baseY + segmentSize, 0,
+          baseX,               baseY + segmentSize, 0);
 
-    // TODO: switch to a notation like mesh.transform
-    getMatrix: function() {
-      //var scale = Math.pow(2, APP.zoom - 16);
-
-      var modelMatrix = new GLX.Matrix();
-      //modelMatrix.scale(scale, scale, scale);
-    
-      return modelMatrix;
-    },
-
-    destroy: function() {
-      this.vertexBuffer.destroy();
-      this.normalBuffer.destroy();
-      this.colorBuffer.destroy();
-      this.idBuffer.destroy();
+        [].push.apply(this.normalBuffer, normals);
+        [].push.apply(this.normalBuffer, normals);
     }
-  };
 
-  return constructor;
+    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
+    this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
+  }
 
-}());
+  getFade () {
+    return 1;
+  }
+
+  // TODO: switch to a notation like mesh.transform
+  getMatrix () {
+    // const scale = Math.pow(2, APP.zoom - 16);
+
+    const modelMatrix = new GLX.Matrix();
+    //modelMatrix.scale(scale, scale, scale);
+
+    return modelMatrix;
+  }
+
+  destroy () {
+    this.vertexBuffer.destroy();
+    this.normalBuffer.destroy();
+  }
+}

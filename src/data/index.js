@@ -1,5 +1,5 @@
 
-// TODO: collision check with bounding cylinders
+// TODO: collision check
 
 const DataIndex = {
 

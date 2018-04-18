@@ -1,12 +1,12 @@
-
+// TODO
 /* This object renders the shadow for the map layer. It only renders the shadow,
- * not the map itself. The intended use for this class is as a blended overlay
+ * not the map itself. Result is used as a blended overlay
  * so that the map can be rendered independently from the shadows cast on it.
  */
 
-render.MapShadows = {
+render.MapShadows = class {
 
-  init: function() {
+  constructor () {
     this.shader = new GLX.Shader({
       vertexShader: Shaders['basemap.shadows'].vertex,
       fragmentShader: Shaders['basemap.shadows'].fragment,
@@ -27,11 +27,17 @@ render.MapShadows = {
       ]
     });
     
-    this.mapPlane = new mesh.MapPlane();
-  },
+    this.mapPlane = new MapPlane();
+  }
 
-  render: function(Sun, depthFramebuffer, shadowStrength) {
-    var shader = this.shader;
+  render (Sun, depthFramebuffer, shadowStrength) {
+    const item = this.mapPlane;
+    if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
+      return;
+    }
+
+    const shader = this.shader;
+
     shader.enable();
 
     GL.disable(GL.CULL_FACE);
@@ -48,12 +54,7 @@ render.MapShadows = {
 
     shader.bindTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
 
-    var item = this.mapPlane;
-    if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
-      return;
-    }
-
-    var modelMatrix;
+    let modelMatrix;
     if (!(modelMatrix = item.getMatrix())) {
       return;
     }
@@ -70,7 +71,9 @@ render.MapShadows = {
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 
     shader.disable();
-  },
+  }
 
-  destroy: function() {}
+  destroy () {
+    this.mapPlane.destroy();
+  }
 };

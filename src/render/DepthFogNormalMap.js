@@ -19,7 +19,7 @@ render.DepthFogNormalMap = function() {
   
   this.framebuffer = new GLX.Framebuffer(128, 128, /*depthTexture=*/true); //dummy sizes, will be resized dynamically
 
-  this.mapPlane = new mesh.MapPlane();
+  this.mapPlane = new MapPlane();
 };
 
 render.DepthFogNormalMap.prototype.getDepthTexture = function() {

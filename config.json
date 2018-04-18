@@ -58,11 +58,9 @@
     "src/Filter.js",
 
     "src/data/index.js",
-    "src/data/Item.js",
     "src/data/GeoJSON.js",
     "src/data/OBJ.js",
 
-    "src/mesh/index.js",
     "src/mesh/MapPlane.js",
 
     "src/geometry.js",

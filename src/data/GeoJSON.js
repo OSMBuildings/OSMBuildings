@@ -1,4 +1,5 @@
-mesh.GeoJSON = class {
+
+class GeoJSON {
 
   constructor (url, options, callback) {
     options = options || {};
@@ -124,6 +125,7 @@ mesh.GeoJSON = class {
     this.matrix.translate(x, y, z);
   }
 
+  // TODO
   scaleX (scale) {
     this.matrix.scale(scale, scale, scale * HEIGHT_SCALE);
   }
@@ -172,4 +174,4 @@ mesh.GeoJSON = class {
       this.heightBuffer.destroy();
     }
   }
-};
+}

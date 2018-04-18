@@ -7,12 +7,12 @@ class DataTile extends Tile {
   }
 
   load (url, callback) {
-    this.mesh = new mesh.GeoJSON(url, this.options, callback);
+    this.content = new GeoJSON(url, this.options, callback);
   }
 
   destroy () {
-    if (this.mesh) {
-      this.mesh.destroy();
+    if (this.content) {
+      this.content.destroy();
     }
   }
 }

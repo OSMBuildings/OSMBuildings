@@ -1,8 +1,8 @@
-var OBJ = {};
+const OBJFormat = {};
 
 (function () {
 
-  OBJ.parseMTL = function (str) {
+  OBJFormat.parseMTL = function (str) {
     var
       lines = str.split(/[\r\n]/g),
       cols,
@@ -44,7 +44,7 @@ var OBJ = {};
     }
   }
 
-  OBJ.parse = function(str, materials) {
+  OBJFormat.parse = function(str, materials) {
     var
       vertexIndex = [],
       lines = str.split(/[\r\n]/g), cols,
@@ -145,7 +145,7 @@ var OBJ = {};
 
 //*****************************************************************************
 
-mesh.OBJ = class {
+class OBJ {
 
   constructor (url, position, options) {
     options = options || {};
@@ -191,7 +191,7 @@ mesh.OBJ = class {
             return;
           }
 
-          this.onLoad(obj, OBJ.parseMTL(mtl));
+          this.onLoad(obj, OBJFormat.parseMTL(mtl));
         });
       } else {
         this.onLoad(obj, null);
@@ -201,7 +201,7 @@ mesh.OBJ = class {
 
   onLoad (obj, mtl) {
     this.items = [];
-    this.addItems(OBJ.parse(obj, mtl));
+    this.addItems(OBJFormat.parse(obj, mtl));
     this.onReady();
   }
 
@@ -318,4 +318,4 @@ mesh.OBJ = class {
       this.heightBuffer.destroy();
     }
   }
-};
+}

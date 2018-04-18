@@ -331,7 +331,7 @@ class OSMBuildings {
    * @return {Object} The added object
    */
   addOBJ (url, position, options) {
-    return new mesh.OBJ(url, position, options);
+    return new OBJ(url, position, options);
   }
 
   /**
@@ -350,7 +350,7 @@ class OSMBuildings {
    * @return {Object} The added object
    */
   addGeoJSON (url, options) {
-    return new mesh.GeoJSON(url, options);
+    return new GeoJSON(url, options);
   }
 
   // TODO: allow more data layers later on
