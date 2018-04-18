@@ -97,7 +97,7 @@ Events.init = function (container) {
     }
     resizeDebounce = setTimeout(() => {
       resizeDebounce = null;
-      APP.setSize({ width: APP.container.offsetWidth, height: APP.container.offsetHeight });
+      APP.setSize(APP.container.offsetWidth, APP.container.offsetHeight);
     }, 250);
   });
 

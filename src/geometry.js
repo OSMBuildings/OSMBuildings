@@ -370,9 +370,8 @@ function getPositionFromLocal(localXY) {
 }
 
 function getTilePositionFromLocal(localXY, zoom) {
-  var pos = getPositionFromLocal(localXY);
-  
-  return [lon2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
+  const pos = getPositionFromLocal(localXY);
+  return project([pos.longitude,  pos.latitude], 1<<zoom);
 }
 
 function project(point, scale = 1) {
@@ -382,17 +381,11 @@ function project(point, scale = 1) {
   ];
 }
 
-//all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-function lon2tile(lon, zoom) {
-  return (lon+180)/360 * Math.pow(2, zoom);
+function tile2lon(x, z) {
+  return (x/Math.pow(2,z)*360-180);
 }
 
-function lat2tile(lat, zoom) {
-  return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 * Math.pow(2, zoom);
-}
-
-function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
-function tile2lat(y,z) { 
+function tile2lat(y, z) {
   var n = Math.PI-2*Math.PI*y/Math.pow(2,z);
   return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }

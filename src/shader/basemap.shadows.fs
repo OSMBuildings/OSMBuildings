@@ -15,7 +15,7 @@
  *       Map brightness is only affected by shadows, not by light direction.
  *       Shadows are darkest when light comes from straight above (and thus
  *       shadows can be computed reliably) and become less and less visible
- *       with the light source close to the horizont (where moiré and offset
+ *       with the light source close to horizon (where moiré and offset
  *       artifacts would otherwise be visible).
  */
 
