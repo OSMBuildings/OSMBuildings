@@ -1,42 +1,34 @@
-class Workers {
+
+class WorkerPool {
 
   constructor (path, num) {
     this.items = [];
     for (let i = 0; i < num; i++) {
-      this.items[i] = { busy: false, worker: new Worker(path) };
+      this.items[i] = new WorkerWrapper(path);
     }
-    this.status();
   }
 
   get (callback) {
+    // console.log(this.items.map(item => {
+    //   return item.busy ? '▪' : '▫';
+    // }).join(''));
+
     for (let i = 0; i < this.items.length; i++) {
       if (!this.items[i].busy) {
         this.items[i].busy = true;
-        callback(this.items[i].worker);
-        this.status();
+        callback(this.items[i]);
         return;
       }
     }
 
     setTimeout(() => {
       this.get(callback);
-    }, 20);
+    }, 50);
   }
 
-  free (worker) {
-    for (let i = 0; i < this.items.length; i++) {
-      if (this.items[i].worker === worker) {
-        this.items[i].busy = false;
-        this.status();
-        return;
-      }
-    }
-  }
-
-  status () {
-    return;
-    console.log(this.items.map(item => {
-      return item.busy ? '▪' : '▫';
-    }).join(''));
+  destroy () {
+    this.items.forEach(item => item.destroy());
+    this.items = [];
   }
 }
+

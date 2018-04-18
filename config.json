@@ -31,7 +31,10 @@
   "src": [
     "src/markers/index.js",
     "src/markers/Marker.js",
+
     "src/workers/index.js",
+    "src/workers/Wrapper.js",
+
     "src/triangulate/geometry/vec2.js",
     "src/triangulate/geometry/vec3.js",
     "src/triangulate/earcut.custom.js",
@@ -59,8 +62,6 @@
 
     "src/data/index.js",
     "src/data/DataItem.js",
-    "src/data/GeoJSONData.js",
-    "src/data/OBJData.js",
 
     "src/mesh/MapPlane.js",
 

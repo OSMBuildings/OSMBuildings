@@ -172,7 +172,7 @@ class OSMBuildings {
     }
 
     const numProc = Math.min(window.navigator.hardwareConcurrency, 4);
-    this.workers = new Workers('./../src/workers/worker.js', numProc * 4);
+    this.workers = new WorkerPool('./../src/workers/worker.js', numProc * 4);
 
     //*** create container ********************************
 
@@ -272,7 +272,7 @@ class OSMBuildings {
   project (latitude, longitude, elevation) {
     const
       metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *  Math.cos(this.position.latitude / 180 * Math.PI),
-      worldPos = [(longitude - this.position.longitude) * metersPerDegreeLongitude, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, elevation * HEIGHT_SCALE];
+      worldPos = [(longitude - this.position.longitude) * metersPerDegreeLongitude, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, elevation];
 
     // takes current cam pos into account.
     let posNDC = transformVec3(render.viewProjMatrix.data, worldPos);
@@ -330,8 +330,9 @@ class OSMBuildings {
    * @param {String} [options.color] A color to apply to the model
    * @return {Object} The added object
    */
-  addOBJ (url, position, options) {
-    return new OBJData(url, position, options);
+  addOBJ (url, position, options = {}) {
+    options.position = position;
+    return new DataItem('OBJ', url, options);
   }
 
   /**
@@ -350,7 +351,7 @@ class OSMBuildings {
    * @return {Object} The added object
    */
   addGeoJSON (url, options) {
-    return new GeoJSONData(url, options);
+    return new DataItem('GeoJSON', url, options);
   }
 
   // TODO: allow more data layers later on
@@ -369,7 +370,7 @@ class OSMBuildings {
    */
   addGeoJSONTiles (url, options = {}) {
     options.fixedZoom = options.fixedZoom || 15;
-    this.dataGrid = new Grid(url, GeoJSONTile, options, 2);
+    this.dataGrid = new Grid(url, GeoJSONTile, options, 6);
     return this.dataGrid;
   }
 
@@ -380,7 +381,7 @@ class OSMBuildings {
    * @return {Object} The added layer object
    */
   addMapTiles (url) {
-    this.basemapGrid = new Grid(url, BitmapTile, {}, 4);
+    this.basemapGrid = new Grid(url, BitmapTile, {}, 12);
     return this.basemapGrid;
   }
 

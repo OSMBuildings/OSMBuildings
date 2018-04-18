@@ -1,10 +1,11 @@
 
 class DataItem {
 
-  constructor (url, options = {}, callback) {
+  constructor (type, url, options = {}, callback) {
+    this.type = type;
     this.url = url;
     this.options = options;
-    this.callback = callback;
+    this.callback = callback || function () {};
 
     this.id = options.id;
     this.color = options.color;
@@ -19,11 +20,33 @@ class DataItem {
       this.minZoom = MIN_ZOOM;
       this.maxZoom = MAX_ZOOM;
     }
+
+    this.load();
   }
 
-  load () {}
+  load () {
+    APP.workers.get(worker => {
+      worker.onMessage(res => {
+        if (res === 'error') {
+          this.callback();
+          worker.free();
+          return;
+        }
 
-  setData (res) {
+        if (res === 'load') {
+          this.callback();
+          return;
+        }
+
+        this.onLoad(res);
+        worker.free();
+      });
+
+      worker.postMessage({ type: this.type, url: this.url, options: this.options });
+    });
+  }
+
+  onLoad (res) {
 
     //****** init matrix **********************************
 
@@ -102,7 +125,7 @@ class DataItem {
 
   // TODO
   scaleX (scale) {
-    this.matrix.scale(scale, scale, scale * HEIGHT_SCALE);
+    this.matrix.scale(scale, scale, scale);
   }
 
   rotate (angle) {

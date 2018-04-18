@@ -6,7 +6,6 @@ const
 var TILE_SIZE = 256;
 
 var DEFAULT_HEIGHT = 10;
-var HEIGHT_SCALE = 1.0;
 
 var MIN_ZOOM = 14.5;
 var MAX_ZOOM = 22;

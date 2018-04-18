@@ -1,9 +1,10 @@
+
 class Request {
 
   static load (url, callback) {
     const req = new XMLHttpRequest();
 
-    const time = setTimeout(function () {
+    const timer = setTimeout(function () {
       if (req.readyState !== 4) {
         req.abort();
         callback('status');
@@ -15,7 +16,7 @@ class Request {
         return;
       }
 
-      clearTimeout(time);
+      clearTimeout(timer);
 
       if (!req.status || req.status < 200 || req.status > 299) {
         callback('status');
@@ -73,12 +74,13 @@ class Request {
         callback('content');
         return;
       }
+
       let json;
       try {
         json = JSON.parse(res.responseText);
         callback(null, json);
       } catch (ex) {
-        console.warn(`Could not parse JSON from {url}\n{ex.message}`);
+        console.warn(`Could not parse JSON from ${url}\n${ex.message}`);
         callback('content');
       }
     });
