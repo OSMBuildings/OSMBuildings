@@ -7,7 +7,7 @@ render.Basemap = {
       fragmentShader: Shaders.basemap.fragment,
       shaderName: 'basemap shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uModelMatrix', 'uMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
+      uniforms: ['uViewMatrix', 'uModelMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
     });
   },
 
@@ -80,13 +80,13 @@ render.Basemap = {
                      MAX_USED_ZOOM_LEVEL - tile.zoom);
                      
     shader.setAllUniforms([
-      ['uViewDirOnMap', '2fv',   render.viewDirOnMap],
+      ['uViewDirOnMap',   '2fv', render.viewDirOnMap],
       ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap]
     ]);
 
     shader.setAllUniformMatrices([
       ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
+      ['uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
     ]);
 
     shader.bindBuffer('aPosition', tile.vertexBuffer);

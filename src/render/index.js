@@ -150,8 +150,7 @@ class render {
       .translate(0, 8 / scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
       .translate(0, 0, -1220 / scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
-    this.viewDirOnMap = [Math.sin(APP.rotation / 180 * Math.PI),
-      -Math.cos(APP.rotation / 180 * Math.PI)];
+    this.viewDirOnMap = [Math.sin(APP.rotation / 180 * Math.PI), -Math.cos(APP.rotation / 180 * Math.PI)];
 
     // First, we need to determine the field-of-view so that our map scale does
     // not change when the viewport size changes. The map scale is given by the
@@ -207,10 +206,10 @@ class render {
 
     const lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
-    /* fogDistance: closest distance at which the fog affects the geometry */
+    // fogDistance: closest distance at which the fog affects the geometry
     this.fogDistance = Math.max(3000, lowerLeftDistanceToCenter);
-    /* fogBlurDistance: closest distance *beyond* fogDistance at which everything is
-     *                  completely enclosed in fog. */
+
+    // fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog.
     this.fogBlurDistance = 500;
   }
 
