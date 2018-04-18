@@ -67,7 +67,7 @@ class MapShadows {
     ]);
 
     shader.bindBuffer('aPosition', item.vertexBuffer);
-    shader.bindBuffer('aPosition', item.normalBuffer);
+    shader.bindBuffer('aNormal', item.normalBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 
