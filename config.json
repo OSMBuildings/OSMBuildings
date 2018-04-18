@@ -52,14 +52,15 @@
 
     "src/layer/Grid.js",
     "src/layer/Tile.js",
-    "src/layer/BasemapTile.js",
-    "src/layer/DataTile.js",
+    "src/layer/BitmapTile.js",
+    "src/layer/GeoJSONTile.js",
 
     "src/Filter.js",
 
     "src/data/index.js",
-    "src/data/GeoJSON.js",
-    "src/data/OBJ.js",
+    "src/data/DataItem.js",
+    "src/data/GeoJSONData.js",
+    "src/data/OBJData.js",
 
     "src/mesh/MapPlane.js",
 

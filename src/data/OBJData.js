@@ -145,31 +145,25 @@ const OBJFormat = {};
 
 //*****************************************************************************
 
-class OBJ {
 
-  constructor (url, position, options) {
-    options = options || {};
 
-    this.forcedId = options.id;
 
-    if (options.color) {
-      this.forcedColor = Qolor.parse(options.color).toArray();
-    }
 
-    this.replace = !!options.replace;
-    this.scale = options.scale || 1;
-    this.rotation = options.rotation || 0;
-    this.elevation = options.elevation || 0;
-    this.position = position;
 
-    this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
-    this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
-    if (this.maxZoom < this.minZoom) {
-      this.minZoom = MIN_ZOOM;
-      this.maxZoom = MAX_ZOOM;
-    }
 
-    this.data = {
+class OBJData extends DataItem {
+
+  constructor (url, position, options, callback) {
+    super(url, options, callback);
+
+    this.color = Qolor.parse(options.color).toArray(); // TODO: move to worker
+    this.position = position; // TODO: move to worker
+
+    this.load();
+  }
+
+  load () {
+    const triangles = {
       vertices: [],
       normals: [],
       colors: [],
@@ -177,7 +171,7 @@ class OBJ {
       ids: []
     };
 
-    this.request = Request.getText(url, (error, obj) => {
+    this.request = Request.getText(this.url, (error, obj) => {
       this.request = null;
       if (error) {
         return;
@@ -185,7 +179,7 @@ class OBJ {
 
       let match;
       if ((match = obj.match(/^mtllib\s+(.*)$/m))) {
-        this.request = Request.getText(url.replace(/[^\/]+$/, '') + match[1], (error, mtl) => {
+        this.request = Request.getText(this.url.replace(/[^\/]+$/, '') + match[1], (error, mtl) => {
           this.request = null;
           if (error) {
             return;
@@ -201,11 +195,9 @@ class OBJ {
 
   onLoad (obj, mtl) {
     this.items = [];
-    this.addItems(OBJFormat.parse(obj, mtl));
-    this.onReady();
-  }
 
-  addItems (items) {
+    const items = OBJFormat.parse(obj, mtl);
+
     items.forEach(feature => {
       /**
        * Fired when a 3d object has been loaded
@@ -218,10 +210,10 @@ class OBJ {
       [].push.apply(this.data.texCoords, feature.texCoords);
 
       const
-        id = this.forcedId || feature.id,
+        id = this.id || feature.id,
         idColor = render.Picking.idToColor(id),
         colorVariance = (id / 2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
-        color = this.forcedColor || feature.color || DEFAULT_COLOR;
+        color = this.color || feature.color || DEFAULT_COLOR;
 
       for (let i = 0; i < feature.vertices.length - 2; i += 3) {
         [].push.apply(this.data.colors, add3scalar(color, colorVariance));
@@ -230,92 +222,11 @@ class OBJ {
 
       this.items.push({ id: id, vertexCount: feature.vertices.length / 3, height: feature.height });
     });
+
+
+    // ... create Buffers
   }
 
-  onReady () {
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.data.vertices));
-    this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.data.normals));
-    this.colorBuffer = new GLX.Buffer(3, new Float32Array(this.data.colors));
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(this.data.texCoords));
-    this.idBuffer = new GLX.Buffer(3, new Float32Array(this.data.ids));
-
-    const heights = [];
-    this.items.forEach(item => {
-      for (let i = 0; i < item.vertexCount; i++) {
-        heights.push(item.height);
-      }
-    });
-    this.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
-
-    this.data = null;
-
-    Filter.apply(this);
-    DataIndex.add(this);
-
-    APP.activity.setBusy();
-
-    this.fade = 0;
-    this.isReady = true;
-  }
-
-  applyFilter () {} // TODO
-
-  getFade () {
-    if (this.fade >= 1) {
-      return 1;
-    }
-    const fade = this.fade;
-    this.fade += 1 / (1 * 60); // (duration * fps)
-
-    if (this.fade >= 1) {
-      APP.activity.setIdle();
-    }
-
-    return fade;
-  }
-
-  // TODO: switch to a notation like mesh.transform
-  getMatrix () {
-    const matrix = new GLX.Matrix();
-
-    if (this.elevation) {
-      matrix.translate(0, 0, this.elevation);
-    }
-
-    matrix.scale(this.scale, this.scale, this.scale);
-
-    if (this.rotation) {
-      matrix.rotateZ(-this.rotation);
-    }
-
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-      Math.cos(APP.position.latitude / 180 * Math.PI);
-
-    const dLat = this.position.latitude - APP.position.latitude;
-    const dLon = this.position.longitude - APP.position.longitude;
-
-    matrix.translate(dLon * metersPerDegreeLongitude,
-      -dLat * METERS_PER_DEGREE_LATITUDE, 0);
-
-    return matrix;
-  }
-
-  destroy () {
-    DataIndex.remove(this);
-
-    if (this.request) {
-      this.request.abort();
-    }
-
-    this.items = [];
-
-    if (this.isReady) {
-      this.vertexBuffer.destroy();
-      this.normalBuffer.destroy();
-      this.colorBuffer.destroy();
-      this.texCoordBuffer.destroy();
-      this.idBuffer.destroy();
-      this.heightBuffer.destroy();
-    }
-  }
+  // getMatrix();
+  // matrix.scale(this.scale, this.scale, this.scale); // TODO
 }

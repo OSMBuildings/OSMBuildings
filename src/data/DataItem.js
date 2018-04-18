@@ -1,53 +1,27 @@
 
-class GeoJSON {
+class DataItem {
 
-  constructor (url, options, callback) {
-    options = options || {};
+  constructor (url, options = {}, callback) {
+    this.url = url;
     this.options = options;
+    this.callback = callback;
 
-    this.forcedId = options.id;
-    // no Qolor.toArray() needed as Triangulation does it internally
-    this.forcedColor = options.color;
-
-    this.replace = !!options.replace;
+    this.id = options.id;
+    this.color = options.color;
     this.scale = options.scale || 1;
     this.rotation = options.rotation || 0;
     this.elevation = options.elevation || 0;
 
     this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
     this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
+
     if (this.maxZoom < this.minZoom) {
       this.minZoom = MIN_ZOOM;
       this.maxZoom = MAX_ZOOM;
     }
-
-    this.items = [];
-
-    APP.workers.get(worker => {
-      this.worker = worker;
-
-      const onResult = function (e) {
-        if (e.data !== 'error') {
-          this.setData(e.data);
-        }
-
-        worker.removeEventListener('message', onResult, false); // remove this listener
-        APP.workers.free(worker); // return worker to pool
-
-        if (callback) {
-          callback();
-        }
-      }.bind(this);
-
-      this.worker.addEventListener('message', onResult, false);
-
-      if (typeof url === 'object') {
-        worker.postMessage({ action: 'process', geojson: url, options: this.options });
-      } else {
-        worker.postMessage({ action: 'load', url: url, options: this.options });
-      }
-    });
   }
+
+  load () {}
 
   setData (res) {
 
@@ -55,11 +29,12 @@ class GeoJSON {
 
     this.position = res.position;
 
-    this.prevX = 0; this.prevY = 0;
+    this.prevX = 0;
+    this.prevY = 0;
 
     this.matrix = new GLX.Matrix();
 
-    if (this.elevation) { // means floating
+    if (this.elevation) {
       this.translate(0, 0, this.elevation);
     }
 
@@ -69,7 +44,7 @@ class GeoJSON {
       this.rotate(-this.rotation);
     }
 
-    //*****************************************************
+    //****** init buffers *********************************
 
     this.items = res.items;
 
@@ -153,19 +128,16 @@ class GeoJSON {
   }
 
   destroy () {
-    this.isReady = false;
-
-    clearTimeout(this.relaxTimer);
-
     DataIndex.remove(this);
 
-    if (this.request) {
-      this.request.abort(); // TODO: signal to workers
-    }
+    // if (this.request) {
+    //   this.request.abort(); // TODO: signal to workers
+    // }
 
     this.items = [];
 
     if (this.isReady) {
+      this.isReady = false;
       this.vertexBuffer.destroy();
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();

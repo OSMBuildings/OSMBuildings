@@ -1,5 +1,5 @@
 
-class DataTile extends Tile {
+class GeoJSONTile extends Tile {
 
   constructor(x, y, zoom, options) {
     super(x, y, zoom);
@@ -7,7 +7,7 @@ class DataTile extends Tile {
   }
 
   load (url, callback) {
-    this.content = new GeoJSON(url, this.options, callback);
+    this.content = new GeoJSONData(url, this.options, callback);
   }
 
   destroy () {

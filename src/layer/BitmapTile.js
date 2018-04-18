@@ -1,4 +1,4 @@
-class BasemapTile extends Tile {
+class BitmapTile extends Tile {
 
   constructor (x, y, zoom) {
     super(x, y, zoom);

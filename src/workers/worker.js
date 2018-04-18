@@ -63,7 +63,7 @@ function process (geojson, options) {
 
     const
       properties = feature.properties,
-      id = options.forcedId || properties.relationId || feature.id || properties.id;
+      id = options.id || properties.relationId || feature.id || properties.id;
     // TODO: forcedColor
 
     let vertexCount = buffers.vertices.length;
