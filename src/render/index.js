@@ -36,10 +36,6 @@ class render {
       render.sunGBuffer.framebufferSize = [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE];
     }
 
-    // const quad = new mesh.DebugQuad();
-    // quad.updateGeometry( [-100, -100, 1], [100, -100, 1], [100, 100, 1], [-100, 100, 1]);
-    // data.Index.add(quad);
-
     this.renderFrame();
   }
 
