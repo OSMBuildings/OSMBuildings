@@ -1,14 +1,11 @@
 
 class Grid {
 
-  constructor (source, tileClass, options, maxThreads = 2) {
+  constructor (source, tileClass, options = {}, maxThreads = 2) {
     this.source = source;
     this.tileClass = tileClass;
 
-    options = options || {};
-
     this.tiles = {};
-    // TODO: respect buffer
     this.buffer = 1;
 
     this.queue = [];
@@ -33,32 +30,33 @@ class Grid {
   }
 
   getURL (x, y, z) {
-    const s = 'abcd'[(x+y) % 4];
+    const s = 'abcd'[(x + y) % 4];
     return pattern(this.source, { s: s, x: x, y: y, z: z });
   }
-  
+
   getClosestTiles (tileList, referencePoint) {
-    tileList.sort(function(a, b) {
-      // tile coordinates correspond to the tile's upper left corner, but for
-      // the distance computation we should rather use their center; hence the 0.5 offsets
-      const distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) + Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
-      const distB = Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) + Math.pow(b[1] + 0.5 - referencePoint[1], 2.0);
-      return distA > distB;
-    });
+    return tileList;
 
-    let prevX, prevY;
-
-    // removes duplicates
-    return tileList.filter(function(tile) {
-      if (tile[0] === prevX && tile[1] === prevY) {
-        return false;
-      }
-      prevX = tile[0];
-      prevY = tile[1];
-      return true;
-    });
+    // tileList.sort(function(a, b) {
+    //   // tile coordinates correspond to the tile's upper left corner, but for
+    //   // the distance computation we should rather use their center; hence the 0.5 offsets
+    //   const distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) + Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
+    //   const distB = Math.pow(b[0] + 0.5 - referencePoint[0], 2.0) + Math.pow(b[1] + 0.5 - referencePoint[1], 2.0);
+    //   return distA > distB;
+    // });
+    //
+    // // remove duplicates
+    // let prevX, prevY;
+    // return tileList.filter(tile => {
+    //   if (tile[0] === prevX && tile[1] === prevY) {
+    //     return false;
+    //   }
+    //   prevX = tile[0];
+    //   prevY = tile[1];
+    //   return true;
+    // });
   }
-  
+
   /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
    * but with those tiles recursively replaced by their respective parent tile
    * (tile from zoom level 'zoom'-1 that contains 'tile') for which said parent
@@ -69,58 +67,103 @@ class Grid {
    * 'tiles' and even if multiple tiles from 'tiles' got replaced by the same parent.
    */
   mergeTiles (tiles, zoom, pixelAreaThreshold) {
-    const parentTiles = {};
-    const tileSet = {};
-    const tileList = [];
-    let key;
-    
+    const
+      parentTiles = {},
+      tileSet = {},
+      tileList = [];
+
     // if there is no parent zoom level
+    let key;
     if (zoom === 0 || zoom <= this.minZoom) {
       for (key in tiles) {
         tiles[key][2] = zoom;
       }
       return tiles;
     }
-    
+
     for (key in tiles) {
       const tile = tiles[key];
 
-      const parentX = (tile[0] <<0) / 2;
-      const parentY = (tile[1] <<0) / 2;
-      
-      if (parentTiles[ [parentX, parentY] ] === undefined) { //parent tile screen size unknown
-        const numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom-1, render.viewProjMatrix);
-        parentTiles[ [parentX, parentY] ] = (numParentScreenPixels < pixelAreaThreshold);
+      const parentX = (tile[0] << 0) / 2;
+      const parentY = (tile[1] << 0) / 2;
+
+      if (parentTiles[[parentX, parentY]] === undefined) { //parent tile screen size unknown
+        const numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom - 1, render.viewProjMatrix);
+        parentTiles[[parentX, parentY]] = (numParentScreenPixels < pixelAreaThreshold);
       }
-      
-      if (! parentTiles[ [parentX, parentY] ]) { //won't be replaced by a parent tile -->keep
-        if (tileSet[ [tile[0], tile[1]] ] === undefined) {  //remove duplicates
-          tileSet[ [tile[0], tile[1]]] = true;
-          tileList.push( [tile[0], tile[1], zoom]);
+
+      if (!parentTiles[[parentX, parentY]]) { //won't be replaced by a parent tile -->keep
+        if (tileSet[[tile[0], tile[1]]] === undefined) {  //remove duplicates
+          tileSet[[tile[0], tile[1]]] = true;
+          tileList.push([tile[0], tile[1], zoom]);
         }
       }
     }
 
     let parentTileList = [];
-    
+
     for (key in parentTiles) {
       if (parentTiles[key]) {
         const parentTile = key.split(',');
-        parentTileList.push( [parseInt(parentTile[0]), parseInt(parentTile[1]), zoom-1]);
+        parentTileList.push([parseInt(parentTile[0]), parseInt(parentTile[1]), zoom - 1]);
       }
     }
-    
+
     if (parentTileList.length > 0) {
       parentTileList = this.mergeTiles(parentTileList, zoom - 1, pixelAreaThreshold);
     }
-      
+
     return tileList.concat(parentTileList);
   }
 
-  getDistance(a, b) {
-    const dx = a[0]-b[0], dy = a[1]-b[1];
-    return dx*dx + dy*dy;
+  getDistance (a, b) {
+    const dx = a[0] - b[0], dy = a[1] - b[1];
+    return dx * dx + dy * dy;
   }
+
+  // getAnglePoint (point, angle, distance) {
+  //   let rad = angle * Math.PI / 180;
+  //   return [distance * Math.cos(rad) + point[0], distance * Math.sin(rad) + point[1]];
+  // }
+  //
+  // // inspired by polygon.js (https://github.com/tmpvar/polygon.js/blob/master/polygon.js
+  // pointInPolygon (point, polygon) {
+  //   let
+  //     res = false,
+  //     curr, prev;
+  //   for (let i = 1; i < polygon.length; i++) {
+  //     curr = polygon[i];
+  //     prev = polygon[i - 1];
+  //
+  //     ((prev[1] <= point[1] && point[1] < curr[1]) || (curr[1] <= point[1] && point[1] < prev[1]))
+  //     && (point[0] < (curr[0] - prev[0]) * (point[1] - prev[1]) / (curr[1] - prev[1]) + prev[0])
+  //     && (res = !res);
+  //   }
+  //   return res;
+  // }
+  //
+  // getTilesForSector (a, b, c) {
+  //   const min = [
+  //     Math.round(Math.min(a[0], b[0], c[0])),
+  //     Math.round(Math.min(a[1], b[1], c[1]))
+  //   ];
+  //   const max = [
+  //     Math.round(Math.max(a[0], b[0], c[0])),
+  //     Math.round(Math.max(a[1], b[1], c[1]))
+  //   ];
+  //
+  //   const res = [];
+  //   for (let x = min[0]; x < max[0]; x++) {
+  //     for (let y = min[1]; y < max[1]; y++) {
+  //
+  //       if (this.pointInPolygon([x*2, y*2], [])) {
+  //         res.push([x*2, y*2]);
+  //       }
+  //     }
+  //   }
+  //
+  //   return res;
+  // }
 
   update () {
     if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
@@ -139,9 +182,21 @@ class Grid {
     //   maxY: max.y <<0
     // };
 
+    // const
+    //   distance = 5, // in tiles
+    //   fov = 120,
+    //   centerX = project([APP.position.longitude, APP.position.latitude], 1<<APP.zoom),
+    //   left = APP.rotation - fov/2,
+    //   right = APP.rotation + fov/2;
+    //
+    // let a = this.getAnglePoint(centerX, left, distance);
+    // let b = this.getAnglePoint(centerX, right, distance);
+    //
+    // const tilesX = this.getTilesForSector(centerX, a, b);
+
     let
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
-      center = [ lon2tile(APP.position.longitude, zoom), lat2tile (APP.position.latitude,  zoom)];
+      center = project([APP.position.longitude, APP.position.latitude], 1<< zoom);
 
     for (let i = 0; i < 4; i++) {
       viewQuad[i] = getTilePositionFromLocal(viewQuad[i], zoom);

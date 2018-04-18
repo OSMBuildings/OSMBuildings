@@ -153,8 +153,8 @@ function rasterFlatTriangle( flat0, flat1, other ) {
  */
 function rasterConvexQuad(quad) {
   assert(quad.length == 4, 'Error: Quadrilateral with more or less than four vertices');
-  var res1  = rasterTriangle(quad[0], quad[1], quad[2]);
-  var res2 =  rasterTriangle(quad[0], quad[2], quad[3]);
+  var res1 = rasterTriangle(quad[0], quad[1], quad[2]);
+  var res2 = rasterTriangle(quad[0], quad[2], quad[3]);
   return res1.concat(res2);
 }
 
@@ -375,9 +375,22 @@ function getTilePositionFromLocal(localXY, zoom) {
   return [lon2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
 }
 
+function project(point, scale = 1) {
+  return [
+    (point[0]/360 + 0.5) * scale,
+    (1-Math.log(Math.tan(point[1] * Math.PI / 180) + 1 / Math.cos(point[1] * Math.PI/180)) / Math.PI)/2 * scale
+  ];
+}
+
 //all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-function lon2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
-function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
+function lon2tile(lon, zoom) {
+  return (lon+180)/360 * Math.pow(2, zoom);
+}
+
+function lat2tile(lat, zoom) {
+  return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 * Math.pow(2, zoom);
+}
+
 function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
 function tile2lat(y,z) { 
   var n = Math.PI-2*Math.PI*y/Math.pow(2,z);
