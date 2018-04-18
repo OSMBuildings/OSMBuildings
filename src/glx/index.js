@@ -24,11 +24,11 @@ class GLX {
       throw new Error('GL not supported');
     }
 
-    canvas.addEventListener('webglcontextlost', function (e) {
+    canvas.addEventListener('webglcontextlost', e => {
       console.warn('context lost');
     });
 
-    canvas.addEventListener('webglcontextrestored', function (e) {
+    canvas.addEventListener('webglcontextrestored', e => {
       console.warn('context restored');
     });
 

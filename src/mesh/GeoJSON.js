@@ -49,8 +49,28 @@ mesh.GeoJSON = class {
   }
 
   setData (res) {
-    this.items = res.items;
+
+    //****** init matrix **********************************
+
     this.position = res.position;
+
+    this.prevX = 0; this.prevY = 0;
+
+    this.matrix = new GLX.Matrix();
+
+    if (this.elevation) { // means floating
+      this.translate(0, 0, this.elevation);
+    }
+
+    this.scaleX(this.scale);
+
+    if (this.rotation) {
+      this.rotate(-this.rotation);
+    }
+
+    //*****************************************************
+
+    this.items = res.items;
 
     this.vertexBuffer = new GLX.Buffer(3, res.vertices);
     setTimeout(() => {
@@ -100,30 +120,34 @@ mesh.GeoJSON = class {
     return fade;
   }
 
-  // TODO: switch to a notation like mesh.transform
+  translate (x = 0, y = 0, z = 0) {
+    this.matrix.translate(x, y, z);
+  }
+
+  scaleX (scale) {
+    this.matrix.scale(scale, scale, scale * HEIGHT_SCALE);
+  }
+
+  rotate (angle) {
+    this.matrix.scale(-angle);
+  }
+
   getMatrix () {
-    const matrix = new GLX.Matrix();
-
-    if (this.elevation) { // means floating
-      matrix.translate(0, 0, this.elevation);
-    }
-
-    matrix.scale(this.scale, this.scale, this.scale * HEIGHT_SCALE);
-
-    if (this.rotation) {
-      matrix.rotateZ(-this.rotation);
-    }
-
     // this position is available once geometry processing is complete.
     // should not be failing before (because of this.isReady)
-    const dLat = this.position.latitude - APP.position.latitude;
-    const dLon = this.position.longitude - APP.position.longitude;
+    const
+      x = (this.position.longitude - APP.position.longitude) - this.prevX,
+      y = (this.position.latitude - APP.position.latitude) - this.prevY;
 
+    // TODO: calc this once per renderFrame()
     const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
-    matrix.translate(dLon * metersPerDegreeLongitude, -dLat * METERS_PER_DEGREE_LATITUDE, 0);
+    this.matrix.translate(x * metersPerDegreeLongitude, -y * METERS_PER_DEGREE_LATITUDE, 0);
 
-    return matrix;
+    this.prevX = (this.position.longitude - APP.position.longitude);
+    this.prevY =(this.position.latitude - APP.position.latitude);
+
+    return this.matrix;
   }
 
   destroy () {

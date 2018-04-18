@@ -260,22 +260,8 @@ GLX.Matrix.identity3 = function () {
     ]);
   };
 
-  // GLX.Matrix.transform = function(x, y, z, m) {
-  //   var X = x*m[0] + y*m[4] + z*m[8]  + m[12];
-  //   var Y = x*m[1] + y*m[5] + z*m[9]  + m[13];
-  //   var Z = x*m[2] + y*m[6] + z*m[10] + m[14];
-  //   var W = x*m[3] + y*m[7] + z*m[11] + m[15];
-  //   return {
-  //     x: (X/W +1) / 2,
-  //     y: (Y/W +1) / 2
-  //   };
-  // };
-
   GLX.Matrix.transform = function (m) {
-    var X = m[12];
-    var Y = m[13];
-    var Z = m[14];
-    var W = m[15];
+    const X = m[12], Y = m[13], Z = m[14], W = m[15];
     return {
       x: (X / W + 1) / 2,
       y: (Y / W + 1) / 2,
@@ -284,7 +270,7 @@ GLX.Matrix.identity3 = function () {
   };
 
   GLX.Matrix.invert = function (a) {
-    var
+    const
       res = new Float32Array(16),
 
       a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
@@ -303,10 +289,10 @@ GLX.Matrix.identity3 = function () {
       b08 = a20 * a33 - a23 * a30,
       b09 = a21 * a32 - a22 * a31,
       b10 = a21 * a33 - a23 * a31,
-      b11 = a22 * a33 - a23 * a32,
+      b11 = a22 * a33 - a23 * a32;
 
-      // Calculate the determinant
-      det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+    // Calculate the determinant
+    let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
 
     if (!det) {
       return;
