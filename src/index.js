@@ -136,7 +136,8 @@ class OSMBuildings {
   constructor (options = {}) {
     APP = this; // refers to current instance. Should make other globals obsolete.
 
-    this.activity = new Activity();
+    this.activity = new Activity(1000);
+    this.userActivity = new Activity(0);
 
     if (options.style) {
       if (options.style.color || options.style.wallColor) {
@@ -421,6 +422,9 @@ class OSMBuildings {
    * @deprecated
    */
   getTarget (x, y, callback) {
+    if(!APP.userActivity.isBusy()){
+      render.Picking.render(x, y, callback);
+    }
   }
 
   /**

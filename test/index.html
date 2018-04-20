@@ -208,23 +208,23 @@
 //  }
 
   var label = document.getElementById('label');
-//  osmb.on('change', function() {
+  //osmb.on('change', function() {
 //    var pos = osmb.project(52.52, 13.37, 50);
 //    label.style.left = Math.round(pos.x) + 'px';
 //    label.style.top = Math.round(pos.y) + 'px';
-//  });
+ // });
 
-  // osmb.on('pointermove', e => {
-  //   osmb.getTarget(e.x, e.y, id => {
-  //     if (id) {
-  //       document.body.style.cursor = 'pointer';
-  //       osmb.highlight(id, '#cc0000');
-  //     } else {
-  //       document.body.style.cursor = 'default';
-  //       osmb.highlight(null);
-  //     }
-  //  });
-  // });
+  osmb.on('pointermove', e => {
+    osmb.getTarget(e.x, e.y, id => {
+      if (id) {
+        document.body.style.cursor = 'pointer';
+        osmb.highlight(id, '#cc0000');
+      } else {
+        document.body.style.cursor = 'default';
+        osmb.highlight(null);
+      }
+    });
+  });
 
 //  osmb.on('pointermove', e => {
 //    obj.position = osmb.unproject(e.x, e.y);
@@ -232,25 +232,26 @@
 //
 
   osmb.on('pointerdown', e => {
-    osmb.getTarget(e.x, e.y, id => {
-      if (id === null) return;
-      if (id.substring(0, 2) === 'w-') {
-        id = 'rel(' + id.slice(2, id.length) + ')';
-      } else {
-        id = 'way(' + id.slice(1, id.length) + ')';
-      }
 
-      let query = 'http://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json];(' + id + ';);out body;');
-
-      fetch(query)
-        .then(response => response.json())
-        .then(parsed => {
-          const feature = parsed.elements[0];
-          if (feature) {
-            console.log(feature.id, feature.tags);
-          }
-        });
-    });
+    // osmb.getTarget(e.x, e.y, id => {
+    //   if (id === null) return;
+    //   if (id.substring(0, 2) === 'w-') {
+    //     id = 'rel(' + id.slice(2, id.length) + ')';
+    //   } else {
+    //     id = 'way(' + id.slice(1, id.length) + ')';
+    //   }
+    //
+    //   let query = 'http://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json];(' + id + ';);out body;');
+    //
+    //   fetch(query)
+    //     .then(response => response.json())
+    //     .then(parsed => {
+    //       const feature = parsed.elements[0];
+    //       if (feature) {
+    //         console.log(feature.id, feature.tags);
+    //       }
+    //     });
+    // });
   });
 
   //*************************************************************************
