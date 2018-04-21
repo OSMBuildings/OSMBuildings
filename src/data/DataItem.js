@@ -9,9 +9,11 @@ class DataItem {
 
     this.id = options.id;
     this.color = options.color;
-    this.scale = options.scale || 1;
-    this.rotation = options.rotation || 0;
-    this.elevation = options.elevation || 0;
+
+    this.matrix = new GLX.Matrix();
+    this.translate(0, 0, options.elevation || 0);
+    this.scale(options.scale || 1);
+    this.rotate(options.rotation || 0);
 
     this.minZoom = Math.max(parseFloat(options.minZoom || MIN_ZOOM), APP.minZoom);
     this.maxZoom = Math.min(parseFloat(options.maxZoom || MAX_ZOOM), APP.maxZoom);
@@ -48,24 +50,9 @@ class DataItem {
 
   onLoad (res) {
 
-    //****** init matrix **********************************
-
     this.position = res.position;
-
     this.prevX = 0;
     this.prevY = 0;
-
-    this.matrix = new GLX.Matrix();
-
-    if (this.elevation) {
-      this.translate(0, 0, this.elevation);
-    }
-
-    this.scaleX(this.scale);
-
-    if (this.rotation) {
-      this.rotate(-this.rotation);
-    }
 
     //****** init buffers *********************************
 
@@ -96,32 +83,16 @@ class DataItem {
     }, 10);
   }
 
-  getFade () {
-    if (this.fade >= 1) {
-      return 1;
-    }
-
-    const fade = this.fade;
-    this.fade += 1 / (1 * 60); // (duration * fps)
-
-    if (this.fade >= 1) {
-      APP.activity.setIdle();
-    }
-
-    return fade;
-  }
-
   translate (x = 0, y = 0, z = 0) {
     this.matrix.translate(x, y, z);
   }
 
-  // TODO
-  scaleX (scale) {
-    this.matrix.scale(scale, scale, scale);
+  scale (scaling) {
+    this.matrix.scale(scaling, scaling, scaling);
   }
 
   rotate (angle) {
-    this.matrix.scale(-angle);
+    this.matrix.rotateZ(-angle);
   }
 
   getMatrix () {
@@ -140,6 +111,21 @@ class DataItem {
     this.prevY =(this.position.latitude - APP.position.latitude);
 
     return this.matrix;
+  }
+
+  getFade () {
+    if (this.fade >= 1) {
+      return 1;
+    }
+
+    const fade = this.fade;
+    this.fade += 1 / (1 * 60); // (duration * fps)
+
+    if (this.fade >= 1) {
+      APP.activity.setIdle();
+    }
+
+    return fade;
   }
 
   destroy () {
