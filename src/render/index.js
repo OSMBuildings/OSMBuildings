@@ -203,10 +203,11 @@ class render {
     const lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     // fogDistance: closest distance at which the fog affects the geometry
-    this.fogDistance = Math.max(3000, lowerLeftDistanceToCenter);
+    // TODO: dependent on tilt!
+    this.fogDistance = Math.max(4000, lowerLeftDistanceToCenter);
 
     // fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog.
-    this.fogBlurDistance = 500;
+    this.fogBlurDistance = 3000;
   }
 
   static destroy () {

@@ -58,8 +58,6 @@
     "src/layer/BitmapTile.js",
     "src/layer/GeoJSONTile.js",
 
-    "src/Filter.js",
-
     "src/data/index.js",
     "src/data/DataItem.js",
 

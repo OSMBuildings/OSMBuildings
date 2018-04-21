@@ -58,6 +58,7 @@ class DataItem {
 
     this.items = res.items;
 
+    // this cascade ralaxes rendering a lot when new tile data arrives
     this.vertexBuffer = new GLX.Buffer(3, res.vertices);
     setTimeout(() => {
       this.normalBuffer = new GLX.Buffer(3, res.normals);
@@ -76,11 +77,11 @@ class DataItem {
 
               this.fade = 0;
               this.isReady = true;
-            }, 10);
-          }, 10);
-        }, 10);
-      }, 10);
-    }, 10);
+            }, 20);
+          }, 20);
+        }, 20);
+      }, 20);
+    }, 20);
   }
 
   translate (x = 0, y = 0, z = 0) {
@@ -96,19 +97,19 @@ class DataItem {
   }
 
   getMatrix () {
-    // this position is available once geometry processing is complete.
-    // should not be failing before (because of this.isReady)
     const
-      x = (this.position.longitude - APP.position.longitude) - this.prevX,
-      y = (this.position.latitude - APP.position.latitude) - this.prevY;
+      currX = (this.position.longitude - APP.position.longitude),
+      currY = (this.position.latitude - APP.position.latitude),
+      dx = currX - this.prevX,
+      dy = currY - this.prevY;
 
     // TODO: calc this once per renderFrame()
     const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
-    this.matrix.translate(x * metersPerDegreeLongitude, -y * METERS_PER_DEGREE_LATITUDE, 0);
+    this.matrix.translate(dx * metersPerDegreeLongitude, -dy * METERS_PER_DEGREE_LATITUDE, 0);
 
-    this.prevX = (this.position.longitude - APP.position.longitude);
-    this.prevY =(this.position.latitude - APP.position.latitude);
+    this.prevX = currX;
+    this.prevY = currY;
 
     return this.matrix;
   }
@@ -143,8 +144,8 @@ class DataItem {
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
       this.texCoordBuffer.destroy();
-      this.pickingBuffer.destroy();
       this.heightBuffer.destroy();
+      this.pickingBuffer.destroy();
     }
   }
 }

@@ -392,25 +392,15 @@ class OSMBuildings {
     // render.Buildings.highlightColor = (id && highlightColor) ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
   }
 
-  // TODO: check naming: show() suggests it affects the layer rather than objects on it
   /**
-   * Sets a function that selects objects to show on this layer
-   * @param {selectorCallback} selector A function that will get run on each feature, and returns a boolean indicating whether or not to show the feature
-   * @param {Integer} [duration=0] How long to fade out the feature
+   * @deprecated
    */
-  show (selector, duration) {
-    Filter.remove('hidden', selector, duration);
-  }
+  show () {}
 
-  // TODO: check naming: hide() suggests it affects the layer rather than objects on it
   /**
-   * Sets a function that defines which objects to hide on this layer
-   * @param {selectorCallback} selector A function that will get run on each feature, and returns a boolean indicating whether or not to hide the feature
-   * @param {Integer} [duration=0] How long to fade in the feature
+   * @deprecated
    */
-  hide (selector, duration) {
-    Filter.add('hidden', selector, duration);
-  }
+  hide () {}
 
   /**
    * @deprecated
