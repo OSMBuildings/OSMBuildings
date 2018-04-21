@@ -2,9 +2,9 @@
 
 ~~~ javascript
 osmb.on('pointerdown', e => {
-  osmb.getTarget(e.x, e.y, id => {
-    if (id) {
-      // fetch URL http://overpass-api.de/api/interpreter?data=[out:json];(relation(id);way(r);node(w);way(id);way(23853131);node(w));out;
+  osmb.getTarget(e.x, e.y, feature => {
+    if (feature) {
+      // fetch URL http://overpass-api.de/api/interpreter?data=[out:json];(way(feature.id);node(w));out;
     }
   });
 });

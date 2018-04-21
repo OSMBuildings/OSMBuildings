@@ -92,7 +92,7 @@ class Picking {
       }
 
       const feature = itemFeatureIndex[itemIndex][featureIndex];
-      callback(feature.id, { id: feature.id, properties: feature.properties });
+      callback({ id: feature.id, properties: feature.properties });
 
     }); // end requestAnimationFrame()
   }

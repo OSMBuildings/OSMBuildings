@@ -21,9 +21,9 @@ function httpGetAsync(theUrl, callback)
 }
 
 osmb.on('pointerdown', e => {
-  var id = osmb.getTarget(e.x, e.y, id => {
-    if (id) {
-      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace(/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace(/^[a-z]+/, '') + ");way(23853131);node(w));out;";
+  osmb.getTarget(e.x, e.y, feature => {
+    if (feature) {
+      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + feature.id.replace(/^[a-z]+/, '') + ");node(w));out;";
       httpGetAsync(url, response => {
         alert(response);
       });
@@ -41,8 +41,7 @@ display an alert window with the response, which contains the details for that b
 ````javascript
 // This function does an HTTP get request, given a URL, and passes the response to a callback
 // Source: http://stackoverflow.com/a/4033310/1202488
-function httpGetAsync(theUrl, callback)
-{
+function httpGetAsync(theUrl, callback) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function() { 
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
@@ -53,9 +52,9 @@ function httpGetAsync(theUrl, callback)
 }
 
 osmb.on('pointerdown', e => {
-  var id = osmb.getTarget(e.x, e.y, id => {
-    if (id) {
-      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(relation(" + id.replace(/^[a-z]+/, '') + ");way(r);node(w);way(" + id.replace(/^[a-z]+/, '') + ");way(23853131);node(w));out;";
+  osmb.getTarget(e.x, e.y, feature => {
+    if (feature) {
+      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + feature.id.replace(/^[a-z]+/, '') + ");node(w));out;";
       httpGetAsync(url, response => {
         alert(response);
       });

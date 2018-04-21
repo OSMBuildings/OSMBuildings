@@ -86,7 +86,7 @@ map.on('pointerdown', e => {
 map.on('pointerup', e => {
   if (e.x === mousePos.x && e.y === mousePos.y) {
     // Add highlight if this wasn't a map drag/pan
-    osmb.getTarget(e.x, e.y, buildingSelected);
+    osmb.getTarget(e.x, e.y, feature);
   }
 });
 </script>
@@ -175,7 +175,7 @@ map.on('pointerdown', e => {
 map.on('pointerup', e => {
   if (e.x === mousePos.x && e.y === mousePos.y) {
     // Add highlight if this wasn't a map drag/pan
-    osmb.getTarget(e.x, e.y, buildingSelected);
+    osmb.getTarget(e.x, e.y, feature);
   }
 });
   

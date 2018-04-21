@@ -30,12 +30,6 @@ let APP, GL;
  */
 
 /**
- * User defined callback function for getTarget()
- * @callback getTargetCallback
- * @param {Object} feature The feature
- */
-
-/**
  * @class OSMBuildings
  */
 
@@ -394,8 +388,8 @@ class OSMBuildings {
    * @param {String} highlightColor An optional color string to be used for highlighting
    */
   highlight (id, highlightColor) {
-    // TODO render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
-    render.Buildings.highlightColor = id && highlightColor ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
+    // render.Buildings.highlightId = id;
+    // render.Buildings.highlightColor = (id && highlightColor) ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
   }
 
   // TODO: check naming: show() suggests it affects the layer rather than objects on it
@@ -422,9 +416,9 @@ class OSMBuildings {
    * @deprecated
    */
   getTarget (x, y, callback) {
-    if (!APP.userActivity.isBusy()) {
+    // if (!APP.userActivity.isBusy()) {
       render.Picking.render(x, y, callback);
-    }
+    // }
   }
 
   /**

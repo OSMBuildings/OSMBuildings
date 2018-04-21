@@ -23,10 +23,10 @@ osmb.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{
 //***************************************************************************
 
 osmb.on('pointermove', function(e) {
-  var id = osmb.getTarget(e.x, e.y, function(id) {
-    if (id) {
+  osmb.getTarget(e.x, e.y, feature => {
+    if (feature) {
       document.body.style.cursor = 'pointer';
-      osmb.highlight(id, '#f08000');
+      osmb.highlight(feature.id, '#f08000');
     } else {
       document.body.style.cursor = 'default';
       osmb.highlight(null);
