@@ -110,7 +110,7 @@ render.Buildings = {
       shader.bindBuffer('aTexCoord', item.texCoordBuffer);
       shader.bindBuffer('aNormal', item.normalBuffer);
       shader.bindBuffer('aColor', item.colorBuffer);
-      shader.bindBuffer('aId', item.idBuffer);
+      shader.bindBuffer('aId', item.pickingBuffer);
       shader.bindBuffer('aHeight', item.heightBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);

@@ -81,15 +81,7 @@ class DataItem {
           setTimeout(() => {
             this.heightBuffer = new GLX.Buffer(1, res.heights);
             setTimeout(() => {
-              const idColors = [];
-              res.items.forEach(item => {
-                const idColor = render.Picking.idToColor(item.id);
-                
-                for (let i = 0; i < item.vertexCount; i++) {
-                  idColors.push(idColor[0], idColor[1], idColor[2]);
-                }
-              });
-              this.idBuffer = new GLX.Buffer(3, new Float32Array(idColors));
+              this.pickingBuffer = new GLX.Buffer(3, res.pickingColors);
 
               DataIndex.add(this);
 
@@ -165,7 +157,7 @@ class DataItem {
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
       this.texCoordBuffer.destroy();
-      this.idBuffer.destroy();
+      this.pickingBuffer.destroy();
       this.heightBuffer.destroy();
     }
   }

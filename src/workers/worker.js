@@ -37,6 +37,11 @@ function getOrigin (geometry) {
   }
 }
 
+function getPickingColor (i) {
+  i++;
+  return [0, (i & 0xff) / 255, ((i >> 8) & 0xff) / 255];
+}
+
 //*****************************************************************************
 
 onmessage = function(e) {
@@ -59,10 +64,11 @@ function postResult(items, position, tri) {
     normals: new Float32Array(tri.normals),
     colors: new Float32Array(tri.colors),
     texCoords: new Float32Array(tri.texCoords),
-    heights: new Float32Array(tri.heights)
+    heights: new Float32Array(tri.heights),
+    pickingColors: new Float32Array(tri.pickingColors)
   };
 
-  postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer]);
+  postMessage(res, [res.vertices.buffer, res.normals.buffer, res.colors.buffer, res.texCoords.buffer, res.heights.buffer, res.pickingColors.buffer]);
 }
 
 //*****************************************************************************
@@ -94,7 +100,8 @@ function processGeoJSON (geojson, options) {
     normals: [],
     colors: [],
     texCoords: [],
-    heights: []
+    heights: [],
+    pickingColors: []
   };
 
   const
@@ -102,13 +109,13 @@ function processGeoJSON (geojson, options) {
     origin = getOrigin(geojson.features[0].geometry),
     position = { latitude: origin[1], longitude: origin[0] };
 
-  geojson.features.forEach(feature => {
+  geojson.features.forEach((feature, i) => {
     // Events.emit('loadfeature', feature); // TODO
 
     const
       properties = feature.properties,
-      id = options.id || properties.relationId || feature.id || properties.id;
-    // TODO: options.color
+      id = options.id || properties.relationId || feature.id || properties.id,
+      pickingColor = getPickingColor(i);
 
     let vertexCount = tri.vertices.length;
     triangulate(tri, feature, origin);
@@ -116,9 +123,10 @@ function processGeoJSON (geojson, options) {
 
     for (let i = 0; i < vertexCount; i++) {
       tri.heights.push(properties.height);
+      tri.pickingColors.push(...pickingColor);
     }
 
-    items.push({ id: id, vertexCount: vertexCount });
+    items.push({ id: id, properties: properties, vertexCount: vertexCount });
   });
 
   postResult(items, position, tri);
@@ -157,7 +165,8 @@ function processOBJ(obj, mtl, options) {
     normals: [],
     colors: [],
     texCoords: [],
-    heights: []
+    heights: [],
+    pickingColors: []
   };
 
   const
@@ -167,7 +176,7 @@ function processOBJ(obj, mtl, options) {
 
   const meshes = OBJ.parse(obj, mtl);
 
-  meshes.forEach(mesh => {
+  meshes.forEach((mesh, index) => {
     // Events.emit('loadfeature', mesh); // TODO
 
     tri.vertices.push(...mesh.vertices);
@@ -178,14 +187,16 @@ function processOBJ(obj, mtl, options) {
       id = options.id || mesh.id,
       colorVariance = (id / 2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
       color = optionColor || mesh.color || DEFAULT_COLOR,
-      vertexCount = mesh.vertices.length / 3;
+      vertexCount = mesh.vertices.length / 3,
+      pickingColor = getPickingColor(i);
 
     for (let i = 0; i < vertexCount; i++) {
       tri.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
       tri.heights.push(mesh.height);
+      tri.pickingColors.push(...pickingColor);
     }
 
-    items.push({ id: id, vertexCount: vertexCount });
+    items.push({ id: id, properties: {}, vertexCount: vertexCount });
   });
 
   postResult(items, position, tri);

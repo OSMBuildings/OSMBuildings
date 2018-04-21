@@ -393,7 +393,7 @@ class OSMBuildings {
    * @param {String} highlightColor An optional color string to be used for highlighting
    */
   highlight (id, highlightColor) {
-    render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
+    // TODO render.Buildings.highlightId = id ? render.Picking.idToColor(id) : null;
     render.Buildings.highlightColor = id && highlightColor ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
   }
 
@@ -421,6 +421,7 @@ class OSMBuildings {
    * @deprecated
    */
   getTarget (x, y, callback) {
+    return render.Picking.render(x, y, callback);
   }
 
   /**

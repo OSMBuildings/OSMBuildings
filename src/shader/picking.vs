@@ -3,13 +3,14 @@ precision highp float;  //is default in vertex shaders anyway, using highp fixes
 #define halfPi 1.57079632679
 
 attribute vec4 aPosition;
-attribute vec3 aIdColor;
+attribute vec3 aPickingColor;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
 
 uniform float uFogRadius;
 uniform float uFade;
+uniform float uIndex;
 
 varying vec4 vColor;
 
@@ -30,7 +31,7 @@ void main() {
     if (distance > uFogRadius) {
       vColor = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
-      vColor = vec4(aIdColor, 1.0);
+      vColor = vec4(clamp(uIndex, 0.0, 1.0), aPickingColor.g, aPickingColor.b, 1.0);
     }
   }
 }
