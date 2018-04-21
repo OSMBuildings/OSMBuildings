@@ -2,10 +2,10 @@
 
 class Activity {
 
-  constructor () {
+  constructor (delay = 0) {
     this.busy = false;
     // console.log('IDLE');
-    this.delay = 1000;
+    this.delay = delay;
   }
 
   setBusy () {

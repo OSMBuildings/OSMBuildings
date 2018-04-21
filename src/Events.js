@@ -124,6 +124,7 @@ Events.init = function (container) {
 
   function onMouseDown (e) {
     APP.activity.setBusy();
+    APP.userActivity.setBusy();
 
     cancelEvent(e);
 
@@ -177,6 +178,7 @@ Events.init = function (container) {
     Events.emit('pointerup', { button: e.button, buttons: e.buttons });
 
     APP.activity.setIdle();
+    APP.userActivity.setIdle();
   }
 
   function onMouseWheel (e) {
@@ -193,11 +195,13 @@ Events.init = function (container) {
 
     if (!Events.disabled) {
       APP.activity.setBusy();
+      APP.userActivity.setBusy();
 
       var adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
       APP.setZoom(APP.zoom + adjust, e);
 
       APP.activity.setIdle();
+      APP.userActivity.setIdle();
     }
 
     // we don't emit mousewheel here as we don't want to run into a loop of death
@@ -267,6 +271,7 @@ Events.init = function (container) {
 
   function onTouchStart (e) {
     APP.activity.setBusy();
+    APP.userActivity.setBusy();
 
     button = 1;
     cancelEvent(e);
@@ -339,7 +344,7 @@ Events.init = function (container) {
       prevX = t1.clientX;
       prevY = t1.clientY;
     }
-
+    APP.userActivity.setIdle();
     APP.activity.setIdle();
   }
 
