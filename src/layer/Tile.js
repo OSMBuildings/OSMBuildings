@@ -7,7 +7,7 @@ class Tile {
     this.key = [x, y, zoom].join(',');
 
     this.distance = Infinity;
-  };
+  }
 
   load () {}
 

@@ -1,6 +1,10 @@
 class Marker {
 
-  constructor ({ sourceLink = 0, offsetX = 0, offsetY = 0 } = {}) {
+  constructor (options = {}) {
+    const
+      sourceLink = options.sourceLink || 0,
+      offsetX = options.offsetX || 0,
+      offsetY = options.offsetY || 0;
 
     if (isNaN(offsetX)) {
       this.offsetX = 0;
@@ -14,7 +18,7 @@ class Marker {
       this.offsetY = Math.round(offsetY);
     }
 
-    if (sourceLink === 0) {
+    if (!sourceLink) {
       this.div = document.createElement('DIV');
       const icon = this.createPlaceholderIcon();
       this.div.appendChild(icon.documentElement);

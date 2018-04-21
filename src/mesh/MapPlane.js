@@ -35,32 +35,33 @@ class MapPlane {
       normal = [0, 0, 1],
       normals = [].concat(normal, normal, normal, normal, normal, normal);
 
-    for (let x = 0; x < NUM_SEGMENTS; x++)
+    for (let x = 0; x < NUM_SEGMENTS; x++) {
       for (let y = 0; y < NUM_SEGMENTS; y++) {
         const
-          baseX = -this.radius + x*segmentSize,
-          baseY = -this.radius + y*segmentSize;
+          baseX = -this.radius + x * segmentSize,
+          baseY = -this.radius + y * segmentSize;
 
         this.vertexBuffer.push(
-          baseX,               baseY, 0,
+          baseX, baseY, 0,
           baseX + segmentSize, baseY + segmentSize, 0,
           baseX + segmentSize, baseY, 0,
 
-          baseX,               baseY, 0,
-          baseX,               baseY + segmentSize, 0,
+          baseX, baseY, 0,
+          baseX, baseY + segmentSize, 0,
           baseX + segmentSize, baseY + segmentSize, 0);
 
         this.vertexBuffer.push(
-          baseX,               baseY, 0,
+          baseX, baseY, 0,
           baseX + segmentSize, baseY, 0,
           baseX + segmentSize, baseY + segmentSize, 0,
 
-          baseX,               baseY, 0,
+          baseX, baseY, 0,
           baseX + segmentSize, baseY + segmentSize, 0,
-          baseX,               baseY + segmentSize, 0);
+          baseX, baseY + segmentSize, 0);
 
         [].push.apply(this.normalBuffer, normals);
         [].push.apply(this.normalBuffer, normals);
+      }
     }
 
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));

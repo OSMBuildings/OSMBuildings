@@ -1,11 +1,11 @@
 
 class DataItem {
 
-  constructor (type, url, options = {}, callback) {
+  constructor (type, url, options = {}, callback = function () {}) {
     this.type = type;
     this.url = url;
     this.options = options;
-    this.callback = callback || function () {};
+    this.callback = callback;
 
     this.id = options.id;
     this.color = options.color;

@@ -25,7 +25,7 @@ class BitmapTile extends Tile {
 
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
-  };
+  }
 
   load (url, callback) {
     this.texture = new GLX.texture.Image().load(url, image => {

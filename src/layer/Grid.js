@@ -227,9 +227,8 @@ class Grid {
 
       // TODO: check: some other zoom levels are loaded!
 
-
       if (this.tiles[key]) {
-        continue
+        continue;
       }
 
       // create tile if it doesn't exist
