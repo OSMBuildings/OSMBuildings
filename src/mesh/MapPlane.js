@@ -16,6 +16,9 @@ class MapPlane {
   constructor (options = {}) {
     this.id = options.id;
     this.radius = options.radius || 5000;
+
+    this.matrix = new GLX.Matrix();
+
     this.createGeometry();
 
     this.minZoom = APP.minZoom;
@@ -72,14 +75,10 @@ class MapPlane {
     return 1;
   }
 
-  // TODO: switch to a notation like mesh.transform
   getMatrix () {
     // const scale = Math.pow(2, APP.zoom - 16);
-
-    const modelMatrix = new GLX.Matrix();
-    //modelMatrix.scale(scale, scale, scale);
-
-    return modelMatrix;
+    // this.matrix.scale(scale, scale, scale);
+    return this.matrix;
   }
 
   destroy () {
