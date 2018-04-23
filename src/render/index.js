@@ -107,7 +107,7 @@ class render {
 
         APP.markers.updateMarkerView();
 
-        if (APP.activity.isBusy()) {
+        if (APP.activity.isBusyData()) {
           this.renderFrame();
           // setTimeout(() => {
           //   this.renderFrame();
