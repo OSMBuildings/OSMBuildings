@@ -406,9 +406,7 @@ class OSMBuildings {
    * @deprecated
    */
   getTarget (x, y, callback) {
-     //if (!APP.activity.isBusyUser()) {
-      render.Picking.render(x, y, callback);
-     //}
+
   }
 
   /**
