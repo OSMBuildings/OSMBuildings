@@ -34,7 +34,7 @@ class Picking {
       GL.clearColor(0, 0, 0, 1);
       GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-      this.shader.setUniform('uFogDistance', '1f', render.fogDistance);
+      this.shader.setParam('uFogDistance', '1f', render.fogDistance);
 
       const itemFeatureIndex = [];
       DataIndex.items.forEach(item => {
@@ -49,16 +49,14 @@ class Picking {
 
         itemFeatureIndex.push(item.items);
 
-        this.shader.setUniform('uFade', '1f', item.getFade());
-        this.shader.setUniform('uIndex', '1f', itemFeatureIndex.length/256);
+        this.shader.setParam('uFade', '1f', item.getFade());
+        this.shader.setParam('uIndex', '1f', itemFeatureIndex.length/256);
 
-        this.shader.setAllUniformMatrices([
-          ['uModelMatrix', '4fv', modelMatrix.data],
-          ['uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
-        ]);
+        this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+        this.shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
-        this.shader.bindBuffer('aPosition', item.vertexBuffer);
-        this.shader.bindBuffer('aPickingColor', item.pickingBuffer);
+        this.shader.setBuffer('aPosition', item.vertexBuffer);
+        this.shader.setBuffer('aPickingColor', item.pickingBuffer);
 
         GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
       });

@@ -43,29 +43,27 @@ class MapShadows {
 
     GL.disable(GL.CULL_FACE);
 
-    shader.setUniform('uDirToSun', '3fv', Sun.direction);
-    shader.setUniform('uViewDirOnMap', '2fv',   render.viewDirOnMap);
-    shader.setUniform('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
-    shader.setUniform('uFogDistance', '1f', render.fogDistance);
-    shader.setUniform('uFogBlurDistance', '1f', render.fogBlurDistance);
-    shader.setUniform('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] );
-    shader.setUniform('uShadowStrength', '1f', shadowStrength);
+    shader.setParam('uDirToSun', '3fv', Sun.direction);
+    shader.setParam('uViewDirOnMap', '2fv',   render.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
+    shader.setParam('uFogDistance', '1f', render.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f', render.fogBlurDistance);
+    shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] );
+    shader.setParam('uShadowStrength', '1f', shadowStrength);
 
-    shader.bindTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
+    shader.setTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
 
     let modelMatrix;
     if (!(modelMatrix = item.getMatrix())) {
       return;
     }
 
-    shader.setAllUniformMatrices([
-      ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
-      ['uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
-    ]);
+    shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
 
-    shader.bindBuffer('aPosition', item.vertexBuffer);
-    shader.bindBuffer('aNormal', item.normalBuffer);
+    shader.setBuffer('aPosition', item.vertexBuffer);
+    shader.setBuffer('aNormal', item.normalBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 

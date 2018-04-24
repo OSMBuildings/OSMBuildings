@@ -63,20 +63,18 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
       return;
     }
 
-    shader.setUniform('uViewDirOnMap',    '2fv', render.viewDirOnMap);
-    shader.setUniform('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
-    shader.setUniform('uFogDistance',     '1f',  render.fogDistance);
-    shader.setUniform('uFogBlurDistance', '1f',  render.fogBlurDistance);
-    shader.setUniform('uFade',            '1f',  item.getFade());
+    shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
+    shader.setParam('uFogDistance',     '1f',  render.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    shader.setParam('uFade',            '1f',  item.getFade());
 
-    shader.setAllUniformMatrices([
-      ['uMatrix',       '4fv', GLX.Matrix.multiply(modelMatrix, viewProjMatrix)],
-      ['uModelMatrix',  '4fv', modelMatrix.data],
-      ['uNormalMatrix', '3fv', GLX.Matrix.transpose3(GLX.Matrix.invert3(GLX.Matrix.multiply(modelMatrix, viewMatrix)))]
-    ]);
-    
-    shader.bindBuffer('aPosition', item.vertexBuffer);
-    shader.bindBuffer('aNormal', item.normalBuffer);
+    shader.setMatrix('uMatrix',       '4fv', GLX.Matrix.multiply(modelMatrix, viewProjMatrix));
+    shader.setMatrix('uModelMatrix',  '4fv', modelMatrix.data);
+    shader.setMatrix('uNormalMatrix', '3fv', GLX.Matrix.transpose3(GLX.Matrix.invert3(GLX.Matrix.multiply(modelMatrix, viewMatrix))));
+
+    shader.setBuffer('aPosition', item.vertexBuffer);
+    shader.setBuffer('aNormal', item.normalBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
   });

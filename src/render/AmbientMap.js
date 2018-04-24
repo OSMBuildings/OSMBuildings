@@ -50,16 +50,16 @@ render.AmbientMap = {
     GL.clearColor(1.0, 0.0, 0.0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setUniform('uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]);
-    shader.setUniform('uEffectStrength', '1f',  effectStrength);
-    shader.setUniform('uNearPlane',      '1f',  1.0); //FIXME: use actual near and far planes of the projection matrix
-    shader.setUniform('uFarPlane',       '1f',  7500.0);
+    shader.setParam('uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]);
+    shader.setParam('uEffectStrength', '1f',  effectStrength);
+    shader.setParam('uNearPlane',      '1f',  1.0); //FIXME: use actual near and far planes of the projection matrix
+    shader.setParam('uFarPlane',       '1f',  7500.0);
 
-    shader.bindBuffer('aPosition', this.vertexBuffer);
-    shader.bindBuffer('aTexCoord', this.texCoordBuffer);
+    shader.setBuffer('aPosition', this.vertexBuffer);
+    shader.setBuffer('aTexCoord', this.texCoordBuffer);
 
-    shader.bindTexture('uDepthTexIndex', 0, depthTexture);
-    shader.bindTexture('uFogTexIndex',   1, fogTexture);
+    shader.setTexture('uDepthTexIndex', 0, depthTexture);
+    shader.setTexture('uFogTexIndex',   1, fogTexture);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 

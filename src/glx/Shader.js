@@ -1,12 +1,11 @@
-
 GLX.Shader = class {
 
-  constructor(config) {
+  constructor (config) {
     this.shaderName = config.shaderName;
     this.id = GL.createProgram();
 
-    this.attach(GL.VERTEX_SHADER,   config.vertexShader);
-    this.attach(GL.FRAGMENT_SHADER, config.fragmentShader);
+    this.compile(GL.VERTEX_SHADER, config.vertexShader);
+    this.compile(GL.FRAGMENT_SHADER, config.fragmentShader);
 
     GL.linkProgram(this.id);
 
@@ -15,7 +14,7 @@ GLX.Shader = class {
     }
 
     this.attributeNames = config.attributes || [];
-    this.uniformNames   = config.uniforms || [];
+    this.uniformNames = config.uniforms || [];
     GL.useProgram(this.id);
 
     this.attributes = {};
@@ -29,7 +28,7 @@ GLX.Shader = class {
     });
   }
 
-  locateAttribute(name) {
+  locateAttribute (name) {
     const loc = GL.getAttribLocation(this.id, name);
     if (loc < 0) {
       throw new Error(`unable to locate attribute "${name}" in shader "${this.shaderName}"`);
@@ -37,7 +36,7 @@ GLX.Shader = class {
     this.attributes[name] = loc;
   }
 
-  locateUniform(name) {
+  locateUniform (name) {
     const loc = GL.getUniformLocation(this.id, name);
     if (!loc) {
       throw new Error(`unable to locate uniform "${name}" in shader "${this.shaderName}"`);
@@ -45,7 +44,7 @@ GLX.Shader = class {
     this.uniforms[name] = loc;
   }
 
-  attach(type, src) {
+  compile (type, src) {
     const shader = GL.createShader(type);
     GL.shaderSource(shader, src);
     GL.compileShader(shader);
@@ -57,7 +56,7 @@ GLX.Shader = class {
     GL.attachShader(this.id, shader);
   }
 
-  enable() {
+  enable () {
     GL.useProgram(this.id);
     for (let name in this.attributes) {
       GL.enableVertexAttribArray(this.attributes[name]);
@@ -65,7 +64,7 @@ GLX.Shader = class {
     return this;
   }
 
-  disable() {
+  disable () {
     if (this.attributes) {
       for (let name in this.attributes) {
         GL.disableVertexAttribArray(this.attributes[name]);
@@ -73,46 +72,34 @@ GLX.Shader = class {
     }
   }
 
-  bindBuffer(name, buffer) {
+  setBuffer (name, buffer) {
     if (this.attributes[name] === undefined) {
       throw new Error(`attempt to bind buffer to invalid attribute "${name}" in shader "${this.shaderName}"`);
     }
     buffer.enable();
     GL.vertexAttribPointer(this.attributes[name], buffer.itemSize, GL.FLOAT, false, 0, 0);
   }
-  
-  setUniform(name, type, value) {
+
+  setParam (name, type, value) {
     if (this.uniforms[name] === undefined) {
       throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
     }
     GL['uniform' + type](this.uniforms[name], value);
   }
 
-  setAllUniforms(allUniforms) {
-    allUniforms.forEach(uniform => {
-      this.setUniform(uniform[0], uniform[1], uniform[2]);
-    });
-  }
-
-  setUniformMatrix(name, type, value) {
+  setMatrix (name, type, value) {
     if (this.uniforms[name] === undefined) {
       throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
     }
     GL['uniformMatrix' + type](this.uniforms[name], false, value);
   }
 
-  setAllUniformMatrices(allUniforms) {
-    allUniforms.forEach(uniform => {
-      this.setUniformMatrix(uniform[0], uniform[1], uniform[2]);
-    });
-  }
-  
-  bindTexture(uniform, textureUnit, glxTexture) {
+  setTexture (uniform, textureUnit, glxTexture) {
     glxTexture.enable(textureUnit);
-    this.setUniform(uniform, '1i', textureUnit);
+    this.setParam(uniform, '1i', textureUnit);
   }
 
-  destroy() {
+  destroy () {
     this.disable();
     this.id = null;
   }

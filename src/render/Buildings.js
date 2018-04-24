@@ -62,24 +62,24 @@ render.Buildings = {
     //   GL.disable(GL.CULL_FACE);
     // }
 
-    shader.setUniform('uFogDistance',     '1f',  render.fogDistance);
-    shader.setUniform('uFogBlurDistance', '1f',  render.fogBlurDistance);
-    shader.setUniform('uHighlightColor',  '3fv', this.highlightColor || [0, 0, 0]);
-    shader.setUniform('uHighlightId',     '3fv', this.highlightId || [0, 0, 0]);
-    shader.setUniform('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
-    shader.setUniform('uLightDirection',  '3fv', Sun.direction);
-    shader.setUniform('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
-    shader.setUniform('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    shader.setParam('uFogDistance',     '1f',  render.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    shader.setParam('uHighlightColor',  '3fv', this.highlightColor || [0, 0, 0]);
+    shader.setParam('uHighlightId',     '3fv', this.highlightId || [0, 0, 0]);
+    shader.setParam('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
+    shader.setParam('uLightDirection',  '3fv', Sun.direction);
+    shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
 
     if (!render.effects.shadows) {
-      shader.setUniformMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);
+      shader.setMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);
     }
 
-    shader.bindTexture('uWallTexIndex', 0, this.wallTexture);
+    shader.setTexture('uWallTexIndex', 0, this.wallTexture);
     
     if (depthFramebuffer) {
-      shader.setUniform('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height]);
-      shader.bindTexture('uShadowTexIndex', 1, depthFramebuffer.depthTexture);
+      shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height]);
+      shader.setTexture('uShadowTexIndex', 1, depthFramebuffer.depthTexture);
     }
 
     var
@@ -93,23 +93,21 @@ render.Buildings = {
         return;
       }
 
-      shader.setUniform('uFade', '1f', item.getFade());
+      shader.setParam('uFade', '1f', item.getFade());
 
-      shader.setAllUniformMatrices([
-        ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
-      ]);
+      shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+      shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
       
       if (render.effects.shadows) {
-        shader.setUniformMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+        shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
       }
 
-      shader.bindBuffer('aPosition', item.vertexBuffer);
-      shader.bindBuffer('aTexCoord', item.texCoordBuffer);
-      shader.bindBuffer('aNormal', item.normalBuffer);
-      shader.bindBuffer('aColor', item.colorBuffer);
-      shader.bindBuffer('aId', item.pickingBuffer);
-      shader.bindBuffer('aHeight', item.heightBuffer);
+      shader.setBuffer('aPosition', item.vertexBuffer);
+      shader.setBuffer('aTexCoord', item.texCoordBuffer);
+      shader.setBuffer('aNormal', item.normalBuffer);
+      shader.setBuffer('aColor', item.colorBuffer);
+      shader.setBuffer('aId', item.pickingBuffer);
+      shader.setBuffer('aHeight', item.heightBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });

@@ -41,10 +41,12 @@ class Blur {
     GL.clearColor(1, 0, 0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    this.shader.setUniform('uInverseTexSize', '2fv', [1/this.framebuffer.width, 1/this.framebuffer.height]);
-    this.shader.bindBuffer('aPosition', this.vertexBuffer);
-    this.shader.bindBuffer('aTexCoord', this.texCoordBuffer);
-    this.shader.bindTexture('uTexIndex', 0, texture);
+    this.shader.setParam('uInverseTexSize', '2fv', [1/this.framebuffer.width, 1/this.framebuffer.height]);
+
+    this.shader.setBuffer('aPosition', this.vertexBuffer);
+    this.shader.setBuffer('aTexCoord', this.texCoordBuffer);
+
+    this.shader.setTexture('uTexIndex', 0, texture);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
