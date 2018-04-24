@@ -15,7 +15,7 @@ class Picking {
       uniforms: [
         'uModelMatrix',
         'uMatrix',
-        'uFogRadius',
+        'uFogDistance',
         'uFade',
         'uIndex'
       ]
@@ -34,7 +34,7 @@ class Picking {
       GL.clearColor(0, 0, 0, 1);
       GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-      this.shader.setUniform('uFogRadius', '1f', render.fogDistance);
+      this.shader.setUniform('uFogDistance', '1f', render.fogDistance);
 
       const itemFeatureIndex = [];
       DataIndex.items.forEach(item => {

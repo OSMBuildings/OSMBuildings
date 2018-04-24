@@ -8,7 +8,7 @@ attribute vec3 aPickingColor;
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
 
-uniform float uFogRadius;
+uniform float uFogDistance;
 uniform float uFade;
 uniform float uIndex;
 
@@ -28,7 +28,7 @@ void main() {
     vec4 mPosition = vec4(uModelMatrix * pos);
     float distance = length(mPosition);
 
-    if (distance > uFogRadius) {
+    if (distance > uFogDistance) {
       vColor = vec4(0.0, 0.0, 0.0, 0.0);
     } else {
       vColor = vec4(clamp(uIndex, 0.0, 1.0), aPickingColor.g, aPickingColor.b, 1.0);

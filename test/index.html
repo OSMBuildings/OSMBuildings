@@ -227,24 +227,24 @@
   // });
 
   osmb.on('pointerdown', e => {
-    // osmb.getTarget(e.x, e.y, feature => {
-    //   if (!feature) {
-    //     return;
-    //   }
-    //   console.log('OSMB', feature.id, JSON.stringify(feature.properties, null, '  '));
-    //
-    //   let query = 'http://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json];((way(' + feature.id + '));(rel(' + feature.id + ');way(r)));out body;');
-    //
-    //   fetch(query)
-    //     .then(response => response.json())
-    //     .then(parsed => {
-    //       // TODO: could be a relation + its members
-    //       const feature = parsed.elements[0];
-    //       if (feature) {
-    //         console.log('Overpass', feature.id, JSON.stringify(feature.tags, null, '  '));
-    //       }
-    //     });
-    // });
+    osmb.getTarget(e.x, e.y, feature => {
+      if (!feature) {
+        return;
+      }
+      console.log('OSMB', feature.id, JSON.stringify(feature.properties, null, '  '));
+
+      let query = 'http://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json];((way(' + feature.id + '));(rel(' + feature.id + ');way(r)));out body;');
+
+      fetch(query)
+        .then(response => response.json())
+        .then(parsed => {
+          // TODO: could be a relation + its members
+          const feature = parsed.elements[0];
+          if (feature) {
+            console.log('Overpass', feature.id, JSON.stringify(feature.tags, null, '  '));
+          }
+        });
+    });
   });
 
   //*************************************************************************

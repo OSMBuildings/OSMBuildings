@@ -1,6 +1,6 @@
 
 const
-  MAX_TILT = 70;
+  MAX_TILT = 60;
 
 
 var TILE_SIZE = 256;

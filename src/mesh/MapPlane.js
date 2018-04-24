@@ -8,43 +8,37 @@
  * no BaseMap is present (e.g. if OSMBuildings is used as an overlay to Leaflet
  * or MapBoxGL). This mostly applies to creating depth and normal textures of the
  * scene, not to the actual shaded scene rendering.
-
-*/
+ */
 
 class MapPlane {
 
-  constructor (options = {}) {
-    this.id = options.id;
-    this.radius = options.radius || 5000;
+  constructor () {
+    this.size = 5000;
+
+    this.minZoom = APP.minZoom;
+    this.maxZoom = APP.maxZoom;
 
     this.matrix = new GLX.Matrix();
 
     this.createGeometry();
-
-    this.minZoom = APP.minZoom;
-    this.maxZoom = APP.maxZoom;
   }
 
-  // This method creates front and back faces, in case rendering effect requires both.
   createGeometry () {
     const
       NUM_SEGMENTS = 50,
-      segmentSize = 2*this.radius / NUM_SEGMENTS;
-
-    this.vertexBuffer = [];
-    this.normalBuffer = [];
-
-    const
+      segmentSize = 2*this.size / NUM_SEGMENTS,
       normal = [0, 0, 1],
-      normals = [].concat(normal, normal, normal, normal, normal, normal);
+      quadNormals = [...normal, ...normal, ...normal, ...normal, ...normal, ...normal],
+      vertices = [],
+      normals = [];
 
     for (let x = 0; x < NUM_SEGMENTS; x++) {
       for (let y = 0; y < NUM_SEGMENTS; y++) {
         const
-          baseX = -this.radius + x * segmentSize,
-          baseY = -this.radius + y * segmentSize;
+          baseX = -this.size + x * segmentSize,
+          baseY = -this.size + y * segmentSize;
 
-        this.vertexBuffer.push(
+        vertices.push(
           baseX, baseY, 0,
           baseX + segmentSize, baseY + segmentSize, 0,
           baseX + segmentSize, baseY, 0,
@@ -53,22 +47,23 @@ class MapPlane {
           baseX, baseY + segmentSize, 0,
           baseX + segmentSize, baseY + segmentSize, 0);
 
-        this.vertexBuffer.push(
-          baseX, baseY, 0,
-          baseX + segmentSize, baseY, 0,
-          baseX + segmentSize, baseY + segmentSize, 0,
+        normals.push(...quadNormals);
 
-          baseX, baseY, 0,
-          baseX + segmentSize, baseY + segmentSize, 0,
-          baseX, baseY + segmentSize, 0);
-
-        [].push.apply(this.normalBuffer, normals);
-        [].push.apply(this.normalBuffer, normals);
+        // vertices.push(
+        //   baseX, baseY, 0,
+        //   baseX + segmentSize, baseY, 0,
+        //   baseX + segmentSize, baseY + segmentSize, 0,
+        //
+        //   baseX, baseY, 0,
+        //   baseX + segmentSize, baseY + segmentSize, 0,
+        //   baseX, baseY + segmentSize, 0);
+        //
+        // normals.push(...quadNormals);
       }
     }
 
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(this.vertexBuffer));
-    this.normalBuffer = new GLX.Buffer(3, new Float32Array(this.normalBuffer));
+    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+    this.normalBuffer = new GLX.Buffer(3, new Float32Array(normals));
   }
 
   getFade () {
