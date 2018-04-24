@@ -6,7 +6,7 @@ render.Overlay = {
 
   init: function() {
   
-    vaconstr geometry = this.createGeometry();
+    const geometry = this.createGeometry();
     this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
