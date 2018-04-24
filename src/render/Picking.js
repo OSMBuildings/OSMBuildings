@@ -49,10 +49,8 @@ class Picking {
 
         itemFeatureIndex.push(item.items);
 
-        this.shader.setAllUniforms([
-          ['uFade', '1f', item.getFade()],
-          ['uIndex', '1f', itemFeatureIndex.length/256]
-        ]);
+        this.shader.setUniform('uFade', '1f', item.getFade());
+        this.shader.setUniform('uIndex', '1f', itemFeatureIndex.length/256);
 
         this.shader.setAllUniformMatrices([
           ['uModelMatrix', '4fv', modelMatrix.data],

@@ -62,16 +62,14 @@ render.Buildings = {
     //   GL.disable(GL.CULL_FACE);
     // }
 
-    shader.setAllUniforms([
-      ['uFogDistance',     '1f',  render.fogDistance],
-      ['uFogBlurDistance', '1f',  render.fogBlurDistance],
-      ['uHighlightColor',  '3fv', this.highlightColor || [0, 0, 0]],
-      ['uHighlightId',     '3fv', this.highlightId || [0, 0, 0]],
-      ['uLightColor',      '3fv', [0.5, 0.5, 0.5]],
-      ['uLightDirection',  '3fv', Sun.direction],
-      ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
-      ['uViewDirOnMap',    '2fv', render.viewDirOnMap]
-    ]);
+    shader.setUniform('uFogDistance',     '1f',  render.fogDistance);
+    shader.setUniform('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    shader.setUniform('uHighlightColor',  '3fv', this.highlightColor || [0, 0, 0]);
+    shader.setUniform('uHighlightId',     '3fv', this.highlightId || [0, 0, 0]);
+    shader.setUniform('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
+    shader.setUniform('uLightDirection',  '3fv', Sun.direction);
+    shader.setUniform('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
+    shader.setUniform('uViewDirOnMap',    '2fv', render.viewDirOnMap);
 
     if (!render.effects.shadows) {
       shader.setUniformMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);

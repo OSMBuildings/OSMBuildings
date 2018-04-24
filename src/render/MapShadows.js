@@ -43,15 +43,13 @@ class MapShadows {
 
     GL.disable(GL.CULL_FACE);
 
-    shader.setAllUniforms([
-      ['uDirToSun', '3fv', Sun.direction],
-      ['uViewDirOnMap', '2fv',   render.viewDirOnMap],
-      ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap],
-      ['uFogDistance', '1f', render.fogDistance],
-      ['uFogBlurDistance', '1f', render.fogBlurDistance],
-      ['uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] ],
-      ['uShadowStrength', '1f', shadowStrength]
-    ]);
+    shader.setUniform('uDirToSun', '3fv', Sun.direction);
+    shader.setUniform('uViewDirOnMap', '2fv',   render.viewDirOnMap);
+    shader.setUniform('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
+    shader.setUniform('uFogDistance', '1f', render.fogDistance);
+    shader.setUniform('uFogBlurDistance', '1f', render.fogBlurDistance);
+    shader.setUniform('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] );
+    shader.setUniform('uShadowStrength', '1f', shadowStrength);
 
     shader.bindTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
 

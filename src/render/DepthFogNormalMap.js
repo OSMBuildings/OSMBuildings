@@ -63,13 +63,11 @@ render.DepthFogNormalMap.prototype.render = function(viewMatrix, projMatrix, fra
       return;
     }
 
-    shader.setAllUniforms([
-      ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
-      ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap],
-      ['uFogDistance',     '1f',  render.fogDistance],
-      ['uFogBlurDistance', '1f',  render.fogBlurDistance],
-      ['uFade',            '1f',  item.getFade()]
-    ]);
+    shader.setUniform('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    shader.setUniform('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
+    shader.setUniform('uFogDistance',     '1f',  render.fogDistance);
+    shader.setUniform('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    shader.setUniform('uFade',            '1f',  item.getFade());
 
     shader.setAllUniformMatrices([
       ['uMatrix',       '4fv', GLX.Matrix.multiply(modelMatrix, viewProjMatrix)],
