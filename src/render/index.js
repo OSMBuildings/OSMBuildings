@@ -186,10 +186,12 @@ class render {
     //    internal reasons).
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
+    const farPlane = 7500;
+
     this.projMatrix = new GLX.Matrix()
       .translate(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
       .scale(1, -1, 1) // flip Y
-      .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, 1, 7500))
+      .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, 1, farPlane))
       .translate(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
@@ -203,7 +205,6 @@ class render {
     const lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     // fogDistance: closest distance at which the fog affects the geometry
-    // TODO: dependent on tilt!
     this.fogDistance = Math.max(4000, lowerLeftDistanceToCenter);
 
     // fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog.

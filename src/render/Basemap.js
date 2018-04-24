@@ -26,12 +26,10 @@ class Basemap {
 
     shader.enable();
 
-    shader.setAllUniforms([
-      ['uFogDistance',     '1f',  render.fogDistance],
-      ['uFogBlurDistance', '1f',  render.fogBlurDistance],
-      ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
-      ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap]
-    ]);
+    shader.setParam('uFogDistance',     '1f',  render.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
 
     const zoom = Math.round(APP.zoom);
 
@@ -78,20 +76,13 @@ class Basemap {
     GL.enable(GL.POLYGON_OFFSET_FILL);
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,
                      MAX_USED_ZOOM_LEVEL - tile.zoom);
-                     
-    this.shader.setAllUniforms([
-      ['uViewDirOnMap',   '2fv', render.viewDirOnMap],
-      ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap]
-    ]);
 
-    this.shader.setAllUniformMatrices([
-      ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
-    ]);
+    this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+    this.shader.setMatrix('uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
-    this.shader.bindBuffer('aPosition', tile.vertexBuffer);
-    this.shader.bindBuffer('aTexCoord', tile.texCoordBuffer);
-    this.shader.bindTexture('uTexIndex', 0, tile.texture);
+    this.shader.setBuffer('aPosition', tile.vertexBuffer);
+    this.shader.setBuffer('aTexCoord', tile.texCoordBuffer);
+    this.shader.setTexture('uTexIndex', 0, tile.texture);
 
     GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     GL.disable(GL.POLYGON_OFFSET_FILL);
