@@ -67,22 +67,24 @@ class Basemap {
   }
 
   renderTile (tile) {
+    const shader = this.shader;
+
     const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
     const modelMatrix = new GLX.Matrix();
+
     modelMatrix.translate( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
                           -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     GL.enable(GL.POLYGON_OFFSET_FILL);
-    GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom,
-                     MAX_USED_ZOOM_LEVEL - tile.zoom);
+    GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, MAX_USED_ZOOM_LEVEL - tile.zoom);
 
-    this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-    this.shader.setMatrix('uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+    shader.setMatrix('uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
-    this.shader.setBuffer('aPosition', tile.vertexBuffer);
-    this.shader.setBuffer('aTexCoord', tile.texCoordBuffer);
-    this.shader.setTexture('uTexIndex', 0, tile.texture);
+    shader.setBuffer('aPosition', tile.vertexBuffer);
+    shader.setBuffer('aTexCoord', tile.texCoordBuffer);
+    shader.setTexture('uTexIndex', 0, tile.texture);
 
     GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     GL.disable(GL.POLYGON_OFFSET_FILL);

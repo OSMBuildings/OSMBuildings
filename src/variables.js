@@ -7,7 +7,7 @@ var TILE_SIZE = 256;
 
 var DEFAULT_HEIGHT = 10;
 
-var MIN_ZOOM = 14.5;
+var MIN_ZOOM = 11;
 var MAX_ZOOM = 22;
 
 var MAX_USED_ZOOM_LEVEL = 25;

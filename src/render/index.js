@@ -182,7 +182,7 @@ class render {
     //    internal reasons).
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
-    const farPlane = 7500;
+    const farPlane = 30000;
 
     this.projMatrix = new GLX.Matrix()
       .translate(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
