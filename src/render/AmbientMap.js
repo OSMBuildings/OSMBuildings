@@ -3,8 +3,8 @@ render.AmbientMap = {
 
   init: function() {
     this.shader = new GLX.Shader({
-      vertexShader:   Shaders.ambientFromDepth.vertex,
-      fragmentShader: Shaders.ambientFromDepth.fragment,
+      vertexShader:   Shaders.ambient_from_depth.vertex,
+      fragmentShader: Shaders.ambient_from_depth.fragment,
       shaderName: 'SSAO shader',
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']

@@ -25,8 +25,8 @@ render.Buildings = {
           'uWallTexIndex'
         ]
       }) : new GLX.Shader({
-      vertexShader: Shaders['buildings.shadows'].vertex,
-      fragmentShader: Shaders['buildings.shadows'].fragment,
+      vertexShader: Shaders['buildings_with_shadows'].vertex,
+      fragmentShader: Shaders['buildings_with_shadows'].fragment,
       shaderName: 'quality building shader',
       attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
       uniforms: [

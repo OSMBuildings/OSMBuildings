@@ -31,8 +31,8 @@ class render {
     // render.NormalMap.init();
     render.MapShadows = new MapShadows();
     if (render.effects.shadows) {
-      render.cameraGBuffer = new render.DepthFogNormalMap();
-      render.sunGBuffer = new render.DepthFogNormalMap();
+      render.cameraGBuffer = new render.DepthFogNormal();
+      render.sunGBuffer = new render.DepthFogNormal();
       render.sunGBuffer.framebufferSize = [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE];
     }
 

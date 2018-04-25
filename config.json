@@ -2,14 +2,13 @@
   "shaders": [
     "picking",
     "buildings",
-    "buildings.shadows",
-    "flatColor",
+    "buildings_with_shadows",
     "basemap",
+    "basemap_with_shadows",
     "texture",
-    "fogNormal",
-    "ambientFromDepth",
-    "blur",
-    "basemap.shadows"
+    "depth_fog_normal",
+    "ambient_from_depth",
+    "blur"
   ],
 
   "modules": [
@@ -72,7 +71,7 @@
     "src/render/MapShadows.js",
     "src/render/Basemap.js",
     "src/render/HudRect.js",
-    "src/render/DepthFogNormalMap.js",
+    "src/render/DepthFogNormal.js",
     "src/render/AmbientMap.js",
     "src/render/Overlay.js",
     "src/render/Blur.js"
