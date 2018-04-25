@@ -131,11 +131,10 @@ class Horizon {
   destroy () {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
-    this.floorVertexBuffer.destroy();
-    this.vertexBuffer.destroy();
-
-    this.shader.destroy();
-    this.floorShader.destroy();
     this.texture.destroy();
+    this.shader.destroy();
+
+    this.floorVertexBuffer.destroy();
+    this.floorShader.destroy();
   }
 }

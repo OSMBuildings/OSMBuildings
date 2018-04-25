@@ -11,9 +11,6 @@ uniform float uAbsoluteHeight;
 varying vec2 vTexCoord;
 varying float vRelativeHeight;
 
-const float gradientHeight = 10.0;
-const float gradientStrength = 1.0;
-
 void main() {
   gl_Position = uMatrix * aPosition;
   vTexCoord = aTexCoord;
