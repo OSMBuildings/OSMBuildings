@@ -29,8 +29,8 @@ class render {
     render.blurredAmbientMap = new Blur();
     render.MapShadows = new MapShadows();
     if (render.effects.shadows) {
-      render.cameraGBuffer = new DepthFogNormal();
-      render.sunGBuffer = new DepthFogNormal();
+      render.cameraGBuffer = new DepthNormal();
+      render.sunGBuffer = new DepthNormal();
     }
 
     this.renderFrame();
@@ -67,7 +67,7 @@ class render {
           Sun.updateView(viewTrapezoid);
           render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
           render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
-          render.AmbientMap.render(render.cameraGBuffer.getDepthTexture(), render.cameraGBuffer.getFogNormalTexture(), viewSize, 2.0);
+          render.AmbientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
           render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
           render.Buildings.render(render.sunGBuffer.framebuffer);
           render.Basemap.render();

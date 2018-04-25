@@ -1,33 +1,24 @@
 
-// Renders the depth buffer and the scene's camera-space
-// normals and fog intensities into textures. Depth is stored as a 24bit depth
-// texture using the WEBGL_depth_texture extension, and normals and fog
-// intensities are stored as the 'rgb' and 'a' of a shared 32bit texture.
+// Renders the depth buffer and normals into textures.
+// Depth is stored as a 24bit depth texture using the WEBGL_depth_texture extension,
+// and normals are stored as the 'rgb' and 'a' of a shared 32bit texture.
 // Note that there is no dedicated shader to create the depth texture. Rather,
 // the depth buffer used by the GPU in depth testing while rendering the normals
-// and fog intensities is itself a texture.
+// to a dedicated texture.
 
-class DepthFogNormal {
+class DepthNormal {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.depth_fog_normal.vertex,
-      fragmentShader: Shaders.depth_fog_normal.fragment,
-      shaderName: 'depth/fog/normal shader',
+      vertexShader: Shaders.depth_normal.vertex,
+      fragmentShader: Shaders.depth_normal.fragment,
+      shaderName: 'depth/normal shader',
       attributes: ['aPosition', 'aNormal'],
       uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uFade', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
     });
 
     this.framebuffer = new GLX.Framebuffer(128, 128, /*depthTexture=*/true); // dummy sizes, will be resized dynamically
     this.mapPlane = new MapPlane();
-  }
-
-  getDepthTexture () {
-    return this.framebuffer.depthTexture;
-  }
-
-  getFogNormalTexture () {
-    return this.framebuffer.renderTexture;
   }
 
   render (viewMatrix, projMatrix, framebufferSize) {
