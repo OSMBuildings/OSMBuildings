@@ -52,8 +52,8 @@ render.AmbientMap = {
 
     shader.setParam('uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]);
     shader.setParam('uEffectStrength', '1f',  effectStrength);
-    shader.setParam('uNearPlane',      '1f',  1.0); // TODO: use actual near and far planes of the projection matrix
-    shader.setParam('uFarPlane',       '1f',  7500.0);
+    shader.setParam('uNearPlane',      '1f',  render.nearPlane);
+    shader.setParam('uFarPlane',       '1f',  render.farPlane);
 
     shader.setBuffer('aPosition', this.vertexBuffer);
     shader.setBuffer('aTexCoord', this.texCoordBuffer);

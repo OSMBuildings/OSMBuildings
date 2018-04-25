@@ -182,29 +182,32 @@ class render {
     //    internal reasons).
     // 3. shift the geometry back down half a screen now *in screen coordinates*
 
-    const farPlane = 30000;
+    this.nearPlane = 1;
+    this.farPlane = 30000;
 
     this.projMatrix = new GLX.Matrix()
       .translate(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
       .scale(1, -1, 1) // flip Y
-      .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, 1, farPlane))
+      .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, this.nearPlane, this.farPlane))
       .translate(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
 
-    //need to store this as a reference point to determine fog distance
+    // need to store this as a reference point to determine fog distance
     this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, GLX.Matrix.invert(this.viewProjMatrix.data));
     if (this.lowerLeftOnMap === undefined) {
       return;
     }
 
-    const lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
+    // const lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
 
     // fogDistance: closest distance at which the fog affects the geometry
-    this.fogDistance = Math.max(4000, lowerLeftDistanceToCenter);
+    // this.fogDistance = Math.max(5000, lowerLeftDistanceToCenter);
+
+   this.fogDistance = 5000;
 
     // fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog.
-    this.fogBlurDistance = 3000;
+    this.fogBlurDistance = 10000;
   }
 
   static destroy () {
