@@ -22,6 +22,7 @@ class render {
     GL.enable(GL.DEPTH_TEST);
 
     render.Picking = new Picking(); // renders only on demand
+    // render.Horizon = new Horizon();
     render.Buildings.init();
     render.Basemap = new Basemap();
     render.Overlay.init();
@@ -54,6 +55,7 @@ class render {
 
           GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
           GL.disable(GL.DEPTH_TEST);
+          // render.Horizon.render();
           GL.disable(GL.BLEND);
           GL.enable(GL.DEPTH_TEST);
         } else {
@@ -65,6 +67,7 @@ class render {
                               [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
           Sun.updateView(viewTrapezoid);
+          // render.Horizon.updateGeometry(viewTrapezoid);
           render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
           render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
           render.AmbientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
@@ -93,6 +96,7 @@ class render {
             // over its background.
             GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
             GL.disable(GL.DEPTH_TEST);
+            // render.Horizon.render();
             GL.enable(GL.DEPTH_TEST);
           }
 
@@ -212,6 +216,7 @@ class render {
 
   static destroy () {
     render.Picking.destroy();
+    // render.Horizon.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
     render.MapShadows.destroy();

@@ -8,6 +8,8 @@
     "texture",
     "depth_normal",
     "ambient_from_depth",
+    "flat_color",
+    "horizon",
     "blur"
   ],
 
@@ -74,6 +76,7 @@
     "src/render/DepthNormal.js",
     "src/render/AmbientMap.js",
     "src/render/Overlay.js",
+    "src/render/Horizon.js",
     "src/render/Blur.js"
   ]
 }
