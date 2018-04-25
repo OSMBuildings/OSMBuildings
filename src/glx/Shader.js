@@ -13,18 +13,16 @@ GLX.Shader = class {
       throw new Error(GL.getProgramParameter(this.id, GL.VALIDATE_STATUS) + '\n' + GL.getError());
     }
 
-    this.attributeNames = config.attributes || [];
-    this.uniformNames = config.uniforms || [];
     GL.useProgram(this.id);
 
     this.attributes = {};
-    this.attributeNames.forEach(name => {
-      this.locateAttribute(name);
+    (config.attributes || []).forEach(item => {
+      this.locateAttribute(item);
     });
 
     this.uniforms = {};
-    this.uniformNames.forEach(name => {
-      this.locateUniform(name);
+    (config.uniforms || []).forEach(item => {
+      this.locateUniform(item);
     });
   }
 
