@@ -20,7 +20,7 @@ class Horizon {
       uniforms: ['uColor', 'uMatrix']
     });
 
-    const url = APP.baseURL + '/skydome.jpg';
+    const url = '../src/skydome2.jpg';
     this.texture = new GLX.texture.Image().load(url, image => {
       if (image) {
         this.isReady = true;
@@ -32,8 +32,8 @@ class Horizon {
     let
       v1 = [viewTrapezoid[3][0], viewTrapezoid[3][1], 0.0],
       v2 = [viewTrapezoid[2][0], viewTrapezoid[2][1], 0.0],
-      v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], SKYWALL_HEIGHT],
-      v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], SKYWALL_HEIGHT];
+      v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], HORIZON_HEIGHT],
+      v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], HORIZON_HEIGHT];
 
     if (
       equal3(v1, this.v1) &&
@@ -81,10 +81,10 @@ class Horizon {
 
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array([tcLeft, 1, tcRight, 1, tcRight, 0, tcLeft, 1, tcRight, 0, tcLeft, 0]));
 
-    v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0];
-    v2 = [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0];
-    v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0];
-    v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0];
+    v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1];
+    v2 = [viewTrapezoid[1][0], viewTrapezoid[1][1], 1];
+    v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], 1];
+    v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], 1];
 
     if (this.floorVertexBuffer) {
       this.floorVertexBuffer.destroy();
@@ -105,12 +105,12 @@ class Horizon {
     shader.enable();
 
     shader.setParam('uFogColor', '3fv', fogColor);
-    shader.setParam('uAbsoluteHeight', '1f', SKYWALL_HEIGHT * 10.0);
+    shader.setParam('uAbsoluteHeight', '1f', HORIZON_HEIGHT * 10.0);
 
     shader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
 
-    shader.setBuffer(this.vertexBuffer, 'aPosition');
-    shader.setBuffer(this.texCoordBuffer, 'aTexCoord');
+    shader.setBuffer('aPosition', this.vertexBuffer);
+    shader.setBuffer('aTexCoord', this.texCoordBuffer);
 
     shader.setTexture('uTexIndex', 0, this.texture);
 
@@ -118,9 +118,10 @@ class Horizon {
     shader.disable();
 
     this.floorShader.enable();
-    this.floorShader.setParam('uColor', '4fv', fogColor.concat([1.0]));
+
+    this.floorShader.setParam('uColor', '4fv', [...fogColor, 1.0]);
     this.floorShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
-    this.floorShader.setBuffer(this.floorVertexBuffer, 'aPosition');
+    this.floorShader.setBuffer('aPosition', this.floorVertexBuffer);
 
     GL.drawArrays(GL.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
 
