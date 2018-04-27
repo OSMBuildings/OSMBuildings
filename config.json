@@ -9,7 +9,8 @@
     "fogNormal",
     "ambientFromDepth",
     "blur",
-    "basemap.shadows"
+    "basemap.shadows",
+    "marker"
   ],
 
   "modules": [
@@ -71,6 +72,7 @@
     "src/render/Buildings.js",
     "src/render/MapShadows.js",
     "src/render/Basemap.js",
+    "src/render/Marker.js",
     "src/render/HudRect.js",
     "src/render/DepthFogNormalMap.js",
     "src/render/AmbientMap.js",
