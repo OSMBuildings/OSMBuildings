@@ -10,7 +10,8 @@
     "ambient_from_depth",
     "flat_color",
     "horizon",
-    "blur"
+    "blur",
+    "marker"
   ],
 
   "modules": [
@@ -77,6 +78,7 @@
     "src/render/AmbientMap.js",
     "src/render/Overlay.js",
     "src/render/Horizon.js",
-    "src/render/Blur.js"
+    "src/render/Blur.js",
+    "src/render/Marker.js"
   ]
 }

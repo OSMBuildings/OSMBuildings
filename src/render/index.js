@@ -25,6 +25,7 @@ class render {
     render.Horizon = new Horizon();
     render.Buildings.init();
     render.Basemap = new Basemap();
+
     render.Overlay.init();
     render.AmbientMap.init();
     render.blurredAmbientMap = new Blur();
@@ -34,6 +35,7 @@ class render {
       render.sunGBuffer = new DepthNormal();
     }
 
+    // render.Marker = new Marker();
     this.renderFrame();
   }
 
@@ -71,6 +73,8 @@ class render {
           render.Buildings.render(render.sunGBuffer.framebuffer);
           render.Basemap.render();
 
+          // render.Marker.render();
+
           GL.enable(GL.BLEND);
 
           // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
@@ -96,10 +100,11 @@ class render {
 
           GL.disable(GL.BLEND);
 
+
           // render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
         }
 
-        APP.markers.updateMarkerView();
+        //APP.markers.updateMarkerView();
 
         if (APP.activity.isBusyData()) {
           this.renderFrame();
@@ -213,6 +218,7 @@ class render {
     render.Horizon.destroy();
     render.Buildings.destroy();
     render.Basemap.destroy();
+    // render.Marker.destroy();
     render.MapShadows.destroy();
 
     if (render.cameraGBuffer) {

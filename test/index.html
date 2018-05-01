@@ -216,15 +216,13 @@
  // });
 
   // osmb.on('pointermove', e => {
-  //   osmb.getTarget(e.x, e.y, feature => {
-  //     if (feature) {
+  //     if (e.building) {
   //       document.body.style.cursor = 'pointer';
-  //       osmb.highlight(feature.id, '#cc0000');
+  //       osmb.highlight(e.building.id, '#cc0000');
   //     } else {
   //       document.body.style.cursor = 'default';
   //       osmb.highlight(null);
   //     }
-  //   });
   // });
 
   osmb.on('pointerdown', e => {

@@ -31,6 +31,7 @@ function getPos (e) {
     res.y += el.offsetTop;
     el = el.parentNode;
   }
+
   return { x: e.x - res.s, y: e.y - res.y };
 }
 
@@ -123,6 +124,7 @@ Events.init = function (container) {
   }
 
   function onMouseDown (e) {
+
     APP.activity.setBusyData();
     APP.activity.setBusyUser();
 
@@ -142,8 +144,9 @@ Events.init = function (container) {
     }
 
     var pos = getPos(e);
-    render.Picking.render(e.x, e.y, id => {
-      Events.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons, buildingID: id });
+
+    render.Picking.render(e.x, e.y, building => {
+    Events.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons, building: building });
     });
   }
 
@@ -159,7 +162,14 @@ Events.init = function (container) {
   }
 
   function onMouseMove (e) {
-    Events.emit('pointermove', getPos(e));
+    if(!APP.activity.isBusyUser()){
+      render.Picking.render(e.x, e.y, building => {
+        Events.emit('pointermove', { e: getPos(e), building: building });
+      });
+    } else {
+      Events.emit('pointermove', { e: getPos(e), building: undefined });
+    }
+
   }
 
   function onMouseUp (e) {
@@ -175,6 +185,7 @@ Events.init = function (container) {
     }
 
     button = 0;
+
     Events.emit('pointerup', { button: e.button, buttons: e.buttons });
 
     APP.activity.setIdleUser();
@@ -218,7 +229,6 @@ Events.init = function (container) {
     if (Events.disabled) {
       return;
     }
-
     // FIXME: make movement exact
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
@@ -296,7 +306,11 @@ Events.init = function (container) {
     startX = prevX = t1.clientX;
     startY = prevY = t1.clientY;
 
-    Events.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1, buildingID: id });
+    render.Picking.render(e.x, e.y, building => {
+      Events.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1, building: building });
+    });
+
+
   }
 
   function onTouchMoveDocument (e) {
