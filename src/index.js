@@ -194,15 +194,14 @@ class OSMBuildings {
     this.glx = new GLX(this.canvas, options.fastMode);
     GL = this.glx.GL;
 
+    // this.markers = new Markers();
 
-    //this.markers = new Markers();
-
-    Events.init(this.canvas);
+    this.events = new Events(this.canvas);
 
     this._getStateFromUrl();
     if (options.state) {
       this._setStateToUrl();
-      Events.on('change', () => {
+      this.events.on('change', e => {
         this._setStateToUrl();
       });
     }
@@ -227,7 +226,7 @@ class OSMBuildings {
    * @param {eventCallback} fn Callback function
    */
   on (type, fn) {
-    Events.on(type, fn);
+    this.events.on(type, fn);
   }
 
   /**
@@ -236,7 +235,7 @@ class OSMBuildings {
    * @param {eventCallback} [fn] If callback is given, only remove that particular listener
    */
   off (type, fn) {
-    Events.off(type, fn);
+    this.events.off(type, fn);
   }
 
   /**
@@ -245,7 +244,7 @@ class OSMBuildings {
    * @param {any} [payload] Any kind of payload
    */
   emit (type, payload) {
-    Events.emit(type, payload);
+    this.events.emit(type, payload);
   }
 
   /**
@@ -477,11 +476,11 @@ class OSMBuildings {
   }
 
   setDisabled (flag) {
-    Events.disabled = !!flag;
+    this.events.isDisabled = !!flag;
   }
 
   isDisabled () {
-    return !!Events.disabled;
+    return !!this.events.isDisabled;
   }
 
   /**
@@ -538,8 +537,8 @@ class OSMBuildings {
          this.center.y += dy;*/
       }
 
-      Events.emit('zoom', { zoom: zoom });
-      Events.emit('change');
+      this.events.emit('zoom', { zoom: zoom });
+      this.events.emit('change');
     }
   }
 
@@ -566,7 +565,7 @@ class OSMBuildings {
       return;
     }
     this.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
-    Events.emit('change');
+    this.events.emit('change');
   }
 
   /**
@@ -591,7 +590,7 @@ class OSMBuildings {
     if (width !== this.width || height !== this.height) {
       this.width = width;
       this.height = height;
-      Events.emit('resize', { width: this.width, height: this.height });
+      this.events.emit('resize', { width: this.width, height: this.height });
     }
   }
 
@@ -613,8 +612,8 @@ class OSMBuildings {
     rotation = parseFloat(rotation) % 360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
-      Events.emit('rotate', { rotation: rotation });
-      Events.emit('change');
+      this.events.emit('rotate', { rotation: rotation });
+      this.events.emit('change');
     }
   }
 
@@ -636,8 +635,8 @@ class OSMBuildings {
     tilt = clamp(parseFloat(tilt), 0, MAX_TILT); // bigger max increases shadow moire on base map
     if (this.tilt !== tilt) {
       this.tilt = tilt;
-      Events.emit('tilt', { tilt: tilt });
-      Events.emit('change');
+      this.events.emit('tilt', { tilt: tilt });
+      this.events.emit('change');
     }
   }
 
@@ -661,6 +660,8 @@ class OSMBuildings {
 
     // this.basemapGrid.destroy();
     // this.dataGrid.destroy();
+
+    this.events.destroy();
 
     this.glx.destroy();
     this.canvas.parentNode.removeChild(this.canvas);

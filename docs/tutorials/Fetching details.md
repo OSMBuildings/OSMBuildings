@@ -20,7 +20,7 @@ function httpGetAsync(theUrl, callback)
     xmlHttp.send(null);
 }
 
-osmb.on('pointerdown', e => {
+osmb.on('pointerup', e => {
   if (e.target) {
     var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + e.target.id + ");node(w));out;";
     httpGetAsync(url, response => {
@@ -49,7 +49,7 @@ function httpGetAsync(theUrl, callback) {
     xmlHttp.send(null);
 }
 
-osmb.on('pointerdown', e => {
+osmb.on('pointerup', e => {
   if (e.target) {
     var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + e.target.id + ");node(w));out;";
     httpGetAsync(url, response => {

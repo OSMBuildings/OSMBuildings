@@ -215,23 +215,15 @@
 //    label.style.top = Math.round(pos.y) + 'px';
  // });
 
-  // osmb.on('pointermove', e => {
-  //     if (e.building) {
-  //       document.body.style.cursor = 'pointer';
-  //       osmb.highlight(e.building.id, '#cc0000');
-  //     } else {
-  //       document.body.style.cursor = 'default';
-  //       osmb.highlight(null);
-  //     }
-  // });
-
-  osmb.on('pointerdown', e => {
+  osmb.on('pointerup', e => {
     const feature = e.target;
 
     if (!feature) {
+//    osmb.highlight(null);
       return;
     }
 
+//  osmb.highlight(feature.id, '#cc0000');
     console.log('OSMB', feature);
 
     let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
