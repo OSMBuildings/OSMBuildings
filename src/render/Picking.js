@@ -24,7 +24,7 @@ class Picking {
     this.framebuffer = new GLX.Framebuffer(this.size[0], this.size[1]);
   }
 
-  render (x, y, callback) {
+  getTarget (x, y, callback) {
     requestAnimationFrame(() => {
       this.shader.enable();
       this.framebuffer.enable();

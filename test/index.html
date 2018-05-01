@@ -226,20 +226,24 @@
   // });
 
   osmb.on('pointerdown', e => {
-    osmb.getTarget(e.x, e.y, feature => {
-      console.log('OSMB', feature);
+    const feature = e.target;
 
-      let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
+    if (!feature) {
+      return;
+    }
 
-      fetch(query)
-        .then(response => response.json())
-        .then(parsed => {
-          const feature = parsed.elements[0];
-          if (feature) {
-            console.log('Overpass', feature);
-          }
-        });
-    });
+    console.log('OSMB', feature);
+
+    let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
+
+    fetch(query)
+      .then(response => response.json())
+      .then(parsed => {
+        const feature = parsed.elements[0];
+        if (feature) {
+          console.log('Overpass', feature);
+        }
+      });
   });
 
   //*************************************************************************

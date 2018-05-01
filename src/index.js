@@ -391,6 +391,9 @@ class OSMBuildings {
     // render.Buildings.highlightColor = (id && highlightColor) ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
   }
 
+  // TODO: setStyle (for color & height)
+
+
   /**
    * @deprecated
    */
@@ -404,15 +407,12 @@ class OSMBuildings {
   /**
    * @deprecated
    */
-  getTarget (x, y, callback) {
-
-  }
+  getTarget () {}
 
   /**
    * @deprecated
    */
-  screenshot () {
-  }
+  screenshot () {}
 
   /**
    * @private

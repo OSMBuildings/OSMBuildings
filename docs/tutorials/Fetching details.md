@@ -21,14 +21,12 @@ function httpGetAsync(theUrl, callback)
 }
 
 osmb.on('pointerdown', e => {
-  osmb.getTarget(e.x, e.y, feature => {
-    if (feature) {
-      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + feature.id.replace(/^[a-z]+/, '') + ");node(w));out;";
-      httpGetAsync(url, response => {
-        alert(response);
-      });
-    }
-  });
+  if (e.target) {
+    var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + e.target.id + ");node(w));out;";
+    httpGetAsync(url, response => {
+      alert(response);
+    });
+  }
 });
 </script>
 
@@ -52,13 +50,11 @@ function httpGetAsync(theUrl, callback) {
 }
 
 osmb.on('pointerdown', e => {
-  osmb.getTarget(e.x, e.y, feature => {
-    if (feature) {
-      var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + feature.id.replace(/^[a-z]+/, '') + ");node(w));out;";
-      httpGetAsync(url, response => {
-        alert(response);
-      });
-    }
-  });
+  if (e.target) {
+    var url = "http://overpass-api.de/api/interpreter?data=[out:json];(way(" + e.target.id + ");node(w));out;";
+    httpGetAsync(url, response => {
+      alert(response);
+    });
+  }
 });
 ````

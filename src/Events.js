@@ -124,7 +124,6 @@ Events.init = function (container) {
   }
 
   function onMouseDown (e) {
-
     APP.activity.setBusyData();
     APP.activity.setBusyUser();
 
@@ -143,10 +142,9 @@ Events.init = function (container) {
       button = 1;
     }
 
-    var pos = getPos(e);
-
-    render.Picking.render(e.x, e.y, building => {
-    Events.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons, building: building });
+    const pos = getPos(e);
+    render.Picking.getTarget(e.x, e.y, target => {
+      Events.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons, target: target });
     });
   }
 
@@ -162,14 +160,13 @@ Events.init = function (container) {
   }
 
   function onMouseMove (e) {
-    if(!APP.activity.isBusyUser()){
-      render.Picking.render(e.x, e.y, building => {
-        Events.emit('pointermove', { e: getPos(e), building: building });
-      });
-    } else {
-      Events.emit('pointermove', { e: getPos(e), building: undefined });
+    if (APP.activity.isBusyUser()) {
+      return;
     }
 
+    render.Picking.getTarget(e.x, e.y, target => {
+      Events.emit('pointermove', { ...getPos(e), target: target });
+    });
   }
 
   function onMouseUp (e) {
@@ -190,7 +187,6 @@ Events.init = function (container) {
 
     APP.activity.setIdleUser();
     APP.activity.setIdleData();
-
   }
 
   function onMouseWheel (e) {
@@ -287,13 +283,13 @@ Events.init = function (container) {
     button = 1;
     cancelEvent(e);
 
-    var t1 = e.touches[0];
+    const t1 = e.touches[0];
 
     // gesturechange polyfill
     if (e.touches.length === 2 && !('ongesturechange' in win)) {
-      var t2 = e.touches[1];
-      var dx = t1.clientX - t2.clientX;
-      var dy = t1.clientY - t2.clientY;
+      const t2 = e.touches[1];
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
       dist1 = dx * dx + dy * dy;
       angle1 = Math.atan2(dy, dx);
       gestureStarted = true;
@@ -306,11 +302,9 @@ Events.init = function (container) {
     startX = prevX = t1.clientX;
     startY = prevY = t1.clientY;
 
-    render.Picking.render(e.x, e.y, building => {
-      Events.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1, building: building });
+    render.Picking.getTarget(e.x, e.y, target => {
+      Events.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1, target: target });
     });
-
-
   }
 
   function onTouchMoveDocument (e) {
