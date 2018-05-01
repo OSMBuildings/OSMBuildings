@@ -1,4 +1,3 @@
-
 class Marker {
 
   constructor () {
@@ -54,7 +53,6 @@ class Marker {
     this.texCoordBuffer = [];
 
     this.handleGeometry(this.poly);
-
   }
 
   render () {
@@ -69,12 +67,10 @@ class Marker {
     // GL.clearColor(0.1, 0, 0, 1);
     // GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    // shader.setAllUniforms([
-    //   ['uFogDistance',     '1f',  render.fogDistance],
-    //   ['uFogBlurDistance', '1f',  render.fogBlurDistance],
-    //   ['uViewDirOnMap',    '2fv', render.viewDirOnMap],
-    //   ['uLowerEdgePoint',  '2fv', render.lowerLeftOnMap]
-    // ]);
+    // shader.setParam('uFogDistance',     '1f',  render.fogDistance);
+    // shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    // shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    // shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
 
     let metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
     let modelMatrix = new GLX.Matrix();
@@ -83,27 +79,23 @@ class Marker {
     //   -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     // hard coded position of data
-    modelMatrix.translate( (37.638721- APP.position.longitude)* metersPerDegreeLongitude,
+    modelMatrix.translate((37.638721 - APP.position.longitude) * metersPerDegreeLongitude,
       -(55.751914 - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     // GL.enable(GL.POLYGON_OFFSET_FILL);
 
-    //GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, MAX_USED_ZOOM_LEVEL - tile.zoom);
+    // GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, MAX_USED_ZOOM_LEVEL - tile.zoom);
     // GL.polygonOffset(MAX_USED_ZOOM_LEVEL - 18, MAX_USED_ZOOM_LEVEL - 18);
 
-    // this.shader.setAllUniforms([
-    //   ['uViewDirOnMap',   '2fv', render.viewDirOnMap],
-    //   ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap]
-    // ]);
+    // this.shader.setParam('uViewDirOnMap',   '2fv', render.viewDirOnMap);
+    // this.shader.setParam('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
 
-    this.shader.setAllUniformMatrices([
-     // ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
-    ]);
+    // this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+    this.shader.setMatrix('uViewMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
-    this.shader.bindBuffer('aPosition', this.vertexBuffer);
+    this.shader.setBuffer('aPosition', this.vertexBuffer);
 
-    //GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
+    // GL.drawArrays(GL.TRIANGLE_STRIP, 0, tile.vertexBuffer.numItems);
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
     // GL.disable(GL.POLYGON_OFFSET_FILL);
 
@@ -111,7 +103,7 @@ class Marker {
     shader.disable();
   }
 
-  handleGeometry(geojson){
+  handleGeometry (geojson) {
 
     const tri = {
       vertices: [],
@@ -129,12 +121,12 @@ class Marker {
 
     geojson.features.forEach((feature, i) => {
 
-      var options = {id: 1};
+      var options = { id: 1 };
 
       const
         properties = feature.properties,
         id = options.id || properties.relationId || feature.id || properties.id;
-        //pickingColor = this.getPickingColor(i);
+      //pickingColor = this.getPickingColor(i);
 
       let vertexCount = tri.vertices.length;
       triangulate(tri, feature, origin);
@@ -150,7 +142,6 @@ class Marker {
 
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array(tri.vertices));
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(tri.texCoords));
-
   }
 
   getOrigin (geometry) {
@@ -177,5 +168,6 @@ class Marker {
   //   return [0, (i & 0xff) / 255, ((i >> 8) & 0xff) / 255];
   // }
 
-  destroy () {}
+  destroy () {
+  }
 }
