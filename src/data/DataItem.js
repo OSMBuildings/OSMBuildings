@@ -73,8 +73,6 @@ class DataItem {
 
               DataIndex.add(this);
 
-              APP.activity.setBusyData();
-
               this.fade = 0;
               this.isReady = true;
             }, 20);
@@ -119,12 +117,10 @@ class DataItem {
       return 1;
     }
 
+    render.speedUp();
+
     const fade = this.fade;
     this.fade += 1 / (1 * 60); // (duration * fps)
-
-    if (this.fade >= 1) {
-      APP.activity.setIdleData();
-    }
 
     return fade;
   }

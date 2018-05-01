@@ -119,7 +119,7 @@ class Marker {
       origin = this.getOrigin(geojson.features[0].geometry),
       position = { latitude: origin[1], longitude: origin[0] };
 
-    geojson.features.forEach((feature, i) => {
+    geojson.features.forEach(feature => {
 
       var options = { id: 1 };
 

@@ -110,7 +110,7 @@ function processGeoJSON (geojson, options) {
     position = { latitude: origin[1], longitude: origin[0] };
 
   geojson.features.forEach((feature, i) => {
-    // Events.emit('loadfeature', feature); // TODO
+    // APP.events.emit('loadfeature', feature); // TODO
 
     const
       properties = feature.properties,
@@ -177,7 +177,7 @@ function processOBJ(obj, mtl, options) {
   const meshes = OBJ.parse(obj, mtl);
 
   meshes.forEach((mesh, index) => {
-    // Events.emit('loadfeature', mesh); // TODO
+    // APP.events.emit('loadfeature', mesh); // TODO
 
     tri.vertices.push(...mesh.vertices);
     tri.normals.push(...mesh.normals);

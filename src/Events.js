@@ -122,6 +122,7 @@ class Events {
       }
       resizeTimer = setTimeout(() => {
         resizeTimer = null;
+        render.speedUp();
         APP.setSize(APP.container.offsetWidth, APP.container.offsetHeight);
       }, 250);
     });
@@ -140,15 +141,13 @@ class Events {
   onDoubleClick (e) {
     this.cancelEvent(e);
     if (!this.isDisabled) {
+      render.speedUp();
       APP.setZoom(APP.zoom + 1, e);
     }
     this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
   }
 
   onMouseDown (e) {
-    APP.activity.setBusyData();
-    APP.activity.setBusyUser();
-
     this.cancelEvent(e);
 
     this.startZoom = APP.zoom;
@@ -179,10 +178,6 @@ class Events {
   }
 
   onMouseMove (e) {
-    if (APP.activity.isBusyUser()) {
-      return;
-    }
-
     this.emit('pointermove', getEventXY(e));
   }
 
@@ -203,9 +198,6 @@ class Events {
     render.Picking.getTarget(e.x, e.y, target => {
       this.emit('pointerup', { buttons: e.buttons, target: target });
     });
-
-    APP.activity.setIdleUser();
-    APP.activity.setIdleData();
   }
 
   onMouseWheel (e) {
@@ -221,14 +213,9 @@ class Events {
     }
 
     if (!this.isDisabled) {
-      APP.activity.setBusyData();
-      APP.activity.setBusyUser();
-
       const adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
+      render.speedUp();
       APP.setZoom(APP.zoom + adjust, e);
-
-      APP.activity.setIdleData();
-      APP.activity.setIdleUser();
     }
   }
 
@@ -262,6 +249,7 @@ class Events {
       latitude: APP.position.latitude + dir[1] * scale
     };
 
+    render.speedUp();
     APP.setPosition(newPosition);
     this.emit('move', newPosition);
   }
@@ -272,6 +260,7 @@ class Events {
     }
     this.prevRotation += (e.clientX - this.prevX) * (360 / this.window.innerWidth);
     this.prevTilt -= (e.clientY - this.prevY) * (360 / this.window.innerHeight);
+    render.speedUp();
     APP.setRotation(this.prevRotation);
     APP.setTilt(this.prevTilt);
   }
@@ -291,9 +280,6 @@ class Events {
   //***************************************************************************
 
   onTouchStart (e) {
-    APP.activity.setBusyData();
-    APP.activity.setBusyUser();
-
     this.buttons = 1;
     this.cancelEvent(e);
 
@@ -327,6 +313,7 @@ class Events {
     const t1 = e.touches[0];
 
     if (e.touches.length > 1) {
+      render.speedUp();
       APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / this.window.innerHeight));
       this.prevTilt = APP.tilt;
       if (!('ongesturechange' in this.window)) {
@@ -365,8 +352,6 @@ class Events {
       this.prevX = t1.clientX;
       this.prevY = t1.clientY;
     }
-    APP.activity.setIdleUser();
-    APP.activity.setIdleData();
   }
 
   onGestureChange (e) {
@@ -377,6 +362,7 @@ class Events {
     this.cancelEvent(e);
 
     if (!this.isDisabled) {
+      render.speedUp();
       APP.setZoom(this.startZoom + (e.scale - 1));
       APP.setRotation(this.prevRotation - e.rotation);
     }

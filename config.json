@@ -49,7 +49,6 @@
 
     "src/index.js",
     "src/Events.js",
-    "src/Activity.js",
 
     "src/variables.js",
     "src/Request.js",

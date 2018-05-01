@@ -130,8 +130,6 @@ class OSMBuildings {
   constructor (options = {}) {
     APP = this; // refers to current instance. Should make other globals obsolete.
 
-    this.activity = new Activity(1000);
-
     if (options.style) {
       if (options.style.color || options.style.wallColor) {
         DEFAULT_COLOR = Qolor.parse(options.style.color || options.style.wallColor).toArray();
@@ -667,7 +665,6 @@ class OSMBuildings {
     this.canvas.parentNode.removeChild(this.canvas);
 
     DataIndex.destroy();
-    this.activity.destroy();
 
     this.container.innerHTML = '';
   }

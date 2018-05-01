@@ -35,6 +35,8 @@ class render {
       render.sunGBuffer = new DepthNormal();
     }
 
+    this.speedUp();
+
     // render.Marker = new Marker();
     this.renderFrame();
   }
@@ -100,13 +102,12 @@ class render {
 
           GL.disable(GL.BLEND);
 
-
           // render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
         }
 
-        //APP.markers.updateMarkerView();
+        // APP.markers.updateMarkerView();
 
-        if (APP.activity.isBusyData()) {
+        if (this.isFast) {
           this.renderFrame();
           // setTimeout(() => {
           //   this.renderFrame();
@@ -207,10 +208,20 @@ class render {
     // fogDistance: closest distance at which the fog affects the geometry
     // this.fogDistance = Math.max(5000, lowerLeftDistanceToCenter);
 
-   this.fogDistance = 5000;
+    this.fogDistance = 5000;
 
     // fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog.
     this.fogBlurDistance = 10000;
+  }
+
+  static speedUp () {
+    this.isFast = true;
+    // console.log('FAST');
+    clearTimeout(this.speedTimer);
+    this.speedTimer = setTimeout(() => {
+      this.isFast = false;
+      // console.log('SLOW');
+    }, 1000);
   }
 
   static destroy () {
@@ -231,5 +242,7 @@ class render {
 
     render.AmbientMap.destroy();
     render.blurredAmbientMap.destroy();
+
+    clearTimeout(this.speedTimer);
   }
 }
