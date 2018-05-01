@@ -377,19 +377,37 @@ class OSMBuildings {
   }
 
   /**
+   * @deprecated
+   */
+  highlight () {}
+
+  /** TODO
    * Highlight a given feature by id.<br>
    * Currently, the highlight can only be applied to one feature.<br>
    * Set id to `null` in order to un-highlight.
    * @param {String} id The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever is defined in the options passed to it.
    * @param {String} highlightColor An optional color string to be used for highlighting
    */
-  highlight (id, highlightColor) {
-    // render.Buildings.highlightId = id;
-    // render.Buildings.highlightColor = (id && highlightColor) ? Qolor.parse(highlightColor).toArray() : HIGHLIGHT_COLOR;
+  // TODO: handle data that is loaded afterwards
+  setStyle (callback) {
+    DataIndex.items = DataIndex.items.map(item => {
+      const colors = [], heights = [];
+      item.items.forEach(feature => {
+        // TODO: Should we really do full coloring * heights again? Even if there are no changes???
+        const res = callback({ id: feature.id, properties: feature.properties });
+        const color = Qolor.parse(res.properties.color).toArray();
+        for (let i = 0; i < feature.vertexCount; i++) {
+          colors.push(...color);
+          heights.push(res.properties.height); // TODO: make this real height. For now it is just gradient height.
+        }
+      });
+
+      item.colorBuffer = new GLX.Buffer(3, new Float32Array(colors));
+      item.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
+
+      return item;
+    });
   }
-
-  // TODO: setStyle (for color & height)
-
 
   /**
    * @deprecated

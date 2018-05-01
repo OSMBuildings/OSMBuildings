@@ -219,11 +219,20 @@
     const feature = e.target;
 
     if (!feature) {
-//    osmb.highlight(null);
+      osmb.setStyle(feature => {
+        feature.properties.color = '#cccccc';
+        feature.properties.height *= 1.1;
+        return feature;
+      });
       return;
     }
 
-//  osmb.highlight(feature.id, '#cc0000');
+    osmb.setStyle(feature => {
+      feature.properties.color = '#ffcc00';
+      feature.properties.height /= 1.1;
+      return feature;
+    });
+
     console.log('OSMB', feature);
 
     let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';

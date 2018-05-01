@@ -59,7 +59,7 @@ void main() {
 
     //*** vertical shading ******************************************************
 
-    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / aHeight), 0.0, gradientStrength);
+    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);
 
     //***************************************************************************
 
