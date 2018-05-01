@@ -114,8 +114,8 @@ function processGeoJSON (geojson, options) {
 
     const
       properties = feature.properties,
-      id = options.id || properties.relationId || feature.id || properties.id,
-      pickingColor = getPickingColor(i);
+      id = options.id || feature.id,
+      pickingColor = getPickingColor(i); // still picks per part id - could perhaps use building id
 
     let vertexCount = tri.vertices.length;
     triangulate(tri, feature, origin);

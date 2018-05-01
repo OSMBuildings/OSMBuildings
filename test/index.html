@@ -98,6 +98,7 @@
 //  position: { latitude:31.23638, longitude:121.49513 }, // Shanghai
     position: { latitude:55.7528, longitude:37.62035 }, // Moskau
 //  position: { latitude:40.71115, longitude:-74.01140 }, // NYC
+//  position: { latitude:48.85554, longitude:2.34678 }, // Paris
 
     // bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
     zoom: 17,
@@ -228,20 +229,16 @@
 
   osmb.on('pointerdown', e => {
     osmb.getTarget(e.x, e.y, feature => {
-      if (!feature) {
-        return;
-      }
-      console.log('OSMB', feature.id, JSON.stringify(feature.properties, null, '  '));
+      console.log('OSMB', feature);
 
-      let query = 'http://overpass-api.de/api/interpreter?data=' + encodeURIComponent('[out:json];((way(' + feature.id + '));(rel(' + feature.id + ');way(r)));out body;');
+      let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
 
       fetch(query)
         .then(response => response.json())
         .then(parsed => {
-          // TODO: could be a relation + its members
           const feature = parsed.elements[0];
           if (feature) {
-            console.log('Overpass', feature.id, JSON.stringify(feature.tags, null, '  '));
+            console.log('Overpass', feature);
           }
         });
     });

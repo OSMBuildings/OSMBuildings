@@ -36,7 +36,7 @@ class Picking {
 
       this.shader.setParam('uFogDistance', '1f', render.fogDistance);
 
-      const itemFeatureIndex = [];
+      const renderedItems = [];
       DataIndex.items.forEach(item => {
         if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
           return;
@@ -47,10 +47,10 @@ class Picking {
           return;
         }
 
-        itemFeatureIndex.push(item.items);
+        renderedItems.push(item.items);
 
         this.shader.setParam('uFade', '1f', item.getFade());
-        this.shader.setParam('uIndex', '1f', itemFeatureIndex.length/256);
+        this.shader.setParam('uIndex', '1f', renderedItems.length / 256);
 
         this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
         this.shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
@@ -70,25 +70,38 @@ class Picking {
         X = x / APP.width * this.size[0] << 0,
         Y = y / APP.height * this.size[1] << 0;
 
-      const imageData = this.framebuffer.getPixel(X, this.size[1] - 1 - Y);
+      const imgData = this.framebuffer.getPixel(X, this.size[1] - 1 - Y);
       this.framebuffer.disable();
 
-      if (!imageData) {
+      if (!imgData) {
         callback();
         return;
       }
 
       const
-        itemIndex = imageData[0]-1,
-        featureIndex = (imageData[1] | (imageData[2] << 8))-1;
+        i = imgData[0] - 1,
+        f = (imgData[1] | (imgData[2] << 8)) - 1;
 
-      if (!itemFeatureIndex[itemIndex] || !itemFeatureIndex[itemIndex][featureIndex]) {
+      if (!renderedItems[i] || !renderedItems[i][f]) {
         callback();
         return;
       }
 
-      const feature = itemFeatureIndex[itemIndex][featureIndex];
-      callback({ id: feature.id, properties: feature.properties });
+      const feature = renderedItems[i][f];
+      // callback({ id: feature.id, properties: feature.properties });
+
+      // find related items - across tiles
+      const res = { id: feature.id, properties: feature.properties, parts: [] };
+      const id = feature.properties.building || feature.id;
+      DataIndex.items.forEach(item => {
+        item.items.forEach(feature => {
+          if (feature.id === id || feature.properties.building === id) {
+            res.parts.push({ id: feature.id, properties: feature.properties });
+          }
+        });
+      });
+
+      callback(res);
 
     }); // end requestAnimationFrame()
   }

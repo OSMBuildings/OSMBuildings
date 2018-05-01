@@ -60,14 +60,10 @@ class render {
           GL.enable(GL.DEPTH_TEST);
         } else {
           const viewTrapezoid = this.getViewQuad();
-          /*
-          quad.updateGeometry([viewTrapezoid[0][0], viewTrapezoid[0][1], 1.0],
-                              [viewTrapezoid[1][0], viewTrapezoid[1][1], 1.0],
-                              [viewTrapezoid[2][0], viewTrapezoid[2][1], 1.0],
-                              [viewTrapezoid[3][0], viewTrapezoid[3][1], 1.0]);*/
 
           Sun.updateView(viewTrapezoid);
           render.Horizon.updateGeometry(viewTrapezoid);
+
           render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
           render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
           render.AmbientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
@@ -77,28 +73,26 @@ class render {
 
           GL.enable(GL.BLEND);
 
-          {
-            // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
-            // this applies the shadow and SSAO effects (which selectively darken the scene)
-            // while keeping the alpha channel (that corresponds to how much the
-            // geometry should be blurred into the background in the next step) intact
-            GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
+          // multiply DEST_COLOR by SRC_COLOR, keep SRC alpha
+          // this applies the shadow and SSAO effects (which selectively darken the scene)
+          // while keeping the alpha channel (that corresponds to how much the
+          // geometry should be blurred into the background in the next step) intact
+          GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
 
-            render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
-            render.Overlay.render(render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
+          render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
+          render.Overlay.render(render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
 
-            // linear interpolation between the colors of the current framebuffer
-            // ( =building geometries) and of the sky. The interpolation factor
-            // is the geometry alpha value, which contains the 'foggyness' of each pixel
-            // the alpha interpolation functions is set to GL.ONE for both operands
-            // to ensure that the alpha channel will become 1.0 for each pixel after this
-            // operation, and thus the whole canvas is not rendered partially transparently
-            // over its background.
-            GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
-            GL.disable(GL.DEPTH_TEST);
-            render.Horizon.render();
-            GL.enable(GL.DEPTH_TEST);
-          }
+          // linear interpolation between the colors of the current framebuffer
+          // ( =building geometries) and of the sky. The interpolation factor
+          // is the geometry alpha value, which contains the 'foggyness' of each pixel
+          // the alpha interpolation functions is set to GL.ONE for both operands
+          // to ensure that the alpha channel will become 1.0 for each pixel after this
+          // operation, and thus the whole canvas is not rendered partially transparently
+          // over its background.
+          GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+          GL.disable(GL.DEPTH_TEST);
+          render.Horizon.render();
+          GL.enable(GL.DEPTH_TEST);
 
           GL.disable(GL.BLEND);
 
