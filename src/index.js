@@ -402,8 +402,8 @@ class OSMBuildings {
         }
       });
 
-      item.colorBuffer = new GLX.Buffer(3, new Float32Array(colors));
-      item.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
+      // item.colorBuffer = new GLX.Buffer(3, new Float32Array(colors));
+      // item.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
 
       return item;
     });

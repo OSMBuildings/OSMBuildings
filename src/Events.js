@@ -83,10 +83,10 @@ class Events {
         this.onTouchMove(e);
       });
       addListener(doc, 'touchend', e => {
-        this.onTouchEnd(e);
+        this.onTouchEndDocument(e);
       });
       addListener(doc, 'gesturechange', e => {
-        this.onGestureChange(e);
+        this.onGestureChangeDocument(e);
       });
     } else {
       addListener(container, 'mousedown', e => {
@@ -99,7 +99,7 @@ class Events {
         this.onMouseMove(e);
       });
       addListener(doc, 'mouseup', e => {
-        this.onMouseUp(e);
+        this.onMouseUpDocument(e);
       });
       addListener(container, 'dblclick', e => {
         this.onDoubleClick(e);
@@ -122,7 +122,6 @@ class Events {
       }
       resizeTimer = setTimeout(() => {
         resizeTimer = null;
-        render.speedUp();
         APP.setSize(APP.container.offsetWidth, APP.container.offsetHeight);
       }, 250);
     });
@@ -139,15 +138,18 @@ class Events {
   }
 
   onDoubleClick (e) {
+    render.speedUp();
     this.cancelEvent(e);
+    
+    this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
+    
     if (!this.isDisabled) {
-      render.speedUp();
       APP.setZoom(APP.zoom + 1, e);
     }
-    this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
   }
 
   onMouseDown (e) {
+    render.speedUp();
     this.cancelEvent(e);
 
     this.startZoom = APP.zoom;
@@ -168,8 +170,10 @@ class Events {
 
   onMouseMoveDocument (e) {
     if (this.buttons === 1) {
+      render.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
     } else if (this.buttons === 2) {
+      render.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
     }
 
@@ -181,7 +185,7 @@ class Events {
     this.emit('pointermove', getEventXY(e));
   }
 
-  onMouseUp (e) {
+  onMouseUpDocument (e) {
     // prevents clicks on other page elements
     if (!this.buttons) {
       return;
@@ -201,6 +205,7 @@ class Events {
   }
 
   onMouseWheel (e) {
+    render.speedUp();
     this.cancelEvent(e);
 
     let delta = 0;
@@ -214,7 +219,6 @@ class Events {
 
     if (!this.isDisabled) {
       const adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
-      render.speedUp();
       APP.setZoom(APP.zoom + adjust, e);
     }
   }
@@ -249,7 +253,6 @@ class Events {
       latitude: APP.position.latitude + dir[1] * scale
     };
 
-    render.speedUp();
     APP.setPosition(newPosition);
     this.emit('move', newPosition);
   }
@@ -258,9 +261,9 @@ class Events {
     if (this.isDisabled) {
       return;
     }
+
     this.prevRotation += (e.clientX - this.prevX) * (360 / this.window.innerWidth);
     this.prevTilt -= (e.clientY - this.prevY) * (360 / this.window.innerHeight);
-    render.speedUp();
     APP.setRotation(this.prevRotation);
     APP.setTilt(this.prevTilt);
   }
@@ -274,14 +277,16 @@ class Events {
       dist = dx * dx + dy * dy,
       angle = Math.atan2(dy, dx);
 
-    this.onGestureChange({ rotation: ((angle - this.startAngle) * (180 / Math.PI)) % 360, scale: Math.sqrt(dist / this.startDist) });
+    this.onGestureChangeDocument({ rotation: ((angle - this.startAngle) * (180 / Math.PI)) % 360, scale: Math.sqrt(dist / this.startDist) });
   }
 
   //***************************************************************************
 
   onTouchStart (e) {
-    this.buttons = 1;
+    render.speedUp();
     this.cancelEvent(e);
+
+    this.buttons = 1;
 
     const t1 = e.touches[0];
 
@@ -310,10 +315,11 @@ class Events {
       return;
     }
 
+    render.speedUp();
+
     const t1 = e.touches[0];
 
     if (e.touches.length > 1) {
-      render.speedUp();
       APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / this.window.innerHeight));
       this.prevTilt = APP.tilt;
       if (!('ongesturechange' in this.window)) {
@@ -332,7 +338,7 @@ class Events {
     }
   }
 
-  onTouchEnd (e) {
+  onTouchEndDocument (e) {
     if (!this.buttons) {
       return;
     }
@@ -354,15 +360,15 @@ class Events {
     }
   }
 
-  onGestureChange (e) {
+  onGestureChangeDocument (e) {
     if (!this.buttons) {
       return;
     }
 
+    render.speedUp();
     this.cancelEvent(e);
 
     if (!this.isDisabled) {
-      render.speedUp();
       APP.setZoom(this.startZoom + (e.scale - 1));
       APP.setRotation(this.prevRotation - e.rotation);
     }
