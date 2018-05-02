@@ -2,12 +2,19 @@
 class Horizon {
 
   constructor () {
+    this.HORIZON_HEIGHT = 2000; // meters TODO: we need to fill whole visible area later on
+
     this.shader = new GLX.Shader({
       vertexShader: Shaders.horizon.vertex,
       fragmentShader: Shaders.horizon.fragment,
       shaderName: 'sky wall shader',
       attributes: ['aPosition', 'aTexCoord'],
-      uniforms: ['uAbsoluteHeight', 'uMatrix', 'uTexIndex', 'uFogColor']
+      uniforms: [
+        'uAbsoluteHeight',
+        'uMatrix',
+        'uTexIndex',
+        'uFogColor'
+      ]
     });
 
     this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
@@ -32,8 +39,8 @@ class Horizon {
     let
       v1 = [viewTrapezoid[3][0], viewTrapezoid[3][1], 0.0],
       v2 = [viewTrapezoid[2][0], viewTrapezoid[2][1], 0.0],
-      v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], HORIZON_HEIGHT],
-      v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], HORIZON_HEIGHT];
+      v3 = [viewTrapezoid[2][0], viewTrapezoid[2][1], this.HORIZON_HEIGHT],
+      v4 = [viewTrapezoid[3][0], viewTrapezoid[3][1], this.HORIZON_HEIGHT];
 
     if (
       equal3(v1, this.v1) &&
@@ -105,7 +112,7 @@ class Horizon {
     shader.enable();
 
     shader.setParam('uFogColor', '3fv', fogColor);
-    shader.setParam('uAbsoluteHeight', '1f', HORIZON_HEIGHT * 10.0);
+    shader.setParam('uAbsoluteHeight', '1f', this.HORIZON_HEIGHT * 10.0);
 
     shader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
 
