@@ -2,19 +2,14 @@
 class Horizon {
 
   constructor () {
-    this.HORIZON_HEIGHT = 2000; // meters TODO: we need to fill whole visible area later on
+    this.HORIZON_HEIGHT = 2000;
 
-    this.shader = new GLX.Shader({
+    this.skyShader = new GLX.Shader({
       vertexShader: Shaders.horizon.vertex,
       fragmentShader: Shaders.horizon.fragment,
       shaderName: 'sky wall shader',
-      attributes: ['aPosition', 'aTexCoord'],
-      uniforms: [
-        'uAbsoluteHeight',
-        'uMatrix',
-        'uTexIndex',
-        'uFogColor'
-      ]
+      attributes: ['aPosition'],
+      uniforms: ['uAbsoluteHeight', 'uMatrix', 'uFogColor']
     });
 
     this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
@@ -25,13 +20,6 @@ class Horizon {
       fragmentShader: Shaders.flat_color.fragment,
       attributes: ['aPosition'],
       uniforms: ['uColor', 'uMatrix']
-    });
-
-    const url = '../src/skydome2.jpg';
-    this.texture = new GLX.texture.Image().load(url, image => {
-      if (image) {
-        this.isReady = true;
-      }
     });
   }
 
@@ -55,38 +43,12 @@ class Horizon {
     this.v3 = v3;
     this.v4 = v4;
 
-    if (this.vertexBuffer) {
-      this.vertexBuffer.destroy();
+    if (this.skyVertexBuffer) {
+      this.skyVertexBuffer.destroy();
     }
 
     const vertices = [...v1, ...v2, ...v3, ...v1, ...v3, ...v4];
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
-
-    if (this.texCoordBuffer) {
-      this.texCoordBuffer.destroy();
-    }
-
-    const
-      inverse = GLX.Matrix.invert(render.viewProjMatrix.data),
-      vBottomCenter = getIntersectionWithXYPlane(0, -1, inverse),
-      vLeftDir = norm2(sub2(v1, vBottomCenter)),
-      vRightDir = norm2(sub2(v2, vBottomCenter));
-
-    let
-      vLeftArc = Math.atan2(vLeftDir[1], vLeftDir[0]) / (2 * Math.PI),
-      vRightArc = Math.atan2(vRightDir[1], vRightDir[0]) / (2 * Math.PI);
-
-    if (vLeftArc > vRightArc) {
-      vRightArc += 1;
-      //console.log(vLeftArc, vRightArc);
-    }
-
-    // var visibleSkyDiameterFraction = Math.asin(dot2( vLeftDir, vRightDir))/ (2*Math.PI);
-    const
-      tcLeft = vLeftArc, // APP.rotation/360.0;
-      tcRight = vRightArc; // APP.rotation/360.0 + visibleSkyDiameterFraction*3;
-
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array([tcLeft, 1, tcRight, 1, tcRight, 0, tcLeft, 1, tcRight, 0, tcLeft, 0]));
+    this.skyVertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
 
     v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1];
     v2 = [viewTrapezoid[1][0], viewTrapezoid[1][1], 1];
@@ -101,45 +63,37 @@ class Horizon {
   }
 
   render () {
-    if (!this.isReady) {
-      return;
-    }
-
     const
-      shader = this.shader,
+      skyShader = this.skyShader,
+      floorShader = this.floorShader,
       fogColor = render.fogColor;
 
-    shader.enable();
+    skyShader.enable();
 
-    shader.setParam('uFogColor', '3fv', fogColor);
-    shader.setParam('uAbsoluteHeight', '1f', this.HORIZON_HEIGHT * 10.0);
+    skyShader.setParam('uFogColor', '3fv', fogColor);
+    skyShader.setParam('uAbsoluteHeight', '1f', this.HORIZON_HEIGHT * 10.0);
+    skyShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
+    skyShader.setBuffer('aPosition', this.skyVertexBuffer);
 
-    shader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
+    GL.drawArrays(GL.TRIANGLES, 0, this.skyVertexBuffer.numItems);
+    
+    skyShader.disable();
 
-    shader.setBuffer('aPosition', this.vertexBuffer);
-    shader.setBuffer('aTexCoord', this.texCoordBuffer);
+    
+    floorShader.enable();
 
-    shader.setTexture('uTexIndex', 0, this.texture);
-
-    GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
-    shader.disable();
-
-    this.floorShader.enable();
-
-    this.floorShader.setParam('uColor', '4fv', [...fogColor, 1.0]);
-    this.floorShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
-    this.floorShader.setBuffer('aPosition', this.floorVertexBuffer);
+    floorShader.setParam('uColor', '4fv', [...fogColor, 1.0]);
+    floorShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
+    floorShader.setBuffer('aPosition', this.floorVertexBuffer);
 
     GL.drawArrays(GL.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
 
-    this.floorShader.disable();
+    floorShader.disable();
   }
 
   destroy () {
-    this.vertexBuffer.destroy();
-    this.texCoordBuffer.destroy();
-    this.texture.destroy();
-    this.shader.destroy();
+    this.skyVertexBuffer.destroy();
+    this.skyShader.destroy();
 
     this.floorVertexBuffer.destroy();
     this.floorShader.destroy();

@@ -1,14 +1,17 @@
 
 const
-  MAX_TILT = 75;
+  // MIN_ZOOM = 11,
+  MIN_ZOOM = 14.5,
+  MAX_ZOOM = 22,
+
+  // MAX_TILT = 75,
+  MAX_TILT = 55;
 
 
 var TILE_SIZE = 256;
 
 var DEFAULT_HEIGHT = 10;
 
-var MIN_ZOOM = 11;
-var MAX_ZOOM = 22;
 
 var MAX_USED_ZOOM_LEVEL = 25;
 var DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
