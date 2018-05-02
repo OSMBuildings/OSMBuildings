@@ -141,29 +141,6 @@ class Grid {
   //   }
   //   return res;
   // }
-  //
-  // getTilesForSector (a, b, c) {
-  //   const min = [
-  //     Math.round(Math.min(a[0], b[0], c[0])),
-  //     Math.round(Math.min(a[1], b[1], c[1]))
-  //   ];
-  //   const max = [
-  //     Math.round(Math.max(a[0], b[0], c[0])),
-  //     Math.round(Math.max(a[1], b[1], c[1]))
-  //   ];
-  //
-  //   const res = [];
-  //   for (let x = min[0]; x < max[0]; x++) {
-  //     for (let y = min[1]; y < max[1]; y++) {
-  //
-  //       if (this.pointInPolygon([x*2, y*2], [])) {
-  //         res.push([x*2, y*2]);
-  //       }
-  //     }
-  //   }
-  //
-  //   return res;
-  // }
 
   update () {
     if (APP.zoom < this.minZoom || APP.zoom > this.maxZoom) {
@@ -181,18 +158,6 @@ class Grid {
     //   maxX: max.x <<0,
     //   maxY: max.y <<0
     // };
-
-    // const
-    //   distance = 5, // in tiles
-    //   fov = 120,
-    //   centerX = project([APP.position.longitude, APP.position.latitude], 1<<APP.zoom),
-    //   left = APP.rotation - fov/2,
-    //   right = APP.rotation + fov/2;
-    //
-    // let a = this.getAnglePoint(centerX, left, distance);
-    // let b = this.getAnglePoint(centerX, right, distance);
-    //
-    // const tilesX = this.getTilesForSector(centerX, a, b);
 
     let
       viewQuad = render.getViewQuad(render.viewProjMatrix.data),
@@ -225,7 +190,7 @@ class Grid {
         y = parseInt(pos[1]),
         zoom = parseInt(pos[2]);
 
-      // TODO: check: some other zoom levels are loaded!
+      // TODO: check why some other zoom levels are loaded!
 
       if (this.tiles[key]) {
         continue;

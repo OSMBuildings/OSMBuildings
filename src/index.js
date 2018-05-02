@@ -388,8 +388,8 @@ class OSMBuildings {
    * @param {String} id The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever is defined in the options passed to it.
    * @param {String} highlightColor An optional color string to be used for highlighting
    */
-  // TODO: handle data that is loaded afterwards
   setStyle (callback) {
+    // TODO: handle data that will be loaded later on
     DataIndex.items = DataIndex.items.map(item => {
       const colors = [], heights = [];
       item.items.forEach(feature => {
@@ -398,11 +398,11 @@ class OSMBuildings {
         const color = Qolor.parse(res.properties.color).toArray();
         for (let i = 0; i < feature.vertexCount; i++) {
           colors.push(...color);
-          heights.push(res.properties.height); // TODO: make this real height. For now it is just gradient height.
+          // heights.push(res.properties.height); // TODO: make this real height. For now it is just gradient height.
         }
       });
 
-      // item.colorBuffer = new GLX.Buffer(3, new Float32Array(colors));
+      item.colorBuffer = new GLX.Buffer(3, new Float32Array(colors));
       // item.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
 
       return item;

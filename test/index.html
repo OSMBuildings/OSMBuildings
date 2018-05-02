@@ -119,17 +119,6 @@
     }
   );
 
-  var colorByHeightAvailable = function(feature) {
-    if (!feature.properties.levels && !feature.properties.height) {
-      feature.properties.color = "red";
-    } else if (!feature.properties.height) {
-      feature.properties.color = "lime";
-    } else {
-      feature.properties.color = "green";
-    }
-
-    feature.properties.roofColor = feature.properties.color;
-  };
 
   var colorByHeight = function(feature) {
     var height = parseFloat(feature.properties.height) || (parseFloat(feature.properties.levels)* 3.5) || 0;
@@ -145,37 +134,21 @@
 
     feature.properties.roofColor = feature.properties.color;
   };
-  
-  var colorLandmarks = function(feature) {
-    var landmarkIDs = {
-      "r3074565": true,  // Rotes Rathaus
-      "w313675136": true, // Rotes Rathaus
-      "r2167988": true,  // Berliner Dom
-      "w37449517": true, // Bundestag
-      "r2326380": true,  // Kanzleramt
-      "r4065110": true,  // Fernsehturm components
-      "w304987177": true,
-      "w19046101": true,
-      "w96880470": true,
-      "w326772329": true,
-      "w230818931": true,
-      "w304987174": true,
-      "w304987172": true,
-      "w304987176": true,
-      "w96880477": true,
-      "w304987173": true
-    };
 
-    feature.properties.color = (id in landmarkIDs) ? "#CC4444" : "#DDDDDD";
-  };
-
-//  osmb.on('loadfeature', function(e) {
-//    colorByHeightAvailable(e);
-//  });
+  osmb.setStyle(feature => {
+    if (!feature.properties.levels && !feature.properties.height) {
+      feature.properties.color = 'red';
+    } else if (!feature.properties.height) {
+      feature.properties.color = 'lime';
+    } else {
+      feature.properties.color = 'green';
+    }
+    return feature;
+  });
 
   osmb.addGeoJSONTiles(
- // 'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
-  'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+ 'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
+  // 'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
     {
       fixedZoom: 15
       // bounds
@@ -220,8 +193,11 @@
 
     if (!feature) {
       osmb.setStyle(feature => {
-        feature.properties.color = '#cccccc';
-        feature.properties.height *= 1.1;
+        if (!feature.properties.levels && !feature.properties.height) {
+          feature.properties.color = 'red';
+        } else {
+          feature.properties.color = 'green';
+        }
         return feature;
       });
       return;
@@ -229,7 +205,7 @@
 
     osmb.setStyle(feature => {
       feature.properties.color = '#ffcc00';
-      feature.properties.height /= 1.1;
+      // feature.properties.height /= 1.1;
       return feature;
     });
 
