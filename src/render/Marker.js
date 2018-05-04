@@ -8,8 +8,10 @@ class Marker {
       shaderName: 'marker shader',
       attributes: ['aPosition'],
       uniforms: [
-        'uMatrix',
-        'uViewMatrix'
+        // 'uMatrix',
+        'uProjMatrix',
+        'uViewMatrix',
+        'uModelMatrix'
       ]
     });
 
@@ -71,8 +73,11 @@ class Marker {
     // this.shader.setParam('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
     // this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
 
-    this.shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    // this.shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    this.shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
     this.shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
+    this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+
     this.shader.setBuffer('aPosition', this.vertexBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
