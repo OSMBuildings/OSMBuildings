@@ -109,6 +109,10 @@ class Marker {
       (point[0]-this.origin[0])*scale[0],
       -(point[1]-this.origin[1])*scale[1]
     ];
+    // return [
+    //   (point[0])*scale[0],
+    //   -(point[1])*scale[1]
+    // ];
   }
 
   destroy () {
