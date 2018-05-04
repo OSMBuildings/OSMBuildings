@@ -54,7 +54,6 @@ class render {
         if (!render.effects.shadows) {
           render.Buildings.render();
           render.Marker.render();
-          render.Basemap.render();
 
           GL.enable(GL.BLEND);
 
@@ -63,6 +62,8 @@ class render {
           render.Horizon.render();
           GL.disable(GL.BLEND);
           GL.enable(GL.DEPTH_TEST);
+
+          render.Basemap.render();
         } else {
           const viewTrapezoid = this.getViewQuad();
 
@@ -74,7 +75,6 @@ class render {
           render.AmbientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
           render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
           render.Buildings.render(render.sunGBuffer.framebuffer);
-          render.Marker.render();
           render.Basemap.render();
 
           GL.enable(GL.BLEND);
@@ -96,11 +96,15 @@ class render {
           // operation, and thus the whole canvas is not rendered partially transparently
           // over its background.
           GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
+
+
           GL.disable(GL.DEPTH_TEST);
           render.Horizon.render();
           GL.enable(GL.DEPTH_TEST);
 
           GL.disable(GL.BLEND);
+
+          render.Marker.render();
 
           // render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
         }

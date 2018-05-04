@@ -7,7 +7,10 @@ class Marker {
       fragmentShader: Shaders.marker.fragment,
       shaderName: 'marker shader',
       attributes: ['aPosition'],
-      uniforms: ['uMatrix']
+      uniforms: [
+        'uMatrix',
+        'uViewMatrix'
+      ]
     });
 
     // http://localhost/git/OSMBuildings/test/?lat=55.750472&lon=37.641382&zoom=16.8&tilt=49.9&rotation=225.8
@@ -16,7 +19,7 @@ class Marker {
       [
         37.634793519973755,
         55.75022514787899,
-        30
+        130
       ],
       [
         37.64390230178832,
@@ -26,12 +29,12 @@ class Marker {
       [
         37.64390230178832,
         55.75396865656196,
-        30
+        50
       ],
       [
         37.634793519973755,
         55.75396865656196,
-        30
+        20
       ]
     ];
 
@@ -69,6 +72,7 @@ class Marker {
     // this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
 
     this.shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    this.shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
     this.shader.setBuffer('aPosition', this.vertexBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
