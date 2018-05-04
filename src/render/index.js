@@ -24,6 +24,7 @@ class render {
     render.Picking = new Picking(); // renders only on demand
     render.Horizon = new Horizon();
     render.Buildings.init();
+    render.Marker = new Marker();
     render.Basemap = new Basemap();
 
     render.Overlay.init();
@@ -37,7 +38,6 @@ class render {
 
     this.speedUp();
 
-    // render.Marker = new Marker();
     this.renderFrame();
   }
 
@@ -53,6 +53,7 @@ class render {
 
         if (!render.effects.shadows) {
           render.Buildings.render();
+          render.Marker.render();
           render.Basemap.render();
 
           GL.enable(GL.BLEND);
@@ -73,9 +74,8 @@ class render {
           render.AmbientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
           render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
           render.Buildings.render(render.sunGBuffer.framebuffer);
+          render.Marker.render();
           render.Basemap.render();
-
-          // render.Marker.render();
 
           GL.enable(GL.BLEND);
 
@@ -228,8 +228,8 @@ class render {
     render.Picking.destroy();
     render.Horizon.destroy();
     render.Buildings.destroy();
+    render.Marker.destroy();
     render.Basemap.destroy();
-    // render.Marker.destroy();
     render.MapShadows.destroy();
 
     if (render.cameraGBuffer) {
