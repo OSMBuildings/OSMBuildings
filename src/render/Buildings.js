@@ -88,6 +88,7 @@ render.Buildings = {
 
     dataItems.forEach(item => {
       // no visibility check needed, Grid.purge() is taking care
+      // TODO: but not for individual objects (and markers)!
 
       if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
         return;
