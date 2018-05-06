@@ -7,6 +7,9 @@ uniform mat4 uProjMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uModelMatrix;
 
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
+
 void main() {
 
 //  mat4 modelMatrix = mat4(1.0); // creates an identity matrix
@@ -30,4 +33,6 @@ void main() {
   modelView[2][2] = 1.0;
 
   gl_Position = uProjMatrix * modelView * aPosition;
+
+  vTexCoord = aTexCoord;
 }

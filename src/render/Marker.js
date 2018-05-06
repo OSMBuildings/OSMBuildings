@@ -10,13 +10,26 @@ class Marker {
       vertexShader: Shaders.marker.vertex,
       fragmentShader: Shaders.marker.fragment,
       shaderName: 'marker shader',
-      attributes: ['aPosition'],
+      attributes: ['aPosition', 'aTexCoord'],
       uniforms: [
         'uProjMatrix',
         'uViewMatrix',
-        'uModelMatrix'
+        'uModelMatrix',
+        'uTexIndex'
       ]
     });
+
+    const texCoords = [
+      1,1,
+      0,1,
+      1,0,
+      0,1,
+      0,0,
+      1,0
+    ];
+
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
+
 
     // http://localhost/git/OSMBuildings/test/?lat=55.750472&lon=37.641382&zoom=16.8&tilt=49.9&rotation=225.8
 
@@ -74,6 +87,9 @@ class Marker {
     this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
     this.shader.setBuffer('aPosition', this.vertexBuffer);
 
+    shader.setBuffer('aTexCoord', this.texCoordBuffer);
+    shader.setTexture('uTexIndex', 0, this.texture);
+
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
@@ -93,10 +109,29 @@ class Marker {
       -w2,  h2, 0
     ];
 
+
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+
+    this.texture = new GLX.texture.Image().load("http://localhost/git/OSMBuildings/test/OSMBuildings/jan.png", image => {
+      if (image) {
+        /* Whole texture will be mapped to fit the tile exactly. So
+         * don't attempt to wrap around the texture coordinates. */
+
+        GL.bindTexture(GL.TEXTURE_2D, this.texture.id);
+        GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
+        GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+
+      }
+    });
+
   }
 
   destroy () {
     this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+
+    if (this.texture) {
+      this.texture.destroy();
+    }
   }
 }
