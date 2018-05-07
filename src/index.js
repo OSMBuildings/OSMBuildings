@@ -308,7 +308,6 @@ class OSMBuildings {
   /**
    * Adds an 3D object (OBJ format) file to the map.<br>
    * <em>Important</em>: objects with exactly the same url are cached and only loaded once.<br>
-   * In order to remove the object, use myObj.destroy()
    * @param {String} url URL of the OBJ file
    * @param {Object} position Where to render the object
    * @param {Number} position.latitude Position latitude for the object
@@ -327,8 +326,14 @@ class OSMBuildings {
   }
 
   /**
+   * Removes an 3D object (OBJ format) file from the map.<br>
+   */
+  removeOBJ (obj) {
+   obj.destroy();
+  }
+
+  /**
    * Adds a GeoJSON object to the map.<br>
-   * In order to remove the object use myObj.destroy()
    * @param {String} url URL of the GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
@@ -345,11 +350,17 @@ class OSMBuildings {
     return new DataItem('GeoJSON', url, options);
   }
 
+  /**
+   * Removes a GeoJSON object from the map.<br>
+   */
+  removeGeoJSON (obj) {
+    obj.destroy();
+  }
+
   // TODO: allow more data layers later on
   /**
    * Adds a GeoJSON tile layer to the map.<br>
-   * This is for continuous building coverage.<br>
-   * In order to remove the layer use myLayer.destroy()
+   * This is for continuous building coverage.
    * @param {String} [url=https://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json] url The URL of the GeoJSON tile server
    * @param {Object} [options]
    * @param {Number} [options.fixedZoom=15] Tiles are fetched for this zoom level only. Other zoom levels are scaled up/down to this value
@@ -366,14 +377,27 @@ class OSMBuildings {
   }
 
   /**
-   * Adds a 2d base map source. This renders below the buildings.<br>
-   * In order to remove the layer use myLayer.destroy()
+   * Removes a GeoJSON tile layer from the map.<br>
+   */
+  removeGeoJSONTiles (obj) {
+    obj.destroy();
+  }
+
+  /**
+   * Adds a 2d base map source. This renders below the buildings.
    * @param {String} url The URL of the map server. This could be from Mapbox or other tile servers
    * @return {Object} The added layer object
    */
   addMapTiles (url) {
     this.basemapGrid = new Grid(url, BitmapTile, {}, 4);
     return this.basemapGrid;
+  }
+
+  /**
+   * Removes a 2d base map source.
+   */
+  removeMapTiles (obj) {
+    obj.destroy();
   }
 
   /**
@@ -664,8 +688,19 @@ class OSMBuildings {
     return this.tilt;
   }
 
-  addMarker (options) {
-    return new Marker(options);
+  /**
+   * Adds a WebGL Marker to the map.
+   * * @return {Object} Marker
+   */
+  addMarker(options){
+   return new Marker(options);
+  }
+
+  /**
+   * Removes a WebGL Marker from the map.
+   */
+  removeMarker(obj){
+    obj.destroy();
   }
 
   /**

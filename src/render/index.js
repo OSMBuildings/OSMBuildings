@@ -24,7 +24,7 @@ class render {
     render.Picking = new Picking(); // renders only on demand
     render.Horizon = new Horizon();
     render.Buildings.init();
-    render.Marker = new Marker();
+    render.Marker = new MarkerRender();
     render.Basemap = new Basemap();
 
     render.Overlay.init();
@@ -53,7 +53,7 @@ class render {
 
         if (!render.effects.shadows) {
           render.Buildings.render();
-          render.Marker.render();
+          render.MarkerRender.render();
 
           GL.enable(GL.BLEND);
 
