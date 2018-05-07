@@ -71,6 +71,10 @@ class Marker {
 
     this.texCoordBuffer.destroy();
     this.vertexBuffer.destroy();
-    this.texture.destroy();
+
+    if(this.isReady){
+      this.texture.destroy();
+    }
+
   }
 }

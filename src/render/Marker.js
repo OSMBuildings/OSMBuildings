@@ -26,7 +26,7 @@ class MarkerRender {
 
     shader.enable();
 
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
+    const metersPerDegreeLongitude = render.metersPerDegreeLongitude;
 
     var markers = Markers.items;
 

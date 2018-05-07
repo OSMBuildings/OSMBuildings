@@ -1,12 +1,18 @@
 
 class render {
 
+  constructor(){
+    this.metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
+  }
+
   static getViewQuad () {
     return getViewQuad(this.viewProjMatrix.data,  (this.fogDistance + this.fogBlurDistance), this.viewDirOnMap);
   }
 
   static start () {
     render.effects = { shadows: true };
+
+    this.metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
 
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
@@ -46,6 +52,7 @@ class render {
       requestAnimationFrame(() => {
 
         this.setupViewport();
+        this.metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
         GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
