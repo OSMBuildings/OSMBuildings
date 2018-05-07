@@ -32,26 +32,13 @@ class MarkerRender {
 
     GL.disable(GL.DEPTH_TEST);
     GL.enable(GL.BLEND);
-    // GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
-    // GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-
-    // GL.blendFunc(GL.SRC_COLOR, GL.ONE);
-
-    GL.blendFunc(GL.SRC_ALPHA  , GL.ONE);
-
-
-    // console.log(GL.getParameter(GL.SRC_ALPHA))
-    // GL.disable(GL.DEPTH_TEST);
+    GL.blendFunc(GL.SRC_ALPHA  , GL.ONE_MINUS_SRC_ALPHA);
 
     markers.forEach(item => {
       if(!item.isReady){
         return;
       }
 
-
-
-
-    // console.log(item)
       const modelMatrix = new GLX.Matrix();
       modelMatrix.translate(
         (item.position.longitude - APP.position.longitude) * metersPerDegreeLongitude,
@@ -71,7 +58,6 @@ class MarkerRender {
 
     })
 
-
     GL.disable(GL.BLEND);
     GL.enable(GL.DEPTH_TEST);
 
@@ -80,11 +66,6 @@ class MarkerRender {
 
 
   destroy () {
-    // this.vertexBuffer.destroy();
-    // this.texCoordBuffer.destroy();
-    //
-    // if (this.texture) {
-    //   this.texture.destroy();
-    // }
+    this.shader.destroy();
   }
 }
