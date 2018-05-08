@@ -6,9 +6,9 @@ class Marker {
     this.offsetY = options.offsetY || 0;
     this.position = options.position ||{ latitude: 0, longitude: 0 };
     this.elevation = options.elevation || 30;
-    this.size = options.size || 150;
     this.source = options.source;
     this.isReady = false;
+    this.size = options.size || 1;
 
     Markers.add(this);
     this.load();
