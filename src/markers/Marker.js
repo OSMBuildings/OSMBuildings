@@ -52,6 +52,8 @@ class Marker {
         GL.bindTexture(GL.TEXTURE_2D, this.texture.id);
         GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
         GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+        // fits texture to vertex
+        GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
 
         this.isReady = true;
       }
