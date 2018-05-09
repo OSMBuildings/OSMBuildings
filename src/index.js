@@ -306,8 +306,15 @@ class OSMBuildings {
   }
 
   /**
-   * Adds an 3D object (OBJ format) file to the map.<br>
-   * <em>Important</em>: objects with exactly the same url are cached and only loaded once.<br>
+   * Removes an object from the map.
+   */
+  remove (item) {
+    item.destroy && item.destroy();
+  }
+
+  /**
+   * Adds an 3D object (OBJ format) file to the map.
+   * <em>Important</em>: objects with exactly the same url are cached and only loaded once.
    * @param {String} url URL of the OBJ file
    * @param {Object} position Where to render the object
    * @param {Number} position.latitude Position latitude for the object
@@ -326,14 +333,7 @@ class OSMBuildings {
   }
 
   /**
-   * Removes an 3D object (OBJ format) file from the map.<br>
-   */
-  removeOBJ (obj) {
-   obj.destroy();
-  }
-
-  /**
-   * Adds a GeoJSON object to the map.<br>
+   * Adds a GeoJSON object to the map.
    * @param {String} url URL of the GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
@@ -350,16 +350,9 @@ class OSMBuildings {
     return new DataItem('GeoJSON', url, options);
   }
 
-  /**
-   * Removes a GeoJSON object from the map.<br>
-   */
-  removeGeoJSON (obj) {
-    obj.destroy();
-  }
-
   // TODO: allow more data layers later on
   /**
-   * Adds a GeoJSON tile layer to the map.<br>
+   * Adds a GeoJSON tile layer to the map.
    * This is for continuous building coverage.
    * @param {String} [url=https://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json] url The URL of the GeoJSON tile server
    * @param {Object} [options]
@@ -377,13 +370,6 @@ class OSMBuildings {
   }
 
   /**
-   * Removes a GeoJSON tile layer from the map.<br>
-   */
-  removeGeoJSONTiles (obj) {
-    obj.destroy();
-  }
-
-  /**
    * Adds a 2d base map source. This renders below the buildings.
    * @param {String} url The URL of the map server. This could be from Mapbox or other tile servers
    * @return {Object} The added layer object
@@ -394,42 +380,51 @@ class OSMBuildings {
   }
 
   /**
-   * Removes a 2d base map source.
+   * This replaces any previous highlighting.
+   * @example
+   * osmb.highlight(building => {
+   *   if (building.properties.height > 200) return 'red';
+   *   if (building.properties.height > 100) return 'green';
+   * });
+   * @param callback {Function} A function that does user defined filtering and highlights by returning a color
    */
-  removeMapTiles (obj) {
-    obj.destroy();
-  }
-
-  /**
-   * @deprecated
-   */
-  highlight () {}
-
-  /** TODO
-   * Highlight a given feature by id.<br>
-   * Currently, the highlight can only be applied to one feature.<br>
-   * Set id to `null` in order to un-highlight.
-   * @param {String} id The feature's id. For OSM buildings, it's the OSM id. For other objects, it's whatever is defined in the options passed to it.
-   * @param {String} highlightColor An optional color string to be used for highlighting
-   */
-  setStyle (callback) {
+  highlight (callback) {
     // TODO: handle data that will be loaded later on
-    DataIndex.items = DataIndex.items.map(item => {
-      const colors = [], heights = [];
-      item.items.forEach(feature => {
-        // TODO: Should we really do full coloring * heights again? Even if there are no changes???
+    DataIndex.items.forEach((dataItem, i) => {
+      const tintColors = [];
+      dataItem.items.forEach(feature => {
         const res = callback({ id: feature.id, properties: feature.properties });
-        const color = Qolor.parse(res.properties.color).toArray();
+        const col = res ? Qolor.parse(res).toArray() : [0, 0, 0, 0];
         for (let i = 0; i < feature.vertexCount; i++) {
-          colors.push(...color);
-          // heights.push(res.properties.height); // TODO: make this real height. For now it is just gradient height.
+          tintColors.push(...col);
         }
       });
 
-      // item.colorBuffer = new GLX.Buffer(3, new Float32Array(colors));
-      // item.heightBuffer = new GLX.Buffer(1, new Float32Array(heights));
+      DataIndex.items[i].tintColors = new GLX.Buffer(4, new Float32Array(tintColors));
+    });
+  }
 
-      return item;
+  /**
+   * This replaces any previous show/hide rules.
+   * @example
+   * osmb.hide(building => {
+   *   if (building.properties.height < 100) return true;
+   *   if (building.id == "B05417") return true;
+   * });
+   * @param callback {Function} A function that does user defined filtering and hides if return value is true
+   */
+  hide (callback) {
+    // TODO: handle data that will be loaded later on
+    DataIndex.items.forEach((dataItem, i) => {
+      const heightScales = [];
+      dataItem.items.forEach(feature => {
+        const res = callback({ id: feature.id, properties: feature.properties });
+        for (let i = 0; i < feature.vertexCount; i++) {
+          heightScales[i] = res ? 0 : 1;
+        }
+      });
+
+      DataIndex.items[i].heightScales = new GLX.Buffer(1, new Float32Array(heightScales));
     });
   }
 
@@ -692,15 +687,8 @@ class OSMBuildings {
    * Adds a WebGL Marker to the map.
    * * @return {Object} Marker
    */
-  addMarker(options){
+  addMarker(options) {
    return new Marker(options);
-  }
-
-  /**
-   * Removes a WebGL Marker from the map.
-   */
-  removeMarker(obj){
-    obj.destroy();
   }
 
   /**

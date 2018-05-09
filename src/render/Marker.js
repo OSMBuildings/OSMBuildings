@@ -19,7 +19,6 @@ class MarkerRender {
         'markerSize'
       ]
     });
-
   }
 
   render () {
@@ -29,14 +28,12 @@ class MarkerRender {
 
     const metersPerDegreeLongitude = render.metersPerDegreeLongitude;
 
-    var markers = Markers.items;
-
     GL.disable(GL.DEPTH_TEST);
     GL.enable(GL.BLEND);
-    GL.blendFunc(GL.SRC_ALPHA  , GL.ONE_MINUS_SRC_ALPHA);
+    GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
 
-    markers.forEach(item => {
-      if(!item.isReady){
+    Markers.items.forEach(item => {
+      if (!item.isReady) {
         return;
       }
 
@@ -47,7 +44,7 @@ class MarkerRender {
         item.elevation
       );
 
-      shader.setParam('markerSize',       '1f',  item.size);
+      shader.setParam('markerSize', '1f', item.size);
       shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
       shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
@@ -57,15 +54,13 @@ class MarkerRender {
       shader.setTexture('uTexIndex', 0, item.texture);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-
-    })
+    });
 
     GL.disable(GL.BLEND);
     GL.enable(GL.DEPTH_TEST);
 
     shader.disable();
   }
-
 
   destroy () {
     this.shader.destroy();

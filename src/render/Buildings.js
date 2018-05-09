@@ -49,8 +49,8 @@ render.Buildings = {
     });
     
     this.wallTexture = new GLX.texture.Image();
-    this.wallTexture.color( [1,1,1]);
-    this.wallTexture.load( BUILDING_TEXTURE);
+    this.wallTexture.color([1,1,1]);
+    this.wallTexture.load(BUILDING_TEXTURE);
   },
 
   render: function(depthFramebuffer) {

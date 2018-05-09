@@ -70,11 +70,17 @@ class DataItem {
             this.heightBuffer = new GLX.Buffer(1, res.heights);
             setTimeout(() => {
               this.pickingBuffer = new GLX.Buffer(3, res.pickingColors);
+              setTimeout(() => {
+                this.tintColors = new GLX.Buffer(4, res.tintColors);
+                setTimeout(() => {
+                  this.heightScales = new GLX.Buffer(1, res.heightScales);
 
-              DataIndex.add(this);
+                  DataIndex.add(this);
 
-              this.fade = 0;
-              this.isReady = true;
+                  this.fade = 0;
+                  this.isReady = true;
+                }, 20);
+              }, 20);
             }, 20);
           }, 20);
         }, 20);

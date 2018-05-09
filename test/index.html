@@ -93,10 +93,10 @@
     container: 'map',
     // fastMode: true,
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>',
-//  position: { latitude:52.52000, longitude:13.41000 }, // Berlin
-//  position: { latitude:53.40501, longitude:-2.96789 }, // Liverpool
-//  position: { latitude:31.23638, longitude:121.49513 }, // Shanghai
-    position: { latitude:55.7528, longitude:37.62035 }, // Moskau
+ // position: { latitude:52.52000, longitude:13.41000 }, // Berlin
+ // position: { latitude:53.40501, longitude:-2.96789 }, // Liverpool
+ // position: { latitude:31.23638, longitude:121.49513 }, // Shanghai
+ position: { latitude:55.7528, longitude:37.62035 }, // Moskau
 //  position: { latitude:40.71115, longitude:-74.01140 }, // NYC
 //  position: { latitude:48.85554, longitude:2.34678 }, // Paris
 
@@ -134,17 +134,6 @@
 
     feature.properties.roofColor = feature.properties.color;
   };
-
-  osmb.setStyle(feature => {
-    if (!feature.properties.levels && !feature.properties.height) {
-      feature.properties.color = 'red';
-    } else if (!feature.properties.height) {
-      feature.properties.color = 'lime';
-    } else {
-      feature.properties.color = 'green';
-    }
-    return feature;
-  });
 
   osmb.addGeoJSONTiles(
  // 'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
@@ -192,21 +181,17 @@
     const feature = e.target;
 
     if (!feature) {
-      osmb.setStyle(feature => {
+      osmb.highlight(feature => {
         if (!feature.properties.levels && !feature.properties.height) {
-          feature.properties.color = 'red';
-        } else {
-          feature.properties.color = 'green';
+          return 'red';
         }
-        return feature;
+        return 'green';
       });
       return;
     }
 
-    osmb.setStyle(feature => {
-      feature.properties.color = '#ffcc00';
-      // feature.properties.height /= 1.1;
-      return feature;
+    osmb.highlight(feature => {
+      return '#ffcc00';
     });
 
     console.log('OSMB', feature);
@@ -327,7 +312,7 @@
   // });
 
 
-  // osmb.removeMarker(examplePop);
+  // osmb.remove(examplePop);
 
   // for(let i = 0;i< 15; i++ ){
   //

@@ -1,5 +1,6 @@
 
 // TODO: collision check
+// TODO: make this a generic collection
 
 const DataIndex = {
 
