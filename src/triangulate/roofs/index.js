@@ -171,7 +171,7 @@ var createRoof;
 
     // create extra wall faces
     polygon.forEach(function(ring) {
-      for (var i = 0; i < outerPolygon.length - 1; i++) {
+      for (var i = 0; i < ring.length - 1; i++) {
         // skip degenerate quads - could even skip degenerate triangles
         if (ring[i][2] === 0 && ring[i + 1][2] === 0) {
           continue;
