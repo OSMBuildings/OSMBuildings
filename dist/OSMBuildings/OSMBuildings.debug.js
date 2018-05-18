@@ -2257,7 +2257,7 @@ var createRoof;
     }
 
     var
-      rad = properties.roofDirection*Math.PI/180,
+      rad = properties.roofDirection / 180 * Math.PI,
       closestPoint, farthestPoint,
       minY = Infinity, maxY = -Infinity;
 
@@ -2292,7 +2292,7 @@ var createRoof;
 
     // create extra wall faces
     polygon.forEach(function(ring) {
-      for (var i = 0; i < outerPolygon.length - 1; i++) {
+      for (var i = 0; i < ring.length - 1; i++) {
         // skip degenerate quads - could even skip degenerate triangles
         if (ring[i][2] === 0 && ring[i + 1][2] === 0) {
           continue;
@@ -3173,7 +3173,7 @@ var OSMBuildings = function(options) {
  * (String) OSMBuildings version
  * @static
  */
-OSMBuildings.VERSION = '3.2.10';
+OSMBuildings.VERSION = '3.2.11';
 
 /**
  * (String) OSMBuildings attribution
