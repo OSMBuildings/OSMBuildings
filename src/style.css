@@ -1,12 +1,14 @@
 
 .osmb {
+  position: relative;
   width: 100%;
   height: 100%;
   cursor: default;
 }
 
 .osmb-viewport {
-  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 .osmb-attribution {
@@ -34,5 +36,6 @@
   color: #0078A8;
 }
 
-.osmb-markers {
+.osmb-popup {
+  position: absolute;
 }

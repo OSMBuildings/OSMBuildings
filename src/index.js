@@ -185,12 +185,17 @@ class OSMBuildings {
 
     this.canvas = document.createElement('CANVAS');
     this.canvas.className = 'osmb-viewport';
-    this.canvas.width = this.width = container.offsetWidth;
-    this.canvas.height = this.height = container.offsetHeight;
+
+    // const devicePixelRatio = window.devicePixelRatio || 1;
+    const devicePixelRatio = 1; // this also affects building height and zoom
+
+    this.canvas.width = this.width = container.offsetWidth*devicePixelRatio;
+    this.canvas.height = this.height = container.offsetHeight*devicePixelRatio;
     this.container.appendChild(this.canvas);
 
     this.glx = new GLX(this.canvas, options.fastMode);
     GL = this.glx.GL;
+
 
     // this.markers = new Markers();
 
