@@ -216,6 +216,8 @@ class OSMBuildings {
 
     this.setDate(new Date());
     render.start();
+
+    this.emit('load', this)
   }
 
   /**
