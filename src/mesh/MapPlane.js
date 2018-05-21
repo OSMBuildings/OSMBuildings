@@ -61,7 +61,7 @@ class MapPlane {
         //
         // normals.push(...quadNormals);
 
-        zScale.push(1);
+        zScale.push(1, 1, 1, 1, 1, 1);
       }
     }
 

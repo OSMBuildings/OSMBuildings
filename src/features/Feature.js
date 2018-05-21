@@ -56,9 +56,8 @@ class Feature {
 
     //****** init buffers *********************************
 
-    this.items = res.items;
-
     // this cascade ralaxes rendering a lot when new tile data arrives
+    // TODO: destroy properly, even while this cascade might run -> make each step abortable
     this.vertexBuffer = new GLX.Buffer(3, res.vertices);
     setTimeout(() => {
       this.normalBuffer = new GLX.Buffer(3, res.normals);
@@ -71,6 +70,7 @@ class Feature {
             setTimeout(() => {
               this.pickingBuffer = new GLX.Buffer(3, res.pickingColors);
               setTimeout(() => {
+                this.items = res.items;
                 this.applyTintAndZScale();
                 APP.features.add(this);
                 this.fade = 0;
@@ -155,10 +155,16 @@ class Feature {
     //   this.request.abort(); // TODO: signal to workers
     // }
 
-    this.items = [];
+    // this.vertexBuffer && this.vertexBuffer.destroy();
+    // this.normalBuffer && this.normalBuffer.destroy();
+    // this.colorBuffer && this.colorBuffer.destroy();
+    // this.texCoordBuffer && this.texCoordBuffer.destroy();
+    // this.heightBuffer && this.heightBuffer.destroy();
+    // this.pickingBuffer && this.pickingBuffer.destroy();
+    // this.tintBuffer && this.tintBuffer.destroy();
+    // this.zScaleBuffer && this.zScaleBuffer.destroy();
 
     if (this.isReady) {
-      this.isReady = false;
       this.vertexBuffer.destroy();
       this.normalBuffer.destroy();
       this.colorBuffer.destroy();
@@ -168,5 +174,8 @@ class Feature {
       this.tintBuffer.destroy();
       this.zScaleBuffer.destroy();
     }
+
+    this.isReady = false;
+    this.items = [];
   }
 }
