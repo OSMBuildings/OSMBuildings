@@ -59,22 +59,21 @@ class Feature {
     // this cascade ralaxes rendering a lot when new tile data arrives
     // TODO: destroy properly, even while this cascade might run -> make each step abortable
     this.vertexBuffer = new GLX.Buffer(3, res.vertices);
-    setTimeout(() => {
+    this.timer = setTimeout(() => {
       this.normalBuffer = new GLX.Buffer(3, res.normals);
-      setTimeout(() => {
+      this.timer = setTimeout(() => {
         this.colorBuffer = new GLX.Buffer(3, res.colors);
-        setTimeout(() => {
+        this.timer = setTimeout(() => {
           this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
-          setTimeout(() => {
+          this.timer = setTimeout(() => {
             this.heightBuffer = new GLX.Buffer(1, res.heights);
-            setTimeout(() => {
+            this.timer = setTimeout(() => {
               this.pickingBuffer = new GLX.Buffer(3, res.pickingColors);
-              setTimeout(() => {
+              this.timer = setTimeout(() => {
                 this.items = res.items;
                 this.applyTintAndZScale();
                 APP.features.add(this);
                 this.fade = 0;
-                this.isReady = true;
               }, 20);
             }, 20);
           }, 20);
@@ -155,27 +154,17 @@ class Feature {
     //   this.request.abort(); // TODO: signal to workers
     // }
 
-    // this.vertexBuffer && this.vertexBuffer.destroy();
-    // this.normalBuffer && this.normalBuffer.destroy();
-    // this.colorBuffer && this.colorBuffer.destroy();
-    // this.texCoordBuffer && this.texCoordBuffer.destroy();
-    // this.heightBuffer && this.heightBuffer.destroy();
-    // this.pickingBuffer && this.pickingBuffer.destroy();
-    // this.tintBuffer && this.tintBuffer.destroy();
-    // this.zScaleBuffer && this.zScaleBuffer.destroy();
+    clearTimeout(this.timer);
 
-    if (this.isReady) {
-      this.vertexBuffer.destroy();
-      this.normalBuffer.destroy();
-      this.colorBuffer.destroy();
-      this.texCoordBuffer.destroy();
-      this.heightBuffer.destroy();
-      this.pickingBuffer.destroy();
-      this.tintBuffer.destroy();
-      this.zScaleBuffer.destroy();
-    }
+    this.vertexBuffer && this.vertexBuffer.destroy();
+    this.normalBuffer && this.normalBuffer.destroy();
+    this.colorBuffer && this.colorBuffer.destroy();
+    this.texCoordBuffer && this.texCoordBuffer.destroy();
+    this.heightBuffer && this.heightBuffer.destroy();
+    this.pickingBuffer && this.pickingBuffer.destroy();
+    this.tintBuffer && this.tintBuffer.destroy();
+    this.zScaleBuffer && this.zScaleBuffer.destroy();
 
-    this.isReady = false;
     this.items = [];
   }
 }
