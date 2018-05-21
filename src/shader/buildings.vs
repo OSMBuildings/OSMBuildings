@@ -8,6 +8,7 @@ attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute float aHeight;
 attribute vec4 aTintColor;
+attribute float aZScale;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
@@ -29,7 +30,7 @@ const float gradientStrength = 0.4;
 
 void main() {
 
-  float f = clamp(uFade, 0.0, 1.0);
+  float f = clamp(uFade*aZScale, 0.0, 1.0);
 
   if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);

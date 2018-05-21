@@ -4,6 +4,7 @@ precision highp float;  //is default in vertex shaders anyway, using highp fixes
 
 attribute vec4 aPosition;
 attribute vec3 aPickingColor;
+attribute float aZScale;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
@@ -16,7 +17,7 @@ varying vec4 vColor;
 
 void main() {
 
-  float f = clamp(uFade, 0.0, 1.0);
+  float f = clamp(uFade*aZScale, 0.0, 1.0);
 
   if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);

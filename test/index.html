@@ -180,12 +180,19 @@
   osmb.on('pointerup', e => {
     const feature = e.target;
 
+    // if (!feature) {
+    //   osmb.highlight(feature => {
+    //     if (!feature.properties.levels && !feature.properties.height) {
+    //       return 'red';
+    //     }
+    //     return 'green';
+    //   });
+    //   return;
+    // }
+
     if (!feature) {
-      osmb.highlight(feature => {
-        if (!feature.properties.levels && !feature.properties.height) {
-          return 'red';
-        }
-        return 'green';
+      osmb.hide(feature => {
+        return (!feature.properties.levels && !feature.properties.height);
       });
       return;
     }

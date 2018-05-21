@@ -7,7 +7,7 @@ class Buildings {
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
         uniforms: [
           'uModelMatrix',
           'uViewDirOnMap',
@@ -25,7 +25,7 @@ class Buildings {
       vertexShader: Shaders['buildings_with_shadows'].vertex,
       fragmentShader: Shaders['buildings_with_shadows'].fragment,
       shaderName: 'quality building shader',
-      attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor'],
+      attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
       uniforms: [
         'uFogDistance',
         'uFogBlurDistance',
@@ -103,6 +103,7 @@ class Buildings {
       shader.setBuffer('aColor', item.colorBuffer);
       shader.setBuffer('aHeight', item.heightBuffer);
       shader.setBuffer('aTintColor',  item.tintBuffer);
+      shader.setBuffer('aZScale',  item.zScaleBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });

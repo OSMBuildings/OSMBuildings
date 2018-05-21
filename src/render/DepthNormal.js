@@ -13,7 +13,7 @@ class DepthNormal {
       vertexShader: Shaders.depth_normal.vertex,
       fragmentShader: Shaders.depth_normal.fragment,
       shaderName: 'depth/normal shader',
-      attributes: ['aPosition', 'aNormal'],
+      attributes: ['aPosition', 'aNormal', 'aZScale'],
       uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uFade', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
     });
 
@@ -66,6 +66,7 @@ class DepthNormal {
 
       shader.setBuffer('aPosition', item.vertexBuffer);
       shader.setBuffer('aNormal', item.normalBuffer);
+      shader.setBuffer('aZScale', item.zScaleBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });

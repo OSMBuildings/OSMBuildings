@@ -139,7 +139,7 @@ class Feature {
       const hideFlag = zScaleCallback(f);
       for (let i = 0; i < item.vertexCount; i++) {
         tintColors.push(...col);
-        zScales[i] = hideFlag ? 0 : 1;
+        zScales.push(hideFlag ? 0 : 1);
       }
     });
 
@@ -165,6 +165,8 @@ class Feature {
       this.texCoordBuffer.destroy();
       this.heightBuffer.destroy();
       this.pickingBuffer.destroy();
+      this.tintBuffer.destroy();
+      this.zScaleBuffer.destroy();
     }
   }
 }

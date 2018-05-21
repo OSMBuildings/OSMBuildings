@@ -22,14 +22,13 @@ float getDepth(vec2 pos, ivec2 offset)
 }
 
 
-/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how 
- * much the fragment at 'pos' with depth 'depthHere'is occluded by the 
+/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how
+ * much the fragment at 'pos' with depth 'depthHere'is occluded by the
  * fragment that is (dx, dy) texels away from it.
  */
-float getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset)
-{
+float getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset) {
     float depthThere = getDepth(pos, offset);
-    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there), 
+    /* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there),
      * then 'here' is not occluded (result 1.0) */
     if (depthThere == 0.0)
       return 1.0;
@@ -38,7 +37,7 @@ float getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset)
      * 'here is not occluded' */
     if (depthHere < depthThere )
       return 1.0;
-      
+
     float relDepthDiff = depthThere / depthHere;
     float depthDiff = abs(depthThere - depthHere) * uFarPlane;
     /* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes
@@ -51,19 +50,19 @@ float getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset)
     return depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;
 }
 
-/* This shader approximates the ambient occlusion in screen space (SSAO). 
- * It is based on the assumption that a pixel will be occluded by neighboring 
+/* This shader approximates the ambient occlusion in screen space (SSAO).
+ * It is based on the assumption that a pixel will be occluded by neighboring
  * pixels iff. those have a depth value closer to the camera than the original
- * pixel itself (the function getOcclusionFactor() computes this occlusion 
+ * pixel itself (the function getOcclusionFactor() computes this occlusion
  * by a single other pixel).
  *
  * A naive approach would sample all pixels within a given distance. For an
- * interesting-looking effect, the sampling area needs to be at least 9 pixels 
+ * interesting-looking effect, the sampling area needs to be at least 9 pixels
  * wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.
  * This overburdens many GPUs.
- * To make the ambient occlusion computation faster, we do not consider all 
+ * To make the ambient occlusion computation faster, we do not consider all
  * texels in the sampling area, but only 16. This causes some sampling artifacts
- * that are later removed by blurring the ambient occlusion texture (this is 
+ * that are later removed by blurring the ambient occlusion texture (this is
  * done in a separate shader).
  */
 void main() {
@@ -78,7 +77,7 @@ void main() {
   }
 
   float occlusionFactor = 1.0;
-  
+
   occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1,  0));
   occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1,  0));
   occlusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));

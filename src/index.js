@@ -416,11 +416,6 @@ class OSMBuildings {
   /**
    * @deprecated
    */
-  hide () {}
-
-  /**
-   * @deprecated
-   */
   getTarget () {}
 
   /**

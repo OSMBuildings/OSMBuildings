@@ -11,7 +11,7 @@ class Picking {
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
-      attributes: ['aPosition', 'aPickingColor'],
+      attributes: ['aPosition', 'aPickingColor', 'aZScale'],
       uniforms: [
         'uModelMatrix',
         'uMatrix',
@@ -26,7 +26,9 @@ class Picking {
 
   getTarget (x, y, callback) {
     requestAnimationFrame(() => {
-      this.shader.enable();
+      const shader = this.shader;
+
+      shader.enable();
       this.framebuffer.enable();
 
       GL.viewport(0, 0, this.size[0], this.size[1]);
@@ -34,7 +36,7 @@ class Picking {
       GL.clearColor(0, 0, 0, 1);
       GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-      this.shader.setParam('uFogDistance', '1f', render.fogDistance);
+      shader.setParam('uFogDistance', '1f', render.fogDistance);
 
       const renderedItems = [];
       APP.features.forEach(item => {
@@ -49,19 +51,20 @@ class Picking {
 
         renderedItems.push(item.items);
 
-        this.shader.setParam('uFade', '1f', item.getFade());
-        this.shader.setParam('uIndex', '1f', renderedItems.length / 256);
+        shader.setParam('uFade', '1f', item.getFade());
+        shader.setParam('uIndex', '1f', renderedItems.length / 256);
 
-        this.shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-        this.shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+        shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+        shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
 
-        this.shader.setBuffer('aPosition', item.vertexBuffer);
-        this.shader.setBuffer('aPickingColor', item.pickingBuffer);
+        shader.setBuffer('aPosition', item.vertexBuffer);
+        shader.setBuffer('aPickingColor', item.pickingBuffer);
+        shader.setBuffer('aZScale', item.zScaleBuffer);
 
         GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
       });
 
-      this.shader.disable();
+      shader.disable();
       GL.viewport(0, 0, APP.width, APP.height);
 
       //***************************************************
