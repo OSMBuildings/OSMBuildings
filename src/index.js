@@ -120,10 +120,10 @@ class OSMBuildings {
    * @deprecated {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
    * @deprecated {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
    * @deprecated {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
-   * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
-   * @param {String} [options.highlightColor='#f08000'] Default color for highlighting features
-   * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality.
+   * @deprecated {String} [options.highlightColor='#f08000'] Default color for highlighting features
    * @deprecated {Array} [options.effects=[]] Which effects to enable. The only effect at the moment is 'shadows'
+   * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
+   * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality.
    * @param {Object} [options.style] Sets the default building style
    * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
    */
@@ -138,10 +138,6 @@ class OSMBuildings {
 
     render.backgroundColor = Qolor.parse(options.backgroundColor || BACKGROUND_COLOR).toArray();
     render.fogColor = Qolor.parse(options.fogColor || FOG_COLOR).toArray();
-
-    if (options.highlightColor) {
-      HIGHLIGHT_COLOR = Qolor.parse(options.highlightColor).toArray();
-    }
 
     this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
@@ -196,8 +192,8 @@ class OSMBuildings {
     this.glx = new GLX(this.canvas, options.fastMode);
     GL = this.glx.GL;
 
-
-    // this.markers = new Markers();
+    this.features = new FeatureCollection();
+    this.markers = new Collection();
 
     this.events = new Events(this.canvas);
 
@@ -336,7 +332,7 @@ class OSMBuildings {
    */
   addOBJ (url, position, options = {}) {
     options.position = position;
-    return new DataItem('OBJ', url, options);
+    return new Feature('OBJ', url, options);
   }
 
   /**
@@ -354,7 +350,7 @@ class OSMBuildings {
    * @return {Object} The added object
    */
   addGeoJSON (url, options) {
-    return new DataItem('GeoJSON', url, options);
+    return new Feature('GeoJSON', url, options);
   }
 
   // TODO: allow more data layers later on
@@ -395,24 +391,12 @@ class OSMBuildings {
    * });
    * @param callback {Function} A function that does user defined filtering and highlights by returning a color
    */
-  highlight (callback) {
-    // TODO: handle data that will be loaded later on
-    DataIndex.items.forEach((dataItem, i) => {
-      const tintColors = [];
-      dataItem.items.forEach(feature => {
-        const res = callback({ id: feature.id, properties: feature.properties });
-        const col = res ? Qolor.parse(res).toArray() : [0, 0, 0, 0];
-        for (let i = 0; i < feature.vertexCount; i++) {
-          tintColors.push(...col);
-        }
-      });
-
-      DataIndex.items[i].tintColors = new GLX.Buffer(4, new Float32Array(tintColors));
-    });
+  highlight (tintCallback) {
+    this.features.setTintCallback(tintCallback);
   }
 
   /**
-   * This replaces any previous show/hide rules.
+   * This replaces any previous show/hide rule.
    * @example
    * osmb.hide(building => {
    *   if (building.properties.height < 100) return true;
@@ -420,19 +404,8 @@ class OSMBuildings {
    * });
    * @param callback {Function} A function that does user defined filtering and hides if return value is true
    */
-  hide (callback) {
-    // TODO: handle data that will be loaded later on
-    DataIndex.items.forEach((dataItem, i) => {
-      const heightScales = [];
-      dataItem.items.forEach(feature => {
-        const res = callback({ id: feature.id, properties: feature.properties });
-        for (let i = 0; i < feature.vertexCount; i++) {
-          heightScales[i] = res ? 0 : 1;
-        }
-      });
-
-      DataIndex.items[i].heightScales = new GLX.Buffer(1, new Float32Array(heightScales));
-    });
+  hide (zScaleCallback) {
+    this.features.setZScaleCallback(zScaleCallback);
   }
 
   /**
@@ -712,7 +685,8 @@ class OSMBuildings {
     this.glx.destroy();
     this.canvas.parentNode.removeChild(this.canvas);
 
-    DataIndex.destroy();
+    this.features.destroy();
+    this.markers.destroy();
 
     this.container.innerHTML = '';
   }

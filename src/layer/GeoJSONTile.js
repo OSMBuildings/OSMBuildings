@@ -7,7 +7,7 @@ class GeoJSONTile extends Tile {
   }
 
   load (url, callback) {
-    this.content = new DataItem('GeoJSON', url, this.options, callback);
+    this.content = new Feature('GeoJSON', url, this.options, callback);
   }
 
   destroy () {

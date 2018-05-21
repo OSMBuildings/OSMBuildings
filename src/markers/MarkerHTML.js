@@ -80,7 +80,7 @@
 //   }
 //
 //   remove () {
-//     APP.markers.items.forEach(item => {
+//     APP.markers.forEach(item => {
 //       if (item.div === this.div && this.visibility) {
 //         APP.markers.div.removeChild(this.div);
 //       }

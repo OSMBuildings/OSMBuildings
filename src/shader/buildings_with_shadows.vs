@@ -6,8 +6,8 @@ attribute vec4 aPosition;
 attribute vec3 aNormal;
 attribute vec3 aColor;
 attribute vec2 aTexCoord;
-attribute vec3 aId;
 attribute float aHeight;
+attribute vec4 aTintColor;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
@@ -15,8 +15,6 @@ uniform mat4 uSunMatrix;
 
 uniform mat3 uNormalTransform;
 
-uniform vec3 uHighlightColor;
-uniform vec3 uHighlightId;
 uniform vec2 uViewDirOnMap;
 uniform vec2 uLowerEdgePoint;
 
@@ -42,11 +40,12 @@ void main() {
     vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
     gl_Position = uMatrix * pos;
 
-    //*** highlight object ******************************************************
-
     vec3 color = aColor;
-    if (uHighlightId == aId) {
-      color = mix(aColor, uHighlightColor, 0.5);
+
+    // tint ***********************************************
+
+    if (aTintColor.a > 0.0) {
+      color = mix(aColor, aTintColor.rgb, 0.5);
     }
 
     //*** light intensity, defined by light direction on surface ****************
@@ -67,7 +66,7 @@ void main() {
     vec4 worldPos = uModelMatrix * pos;
     vec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;
     verticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);
-    
+
     // *** shadow mapping ********
 
     vec4 sunRelPosition = uSunMatrix * pos;

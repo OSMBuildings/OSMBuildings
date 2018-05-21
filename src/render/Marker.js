@@ -32,7 +32,7 @@ class MarkerRender {
     GL.enable(GL.BLEND);
     GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
 
-    Markers.items.forEach(item => {
+    APP.markers.forEach(item => {
       if (!item.isReady) {
         return;
       }

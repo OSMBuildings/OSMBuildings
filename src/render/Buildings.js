@@ -1,14 +1,13 @@
 
-render.Buildings = {
+class Buildings {
 
-  init: function() {
-  
+  constructor () {
     this.shader = !render.effects.shadows ?
       new GLX.Shader({
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
-        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
+        attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor'],
         uniforms: [
           'uModelMatrix',
           'uViewDirOnMap',
@@ -19,8 +18,6 @@ render.Buildings = {
           'uLowerEdgePoint',
           'uFogDistance',
           'uFogBlurDistance',
-          'uHighlightColor',
-          'uHighlightId',
           'uFade',
           'uWallTexIndex'
         ]
@@ -28,12 +25,10 @@ render.Buildings = {
       vertexShader: Shaders['buildings_with_shadows'].vertex,
       fragmentShader: Shaders['buildings_with_shadows'].fragment,
       shaderName: 'quality building shader',
-      attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aId', 'aHeight'],
+      attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor'],
       uniforms: [
         'uFogDistance',
         'uFogBlurDistance',
-        'uHighlightColor',
-        'uHighlightId',
         'uLightColor',
         'uLightDirection',
         'uLowerEdgePoint',
@@ -47,15 +42,14 @@ render.Buildings = {
         'uWallTexIndex'
       ]
     });
-    
+
     this.wallTexture = new GLX.texture.Image();
     this.wallTexture.color([1,1,1]);
     this.wallTexture.load(BUILDING_TEXTURE);
-  },
+  }
 
-  render: function(depthFramebuffer) {
-
-    var shader = this.shader;
+  render (depthFramebuffer) {
+    const shader = this.shader;
     shader.enable();
 
     // if (this.showBackfaces) {
@@ -64,8 +58,6 @@ render.Buildings = {
 
     shader.setParam('uFogDistance',     '1f',  render.fogDistance);
     shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
-    shader.setParam('uHighlightColor',  '3fv', this.highlightColor || [0, 0, 0]);
-    shader.setParam('uHighlightId',     '3fv', this.highlightId || [0, 0, 0]);
     shader.setParam('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
     shader.setParam('uLightDirection',  '3fv', Sun.direction);
     shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
@@ -76,21 +68,23 @@ render.Buildings = {
     }
 
     shader.setTexture('uWallTexIndex', 0, this.wallTexture);
-    
+
     if (depthFramebuffer) {
       shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height]);
       shader.setTexture('uShadowTexIndex', 1, depthFramebuffer.depthTexture);
     }
 
-    var
-      dataItems = DataIndex.items,
-      modelMatrix;
-
-    dataItems.forEach(item => {
+    APP.features.forEach(item => {
       // no visibility check needed, Grid.purge() is taking care
       // TODO: but not for individual objects (and markers)!
 
-      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom || !(modelMatrix = item.getMatrix())) {
+      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
+        return;
+      }
+
+      const modelMatrix = item.getMatrix();
+
+      if (!modelMatrix) {
         return;
       }
 
@@ -98,7 +92,7 @@ render.Buildings = {
 
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
       shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-      
+
       if (render.effects.shadows) {
         shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
       }
@@ -107,8 +101,8 @@ render.Buildings = {
       shader.setBuffer('aTexCoord', item.texCoordBuffer);
       shader.setBuffer('aNormal', item.normalBuffer);
       shader.setBuffer('aColor', item.colorBuffer);
-      shader.setBuffer('aId', item.pickingBuffer);
       shader.setBuffer('aHeight', item.heightBuffer);
+      shader.setBuffer('aTintColor',  item.tintBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });
@@ -118,7 +112,7 @@ render.Buildings = {
     // }
 
     shader.disable();
-  },
+  }
 
-  destroy: function() {}
-};
+  destroy () {}
+}

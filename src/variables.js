@@ -12,10 +12,9 @@ var TILE_SIZE = 256;
 
 var DEFAULT_HEIGHT = 10;
 
-
 var MAX_USED_ZOOM_LEVEL = 25;
 var DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
-var HIGHLIGHT_COLOR = Qolor.parse('#f08000').toArray();
+
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to horizon into
 var FOG_COLOR = '#e8e0d8';
@@ -29,8 +28,8 @@ var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
 var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
- * to cover everything that's also visible to the user. For this to work 
- * reliably, we have to make assumptions on how high (in [m]) the buildings 
+ * to cover everything that's also visible to the user. For this to work
+ * reliably, we have to make assumptions on how high (in [m]) the buildings
  * can become.
  * Note: using a lower-than-accurate value will lead to buildings parts at the
  * edge of the viewport to have incorrect shadows. Using a higher-than-necessary

@@ -10,7 +10,7 @@ class Marker {
     this.isReady = false;
     this.size = options.size || 1;
 
-    Markers.add(this);
+    APP.markers.add(this);
     this.load();
   }
 
@@ -95,7 +95,7 @@ class Marker {
 
 
   destroy () {
-    Markers.remove(this);
+    APP.markers.remove(this);
 
     this.texCoordBuffer.destroy();
     this.vertexBuffer.destroy();

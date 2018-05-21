@@ -65,10 +65,7 @@ function postResult(items, position, tri) {
     colors: new Float32Array(tri.colors),
     texCoords: new Float32Array(tri.texCoords),
     heights: new Float32Array(tri.heights),
-    pickingColors: new Float32Array(tri.pickingColors),
-
-    tintColors: new Float32Array(tri.tintColors),
-    heightScales: new Float32Array(tri.heightScales)
+    pickingColors: new Float32Array(tri.pickingColors)
   };
 
   postMessage(res, [
@@ -77,10 +74,7 @@ function postResult(items, position, tri) {
     res.colors.buffer,
     res.texCoords.buffer,
     res.heights.buffer,
-    res.pickingColors.buffer,
-
-    res.tintColors.buffer,
-    res.heightScales.buffer
+    res.pickingColors.buffer
   ]);
 }
 
@@ -114,10 +108,7 @@ function processGeoJSON (geojson, options) {
     colors: [],
     texCoords: [],
     heights: [],
-    pickingColors: [],
-
-    tintColors: [],
-    heightScales: []
+    pickingColors: []
   };
 
   const
@@ -140,9 +131,6 @@ function processGeoJSON (geojson, options) {
     for (let i = 0; i < vertexCount; i++) {
       tri.heights.push(properties.height);
       tri.pickingColors.push(...pickingColor);
-
-      tri.tintColors.push(0, 0, 0, 0);
-      tri.heightScales[i] = 1;
     }
 
     items.push({ id: id, properties: properties, vertexCount: vertexCount });
@@ -185,10 +173,7 @@ function processOBJ(obj, mtl, options) {
     colors: [],
     texCoords: [],
     heights: [],
-    pickingColors: [],
-
-    tintColors: [],
-    heightScales: []
+    pickingColors: []
   };
 
   const
@@ -216,9 +201,6 @@ function processOBJ(obj, mtl, options) {
       tri.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
       tri.heights.push(mesh.height);
       tri.pickingColors.push(...pickingColor);
-
-      tri.tintColors.push(0, 0, 0, 0);
-      tri.heightScales[i] = 1;
     }
 
     items.push({ id: id, properties: {}, vertexCount: vertexCount });

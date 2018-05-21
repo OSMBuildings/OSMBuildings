@@ -31,7 +31,8 @@
   ],
 
   "src": [
-    "src/markers/index.js",
+    "src/Collection.js",
+    
     "src/markers/Marker.js",
 
     "src/workers/index.js",
@@ -59,8 +60,8 @@
     "src/layer/BitmapTile.js",
     "src/layer/GeoJSONTile.js",
 
-    "src/data/index.js",
-    "src/data/DataItem.js",
+    "src/features/index.js",
+    "src/features/Feature.js",
 
     "src/mesh/MapPlane.js",
 

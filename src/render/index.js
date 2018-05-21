@@ -29,7 +29,7 @@ class render {
 
     render.Picking = new Picking(); // renders only on demand
     render.Horizon = new Horizon();
-    render.Buildings.init();
+    render.Buildings = new Buildings();
     render.Marker = new MarkerRender();
     render.Basemap = new Basemap();
 
@@ -183,7 +183,7 @@ class render {
     const verticalFOV = 2 * Math.atan((height / 2.0) / virtualDistance) / Math.PI * 180;
 
     // OSMBuildings' perspective camera is ... special: The reference point for
-    // camera movement, rotation and zoom is at the screen center (as usual). 
+    // camera movement, rotation and zoom is at the screen center (as usual).
     // But the center of projection is not at the screen center as well but at
     // the bottom center of the screen. This projection was chosen for artistic
     // reasons so that when the map is seen from straight above, vertical building

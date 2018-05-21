@@ -37,7 +37,7 @@ class Picking {
       this.shader.setParam('uFogDistance', '1f', render.fogDistance);
 
       const renderedItems = [];
-      DataIndex.items.forEach(item => {
+      APP.features.forEach(item => {
         if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
           return;
         }
@@ -93,7 +93,7 @@ class Picking {
       // find related items - across tiles
       const res = { id: feature.id, properties: feature.properties, parts: [] };
       const id = feature.properties.building || feature.id;
-      DataIndex.items.forEach(item => {
+      APP.features.forEach(item => {
         item.items.forEach(feature => {
           if (feature.id === id || feature.properties.building === id) {
             res.parts.push({ id: feature.id, properties: feature.properties });

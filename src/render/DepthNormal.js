@@ -45,14 +45,15 @@ class DepthNormal {
     // render all data items, but also a dummy map plane
     // Note: SSAO on the map plane has been disabled temporarily TODO: check
 
-    const dataItems = DataIndex.items.concat([this.mapPlane]);
+    const features = APP.features.items.concat([this.mapPlane]);
 
-    dataItems.forEach(item => {
+    features.forEach(item => {
       if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
         return;
       }
 
       const modelMatrix = item.getMatrix();
+
       if (!modelMatrix) {
         return;
       }

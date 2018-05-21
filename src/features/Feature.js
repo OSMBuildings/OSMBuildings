@@ -1,5 +1,5 @@
 
-class DataItem {
+class Feature {
 
   constructor (type, url, options = {}, callback = function () {}) {
     this.type = type;
@@ -71,15 +71,10 @@ class DataItem {
             setTimeout(() => {
               this.pickingBuffer = new GLX.Buffer(3, res.pickingColors);
               setTimeout(() => {
-                this.tintColors = new GLX.Buffer(4, res.tintColors);
-                setTimeout(() => {
-                  this.heightScales = new GLX.Buffer(1, res.heightScales);
-
-                  DataIndex.add(this);
-
-                  this.fade = 0;
-                  this.isReady = true;
-                }, 20);
+                this.applyTintAndZScale();
+                APP.features.add(this);
+                this.fade = 0;
+                this.isReady = true;
               }, 20);
             }, 20);
           }, 20);
@@ -131,8 +126,30 @@ class DataItem {
     return fade;
   }
 
+  applyTintAndZScale () {
+    const tintColors = [];
+    const tintCallback = APP.features.tintCallback;
+    const zScales = [];
+    const zScaleCallback = APP.features.zScaleCallback;
+
+    this.items.forEach(item => {
+      const f = { id: item.id, properties: item.properties }; // perhaps pass center/bbox as well
+      const tintColor = tintCallback(f);
+      const col = tintColor ? [...Qolor.parse(tintColor).toArray(), 1] : [0, 0, 0, 0];
+      const hideFlag = zScaleCallback(f);
+      for (let i = 0; i < item.vertexCount; i++) {
+        tintColors.push(...col);
+        zScales[i] = hideFlag ? 0 : 1;
+      }
+    });
+
+    // perhaps mix colors in JS and transfer just one color buffer
+    this.tintBuffer = new GLX.Buffer(4, new Float32Array(tintColors));
+    this.zScaleBuffer = new GLX.Buffer(1, new Float32Array(zScales));
+  }
+
   destroy () {
-    DataIndex.remove(this);
+    APP.features.remove(this);
 
     // if (this.request) {
     //   this.request.abort(); // TODO: signal to workers
