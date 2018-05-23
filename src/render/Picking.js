@@ -24,7 +24,7 @@ class Picking {
     this.framebuffer = new GLX.Framebuffer(this.size[0], this.size[1]);
   }
 
-  getTarget (x, y, callback) {
+  getTargets (x, y, callback) {
     requestAnimationFrame(() => {
       const shader = this.shader;
 

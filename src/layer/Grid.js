@@ -60,7 +60,7 @@ class Grid {
   /* Returns a set of tiles based on 'tiles' (at zoom level 'zoom'),
    * but with those tiles recursively replaced by their respective parent tile
    * (tile from zoom level 'zoom'-1 that contains 'tile') for which said parent
-   * tile covers less than 'pixelAreaThreshold' pixels on screen based on the 
+   * tile covers less than 'pixelAreaThreshold' pixels on screen based on the
    * current view-projection matrix.
    *
    * The returned tile set is duplicate-free even if there were duplicates in
@@ -214,12 +214,12 @@ class Grid {
 
     setTimeout(() => {
       this.update();
-    }, 250);
+    }, 100);
   }
 
   queueNext () {
     if (!this.queue.length) {
-      setTimeout(this.queueNext.bind(this), 50);
+      setTimeout(this.queueNext.bind(this), 200);
       return;
     }
 

@@ -177,30 +177,33 @@
 //    label.style.top = Math.round(pos.y) + 'px';
  // });
 
+//   osmb.highlight(feature => {
+//     if (!feature.properties.levels && !feature.properties.height) {
+//       return 'red';
+//     }
+//     return 'green';
+//   });
+
   osmb.on('pointerup', e => {
-    const feature = e.target;
+    const features = e.targets;
 
-    osmb.hide(feature => {
-      return (Math.random()*10 <<0) % 2  == 0;
-    });
+    // osmb.hide(feature => {
+    //   return (Math.random()*10 <<0) % 2  == 0;
+    // });
 
-    if (!feature) {
-      osmb.highlight(feature => {
-        if (!feature.properties.levels && !feature.properties.height) {
-          return 'red';
-        }
-        return 'green';
-      });
-
+    if (!features) {
       return;
     }
 
-    osmb.highlight(feature => {
-      return '#ffcc00';
-    });
+    // const id = feature.properties.building || feature.id;
+    // osmb.highlight(feature => {
+    //   if (feature.id === id || feature.properties.building === id) {
+    //     return '#ffcc00';
+    //   }
+    // });
 
-    console.log('OSMB', feature);
-
+    console.log('OSMB', features);
+return;
     let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
 
     fetch(query)

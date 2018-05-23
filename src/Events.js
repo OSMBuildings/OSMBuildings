@@ -17,25 +17,10 @@ function mul2scalar (a, f) {
  * @private
  */
 function getEventXY (e) {
-  let el = e.target;
-
-  if (el.getBoundingClientRect) {
-    const box = el.getBoundingClientRect();
-    if (box !== undefined) {
-      return { x: e.x - box.left, y: e.y - box.top };
-    }
-  }
-
-  const res = { x: 0, y: 0 };
-  while (el.nodeType === 1) {
-    res.x += el.offsetLeft;
-    res.y += el.offsetTop;
-    el = el.parentNode;
-  }
-
-  return { x: e.x - res.s, y: e.y - res.y };
+  const el = e.target;
+  const box = el.getBoundingClientRect();
+  return { x: e.x - box.left, y: e.y - box.top };
 }
-
 
 /**
  * @private
@@ -70,7 +55,7 @@ class Events {
 
   addAllListeners (win, container) {
     const doc = win.document;
-    
+
     if ('ontouchstart' in win) {
       addListener(container, 'touchstart', e => {
         this.onTouchStart(e);
@@ -100,6 +85,9 @@ class Events {
       });
       addListener(doc, 'mouseup', e => {
         this.onMouseUpDocument(e);
+      });
+      addListener(container, 'mouseup', e => {
+        this.onMouseUp(e);
       });
       addListener(container, 'dblclick', e => {
         this.onDoubleClick(e);
@@ -140,9 +128,9 @@ class Events {
   onDoubleClick (e) {
     render.speedUp();
     this.cancelEvent(e);
-    
+
     this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
-    
+
     if (!this.isDisabled) {
       APP.setZoom(APP.zoom + 1, e);
     }
@@ -198,9 +186,12 @@ class Events {
     }
 
     this.buttons = 0;
+  }
 
-    render.Picking.getTarget(e.x, e.y, target => {
-      this.emit('pointerup', { buttons: e.buttons, target: target });
+  onMouseUp (e) {
+    const pos = getEventXY(e);
+    render.Picking.getTargets(pos.x, pos.y, targets => {
+      this.emit('pointerup', { buttons: e.buttons, targets: targets });
     });
   }
 
@@ -349,8 +340,8 @@ class Events {
       this.buttons = 0;
 
       const pos = getEventXY(e);
-      render.Picking.getTarget(pos.x, pos.y, target => {
-        this.emit('pointerup', { buttons: 1, target: target });
+      render.Picking.getTargets(pos.x, pos.y, targets => {
+        this.emit('pointerup', { buttons: 1, targets: targets });
       });
 
     } else if (e.touches.length === 1) {
