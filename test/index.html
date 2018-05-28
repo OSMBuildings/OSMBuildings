@@ -180,37 +180,39 @@
   osmb.on('pointerup', e => {
     const feature = e.target;
 
-    osmb.hide(feature => {
-      return (Math.random()*10 <<0) % 2  == 0;
-    });
 
-    if (!feature) {
-      osmb.highlight(feature => {
-        if (!feature.properties.levels && !feature.properties.height) {
-          return 'red';
-        }
-        return 'green';
-      });
 
-      return;
-    }
-
-    osmb.highlight(feature => {
-      return '#ffcc00';
-    });
-
-    console.log('OSMB', feature);
-
-    let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
-
-    fetch(query)
-      .then(response => response.json())
-      .then(parsed => {
-        const feature = parsed.elements[0];
-        if (feature) {
-          console.log('Overpass', feature);
-        }
-      });
+    // osmb.hide(feature => {
+    //   return (Math.random()*10 <<0) % 2  == 0;
+    // });
+    //
+    // if (!feature) {
+    //   osmb.highlight(feature => {
+    //     if (!feature.properties.levels && !feature.properties.height) {
+    //       return 'red';
+    //     }
+    //     return 'green';
+    //   });
+    //
+    //   return;
+    // }
+    //
+    // osmb.highlight(feature => {
+    //   return '#ffcc00';
+    // });
+    //
+    // console.log('OSMB', feature);
+    //
+    // let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
+    //
+    // fetch(query)
+    //   .then(response => response.json())
+    //   .then(parsed => {
+    //     const feature = parsed.elements[0];
+    //     if (feature) {
+    //       console.log('Overpass', feature);
+    //     }
+    //   });
   });
 
   //*************************************************************************
@@ -310,10 +312,20 @@
 
   // let examplePop = osmb.addMarker();
   // let examplePop = osmb.addMarker({
-  //   elevation: 50,
-  //   position: { latitude: 55.750247791148475, longitude: 37.61785268783569 },
-  //   size: 2
-  //   // , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/marker-icon.png"
+  //   elevation: 1,
+  //   position: { latitude: 55.750117969558325, longitude: 37.61808604001999 },
+  //   size: 10
+  //   , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/sprech.png"
+  //   // , offsetX :-5
+  //   // , offsetY:-5
+  // });
+
+  // let examplePop2 = osmb.addMarker({
+  //   elevation: 1,
+  //   position: { latitude: 55.750117969558325, longitude: 37.61808604001999 },
+  //   size: 5,
+  //   anchor : 'center'
+  //   , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/brille.png"
   // });
 
 
