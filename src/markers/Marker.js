@@ -59,15 +59,14 @@ class Marker {
           this.isReady = true;
         }
         else {
-          console.log("can not read marker source")
+          console.log("can not read marker source");
           this.loadStandardIcon();
         }
       });
     } else {
-      console.log("no marker source")
+      console.log("no marker source");
       this.loadStandardIcon();
     }
-
   }
 
 

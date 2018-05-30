@@ -6,6 +6,7 @@
   "homepage": "http://osmbuildings.org",
   "author": "@kekscom",
   "contributors": [],
+  "license": "MIT",
   "maintainers": [
     "Jan Marsch (@kekscom)",
     "Robert Buchholz (@rbuch703)",
@@ -28,8 +29,8 @@
     "grunt-contrib-compress": "^1.0.0",
     "grunt-contrib-concat": "~0.5.1",
     "grunt-contrib-copy": "~0.8.2",
-    "grunt-contrib-jshint": "^0.11.0",
-    "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony"
+    "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
+    "grunt-eslint": "^20.1.0"
   },
   "optionalDependencies": {}
 }

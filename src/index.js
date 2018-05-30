@@ -213,7 +213,7 @@ class OSMBuildings {
     this.setDate(new Date());
     render.start();
 
-    this.emit('load', this)
+    this.emit('load', this);
   }
 
   /**
@@ -312,7 +312,9 @@ class OSMBuildings {
    * Removes an object from the map.
    */
   remove (item) {
-    item.destroy && item.destroy();
+    if (item.destroy) {
+      item.destroy();
+    }
   }
 
   /**
