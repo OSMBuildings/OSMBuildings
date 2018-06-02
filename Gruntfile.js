@@ -164,7 +164,7 @@ module.exports = grunt => {
 
     const content = fileToVar('build/temp/worker.js'); // CONFIG
 
-    fs.writeFileSync('build/temp/worker.var.js', `const worker = '${content}';\n`);
+    fs.writeFileSync('build/temp/worker.var.js', `const workerStr = '${content}';\n`);
   });
 
   grunt.registerTask('shaders', () => {
