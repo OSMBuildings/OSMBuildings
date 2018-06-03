@@ -16,7 +16,6 @@ class MarkerRender {
         'uViewMatrix',
         'uModelMatrix',
         'uTexIndex'
-        // , 'markerSize'
       ]
     });
   }
@@ -44,7 +43,6 @@ class MarkerRender {
         item.elevation
       );
 
-      //shader.setParam('markerSize', '1f', item.size);
       shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
       shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);

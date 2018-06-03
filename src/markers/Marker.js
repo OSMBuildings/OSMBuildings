@@ -5,103 +5,18 @@ class Marker {
     this.offsetX = options.offsetX || 0;
     this.offsetY = options.offsetY || 0;
     this.position = options.position || { latitude: 0, longitude: 0 };
-    this.elevation = options.elevation || 30;
+    this.elevation = options.elevation || 1;
     this.source = options.source;
     this.isReady = false;
-    this.size = options.size || 1;
-    this.anchor = options.anchor || 'center';
+    this._size = 1;
+    this.anchor = options.anchor || 'bottom';
+    this._scale =options.scale || 1;
 
     APP.markers.add(this);
     this.load();
   }
 
   load () {
-
-    const texCoords = [
-      0, 0,
-      1, 0,
-      0, 1,
-      1, 1,
-      0, 1,
-      1, 0
-    ];
-
-    const
-      w2 = this.size / 2,
-      h2 = this.size / 2;
-
-    const anchorsCoord = {
-      center: [0,0],
-      top: [-1,-1,-1,-1],
-      bottom: [-1,-1,-1,-1],
-      left: [-1,-1,-1,-1],
-      right: [-1,-1,-1,-1],
-      top_left: [-1,-1,-1,-1],
-      top_right: [-1,-1,-1,-1],
-      bottom_left: [-1,-1,-1,-1],
-      bottom_right: [-1,-1,-1,-1]
-
-    };
-
-    // let anchor = this.anchor;
-
-    // let anchorCoord = [0, this.size/2, this.size, this.size/2];   // top
-    // let anchorCoord = [this.size, this.size/2, 0, this.size/2];   // bottom
-
-    // let anchorCoord = [this.size/2, this.size/2, this.size/2, this.size/2];   // center
-    // let anchorCoord = [this.size/2, 0, this.size/2, this.size];   // left
-    // let anchorCoord = [this.size/2, this.size, this.size/2, 0];   // right
-    // let anchorCoord = [0, 0, this.size, this.size];   // top_left
-    // let anchorCoord = [0, this.size, this.size, 0];   // top_right
-    // let anchorCoord = [this.size, this.size, 0, 0];   // bottom_right
-    // let anchorCoord = [this.size, -this.size, 0, 0];   // bottom_left
-    // let anchorCoord = [this.size, this.size, 0, 0];   // bottom_left
-
-    //
-    // for (var property in anchorsCoord) {
-    //   if (anchorsCoord.hasOwnProperty(property)) {
-    //     if(anchor === property){
-    //       console.log(property)
-    //
-    //     }
-    //   }
-    // }
-
-    let center = {x: 0 , y: 0};
-    center.x = this.offsetX;
-    center.y = this.offsetY;
-
-    const vertices = [
-      center.x - anchorCoord[1], center.y - anchorCoord[0], 0,  // upper left
-      center.x + anchorCoord[3], center.y - anchorCoord[0], 0 , // upper right
-      center.x - anchorCoord[1], center.y + anchorCoord[2], 0,  // bottom left
-      center.x + anchorCoord[3], center.y + anchorCoord[2] , 0, // bottom right
-      center.x - anchorCoord[1], center.y + anchorCoord[2], 0,  // bottom left
-      center.x + anchorCoord[3], center.y - anchorCoord[0] , 0  // upper right
-    ];
-    console.log(vertices)
-
-
-    // const vertices = [
-    //   center.x - w2 , center.y -h2 , 0,
-    //   center.x + w2 , center.y - h2, 0 ,
-    //   center.x - w2 , center.y + h2, 0,
-    //   center.x + w2,  center.y + h2 , 0,
-    //   center.x - w2,  center.y + h2 , 0,
-    //   center.x + w2 , center.y - h2, 0
-    // ];
-
-    // const vertices = [
-    //   -w2, -h2, 0,
-    //   w2, -h2, 0,
-    //   -w2, h2, 0,
-    //   w2, h2, 0,
-    //   -w2, h2, 0,
-    //   w2, -h2, 0
-    // ];
-
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
 
     if(this.source){
       this.texture = new GLX.texture.Image().load(this.source, image => {
@@ -119,6 +34,11 @@ class Marker {
           GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
 
           this.isReady = true;
+          this.size = image.width/20*this._scale;
+
+
+          this.loadBuffer();
+
         }
         else {
           console.log("can not read marker source")
@@ -128,10 +48,57 @@ class Marker {
     } else {
       console.log("no marker source")
       this.loadStandardIcon();
+
     }
 
   }
 
+  loadBuffer(){
+
+    const texCoords = [
+      0, 0,
+      1, 0,
+      0, 1,
+      1, 1,
+      0, 1,
+      1, 0
+    ];
+
+    const anchorsCoordPool = {
+      center: [this.size/2, this.size/2, this.size/2, this.size/2],
+      top: [0, this.size/2, this.size, this.size/2],
+      bottom: [this.size, this.size/2, 0, this.size/2],
+      left: [this.size/2, 0, this.size/2, this.size],
+      right: [this.size/2, this.size, this.size/2, 0],
+      top_left: [0, 0, this.size, this.size],
+      top_right: [0, this.size, this.size, 0],
+      bottom_left: [this.size, -this.size, 0, 0],
+      bottom_right: [this.size, this.size, 0, 0]
+
+    };
+
+    let anchorCoord = [this.size/2, this.size/2, this.size/2, this.size/2];
+
+    for (var prop in anchorsCoordPool) {
+        if(this.anchor === prop){
+          anchorCoord = anchorsCoordPool[prop];
+        }
+    }
+
+    const vertices = [
+      this.offsetX - anchorCoord[1], this.offsetY - anchorCoord[0], 0,  // upper left
+      this.offsetX + anchorCoord[3], this.offsetY - anchorCoord[0], 0 , // upper right
+      this.offsetX - anchorCoord[1], this.offsetY + anchorCoord[2], 0,  // bottom left
+      this.offsetX + anchorCoord[3], this.offsetY + anchorCoord[2] , 0, // bottom right
+      this.offsetX - anchorCoord[1], this.offsetY + anchorCoord[2], 0,  // bottom left
+      this.offsetX + anchorCoord[3], this.offsetY - anchorCoord[0] , 0  // upper right
+    ];
+    console.log(vertices)
+
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
+    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+
+  }
 
   loadStandardIcon(){
     this.texture = new GLX.texture.Image().load(MARKER_TEXTURE, image => {
@@ -150,11 +117,13 @@ class Marker {
 
         this.isReady = true;
         this.source = 'Standard Icon';
+        this.size = image.width/100*this._scale;
+        this.loadBuffer();
+
       }
     });
 
   }
-
 
   destroy () {
     APP.markers.remove(this);
