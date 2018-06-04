@@ -158,9 +158,7 @@ class Events {
 
     this.prevX = e.clientX;
     this.prevY = e.clientY;
-
-    this.clickStartX = e.clientX;
-    this.clickStartY = e.clientY;
+    this.movement = false;
 
     if ((e.buttons === 1 && e.altKey) || e.buttons === 2) {
       this.buttons = 2;
@@ -177,9 +175,11 @@ class Events {
     if (this.buttons === 1) {
       render.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
+      this.movement = true;
     } else if (this.buttons === 2) {
       render.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
+      this.movement = true;
     }
 
     this.prevX = e.clientX;
@@ -205,13 +205,13 @@ class Events {
 
     this.buttons = 0;
 
-    if(this.clickStartX === e.clientX && this.clickStartY === e.clientY){
+    if(this.movement){
+      this.emit('pointerup', { buttons: e.buttons });
+    }
+    else {
       render.Picking.getTarget(e.x, e.y, target => {
         this.emit('pointerup', { buttons: e.buttons, target: target });
       });
-    }
-    else {
-      this.emit('pointerup', { buttons: e.buttons });
     }
 
   }
@@ -301,6 +301,7 @@ class Events {
     this.cancelEvent(e);
 
     this.buttons = 1;
+    this.movement = false;
 
     const t1 = e.touches[0];
 
@@ -339,8 +340,10 @@ class Events {
       if (!('ongesturechange' in this.window)) {
         this.emitGestureChange(e);
       }
+      this.movement = true;
     } else {
       this.moveMap(t1);
+      this.movement = true;
     }
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
@@ -363,9 +366,15 @@ class Events {
       this.buttons = 0;
 
       const pos = getEventXY(e);
-      render.Picking.getTarget(pos.x, pos.y, target => {
-        this.emit('pointerup', { buttons: 1, target: target });
-      });
+      if(this.movement){
+        this.emit('pointerup', { buttons: 1});
+      }
+      else{
+        render.Picking.getTarget(pos.x, pos.y, target => {
+          this.emit('pointerup', { buttons: 1, target: target });
+        });
+      }
+
 
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move

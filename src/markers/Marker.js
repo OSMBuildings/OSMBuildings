@@ -36,7 +36,6 @@ class Marker {
           this.isReady = true;
           this.size = image.width/20*this._scale;
 
-
           this.loadBuffer();
 
         }
@@ -79,7 +78,7 @@ class Marker {
 
     let anchorCoord = [this.size/2, this.size/2, this.size/2, this.size/2];
 
-    for (var prop in anchorsCoordPool) {
+    for (let prop in anchorsCoordPool) {
         if(this.anchor === prop){
           anchorCoord = anchorsCoordPool[prop];
         }
