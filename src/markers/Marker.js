@@ -93,7 +93,6 @@ class Marker {
       this.offsetX - anchorCoord[1], this.offsetY + anchorCoord[2], 0,  // bottom left
       this.offsetX + anchorCoord[3], this.offsetY - anchorCoord[0] , 0  // upper right
     ];
-    console.log(vertices)
 
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));

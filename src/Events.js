@@ -159,6 +159,9 @@ class Events {
     this.prevX = e.clientX;
     this.prevY = e.clientY;
 
+    this.clickStartX = e.clientX;
+    this.clickStartY = e.clientY;
+
     if ((e.buttons === 1 && e.altKey) || e.buttons === 2) {
       this.buttons = 2;
     } else if (e.buttons === 1) {
@@ -166,9 +169,11 @@ class Events {
     }
 
     this.emit('pointerdown', { ...getEventXY(e), buttons: e.buttons });
+
   }
 
   onMouseMoveDocument (e) {
+
     if (this.buttons === 1) {
       render.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
@@ -193,15 +198,22 @@ class Events {
 
     if (this.buttons === 1) {
       this.moveMap(e);
+
     } else if (this.buttons === 2) {
       this.rotateMap(e);
     }
 
     this.buttons = 0;
 
-    render.Picking.getTarget(e.x, e.y, target => {
-      this.emit('pointerup', { buttons: e.buttons, target: target });
-    });
+    if(this.clickStartX === e.clientX && this.clickStartY === e.clientY){
+      render.Picking.getTarget(e.x, e.y, target => {
+        this.emit('pointerup', { buttons: e.buttons, target: target });
+      });
+    }
+    else {
+      this.emit('pointerup', { buttons: e.buttons });
+    }
+
   }
 
   onMouseWheel (e) {
@@ -237,6 +249,8 @@ class Events {
     // FIXME: make movement exact
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
+
+
 
     const
       scale = 0.86 * Math.pow(2, -APP.zoom),
