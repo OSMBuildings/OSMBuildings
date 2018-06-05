@@ -18,24 +18,11 @@ module.exports = grunt => {
         src: [
           '<%=cfg.modules%>',
           'build/temp/Shaders.js',
-          // 'build/temp/GLX.debug.js',
           'build/temp/worker.var.js',
-          '<%=cfg.glx%>',
           '<%=cfg.src%>'
         ],
         dest: 'dist/OSMBuildings/<%=pkg.name%>.debug.js'
       },
-
-      // glx: {
-      //   options: {
-      //     separator: "\n",
-      //     banner: "var GLX = (function() {",
-      //     footer: "\nreturn GLX;\n}());\n",
-      //     sourceMap: false
-      //   },
-      //   src: '<%=cfg.glx%>',
-      //   dest: 'build/temp/GLX.debug.js'
-      // },
 
       worker: {
         options: {
@@ -90,13 +77,8 @@ module.exports = grunt => {
           configFile: 'eslint.json',
           rulePaths: []
         },
-        src: ['build/temp/GLX.debug.js']
+        src: ['./dist/OSMBuildings/<%=pkg.name%>.debug.js']
       },
-
-      // glx: {
-      //   options: { esnext: true },
-      //   src: ['build/temp/GLX.debug.js']
-      // },
 
       worker: {
         options: {
@@ -148,7 +130,7 @@ module.exports = grunt => {
 
   function fileToVar (file, encoding = 'utf8') {
     const content = fs.readFileSync(file, encoding);
-    return content.replace(/'/g, "\'").replace(/ +/g, ' ').replace(/ *[\r\n]+ */g, '\n');
+    return content.replace(/'/g, "\'").replace(/ *[\r\n]+ */g, '\n').replace(/\\/g, "\\\\").replace(/ +/g, ' ');
   }
 
   grunt.registerTask('worker', () => {
@@ -188,12 +170,6 @@ module.exports = grunt => {
     fs.writeFileSync(config.dest, `const Shaders = ${JSON.stringify(shaders)};\n`);
   });
 
-  // grunt.registerTask('glx', 'build GL tools', function() {
-  //   setup();
-  //   grunt.task.run('concat:glx');
-  //   grunt.task.run('eslint:glx');
-  // });
-
   grunt.registerTask('replace', () => {
     const config = grunt.config.get('replace');
 
@@ -213,8 +189,6 @@ module.exports = grunt => {
     setup();
 
     grunt.task.run('shaders');
-
-    // grunt.task.run('glx');
 
     grunt.task.run('worker');
 

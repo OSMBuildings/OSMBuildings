@@ -29,10 +29,12 @@
     "src/triangulate/split.js",
     "src/triangulate/earcut.custom.js",
     "src/triangulate/geometry/vec3.js",
-    "src/triangulate/geometry/vec2.js"
+    "src/triangulate/geometry/vec2.js",
+    "src/workers/worker.js"
   ],
 
-  "glx": [
+  "src": [
+
     "src/glx/index.js",
     "src/glx/Buffer.js",
     "src/glx/Framebuffer.js",
@@ -40,10 +42,8 @@
     "src/glx/Matrix.js",
     "src/glx/texture/index.js",
     "src/glx/texture/Image.js",
-    "src/glx/texture/Data.js"
-  ],
+    "src/glx/texture/Data.js",
 
-  "src": [
     "src/Collection.js",
     
     "src/markers/Marker.js",
