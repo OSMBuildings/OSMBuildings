@@ -146,6 +146,7 @@ class Events {
 
     this.prevX = e.clientX;
     this.prevY = e.clientY;
+    this.isMove = false;
 
     if ((e.buttons === 1 && e.altKey) || e.buttons === 2) {
       this.buttons = 2;
@@ -160,9 +161,11 @@ class Events {
     if (this.buttons === 1) {
       render.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
+      this.isMove = true;
     } else if (this.buttons === 2) {
       render.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
+      this.isMove = true;
     }
 
     this.prevX = e.clientX;
@@ -189,10 +192,14 @@ class Events {
   }
 
   onMouseUp (e) {
-    const pos = getEventXY(e);
-    render.Picking.getTargets(pos.x, pos.y, targets => {
-      this.emit('pointerup', { buttons: e.buttons, targets: targets });
-    });
+    if (this.isMove){
+      this.emit('pointerup', { buttons: e.buttons });
+    } else {
+      const pos = getEventXY(e);
+      render.Picking.getTargets(pos.x, pos.y, targets => {
+        this.emit('pointerup', { buttons: e.buttons, targets: targets });
+      });
+    }
   }
 
   onMouseWheel (e) {
@@ -278,6 +285,7 @@ class Events {
     this.cancelEvent(e);
 
     this.buttons = 1;
+    this.isMove = false;
 
     const t1 = e.touches[0];
 
@@ -316,8 +324,10 @@ class Events {
       if (!('ongesturechange' in this.window)) {
         this.emitGestureChange(e);
       }
+      this.isMove = true;
     } else {
       this.moveMap(t1);
+      this.isMove = true;
     }
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
@@ -339,10 +349,14 @@ class Events {
     if (e.touches.length === 0) {
       this.buttons = 0;
 
-      const pos = getEventXY(e);
-      render.Picking.getTargets(pos.x, pos.y, targets => {
-        this.emit('pointerup', { buttons: 1, targets: targets });
-      });
+      if (this.isMove) {
+        this.emit('pointerup', { buttons: 1 });
+      } else {
+        const pos = getEventXY(e);
+        render.Picking.getTargets(pos.x, pos.y, targets => {
+          this.emit('pointerup', { buttons: 1, targets: targets });
+        });
+      }
 
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move

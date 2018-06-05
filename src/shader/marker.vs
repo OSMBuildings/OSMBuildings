@@ -10,8 +10,6 @@ uniform mat4 uModelMatrix;
 attribute vec2 aTexCoord;
 varying vec2 vTexCoord;
 
-uniform float markerSize;
-
 void main() {
 
   mat4 modelView = uViewMatrix * uModelMatrix;
@@ -34,8 +32,7 @@ void main() {
   float w = (mvp * vec4(0,0,0,1)).w;
   w *= reciprScaleOnscreen;
 
-  // marker size is needed for a new offset after scaling the marker
-  vec4 pos = vec4((aPosition.x * w), (aPosition.y * w) - (markerSize/2.0*w), aPosition.z * w , 1);
+  vec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);
 
   gl_Position =  mvp * pos;
 
