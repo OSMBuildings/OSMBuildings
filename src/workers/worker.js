@@ -1,21 +1,6 @@
 
 // TODO: opt for specialized workers
 
-importScripts(
-  '../Request.js',
-  '../../node_modules/qolor/dist/Qolor.js',
-
-  '../OBJ.js',
-
-  '../triangulate/index.js',
-  '../triangulate/roofs/index.js',
-  '../triangulate/roofs/Tools.js',
-  '../triangulate/split.js',
-  '../triangulate/earcut.custom.js',
-  '../triangulate/geometry/vec3.js',
-  '../triangulate/geometry/vec2.js'
-);
-
 //*****************************************************************************
 
 function getOrigin (geometry) {

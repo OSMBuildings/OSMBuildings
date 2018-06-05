@@ -161,12 +161,11 @@ class OSMBuildings {
 
     const numProc = Math.min(window.navigator.hardwareConcurrency, 4);
 
-    let workerURL = './../src/workers/worker.js';
-    if (workerStr) {
+    if (typeof workerStr === 'string') {
       const blob = new Blob([workerStr], { type: 'application/javascript' });
       workerURL = URL.createObjectURL(blob);
+      this.workers = new WorkerPool(workerURL, numProc * 4);
     }
-    this.workers = new WorkerPool(workerURL, numProc * 4);
 
     //*** create container ********************************
 
@@ -368,10 +367,8 @@ class OSMBuildings {
    * @param {String} [url=https://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json] url The URL of the GeoJSON tile server
    * @param {Object} [options]
    * @param {Number} [options.fixedZoom=15] Tiles are fetched for this zoom level only. Other zoom levels are scaled up/down to this value
-   * @deprecated {String} [options.color] A color to apply to all features on this layer
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show features from this layer. Defaults to and limited by global minZoom.
    * @param {Number} [options.maxZoom=maxZoom] Maximum zoom level to show features from this layer. Defaults to and limited by global maxZoom.
-   * @deprecated {Boolean} [options.fadeIn=true] Fade GeoJSON features. If `false`, then display immediately.
    * @return {Object} The added layer object
    */
   addGeoJSONTiles (url, options = {}) {

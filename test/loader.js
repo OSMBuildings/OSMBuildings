@@ -19,17 +19,17 @@ function loadFile (url) {
   return xhr.responseText;
 }
 
+function toVar (content) {
+  return content.replace(/'/g, "\'").replace(/ *[\r\n]+ */g, '\n').replace(/\\/g, "\\\\").replace(/ +/g, ' ');
+}
+
 function loadShaders (config) {
   const Shaders = {};
   config.forEach(name => {
-    let src;
-    Shaders[name] = {};
-
-    src = loadFile(`${baseURL}/src/shader/${name}.vs`);
-    Shaders[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
-
-    src = loadFile(`${baseURL}/src/shader/${name}.fs`);
-    Shaders[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
+    Shaders[name] = {
+      vertex: toVar(loadFile(`${baseURL}/src/shader/${name}.vs`)),
+      fragment: toVar(loadFile(`${baseURL}/src/shader/${name}.fs`))
+    };
   });
 
   console.log('Shaders', Shaders);
@@ -44,15 +44,22 @@ js += "(function() {";
 
 // modules
 config.modules.forEach(module => {
-  js += loadFile(`${baseURL}/${module}\n`;
+  js += loadFile(`${baseURL}/${module}\n`);
 });
 
 // shaders
 js += loadShaders(config.shaders);
 
+// worker
+let workerStr = '';
+config.worker.forEach(worker => {
+  workerStr += loadFile(`${baseURL}/${worker}\n`);
+});
+js += "const workerURL = ' + toVar(workerStr) + ';";
+
 // OSMB core
 config.src.forEach(name => {
-  js += loadFile(`${baseURL}/${name}\n`;
+  js += loadFile(`${baseURL}/${name}\n`);
 });
 
 js += "}());";
