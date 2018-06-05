@@ -37,4 +37,5 @@ void main() {
   gl_Position =  mvp * pos;
 
   vTexCoord = aTexCoord;
+
 }

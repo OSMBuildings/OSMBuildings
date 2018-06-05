@@ -306,10 +306,10 @@
 
     //***************************Marker HTML******************************
 
-    // const examplePop = new osmb.Marker({ offsetY: 10}); // const examplePop = new osmb.Marker("OSMBuildings/marker-icon.png");
-    //  examplePop.setPosition({latitude: 55.75025533890208, longitude: 37.61789560317993},0);
-    //  examplePop.addToMap();
-    //examplePop.remove();
+    // const marker = new osmb.Marker({ offsetY: 10}); // const marker = new osmb.Marker("OSMBuildings/marker-icon.png");
+    //  marker.setPosition({latitude: 55.75025533890208, longitude: 37.61789560317993},0);
+    //  marker.addToMap();
+    //marker.remove();
 
     // for(let i = 0;i< 150; i++ ){
     //   let temp = new osmb.Marker();
@@ -324,40 +324,35 @@
 
     //***************************Marker WebGL******************************
 
-  // let examplePop = osmb.addMarker({
-  //   elevation: 50,
-  //   position: { latitude: 55.750117969558325, longitude: 37.61808604001999 }
-  //   , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/sprech.png"
-  //   , scale:0.4
-  //   // , offsetX :-5
-  //   // , offsetY:-5
-  //   , anchor : 'bottom_right'
-  // });
-  //
-  // let examplePop2 = osmb.addMarker({
-  //   // elevation: 1,
-  //   position: { latitude: 55.750117969558325, longitude: 37.61808604001999 }
-  //   ,anchor : 'bottom'
-  //   // , scale: 0.5
-  //   // , offsetX :-5
-  //   // , offsetY:-5
-  //   // , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/marker-15.png"
-  // });
+  let marker = osmb.addMarker({
+    elevation: 50,
+    position: { latitude: 55.750117969558325, longitude: 37.61808604001999 },
+    source: './bubble.png',
+    scale: 0.4,
+    anchor: 'bottom_right'
+  });
 
+  let marker2 = osmb.addMarker({
+    // elevation: 1,
+    position: { latitude: 55.750117969558325, longitude: 37.61808604001999 }
+    ,anchor : 'bottom'
+    // , scale: 0.5
+    // , offsetX :-5
+    // , offsetY:-5
+    // , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/marker-15.png"
+  });
 
+  // osmb.removeMarker(marker);
 
-    // osmb.removeMarker(examplePop);
+    for(let i = 0;i< 15; i++ ){
 
-    // for(let i = 0;i< 15; i++ ){
-    //
-    //   let examplePop = osmb.addMarker({
-    //     elevation:50,
-    //     position: { latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100 },
-    //     size: 3
-    //     // , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/marker-icon.png"
-    //     , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/test.png"
-    //   });
-    // }
+      let marker = osmb.addMarker({
+        elevation:50,
+        position: { latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100 },
+        size: 3
+        , source: "./bubble.png"
+      });
+    }
 
     //*****************************************************************
 
