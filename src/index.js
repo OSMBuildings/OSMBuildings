@@ -163,8 +163,7 @@ class OSMBuildings {
 
     if (typeof workerStr === 'string') {
       const blob = new Blob([workerStr], { type: 'application/javascript' });
-      workerURL = URL.createObjectURL(blob);
-      this.workers = new WorkerPool(workerURL, numProc * 4);
+      this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
     }
 
     //*** create container ********************************

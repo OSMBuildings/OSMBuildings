@@ -20,7 +20,7 @@ function loadFile (url) {
 }
 
 function toVar (content) {
-  return content.replace(/'/g, "\'").replace(/ *[\r\n]+ */g, '\n').replace(/\\/g, "\\\\").replace(/ +/g, ' ');
+  return content.replace(/ *[\r\n]+ */g, '\n');
 }
 
 function loadShaders (config) {
@@ -33,7 +33,7 @@ function loadShaders (config) {
   });
 
   console.log('Shaders', Shaders);
-  return `var Shaders = ${JSON.stringify(Shaders)};\n`;
+  return `const Shaders = ${JSON.stringify(Shaders)};\n\n`;
 }
 
 //*****************************************************************************
@@ -55,7 +55,7 @@ let workerStr = '';
 config.worker.forEach(worker => {
   workerStr += loadFile(`${baseURL}/${worker}\n`);
 });
-js += "const workerURL = ' + toVar(workerStr) + ';";
+js += `const workerStr = '${workerStr.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/ *[\r\n]+ */g, '\\n')}';`;
 
 // OSMB core
 config.src.forEach(name => {
