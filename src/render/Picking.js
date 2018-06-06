@@ -24,7 +24,7 @@ class Picking {
     this.framebuffer = new GLX.Framebuffer(this.size[0], this.size[1]);
   }
 
-  getTargets (x, y, callback) {
+  getTarget (x, y, callback) {
     requestAnimationFrame(() => {
       const shader = this.shader;
 
@@ -93,13 +93,13 @@ class Picking {
       const feature = renderedItems[i][f];
       // callback({ id: feature.id, properties: feature.properties });
 
-      // find related items - across tiles
-      const res = { id: feature.id, properties: feature.properties, parts: [] };
+      // find related items (across tiles)
+      const res = [];
       const id = feature.properties.building || feature.id;
-      APP.features.forEach(item => {
-        item.items.forEach(feature => {
-          if (feature.id === id || feature.properties.building === id) {
-            res.parts.push({ id: feature.id, properties: feature.properties });
+      APP.features.forEach(item => { // all tiles...
+        item.items.forEach(feature => { // ...and their features
+          if ((feature.id === id || feature.properties.building === id) && !res.some(f => f.id === feature.id)) {
+            res.push({ id: feature.id, properties: feature.properties });
           }
         });
       });

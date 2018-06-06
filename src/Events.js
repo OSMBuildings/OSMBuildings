@@ -196,8 +196,8 @@ class Events {
       this.emit('pointerup', { buttons: e.buttons });
     } else {
       const pos = getEventXY(e);
-      render.Picking.getTargets(pos.x, pos.y, targets => {
-        this.emit('pointerup', { buttons: e.buttons, targets: targets });
+      render.Picking.getTarget(pos.x, pos.y, target => {
+        this.emit('pointerup', { buttons: e.buttons, target: target });
       });
     }
   }
@@ -353,8 +353,8 @@ class Events {
         this.emit('pointerup', { buttons: 1 });
       } else {
         const pos = getEventXY(e);
-        render.Picking.getTargets(pos.x, pos.y, targets => {
-          this.emit('pointerup', { buttons: 1, targets: targets });
+        render.Picking.getTarget(pos.x, pos.y, target => {
+          this.emit('pointerup', { buttons: 1, target: target });
         });
       }
 

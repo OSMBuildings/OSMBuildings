@@ -101,13 +101,27 @@
 
   //***************************************************************************
 
-  // osmb.on('pointerdown', e => {
-  //   if (e.targets) {
-  //     osmb.highlight(id, '#f08000');
-  //   } else {
-  //     osmb.highlight(null);
-  //   }
-  // });
+  // on pointer up
+  osmb.on('pointerup', e => {
+    // check for event targets aka clicked buildings
+    const features = e.target;
+
+    // if none, remove any previous selection and return
+    if (!features) {
+      osmb.highlight(feature => {});
+      return;
+    }
+
+    // store id's from seleted items...
+    const featureIDList = features.map(feature => feature.id);
+
+    // ...then is is faster: set highlight color for matching features
+    osmb.highlight(feature => {
+      if (featureIDList.indexOf(feature.id) > -1) {
+        return '#ffffff';
+      }
+    });
+  });
 
   //***************************************************************************
 

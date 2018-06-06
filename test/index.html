@@ -198,34 +198,34 @@
     //   });
 
     osmb.on('pointerup', e => {
-      const features = e.targets;
-
-      // osmb.hide(feature => {
-      //   return (Math.random()*10 <<0) % 2  == 0;
-      // });
+      const features = e.target;
 
       if (!features) {
+        osmb.highlight(feature => {});
         return;
       }
 
-      // const id = feature.properties.building || feature.id;
-      // osmb.highlight(feature => {
-      //   if (feature.id === id || feature.properties.building === id) {
-      //     return '#ffcc00';
-      //   }
-      // });
+      const featureIDList = features.map(feature => feature.id);
+      osmb.highlight(feature => {
+        if (featureIDList.indexOf(feature.id) > -1) {
+          return '#ffffff';
+        }
+      });
 
       console.log('OSMB', features);
-      return;
-    let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
+
+      // let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
+
+      const q = features.map(feature => {
+        return 'way(' + feature.id + ');relation(' + feature.id + ');';
+      });
+
+      let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(' + q.join('') + ');out body;';
 
       fetch(query)
         .then(response => response.json())
         .then(parsed => {
-          const feature = parsed.elements[0];
-          if (feature) {
-            console.log('Overpass', feature);
-          }
+          console.log('Overpass', parsed.elements);
         });
     });
 
