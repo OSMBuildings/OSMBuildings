@@ -1,5 +1,5 @@
 
-class GLX {
+module.exports = class GLX {
 
   constructor(canvas, quickRender) {
     let GL;
@@ -38,7 +38,7 @@ class GLX {
     GL.enable(GL.DEPTH_TEST);
     GL.clearColor(0.5, 0.5, 0.5, 1);
 
-    if (!quickRender) { // TODO OSMB4 always activate but use dynamically
+    if (!quickRender) { // TODO always active but use dynamically
       GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
       if (GL.anisotropyExtension) {
         GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
@@ -54,4 +54,10 @@ class GLX {
     ext.loseContext();
     this.GL = null;
   }
-}
+};
+
+GLX.Texture = require('./texture');
+GLX.Buffer = require('./Buffer.js');
+GLX.Framebuffer = require('./Framebuffer.js');
+GLX.Matrix = require('./Matrix.js');
+GLX.Shader = require('./Shader.js');

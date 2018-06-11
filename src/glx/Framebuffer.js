@@ -1,5 +1,7 @@
 
-GLX.Framebuffer = class {
+const texture = require('./texture');
+
+module.exports = class Framebuffer {
 
   constructor(width, height, useDepthTexture) {
     if (useDepthTexture && !GL.depthTextureExtension) {
@@ -33,7 +35,7 @@ GLX.Framebuffer = class {
     }
     
     if (this.useDepthTexture) {
-      this.depthTexture = new GLX.texture.Image(); // GL.createTexture();
+      this.depthTexture = new texture.Image(); // GL.createTexture();
       this.depthTexture.enable(0);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
       GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
@@ -53,7 +55,7 @@ GLX.Framebuffer = class {
       this.renderTexture.destroy();
     }
 
-    this.renderTexture = new GLX.texture.Data(GL, width, height);
+    this.renderTexture = new texture.Data(GL, width, height);
     GL.bindTexture(GL.TEXTURE_2D, this.renderTexture.id);
 
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE); //necessary for NPOT textures

@@ -1,5 +1,6 @@
 
-GLX.texture.Image = class {
+module.exports = class Image {
+
   constructor () {
     this.id = GL.createTexture();
     GL.bindTexture(GL.TEXTURE_2D, this.id);

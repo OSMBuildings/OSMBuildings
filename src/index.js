@@ -1,3 +1,10 @@
+
+const GLX = require('./glx');
+// const FeatureCollection = require('./features');
+// // const MarkerCollection = require('./markers');
+// const Collection = require('./Collection.js');
+// const Events = require('./Events.js');
+
 /*
  * NOTE: OSMBuildings cannot use a single global world coordinate system.
  *       The numerical accuracy required for such a system would be about
@@ -9,7 +16,7 @@
  *       (APP.position) at the viewport center, and all world positions are
  *       expressed as distances in meters from that reference point. The
  *       reference point itself shifts with map panning so that all world
- *       positions relevant to the part of the world curently rendered on-screen
+ *       positions relevant to the part of the world currently rendered on-screen
  *       can accurately be represented within the limited accuracy of IEEE floats.
  */
 

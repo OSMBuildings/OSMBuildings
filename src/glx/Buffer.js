@@ -1,4 +1,5 @@
-GLX.Buffer = class {
+
+module.exports = class Buffer {
 
   constructor (itemSize, data) {
     this.id = GL.createBuffer();

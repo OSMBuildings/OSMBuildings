@@ -1,5 +1,5 @@
 
-GLX.texture.Data = class {
+module.exports = class Data {
 
   constructor(GL, width, height, data) {
     this.id = GL.createTexture();

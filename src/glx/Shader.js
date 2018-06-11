@@ -1,4 +1,5 @@
-GLX.Shader = class {
+
+module.exports = class Shader {
 
   constructor (config) {
     this.shaderName = config.shaderName;
