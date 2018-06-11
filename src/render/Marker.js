@@ -1,3 +1,6 @@
+
+const GLX = require('../glx');
+
 // TODO: handle multiple markers
 // A: cluster them into 'tiles' that give close reference point and allow simpler visibility tests or
 // B: handle them as individual objects

@@ -1,3 +1,6 @@
+
+const GLX = require('../glx');
+
 class Blur {
 
   constructor () {

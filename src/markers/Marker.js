@@ -1,3 +1,6 @@
+
+const GLX = require('../glx');
+
 class Marker {
 
   constructor (options = {}) {

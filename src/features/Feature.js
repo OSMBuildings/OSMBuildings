@@ -1,4 +1,6 @@
 
+const GLX = require('../glx');
+
 class Feature {
 
   constructor (type, url, options = {}, callback = function () {}) {

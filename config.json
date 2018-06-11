@@ -42,7 +42,8 @@
     "src/workers/index.js",
     "src/workers/Wrapper.js",
 
-    "src/index.js",
+    "build/bundle.js",
+
     "src/Events.js",
 
     "src/variables.js",

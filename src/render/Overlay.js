@@ -1,4 +1,6 @@
 
+const GLX = require('../glx');
+
 /* 'Overlay' renders part of a texture over the whole viewport.
    The intended use is for compositing of screen-space effects.
  */

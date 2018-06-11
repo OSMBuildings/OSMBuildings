@@ -1,4 +1,6 @@
 
+const GLX = require('./glx');
+
 function assert(condition, message) {
   if (!condition) {
     throw message;

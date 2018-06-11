@@ -1,3 +1,6 @@
+
+const GLX = require('../glx');
+
 // TODO: perhaps render only clicked area
 // TODO: no picking if too far, too small (zoom levels)
 

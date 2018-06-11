@@ -1,4 +1,6 @@
 
+const GLX = require('../glx');
+
 var Sun = {
 
   setDate: function(date) {

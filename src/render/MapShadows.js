@@ -1,4 +1,6 @@
 
+const GLX = require('../glx');
+
 /**
  * This renders shadow for the map layer. It only renders the shadow,
  * not the map itself. Result is used as a blended overlay

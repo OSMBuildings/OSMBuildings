@@ -1,4 +1,6 @@
 
+const GLX = require('../glx');
+
 // Renders the depth buffer and normals into textures.
 // Depth is stored as a 24bit depth texture using the WEBGL_depth_texture extension,
 // and normals are stored as the 'rgb' and 'a' of a shared 32bit texture.

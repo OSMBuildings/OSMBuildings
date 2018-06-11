@@ -1,4 +1,6 @@
 
+const GLX = require('../glx');
+
 class render {
 
   constructor(){

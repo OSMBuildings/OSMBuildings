@@ -1,4 +1,7 @@
 
+const GLX = require('../glx');
+
+
 /* A 'MapPlane' object is a rectangular mesh in the X/Y plane (Z=0) that is
  * guaranteed to cover all of the area of that plane that is inside the skydome.
  *

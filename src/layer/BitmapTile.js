@@ -1,3 +1,6 @@
+
+const GLX = require('../glx');
+
 class BitmapTile extends Tile {
 
   constructor (x, y, zoom) {
