@@ -62,7 +62,7 @@ GLX.texture.Image = class {
 
   set (image) {
     if (!this.id) {
-      // texture has been destroyed
+      // texture had been destroyed
       return;
     }
 

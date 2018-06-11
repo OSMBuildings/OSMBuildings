@@ -10,7 +10,7 @@ class MarkerRender {
       vertexShader: Shaders.marker.vertex,
       fragmentShader: Shaders.marker.fragment,
       shaderName: 'marker shader',
-      attributes: ['aPosition', 'aTexCoord'], //
+      attributes: ['aPosition', 'aTexCoord'],
       uniforms: [
         'uProjMatrix',
         'uViewMatrix',
@@ -27,20 +27,16 @@ class MarkerRender {
 
     const metersPerDegreeLongitude = render.metersPerDegreeLongitude;
 
-    GL.disable(GL.DEPTH_TEST);
+    // GL.disable(GL.DEPTH_TEST);
     GL.enable(GL.BLEND);
     GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
 
     APP.markers.forEach(item => {
-      if (!item.isReady) {
-        return;
-      }
-
       const modelMatrix = new GLX.Matrix();
       modelMatrix.translate(
         (item.position.longitude - APP.position.longitude) * metersPerDegreeLongitude,
         -(item.position.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE,
-        item.elevation
+        item.position.altitude
       );
 
       shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
@@ -55,7 +51,7 @@ class MarkerRender {
     });
 
     GL.disable(GL.BLEND);
-    GL.enable(GL.DEPTH_TEST);
+    // GL.enable(GL.DEPTH_TEST);
 
     shader.disable();
   }

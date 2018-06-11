@@ -325,34 +325,33 @@
     //***************************Marker WebGL******************************
 
   let marker = osmb.addMarker({
-    elevation: 50,
-    position: { latitude: 55.750117969558325, longitude: 37.61808604001999 },
+    position: { latitude: 55.75079, longitude: 37.61828, altitude: 75 },
     source: './bubble.png',
-    scale: 0.4,
+    scale: 0.1,
     anchor: 'bottom_right'
   });
 
   let marker2 = osmb.addMarker({
-    // elevation: 1,
-    position: { latitude: 55.750117969558325, longitude: 37.61808604001999 }
-    ,anchor : 'bottom'
+    position: { latitude: 55.750117, longitude: 37.618086 },
+    anchor : 'bottom',
+    scale: 0.1
     // , scale: 0.5
     // , offsetX :-5
     // , offsetY:-5
     // , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/marker-15.png"
   });
 
-  // osmb.removeMarker(marker);
+  // osmb.remove(marker); // will not work too early
 
-    for(let i = 0;i< 15; i++ ){
-
-      let marker = osmb.addMarker({
-        elevation:50,
-        position: { latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100 },
-        size: 3
-        , source: "./bubble.png"
-      });
-    }
+  //   for(let i = 0;i< 15; i++ ){
+  //
+  //     let marker = osmb.addMarker({
+  //       elevation: 50,
+  //       position: { latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100 },
+  //       size: 3
+  //       , source: "./bubble.png"
+  //     });
+  //   }
 
     //*****************************************************************
 

@@ -1,22 +1,17 @@
 class Marker {
 
   constructor (options = {}) {
-    this.offsetX = options.offsetX || 0;
-    this.offsetY = options.offsetY || 0;
-    this.position = options.position || { latitude: 0, longitude: 0 };
-    this.elevation = options.elevation || 1;
+    this.position = { altitude: 0, ...options.position };
     this.source = options.source;
-    this.isReady = false;
     this.anchor = options.anchor || 'bottom';
-    this.scale = options.scale || 1;
+    this.scale = options.scale || 1; // TODO -> size
 
-    APP.markers.add(this);
     this.load();
   }
 
   load () {
     if (!this.source) {
-      // console.log('no marker source');
+      console.log('no marker icon, loading default');
       this.loadDefaultIcon();
       return;
     }
@@ -30,7 +25,19 @@ class Marker {
 
       this.setTexture(image);
       this.setBuffers();
-      this.isReady = true;
+      APP.markers.add(this);
+    });
+  }
+
+  loadDefaultIcon () {
+    this.texture = new GLX.texture.Image().load(MARKER_TEXTURE, image => {
+      if (!image) {
+        return;
+      }
+
+      this.setTexture(image);
+      this.setBuffers();
+      APP.markers.add(this);
     });
   }
 
@@ -74,35 +81,20 @@ class Marker {
     const anchorCoord = anchorsCoordPool[this.anchor] || anchorsCoordPool.center;
 
     const vertices = [
-      this.offsetX - anchorCoord[1], this.offsetY - anchorCoord[0], 0,  // upper left
-      this.offsetX + anchorCoord[3], this.offsetY - anchorCoord[0], 0, // upper right
-      this.offsetX - anchorCoord[1], this.offsetY + anchorCoord[2], 0,  // bottom left
-      this.offsetX + anchorCoord[3], this.offsetY + anchorCoord[2], 0, // bottom right
-      this.offsetX - anchorCoord[1], this.offsetY + anchorCoord[2], 0,  // bottom left
-      this.offsetX + anchorCoord[3], this.offsetY - anchorCoord[0], 0  // upper right
+      -anchorCoord[1], -anchorCoord[0], 0, // upper left
+       anchorCoord[3], -anchorCoord[0], 0, // upper right
+      -anchorCoord[1],  anchorCoord[2], 0, // bottom left
+       anchorCoord[3],  anchorCoord[2], 0, // bottom right
+      -anchorCoord[1],  anchorCoord[2], 0, // bottom left
+       anchorCoord[3], -anchorCoord[0], 0  // upper right
     ];
 
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
   }
 
-  loadDefaultIcon () {
-    this.texture = new GLX.texture.Image().load(MARKER_TEXTURE, image => {
-      if (!image) {
-        return;
-      }
-
-      this.setTexture(image);
-      this.setBuffers();
-      this.isReady = true;
-    });
-  }
-
   destroy () {
-    this.isReady = false;
-
     APP.markers.remove(this);
-
     this.texCoordBuffer && this.texCoordBuffer.destroy();
     this.texCoordBuffer && this.vertexBuffer.destroy();
     this.texture && this.texture.destroy();
