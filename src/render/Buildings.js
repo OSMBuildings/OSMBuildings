@@ -64,7 +64,13 @@ class Buildings {
     shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
 
     if (!render.effects.shadows) {
-      shader.setMatrix('uNormalTransform', '3fv', GLX.Matrix.identity3().data);
+      const matrix3 = new Float32Array([
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+      ]);
+
+      shader.setUniformMatrix('uNormalTransform', '3fv', matrix3);
     }
 
     shader.setTexture('uWallTexIndex', 0, this.wallTexture);
