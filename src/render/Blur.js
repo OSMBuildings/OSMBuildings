@@ -1,7 +1,7 @@
 class Blur {
 
   constructor () {
-    this.shader = new GLX.Shader({
+    this.shader = new GLX.Shader(GL, {
       vertexShader: Shaders.blur.vertex,
       fragmentShader: Shaders.blur.fragment,
       shaderName: 'blur shader',
@@ -9,9 +9,9 @@ class Blur {
       uniforms: ['uInverseTexSize', 'uTexIndex']
     });
 
-    this.framebuffer = new GLX.Framebuffer(128, 128); // dummy value, size will be set dynamically
+    this.framebuffer = new GLX.Framebuffer(GL, 128, 128); // dummy value, size will be set dynamically
 
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array([
+    this.vertexBuffer = new GLX.Buffer(GL, 3, new Float32Array([
       -1, -1, 1E-5,
       1, -1, 1E-5,
       1, 1, 1E-5,
@@ -20,7 +20,7 @@ class Blur {
       -1, 1, 1E-5
     ]));
 
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array([
+    this.texCoordBuffer = new GLX.Buffer(GL, 2, new Float32Array([
       0, 0,
       1, 0,
       1, 1,

@@ -8,7 +8,7 @@
 class MapShadows {
 
   constructor () {
-    this.shader = new GLX.Shader({
+    this.shader = new GLX.Shader(GL, {
       vertexShader: Shaders['basemap_with_shadows'].vertex,
       fragmentShader: Shaders['basemap_with_shadows'].fragment,
       shaderName: 'map shadows shader',

@@ -1,20 +1,21 @@
 
 module.exports = class Shader {
 
-  constructor (config) {
+  constructor (GL, config) {
+    this.GL = GL;
     this.shaderName = config.shaderName;
-    this.id = GL.createProgram();
+    this.id = this.GL.createProgram();
 
-    this.compile(GL.VERTEX_SHADER, config.vertexShader);
-    this.compile(GL.FRAGMENT_SHADER, config.fragmentShader);
+    this.compile(this.GL.VERTEX_SHADER, config.vertexShader);
+    this.compile(this.GL.FRAGMENT_SHADER, config.fragmentShader);
 
-    GL.linkProgram(this.id);
+    this.GL.linkProgram(this.id);
 
-    if (!GL.getProgramParameter(this.id, GL.LINK_STATUS)) {
-      throw new Error(GL.getProgramParameter(this.id, GL.VALIDATE_STATUS) + '\n' + GL.getError());
+    if (!this.GL.getProgramParameter(this.id, this.GL.LINK_STATUS)) {
+      throw new Error(this.GL.getProgramParameter(this.id, this.GL.VALIDATE_STATUS) + '\n' + this.GL.getError());
     }
 
-    GL.useProgram(this.id);
+    this.GL.useProgram(this.id);
 
     this.attributes = {};
     (config.attributes || []).forEach(item => {
@@ -28,7 +29,7 @@ module.exports = class Shader {
   }
 
   locateAttribute (name) {
-    const loc = GL.getAttribLocation(this.id, name);
+    const loc = this.GL.getAttribLocation(this.id, name);
     if (loc < 0) {
       throw new Error(`unable to locate attribute "${name}" in shader "${this.shaderName}"`);
     }
@@ -36,7 +37,7 @@ module.exports = class Shader {
   }
 
   locateUniform (name) {
-    const loc = GL.getUniformLocation(this.id, name);
+    const loc = this.GL.getUniformLocation(this.id, name);
     if (!loc) {
       throw new Error(`unable to locate uniform "${name}" in shader "${this.shaderName}"`);
     }
@@ -44,21 +45,21 @@ module.exports = class Shader {
   }
 
   compile (type, src) {
-    const shader = GL.createShader(type);
-    GL.shaderSource(shader, src);
-    GL.compileShader(shader);
+    const shader = this.GL.createShader(type);
+    this.GL.shaderSource(shader, src);
+    this.GL.compileShader(shader);
 
-    if (!GL.getShaderParameter(shader, GL.COMPILE_STATUS)) {
-      throw new Error(GL.getShaderInfoLog(shader));
+    if (!this.GL.getShaderParameter(shader, this.GL.COMPILE_STATUS)) {
+      throw new Error(this.GL.getShaderInfoLog(shader));
     }
 
-    GL.attachShader(this.id, shader);
+    this.GL.attachShader(this.id, shader);
   }
 
   enable () {
-    GL.useProgram(this.id);
+    this.GL.useProgram(this.id);
     for (let name in this.attributes) {
-      GL.enableVertexAttribArray(this.attributes[name]);
+      this.GL.enableVertexAttribArray(this.attributes[name]);
     }
     return this;
   }
@@ -66,7 +67,7 @@ module.exports = class Shader {
   disable () {
     if (this.attributes) {
       for (let name in this.attributes) {
-        GL.disableVertexAttribArray(this.attributes[name]);
+        this.GL.disableVertexAttribArray(this.attributes[name]);
       }
     }
   }
@@ -76,21 +77,21 @@ module.exports = class Shader {
       throw new Error(`attempt to bind buffer to invalid attribute "${name}" in shader "${this.shaderName}"`);
     }
     buffer.enable();
-    GL.vertexAttribPointer(this.attributes[name], buffer.itemSize, GL.FLOAT, false, 0, 0);
+    this.GL.vertexAttribPointer(this.attributes[name], buffer.itemSize, this.GL.FLOAT, false, 0, 0);
   }
 
   setParam (name, type, value) {
     if (this.uniforms[name] === undefined) {
       throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
     }
-    GL['uniform' + type](this.uniforms[name], value);
+    this.GL['uniform' + type](this.uniforms[name], value);
   }
 
   setMatrix (name, type, value) {
     if (this.uniforms[name] === undefined) {
       throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
     }
-    GL['uniformMatrix' + type](this.uniforms[name], false, value);
+    this.GL['uniformMatrix' + type](this.uniforms[name], false, value);
   }
 
   setTexture (uniform, textureUnit, glxTexture) {

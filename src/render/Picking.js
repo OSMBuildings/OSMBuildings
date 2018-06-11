@@ -7,7 +7,7 @@ class Picking {
 
     this.size = [512, 512];
 
-    this.shader = new GLX.Shader({
+    this.shader = new GLX.Shader(GL, {
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
@@ -21,7 +21,7 @@ class Picking {
       ]
     });
 
-    this.framebuffer = new GLX.Framebuffer(this.size[0], this.size[1]);
+    this.framebuffer = new GLX.Framebuffer(GL, this.size[0], this.size[1]);
   }
 
   getTarget (x, y, callback) {

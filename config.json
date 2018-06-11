@@ -35,15 +35,6 @@
 
   "src": [
 
-    "src/glx/index.js",
-    "src/glx/Buffer.js",
-    "src/glx/Framebuffer.js",
-    "src/glx/Shader.js",
-    "src/glx/Matrix.js",
-    "src/glx/texture/index.js",
-    "src/glx/texture/Image.js",
-    "src/glx/texture/Data.js",
-
     "src/Collection.js",
     
     "src/markers/Marker.js",

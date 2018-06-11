@@ -62,7 +62,7 @@ function multiply (res, a, b) {
 
 //*****************************************************************************
 
-GLX.Matrix = class {
+module.exports = class Matrix {
 
   constructor (data) {
     this.data = new Float32Array(data ? data : [
@@ -132,7 +132,7 @@ GLX.Matrix = class {
   }
 };
 
-GLX.Matrix.multiply = (a, b) => {
+Matrix.multiply = (a, b) => {
   const res = new Float32Array(16);
   multiply(res, a.data, b.data);
   return res;
@@ -141,7 +141,7 @@ GLX.Matrix.multiply = (a, b) => {
 // returns a perspective projection matrix with a field-of-view of 'fov'
 // degrees, an width/height aspect ratio of 'aspect', the near plane at 'near'
 // and the far plane at 'far'
-GLX.Matrix.Perspective = class extends GLX.Matrix {
+Matrix.Perspective = class extends Matrix {
   constructor (fov, aspect, near, far) {
     const
       f = 1 / Math.tan(fov * (Math.PI / 180) / 2),
@@ -159,7 +159,7 @@ GLX.Matrix.Perspective = class extends GLX.Matrix {
 // returns a perspective projection matrix with the near plane at 'near',
 // the far plane at 'far' and the view rectangle on the near plane bounded
 // by 'left', 'right', 'top', 'bottom'
-GLX.Matrix.Frustum = class extends GLX.Matrix {
+Matrix.Frustum = class extends Matrix {
   constructor (left, right, top, bottom, near, far) {
     const rl = 1 / (right - left),
       tb = 1 / (top - bottom),
@@ -175,7 +175,7 @@ GLX.Matrix.Frustum = class extends GLX.Matrix {
 };
 
 // based on http://www.songho.ca/opengl/gl_projectionmatrix.html
-GLX.Matrix.Ortho = class extends GLX.Matrix {
+Matrix.Ortho = class extends Matrix {
   constructor (left, right, top, bottom, near, far) {
     super([
       2 / (right - left), 0, 0, 0,
@@ -186,7 +186,7 @@ GLX.Matrix.Ortho = class extends GLX.Matrix {
   }
 };
 
-GLX.Matrix.invert3 = a => {
+Matrix.invert3 = a => {
   const
     a00 = a[0], a01 = a[1], a02 = a[2],
     a04 = a[4], a05 = a[5], a06 = a[6],
@@ -217,7 +217,7 @@ GLX.Matrix.invert3 = a => {
   ];
 };
 
-GLX.Matrix.transpose3 = a => {
+Matrix.transpose3 = a => {
   return new Float32Array([
     a[0], a[3], a[6],
     a[1], a[4], a[7],
@@ -225,7 +225,7 @@ GLX.Matrix.transpose3 = a => {
   ]);
 };
 
-GLX.Matrix.transpose = a => {
+Matrix.transpose = a => {
   return new Float32Array([
     a[0], a[4],  a[8], a[12],
     a[1], a[5],  a[9], a[13],
@@ -234,7 +234,7 @@ GLX.Matrix.transpose = a => {
   ]);
 };
 
-// GLX.Matrix.transform = (x, y, z, m) => {
+// Matrix.transform = (x, y, z, m) => {
 //   const X = x*m[0] + y*m[4] + z*m[8]  + m[12];
 //   const Y = x*m[1] + y*m[5] + z*m[9]  + m[13];
 //   const Z = x*m[2] + y*m[6] + z*m[10] + m[14];
@@ -245,7 +245,7 @@ GLX.Matrix.transpose = a => {
 //   };
 // };
 
-GLX.Matrix.transform = m => {
+Matrix.transform = m => {
   const X = m[12];
   const Y = m[13];
   const Z = m[14];
@@ -257,7 +257,7 @@ GLX.Matrix.transform = m => {
   };
 };
 
-GLX.Matrix.invert = a => {
+Matrix.invert = a => {
   const
     res = new Float32Array(16),
 
@@ -311,8 +311,8 @@ GLX.Matrix.invert = a => {
   return res;
 };
 
-GLX.Matrix.identity = () => {
-  return new GLX.Matrix([
+Matrix.identity = () => {
+  return new Matrix([
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,

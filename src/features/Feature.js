@@ -58,17 +58,17 @@ class Feature {
 
     // this cascade ralaxes rendering a lot when new tile data arrives
     // TODO: destroy properly, even while this cascade might run -> make each step abortable
-    this.vertexBuffer = new GLX.Buffer(3, res.vertices);
+    this.vertexBuffer = new GLX.Buffer(GL, 3, res.vertices);
     this.timer = setTimeout(() => {
-      this.normalBuffer = new GLX.Buffer(3, res.normals);
+      this.normalBuffer = new GLX.Buffer(GL, 3, res.normals);
       this.timer = setTimeout(() => {
-        this.colorBuffer = new GLX.Buffer(3, res.colors);
+        this.colorBuffer = new GLX.Buffer(GL, 3, res.colors);
         this.timer = setTimeout(() => {
-          this.texCoordBuffer = new GLX.Buffer(2, res.texCoords);
+          this.texCoordBuffer = new GLX.Buffer(GL, 2, res.texCoords);
           this.timer = setTimeout(() => {
-            this.heightBuffer = new GLX.Buffer(1, res.heights);
+            this.heightBuffer = new GLX.Buffer(GL, 1, res.heights);
             this.timer = setTimeout(() => {
-              this.pickingBuffer = new GLX.Buffer(3, res.pickingColors);
+              this.pickingBuffer = new GLX.Buffer(GL, 3, res.pickingColors);
               this.timer = setTimeout(() => {
                 this.items = res.items;
                 this.applyTintAndZScale();
@@ -143,8 +143,8 @@ class Feature {
     });
 
     // perhaps mix colors in JS and transfer just one color buffer
-    this.tintBuffer = new GLX.Buffer(4, new Float32Array(tintColors));
-    this.zScaleBuffer = new GLX.Buffer(1, new Float32Array(zScales));
+    this.tintBuffer = new GLX.Buffer(GL, 4, new Float32Array(tintColors));
+    this.zScaleBuffer = new GLX.Buffer(GL, 1, new Float32Array(zScales));
   }
 
   destroy () {

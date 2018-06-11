@@ -16,7 +16,7 @@ class Marker {
       return;
     }
 
-    this.texture = new GLX.texture.Image().load(this.source, image => {
+    this.texture = new GLX.texture.Image(GL).load(this.source, image => {
       if (!image) {
         console.log(`can't read marker icon ${this.source}`);
         this.loadDefaultIcon();
@@ -30,7 +30,7 @@ class Marker {
   }
 
   loadDefaultIcon () {
-    this.texture = new GLX.texture.Image().load(MARKER_TEXTURE, image => {
+    this.texture = new GLX.texture.Image(GL).load(MARKER_TEXTURE, image => {
       if (!image) {
         return;
       }
@@ -89,8 +89,8 @@ class Marker {
        anchorCoord[3], -anchorCoord[0], 0  // upper right
     ];
 
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+    this.texCoordBuffer = new GLX.Buffer(GL, 2, new Float32Array(texCoords));
+    this.vertexBuffer = new GLX.Buffer(GL, 3, new Float32Array(vertices));
   }
 
   destroy () {

@@ -9,7 +9,7 @@
 class DepthNormal {
 
   constructor () {
-    this.shader = new GLX.Shader({
+    this.shader = new GLX.Shader(GL, {
       vertexShader: Shaders.depth_normal.vertex,
       fragmentShader: Shaders.depth_normal.fragment,
       shaderName: 'depth/normal shader',
@@ -17,7 +17,7 @@ class DepthNormal {
       uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uFade', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
     });
 
-    this.framebuffer = new GLX.Framebuffer(128, 128, /*depthTexture=*/true); // dummy sizes, will be resized dynamically
+    this.framebuffer = new GLX.Framebuffer(GL, 128, 128, /*depthTexture=*/true); // dummy sizes, will be resized dynamically
     this.mapPlane = new MapPlane();
   }
 

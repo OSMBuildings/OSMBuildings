@@ -7,10 +7,10 @@ render.Overlay = {
   init: function() {
   
     const geometry = this.createGeometry();
-    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
+    this.vertexBuffer   = new GLX.Buffer(GL, 3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new GLX.Buffer(GL, 2, new Float32Array(geometry.texCoords));
 
-    this.shader = new GLX.Shader({
+    this.shader = new GLX.Shader(GL, {
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
       shaderName: 'overlay texture shader',

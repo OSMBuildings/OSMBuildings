@@ -1,14 +1,15 @@
 
 module.exports = class Image {
 
-  constructor () {
-    this.id = GL.createTexture();
-    GL.bindTexture(GL.TEXTURE_2D, this.id);
+  constructor (GL) {
+    this.GL = GL;
+    this.id = this.GL.createTexture();
+    this.GL.bindTexture(this.GL.TEXTURE_2D, this.id);
 
-//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-//GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
+//this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_WRAP_S, this.GL.CLAMP_TO_EDGE);
+//this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_WRAP_T, this.GL.CLAMP_TO_EDGE);
 
-    GL.bindTexture(GL.TEXTURE_2D, null);
+    this.GL.bindTexture(this.GL.TEXTURE_2D, null);
   }
 
   clamp (image, maxSize) {
@@ -53,11 +54,11 @@ module.exports = class Image {
   }
 
   color (color) {
-    GL.bindTexture(GL.TEXTURE_2D, this.id);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, 1, 1, 0, GL.RGBA, GL.UNSIGNED_BYTE, new Uint8Array([color[0]*255, color[1]*255, color[2]*255, (color[3] === undefined ? 1 : color[3])*255]));
-    GL.bindTexture(GL.TEXTURE_2D, null);
+    this.GL.bindTexture(this.GL.TEXTURE_2D, this.id);
+    this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_MIN_FILTER, this.GL.LINEAR);
+    this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_MAG_FILTER, this.GL.LINEAR);
+    this.GL.texImage2D(this.GL.TEXTURE_2D, 0, this.GL.RGBA, 1, 1, 0, this.GL.RGBA, this.GL.UNSIGNED_BYTE, new Uint8Array([color[0]*255, color[1]*255, color[2]*255, (color[3] === undefined ? 1 : color[3])*255]));
+    this.GL.bindTexture(this.GL.TEXTURE_2D, null);
     return this;
   }
 
@@ -67,20 +68,20 @@ module.exports = class Image {
       return;
     }
 
-    image = this.clamp(image, GL.getParameter(GL.MAX_TEXTURE_SIZE));
+    image = this.clamp(image, this.GL.getParameter(this.GL.MAX_TEXTURE_SIZE));
 
-    GL.bindTexture(GL.TEXTURE_2D, this.id);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR_MIPMAP_NEAREST);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
+    this.GL.bindTexture(this.GL.TEXTURE_2D, this.id);
+    this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_MIN_FILTER, this.GL.LINEAR_MIPMAP_NEAREST);
+    this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_MAG_FILTER, this.GL.LINEAR);
 
-    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, image);
-    GL.generateMipmap(GL.TEXTURE_2D);
+    this.GL.texImage2D(this.GL.TEXTURE_2D, 0, this.GL.RGBA, this.GL.RGBA, this.GL.UNSIGNED_BYTE, image);
+    this.GL.generateMipmap(this.GL.TEXTURE_2D);
 
-    if (GL.anisotropyExtension) { // TODO OSMB4 use this dynamically
-      GL.texParameterf(GL.TEXTURE_2D, GL.anisotropyExtension.TEXTURE_MAX_ANISOTROPY_EXT, GL.anisotropyExtension.maxAnisotropyLevel);
+    if (this.GL.anisotropyExtension) { // TODO OSMB4 use this dynamically
+      this.GL.texParameterf(this.GL.TEXTURE_2D, this.GL.anisotropyExtension.TEXTURE_MAX_ANISOTROPY_EXT, this.GL.anisotropyExtension.maxAnisotropyLevel);
     }
 
-    GL.bindTexture(GL.TEXTURE_2D, null);
+    this.GL.bindTexture(this.GL.TEXTURE_2D, null);
     return this;
   }
 
@@ -88,14 +89,14 @@ module.exports = class Image {
     if (!this.id) {
       return;
     }
-    GL.activeTexture(GL.TEXTURE0 + (index || 0));
-    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    this.GL.activeTexture(this.GL.TEXTURE0 + (index || 0));
+    this.GL.bindTexture(this.GL.TEXTURE_2D, this.id);
     return this;
   }
 
   destroy () {
-    GL.bindTexture(GL.TEXTURE_2D, null);
-    GL.deleteTexture(this.id);
+    this.GL.bindTexture(this.GL.TEXTURE_2D, null);
+    this.GL.deleteTexture(this.id);
     this.id = null;
   }
 };

@@ -3,7 +3,7 @@ class Buildings {
 
   constructor () {
     this.shader = !render.effects.shadows ?
-      new GLX.Shader({
+      new GLX.Shader(GL, {
         vertexShader: Shaders.buildings.vertex,
         fragmentShader: Shaders.buildings.fragment,
         shaderName: 'building shader',
@@ -21,7 +21,7 @@ class Buildings {
           'uFade',
           'uWallTexIndex'
         ]
-      }) : new GLX.Shader({
+      }) : new GLX.Shader(GL, {
       vertexShader: Shaders['buildings_with_shadows'].vertex,
       fragmentShader: Shaders['buildings_with_shadows'].fragment,
       shaderName: 'quality building shader',
@@ -43,7 +43,7 @@ class Buildings {
       ]
     });
 
-    this.wallTexture = new GLX.texture.Image();
+    this.wallTexture = new GLX.texture.Image(GL);
     this.wallTexture.color([1,1,1]);
     this.wallTexture.load(BUILDING_TEXTURE);
   }

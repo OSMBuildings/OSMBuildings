@@ -2,11 +2,12 @@
 module.exports = class Data {
 
   constructor(GL, width, height, data) {
-    this.id = GL.createTexture();
-    GL.bindTexture(GL.TEXTURE_2D, this.id);
+    this.GL = GL;
+    this.id = this.GL.createTexture();
+    this.GL.bindTexture(this.GL.TEXTURE_2D, this.id);
 
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+    this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_MIN_FILTER, this.GL.NEAREST);
+    this.GL.texParameteri(this.GL.TEXTURE_2D, this.GL.TEXTURE_MAG_FILTER, this.GL.NEAREST);
 
     let bytes = null;
     if (data) {
@@ -15,10 +16,8 @@ module.exports = class Data {
       bytes.set(data.subarray(0, length));
     }
 
-    GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, width, height, 0, GL.RGBA, GL.UNSIGNED_BYTE, bytes);
-    GL.bindTexture(GL.TEXTURE_2D, null);
-
-    this.GL = GL;
+    this.GL.texImage2D(this.GL.TEXTURE_2D, 0, this.GL.RGBA, width, height, 0, this.GL.RGBA, this.GL.UNSIGNED_BYTE, bytes);
+    this.GL.bindTexture(this.GL.TEXTURE_2D, null);
   }
 
   enable(index) {

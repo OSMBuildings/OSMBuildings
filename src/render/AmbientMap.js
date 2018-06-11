@@ -2,7 +2,7 @@
 render.AmbientMap = {
 
   init: function() {
-    this.shader = new GLX.Shader({
+    this.shader = new GLX.Shader(GL, {
       vertexShader:   Shaders.ambient_from_depth.vertex,
       fragmentShader: Shaders.ambient_from_depth.fragment,
       shaderName: 'SSAO shader',
@@ -10,9 +10,9 @@ render.AmbientMap = {
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });
 
-    this.framebuffer = new GLX.Framebuffer(128, 128); //dummy value, size will be set dynamically
+    this.framebuffer = new GLX.Framebuffer(GL, 128, 128); //dummy value, size will be set dynamically
     
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array([
+    this.vertexBuffer = new GLX.Buffer(GL, 3, new Float32Array([
       -1, -1, 1E-5,
        1, -1, 1E-5,
        1,  1, 1E-5,
@@ -21,7 +21,7 @@ render.AmbientMap = {
       -1,  1, 1E-5
     ]));
        
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array([
+    this.texCoordBuffer = new GLX.Buffer(GL, 2, new Float32Array([
       0,0,
       1,0,
       1,1,

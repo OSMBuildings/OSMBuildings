@@ -23,12 +23,12 @@ class BitmapTile extends Tile {
       0, 1
     ];
 
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
+    this.vertexBuffer = new GLX.Buffer(GL, 3, new Float32Array(vertices));
+    this.texCoordBuffer = new GLX.Buffer(GL, 2, new Float32Array(texCoords));
   }
 
   load (url, callback) {
-    this.texture = new GLX.texture.Image().load(url, image => {
+    this.texture = new GLX.texture.Image(GL).load(url, image => {
       if (image) {
 
         /* Whole texture will be mapped to fit the tile exactly. So

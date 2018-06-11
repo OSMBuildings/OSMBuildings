@@ -2,7 +2,7 @@
 class Basemap {
 
   constructor () {
-    this.shader = new GLX.Shader({
+    this.shader = new GLX.Shader(GL, {
       vertexShader: Shaders.basemap.vertex,
       fragmentShader: Shaders.basemap.fragment,
       shaderName: 'basemap shader',

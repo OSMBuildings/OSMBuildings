@@ -2,7 +2,7 @@
 module.exports = class GLX {
 
   constructor(canvas, quickRender) {
-    let GL;
+    this.GL = null;
 
     const canvasOptions = {
       antialias: !quickRender,
@@ -11,16 +11,16 @@ module.exports = class GLX {
     };
 
     try {
-      GL = canvas.getContext('webgl', canvasOptions);
+      this.GL = canvas.getContext('webgl', canvasOptions);
     } catch (ex) {}
 
-    if (!GL) {
+    if (!this.GL) {
       try {
-        GL = canvas.getContext('experimental-webgl', canvasOptions);
+        this.GL = canvas.getContext('experimental-webgl', canvasOptions);
       } catch (ex) {}
     }
 
-    if (!GL) {
+    if (!this.GL) {
       throw new Error('GL not supported');
     }
 
@@ -32,21 +32,19 @@ module.exports = class GLX {
       console.warn('context restored');
     });
 
-    GL.viewport(0, 0, canvas.width, canvas.height);
-    GL.cullFace(GL.BACK);
-    GL.enable(GL.CULL_FACE);
-    GL.enable(GL.DEPTH_TEST);
-    GL.clearColor(0.5, 0.5, 0.5, 1);
+    this.GL.viewport(0, 0, canvas.width, canvas.height);
+    this.GL.cullFace(this.GL.BACK);
+    this.GL.enable(this.GL.CULL_FACE);
+    this.GL.enable(this.GL.DEPTH_TEST);
+    this.GL.clearColor(0.5, 0.5, 0.5, 1);
 
     if (!quickRender) { // TODO always active but use dynamically
-      GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
-      if (GL.anisotropyExtension) {
-        GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+      this.GL.anisotropyExtension = this.GL.getExtension('EXT_texture_filter_anisotropic');
+      if (this.GL.anisotropyExtension) {
+        this.GL.anisotropyExtension.maxAnisotropyLevel = this.GL.getParameter(this.GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
       }
-      GL.depthTextureExtension = GL.getExtension('WEBGL_depth_texture');
+      this.GL.depthTextureExtension = this.GL.getExtension('WEBGL_depth_texture');
     }
-
-    this.GL = GL;
   }
 
   destroy () {

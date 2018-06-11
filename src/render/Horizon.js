@@ -4,7 +4,7 @@ class Horizon {
   constructor () {
     this.HORIZON_HEIGHT = 2000;
 
-    this.skyShader = new GLX.Shader({
+    this.skyShader = new GLX.Shader(GL, {
       vertexShader: Shaders.horizon.vertex,
       fragmentShader: Shaders.horizon.fragment,
       shaderName: 'sky wall shader',
@@ -15,7 +15,7 @@ class Horizon {
     this.v1 = this.v2 = this.v3 = this.v4 = [false, false, false];
     this.updateGeometry([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]);
 
-    this.floorShader = new GLX.Shader({
+    this.floorShader = new GLX.Shader(GL, {
       vertexShader: Shaders.flat_color.vertex,
       fragmentShader: Shaders.flat_color.fragment,
       attributes: ['aPosition'],
@@ -48,7 +48,7 @@ class Horizon {
     }
 
     const vertices = [...v1, ...v2, ...v3, ...v1, ...v3, ...v4];
-    this.skyVertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+    this.skyVertexBuffer = new GLX.Buffer(GL, 3, new Float32Array(vertices));
 
     v1 = [viewTrapezoid[0][0], viewTrapezoid[0][1], 1];
     v2 = [viewTrapezoid[1][0], viewTrapezoid[1][1], 1];
@@ -59,7 +59,7 @@ class Horizon {
       this.floorVertexBuffer.destroy();
     }
 
-    this.floorVertexBuffer = new GLX.Buffer(3, new Float32Array([...v1, ...v2, ...v3, ...v4]));
+    this.floorVertexBuffer = new GLX.Buffer(GL, 3, new Float32Array([...v1, ...v2, ...v3, ...v4]));
   }
 
   render () {

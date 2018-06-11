@@ -65,9 +65,9 @@ class MapPlane {
       }
     }
 
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
-    this.normalBuffer = new GLX.Buffer(3, new Float32Array(normals));
-    this.zScaleBuffer = new GLX.Buffer(1, new Float32Array(zScale));
+    this.vertexBuffer = new GLX.Buffer(GL, 3, new Float32Array(vertices));
+    this.normalBuffer = new GLX.Buffer(GL, 3, new Float32Array(normals));
+    this.zScaleBuffer = new GLX.Buffer(GL, 1, new Float32Array(zScale));
   }
 
   getFade () {
