@@ -141,41 +141,49 @@ GLX.Matrix.multiply = (a, b) => {
 // returns a perspective projection matrix with a field-of-view of 'fov'
 // degrees, an width/height aspect ratio of 'aspect', the near plane at 'near'
 // and the far plane at 'far'
-GLX.Matrix.Perspective = (fov, aspect, near, far) => {
-  const
-    f =  1 / Math.tan(fov*(Math.PI/180)/2),
-    nf = 1 / (near - far);
+GLX.Matrix.Perspective = class extends GLX.Matrix {
+  constructor (fov, aspect, near, far) {
+    const
+      f = 1 / Math.tan(fov * (Math.PI / 180) / 2),
+      nf = 1 / (near - far);
 
-  return new GLX.Matrix([
-    f/aspect, 0,               0,  0,
-    0,        f,               0,  0,
-    0,        0, (far + near)*nf, -1,
-    0,        0, (2*far*near)*nf,  0]);
+    super([
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (far + near) * nf, -1,
+      0, 0, (2 * far * near) * nf, 0
+    ]);
+  }
 };
 
 // returns a perspective projection matrix with the near plane at 'near',
 // the far plane at 'far' and the view rectangle on the near plane bounded
 // by 'left', 'right', 'top', 'bottom'
-GLX.Matrix.Frustum = (left, right, top, bottom, near, far) => {
-  const rl = 1 / (right - left),
+GLX.Matrix.Frustum = class extends GLX.Matrix {
+  constructor (left, right, top, bottom, near, far) {
+    const rl = 1 / (right - left),
       tb = 1 / (top - bottom),
       nf = 1 / (near - far);
 
-  return new GLX.Matrix( [
-        (near * 2) * rl,                   0,                     0,  0,
-                      0,     (near * 2) * tb,                     0,  0,
-    (right + left) * rl, (top + bottom) * tb,     (far + near) * nf, -1,
-                      0,                   0, (far * near * 2) * nf,  0]);
+    super([
+      (near * 2) * rl, 0, 0, 0,
+      0, (near * 2) * tb, 0, 0,
+      (right + left) * rl, (top + bottom) * tb, (far + near) * nf, -1,
+      0, 0, (far * near * 2) * nf, 0
+    ]);
+  }
 };
 
 // based on http://www.songho.ca/opengl/gl_projectionmatrix.html
-GLX.Matrix.Ortho = (left, right, top, bottom, near, far) => {
-  return new GLX.Matrix([
-                 2/(right-left),                          0,                       0, 0,
-                              0,           2/(top - bottom),                       0, 0,
-                              0,                          0,         -2/(far - near), 0,
-    - (right+left)/(right-left), -(top+bottom)/(top-bottom), - (far+near)/(far-near), 1
-  ]);
+GLX.Matrix.Ortho = class extends GLX.Matrix {
+  constructor (left, right, top, bottom, near, far) {
+    super([
+      2 / (right - left), 0, 0, 0,
+      0, 2 / (top - bottom), 0, 0,
+      0, 0, -2 / (far - near), 0,
+      -(right + left) / (right - left), -(top + bottom) / (top - bottom), -(far + near) / (far - near), 1
+    ]);
+  }
 };
 
 GLX.Matrix.invert3 = a => {
