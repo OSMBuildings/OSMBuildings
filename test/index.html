@@ -14,12 +14,8 @@
 
     #map {
       width: 100%;
-      height: 100%;
-
       height: 600px;
       margin-top: 50px;
-      /*position: absolute;*/
-      /*top: 50px;*/
     }
 
     .control {
@@ -40,7 +36,7 @@
       top: 90px;
     }
 
-    .control.zoom button{
+    .control.zoom button {
       font-weight: normal;
     }
 
@@ -67,225 +63,188 @@
 </head>
 
 <body>
-<!--<div id="map" style="position:absolute;top:100px"></div>-->
-<div id="map"></div>
+  <!--<div id="map" style="position:absolute;top:100px"></div>-->
+  <div id="map"></div>
 
-<div id="label" style="width:10px;height:10px;position:absolute;z-Index:1000;border:3px solid red;"></div>
+  <div id="label" style="width:10px;height:10px;position:absolute;z-Index:1000;border:3px solid red;"></div>
 
-<div style="position:absolute;left:100px;top:20px;border:1px solid #ff8888; background:#fff;font-family:sans-serif;padding:10px;font-size:12px;}">Click?</div>
+  <div style="position:absolute;left:100px;top:20px;border:1px solid #ff8888; background:#fff;font-family:sans-serif;padding:10px;font-size:12px;">Click?</div>
 
-<div class="control tilt">
-  <button class="dec">&#8601;</button>
-  <button class="inc">&#8599;</button>
-</div>
+  <div class="control tilt">
+    <button class="dec">&#8601;</button>
+    <button class="inc">&#8599;</button>
+  </div>
 
-<div class="control rotation">
-  <button class="inc">&#8630;</button>
-  <button class="dec">&#8631;</button>
-</div>
+  <div class="control rotation">
+    <button class="inc">&#8630;</button>
+    <button class="dec">&#8631;</button>
+  </div>
 
-<div class="control zoom">
-  <button class="dec">-</button>
-  <button class="inc">+</button>
-</div>
+  <div class="control zoom">
+    <button class="dec">-</button>
+    <button class="inc">+</button>
+  </div>
 
-<script>
-  var osmb = new OSMBuildings({
-    baseURL: './OSMBuildings',
-    // minZoom: 16,
-    // maxZoom: 18,
-    // showBackfaces: true, // render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-    // fastMode: true,
-    // effects: ['shadows', 'outlines'],
-    effects: ['shadows'],
-    attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>',
-//  position: { latitude:52.52000, longitude:13.41000 }, // Berlin
-//  position: { latitude:53.405019, longitude:-2.967899 }, // Liverpool
-//  position: { latitude:31.23638, longitude:121.49513 }, // Shanghai
-    position: { latitude:55.7528, longitude:37.62035 }, // Moskau
-//  position: { latitude:51.50787, longitude:-0.12002 }, // London Eye
+  <script>
+    const osmb = new OSMBuildings({
+      container: 'map',
+      // fastMode: true,
+      attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>',
+      // position: { latitude:52.52000, longitude:13.41000 }, // Berlin
+      // position: { latitude:53.40501, longitude:-2.96789 }, // Liverpool
+      // position: { latitude:31.23638, longitude:121.49513 }, // Shanghai
+ position: { latitude:55.7528, longitude:37.62035 }, // Moskau
+      //  position: { latitude:40.71115, longitude:-74.01140 }, // NYC
+      //  position: { latitude:48.85554, longitude:2.34678 }, // Paris
 
-    // bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
-    zoom: 17,
-    rotation: 0,
-    tilt: 0, // optional
-    // disabled: true, // disables user input
-    state: true // stores map position, zoom etc. in url
-  });
-
-  osmb.appendTo('map');
-
-  var selector = function(id, data) {
-    return id % 2 === 0;
-  };
-
-  function showEven(duration) {
-    osmb.show(selector, duration || 1000);
-  }
-
-  function hideEven(duration) {
-    osmb.hide(selector, duration || 1000);
-  }
-
-  osmb.addMapTiles(
-    //'https://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
-    //'https://tile.stamen.com/toner/{z}/{x}/{y}.png',
-    'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
-//    'https://a.tiles.mapbox.com/v4/digitalglobe.316c9a2e/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZGlnaXRhbGdsb2JlIiwiYSI6ImNqOGRmNXltOTBucm0yd3BtY3E5czl6NmYifQ.qJJsPgCjyzMCm3YG3YWQBQ',
-
-  {
-      attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="https://mapbox.com/">Mapbox</a>'
-    }
-  );
-
-  var colorByHeightAvailable = function(feature) {
-    if (!feature.properties.levels && !feature.properties.height) {
-      feature.properties.color = "red";
-    } else if (!feature.properties.height) {
-      feature.properties.color = "lime";
-    } else {
-      feature.properties.color = "green";
-    }
-
-    feature.properties.roofColor = feature.properties.color;
-  };
-
-  var colorByHeight = function(feature) {
-    var height = parseFloat(feature.properties.height) || (parseFloat(feature.properties.levels)* 3.5) || 0;
-
-    if (height < 20)
-      feature.properties.color = "#CCCCCC";
-    else if (height < 30)
-      feature.properties.color = "purple";
-    else if (height < 60)
-      feature.properties.color = "#CC4444";
-    else
-      feature.properties.color = "orange";
-
-    feature.properties.roofColor = feature.properties.color;
-  };
-  
-  var colorLandmarks = function(feature) {
-    var landmarkIDs = {
-      "r3074565": true,  // Rotes Rathaus
-      "w313675136": true, // Rotes Rathaus
-      "r2167988": true,  // Berliner Dom
-      "w37449517": true, // Bundestag
-      "r2326380": true,  // Kanzleramt
-      "r4065110": true,  // Fernsehturm components
-      "w304987177": true,
-      "w19046101": true,
-      "w96880470": true,
-      "w326772329": true,
-      "w230818931": true,
-      "w304987174": true,
-      "w304987172": true,
-      "w304987176": true,
-      "w96880477": true,
-      "w304987173": true
-    };
-
-    feature.properties.color = (id in landmarkIDs) ? "#CC4444" : "#DDDDDD";
-  };
-
-//  osmb.on('loadfeature', function(e) {
-//    colorByHeightAvailable(e.detail);
-//  });
-
-  osmb.addGeoJSONTiles(
- // 'http://localhost:8000/0.2/anonymous/tile/{z}/{x}/{y}.json',
-  'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
-    {
-      fixedZoom: 15
-      // bounds
+      // bounds: { n:52.52050, e:13.41050, s:52.52000, w:13.41000 },
+      zoom: 17,
+      rotation: 0,
+      tilt: 0, // optional
+      // disabled: true, // disables user input
+      state: true // stores map position, zoom etc. in url
     });
 
-//   osmb.addOBJ('data/Fernsehturm.obj', { latitude:52.524133, longitude:13.407434 }, { id:'Fernsehturm', scale:2, color:'#ff0000', elevation:0, rotation:51 });
-  // osmb.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { elevation:-3, rotation:97, id:'London Eye' });
+    osmb.addMapTiles(
+      //'https://{s}.tiles.mapbox.com/v3/osmbuildings.lgh43kca/{z}/{x}/{y}.png',
+      //'https://tile.stamen.com/toner/{z}/{x}/{y}.png',
+      'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+      //    'https://a.tiles.mapbox.com/v4/digitalglobe.316c9a2e/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZGlnaXRhbGdsb2JlIiwiYSI6ImNqOGRmNXltOTBucm0yd3BtY3E5czl6NmYifQ.qJJsPgCjyzMCm3YG3YWQBQ',
 
-  // osmb.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
-
-  var gj = { type: 'FeatureCollection', features: [
-    { type: 'Feature', properties: { color: '#ff0000', roofColor: '#cc0000', height: 50, minHeight: 0 }, geometry:
-    { type: 'Polygon', coordinates: [[
-      [ 13.37000, 52.52000 ],
-      [ 13.37010, 52.52000 ],
-      [ 13.37010, 52.52010 ],
-      [ 13.37000, 52.52010 ],
-      [ 13.37000, 52.52000 ]
-    ]] }
-    }
-  ] };
-
-  osmb.addGeoJSON('data/test.geo.json');
-//  osmb.addGeoJSON(gj);
-
-//  for (var i = 0; i < 10; i++) {
-//    osmb.addOBJ('data/Zeiss Planetarium_MAT_LOW.obj?' + i, {
-//      latitude: 52.52 + (i*0.001),
-//      longitude: 13.37
-//    }, { color: '#00ccff', scale: 0.1 });
-//  }
-
-  var label = document.getElementById('label');
-//  osmb.on('change', function() {
-//    var pos = osmb.project(52.52, 13.37, 50);
-//    label.style.left = Math.round(pos.x) + 'px';
-//    label.style.top = Math.round(pos.y) + 'px';
-//  });
-
-  osmb.on('pointermove', function(e) {
-    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
-      if (id) {
-        document.body.style.cursor = 'pointer';
-        osmb.highlight(id, '#cc0000');
-      } else {
-        document.body.style.cursor = 'default';
-        osmb.highlight(null);
+      {
+        attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="https://mapbox.com/">Mapbox</a>'
       }
-   });
-  });
+    );
 
-//  osmb.on('pointermove', function(e) {
-//    obj.position = osmb.unproject(e.detail.x, e.detail.y);
-//  });
-//
 
-//  osmb.on('pointerdown', function(e) {
-//    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
-//      console.log(id);
-//    });
-//  });
+    const colorByHeight = function (feature) {
+      const height = parseFloat(feature.properties.height) || (parseFloat(feature.properties.levels) * 3.5) || 0;
 
-  //*************************************************************************
+      if (height < 20)
+        feature.properties.color = "#CCCCCC";
+      else if (height < 30)
+        feature.properties.color = "purple";
+      else if (height < 60)
+        feature.properties.color = "#CC4444";
+      else
+        feature.properties.color = "orange";
 
-  //  osmb.on('idle', function() {
-  //    console.log('IDLE');
-  //  });
-  //
-  //  osmb.on('busy', function() {
-  //    console.log('BUSY');
-  //  });
+      feature.properties.roofColor = feature.properties.color;
+    };
 
-  //*************************************************************************
+    osmb.addGeoJSONTiles(
+      // 'http://localhost:8000/0.2/dixw8kmb/tile/{z}/{x}/{y}.json',
+      'https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json',
+      {
+        fixedZoom: 15
+        // bounds
+      });
 
-  /*
-   * ## Key codes for object positioning ##
-   * Cursor keys: move
-   * +/- : scale
-   * w/s : elevate
-   * a/d : rotate
-   *
-   * Pressing Alt the same time accelerates
-   */
-  function positionOnMap(obj) {
-    document.addEventListener('keydown', function(e) {
-      var transInc = e.altKey ? 0.0002 : 0.00002;
-      var scaleInc = e.altKey ? 0.1 : 0.01;
-      var rotaInc = e.altKey ? 10 : 1;
-      var eleInc = e.altKey ? 10 : 1;
+    //osmb.addOBJ('data/Fernsehturm.obj', { latitude:52.524133, longitude:13.407434 }, { id:'Fernsehturm', scale:2, color:'#ff0000', elevation:0, rotation:51 });
+    //osmb.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { elevation:-3, rotation:97, id:'London Eye' });
 
-      switch (e.which) {
+    // osmb.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
+
+    const gj = {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: {
+          color: '#ff0000',
+          roofColor: '#cc0000',
+          height: 50,
+          minHeight: 0
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [13.37000, 52.52000],
+              [13.37010, 52.52000],
+              [13.37010, 52.52010],
+              [13.37000, 52.52010],
+              [13.37000, 52.52000]
+            ]
+          ]
+        }
+      }]
+    };
+
+    osmb.addGeoJSON('data/test.geo.json');
+    //  osmb.addGeoJSON(gj);
+
+    //  for (let i = 0; i < 10; i++) {
+    //    osmb.addOBJ('data/Zeiss Planetarium_MAT_LOW.obj?' + i, {
+    //      latitude: 52.52 + (i*0.001),
+    //      longitude: 13.37
+    //    }, { color: '#00ccff', scale: 0.1 });
+    //  }
+
+    const label = document.getElementById('label');
+    //osmb.on('change', e => {
+    //    const pos = osmb.project(52.52, 13.37, 50);
+    //    label.style.left = Math.round(pos.x) + 'px';
+    //    label.style.top = Math.round(pos.y) + 'px';
+    // });
+
+    //   osmb.highlight(feature => {
+    //     if (!feature.properties.levels && !feature.properties.height) {
+    //       return 'red';
+    //     }
+    //     return 'green';
+    //   });
+
+    osmb.on('pointerup', e => {
+      const features = e.target;
+
+      if (!features) {
+        osmb.highlight(feature => {});
+        return;
+      }
+
+      const featureIDList = features.map(feature => feature.id);
+      osmb.highlight(feature => {
+        if (featureIDList.indexOf(feature.id) > -1) {
+          return '#ffffff';
+        }
+      });
+
+      console.log('OSMB', features);
+
+      // let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(way(' + feature.id + ');relation(' + feature.id + '););out body;';
+
+      const q = features.map(feature => {
+        return 'way(' + feature.id + ');relation(' + feature.id + ');';
+      });
+
+      let query = 'http://overpass-api.de/api/interpreter?data=[out:json];(' + q.join('') + ');out body;';
+
+      fetch(query)
+        .then(response => response.json())
+        .then(parsed => {
+          console.log('Overpass', parsed.elements);
+        });
+    });
+
+    //*************************************************************************
+
+    /*
+     * ## Key codes for object positioning ##
+     * Cursor keys: move
+     * +/- : scale
+     * w/s : elevate
+     * a/d : rotate
+     *
+     * Pressing Alt the same time accelerates
+     */
+    function positionOnMap(obj) {
+      document.addEventListener('keydown', e => {
+        let transInc = e.altKey ? 0.0002 : 0.00002;
+        let scaleInc = e.altKey ? 0.1 : 0.01;
+        let rotaInc = e.altKey ? 10 : 1;
+        let eleInc = e.altKey ? 10 : 1;
+
+        switch (e.which) {
         case 37: obj.position.longitude -= transInc; break;
         case 39: obj.position.longitude += transInc; break;
         case 38: obj.position.latitude += transInc; break;
@@ -297,50 +256,103 @@
         case 87: obj.elevation += eleInc; break;
         case 83: obj.elevation -= eleInc; break;
         default: return;
-      }
-      console.log(JSON.stringify({
-        position:{
-          latitude:parseFloat(obj.position.latitude.toFixed(5)),
-          longitude:parseFloat(obj.position.longitude.toFixed(5))
-        },
-        elevation:parseFloat(obj.elevation.toFixed(2)),
-        scale:parseFloat(obj.scale.toFixed(2)),
-        rotation:parseInt(obj.rotation, 10)
-      }));
-    });
-  }
+        }
+        console.log(JSON.stringify({
+          position: {
+            latitude: parseFloat(obj.position.latitude.toFixed(5)),
+            longitude: parseFloat(obj.position.longitude.toFixed(5))
+          },
+          elevation: parseFloat(obj.elevation.toFixed(2)),
+          scale: parseFloat(obj.scale.toFixed(2)),
+          rotation: parseInt(obj.rotation, 10)
+        }));
+      });
+    }
 
-  //*************************************************************************
+    //*************************************************************************
 
-  if (typeof obj !== 'undefined') positionOnMap(obj);
+    if (typeof obj !== 'undefined') positionOnMap(obj);
 
-  var controlButtons = document.querySelectorAll('.control button');
+    const controlButtons = document.querySelectorAll('.control button');
 
-  for (var i = 0, il = controlButtons.length; i < il; i++) {
-    controlButtons[i].addEventListener('click', function(e) {
-      var button = this;
-      var parentClassList = button.parentNode.classList;
-      var direction = button.classList.contains('inc') ? 1 : -1;
-      var increment;
-      var property;
+    for (let i = 0, il = controlButtons.length; i < il; i++) {
+      controlButtons[i].addEventListener('click', e => {
+        const button = this;
+        const parentClassList = button.parentNode.classList;
+        const direction = button.classList.contains('inc') ? 1 : -1;
+        let increment;
+        let property;
 
-      if (parentClassList.contains('tilt')) {
-        property = 'Tilt';
-        increment = direction*10;
-      }
-      if (parentClassList.contains('rotation')) {
-        property = 'Rotation';
-        increment = direction*10;
-      }
-      if (parentClassList.contains('zoom')) {
-        property = 'Zoom';
-        increment = direction*1;
-      }
-      if (property) {
-        osmb['set'+ property](osmb['get'+ property]()+increment);
-      }
-    });
-  }
-</script>
+        if (parentClassList.contains('tilt')) {
+          property = 'Tilt';
+          increment = direction * 10;
+        }
+        if (parentClassList.contains('rotation')) {
+          property = 'Rotation';
+          increment = direction * 10;
+        }
+        if (parentClassList.contains('zoom')) {
+          property = 'Zoom';
+          increment = direction * 1;
+        }
+        if (property) {
+          osmb['set' + property](osmb['get' + property]() + increment);
+        }
+      });
+    }
+
+    //***************************Marker HTML******************************
+
+    // const marker = new osmb.Marker({ offsetY: 10}); // const marker = new osmb.Marker("OSMBuildings/marker-icon.png");
+    //  marker.setPosition({latitude: 55.75025533890208, longitude: 37.61789560317993},0);
+    //  marker.addToMap();
+    //marker.remove();
+
+    // for(let i = 0;i< 150; i++ ){
+    //   let temp = new osmb.Marker();
+    //   temp.setPosition({latitude: 55.751 + Math.random()/100 , longitude: 37.617 + Math.random()/100},0);
+    //   //temp.setPosition({latitude: 5+ Math.random() , longitude: 37 + Math.random()},0);
+    //   temp.addToMap();
+    //   // temp.addEventListener('click', (e) => console.log("clicked"));
+    //   // temp.removeEventListener('click', (e) => console.log("clicked"));
+    // }
+
+    //*****************************************************************
+
+    //***************************Marker WebGL******************************
+
+  let marker = osmb.addMarker({
+    position: { latitude: 55.75079, longitude: 37.61828, altitude: 75 },
+    source: './bubble.png',
+    scale: 0.1,
+    anchor: 'bottom_right'
+  });
+
+  let marker2 = osmb.addMarker({
+    position: { latitude: 55.750117, longitude: 37.618086, altitude: 100 },
+    anchor : 'bottom',
+    scale: 0.1
+    // , scale: 0.5
+    // , offsetX :-5
+    // , offsetY:-5
+    // , source: "http://localhost/git/OSMBuildings/test/OSMBuildings/marker-15.png"
+  });
+
+  // osmb.remove(marker); // will not work too early
+
+  //   for(let i = 0;i< 15; i++ ){
+  //
+  //     let marker = osmb.addMarker({
+  //       elevation: 50,
+  //       position: { latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100 },
+  //       size: 3
+  //       , source: "./bubble.png"
+  //     });
+  //   }
+
+    //*****************************************************************
+
+
+  </script>
 </body>
 </html>
