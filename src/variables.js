@@ -1,11 +1,11 @@
 
 const
   // MIN_ZOOM = 11,
-  MIN_ZOOM = 14.5,
+  MIN_ZOOM = 15,
   MAX_ZOOM = 22,
 
   // MAX_TILT = 75;
-  MAX_TILT = 55;
+  MAX_TILT = 45;
 
 
 var TILE_SIZE = 256;
