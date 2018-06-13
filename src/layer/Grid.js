@@ -8,15 +8,6 @@ class Grid {
     this.tiles = {};
     this.buffer = 1;
 
-    this.queue = [];
-    // TODO: should be more flexible, also connected to # of webworkers, could increase when idle
-    for (let i = 0; i < maxThreads; i++) {
-      this.queueNext();
-    }
-
-    this.update();
-
-    // TODO: get rid
     this.fixedZoom = options.fixedZoom;
 
     this.bounds = options.bounds || { w: -180, s: -90, e: 180, n: 90 };
@@ -27,6 +18,14 @@ class Grid {
       this.minZoom = APP.minZoom;
       this.maxZoom = APP.maxZoom;
     }
+
+    this.queue = [];
+    // TODO: should be more flexible, also connected to # of webworkers, could increase when idle
+    for (let i = 0; i < maxThreads; i++) {
+      this.queueNext();
+    }
+
+    this.update();
   }
 
   getURL (x, y, z) {
@@ -37,7 +36,7 @@ class Grid {
   getClosestTiles (tileList, referencePoint) {
     return tileList;
 
-    // tileList.sort(function(a, b) {
+    // tileList.sort((a, b) => {
     //   // tile coordinates correspond to the tile's upper left corner, but for
     //   // the distance computation we should rather use their center; hence the 0.5 offsets
     //   const distA = Math.pow(a[0] + 0.5 - referencePoint[0], 2.0) + Math.pow(a[1] + 0.5 - referencePoint[1], 2.0);
@@ -168,7 +167,7 @@ class Grid {
     }
 
     let tiles = rasterConvexQuad(viewQuad);
-    tiles = ( this.fixedZoom ) ? this.getClosestTiles(tiles, center) : this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
+    tiles = this.fixedZoom ? this.getClosestTiles(tiles, center) : this.mergeTiles(tiles, zoom, 0.5 * TILE_SIZE * TILE_SIZE);
 
     const visibleTiles = {};
     tiles.forEach(pos => {
