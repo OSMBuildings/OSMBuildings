@@ -1,6 +1,7 @@
 .DS_Store
 .idea
 .vscode
+npm-debug.log
 
 _scratch
 node_modules

@@ -1,16 +1,16 @@
 
-var baseURL = '../';
+const baseURL = '..';
 
 //*****************************************************************************
 
-function loadFile(url) {
-  var xhr = new XMLHttpRequest();
+function loadFile (url) {
+  const xhr = new XMLHttpRequest();
   xhr.open('GET', url, false);
   xhr.send(null);
 
-  var s = xhr.status;
+  const s = xhr.status;
   if (s !== 0 && s !== 200 && s !== 1223) {
-    var err = Error(xhr.status +' failed to load '+ url);
+    const err = Error(`{xhr.status} failed to load ${url}`);
     err.status = xhr.status;
     err.responseText = xhr.responseText;
     throw err;
@@ -19,58 +19,50 @@ function loadFile(url) {
   return xhr.responseText;
 }
 
-function loadShaders(config) {
-  var src, name, Shaders = {};
+function toVar (content) {
+  return content.replace(/ *[\r\n]+ */g, '\n');
+}
 
-  for (var i = 0; i < config.length; i++) {
-    name = config[i];
-
-    Shaders[name] = {};
-
-    src = loadFile(baseURL +'src/shader/'+ name +'.vs');
-    Shaders[name].vertex = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
-
-    src = loadFile(baseURL +'src/shader/'+ name +'.fs');
-    Shaders[name].fragment = src.replace(/'/g, "\'").replace(/[\r\n]+/g, '\n');
-  }
+function loadShaders (config) {
+  const Shaders = {};
+  config.forEach(name => {
+    Shaders[name] = {
+      vertex: toVar(loadFile(`${baseURL}/src/shader/${name}.vs`)),
+      fragment: toVar(loadFile(`${baseURL}/src/shader/${name}.fs`))
+    };
+  });
 
   console.log('Shaders', Shaders);
-  return 'var Shaders = '+ JSON.stringify(Shaders) +';\n';
+  return `const Shaders = ${JSON.stringify(Shaders)};\n\n`;
 }
 
 //*****************************************************************************
 
-var config = JSON.parse(loadFile(baseURL +'config.json'));
-var js = '';
+const config = JSON.parse(loadFile(`${baseURL}/config.json`));
+let js = '';
 js += "(function() {";
 
 // modules
-
-for (var i = 0; i < config.modules.length; i++) {
-  js += loadFile(baseURL + config.modules[i]) + '\n';
-}
+config.modules.forEach(module => {
+  js += loadFile(`${baseURL}/${module}\n`);
+});
 
 // shaders
-
 js += loadShaders(config.shaders);
 
-// GLX
-
-js += "var GLX = (function() {";
-for (var i = 0; i < config.glx.length; i++) {
-  js += loadFile(baseURL + config.glx[i]) + '\n';
-}
-js += "\nreturn GLX;\n}());\n";
+// worker
+let workerStr = '';
+config.worker.forEach(worker => {
+  workerStr += loadFile(`${baseURL}/${worker}\n`);
+});
+js += `const workerStr = '${workerStr.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/ *[\r\n]+ */g, '\\n')}';`;
 
 // OSMB core
-
-for (var i = 0; i < config.src.length; i++) {
-  js += loadFile(baseURL + config.src[i]) + '\n';
-}
-
+config.src.forEach(name => {
+  js += loadFile(`${baseURL}/${name}\n`);
+});
 
 js += "}());";
-
 
 try {
   eval(js);

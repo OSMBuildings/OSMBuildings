@@ -1,11 +1,4 @@
 
-function distance2(a, b) {
-  var
-    dx = a[0]-b[0],
-    dy = a[1]-b[1];
-  return dx*dx + dy*dy;
-}
-
 function assert(condition, message) {
   if (!condition) {
     throw message;
@@ -160,8 +153,8 @@ function rasterFlatTriangle( flat0, flat1, other ) {
  */
 function rasterConvexQuad(quad) {
   assert(quad.length == 4, 'Error: Quadrilateral with more or less than four vertices');
-  var res1  = rasterTriangle(quad[0], quad[1], quad[2]);
-  var res2 =  rasterTriangle(quad[0], quad[2], quad[3]);
+  var res1 = rasterTriangle(quad[0], quad[1], quad[2]);
+  var res2 = rasterTriangle(quad[0], quad[2], quad[3]);
   return res1.concat(res2);
 }
 
@@ -175,70 +168,71 @@ function normal(a, b, c) {
                  d1[0]*d2[1] - d1[1]*d2[0] ]);
 }
 
-/* returns the quadrilateral part of the XY plane that is currently visible on
+
+
+/**
+ * returns the quadrilateral part of the XY plane that is currently visible on
  * screen. The quad is returned in tile coordinates for tile zoom level
  * 'tileZoomLevel', and thus can directly be used to determine which basemap
  * and geometry tiles need to be loaded.
  * Note: if the horizon is level (as should usually be the case for 
- * OSMBuildings) then said quad is also a trapezoid. */
+ * OSMBuildings) then said quad is also a trapezoid.
+ */
 function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
-  /* maximum distance from the map center at which
-   * geometry is still visible */
-  //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
+  // maxFarEdgeDistance: maximum distance from the map center at which geometry is still visible
 
-  var inverse = GLX.Matrix.invert(viewProjectionMatrix);
+  const inverseViewMatrix = GLX.Matrix.invert(viewProjectionMatrix);
 
-  var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
-  var vBottomRight = getIntersectionWithXYPlane( 1, -1, inverse);
-  var vTopRight    = getIntersectionWithXYPlane( 1,  1, inverse);
-  var vTopLeft     = getIntersectionWithXYPlane(-1,  1, inverse);
+  let
+    vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverseViewMatrix),
+    vBottomRight = getIntersectionWithXYPlane( 1, -1, inverseViewMatrix),
+    vTopRight    = getIntersectionWithXYPlane( 1,  1, inverseViewMatrix),
+    vTopLeft     = getIntersectionWithXYPlane(-1,  1, inverseViewMatrix);
 
-  /* If even the lower edge of the screen does not intersect with the map plane,
-   * then the map plane is not visible at all.
-   * (Or somebody screwed up the projection matrix, putting the view upside-down 
-   *  or something. But in any case we won't attempt to create a view rectangle).
-   */
+  // If even the lower edge of the screen does not intersect with the map plane,
+  // then the map plane is not visible at all. We won't attempt to create a view rectangle.
+
   if (!vBottomLeft || !vBottomRight) {
     return;
   }
 
-  var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
-  var f;
+  let
+    vLeftDir, vRightDir, vLeftPoint, vRightPoint,
+    f;
 
-  /* The lower screen edge shows the map layer, but the upper one does not.
-   * This usually happens when the camera is close to parallel to the ground
-   * so that the upper screen edge lies above the horizon. This is not a bug
-   * and can legitimately happen. But from a theoretical standpoint, this means 
-   * that the view 'trapezoid' stretches infinitely toward the horizon. Since this
-   * is not a practically useful result - though formally correct - we instead
-   * manually bound that area.*/
+  // The lower screen edge intersects map plane, but the upper one does not.
+  // Usually happens when the camera is close to parallel to the ground
+  // so that the upper screen edge lies above the horizon. This is not a bug
+  // and can legitimately happen. But from a theoretical standpoint, this means
+  // that the view 'trapezoid' stretches infinitely toward the horizon. Since this
+  // is not useful we manually limit that area.
+
   if (!vTopLeft || !vTopRight) {
-    /* point on the left screen edge with the same y-value as the map center*/
-    vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
-    vLeftDir = norm2(sub2( vLeftPoint, vBottomLeft));
+    // point on the left screen edge with the same y-value as the map center*/
+    vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverseViewMatrix);
+    vLeftDir = norm2(sub2(vLeftPoint, vBottomLeft));
     f = dot2(vLeftDir, viewDirOnMap);
     vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
     
-    vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
+    vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverseViewMatrix);
     vRightDir = norm2(sub2(vRightPoint, vBottomRight));
     f = dot2(vRightDir, viewDirOnMap);
     vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
   }
 
-  /* if vTopLeft is further than maxFarEdgeDistance away vertically from the lower edge,
-   * move it closer. */
- if (dot2( viewDirOnMap, sub2(vTopLeft, vBottomLeft)) > maxFarEdgeDistance) {
-    vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
+  // If vTopLeft is further than maxFarEdgeDistance away vertically from the lower edge, move it closer.
+  if (dot2(viewDirOnMap, sub2(vTopLeft, vBottomLeft)) > maxFarEdgeDistance) {
+    vLeftDir = norm2(sub2(vTopLeft, vBottomLeft));
     f = dot2(vLeftDir, viewDirOnMap);
-    vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
- }
+    vTopLeft = add2(vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
+  }
 
- /* dito for vTopRight*/
- if (dot2( viewDirOnMap, sub2(vTopRight, vBottomRight)) > maxFarEdgeDistance) {
-    vRightDir = norm2(sub2( vTopRight, vBottomRight));
+  // Same for vTopRight
+  if (dot2(viewDirOnMap, sub2(vTopRight, vBottomRight)) > maxFarEdgeDistance) {
+    vRightDir = norm2(sub2(vTopRight, vBottomRight));
     f = dot2(vRightDir, viewDirOnMap);
-    vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
- }
+    vTopRight = add2(vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
+  }
  
   return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
 }
@@ -376,16 +370,22 @@ function getPositionFromLocal(localXY) {
 }
 
 function getTilePositionFromLocal(localXY, zoom) {
-  var pos = getPositionFromLocal(localXY);
-  
-  return [long2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
+  const pos = getPositionFromLocal(localXY);
+  return project([pos.longitude,  pos.latitude], 1<<zoom);
 }
 
-//all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-function long2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
-function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
-function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
-function tile2lat(y,z) { 
+function project(point, scale = 1) {
+  return [
+    (point[0]/360 + 0.5) * scale,
+    (1-Math.log(Math.tan(point[1] * Math.PI / 180) + 1 / Math.cos(point[1] * Math.PI/180)) / Math.PI)/2 * scale
+  ];
+}
+
+function tile2lon(x, z) {
+  return (x/Math.pow(2,z)*360-180);
+}
+
+function tile2lat(y, z) {
   var n = Math.PI-2*Math.PI*y/Math.pow(2,z);
   return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }

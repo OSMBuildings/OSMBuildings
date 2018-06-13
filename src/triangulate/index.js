@@ -3,8 +3,9 @@ var triangulate = (function() {
 
   var
     DEFAULT_HEIGHT = 10,
-    DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray(),
+    DEFAULT_COLOR = [ 0.8627450980392157, 0.8235294117647058, 0.7843137254901961 ]; //Qolor.parse('rgb(220, 210, 200)').toArray(),
     METERS_PER_LEVEL = 3;
+
 
   var MATERIAL_COLORS = {
     brick: '#cc7755',

@@ -1,15 +1,16 @@
 
-/* This object renders the shadow for the map layer. It only renders the shadow,
- * not the map itself. The intended use for this class is as a blended overlay
+/**
+ * This renders shadow for the map layer. It only renders the shadow,
+ * not the map itself. Result is used as a blended overlay
  * so that the map can be rendered independently from the shadows cast on it.
  */
 
-render.MapShadows = {
+class MapShadows {
 
-  init: function() {
+  constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders['basemap.shadows'].vertex,
-      fragmentShader: Shaders['basemap.shadows'].fragment,
+      vertexShader: Shaders['basemap_with_shadows'].vertex,
+      fragmentShader: Shaders['basemap_with_shadows'].fragment,
       shaderName: 'map shadows shader',
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
@@ -27,56 +28,49 @@ render.MapShadows = {
       ]
     });
     
-    this.mapPlane = new mesh.MapPlane();
-  },
+    this.mapPlane = new MapPlane();
+  }
 
-  render: function(Sun, depthFramebuffer, shadowStrength) {
-    var shader = this.shader;
-    shader.enable();
-
-    if (this.showBackfaces) {
-      GL.disable(GL.CULL_FACE);
-    }
-
-    shader.setUniforms([
-      ['uDirToSun', '3fv', Sun.direction],
-      ['uViewDirOnMap', '2fv',   render.viewDirOnMap],
-      ['uLowerEdgePoint', '2fv', render.lowerLeftOnMap],
-      ['uFogDistance', '1f', render.fogDistance],
-      ['uFogBlurDistance', '1f', render.fogBlurDistance],
-      ['uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] ],
-      ['uShadowStrength', '1f', shadowStrength]
-    ]);
-
-    shader.bindTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
-
-    var item = this.mapPlane;
+  render (Sun, depthFramebuffer, shadowStrength) {
+    const item = this.mapPlane;
     if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
       return;
     }
 
-    var modelMatrix;
+    const shader = this.shader;
+
+    shader.enable();
+
+    GL.disable(GL.CULL_FACE);
+
+    shader.setParam('uDirToSun', '3fv', Sun.direction);
+    shader.setParam('uViewDirOnMap', '2fv',   render.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
+    shader.setParam('uFogDistance', '1f', render.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f', render.fogBlurDistance);
+    shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] );
+    shader.setParam('uShadowStrength', '1f', shadowStrength);
+
+    shader.setTexture('uShadowTexIndex', 0, depthFramebuffer.depthTexture);
+
+    let modelMatrix;
     if (!(modelMatrix = item.getMatrix())) {
       return;
     }
 
-    shader.setUniformMatrices([
-      ['uModelMatrix', '4fv', modelMatrix.data],
-      ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)],
-      ['uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix)]
-    ]);
+    shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
 
-    shader.bindBuffer(item.vertexBuffer, 'aPosition');
-    shader.bindBuffer(item.normalBuffer, 'aNormal');
+    shader.setBuffer('aPosition', item.vertexBuffer);
+    shader.setBuffer('aNormal', item.normalBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
 
-    if (this.showBackfaces) {
-      GL.enable(GL.CULL_FACE);
-    }
-
     shader.disable();
-  },
+  }
 
-  destroy: function() {}
-};
+  destroy () {
+    this.mapPlane.destroy();
+  }
+}

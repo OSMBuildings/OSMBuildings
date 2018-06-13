@@ -2,7 +2,7 @@
 var createRoof;
 
 (function () {
-  
+
   createRoof = function(triangles, properties, polygon, dim, roofColor, wallColor) {
     switch (properties.roofShape) {
       case 'cone':

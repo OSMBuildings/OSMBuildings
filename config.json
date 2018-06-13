@@ -2,16 +2,16 @@
   "shaders": [
     "picking",
     "buildings",
-    "buildings.shadows",
-    "flatColor",
-    "skywall",
+    "buildings_with_shadows",
     "basemap",
+    "basemap_with_shadows",
     "texture",
-    "fogNormal",
-    "ambientFromDepth",
+    "depth_normal",
+    "ambient_from_depth",
+    "flat_color",
+    "horizon",
     "blur",
-    "basemap.shadows",
-    "outlineMap"
+    "marker"
   ],
 
   "modules": [
@@ -19,68 +19,69 @@
     "node_modules/suncalc/suncalc.js"
   ],
 
-  "glx": [
+  "worker": [
+    "src/Request.js",
+    "node_modules/qolor/dist/Qolor.debug.js",
+    "src/OBJ.js",
+    "src/triangulate/index.js",
+    "src/triangulate/roofs/index.js",
+    "src/triangulate/roofs/Tools.js",
+    "src/triangulate/split.js",
+    "src/triangulate/earcut.custom.js",
+    "src/triangulate/geometry/vec3.js",
+    "src/triangulate/geometry/vec2.js",
+    "src/workers/worker.js"
+  ],
+
+  "src": [
+
     "src/glx/index.js",
-    "src/glx/util.js",
     "src/glx/Buffer.js",
     "src/glx/Framebuffer.js",
     "src/glx/Shader.js",
     "src/glx/Matrix.js",
     "src/glx/texture/index.js",
     "src/glx/texture/Image.js",
-    "src/glx/texture/Data.js"
-  ],
+    "src/glx/texture/Data.js",
 
-  "src": [
-    "src/triangulate/geometry/vec2.js",
-    "src/triangulate/geometry/vec3.js",
-    "src/triangulate/earcut.custom.js",
+    "src/Collection.js",
+    
+    "src/markers/Marker.js",
 
-    "src/triangulate/roofs/Tools.js",
-    "src/triangulate/roofs/index.js",
-
-    "src/triangulate/split.js",
-    "src/triangulate/index.js",
-
-    "src/polyfills.js",
+    "src/workers/index.js",
+    "src/workers/Wrapper.js",
 
     "src/index.js",
     "src/Events.js",
-    "src/Activity.js",
 
     "src/variables.js",
     "src/Request.js",
     "src/util.js",
 
-    "src/Grid.js",
-    "src/Filter.js",
+    "src/layer/Grid.js",
+    "src/layer/Tile.js",
+    "src/layer/BitmapTile.js",
+    "src/layer/GeoJSONTile.js",
 
-    "src/data/index.js",
-    "src/data/Tile.js",
+    "src/features/index.js",
+    "src/features/Feature.js",
 
-    "src/mesh/index.js",
-    "src/mesh/GeoJSON.js",
     "src/mesh/MapPlane.js",
-    "src/mesh/DebugQuad.js",
-    "src/mesh/OBJ.js",
 
     "src/geometry.js",
 
     "src/render/index.js",
     "src/render/Picking.js",
     "src/render/Sun.js",
-    "src/render/SkyWall.js",
     "src/render/Buildings.js",
     "src/render/MapShadows.js",
     "src/render/Basemap.js",
     "src/render/HudRect.js",
-    "src/render/DepthFogNormalMap.js",
+    "src/render/DepthNormal.js",
     "src/render/AmbientMap.js",
     "src/render/Overlay.js",
-    "src/render/OutlineMap.js",
+    "src/render/Horizon.js",
     "src/render/Blur.js",
-
-    "src/basemap/index.js",
-    "src/basemap/Tile.js"
+    "src/render/Marker.js"
   ]
 }

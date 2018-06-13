@@ -1,114 +1,116 @@
-
 // TODO: perhaps render only clicked area
+// TODO: no picking if too far, too small (zoom levels)
 
-render.Picking = {
+class Picking {
 
-  idMapping: [null],
-  viewportSize: 512,
+  constructor () {
 
-  init: function() {
+    this.size = [512, 512];
+
     this.shader = new GLX.Shader({
       vertexShader: Shaders.picking.vertex,
       fragmentShader: Shaders.picking.fragment,
       shaderName: 'picking shader',
-      attributes: ['aPosition', 'aId', 'aFilter'],
+      attributes: ['aPosition', 'aPickingColor', 'aZScale'],
       uniforms: [
         'uModelMatrix',
         'uMatrix',
-        'uFogRadius',
-        'uTime'
+        'uFogDistance',
+        'uFade',
+        'uIndex'
       ]
     });
 
-    this.framebuffer = new GLX.Framebuffer(this.viewportSize, this.viewportSize);
-  },
+    this.framebuffer = new GLX.Framebuffer(this.size[0], this.size[1]);
+  }
 
-  render: function(framebufferSize) {
-    var
-      shader = this.shader,
-      framebuffer = this.framebuffer;
+  getTarget (x, y, callback) {
+    requestAnimationFrame(() => {
+      const shader = this.shader;
 
-    framebuffer.setSize(framebufferSize[0], framebufferSize[1]);
-    
-    shader.enable();
-    framebuffer.enable();
-    GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
-
-    GL.clearColor(0, 0, 0, 1);
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
-
-    shader.setUniforms([
-      ['uFogRadius', '1f', render.fogDistance],
-      ['uTime',      '1f', Filter.getTime()]
-    ]);
-
-    var
-      dataItems = data.Index.items,
-      item,
-      modelMatrix;
-
-    for (var i = 0, il = dataItems.length; i<il; i++) {
-      item = dataItems[i];
-
-      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
-        continue;
-      }
-
-      if (!(modelMatrix = item.getMatrix())) {
-        continue;
-      }
-
-      shader.setUniformMatrices([
-        ['uModelMatrix', '4fv', modelMatrix.data],
-        ['uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix)]
-      ]);
-
-      shader.bindBuffer(item.vertexBuffer, 'aPosition');
-      shader.bindBuffer(item.idBuffer, 'aId');
-      shader.bindBuffer(item.filterBuffer, 'aFilter');
-
-      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-    }
-
-    this.shader.disable();
-    this.framebuffer.disable();
-    GL.viewport(0, 0, APP.width, APP.height);
-  },
-  
-  // TODO: throttle calls
-  getTarget: function(x, y, callback) {
-    requestAnimationFrame(function() {
-      this.render( [this.viewportSize, this.viewportSize] );
-
-      x = x/APP.width *this.viewportSize <<0;
-      y = y/APP.height*this.viewportSize <<0;
-
+      shader.enable();
       this.framebuffer.enable();
-      var imageData = this.framebuffer.getPixel(x, this.viewportSize - 1 - y);
+
+      GL.viewport(0, 0, this.size[0], this.size[1]);
+
+      GL.clearColor(0, 0, 0, 1);
+      GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+
+      shader.setParam('uFogDistance', '1f', render.fogDistance);
+
+      const renderedItems = [];
+      APP.features.forEach(item => {
+        if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
+          return;
+        }
+
+        let modelMatrix = item.getMatrix();
+        if (!modelMatrix) {
+          return;
+        }
+
+        renderedItems.push(item.items);
+
+        shader.setParam('uFade', '1f', item.getFade());
+        shader.setParam('uIndex', '1f', renderedItems.length / 256);
+
+        shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+        shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+
+        shader.setBuffer('aPosition', item.vertexBuffer);
+        shader.setBuffer('aPickingColor', item.pickingBuffer);
+        shader.setBuffer('aZScale', item.zScaleBuffer);
+
+        GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
+      });
+
+      shader.disable();
+      GL.viewport(0, 0, APP.width, APP.height);
+
+      //***************************************************
+
+      const
+        X = x / APP.width * this.size[0] << 0,
+        Y = y / APP.height * this.size[1] << 0;
+
+      const imgData = this.framebuffer.getPixel(X, this.size[1] - 1 - Y);
       this.framebuffer.disable();
 
-      if (imageData === undefined) {
-        callback(undefined);
+      if (!imgData) {
+        callback();
         return;
       }
-      var color = imageData[0] | (imageData[1]<<8) | (imageData[2]<<16);
 
-      callback(this.idMapping[color]);
-    }.bind(this));
-  },
+      const
+        i = imgData[0] - 1,
+        f = (imgData[1] | (imgData[2] << 8)) - 1;
 
-  idToColor: function(id) {
-    var index = this.idMapping.indexOf(id);
-    if (index === -1) {
-      this.idMapping.push(id);
-      index = this.idMapping.length-1;
-    }
-    return [
-      ( index        & 0xff) / 255,
-      ((index >>  8) & 0xff) / 255,
-      ((index >> 16) & 0xff) / 255
-    ];
-  },
+      if (!renderedItems[i] || !renderedItems[i][f]) {
+        callback();
+        return;
+      }
 
-  destroy: function() {}
-};
+      const feature = renderedItems[i][f];
+      // callback({ id: feature.id, properties: feature.properties });
+
+      // find related items (across tiles)
+      const res = [];
+      const id = feature.properties.building || feature.id;
+      APP.features.forEach(item => { // all tiles...
+        item.items.forEach(feature => { // ...and their features
+          if ((feature.id === id || feature.properties.building === id) && !res.some(f => f.id === feature.id)) {
+            res.push({ id: feature.id, properties: feature.properties });
+          }
+        });
+      });
+
+      callback(res);
+
+    }); // end requestAnimationFrame()
+  }
+
+  destroy () {
+    this.shader.destroy();
+    this.framebuffer.destroy();
+  }
+}

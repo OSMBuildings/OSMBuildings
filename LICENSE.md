@@ -103,14 +103,3 @@ Licensed under the GNU General Public License version 3.
 Inspiration of roof processing from OSM2World
 https://github.com/tordanik/OSM2World
 Tobias Knerr
-
-===============================================================================
-
-Skydome image
-<unknown>
-
-Taken from http://blenderartists.org/forum/showthread.php?24038-Free-high-res-skymaps-%28Massive-07-update!%29
-
-"There are no restrictions on using these textures, you can use these for 
-commercial work, and you don't have to name me if you don't want to. the only
-restriction is that you can't sell them. that's all."

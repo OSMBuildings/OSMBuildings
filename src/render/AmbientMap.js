@@ -3,8 +3,8 @@ render.AmbientMap = {
 
   init: function() {
     this.shader = new GLX.Shader({
-      vertexShader:   Shaders.ambientFromDepth.vertex,
-      fragmentShader: Shaders.ambientFromDepth.fragment,
+      vertexShader:   Shaders.ambient_from_depth.vertex,
+      fragmentShader: Shaders.ambient_from_depth.fragment,
       shaderName: 'SSAO shader',
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
@@ -50,18 +50,16 @@ render.AmbientMap = {
     GL.clearColor(1.0, 0.0, 0.0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setUniforms([
-      ['uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]],
-      ['uEffectStrength', '1f',  effectStrength],
-      ['uNearPlane',      '1f',  1.0], //FIXME: use actual near and far planes of the projection matrix
-      ['uFarPlane',       '1f',  7500.0]
-    ]);
+    shader.setParam('uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]);
+    shader.setParam('uEffectStrength', '1f',  effectStrength);
+    shader.setParam('uNearPlane',      '1f',  render.nearPlane);
+    shader.setParam('uFarPlane',       '1f',  render.farPlane);
 
-    shader.bindBuffer(this.vertexBuffer,   'aPosition');
-    shader.bindBuffer(this.texCoordBuffer, 'aTexCoord');
+    shader.setBuffer('aPosition', this.vertexBuffer);
+    shader.setBuffer('aTexCoord', this.texCoordBuffer);
 
-    shader.bindTexture('uDepthTexIndex', 0, depthTexture);
-    shader.bindTexture('uFogTexIndex',   1, fogTexture);
+    shader.setTexture('uDepthTexIndex', 0, depthTexture);
+    shader.setTexture('uFogTexIndex',   1, fogTexture);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 

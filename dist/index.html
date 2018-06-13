@@ -80,16 +80,15 @@
 </div>
 
 <script>
-  var osmb = new OSMBuildings({
-    baseURL: './OSMBuildings',
+  const osmb = new OSMBuildings({
+    container: 'map',
     zoom: 16,
     minZoom: 16,
     maxZoom: 19,
-    position: { latitude:52.52000, longitude:13.41000 },
+    position: { latitude: 52.52000, longitude: 13.41000 },
     state: true, // stores map position/rotation in url
-    effects: ['shadows'],
     attribution: '© 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
-  }).appendTo('map');
+  });
 
   osmb.addMapTiles(
     'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
@@ -102,29 +101,37 @@
 
   //***************************************************************************
 
-  osmb.on('pointermove', function(e) {
-    osmb.getTarget(e.detail.x, e.detail.y, function(id) {
-      if (id) {
-        document.body.style.cursor = 'pointer';
-        osmb.highlight(id, '#f08000');
-      } else {
-        document.body.style.cursor = 'default';
-        osmb.highlight(null);
+  // on pointer up
+  osmb.on('pointerup', e => {
+    // check for event targets aka clicked buildings
+    const features = e.target;
+
+    // if none, remove any previous selection and return
+    if (!features) {
+      osmb.highlight(feature => {});
+      return;
+    }
+
+    // store id's from seleted items...
+    const featureIDList = features.map(feature => feature.id);
+
+    // ...then is is faster: set highlight color for matching features
+    osmb.highlight(feature => {
+      if (featureIDList.indexOf(feature.id) > -1) {
+        return '#ffffff';
       }
     });
   });
 
   //***************************************************************************
 
-  var controlButtons = document.querySelectorAll('.control button');
+  const controlButtons = document.querySelectorAll('.control button');
 
-  for (var i = 0, il = controlButtons.length; i < il; i++) {
-    controlButtons[i].addEventListener('click', function(e) {
-      var button = this;
-      var parentClassList = button.parentNode.classList;
-      var direction = button.classList.contains('inc') ? 1 : -1;
-      var increment;
-      var property;
+  controlButtons.forEach(button => {
+    button.addEventListener('click', e => {
+      const parentClassList = button.parentNode.classList;
+      const direction = button.classList.contains('inc') ? 1 : -1;
+      let increment, property;
 
       if (parentClassList.contains('tilt')) {
         property = 'Tilt';
@@ -142,7 +149,7 @@
         osmb['set'+ property](osmb['get'+ property]()+increment);
       }
     });
-  }
+  });
 </script>
 </body>
 </html>
