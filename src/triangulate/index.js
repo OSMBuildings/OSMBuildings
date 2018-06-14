@@ -1,13 +1,13 @@
 
-var triangulate = (function() {
+const triangulate = (function() {
 
-  var
+  const
     DEFAULT_HEIGHT = 10,
     DEFAULT_COLOR = [ 0.8627450980392157, 0.8235294117647058, 0.7843137254901961 ]; //Qolor.parse('rgb(220, 210, 200)').toArray(),
     METERS_PER_LEVEL = 3;
 
 
-  var MATERIAL_COLORS = {
+  const MATERIAL_COLORS = {
     brick: '#cc7755',
     bronze: '#ffeecc',
     canvas: '#fff8f0',
@@ -27,7 +27,7 @@ var triangulate = (function() {
     wood: '#deb887'
   };
 
-  var BASE_MATERIALS = {
+  const BASE_MATERIALS = {
     asphalt: 'tar_paper',
     bitumen: 'tar_paper',
     block: 'stone',
@@ -61,19 +61,19 @@ var triangulate = (function() {
   };
 
   // number of windows per horizontal meter of building wall
-  var WINDOWS_PER_METER = 0.5;
+  const WINDOWS_PER_METER = 0.5;
 
-  // var EARTH_RADIUS_IN_METERS = 6378137;
-  // var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
-  // var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
-  var METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
+  // const EARTH_RADIUS_IN_METERS = 6378137;
+  // const EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
+  // const METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+  const METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
 
   function triangulate(buffers, feature, origin, forcedColor, colorVariance) {
-    var scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE];
+    const scale = [METERS_PER_DEGREE_LATITUDE*Math.cos(origin[1]/180*Math.PI), METERS_PER_DEGREE_LATITUDE];
 
     // a single feature might split into several items
-    alignGeometry(feature.geometry).map(function(geometry) {
-      var polygon = transform(geometry, origin, scale);
+    alignGeometry(feature.geometry).map(geometry => {
+      const polygon = transform(geometry, origin, scale);
       addBuilding(buffers, feature.properties, polygon, forcedColor, colorVariance);
     });
   }
@@ -82,7 +82,7 @@ var triangulate = (function() {
 
   // converts all coordinates of all rings in 'polygonRings' from lat/lon pairs to offsets from origin
   function transform(geometry, origin, scale) {
-    return geometry.map(function(ring, i) {
+    return geometry.map((ring, i) => {
       // outer ring (first ring) needs to be clockwise, inner rings
       // counter-clockwise. If they are not, make them by reverting order.
       if ((i === 0) !== isClockWise(ring)) {
@@ -99,17 +99,17 @@ var triangulate = (function() {
   }
 
   function isClockWise(ring) {
-    return 0 < ring.reduce(function(a, b, c, d) {
+    return 0 < ring.reduce((a, b, c, d) => {
       return a + ((c < d.length - 1) ? (d[c+1][0] - b[0]) * (d[c+1][1] + b[1]) : 0);
     }, 0);
   }
 
   function getBBox(ring) {
-    var
+    let
       x =  Infinity, y =  Infinity,
       X = -Infinity, Y = -Infinity;
 
-    for (var i = 0; i < ring.length; i++) {
+    for (let i = 0; i < ring.length; i++) {
       x = Math.min(x, ring[i][0]);
       y = Math.min(y, ring[i][1]);
 
@@ -144,7 +144,7 @@ var triangulate = (function() {
 
   function varyColor(col, variance) {
     variance = variance || 0;
-    var color = Qolor.parse(col), rgb;
+    let color = Qolor.parse(col), rgb;
     if (!color.isValid()) {
       rgb = DEFAULT_COLOR;
     } else {
@@ -158,7 +158,7 @@ var triangulate = (function() {
 
   // TODO: add floor polygons if items have minHeight
   function addBuilding(buffers, properties, polygon, forcedColor, colorVariance) {
-    var
+    const
       dim = getDimensions(properties, getBBox(polygon[0])),
       wallColor = varyColor((forcedColor || properties.wallColor || properties.color || getMaterialColor(properties.material)), colorVariance),
       roofColor = varyColor((forcedColor || properties.roofColor || getMaterialColor(properties.roofMaterial)), colorVariance);
@@ -199,8 +199,8 @@ var triangulate = (function() {
         return;
 
       default: // extruded polygon
-        var ty1 = 0.2;
-        var ty2 = 0.4;
+        let ty1 = 0.2;
+        let ty2 = 0.4;
         // non-continuous windows
         if (properties.material !== 'glass') {
           ty1 = 0;
@@ -214,7 +214,7 @@ var triangulate = (function() {
   }
 
   function getDimensions(properties, bbox) {
-    var dim = {};
+    const dim = {};
 
     dim.center = [bbox.minX + (bbox.maxX - bbox.minX)/2, bbox.minY + (bbox.maxY - bbox.minY)/2];
     dim.radius = (bbox.maxX - bbox.minX)/2;
@@ -252,7 +252,7 @@ var triangulate = (function() {
 
     //*** wall height *********************************************************
 
-    var maxHeight;
+    let maxHeight;
     dim.wallZ = properties.minHeight || (properties.minLevel ? properties.minLevel*METERS_PER_LEVEL : 0);
 
     if (properties.height !== undefined) {

@@ -34,7 +34,7 @@ class render {
     render.Basemap = new Basemap();
 
     render.Overlay.init();
-    render.AmbientMap.init();
+    render.ambientMap = new AmbientMap();
     render.blurredAmbientMap = new Blur();
     render.MapShadows = new MapShadows();
     if (render.effects.shadows) {
@@ -79,8 +79,8 @@ class render {
 
           render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
           render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
-          render.AmbientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
-          render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
+          render.ambientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
+          render.blurredAmbientMap.render(render.ambientMap.framebuffer.renderTexture, viewSize);
           render.Buildings.render(render.sunGBuffer.framebuffer);
           render.Basemap.render();
 
@@ -113,7 +113,7 @@ class render {
 
           render.Marker.render();
 
-          // render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
+          // render.hudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
         }
 
         // APP.markers.updateMarkerView();
@@ -251,7 +251,7 @@ class render {
       render.sunGBuffer.destroy();
     }
 
-    render.AmbientMap.destroy();
+    render.ambientMap.destroy();
     render.blurredAmbientMap.destroy();
 
     clearTimeout(this.speedTimer);

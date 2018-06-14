@@ -1,15 +1,10 @@
 
-/* 'HudRect' renders a textured rectangle to the top-right quarter of the viewport.
-   The intended use is visualize render-to-texture effects during development.
- */
-render.HudRect = {
+// HudRect renders a textured rectangle to the top-right quarter of the viewport.
+// The intended use is visualize render-to-texture effects during development.
 
-  init: function() {
-  
-    var geometry = this.createGeometry();
-    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
+class HudRect {
 
+  constructor () {
     this.shader = new GLX.Shader({
       vertexShader: Shaders.texture.vertex,
       fragmentShader: Shaders.texture.fragment,
@@ -17,11 +12,17 @@ render.HudRect = {
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [ 'uMatrix', 'uTexIndex']
     });
-  },
 
-  createGeometry: function() {
-    var vertices = [],
-        texCoords= [];
+    const geometry = this.createGeometry();
+    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
+  }
+
+  createGeometry () {
+    const
+      vertices = [],
+      texCoords= [];
+
     vertices.push(0, 0, 1E-5,
                   1, 0, 1E-5,
                   1, 1, 1E-5);
@@ -39,10 +40,10 @@ render.HudRect = {
                    0.5,1.0);
 
     return { vertices: vertices , texCoords: texCoords };
-  },
+  }
 
-  render: function(texture) {
-    var shader = this.shader;
+  render (texture) {
+    const shader = this.shader;
 
     shader.enable();
     
@@ -60,7 +61,11 @@ render.HudRect = {
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
-  },
+  }
 
-  destroy: function() {}
-};
+  destroy () {
+    this.shader.destroy();
+    this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+  }
+}

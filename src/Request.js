@@ -4,7 +4,7 @@ class Request {
   static load (url, callback) {
     const req = new XMLHttpRequest();
 
-    const timer = setTimeout(function () {
+    const timer = setTimeout(t => {
       if (req.readyState !== 4) {
         req.abort();
         callback('status');

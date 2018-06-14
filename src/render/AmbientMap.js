@@ -1,7 +1,7 @@
 
-render.AmbientMap = {
+class AmbientMap {
 
-  init: function() {
+  constructor () {
     this.shader = new GLX.Shader({
       vertexShader:   Shaders.ambient_from_depth.vertex,
       fragmentShader: Shaders.ambient_from_depth.fragment,
@@ -10,7 +10,7 @@ render.AmbientMap = {
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });
 
-    this.framebuffer = new GLX.Framebuffer(128, 128); //dummy value, size will be set dynamically
+    this.framebuffer = new GLX.Framebuffer(128, 128); // size will be set dynamically
     
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array([
       -1, -1, 1E-5,
@@ -29,11 +29,10 @@ render.AmbientMap = {
       1,1,
       0,1
     ]));
-  },
+  }
 
-  render: function(depthTexture, fogTexture, framebufferSize, effectStrength) {
-
-    var
+  render (depthTexture, fogTexture, framebufferSize, effectStrength) {
+    const
       shader = this.shader,
       framebuffer = this.framebuffer;
 
@@ -41,9 +40,10 @@ render.AmbientMap = {
       effectStrength = 1.0;
     }
 
-    framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
+    framebuffer.setSize(framebufferSize[0], framebufferSize[1]);
 
     GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+
     shader.enable();
     framebuffer.enable();
 
@@ -67,8 +67,12 @@ render.AmbientMap = {
     framebuffer.disable();
 
     GL.viewport(0, 0, APP.width, APP.height);
+  }
 
-  },
-
-  destroy: function() {}
-};
+  destroy () {
+    this.shader.destroy();
+    this.framebuffer.destroy();
+    this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+  }
+}
