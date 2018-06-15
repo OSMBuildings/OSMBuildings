@@ -9,9 +9,7 @@ class MapShadows {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders['basemap_with_shadows'].vertex,
-      fragmentShader: Shaders['basemap_with_shadows'].fragment,
-      shaderName: 'map shadows shader',
+      source: basemap_with_shadowsShader,
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
         'uModelMatrix',

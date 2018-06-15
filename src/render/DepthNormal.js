@@ -10,9 +10,7 @@ class DepthNormal {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.depth_normal.vertex,
-      fragmentShader: Shaders.depth_normal.fragment,
-      shaderName: 'depth/normal shader',
+      source: depth_normalShader,
       attributes: ['aPosition', 'aNormal', 'aZScale'],
       uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uFade', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
     });

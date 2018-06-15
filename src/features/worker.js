@@ -1,8 +1,4 @@
 
-// TODO: opt for specialized workers
-
-//*****************************************************************************
-
 function getOrigin (geometry) {
   const coordinates = geometry.coordinates;
   switch (geometry.type) {

@@ -4,9 +4,7 @@ class Buildings {
   constructor () {
     this.shader = !render.effects.shadows ?
       new GLX.Shader({
-        vertexShader: Shaders.buildings.vertex,
-        fragmentShader: Shaders.buildings.fragment,
-        shaderName: 'building shader',
+        source: buildingsShader,
         attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
         uniforms: [
           'uModelMatrix',
@@ -22,9 +20,7 @@ class Buildings {
           'uWallTexIndex'
         ]
       }) : new GLX.Shader({
-      vertexShader: Shaders['buildings_with_shadows'].vertex,
-      fragmentShader: Shaders['buildings_with_shadows'].fragment,
-      shaderName: 'quality building shader',
+      source: buildings_with_shadowsShader,
       attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
       uniforms: [
         'uFogDistance',

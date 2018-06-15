@@ -3,9 +3,7 @@ class Basemap {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.basemap.vertex,
-      fragmentShader: Shaders.basemap.fragment,
-      shaderName: 'basemap shader',
+      source: basemapShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uViewMatrix', 'uModelMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
     });

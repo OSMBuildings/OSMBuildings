@@ -161,10 +161,8 @@ class OSMBuildings {
 
     const numProc = Math.min(window.navigator.hardwareConcurrency, 4);
 
-    if (typeof workerStr === 'string') {
-      const blob = new Blob([workerStr], { type: 'application/javascript' });
-      this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
-    }
+    const blob = new Blob([featureWorker], { type: 'application/javascript' });
+    this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
 
     //*** create container ********************************
 

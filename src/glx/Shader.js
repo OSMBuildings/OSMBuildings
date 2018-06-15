@@ -1,11 +1,11 @@
 GLX.Shader = class {
 
   constructor (config) {
-    this.shaderName = config.shaderName;
+    this.name = config.source.name || '';
     this.id = GL.createProgram();
 
-    this.compile(GL.VERTEX_SHADER, config.vertexShader);
-    this.compile(GL.FRAGMENT_SHADER, config.fragmentShader);
+    this.compile(GL.VERTEX_SHADER, config.source.vs);
+    this.compile(GL.FRAGMENT_SHADER, config.source.fs);
 
     GL.linkProgram(this.id);
 
@@ -29,7 +29,7 @@ GLX.Shader = class {
   locateAttribute (name) {
     const loc = GL.getAttribLocation(this.id, name);
     if (loc < 0) {
-      throw new Error(`unable to locate attribute "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`unable to locate attribute "${name}" in shader "${this.name}"`);
     }
     this.attributes[name] = loc;
   }
@@ -37,7 +37,7 @@ GLX.Shader = class {
   locateUniform (name) {
     const loc = GL.getUniformLocation(this.id, name);
     if (!loc) {
-      throw new Error(`unable to locate uniform "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`unable to locate uniform "${name}" in shader "${this.name}"`);
     }
     this.uniforms[name] = loc;
   }
@@ -72,7 +72,7 @@ GLX.Shader = class {
 
   setBuffer (name, buffer) {
     if (this.attributes[name] === undefined) {
-      throw new Error(`attempt to bind buffer to invalid attribute "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`attempt to bind buffer to invalid attribute "${name}" in shader "${this.name}"`);
     }
     buffer.enable();
     GL.vertexAttribPointer(this.attributes[name], buffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -80,14 +80,14 @@ GLX.Shader = class {
 
   setParam (name, type, value) {
     if (this.uniforms[name] === undefined) {
-      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.name}"`);
     }
     GL['uniform' + type](this.uniforms[name], value);
   }
 
   setMatrix (name, type, value) {
     if (this.uniforms[name] === undefined) {
-      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.name}"`);
     }
     GL['uniformMatrix' + type](this.uniforms[name], false, value);
   }

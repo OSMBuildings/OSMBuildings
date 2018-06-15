@@ -2,9 +2,7 @@ class Blur {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.blur.vertex,
-      fragmentShader: Shaders.blur.fragment,
-      shaderName: 'blur shader',
+      source: blurShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uTexIndex']
     });

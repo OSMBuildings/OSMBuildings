@@ -5,9 +5,7 @@ class Horizon {
     this.HORIZON_HEIGHT = 2000;
 
     this.skyShader = new GLX.Shader({
-      vertexShader: Shaders.horizon.vertex,
-      fragmentShader: Shaders.horizon.fragment,
-      shaderName: 'sky wall shader',
+      source: horizonShader,
       attributes: ['aPosition'],
       uniforms: ['uAbsoluteHeight', 'uMatrix', 'uFogColor']
     });
@@ -16,8 +14,7 @@ class Horizon {
     this.updateGeometry([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]);
 
     this.floorShader = new GLX.Shader({
-      vertexShader: Shaders.flat_color.vertex,
-      fragmentShader: Shaders.flat_color.fragment,
+      source: flat_colorShader,
       attributes: ['aPosition'],
       uniforms: ['uColor', 'uMatrix']
     });

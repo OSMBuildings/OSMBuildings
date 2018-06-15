@@ -19,22 +19,23 @@
     "node_modules/suncalc/suncalc.js"
   ],
 
-  "worker": [
-    "src/Request.js",
-    "node_modules/qolor/dist/Qolor.debug.js",
-    "src/OBJ.js",
-    "src/triangulate/index.js",
-    "src/triangulate/roofs/index.js",
-    "src/triangulate/roofs/Tools.js",
-    "src/triangulate/split.js",
-    "src/triangulate/earcut.custom.js",
-    "src/triangulate/geometry/vec3.js",
-    "src/triangulate/geometry/vec2.js",
-    "src/workers/worker.js"
-  ],
+  "workers": {
+    "feature": [
+      "src/Request.js",
+      "node_modules/qolor/dist/Qolor.debug.js",
+      "src/OBJ.js",
+      "src/triangulate/index.js",
+      "src/triangulate/roofs/index.js",
+      "src/triangulate/roofs/Tools.js",
+      "src/triangulate/split.js",
+      "src/triangulate/earcut.custom.js",
+      "src/triangulate/geometry/vec3.js",
+      "src/triangulate/geometry/vec2.js",
+      "src/features/worker.js"
+    ]
+  },
 
   "src": [
-
     "src/glx/index.js",
     "src/glx/Buffer.js",
     "src/glx/Framebuffer.js",

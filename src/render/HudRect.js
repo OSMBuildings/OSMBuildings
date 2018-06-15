@@ -6,9 +6,7 @@ class HudRect {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.texture.vertex,
-      fragmentShader: Shaders.texture.fragment,
-      shaderName: 'HUD rectangle shader',
+      source: textureShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [ 'uMatrix', 'uTexIndex']
     });

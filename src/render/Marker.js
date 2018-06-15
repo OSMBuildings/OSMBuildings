@@ -7,9 +7,7 @@ class MarkerRender {
   constructor () {
 
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.marker.vertex,
-      fragmentShader: Shaders.marker.fragment,
-      shaderName: 'marker shader',
+      source: markerShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [
         'uProjMatrix',

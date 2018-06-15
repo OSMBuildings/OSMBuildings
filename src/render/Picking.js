@@ -8,9 +8,7 @@ class Picking {
     this.size = [512, 512];
 
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.picking.vertex,
-      fragmentShader: Shaders.picking.fragment,
-      shaderName: 'picking shader',
+      source: pickingShader,
       attributes: ['aPosition', 'aPickingColor', 'aZScale'],
       uniforms: [
         'uModelMatrix',

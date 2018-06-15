@@ -3,9 +3,7 @@ class AmbientMap {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader:   Shaders.ambient_from_depth.vertex,
-      fragmentShader: Shaders.ambient_from_depth.fragment,
-      shaderName: 'SSAO shader',
+      source: ambient_from_depthShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });

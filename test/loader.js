@@ -3,6 +3,12 @@ const baseURL = '..';
 
 //*****************************************************************************
 
+function toVar (content) {
+  return content.replace(/ *[\r\n]+ */g, '\n');
+}
+
+//*****************************************************************************
+
 function loadFile (url) {
   const xhr = new XMLHttpRequest();
   xhr.open('GET', url, false);
@@ -19,21 +25,45 @@ function loadFile (url) {
   return xhr.responseText;
 }
 
-function toVar (content) {
-  return content.replace(/ *[\r\n]+ */g, '\n');
-}
+//*****************************************************************************
 
-function loadShaders (config) {
-  const Shaders = {};
-  config.forEach(name => {
-    Shaders[name] = {
-      vertex: toVar(loadFile(`${baseURL}/src/shader/${name}.vs`)),
-      fragment: toVar(loadFile(`${baseURL}/src/shader/${name}.fs`))
-    };
+function loadModules (config) {
+  let str = '';
+  config.forEach(file => {
+    str += loadFile(`${baseURL}/${file}\n`);
   });
 
-  console.log('Shaders', Shaders);
-  return `const Shaders = ${JSON.stringify(Shaders)};\n\n`;
+  return str;
+}
+
+//*****************************************************************************
+
+function loadShaders (config) {
+  let str = '';
+  config.forEach(name => {
+    str += `const ${name}Shader = ${JSON.stringify({
+      name: name,
+      vs: toVar(loadFile(`${baseURL}/src/shader/${name}.vs`)),
+      fs: toVar(loadFile(`${baseURL}/src/shader/${name}.fs`))
+    })}\n\n`;
+  });
+
+  return str;
+}
+
+//*****************************************************************************
+
+function loadWorkers (config) {
+  let str = '';
+  for (let name in config) {
+    let src = '';
+    config[name].forEach(file => {
+      src += loadFile(`${baseURL}/${file}\n`);
+    });
+    str += `const ${name}Worker = '${src.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/ *[\r\n]+ */g, '\\n')}';\n\n`;
+  }
+
+  return str;
 }
 
 //*****************************************************************************
@@ -42,20 +72,9 @@ const config = JSON.parse(loadFile(`${baseURL}/config.json`));
 let js = '';
 js += "(function() {";
 
-// modules
-config.modules.forEach(module => {
-  js += loadFile(`${baseURL}/${module}\n`);
-});
-
-// shaders
+js += loadModules(config.modules);
 js += loadShaders(config.shaders);
-
-// worker
-let workerStr = '';
-config.worker.forEach(worker => {
-  workerStr += loadFile(`${baseURL}/${worker}\n`);
-});
-js += `const workerStr = '${workerStr.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/ *[\r\n]+ */g, '\\n')}';`;
+js += loadWorkers(config.workers);
 
 // OSMB core
 config.src.forEach(name => {

@@ -11,9 +11,7 @@ render.Overlay = {
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.texture.vertex,
-      fragmentShader: Shaders.texture.fragment,
-      shaderName: 'overlay texture shader',
+      source: textureShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uTexIndex']
     });
