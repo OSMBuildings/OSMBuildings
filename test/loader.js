@@ -27,7 +27,7 @@ function loadFile (url) {
 
 //*****************************************************************************
 
-function loadModules (config) {
+function loadLibs (config) {
   let str = '';
   config.forEach(file => {
     str += loadFile(`${baseURL}/${file}\n`);
@@ -72,7 +72,7 @@ const config = JSON.parse(loadFile(`${baseURL}/config.json`));
 let js = '';
 js += "(function() {";
 
-js += loadModules(config.modules);
+js += loadLibs(config.libs);
 js += loadShaders(config.shaders);
 js += loadWorkers(config.workers);
 

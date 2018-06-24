@@ -697,7 +697,7 @@ class OSMBuildings {
  * (String) OSMBuildings version
  * @static
  */
-OSMBuildings.VERSION = '{{VERSION}}';
+OSMBuildings.VERSION = null;
 
 /**
  * (String) OSMBuildings attribution

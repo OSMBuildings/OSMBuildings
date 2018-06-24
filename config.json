@@ -14,7 +14,7 @@
     "marker"
   ],
 
-  "modules": [
+  "libs": [
     "node_modules/qolor/dist/Qolor.debug.js",
     "node_modules/suncalc/suncalc.js"
   ],
