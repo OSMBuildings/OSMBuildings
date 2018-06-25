@@ -1,7 +1,7 @@
 
 const fs = require('fs');
 const Uglify = require('uglify-es');
-const archive = require('node-zip-dir').zip;
+const FileZip = require('file-zip');
 const ESLint = require('eslint').linter;
 const package = require('./package.json');
 const config = require('./config.json');
@@ -87,7 +87,6 @@ function taskLint (str) {
 
   const messages = ESLint.verify(str, config);
   if (messages.length) {
-
     const lines = str.split('\n');
     const err = messages.map(err => {
       return `${err.message} in line ${err.line}\n${lines[err.line-1]}`;
@@ -98,13 +97,12 @@ function taskLint (str) {
 }
 
 function taskArchive (src, dst, callback) {
-  // archive(src, { saveTo: dst }, err => {
-  //   if (err) {
-  //     throw new Error(err);
-  //   }
-  //   callback();
-  // });
-  callback();
+  FileZip.zipFolder([src], dst, err => {
+    if (err) {
+      throw new Error(err);
+    }
+    callback();
+  });
 }
 
 //*****************************************************************************

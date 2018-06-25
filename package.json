@@ -27,6 +27,7 @@
     "browserify": "^16.2.2",
     "documentation": "^5.3.0",
     "eslint": "^5.0.0",
+    "file-zip": "^1.0.1",
     "node-zip-dir": "^1.0.2",
     "uglify-es": "github:mishoo/UglifyJS2#harmony"
   },

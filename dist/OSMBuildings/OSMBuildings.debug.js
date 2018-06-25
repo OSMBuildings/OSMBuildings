@@ -1,4 +1,5 @@
-(function() {var Qolor = (function() {
+(function(){
+var Qolor = (function() {
 var w3cColors = {
   aliceblue: '#f0f8ff',
   antiquewhite: '#faebd7',
@@ -431,9 +432,31 @@ var suncalc = (function () {
 }());
 
 
-const Shaders = {"picking":{"vertex":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aPickingColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogDistance;\nuniform float uFade;\nuniform float uIndex;\nvarying vec4 vColor;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec4 mPosition = vec4(uModelMatrix * pos);\nfloat distance = length(mPosition);\nif (distance > uFogDistance) {\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvColor = vec4(clamp(uIndex, 0.0, 1.0), aPickingColor.g, aPickingColor.b, 1.0);\n}\n}\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\ngl_FragColor = vColor;\n}\n"},"buildings":{"vertex":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvec3 transformedNormal = aNormal * uNormalTransform;\nfloat lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\ncolor = color + uLightColor * lightIntensity;\nvTexCoord = aTexCoord;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"},"buildings_with_shadows":{"vertex":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec2 aTexCoord;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvNormal = aNormal;\nvTexCoord = aTexCoord;\n//vec3 transformedNormal = aNormal * uNormalTransform;\n//float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n//color = color + uLightColor * lightIntensity;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n// *** shadow mapping ********\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n}\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\nvec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\nfloat diffuse = dot(uLightDirection, normal);\ndiffuse = max(diffuse, 0.0);\n// reduce shadow strength with:\n// - lowering sun positions, to be consistent with the shadows on the basemap (there,\n// shadows are faded out with lowering sun positions to hide shadow artifacts caused\n// when sun direction and map surface are almost perpendicular\n// - large angles between the sun direction and the surface normal, to hide shadow\n// artifacts that occur when surface normal and sun direction are almost perpendicular\nfloat shadowStrength = pow( max( min(\ndot(uLightDirection, vec3(0.0, 0.0, 1.0)),\ndot(uLightDirection, normal)\n), 0.0), 1.5);\nif (diffuse > 0.0 && shadowStrength > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat occludedBySun = mix(\nmix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\ndiffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n}\nvec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n(diffuse/1.5) * uLightColor;\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\n//gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\ngl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"},"basemap":{"vertex":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\ngl_Position = uViewMatrix * aPosition;\nvTexCoord = aTexCoord;\nvec4 worldPos = uModelMatrix * aPosition;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"},"basemap_with_shadows":{"vertex":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\nvec4 pos = vec4(aPosition.xyz, 1.0);\ngl_Position = uMatrix * pos;\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\nvNormal = aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fragment":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not*\n* render the map texture itself, but is instead intended to be blended on top\n* of an already rendered map.\n* Note: this shader is not (and does not attempt to) be physically correct.\n* It is intented to be a blend between a useful illustration of cast\n* shadows and a mitigation of shadow casting artifacts occuring at\n* low angles on incidence.\n* Map brightness is only affected by shadows, not by light direction.\n* Shadows are darkest when light comes from straight above (and thus\n* shadows can be computed reliably) and become less and less visible\n* with the light source close to horizon (where moirC) and offset\n* artifacts would otherwise be visible).\n*/\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n//vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n//gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n//return;\nfloat diffuse = dot(uDirToSun, normalize(vNormal));\ndiffuse = max(diffuse, 0.0);\n\nfloat shadowStrength = uShadowStrength * pow(diffuse, 1.5);\nif (diffuse > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\ndiffuse = mix( mix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\n}\ndiffuse = mix(1.0, diffuse, shadowStrength);\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\nfloat darkness = (1.0 - diffuse);\ndarkness *= (1.0 - fogIntensity);\ngl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"},"texture":{"vertex":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"},"depth_normal":{"vertex":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute float aZScale;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nverticalDistanceToLowerEdge = 0.0;\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvNormal = uNormalMatrix * aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fragment":"\n#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\ngl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"},"ambient_from_depth":{"vertex":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n// we need high precision for the depth values\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize; //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\nfloat z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\nreturn (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how\n* much the fragment at 'pos' with depth 'depthHere'is occluded by the\n* fragment that is (dx, dy) texels away from it.\n*/\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset) {\nfloat depthThere = getDepth(pos, offset);\n/* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there),\n* then 'here' is not occluded (result 1.0) */\nif (depthThere == 0.0)\nreturn 1.0;\n/* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n* 'here is not occluded' */\nif (depthHere < depthThere )\nreturn 1.0;\nfloat relDepthDiff = depthThere / depthHere;\nfloat depthDiff = abs(depthThere - depthHere) * uFarPlane;\n/* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n* 'here'. The occlusion is the higher the bigger the depth difference between the two\n* locations is.\n* However, if the depth difference is too high, we assume that 'there' lies in a\n* completely different depth region of the scene than 'here' and thus cannot occlude\n* 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n*/\nreturn depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO).\n* It is based on the assumption that a pixel will be occluded by neighboring\n* pixels iff. those have a depth value closer to the camera than the original\n* pixel itself (the function getOcclusionFactor() computes this occlusion\n* by a single other pixel).\n*\n* A naive approach would sample all pixels within a given distance. For an\n* interesting-looking effect, the sampling area needs to be at least 9 pixels\n* wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n* This overburdens many GPUs.\n* To make the ambient occlusion computation faster, we do not consider all\n* texels in the sampling area, but only 16. This causes some sampling artifacts\n* that are later removed by blurring the ambient occlusion texture (this is\n* done in a separate shader).\n*/\nvoid main() {\nfloat depthHere = getDepth(vTexCoord, ivec2(0, 0));\nfloat fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\nif (depthHere == 0.0)\n{\n\t//there was nothing rendered 'here' --> it can't be occluded\ngl_FragColor = vec4(1.0);\nreturn;\n}\nfloat occlusionFactor = 1.0;\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\nocclusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\nocclusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\ngl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"},"flat_color":{"vertex":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\ngl_Position = uMatrix * aPosition;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\ngl_FragColor = uColor;\n}\n"},"horizon":{"vertex":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nuniform float uAbsoluteHeight;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvRelativeHeight = aPosition.z / uAbsoluteHeight;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec3 uFogColor;\nvarying float vRelativeHeight;\nvoid main() {\nfloat blendFactor = min(100.0 * vRelativeHeight, 1.0);\nvec4 skyColor = vec4(0.9, 0.85, 1.0, 1.0);\ngl_FragColor = mix(vec4(uFogColor, 1.0), skyColor, blendFactor);\n}\n"},"blur":{"vertex":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize; // as 1/n pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n// Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'.\nvec4 getTexel(vec2 pos, vec2 offset) {\nreturn texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\nvec4 center = texture2D(uTexIndex, vTexCoord);\nvec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, 0.0)) +\ngetTexel(vTexCoord, vec2(+1.0, 0.0)) +\ngetTexel(vTexCoord, vec2( 0.0, -1.0)) +\ngetTexel(vTexCoord, vec2( 0.0, +1.0));\nvec4 diagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, -1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(-1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, -1.0));\n\n// approximate Gaussian blur (mean 0.0, stdev 1.0)\ngl_FragColor = 0.2/1.0 * center +\n0.5/4.0 * nonDiagonalNeighbors +\n0.3/4.0 * diagonalNeighbors;\n}\n"},"marker":{"vertex":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\n// uniform mat4 uMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\nmat4 modelView = uViewMatrix * uModelMatrix;\nmodelView[0][0] = 1.0;\nmodelView[0][1] = 0.0;\nmodelView[0][2] = 0.0;\nmodelView[1][0] = 0.0;\nmodelView[1][1] = 1.0;\nmodelView[1][2] = 0.0;\nmodelView[2][0] = 0.0;\nmodelView[2][1] = 0.0;\nmodelView[2][2] = 1.0;\nmat4 mvp = uProjMatrix * modelView;\nfloat reciprScaleOnscreen = 0.02;\nfloat w = (mvp * vec4(0,0,0,1)).w;\nw *= reciprScaleOnscreen;\nvec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);\ngl_Position = mvp * pos;\nvTexCoord = aTexCoord;\n}\n","fragment":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = texture2D(uTexIndex, vTexCoord);\n}\n"}};
+const pickingShader = {"name":"picking","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aPickingColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogDistance;\nuniform float uFade;\nuniform float uIndex;\nvarying vec4 vColor;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec4 mPosition = vec4(uModelMatrix * pos);\nfloat distance = length(mPosition);\nif (distance > uFogDistance) {\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvColor = vec4(clamp(uIndex, 0.0, 1.0), aPickingColor.g, aPickingColor.b, 1.0);\n}\n}\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\ngl_FragColor = vColor;\n}\n"};
 
-const workerStr = 'class Request{static load(e,t){const r=new XMLHttpRequest,n=setTimeout(function(){4!==r.readyState&&(r.abort(),t("status"))},1e4);return r.onreadystatechange=(()=>{4===r.readyState&&(clearTimeout(n),!r.status||r.status<200||r.status>299?t("status"):t(null,r))}),r.open("GET",e),r.send(null),{abort:()=>{r.abort()}}}static getText(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseText?t(null,r.responseText):t("content")})}static getXML(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseXML?t(null,r.responseXML):t("content")})}static getJSON(e,t){return this.load(e,(r,n)=>{if(r)return void t(r);if(!n.responseText)return void t("content");let o;try{o=JSON.parse(n.responseText),t(null,o)}catch(r){console.warn(`Could not parse JSON from ${e}\\n${r.message}`),t("content")}})}}var Qolor=function(){var e={aliceblue:"#f0f8ff",antiquewhite:"#faebd7",aqua:"#00ffff",aquamarine:"#7fffd4",azure:"#f0ffff",beige:"#f5f5dc",bisque:"#ffe4c4",black:"#000000",blanchedalmond:"#ffebcd",blue:"#0000ff",blueviolet:"#8a2be2",brown:"#a52a2a",burlywood:"#deb887",cadetblue:"#5f9ea0",chartreuse:"#7fff00",chocolate:"#d2691e",coral:"#ff7f50",cornflowerblue:"#6495ed",cornsilk:"#fff8dc",crimson:"#dc143c",cyan:"#00ffff",darkblue:"#00008b",darkcyan:"#008b8b",darkgoldenrod:"#b8860b",darkgray:"#a9a9a9",darkgrey:"#a9a9a9",darkgreen:"#006400",darkkhaki:"#bdb76b",darkmagenta:"#8b008b",darkolivegreen:"#556b2f",darkorange:"#ff8c00",darkorchid:"#9932cc",darkred:"#8b0000",darksalmon:"#e9967a",darkseagreen:"#8fbc8f",darkslateblue:"#483d8b",darkslategray:"#2f4f4f",darkslategrey:"#2f4f4f",darkturquoise:"#00ced1",darkviolet:"#9400d3",deeppink:"#ff1493",deepskyblue:"#00bfff",dimgray:"#696969",dimgrey:"#696969",dodgerblue:"#1e90ff",firebrick:"#b22222",floralwhite:"#fffaf0",forestgreen:"#228b22",fuchsia:"#ff00ff",gainsboro:"#dcdcdc",ghostwhite:"#f8f8ff",gold:"#ffd700",goldenrod:"#daa520",gray:"#808080",grey:"#808080",green:"#008000",greenyellow:"#adff2f",honeydew:"#f0fff0",hotpink:"#ff69b4",indianred:"#cd5c5c",indigo:"#4b0082",ivory:"#fffff0",khaki:"#f0e68c",lavender:"#e6e6fa",lavenderblush:"#fff0f5",lawngreen:"#7cfc00",lemonchiffon:"#fffacd",lightblue:"#add8e6",lightcoral:"#f08080",lightcyan:"#e0ffff",lightgoldenrodyellow:"#fafad2",lightgray:"#d3d3d3",lightgrey:"#d3d3d3",lightgreen:"#90ee90",lightpink:"#ffb6c1",lightsalmon:"#ffa07a",lightseagreen:"#20b2aa",lightskyblue:"#87cefa",lightslategray:"#778899",lightslategrey:"#778899",lightsteelblue:"#b0c4de",lightyellow:"#ffffe0",lime:"#00ff00",limegreen:"#32cd32",linen:"#faf0e6",magenta:"#ff00ff",maroon:"#800000",mediumaquamarine:"#66cdaa",mediumblue:"#0000cd",mediumorchid:"#ba55d3",mediumpurple:"#9370db",mediumseagreen:"#3cb371",mediumslateblue:"#7b68ee",mediumspringgreen:"#00fa9a",mediumturquoise:"#48d1cc",mediumvioletred:"#c71585",midnightblue:"#191970",mintcream:"#f5fffa",mistyrose:"#ffe4e1",moccasin:"#ffe4b5",navajowhite:"#ffdead",navy:"#000080",oldlace:"#fdf5e6",olive:"#808000",olivedrab:"#6b8e23",orange:"#ffa500",orangered:"#ff4500",orchid:"#da70d6",palegoldenrod:"#eee8aa",palegreen:"#98fb98",paleturquoise:"#afeeee",palevioletred:"#db7093",papayawhip:"#ffefd5",peachpuff:"#ffdab9",peru:"#cd853f",pink:"#ffc0cb",plum:"#dda0dd",powderblue:"#b0e0e6",purple:"#800080",rebeccapurple:"#663399",red:"#ff0000",rosybrown:"#bc8f8f",royalblue:"#4169e1",saddlebrown:"#8b4513",salmon:"#fa8072",sandybrown:"#f4a460",seagreen:"#2e8b57",seashell:"#fff5ee",sienna:"#a0522d",silver:"#c0c0c0",skyblue:"#87ceeb",slateblue:"#6a5acd",slategray:"#708090",slategrey:"#708090",snow:"#fffafa",springgreen:"#00ff7f",steelblue:"#4682b4",tan:"#d2b48c",teal:"#008080",thistle:"#d8bfd8",tomato:"#ff6347",turquoise:"#40e0d0",violet:"#ee82ee",wheat:"#f5deb3",white:"#ffffff",whitesmoke:"#f5f5f5",yellow:"#ffff00",yellowgreen:"#9acd32"};function t(e,t,r){return r<0&&(r+=1),r>1&&(r-=1),r<1/6?e+6*(t-e)*r:r<.5?t:r<2/3?e+(t-e)*(2/3-r)*6:e}function r(e,t){if(void 0!==e)return Math.min(t,Math.max(0,e||0))}var n=function(e,t,n,o){this.r=r(e,1),this.g=r(t,1),this.b=r(n,1),this.a=r(o,1)||1};return n.parse=function(t){if("string"==typeof t){var r;if(t=t.toLowerCase(),r=(t=e[t]||t).match(/^#?(\\w{2})(\\w{2})(\\w{2})$/))return new n(parseInt(r[1],16)/255,parseInt(r[2],16)/255,parseInt(r[3],16)/255);if(r=t.match(/^#?(\\w)(\\w)(\\w)$/))return new n(parseInt(r[1]+r[1],16)/255,parseInt(r[2]+r[2],16)/255,parseInt(r[3]+r[3],16)/255);if(r=t.match(/rgba?\\((\\d+)\\D+(\\d+)\\D+(\\d+)(\\D+([\\d.]+))?\\)/))return new n(parseFloat(r[1])/255,parseFloat(r[2])/255,parseFloat(r[3])/255,r[4]?parseFloat(r[5]):1)}return new n},n.fromHSL=function(e,t,r){var o=(new n).fromHSL(e,t,r);return o.a=a,o},n.prototype={isValid:function(){return void 0!==this.r&&void 0!==this.g&&void 0!==this.b},toHSL:function(){if(this.isValid()){var e,t,r=Math.max(this.r,this.g,this.b),n=Math.min(this.r,this.g,this.b),o=(r+n)/2,a=r-n;if(a){switch(t=o>.5?a/(2-r-n):a/(r+n),r){case this.r:e=(this.g-this.b)/a+(this.g<this.b?6:0);break;case this.g:e=(this.b-this.r)/a+2;break;case this.b:e=(this.r-this.g)/a+4}e*=60}else e=t=0;return{h:e,s:t,l:o}}},fromHSL:function(e,r,n){if(0===r)return this.r=this.g=this.b=n,this;var o=n<.5?n*(1+r):n+r-n*r,a=2*n-o;return e/=360,this.r=t(a,o,e+1/3),this.g=t(a,o,e),this.b=t(a,o,e-1/3),this},toString:function(){if(this.isValid())return 1===this.a?"#"+((1<<24)+(Math.round(255*this.r)<<16)+(Math.round(255*this.g)<<8)+Math.round(255*this.b)).toString(16).slice(1,7):"rgba("+[Math.round(255*this.r),Math.round(255*this.g),Math.round(255*this.b),this.a.toFixed(2)].join(",")+")"},toArray:function(){if(this.isValid)return[this.r,this.g,this.b]},hue:function(e){var t=this.toHSL();return this.fromHSL(t.h+e,t.s,t.l)},saturation:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s*e,t.l)},lightness:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s,t.l*e)},clone:function(){return new n(this.r,this.g,this.b,this.a)}},n}();"object"==typeof module&&(module.exports=Qolor);class OBJ{constructor(e,t){this.materialIndex={},this.vertexIndex=[],t&&this.readMTL(t),this.meshes=[],this.readOBJ(e)}readMTL(e){let t,r=[];e.split(/[\\r\\n]/g).forEach(e=>{const n=e.trim().split(/\\s+/);switch(n[0]){case"newmtl":t&&(this.materialIndex[t]=r),t=n[1],r=[];break;case"Kd":r=[parseFloat(n[1]),parseFloat(n[2]),parseFloat(n[3])]}}),t&&(this.materialIndex[t]=r),e=null}readOBJ(e){let t,r,n=[];e.split(/[\\r\\n]/g).forEach(e=>{const o=e.trim().split(/\\s+/);switch(o[0]){case"g":case"o":this.storeMesh(t,r,n),t=o[1],n=[];break;case"usemtl":this.storeMesh(t,r,n),this.materialIndex[o[1]]&&(r=this.materialIndex[o[1]]),n=[];break;case"v":this.vertexIndex.push([parseFloat(o[1]),parseFloat(o[2]),parseFloat(o[3])]);break;case"f":n.push([parseFloat(o[1])-1,parseFloat(o[2])-1,parseFloat(o[3])-1])}}),this.storeMesh(t,r,n)}storeMesh(e,t,r){if(r.length){const n=this.createGeometry(r);this.meshes.push({...n,color:t,id:e})}}sub(e,t){return[e[0]-t[0],e[1]-t[1],e[2]-t[2]]}unit(e){const t=this.len(e);return[e[0]/t,e[1]/t,e[2]/t]}normal(e,t,r){const n=this.sub(e,t),o=this.sub(t,r);return this.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}createGeometry(e){const t=[],r=[],n=[];let o=-1/0;return e.forEach(e=>{const a=this.vertexIndex[e[0]],i=this.vertexIndex[e[1]],s=this.vertexIndex[e[2]],l=this.normal(a,i,s);t.push(a[0],a[2],a[1],i[0],i[2],i[1],s[0],s[2],s[1]),r.push(l[0],l[1],l[2],l[0],l[1],l[2],l[0],l[1],l[2]),n.push(0,0,0,0,0,0),o=Math.max(o,a[1],i[1],s[1])}),{vertices:t,normals:r,texCoords:n,height:o}}}OBJ.parse=function(e,t){return new OBJ(e,t).meshes};var createRoof,triangulate=function(){var e=10,t=[.8627450980392157,.8235294117647058,.7843137254901961];METERS_PER_LEVEL=3;var r={brick:"#cc7755",bronze:"#ffeecc",canvas:"#fff8f0",concrete:"#999999",copper:"#a0e0d0",glass:"#e8f8f8",gold:"#ffcc00",plants:"#009933",metal:"#aaaaaa",panel:"#fff8f0",plaster:"#999999",roof_tiles:"#f08060",silver:"#cccccc",slate:"#666666",stone:"#996666",tar_paper:"#333333",wood:"#deb887"},n={asphalt:"tar_paper",bitumen:"tar_paper",block:"stone",bricks:"brick",glas:"glass",glassfront:"glass",grass:"plants",masonry:"stone",granite:"stone",panels:"panel",paving_stones:"stone",plastered:"plaster",rooftiles:"roof_tiles",roofingfelt:"tar_paper",sandstone:"stone",sheet:"canvas",sheets:"canvas",shingle:"tar_paper",shingles:"tar_paper",slates:"slate",steel:"metal",tar:"tar_paper",tent:"canvas",thatch:"plants",tile:"roof_tiles",tiles:"roof_tiles"},o=.5,a=6378137*Math.PI/180;function i(e){return"string"!=typeof e?null:"#"===(e=e.toLowerCase())[0]?e:r[n[e]||e]||null}function s(e,r){r=r||0;var n,o=Qolor.parse(e);return[(n=o.isValid()?o.saturation(.7).toArray():t)[0]+r,n[1]+r,n[2]+r]}return function(t,r,n,l,f){var c=[a*Math.cos(n[1]/180*Math.PI),a];(function(e){switch(e.type){case"MultiPolygon":return e.coordinates;case"Polygon":return[e.coordinates];default:return[]}})(r.geometry).map(function(a){var u=function(e,t,r){return e.map(function(e,n){return 0===n!==function(e){return 0<e.reduce(function(e,t,r,n){return e+(r<n.length-1?(n[r+1][0]-t[0])*(n[r+1][1]+t[1]):0)},0)}(e)&&e.reverse(),e.map(function(e){return[(e[0]-t[0])*r[0],-(e[1]-t[1])*r[1]]})})}(a,n,c);!function(t,r,n,a,l){var f=function(t,r){var n,o={};switch(o.center=[r.minX+(r.maxX-r.minX)/2,r.minY+(r.maxY-r.minY)/2],o.radius=(r.maxX-r.minX)/2,o.roofHeight=t.roofHeight||(t.roofLevels?t.roofLevels*METERS_PER_LEVEL:0),t.roofShape){case"cone":case"pyramid":case"dome":case"onion":o.roofHeight=o.roofHeight||1*o.radius;break;case"gabled":case"hipped":case"half-hipped":case"skillion":case"gambrel":case"mansard":case"round":o.roofHeight=o.roofHeight||1*METERS_PER_LEVEL;break;case"flat":o.roofHeight=0;break;default:o.roofHeight=0}if(o.wallZ=t.minHeight||(t.minLevel?t.minLevel*METERS_PER_LEVEL:0),void 0!==t.height)n=t.height,o.roofHeight=Math.min(o.roofHeight,n),o.roofZ=n-o.roofHeight,o.wallHeight=n-o.roofHeight-o.wallZ;else if(void 0!==t.levels)n=t.levels*METERS_PER_LEVEL,o.roofZ=n,o.wallHeight=n-o.wallZ;else{switch(t.shape){case"cone":case"dome":case"pyramid":n=2*o.radius,o.roofHeight=0;break;case"sphere":n=4*o.radius,o.roofHeight=0;break;default:n=e}o.roofZ=n,o.wallHeight=n-o.wallZ}return o}(r,function(e){for(var t=1/0,r=1/0,n=-1/0,o=-1/0,a=0;a<e.length;a++)t=Math.min(t,e[a][0]),r=Math.min(r,e[a][1]),n=Math.max(n,e[a][0]),o=Math.max(o,e[a][1]);return{minX:t,minY:r,maxX:n,maxY:o}}(n[0])),c=s(a||r.wallColor||r.color||i(r.material),l),u=s(a||r.roofColor||i(r.roofMaterial),l);switch(r.shape){case"cone":return void split.cylinder(t,f.center,f.radius,0,f.wallHeight,f.wallZ,c);case"dome":return void split.dome(t,f.center,f.radius,f.wallHeight,f.wallZ,c);case"pyramid":return void split.pyramid(t,n,f.center,f.wallHeight,f.wallZ,c);case"sphere":return void split.sphere(t,f.center,f.radius,f.wallHeight,f.wallZ,c)}switch(createRoof(t,r,n,f,u,c),r.shape){case"none":return;case"cylinder":return void split.cylinder(t,f.center,f.radius,f.radius,f.wallHeight,f.wallZ,c);default:var h=.2,d=.4;"glass"!==r.material&&(h=0,d=0,r.levels&&(d=parseFloat(r.levels)-parseFloat(r.minLevel||0)<<0)),split.extrusion(t,n,f.wallHeight,f.wallZ,c,[0,o,h/f.wallHeight,d/f.wallHeight])}}(t,r.properties,u,l,f)})}}();function pointOnSegment(e,t){return e[0]>=Math.min(t[0][0],t[1][0])&&e[0]<=Math.max(t[1][0],t[0][0])&&e[1]>=Math.min(t[0][1],t[1][1])&&e[1]<=Math.max(t[1][1],t[0][1])}function getVectorSegmentIntersection(e,t,r){var n,o,a,i,s,l=r[0],f=[r[1][0]-r[0][0],r[1][1]-r[0][1]];if(0!==t[0]||0!==f[0]){if(0!==t[0]&&(a=t[1]/t[0],n=e[1]-a*e[0]),0!==f[0]&&(i=f[1]/f[0],o=l[1]-i*l[0]),0===t[0]&&pointOnSegment(s=[e[0],i*e[0]+o],r))return s;if(0===f[0]&&pointOnSegment(s=[l[0],a*l[0]+n],r))return s;if(a!==i){var c=(o-n)/(a-i);return pointOnSegment(s=[c,a*c+n],r)?s:void 0}}}function getDistanceToLine(e,t){var r=t[0],n=t[1];if(r[0]!==n[0]||r[1]!==n[1]){var o=(n[1]-r[1])/(n[0]-r[0]),a=r[1]-o*r[0];if(0===o)return Math.abs(a-e[1]);if(o===1/0)return Math.abs(r[0]-e[0]);var i=-1/o,s=(e[1]-i*e[0]-a)/(o-i),l=o*s+a,f=e[0]-s,c=e[1]-l;return Math.sqrt(f*f+c*c)}}!function(){function e(e,r,n,o,a,i,s){if(0,n.length>1||void 0===r.roofDirection)return t(e,r,n,a,i);var l=(r.roofDirection/180-.5)*Math.PI,f=[Math.cos(l),Math.sin(l)],c=function(e,t,r){for(var n,o=[],a=0;a<r.length-1;a++)if(void 0!==(n=getVectorSegmentIntersection(e,t,[r[a],r[a+1]]))){if(2===o.length)return;a++,r.splice(a,0,n),o.push(a)}if(!(o.length<2))return{index:o,roof:r}}(a.center,f,n[0]);if(!c)return t(e,r,n,a,i);for(var u,h=c.index,d=c.roof,p=[],g=0,v=[d[h[0]],d[h[1]]],x=0;x<d.length;x++)p[x]=getDistanceToLine(d[x],v),g=Math.max(g,p[x]);for(x=0;x<d.length;x++)d[x][2]=(1-p[x]/g)*a.roofHeight;for(u=d.slice(h[0],h[1]+1),split.polygon(e,[u],a.roofZ,i),u=(u=d.slice(h[1],d.length-1)).concat(d.slice(0,h[0]+1)),split.polygon(e,[u],a.roofZ,i),x=0;x<d.length-1;x++)0===d[x][2]&&0===d[x+1][2]||split.quad(e,[d[x][0],d[x][1],a.roofZ+d[x][2]],[d[x][0],d[x][1],a.roofZ],[d[x+1][0],d[x+1][1],a.roofZ],[d[x+1][0],d[x+1][1],a.roofZ+d[x+1][2]],s)}function t(e,t,r,n,o){"cylinder"===t.shape?split.circle(e,n.center,n.radius,n.roofZ,o):split.polygon(e,r,n.roofZ,o)}createRoof=function(r,n,o,a,i,s){switch(n.roofShape){case"cone":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.cylinder(e,r.center,r.radius,0,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"dome":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.dome(e,r.center,r.radius,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"pyramid":return function(e,t,r,n,o){"cylinder"===t.shape?split.cylinder(e,n.center,n.radius,0,n.roofHeight,n.roofZ,o):split.pyramid(e,r,n.center,n.roofHeight,n.roofZ,o)}(r,n,o,a,i);case"skillion":return function(e,r,n,o,a,i){if(void 0===r.roofDirection)return t(e,r,n,o,a);var s,l,f=r.roofDirection/180*Math.PI,c=1/0,u=-1/0;n[0].forEach(function(e){var t=e[1]*Math.cos(-f)+e[0]*Math.sin(-f);t<c&&(c=t,s=e),t>u&&(u=t,l=e)});var h=n[0],d=[Math.cos(f),Math.sin(f)],p=[s,[s[0]+d[0],s[1]+d[1]]],g=getDistanceToLine(l,p);n.forEach(function(e){e.forEach(function(e){var t=getDistanceToLine(e,p);e[2]=t/g*o.roofHeight})}),split.polygon(e,[h],o.roofZ,a),n.forEach(function(t){for(var r=0;r<t.length-1;r++)0===t[r][2]&&0===t[r+1][2]||split.quad(e,[t[r][0],t[r][1],o.roofZ+t[r][2]],[t[r][0],t[r][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ+t[r+1][2]],i)})}(r,n,o,a,i,s);case"gabled":return e(r,n,o,0,a,i,s);case"hipped":case"half-hipped":return t(r,n,o,a,i);case"gambrel":case"mansard":return e(r,n,o,0,a,i,s);case"round":return function(e,r,n,o,a,i){if(n.length>1||void 0===r.roofDirection)return t(e,r,n,o,a);return t(e,r,n,o,a)}(r,n,o,a,i);case"onion":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n);for(var o,a,i=[{rScale:.8,hScale:0},{rScale:.9,hScale:.18},{rScale:.9,hScale:.35},{rScale:.8,hScale:.47},{rScale:.6,hScale:.59},{rScale:.5,hScale:.65},{rScale:.2,hScale:.82},{rScale:0,hScale:1}],s=0,l=i.length-1;s<l;s++)o=r.roofHeight*i[s].hScale,a=r.roofHeight*i[s+1].hScale,split.cylinder(e,r.center,r.radius*i[s].rScale,r.radius*i[s+1].rScale,a-o,r.roofZ+o,n)}(r,o,a,i);default:return t(r,n,o,a,i)}}}();var split={NUM_Y_SEGMENTS:24,NUM_X_SEGMENTS:32,quad:function(e,t,r,n,o,a){this.triangle(e,t,r,n,a),this.triangle(e,n,o,t,a)},triangle:function(e,t,r,n,o){var a=vec3.normal(t,r,n);[].push.apply(e.vertices,[].concat(t,n,r)),[].push.apply(e.normals,[].concat(a,a,a)),[].push.apply(e.colors,[].concat(o,o,o)),e.texCoords.push(0,0,0,0,0,0)},circle:function(e,t,r,n,o){var a,i;n=n||0;for(var s=0;s<this.NUM_X_SEGMENTS;s++)a=s/this.NUM_X_SEGMENTS,i=(s+1)/this.NUM_X_SEGMENTS,this.triangle(e,[t[0]+r*Math.sin(a*Math.PI*2),t[1]+r*Math.cos(a*Math.PI*2),n],[t[0],t[1],n],[t[0]+r*Math.sin(i*Math.PI*2),t[1]+r*Math.cos(i*Math.PI*2),n],o)},polygon:function(e,t,r,n){r=r||0;var o,a,i,s,l,f=[],c=[],u=0;for(o=0,a=t.length;o<a;o++){for(s=t[o],i=0;i<s.length;i++)l=s[i],f.push(l[0],l[1],r+(l[2]||0));o&&(u+=t[o-1].length,c.push(u))}var h,d,p,g=earcut(f,c,3);for(o=0,a=g.length-2;o<a;o+=3)h=3*g[o],d=3*g[o+1],p=3*g[o+2],this.triangle(e,[f[h],f[h+1],f[h+2]],[f[d],f[d+1],f[d+2]],[f[p],f[p+1],f[p+2]],n)},cube:function(e,t,r,n,o,a,i,s){var l=[o=o||0,a=a||0,i=i||0],f=[o+t,a,i],c=[o+t,a+r,i],u=[o,a+r,i],h=[o,a,i+n],d=[o+t,a,i+n],p=[o+t,a+r,i+n],g=[o,a+r,i+n];this.quad(e,f,l,u,c,s),this.quad(e,h,d,p,g,s),this.quad(e,l,f,d,h,s),this.quad(e,f,c,p,d,s),this.quad(e,c,u,g,p,s),this.quad(e,u,l,h,g,s)},cylinder:function(e,t,r,n,o,a,i){a=a||0;for(var s,l,f,c,u,h,d=this.NUM_X_SEGMENTS,p=2*Math.PI,g=0;g<d;g++)s=g/d*p,l=(g+1)/d*p,f=Math.sin(s),c=Math.cos(s),u=Math.sin(l),h=Math.cos(l),this.triangle(e,[t[0]+r*f,t[1]+r*c,a],[t[0]+n*u,t[1]+n*h,a+o],[t[0]+r*u,t[1]+r*h,a],i),0!==n&&this.triangle(e,[t[0]+n*f,t[1]+n*c,a+o],[t[0]+n*u,t[1]+n*h,a+o],[t[0]+r*f,t[1]+r*c,a],i)},dome:function(e,t,r,n,o,a,i){o=o||0;for(var s,l,f,c,u,h,d,p,g,v=this.NUM_Y_SEGMENTS/2,x=Math.PI/2,m=i?0:-x,y=0;y<v;y++)s=y/v*x+m,l=(y+1)/v*x+m,f=Math.cos(s),c=Math.sin(s),h=f*r,d=Math.cos(l)*r,p=((u=Math.sin(l))-c)*n,g=o-u*n,this.cylinder(e,t,d,h,p,g,a)},sphere:function(e,t,r,n,o,a){o=o||0;var i=0;return i+=this.dome(e,t,r,n/2,o+n/2,a,!0),i+=this.dome(e,t,r,n/2,o+n/2,a)},pyramid:function(e,t,r,n,o,a){o=o||0;for(var i=0,s=(t=t[0]).length-1;i<s;i++)this.triangle(e,[t[i][0],t[i][1],o],[t[i+1][0],t[i+1][1],o],[r[0],r[1],o+n],a)},extrusion:function(e,t,r,n,o,a){n=n||0;var i,s,l,f,c,u,h,d,p,g,v,x,m,y,b,M=a[2]*r,w=a[3]*r;for(x=0,m=t.length;x<m;x++)for(y=0,b=(i=t[x]).length-1;y<b;y++)s=i[y],l=i[y+1],f=vec2.len(vec2.sub(s,l)),c=[s[0],s[1],n],u=[l[0],l[1],n],h=[l[0],l[1],n+r],d=[s[0],s[1],n+r],p=vec3.normal(c,u,h),[].push.apply(e.vertices,[].concat(c,h,u,c,d,h)),[].push.apply(e.normals,[].concat(p,p,p,p,p,p)),[].push.apply(e.colors,[].concat(o,o,o,o,o,o)),g=a[0]*f<<0,v=a[1]*f<<0,e.texCoords.push(g,w,v,M,v,w,g,w,g,M,v,M)}},earcut=function(){function e(e,o,a){a=a||2;var i,s,c,h,d,p,g,v=o&&o.length,x=v?o[0]*a:e.length,m=t(e,0,x,a,!0),y=[];if(!m)return y;if(v&&(m=function(e,n,o,a){var i,s,c,h,d,p=[];for(i=0,s=n.length;i<s;i++)c=n[i]*a,h=i<s-1?n[i+1]*a:e.length,(d=t(e,c,h,a,!1))===d.next&&(d.steiner=!0),p.push(u(d));for(p.sort(l),i=0;i<p.length;i++)f(p[i],o),o=r(o,o.next);return o}(e,o,m,a)),e.length>80*a){i=c=e[0],s=h=e[1];for(var b=a;b<x;b+=a)d=e[b],p=e[b+1],d<i&&(i=d),p<s&&(s=p),d>c&&(c=d),p>h&&(h=p);g=Math.max(c-i,h-s)}return n(m,y,a,i,s,g),y}function t(e,t,r,n,o){var a,i;if(o===w(e,t,r,n)>0)for(a=t;a<r;a+=n)i=y(a,e[a],e[a+1],i);else for(a=r-n;a>=t;a-=n)i=y(a,e[a],e[a+1],i);return i&&g(i,i.next)&&(b(i),i=i.next),i}function r(e,t){if(!e)return e;t||(t=e);var r,n=e;do{if(r=!1,n.steiner||!g(n,n.next)&&0!==p(n.prev,n,n.next))n=n.next;else{if(b(n),(n=t=n.prev)===n.next)return null;r=!0}}while(r||n!==t);return t}function n(e,t,l,f,u,h,d){if(e){!d&&h&&function(e,t,r,n){var o=e;do{null===o.z&&(o.z=c(o.x,o.y,t,r,n)),o.prevZ=o.prev,o.nextZ=o.next,o=o.next}while(o!==e);o.prevZ.nextZ=null,o.prevZ=null,function(e){var t,r,n,o,a,i,s,l,f=1;do{for(r=e,e=null,a=null,i=0;r;){for(i++,n=r,s=0,t=0;t<f&&(s++,n=n.nextZ);t++);for(l=f;s>0||l>0&&n;)0===s?(o=n,n=n.nextZ,l--):0!==l&&n?r.z<=n.z?(o=r,r=r.nextZ,s--):(o=n,n=n.nextZ,l--):(o=r,r=r.nextZ,s--),a?a.nextZ=o:e=o,o.prevZ=a,a=o;r=n}a.nextZ=null,f*=2}while(i>1)}(o)}(e,f,u,h);for(var p,g,v=e;e.prev!==e.next;)if(p=e.prev,g=e.next,h?a(e,f,u,h):o(e))t.push(p.i/l),t.push(e.i/l),t.push(g.i/l),b(e),e=g.next,v=g.next;else if((e=g)===v){d?1===d?n(e=i(e,t,l),t,l,f,u,h,2):2===d&&s(e,t,l,f,u,h):n(r(e),t,l,f,u,h,1);break}}}function o(e){var t=e.prev,r=e,n=e.next;if(p(t,r,n)>=0)return!1;for(var o=e.next.next;o!==e.prev;){if(h(t.x,t.y,r.x,r.y,n.x,n.y,o.x,o.y)&&p(o.prev,o,o.next)>=0)return!1;o=o.next}return!0}function a(e,t,r,n){var o=e.prev,a=e,i=e.next;if(p(o,a,i)>=0)return!1;for(var s=o.x<a.x?o.x<i.x?o.x:i.x:a.x<i.x?a.x:i.x,l=o.y<a.y?o.y<i.y?o.y:i.y:a.y<i.y?a.y:i.y,f=o.x>a.x?o.x>i.x?o.x:i.x:a.x>i.x?a.x:i.x,u=o.y>a.y?o.y>i.y?o.y:i.y:a.y>i.y?a.y:i.y,d=c(s,l,t,r,n),g=c(f,u,t,r,n),v=e.nextZ;v&&v.z<=g;){if(v!==e.prev&&v!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,v.x,v.y)&&p(v.prev,v,v.next)>=0)return!1;v=v.nextZ}for(v=e.prevZ;v&&v.z>=d;){if(v!==e.prev&&v!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,v.x,v.y)&&p(v.prev,v,v.next)>=0)return!1;v=v.prevZ}return!0}function i(e,t,r){var n=e;do{var o=n.prev,a=n.next.next;!g(o,a)&&v(o,n,n.next,a)&&x(o,a)&&x(a,o)&&(t.push(o.i/r),t.push(n.i/r),t.push(a.i/r),b(n),b(n.next),n=e=a),n=n.next}while(n!==e);return n}function s(e,t,o,a,i,s){var l=e;do{for(var f=l.next.next;f!==l.prev;){if(l.i!==f.i&&d(l,f)){var c=m(l,f);return l=r(l,l.next),c=r(c,c.next),n(l,t,o,a,i,s),void n(c,t,o,a,i,s)}f=f.next}l=l.next}while(l!==e)}function l(e,t){return e.x-t.x}function f(e,t){if(t=function(e,t){var r,n=t,o=e.x,a=e.y,i=-1/0;do{if(a<=n.y&&a>=n.next.y){var s=n.x+(a-n.y)*(n.next.x-n.x)/(n.next.y-n.y);if(s<=o&&s>i){if(i=s,s===o){if(a===n.y)return n;if(a===n.next.y)return n.next}r=n.x<n.next.x?n:n.next}}n=n.next}while(n!==t);if(!r)return null;if(o===i)return r.prev;var l,f=r,c=r.x,u=r.y,d=1/0;n=r.next;for(;n!==f;)o>=n.x&&n.x>=c&&h(a<u?o:i,a,c,u,a<u?i:o,a,n.x,n.y)&&((l=Math.abs(a-n.y)/(o-n.x))<d||l===d&&n.x>r.x)&&x(n,e)&&(r=n,d=l),n=n.next;return r}(e,t)){var n=m(t,e);r(n,n.next)}}function c(e,t,r,n,o){return(e=1431655765&((e=858993459&((e=252645135&((e=16711935&((e=32767*(e-r)/o)|e<<8))|e<<4))|e<<2))|e<<1))|(t=1431655765&((t=858993459&((t=252645135&((t=16711935&((t=32767*(t-n)/o)|t<<8))|t<<4))|t<<2))|t<<1))<<1}function u(e){var t=e,r=e;do{t.x<r.x&&(r=t),t=t.next}while(t!==e);return r}function h(e,t,r,n,o,a,i,s){return(o-i)*(t-s)-(e-i)*(a-s)>=0&&(e-i)*(n-s)-(r-i)*(t-s)>=0&&(r-i)*(a-s)-(o-i)*(n-s)>=0}function d(e,t){return e.next.i!==t.i&&e.prev.i!==t.i&&!function(e,t){var r=e;do{if(r.i!==e.i&&r.next.i!==e.i&&r.i!==t.i&&r.next.i!==t.i&&v(r,r.next,e,t))return!0;r=r.next}while(r!==e);return!1}(e,t)&&x(e,t)&&x(t,e)&&function(e,t){var r=e,n=!1,o=(e.x+t.x)/2,a=(e.y+t.y)/2;do{r.y>a!=r.next.y>a&&o<(r.next.x-r.x)*(a-r.y)/(r.next.y-r.y)+r.x&&(n=!n),r=r.next}while(r!==e);return n}(e,t)}function p(e,t,r){return(t.y-e.y)*(r.x-t.x)-(t.x-e.x)*(r.y-t.y)}function g(e,t){return e.x===t.x&&e.y===t.y}function v(e,t,r,n){return!!(g(e,t)&&g(r,n)||g(e,n)&&g(r,t))||p(e,t,r)>0!=p(e,t,n)>0&&p(r,n,e)>0!=p(r,n,t)>0}function x(e,t){return p(e.prev,e,e.next)<0?p(e,t,e.next)>=0&&p(e,e.prev,t)>=0:p(e,t,e.prev)<0||p(e,e.next,t)<0}function m(e,t){var r=new M(e.i,e.x,e.y),n=new M(t.i,t.x,t.y),o=e.next,a=t.prev;return e.next=t,t.prev=e,r.next=o,o.prev=r,n.next=r,r.prev=n,a.next=n,n.prev=a,n}function y(e,t,r,n){var o=new M(e,t,r);return n?(o.next=n.next,o.prev=n,n.next.prev=o,n.next=o):(o.prev=o,o.next=o),o}function b(e){e.next.prev=e.prev,e.prev.next=e.next,e.prevZ&&(e.prevZ.nextZ=e.nextZ),e.nextZ&&(e.nextZ.prevZ=e.prevZ)}function M(e,t,r){this.i=e,this.x=t,this.y=r,this.prev=null,this.next=null,this.z=null,this.prevZ=null,this.nextZ=null,this.steiner=!1}function w(e,t,r,n){for(var o=0,a=t,i=r-n;a<r;a+=n)o+=(e[i]-e[a])*(e[a+1]+e[i+1]),i=a;return o}return e.deviation=function(e,t,r,n){var o,a,i=t&&t.length,s=i?t[0]*r:e.length,l=Math.abs(w(e,0,s,r));if(i)for(o=0,a=t.length;o<a;o++){var f=t[o]*r,c=o<a-1?t[o+1]*r:e.length;l-=Math.abs(w(e,f,c,r))}var u=0;for(o=0,a=n.length;o<a;o+=3){var h=n[o]*r,d=n[o+1]*r,p=n[o+2]*r;u+=Math.abs((e[h]-e[p])*(e[d+1]-e[h+1])-(e[h]-e[d])*(e[p+1]-e[h+1]))}return 0===l&&0===u?0:Math.abs((u-l)/l)},e.flatten=function(e){for(var t=e[0][0].length,r={vertices:[],holes:[],dimensions:t},n=0,o=0;o<e.length;o++){for(var a=0;a<e[o].length;a++)for(var i=0;i<t;i++)r.vertices.push(e[o][a][i]);o>0&&(n+=e[o-1].length,r.holes.push(n))}return r},e}(),vec3={len:function(e){return Math.sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2])},sub:function(e,t){return[e[0]-t[0],e[1]-t[1],e[2]-t[2]]},unit:function(e){var t=this.len(e);return[e[0]/t,e[1]/t,e[2]/t]},normal:function(e,t,r){var n=this.sub(e,t),o=this.sub(t,r);return this.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}},vec2={len:function(e){return Math.sqrt(e[0]*e[0]+e[1]*e[1])},add:function(e,t){return[e[0]+t[0],e[1]+t[1]]},sub:function(e,t){return[e[0]-t[0],e[1]-t[1]]},dot:function(e,t){return e[1]*t[0]-e[0]*t[1]},scale:function(e,t){return[e[0]*t,e[1]*t]},equals:function(e,t){return e[0]===t[0]&&e[1]===t[1]}};function getOrigin(e){const t=e.coordinates;switch(e.type){case"Point":return t;case"MultiPoint":case"LineString":return t[0];case"MultiLineString":case"Polygon":return t[0][0];case"MultiPolygon":return t[0][0][0]}}function getPickingColor(e){return[0,(255&++e)/255,(e>>8&255)/255]}function postResult(e,t,r){const n={items:e,position:t,vertices:new Float32Array(r.vertices),normals:new Float32Array(r.normals),colors:new Float32Array(r.colors),texCoords:new Float32Array(r.texCoords),heights:new Float32Array(r.heights),pickingColors:new Float32Array(r.pickingColors)};postMessage(n,[n.vertices.buffer,n.normals.buffer,n.colors.buffer,n.texCoords.buffer,n.heights.buffer,n.pickingColors.buffer])}function loadGeoJSON(e){"object"==typeof e.url?(postMessage("load"),processGeoJSON(e.url,e.options)):Request.getJSON(e.url,(t,r)=>{t?postMessage("error"):(postMessage("load"),processGeoJSON(r,e.options))})}function processGeoJSON(e,t){if(!e||!e.features.length)return void postMessage("error");const r={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},n=[],o=getOrigin(e.features[0].geometry),a={latitude:o[1],longitude:o[0]};e.features.forEach((e,a)=>{const i=e.properties,s=t.id||e.id,l=getPickingColor(a);let f=r.vertices.length;triangulate(r,e,o),f=(r.vertices.length-f)/3;for(let e=0;e<f;e++)r.heights.push(i.height),r.pickingColors.push(...l);n.push({id:s,properties:i,vertexCount:f})}),postResult(n,a,r)}function loadOBJ(e){Request.getText(e.url,(e,t)=>{if(e)return void postMessage("error");let r=t.match(/^mtllib\\s+(.*)$/m);r?Request.getText(this.url.replace(/[^\\/]+$/,"")+r[1],(e,r)=>{e?postMessage("error"):(postMessage("load"),processOBJ(t,r))}):(postMessage("load"),processOBJ(t,null))})}function processOBJ(e,t,r){const n={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},o=[],a=Qolor.parse(r.color).toArray(),s=r.position;OBJ.parse(e,t).forEach((e,t)=>{n.vertices.push(...e.vertices),n.normals.push(...e.normals),n.texCoords.push(...e.texCoords);const s=r.id||e.id,l=(s/2%2?-1:1)*(s%2?.03:.06),f=a||e.color||DEFAULT_COLOR,c=e.vertices.length/3,u=getPickingColor(i);for(let t=0;t<c;t++)n.colors.push(f[0]+l,f[1]+l,f[2]+l),n.heights.push(e.height),n.pickingColors.push(...u);o.push({id:s,properties:{},vertexCount:c})}),postResult(o,s,n)}onmessage=function(e){const t=e.data;"GeoJSON"===t.type&&loadGeoJSON(t),"OBJ"===t.type&&loadOBJ(t)};';
+const buildingsShader = {"name":"buildings","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvec3 transformedNormal = aNormal * uNormalTransform;\nfloat lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\ncolor = color + uLightColor * lightIntensity;\nvTexCoord = aTexCoord;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"};
+
+const buildings_with_shadowsShader = {"name":"buildings_with_shadows","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec2 aTexCoord;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvNormal = aNormal;\nvTexCoord = aTexCoord;\n//vec3 transformedNormal = aNormal * uNormalTransform;\n//float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n//color = color + uLightColor * lightIntensity;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n// *** shadow mapping ********\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n}\n}\n","fs":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\nvec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\nfloat diffuse = dot(uLightDirection, normal);\ndiffuse = max(diffuse, 0.0);\n// reduce shadow strength with:\n// - lowering sun positions, to be consistent with the shadows on the basemap (there,\n// shadows are faded out with lowering sun positions to hide shadow artifacts caused\n// when sun direction and map surface are almost perpendicular\n// - large angles between the sun direction and the surface normal, to hide shadow\n// artifacts that occur when surface normal and sun direction are almost perpendicular\nfloat shadowStrength = pow( max( min(\ndot(uLightDirection, vec3(0.0, 0.0, 1.0)),\ndot(uLightDirection, normal)\n), 0.0), 1.5);\nif (diffuse > 0.0 && shadowStrength > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat occludedBySun = mix(\nmix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\ndiffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n}\nvec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n(diffuse/1.5) * uLightColor;\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\n//gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\ngl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"};
+
+const basemapShader = {"name":"basemap","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\ngl_Position = uViewMatrix * aPosition;\nvTexCoord = aTexCoord;\nvec4 worldPos = uModelMatrix * aPosition;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"};
+
+const basemap_with_shadowsShader = {"name":"basemap_with_shadows","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\nvec4 pos = vec4(aPosition.xyz, 1.0);\ngl_Position = uMatrix * pos;\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\nvNormal = aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fs":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not*\n* render the map texture itself, but is instead intended to be blended on top\n* of an already rendered map.\n* Note: this shader is not (and does not attempt to) be physically correct.\n* It is intented to be a blend between a useful illustration of cast\n* shadows and a mitigation of shadow casting artifacts occuring at\n* low angles on incidence.\n* Map brightness is only affected by shadows, not by light direction.\n* Shadows are darkest when light comes from straight above (and thus\n* shadows can be computed reliably) and become less and less visible\n* with the light source close to horizon (where moiré and offset\n* artifacts would otherwise be visible).\n*/\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n//vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n//gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n//return;\nfloat diffuse = dot(uDirToSun, normalize(vNormal));\ndiffuse = max(diffuse, 0.0);\n\nfloat shadowStrength = uShadowStrength * pow(diffuse, 1.5);\nif (diffuse > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\ndiffuse = mix( mix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\n}\ndiffuse = mix(1.0, diffuse, shadowStrength);\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\nfloat darkness = (1.0 - diffuse);\ndarkness *= (1.0 - fogIntensity);\ngl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"};
+
+const textureShader = {"name":"texture","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"};
+
+const depth_normalShader = {"name":"depth_normal","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute float aZScale;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nverticalDistanceToLowerEdge = 0.0;\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvNormal = uNormalMatrix * aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fs":"\n#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\ngl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"};
+
+const ambient_from_depthShader = {"name":"ambient_from_depth","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n// we need high precision for the depth values\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize; //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\nfloat z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\nreturn (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how\n* much the fragment at 'pos' with depth 'depthHere'is occluded by the\n* fragment that is (dx, dy) texels away from it.\n*/\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset) {\nfloat depthThere = getDepth(pos, offset);\n/* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there),\n* then 'here' is not occluded (result 1.0) */\nif (depthThere == 0.0)\nreturn 1.0;\n/* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n* 'here is not occluded' */\nif (depthHere < depthThere )\nreturn 1.0;\nfloat relDepthDiff = depthThere / depthHere;\nfloat depthDiff = abs(depthThere - depthHere) * uFarPlane;\n/* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n* 'here'. The occlusion is the higher the bigger the depth difference between the two\n* locations is.\n* However, if the depth difference is too high, we assume that 'there' lies in a\n* completely different depth region of the scene than 'here' and thus cannot occlude\n* 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n*/\nreturn depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO).\n* It is based on the assumption that a pixel will be occluded by neighboring\n* pixels iff. those have a depth value closer to the camera than the original\n* pixel itself (the function getOcclusionFactor() computes this occlusion\n* by a single other pixel).\n*\n* A naive approach would sample all pixels within a given distance. For an\n* interesting-looking effect, the sampling area needs to be at least 9 pixels\n* wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n* This overburdens many GPUs.\n* To make the ambient occlusion computation faster, we do not consider all\n* texels in the sampling area, but only 16. This causes some sampling artifacts\n* that are later removed by blurring the ambient occlusion texture (this is\n* done in a separate shader).\n*/\nvoid main() {\nfloat depthHere = getDepth(vTexCoord, ivec2(0, 0));\nfloat fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\nif (depthHere == 0.0)\n{\n\t//there was nothing rendered 'here' --> it can't be occluded\ngl_FragColor = vec4(1.0);\nreturn;\n}\nfloat occlusionFactor = 1.0;\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\nocclusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\nocclusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\ngl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"};
+
+const flat_colorShader = {"name":"flat_color","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\ngl_Position = uMatrix * aPosition;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\ngl_FragColor = uColor;\n}\n"};
+
+const horizonShader = {"name":"horizon","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nuniform float uAbsoluteHeight;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvRelativeHeight = aPosition.z / uAbsoluteHeight;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec3 uFogColor;\nvarying float vRelativeHeight;\nvoid main() {\nfloat blendFactor = min(100.0 * vRelativeHeight, 1.0);\nvec4 skyColor = vec4(0.9, 0.85, 1.0, 1.0);\ngl_FragColor = mix(vec4(uFogColor, 1.0), skyColor, blendFactor);\n}\n"};
+
+const blurShader = {"name":"blur","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize; // as 1/n pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n// Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'.\nvec4 getTexel(vec2 pos, vec2 offset) {\nreturn texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\nvec4 center = texture2D(uTexIndex, vTexCoord);\nvec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, 0.0)) +\ngetTexel(vTexCoord, vec2(+1.0, 0.0)) +\ngetTexel(vTexCoord, vec2( 0.0, -1.0)) +\ngetTexel(vTexCoord, vec2( 0.0, +1.0));\nvec4 diagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, -1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(-1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, -1.0));\n\n// approximate Gaussian blur (mean 0.0, stdev 1.0)\ngl_FragColor = 0.2/1.0 * center +\n0.5/4.0 * nonDiagonalNeighbors +\n0.3/4.0 * diagonalNeighbors;\n}\n"};
+
+const markerShader = {"name":"marker","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\n// uniform mat4 uMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\nmat4 modelView = uViewMatrix * uModelMatrix;\nmodelView[0][0] = 1.0;\nmodelView[0][1] = 0.0;\nmodelView[0][2] = 0.0;\nmodelView[1][0] = 0.0;\nmodelView[1][1] = 1.0;\nmodelView[1][2] = 0.0;\nmodelView[2][0] = 0.0;\nmodelView[2][1] = 0.0;\nmodelView[2][2] = 1.0;\nmat4 mvp = uProjMatrix * modelView;\nfloat reciprScaleOnscreen = 0.02;\nfloat w = (mvp * vec4(0,0,0,1)).w;\nw *= reciprScaleOnscreen;\nvec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);\ngl_Position = mvp * pos;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = texture2D(uTexIndex, vTexCoord);\n}\n"};
+const featureWorker = 'class Request{static load(e,t){const r=new XMLHttpRequest,n=setTimeout(e=>{4!==r.readyState&&(r.abort(),t("status"))},1e4);return r.onreadystatechange=(()=>{4===r.readyState&&(clearTimeout(n),!r.status||r.status<200||r.status>299?t("status"):t(null,r))}),r.open("GET",e),r.send(null),{abort:()=>{r.abort()}}}static getText(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseText?t(null,r.responseText):t("content")})}static getXML(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseXML?t(null,r.responseXML):t("content")})}static getJSON(e,t){return this.load(e,(r,n)=>{if(r)return void t(r);if(!n.responseText)return void t("content");let o;try{o=JSON.parse(n.responseText),t(null,o)}catch(r){console.warn(`Could not parse JSON from ${e}\\n${r.message}`),t("content")}})}}var Qolor=function(){var e={aliceblue:"#f0f8ff",antiquewhite:"#faebd7",aqua:"#00ffff",aquamarine:"#7fffd4",azure:"#f0ffff",beige:"#f5f5dc",bisque:"#ffe4c4",black:"#000000",blanchedalmond:"#ffebcd",blue:"#0000ff",blueviolet:"#8a2be2",brown:"#a52a2a",burlywood:"#deb887",cadetblue:"#5f9ea0",chartreuse:"#7fff00",chocolate:"#d2691e",coral:"#ff7f50",cornflowerblue:"#6495ed",cornsilk:"#fff8dc",crimson:"#dc143c",cyan:"#00ffff",darkblue:"#00008b",darkcyan:"#008b8b",darkgoldenrod:"#b8860b",darkgray:"#a9a9a9",darkgrey:"#a9a9a9",darkgreen:"#006400",darkkhaki:"#bdb76b",darkmagenta:"#8b008b",darkolivegreen:"#556b2f",darkorange:"#ff8c00",darkorchid:"#9932cc",darkred:"#8b0000",darksalmon:"#e9967a",darkseagreen:"#8fbc8f",darkslateblue:"#483d8b",darkslategray:"#2f4f4f",darkslategrey:"#2f4f4f",darkturquoise:"#00ced1",darkviolet:"#9400d3",deeppink:"#ff1493",deepskyblue:"#00bfff",dimgray:"#696969",dimgrey:"#696969",dodgerblue:"#1e90ff",firebrick:"#b22222",floralwhite:"#fffaf0",forestgreen:"#228b22",fuchsia:"#ff00ff",gainsboro:"#dcdcdc",ghostwhite:"#f8f8ff",gold:"#ffd700",goldenrod:"#daa520",gray:"#808080",grey:"#808080",green:"#008000",greenyellow:"#adff2f",honeydew:"#f0fff0",hotpink:"#ff69b4",indianred:"#cd5c5c",indigo:"#4b0082",ivory:"#fffff0",khaki:"#f0e68c",lavender:"#e6e6fa",lavenderblush:"#fff0f5",lawngreen:"#7cfc00",lemonchiffon:"#fffacd",lightblue:"#add8e6",lightcoral:"#f08080",lightcyan:"#e0ffff",lightgoldenrodyellow:"#fafad2",lightgray:"#d3d3d3",lightgrey:"#d3d3d3",lightgreen:"#90ee90",lightpink:"#ffb6c1",lightsalmon:"#ffa07a",lightseagreen:"#20b2aa",lightskyblue:"#87cefa",lightslategray:"#778899",lightslategrey:"#778899",lightsteelblue:"#b0c4de",lightyellow:"#ffffe0",lime:"#00ff00",limegreen:"#32cd32",linen:"#faf0e6",magenta:"#ff00ff",maroon:"#800000",mediumaquamarine:"#66cdaa",mediumblue:"#0000cd",mediumorchid:"#ba55d3",mediumpurple:"#9370db",mediumseagreen:"#3cb371",mediumslateblue:"#7b68ee",mediumspringgreen:"#00fa9a",mediumturquoise:"#48d1cc",mediumvioletred:"#c71585",midnightblue:"#191970",mintcream:"#f5fffa",mistyrose:"#ffe4e1",moccasin:"#ffe4b5",navajowhite:"#ffdead",navy:"#000080",oldlace:"#fdf5e6",olive:"#808000",olivedrab:"#6b8e23",orange:"#ffa500",orangered:"#ff4500",orchid:"#da70d6",palegoldenrod:"#eee8aa",palegreen:"#98fb98",paleturquoise:"#afeeee",palevioletred:"#db7093",papayawhip:"#ffefd5",peachpuff:"#ffdab9",peru:"#cd853f",pink:"#ffc0cb",plum:"#dda0dd",powderblue:"#b0e0e6",purple:"#800080",rebeccapurple:"#663399",red:"#ff0000",rosybrown:"#bc8f8f",royalblue:"#4169e1",saddlebrown:"#8b4513",salmon:"#fa8072",sandybrown:"#f4a460",seagreen:"#2e8b57",seashell:"#fff5ee",sienna:"#a0522d",silver:"#c0c0c0",skyblue:"#87ceeb",slateblue:"#6a5acd",slategray:"#708090",slategrey:"#708090",snow:"#fffafa",springgreen:"#00ff7f",steelblue:"#4682b4",tan:"#d2b48c",teal:"#008080",thistle:"#d8bfd8",tomato:"#ff6347",turquoise:"#40e0d0",violet:"#ee82ee",wheat:"#f5deb3",white:"#ffffff",whitesmoke:"#f5f5f5",yellow:"#ffff00",yellowgreen:"#9acd32"};function t(e,t,r){return r<0&&(r+=1),r>1&&(r-=1),r<1/6?e+6*(t-e)*r:r<.5?t:r<2/3?e+(t-e)*(2/3-r)*6:e}function r(e,t){if(void 0!==e)return Math.min(t,Math.max(0,e||0))}var n=function(e,t,n,o){this.r=r(e,1),this.g=r(t,1),this.b=r(n,1),this.a=r(o,1)||1};return n.parse=function(t){if("string"==typeof t){var r;if(t=t.toLowerCase(),r=(t=e[t]||t).match(/^#?(\\w{2})(\\w{2})(\\w{2})$/))return new n(parseInt(r[1],16)/255,parseInt(r[2],16)/255,parseInt(r[3],16)/255);if(r=t.match(/^#?(\\w)(\\w)(\\w)$/))return new n(parseInt(r[1]+r[1],16)/255,parseInt(r[2]+r[2],16)/255,parseInt(r[3]+r[3],16)/255);if(r=t.match(/rgba?\\((\\d+)\\D+(\\d+)\\D+(\\d+)(\\D+([\\d.]+))?\\)/))return new n(parseFloat(r[1])/255,parseFloat(r[2])/255,parseFloat(r[3])/255,r[4]?parseFloat(r[5]):1)}return new n},n.fromHSL=function(e,t,r){var o=(new n).fromHSL(e,t,r);return o.a=a,o},n.prototype={isValid:function(){return void 0!==this.r&&void 0!==this.g&&void 0!==this.b},toHSL:function(){if(this.isValid()){var e,t,r=Math.max(this.r,this.g,this.b),n=Math.min(this.r,this.g,this.b),o=(r+n)/2,a=r-n;if(a){switch(t=o>.5?a/(2-r-n):a/(r+n),r){case this.r:e=(this.g-this.b)/a+(this.g<this.b?6:0);break;case this.g:e=(this.b-this.r)/a+2;break;case this.b:e=(this.r-this.g)/a+4}e*=60}else e=t=0;return{h:e,s:t,l:o}}},fromHSL:function(e,r,n){if(0===r)return this.r=this.g=this.b=n,this;var o=n<.5?n*(1+r):n+r-n*r,a=2*n-o;return e/=360,this.r=t(a,o,e+1/3),this.g=t(a,o,e),this.b=t(a,o,e-1/3),this},toString:function(){if(this.isValid())return 1===this.a?"#"+((1<<24)+(Math.round(255*this.r)<<16)+(Math.round(255*this.g)<<8)+Math.round(255*this.b)).toString(16).slice(1,7):"rgba("+[Math.round(255*this.r),Math.round(255*this.g),Math.round(255*this.b),this.a.toFixed(2)].join(",")+")"},toArray:function(){if(this.isValid)return[this.r,this.g,this.b]},hue:function(e){var t=this.toHSL();return this.fromHSL(t.h+e,t.s,t.l)},saturation:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s*e,t.l)},lightness:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s,t.l*e)},clone:function(){return new n(this.r,this.g,this.b,this.a)}},n}();"object"==typeof module&&(module.exports=Qolor);class OBJ{constructor(e,t){this.materialIndex={},this.vertexIndex=[],t&&this.readMTL(t),this.meshes=[],this.readOBJ(e)}readMTL(e){const t=e.split(/[\\r\\n]/g);let r,n=[];t.forEach(e=>{const t=e.trim().split(/\\s+/);switch(t[0]){case"newmtl":r&&(this.materialIndex[r]=n),r=t[1],n=[];break;case"Kd":n=[parseFloat(t[1]),parseFloat(t[2]),parseFloat(t[3])]}}),r&&(this.materialIndex[r]=n),e=null}readOBJ(e){let t,r,n=[];e.split(/[\\r\\n]/g).forEach(e=>{const o=e.trim().split(/\\s+/);switch(o[0]){case"g":case"o":this.storeMesh(t,r,n),t=o[1],n=[];break;case"usemtl":this.storeMesh(t,r,n),this.materialIndex[o[1]]&&(r=this.materialIndex[o[1]]),n=[];break;case"v":this.vertexIndex.push([parseFloat(o[1]),parseFloat(o[2]),parseFloat(o[3])]);break;case"f":n.push([parseFloat(o[1])-1,parseFloat(o[2])-1,parseFloat(o[3])-1])}}),this.storeMesh(t,r,n)}storeMesh(e,t,r){if(r.length){const n=this.createGeometry(r);this.meshes.push({...n,color:t,id:e})}}sub(e,t){return[e[0]-t[0],e[1]-t[1],e[2]-t[2]]}unit(e){const t=this.len(e);return[e[0]/t,e[1]/t,e[2]/t]}normal(e,t,r){const n=this.sub(e,t),o=this.sub(t,r);return this.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}createGeometry(e){const t=[],r=[],n=[];let o=-1/0;return e.forEach(e=>{const a=this.vertexIndex[e[0]],i=this.vertexIndex[e[1]],s=this.vertexIndex[e[2]],l=this.normal(a,i,s);t.push(a[0],a[2],a[1],i[0],i[2],i[1],s[0],s[2],s[1]),r.push(l[0],l[1],l[2],l[0],l[1],l[2],l[0],l[1],l[2]),n.push(0,0,0,0,0,0),o=Math.max(o,a[1],i[1],s[1])}),{vertices:t,normals:r,texCoords:n,height:o}}}OBJ.parse=function(e,t){return new OBJ(e,t).meshes};const triangulate=function(){const e=10,t=[.8627450980392157,.8235294117647058,.7843137254901961];METERS_PER_LEVEL=3;const r={brick:"#cc7755",bronze:"#ffeecc",canvas:"#fff8f0",concrete:"#999999",copper:"#a0e0d0",glass:"#e8f8f8",gold:"#ffcc00",plants:"#009933",metal:"#aaaaaa",panel:"#fff8f0",plaster:"#999999",roof_tiles:"#f08060",silver:"#cccccc",slate:"#666666",stone:"#996666",tar_paper:"#333333",wood:"#deb887"},n={asphalt:"tar_paper",bitumen:"tar_paper",block:"stone",bricks:"brick",glas:"glass",glassfront:"glass",grass:"plants",masonry:"stone",granite:"stone",panels:"panel",paving_stones:"stone",plastered:"plaster",rooftiles:"roof_tiles",roofingfelt:"tar_paper",sandstone:"stone",sheet:"canvas",sheets:"canvas",shingle:"tar_paper",shingles:"tar_paper",slates:"slate",steel:"metal",tar:"tar_paper",tent:"canvas",thatch:"plants",tile:"roof_tiles",tiles:"roof_tiles"},o=.5,a=6378137*Math.PI/180;function i(e){return"string"!=typeof e?null:"#"===(e=e.toLowerCase())[0]?e:r[n[e]||e]||null}function s(e,r){r=r||0;let n,o=Qolor.parse(e);return[(n=o.isValid()?o.saturation(.7).toArray():t)[0]+r,n[1]+r,n[2]+r]}return function(t,r,n,l,f){const c=[a*Math.cos(n[1]/180*Math.PI),a];(function(e){switch(e.type){case"MultiPolygon":return e.coordinates;case"Polygon":return[e.coordinates];default:return[]}})(r.geometry).map(a=>{const u=function(e,t,r){return e.map((e,n)=>(0===n!==function(e){return 0<e.reduce((e,t,r,n)=>e+(r<n.length-1?(n[r+1][0]-t[0])*(n[r+1][1]+t[1]):0),0)}(e)&&e.reverse(),e.map(function(e){return[(e[0]-t[0])*r[0],-(e[1]-t[1])*r[1]]})))}(a,n,c);!function(t,r,n,a,l){const f=function(t,r){const n={};switch(n.center=[r.minX+(r.maxX-r.minX)/2,r.minY+(r.maxY-r.minY)/2],n.radius=(r.maxX-r.minX)/2,n.roofHeight=t.roofHeight||(t.roofLevels?t.roofLevels*METERS_PER_LEVEL:0),t.roofShape){case"cone":case"pyramid":case"dome":case"onion":n.roofHeight=n.roofHeight||1*n.radius;break;case"gabled":case"hipped":case"half-hipped":case"skillion":case"gambrel":case"mansard":case"round":n.roofHeight=n.roofHeight||1*METERS_PER_LEVEL;break;case"flat":n.roofHeight=0;break;default:n.roofHeight=0}let o;if(n.wallZ=t.minHeight||(t.minLevel?t.minLevel*METERS_PER_LEVEL:0),void 0!==t.height)o=t.height,n.roofHeight=Math.min(n.roofHeight,o),n.roofZ=o-n.roofHeight,n.wallHeight=o-n.roofHeight-n.wallZ;else if(void 0!==t.levels)o=t.levels*METERS_PER_LEVEL,n.roofZ=o,n.wallHeight=o-n.wallZ;else{switch(t.shape){case"cone":case"dome":case"pyramid":o=2*n.radius,n.roofHeight=0;break;case"sphere":o=4*n.radius,n.roofHeight=0;break;default:o=e}n.roofZ=o,n.wallHeight=o-n.wallZ}return n}(r,function(e){let t=1/0,r=1/0,n=-1/0,o=-1/0;for(let a=0;a<e.length;a++)t=Math.min(t,e[a][0]),r=Math.min(r,e[a][1]),n=Math.max(n,e[a][0]),o=Math.max(o,e[a][1]);return{minX:t,minY:r,maxX:n,maxY:o}}(n[0])),c=s(a||r.wallColor||r.color||i(r.material),l),u=s(a||r.roofColor||i(r.roofMaterial),l);switch(r.shape){case"cone":return void split.cylinder(t,f.center,f.radius,0,f.wallHeight,f.wallZ,c);case"dome":return void split.dome(t,f.center,f.radius,f.wallHeight,f.wallZ,c);case"pyramid":return void split.pyramid(t,n,f.center,f.wallHeight,f.wallZ,c);case"sphere":return void split.sphere(t,f.center,f.radius,f.wallHeight,f.wallZ,c)}switch(createRoof(t,r,n,f,u,c),r.shape){case"none":return;case"cylinder":return void split.cylinder(t,f.center,f.radius,f.radius,f.wallHeight,f.wallZ,c);default:let e=.2,a=.4;"glass"!==r.material&&(e=0,a=0,r.levels&&(a=parseFloat(r.levels)-parseFloat(r.minLevel||0)<<0)),split.extrusion(t,n,f.wallHeight,f.wallZ,c,[0,o,e/f.wallHeight,a/f.wallHeight])}}(t,r.properties,u,l,f)})}}();var createRoof;function pointOnSegment(e,t){return e[0]>=Math.min(t[0][0],t[1][0])&&e[0]<=Math.max(t[1][0],t[0][0])&&e[1]>=Math.min(t[0][1],t[1][1])&&e[1]<=Math.max(t[1][1],t[0][1])}function getVectorSegmentIntersection(e,t,r){var n,o,a,i,s,l=r[0],f=[r[1][0]-r[0][0],r[1][1]-r[0][1]];if(0!==t[0]||0!==f[0]){if(0!==t[0]&&(a=t[1]/t[0],n=e[1]-a*e[0]),0!==f[0]&&(i=f[1]/f[0],o=l[1]-i*l[0]),0===t[0]&&pointOnSegment(s=[e[0],i*e[0]+o],r))return s;if(0===f[0]&&pointOnSegment(s=[l[0],a*l[0]+n],r))return s;if(a!==i){var c=(o-n)/(a-i);return pointOnSegment(s=[c,a*c+n],r)?s:void 0}}}function getDistanceToLine(e,t){var r=t[0],n=t[1];if(r[0]!==n[0]||r[1]!==n[1]){var o=(n[1]-r[1])/(n[0]-r[0]),a=r[1]-o*r[0];if(0===o)return Math.abs(a-e[1]);if(o===1/0)return Math.abs(r[0]-e[0]);var i=-1/o,s=(e[1]-i*e[0]-a)/(o-i),l=o*s+a,f=e[0]-s,c=e[1]-l;return Math.sqrt(f*f+c*c)}}!function(){function e(e,r,n,o,a,i,s){if(0,n.length>1||void 0===r.roofDirection)return t(e,r,n,a,i);var l=(r.roofDirection/180-.5)*Math.PI,f=[Math.cos(l),Math.sin(l)],c=function(e,t,r){for(var n,o=[],a=0;a<r.length-1;a++)if(void 0!==(n=getVectorSegmentIntersection(e,t,[r[a],r[a+1]]))){if(2===o.length)return;a++,r.splice(a,0,n),o.push(a)}if(!(o.length<2))return{index:o,roof:r}}(a.center,f,n[0]);if(!c)return t(e,r,n,a,i);for(var u,h=c.index,p=c.roof,d=[],g=0,x=[p[h[0]],p[h[1]]],v=0;v<p.length;v++)d[v]=getDistanceToLine(p[v],x),g=Math.max(g,d[v]);for(v=0;v<p.length;v++)p[v][2]=(1-d[v]/g)*a.roofHeight;for(u=p.slice(h[0],h[1]+1),split.polygon(e,[u],a.roofZ,i),u=(u=p.slice(h[1],p.length-1)).concat(p.slice(0,h[0]+1)),split.polygon(e,[u],a.roofZ,i),v=0;v<p.length-1;v++)0===p[v][2]&&0===p[v+1][2]||split.quad(e,[p[v][0],p[v][1],a.roofZ+p[v][2]],[p[v][0],p[v][1],a.roofZ],[p[v+1][0],p[v+1][1],a.roofZ],[p[v+1][0],p[v+1][1],a.roofZ+p[v+1][2]],s)}function t(e,t,r,n,o){"cylinder"===t.shape?split.circle(e,n.center,n.radius,n.roofZ,o):split.polygon(e,r,n.roofZ,o)}createRoof=function(r,n,o,a,i,s){switch(n.roofShape){case"cone":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.cylinder(e,r.center,r.radius,0,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"dome":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.dome(e,r.center,r.radius,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"pyramid":return function(e,t,r,n,o){"cylinder"===t.shape?split.cylinder(e,n.center,n.radius,0,n.roofHeight,n.roofZ,o):split.pyramid(e,r,n.center,n.roofHeight,n.roofZ,o)}(r,n,o,a,i);case"skillion":return function(e,r,n,o,a,i){if(void 0===r.roofDirection)return t(e,r,n,o,a);var s,l,f=r.roofDirection/180*Math.PI,c=1/0,u=-1/0;n[0].forEach(function(e){var t=e[1]*Math.cos(-f)+e[0]*Math.sin(-f);t<c&&(c=t,s=e),t>u&&(u=t,l=e)});var h=n[0],p=[Math.cos(f),Math.sin(f)],d=[s,[s[0]+p[0],s[1]+p[1]]],g=getDistanceToLine(l,d);n.forEach(function(e){e.forEach(function(e){var t=getDistanceToLine(e,d);e[2]=t/g*o.roofHeight})}),split.polygon(e,[h],o.roofZ,a),n.forEach(function(t){for(var r=0;r<t.length-1;r++)0===t[r][2]&&0===t[r+1][2]||split.quad(e,[t[r][0],t[r][1],o.roofZ+t[r][2]],[t[r][0],t[r][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ+t[r+1][2]],i)})}(r,n,o,a,i,s);case"gabled":return e(r,n,o,0,a,i,s);case"hipped":case"half-hipped":return t(r,n,o,a,i);case"gambrel":case"mansard":return e(r,n,o,0,a,i,s);case"round":return function(e,r,n,o,a,i){if(n.length>1||void 0===r.roofDirection)return t(e,r,n,o,a);return t(e,r,n,o,a)}(r,n,o,a,i);case"onion":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n);for(var o,a,i=[{rScale:.8,hScale:0},{rScale:.9,hScale:.18},{rScale:.9,hScale:.35},{rScale:.8,hScale:.47},{rScale:.6,hScale:.59},{rScale:.5,hScale:.65},{rScale:.2,hScale:.82},{rScale:0,hScale:1}],s=0,l=i.length-1;s<l;s++)o=r.roofHeight*i[s].hScale,a=r.roofHeight*i[s+1].hScale,split.cylinder(e,r.center,r.radius*i[s].rScale,r.radius*i[s+1].rScale,a-o,r.roofZ+o,n)}(r,o,a,i);default:return t(r,n,o,a,i)}}}();const split={NUM_Y_SEGMENTS:24,NUM_X_SEGMENTS:32,quad:(e,t,r,n,o,a)=>{split.triangle(e,t,r,n,a),split.triangle(e,n,o,t,a)},triangle:(e,t,r,n,o)=>{const a=vec3.normal(t,r,n);[].push.apply(e.vertices,[].concat(t,n,r)),[].push.apply(e.normals,[].concat(a,a,a)),[].push.apply(e.colors,[].concat(o,o,o)),e.texCoords.push(0,0,0,0,0,0)},circle:(e,t,r,n,o)=>{let a,i;n=n||0;for(let s=0;s<split.NUM_X_SEGMENTS;s++)a=s/split.NUM_X_SEGMENTS,i=(s+1)/split.NUM_X_SEGMENTS,split.triangle(e,[t[0]+r*Math.sin(a*Math.PI*2),t[1]+r*Math.cos(a*Math.PI*2),n],[t[0],t[1],n],[t[0]+r*Math.sin(i*Math.PI*2),t[1]+r*Math.cos(i*Math.PI*2),n],o)},polygon:(e,t,r,n)=>{r=r||0;const o=[],a=[];let i,s,l=0;t.forEach((e,n)=>{e.forEach(e=>{o.push(e[0],e[1],r+(e[2]||0))}),n&&(l+=t[n-1].length,a.push(l))});const f=earcut(o,a,3);let c,u,h;for(i=0,s=f.length-2;i<s;i+=3)c=3*f[i],u=3*f[i+1],h=3*f[i+2],split.triangle(e,[o[c],o[c+1],o[c+2]],[o[u],o[u+1],o[u+2]],[o[h],o[h+1],o[h+2]],n)},cube:(e,t,r,n,o,a,i,s)=>{const l=[o=o||0,a=a||0,i=i||0],f=[o+t,a,i],c=[o+t,a+r,i],u=[o,a+r,i],h=[o,a,i+n],p=[o+t,a,i+n],d=[o+t,a+r,i+n],g=[o,a+r,i+n];split.quad(e,f,l,u,c,s),split.quad(e,h,p,d,g,s),split.quad(e,l,f,p,h,s),split.quad(e,f,c,d,p,s),split.quad(e,c,u,g,d,s),split.quad(e,u,l,h,g,s)},cylinder:(e,t,r,n,o,a,i)=>{a=a||0;const s=split.NUM_X_SEGMENTS,l=2*Math.PI;let f,c,u,h,p,d;for(let g=0;g<s;g++)f=g/s*l,c=(g+1)/s*l,u=Math.sin(f),h=Math.cos(f),p=Math.sin(c),d=Math.cos(c),split.triangle(e,[t[0]+r*u,t[1]+r*h,a],[t[0]+n*p,t[1]+n*d,a+o],[t[0]+r*p,t[1]+r*d,a],i),0!==n&&split.triangle(e,[t[0]+n*u,t[1]+n*h,a+o],[t[0]+n*p,t[1]+n*d,a+o],[t[0]+r*u,t[1]+r*h,a],i)},dome:(e,t,r,n,o,a,i)=>{o=o||0;const s=split.NUM_Y_SEGMENTS/2,l=Math.PI/2,f=i?0:-l;let c,u,h,p,d,g,x,v,m,y;for(let i=0;i<s;i++)c=i/s*l+f,u=(i+1)/s*l+f,h=Math.cos(c),p=Math.sin(c),x=h*r,v=(d=Math.cos(u))*r,m=((g=Math.sin(u))-p)*n,y=o-g*n,split.cylinder(e,t,v,x,m,y,a)},sphere:(e,t,r,n,o,a)=>{o=o||0;let i=0;return i+=split.dome(e,t,r,n/2,o+n/2,a,!0),i+=split.dome(e,t,r,n/2,o+n/2,a)},pyramid:(e,t,r,n,o,a)=>{o=o||0;for(let i=0,s=(t=t[0]).length-1;i<s;i++)split.triangle(e,[t[i][0],t[i][1],o],[t[i+1][0],t[i+1][1],o],[r[0],r[1],o+n],a)},extrusion:(e,t,r,n,o,a)=>{n=n||0;let i,s,l,f,c,u,h,p,d,g,x,v,m=a[2]*r,y=a[3]*r;t.forEach(t=>{for(x=0,v=t.length-1;x<v;x++)i=t[x],s=t[x+1],l=vec2.len(vec2.sub(i,s)),f=[i[0],i[1],n],c=[s[0],s[1],n],u=[s[0],s[1],n+r],h=[i[0],i[1],n+r],p=vec3.normal(f,c,u),[].push.apply(e.vertices,[].concat(f,u,c,f,h,u)),[].push.apply(e.normals,[].concat(p,p,p,p,p,p)),[].push.apply(e.colors,[].concat(o,o,o,o,o,o)),d=a[0]*l<<0,g=a[1]*l<<0,e.texCoords.push(d,y,g,m,g,y,d,y,d,m,g,m)})}};var earcut=function(){function e(e,o,a){a=a||2;var i,s,c,h,p,d,g,x=o&&o.length,v=x?o[0]*a:e.length,m=t(e,0,v,a,!0),y=[];if(!m)return y;if(x&&(m=function(e,n,o,a){var i,s,c,h,p,d=[];for(i=0,s=n.length;i<s;i++)c=n[i]*a,h=i<s-1?n[i+1]*a:e.length,(p=t(e,c,h,a,!1))===p.next&&(p.steiner=!0),d.push(u(p));for(d.sort(l),i=0;i<d.length;i++)f(d[i],o),o=r(o,o.next);return o}(e,o,m,a)),e.length>80*a){i=c=e[0],s=h=e[1];for(var b=a;b<v;b+=a)(p=e[b])<i&&(i=p),(d=e[b+1])<s&&(s=d),p>c&&(c=p),d>h&&(h=d);g=Math.max(c-i,h-s)}return n(m,y,a,i,s,g),y}function t(e,t,r,n,o){var a,i;if(o===w(e,t,r,n)>0)for(a=t;a<r;a+=n)i=y(a,e[a],e[a+1],i);else for(a=r-n;a>=t;a-=n)i=y(a,e[a],e[a+1],i);return i&&g(i,i.next)&&(b(i),i=i.next),i}function r(e,t){if(!e)return e;t||(t=e);var r,n=e;do{if(r=!1,n.steiner||!g(n,n.next)&&0!==d(n.prev,n,n.next))n=n.next;else{if(b(n),(n=t=n.prev)===n.next)return null;r=!0}}while(r||n!==t);return t}function n(e,t,l,f,u,h,p){if(e){!p&&h&&function(e,t,r,n){var o=e;do{null===o.z&&(o.z=c(o.x,o.y,t,r,n)),o.prevZ=o.prev,o.nextZ=o.next,o=o.next}while(o!==e);o.prevZ.nextZ=null,o.prevZ=null,function(e){var t,r,n,o,a,i,s,l,f=1;do{for(r=e,e=null,a=null,i=0;r;){for(i++,n=r,s=0,t=0;t<f&&(s++,n=n.nextZ);t++);for(l=f;s>0||l>0&&n;)0===s?(o=n,n=n.nextZ,l--):0!==l&&n?r.z<=n.z?(o=r,r=r.nextZ,s--):(o=n,n=n.nextZ,l--):(o=r,r=r.nextZ,s--),a?a.nextZ=o:e=o,o.prevZ=a,a=o;r=n}a.nextZ=null,f*=2}while(i>1)}(o)}(e,f,u,h);for(var d,g,x=e;e.prev!==e.next;)if(d=e.prev,g=e.next,h?a(e,f,u,h):o(e))t.push(d.i/l),t.push(e.i/l),t.push(g.i/l),b(e),e=g.next,x=g.next;else if((e=g)===x){p?1===p?n(e=i(e,t,l),t,l,f,u,h,2):2===p&&s(e,t,l,f,u,h):n(r(e),t,l,f,u,h,1);break}}}function o(e){var t=e.prev,r=e,n=e.next;if(d(t,r,n)>=0)return!1;for(var o=e.next.next;o!==e.prev;){if(h(t.x,t.y,r.x,r.y,n.x,n.y,o.x,o.y)&&d(o.prev,o,o.next)>=0)return!1;o=o.next}return!0}function a(e,t,r,n){var o=e.prev,a=e,i=e.next;if(d(o,a,i)>=0)return!1;for(var s=o.x<a.x?o.x<i.x?o.x:i.x:a.x<i.x?a.x:i.x,l=o.y<a.y?o.y<i.y?o.y:i.y:a.y<i.y?a.y:i.y,f=o.x>a.x?o.x>i.x?o.x:i.x:a.x>i.x?a.x:i.x,u=o.y>a.y?o.y>i.y?o.y:i.y:a.y>i.y?a.y:i.y,p=c(s,l,t,r,n),g=c(f,u,t,r,n),x=e.nextZ;x&&x.z<=g;){if(x!==e.prev&&x!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,x.x,x.y)&&d(x.prev,x,x.next)>=0)return!1;x=x.nextZ}for(x=e.prevZ;x&&x.z>=p;){if(x!==e.prev&&x!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,x.x,x.y)&&d(x.prev,x,x.next)>=0)return!1;x=x.prevZ}return!0}function i(e,t,r){var n=e;do{var o=n.prev,a=n.next.next;!g(o,a)&&x(o,n,n.next,a)&&v(o,a)&&v(a,o)&&(t.push(o.i/r),t.push(n.i/r),t.push(a.i/r),b(n),b(n.next),n=e=a),n=n.next}while(n!==e);return n}function s(e,t,o,a,i,s){var l=e;do{for(var f=l.next.next;f!==l.prev;){if(l.i!==f.i&&p(l,f)){var c=m(l,f);return l=r(l,l.next),c=r(c,c.next),n(l,t,o,a,i,s),void n(c,t,o,a,i,s)}f=f.next}l=l.next}while(l!==e)}function l(e,t){return e.x-t.x}function f(e,t){if(t=function(e,t){var r,n=t,o=e.x,a=e.y,i=-1/0;do{if(a<=n.y&&a>=n.next.y){var s=n.x+(a-n.y)*(n.next.x-n.x)/(n.next.y-n.y);if(s<=o&&s>i){if(i=s,s===o){if(a===n.y)return n;if(a===n.next.y)return n.next}r=n.x<n.next.x?n:n.next}}n=n.next}while(n!==t);if(!r)return null;if(o===i)return r.prev;var l,f=r,c=r.x,u=r.y,p=1/0;n=r.next;for(;n!==f;)o>=n.x&&n.x>=c&&h(a<u?o:i,a,c,u,a<u?i:o,a,n.x,n.y)&&((l=Math.abs(a-n.y)/(o-n.x))<p||l===p&&n.x>r.x)&&v(n,e)&&(r=n,p=l),n=n.next;return r}(e,t)){var n=m(t,e);r(n,n.next)}}function c(e,t,r,n,o){return(e=1431655765&((e=858993459&((e=252645135&((e=16711935&((e=32767*(e-r)/o)|e<<8))|e<<4))|e<<2))|e<<1))|(t=1431655765&((t=858993459&((t=252645135&((t=16711935&((t=32767*(t-n)/o)|t<<8))|t<<4))|t<<2))|t<<1))<<1}function u(e){var t=e,r=e;do{t.x<r.x&&(r=t),t=t.next}while(t!==e);return r}function h(e,t,r,n,o,a,i,s){return(o-i)*(t-s)-(e-i)*(a-s)>=0&&(e-i)*(n-s)-(r-i)*(t-s)>=0&&(r-i)*(a-s)-(o-i)*(n-s)>=0}function p(e,t){return e.next.i!==t.i&&e.prev.i!==t.i&&!function(e,t){var r=e;do{if(r.i!==e.i&&r.next.i!==e.i&&r.i!==t.i&&r.next.i!==t.i&&x(r,r.next,e,t))return!0;r=r.next}while(r!==e);return!1}(e,t)&&v(e,t)&&v(t,e)&&function(e,t){var r=e,n=!1,o=(e.x+t.x)/2,a=(e.y+t.y)/2;do{r.y>a!=r.next.y>a&&o<(r.next.x-r.x)*(a-r.y)/(r.next.y-r.y)+r.x&&(n=!n),r=r.next}while(r!==e);return n}(e,t)}function d(e,t,r){return(t.y-e.y)*(r.x-t.x)-(t.x-e.x)*(r.y-t.y)}function g(e,t){return e.x===t.x&&e.y===t.y}function x(e,t,r,n){return!!(g(e,t)&&g(r,n)||g(e,n)&&g(r,t))||d(e,t,r)>0!=d(e,t,n)>0&&d(r,n,e)>0!=d(r,n,t)>0}function v(e,t){return d(e.prev,e,e.next)<0?d(e,t,e.next)>=0&&d(e,e.prev,t)>=0:d(e,t,e.prev)<0||d(e,e.next,t)<0}function m(e,t){var r=new M(e.i,e.x,e.y),n=new M(t.i,t.x,t.y),o=e.next,a=t.prev;return e.next=t,t.prev=e,r.next=o,o.prev=r,n.next=r,r.prev=n,a.next=n,n.prev=a,n}function y(e,t,r,n){var o=new M(e,t,r);return n?(o.next=n.next,o.prev=n,n.next.prev=o,n.next=o):(o.prev=o,o.next=o),o}function b(e){e.next.prev=e.prev,e.prev.next=e.next,e.prevZ&&(e.prevZ.nextZ=e.nextZ),e.nextZ&&(e.nextZ.prevZ=e.prevZ)}function M(e,t,r){this.i=e,this.x=t,this.y=r,this.prev=null,this.next=null,this.z=null,this.prevZ=null,this.nextZ=null,this.steiner=!1}function w(e,t,r,n){for(var o=0,a=t,i=r-n;a<r;a+=n)o+=(e[i]-e[a])*(e[a+1]+e[i+1]),i=a;return o}return e.deviation=function(e,t,r,n){var o,a,i=t&&t.length,s=i?t[0]*r:e.length,l=Math.abs(w(e,0,s,r));if(i)for(o=0,a=t.length;o<a;o++){var f=t[o]*r,c=o<a-1?t[o+1]*r:e.length;l-=Math.abs(w(e,f,c,r))}var u=0;for(o=0,a=n.length;o<a;o+=3){var h=n[o]*r,p=n[o+1]*r,d=n[o+2]*r;u+=Math.abs((e[h]-e[d])*(e[p+1]-e[h+1])-(e[h]-e[p])*(e[d+1]-e[h+1]))}return 0===l&&0===u?0:Math.abs((u-l)/l)},e.flatten=function(e){for(var t=e[0][0].length,r={vertices:[],holes:[],dimensions:t},n=0,o=0;o<e.length;o++){for(var a=0;a<e[o].length;a++)for(var i=0;i<t;i++)r.vertices.push(e[o][a][i]);o>0&&(n+=e[o-1].length,r.holes.push(n))}return r},e}();const vec3={len:e=>Math.sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]),sub:(e,t)=>[e[0]-t[0],e[1]-t[1],e[2]-t[2]],unit:e=>{const t=vec3.len(e);return[e[0]/t,e[1]/t,e[2]/t]},normal:(e,t,r)=>{const n=vec3.sub(e,t),o=vec3.sub(t,r);return vec3.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}},vec2={len:e=>Math.sqrt(e[0]*e[0]+e[1]*e[1]),add:(e,t)=>[e[0]+t[0],e[1]+t[1]],sub:(e,t)=>[e[0]-t[0],e[1]-t[1]],dot:(e,t)=>e[1]*t[0]-e[0]*t[1],scale:(e,t)=>[e[0]*t,e[1]*t],equals:(e,t)=>e[0]===t[0]&&e[1]===t[1]};function getOrigin(e){const t=e.coordinates;switch(e.type){case"Point":return t;case"MultiPoint":case"LineString":return t[0];case"MultiLineString":case"Polygon":return t[0][0];case"MultiPolygon":return t[0][0][0]}}function getPickingColor(e){return[0,(255&++e)/255,(e>>8&255)/255]}function postResult(e,t,r){const n={items:e,position:t,vertices:new Float32Array(r.vertices),normals:new Float32Array(r.normals),colors:new Float32Array(r.colors),texCoords:new Float32Array(r.texCoords),heights:new Float32Array(r.heights),pickingColors:new Float32Array(r.pickingColors)};postMessage(n,[n.vertices.buffer,n.normals.buffer,n.colors.buffer,n.texCoords.buffer,n.heights.buffer,n.pickingColors.buffer])}function loadGeoJSON(e){"object"==typeof e.url?(postMessage("load"),processGeoJSON(e.url,e.options)):Request.getJSON(e.url,(t,r)=>{t?postMessage("error"):(postMessage("load"),processGeoJSON(r,e.options))})}function processGeoJSON(e,t){if(!e||!e.features.length)return void postMessage("error");const r={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},n=[],o=getOrigin(e.features[0].geometry),a={latitude:o[1],longitude:o[0]};e.features.forEach((e,a)=>{const i=e.properties,s=t.id||e.id,l=getPickingColor(a);let f=r.vertices.length;triangulate(r,e,o),f=(r.vertices.length-f)/3;for(let e=0;e<f;e++)r.heights.push(i.height),r.pickingColors.push(...l);n.push({id:s,properties:i,vertexCount:f})}),postResult(n,a,r)}function loadOBJ(e){Request.getText(e.url,(e,t)=>{if(e)return void postMessage("error");let r=t.match(/^mtllib\\s+(.*)$/m);r?Request.getText(this.url.replace(/[^\\/]+$/,"")+r[1],(e,r)=>{e?postMessage("error"):(postMessage("load"),processOBJ(t,r))}):(postMessage("load"),processOBJ(t,null))})}function processOBJ(e,t,r){const n={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},o=[],a=Qolor.parse(r.color).toArray(),s=r.position;OBJ.parse(e,t).forEach((e,t)=>{n.vertices.push(...e.vertices),n.normals.push(...e.normals),n.texCoords.push(...e.texCoords);const s=r.id||e.id,l=(s/2%2?-1:1)*(s%2?.03:.06),f=a||e.color||DEFAULT_COLOR,c=e.vertices.length/3,u=getPickingColor(i);for(let t=0;t<c;t++)n.colors.push(f[0]+l,f[1]+l,f[2]+l),n.heights.push(e.height),n.pickingColors.push(...u);o.push({id:s,properties:{},vertexCount:c})}),postResult(o,s,n)}onmessage=function(e){const t=e.data;"GeoJSON"===t.type&&loadGeoJSON(t),"OBJ"===t.type&&loadOBJ(t)};';
+
 
 
 class GLX {
@@ -633,11 +656,11 @@ GLX.Framebuffer = class {
 GLX.Shader = class {
 
   constructor (config) {
-    this.shaderName = config.shaderName;
+    this.name = config.source.name || '';
     this.id = GL.createProgram();
 
-    this.compile(GL.VERTEX_SHADER, config.vertexShader);
-    this.compile(GL.FRAGMENT_SHADER, config.fragmentShader);
+    this.compile(GL.VERTEX_SHADER, config.source.vs);
+    this.compile(GL.FRAGMENT_SHADER, config.source.fs);
 
     GL.linkProgram(this.id);
 
@@ -661,7 +684,7 @@ GLX.Shader = class {
   locateAttribute (name) {
     const loc = GL.getAttribLocation(this.id, name);
     if (loc < 0) {
-      throw new Error(`unable to locate attribute "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`unable to locate attribute "${name}" in shader "${this.name}"`);
     }
     this.attributes[name] = loc;
   }
@@ -669,7 +692,7 @@ GLX.Shader = class {
   locateUniform (name) {
     const loc = GL.getUniformLocation(this.id, name);
     if (!loc) {
-      throw new Error(`unable to locate uniform "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`unable to locate uniform "${name}" in shader "${this.name}"`);
     }
     this.uniforms[name] = loc;
   }
@@ -704,7 +727,7 @@ GLX.Shader = class {
 
   setBuffer (name, buffer) {
     if (this.attributes[name] === undefined) {
-      throw new Error(`attempt to bind buffer to invalid attribute "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`attempt to bind buffer to invalid attribute "${name}" in shader "${this.name}"`);
     }
     buffer.enable();
     GL.vertexAttribPointer(this.attributes[name], buffer.itemSize, GL.FLOAT, false, 0, 0);
@@ -712,14 +735,14 @@ GLX.Shader = class {
 
   setParam (name, type, value) {
     if (this.uniforms[name] === undefined) {
-      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.name}"`);
     }
     GL['uniform' + type](this.uniforms[name], value);
   }
 
   setMatrix (name, type, value) {
     if (this.uniforms[name] === undefined) {
-      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.shaderName}"`);
+      throw new Error(`attempt to bind to invalid uniform "${name}" in shader "${this.name}"`);
     }
     GL['uniformMatrix' + type](this.uniforms[name], false, value);
   }
@@ -1551,10 +1574,8 @@ class OSMBuildings {
 
     const numProc = Math.min(window.navigator.hardwareConcurrency, 4);
 
-    if (typeof workerStr === 'string') {
-      const blob = new Blob([workerStr], { type: 'application/javascript' });
-      this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
-    }
+    const blob = new Blob([featureWorker], { type: 'application/javascript' });
+    this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
 
     //*** create container ********************************
 
@@ -2089,7 +2110,7 @@ class OSMBuildings {
  * (String) OSMBuildings version
  * @static
  */
-OSMBuildings.VERSION = '4.0.0';
+OSMBuildings.VERSION = null;
 
 /**
  * (String) OSMBuildings attribution
@@ -2527,24 +2548,24 @@ const
   MAX_TILT = 45;
 
 
-var TILE_SIZE = 256;
+const TILE_SIZE = 256;
 
-var DEFAULT_HEIGHT = 10;
+const DEFAULT_HEIGHT = 10;
 
-var MAX_USED_ZOOM_LEVEL = 25;
-var DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
+const MAX_USED_ZOOM_LEVEL = 25;
+const DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
 
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to horizon into
-var FOG_COLOR = '#e8e0d8';
-//var FOG_COLOR = '#f0f8ff';
-var BACKGROUND_COLOR = '#efe8e0';
+const FOG_COLOR = '#e8e0d8';
+//const FOG_COLOR = '#f0f8ff';
+const BACKGROUND_COLOR = '#efe8e0';
 
-var document = window.document;
+const document = window.document;
 
-var EARTH_RADIUS_IN_METERS = 6378137;
-var EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
-var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+const EARTH_RADIUS_IN_METERS = 6378137;
+const EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
+const METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
  * to cover everything that's also visible to the user. For this to work
@@ -2554,7 +2575,7 @@ var METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
  * edge of the viewport to have incorrect shadows. Using a higher-than-necessary
  * value will lead to an unnecessarily large view area and thus to poor shadow
  * resolution. */
-var SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
+const SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
 
 /* for shadow mapping, the scene needs to be rendered into a depth map as seen
  * by the light source. This rendering can have arbitrary dimensions -
@@ -2562,13 +2583,13 @@ var SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
  * the resolution (width and height) for this depth map the smaller are
  * the visual artifacts introduced by shadow mapping. But increasing the
  * shadow depth map size impacts rendering performance */
-var SHADOW_DEPTH_MAP_SIZE = 2048;
+const SHADOW_DEPTH_MAP_SIZE = 2048;
 
 //the building wall texture as a data url
-var BUILDING_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wwCCAUQLpaUSQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAGUExURebm5v///zFES9kAAAAcSURBVCjPY/gPBQyUMh4wAAH/KAPCoFaoDnYGAAKtZsamTRFlAAAAAElFTkSuQmCC';
+const BUILDING_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wwCCAUQLpaUSQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAGUExURebm5v///zFES9kAAAAcSURBVCjPY/gPBQyUMh4wAAH/KAPCoFaoDnYGAAKtZsamTRFlAAAAAElFTkSuQmCC';
 
 //the Marker texture as a data url
-var MARKER_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4gUHDxACbf+ToAAABKBJREFUeNrt3YFtKjEURFGWBmiE/iuhka0AOgCxWpDte04DP/nxG88zkbJdWMLjdnv+89+77/vmf31+foiGXDgIAAy8QBAAGHiBIAAw9MJAAGDohYEAwNALAwGAwRcEAgCDLwgEAAZfEAgADL4gEAAGH0EgAAw+gkAAGHwEgQAw/AgBAWDwEQQCwPAjBASA4UcICACDjyAQAIYfISAADD9CQAAYfoSAADD4CAIBYPgRAgLA8CMEBIDhRwgIAMOPEBAAhh8hcIqrHzd0ZZLO7Y8WEA0Aw48QiAaA4UcIRAPA8CMEogFg+BECn/kUAMKWTDW3P1pANAAMP0LACgDUGoDbHy0gGgCGHyFgBQBqDcDtjxagAQC1BuD2RwvQAIBaA3D7owVoAECtAbj90QI0AKDWANz+aAEaAFBrAG5/tAANABAAQGYFUP+xBmgAgAAAMiuA+o81QAMABACQWQHUf6wBGgAgAAABAKz/BmD/xzuABgAIAEAAAOu/Adj/8Q6gAQACABAAgAAABAAgAIAjhv14wkeArGTUjwI1ALACAAIAEACAAAAEACAAAAEACABAAAACABAAgAAABAAgAAABAAgAQAAAAgAQAIAAAAQAIAAAAQD8zjbyF+ePg7CCUf8oiAYAVgBAAAACAOjYRv8CPQQys5EfADUAsAIAAgDwBuAdABr7vwYAVgDACmANgFT91wDACgAIAJUKBADQuawEAIRNV6t9GoDbXwMABACQWgGsAaj/GgBQDQC/EwAaALiUBABw1NRV2mMgbn8NACgGgMdA0ADAJSQAgG8tUaE9BuL21wCAYgPQAnD7awBAtQFoAbj9NQCgGgB+MQg0AHDJVANACwANAFwuAgB4Z9m67CNB3P4aAFBsAFoAbn8NAKg2AC0At78GAFQbgBaA218DAKoNQAvA7R8PACGA4bcCANUGoAXg9tcAgGoD0AJw+2sAQLUBaAG4/TUA0ADK37wWQPn21wBAA2jTAtz+5e9fA8DwCwCHAKwAVgEEvwYAaABaAG5/DQDQALQA3P4aABh+AeCQgBXAKoBg1wAADUALwO2vAYDhFwAOD1gBrAIIcA0A0AC0ANz+GgAYfgHgUIEAAEEtABwu+DMH+gAPggJaAwDDLwAcNrACWAUQyBoAGH4B4PCBAAAB7A3AWwCGXwNwGEEAgMAVAA4leAPwHoCg1QDA8AsAhxSsAFYBBKsGAIZfADi0IAAQpHgD8BZg+NEAHGIQAAhOrABWAcOPBuBQgwBAUGIFsAoYfjQAhxwEAIIRK4BVwPCjATj0IAAQhFYArAKGXwPAECAAQPBZAbAKGH4BgBAw/FYADAcCAAScFQCrgOHXADAsCAAQaFYArAKGXwPA8CAAQIBZAciuAoZfABANAcNvBcBQIQAQVFgBSKwChl8DwJAhABBMWAFIrAKGXwAQDQHDbwXA8CEAEEBYAUisAoZfA8BNjABA4GAFILEKGH4BQDQEDL8VAPUcAYBgwQpAYhUw/AKAaAgYfisAajsaALUmIEA0ALQHBACGGSsAiVVAYAgAoiFg+K0AWBUQABhyrAAkVgHBAMEQmPEPj3KeFy7fLVanpR7MAAAAAElFTkSuQmCC';
+const MARKER_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4gUHDxACbf+ToAAABKBJREFUeNrt3YFtKjEURFGWBmiE/iuhka0AOgCxWpDte04DP/nxG88zkbJdWMLjdnv+89+77/vmf31+foiGXDgIAAy8QBAAGHiBIAAw9MJAAGDohYEAwNALAwGAwRcEAgCDLwgEAAZfEAgADL4gEAAGH0EgAAw+gkAAGHwEgQAw/AgBAWDwEQQCwPAjBASA4UcICACDjyAQAIYfISAADD9CQAAYfoSAADD4CAIBYPgRAgLA8CMEBIDhRwgIAMOPEBAAhh8hcIqrHzd0ZZLO7Y8WEA0Aw48QiAaA4UcIRAPA8CMEogFg+BECn/kUAMKWTDW3P1pANAAMP0LACgDUGoDbHy0gGgCGHyFgBQBqDcDtjxagAQC1BuD2RwvQAIBaA3D7owVoAECtAbj90QI0AKDWANz+aAEaAFBrAG5/tAANABAAQGYFUP+xBmgAgAAAMiuA+o81QAMABACQWQHUf6wBGgAgAAABAKz/BmD/xzuABgAIAEAAAOu/Adj/8Q6gAQACABAAgAAABAAgAIAjhv14wkeArGTUjwI1ALACAAIAEACAAAAEACAAAAEACABAAAACABAAgAAABAAgAAABAAgAQAAAAgAQAIAAAAQAIAAAAQD8zjbyF+ePg7CCUf8oiAYAVgBAAAACAOjYRv8CPQQys5EfADUAsAIAAgDwBuAdABr7vwYAVgDACmANgFT91wDACgAIAJUKBADQuawEAIRNV6t9GoDbXwMABACQWgGsAaj/GgBQDQC/EwAaALiUBABw1NRV2mMgbn8NACgGgMdA0ADAJSQAgG8tUaE9BuL21wCAYgPQAnD7awBAtQFoAbj9NQCgGgB+MQg0AHDJVANACwANAFwuAgB4Z9m67CNB3P4aAFBsAFoAbn8NAKg2AC0At78GAFQbgBaA218DAKoNQAvA7R8PACGA4bcCANUGoAXg9tcAgGoD0AJw+2sAQLUBaAG4/TUA0ADK37wWQPn21wBAA2jTAtz+5e9fA8DwCwCHAKwAVgEEvwYAaABaAG5/DQDQALQA3P4aABh+AeCQgBXAKoBg1wAADUALwO2vAYDhFwAOD1gBrAIIcA0A0AC0ANz+GgAYfgHgUIEAAEEtABwu+DMH+gAPggJaAwDDLwAcNrACWAUQyBoAGH4B4PCBAAAB7A3AWwCGXwNwGEEAgMAVAA4leAPwHoCg1QDA8AsAhxSsAFYBBKsGAIZfADi0IAAQpHgD8BZg+NEAHGIQAAhOrABWAcOPBuBQgwBAUGIFsAoYfjQAhxwEAIIRK4BVwPCjATj0IAAQhFYArAKGXwPAECAAQPBZAbAKGH4BgBAw/FYADAcCAAScFQCrgOHXADAsCAAQaFYArAKGXwPA8CAAQIBZAciuAoZfABANAcNvBcBQIQAQVFgBSKwChl8DwJAhABBMWAFIrAKGXwAQDQHDbwXA8CEAEEBYAUisAoZfA8BNjABA4GAFILEKGH4BQDQEDL8VAPUcAYBgwQpAYhUw/AKAaAgYfisAajsaALUmIEA0ALQHBACGGSsAiVVAYAgAoiFg+K0AWBUQABhyrAAkVgHBAMEQmPEPj3KeFy7fLVanpR7MAAAAAElFTkSuQmCC';
 
 
 class Request {
@@ -2576,7 +2597,7 @@ class Request {
   static load (url, callback) {
     const req = new XMLHttpRequest();
 
-    const timer = setTimeout(function () {
+    const timer = setTimeout(t => {
       if (req.readyState !== 4) {
         req.abort();
         callback('status');
@@ -2659,44 +2680,13 @@ class Request {
   }
 }
 
-/*function project(latitude, longitude, worldSize) {
-  var
-    x = longitude/360 + 0.5,
-    y = Math.min(1, Math.max(0, 0.5 - (Math.log(Math.tan((Math.PI/4) + (Math.PI/2)*latitude/180)) / Math.PI) / 2));
-  return { x: x*worldSize, y: y*worldSize };
-}
-
-function unproject(x, y, worldSize) {
-  x /= worldSize;
-  y /= worldSize;
-  return {
-    latitude: (2 * Math.atan(Math.exp(Math.PI * (1 - 2*y))) - Math.PI/2) * (180/Math.PI),
-    longitude: x*360 - 180
-  };
-}*/
 
 function pattern(str, param) {
-  return str.replace(/\{(\w+)\}/g, function(tag, key) {
-    return param[key] || tag;
-  });
+  return str.replace(/\{(\w+)\}/g, (tag, key) => param[key] || tag);
 }
 
-function assert(condition, message) {
-  if (!condition) {
-    throw message;
-  }
-}
-
-/* returns a new list of points based on 'points' where the 3rd coordinate in
- * each entry is set to 'zValue'
- */
 function substituteZCoordinate(points, zValue) {
-  var res = [];
-  for (var i in points) {
-    res.push( [points[i][0], points[i][1], zValue] );
-  }
-  
-  return res;
+  return points.map(point => [...point, zValue]);
 }
 
 function clamp(value, min, max) {
@@ -3399,8 +3389,8 @@ function assert(condition, message) {
 function getDistancePointLine2( line1, line2, p) {
 
   //v: a unit-length vector perpendicular to the line;
-  var v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
-  var r = sub2( line1, p);
+  const v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
+  const r = sub2( line1, p);
   return Math.abs(dot2(v, r));
 } */
 
@@ -3411,16 +3401,15 @@ function getDistancePointLine2( line1, line2, p) {
  *  would lie beyond 'segmentEnd'. )
  */
 function getNextPixel(segmentStart, segmentEnd, currentPixel) {
-
-  var vInc = [segmentStart[0] < segmentEnd[0] ? 1 : -1, 
+  const vInc = [segmentStart[0] < segmentEnd[0] ? 1 : -1,
               segmentStart[1] < segmentEnd[1] ? 1 : -1];
          
-  var nextX = currentPixel[0] + (segmentStart[0] < segmentEnd[0] ?  +1 : 0);
-  var nextY = currentPixel[1] + (segmentStart[1] < segmentEnd[1] ?  +1 : 0);
+  const nextX = currentPixel[0] + (segmentStart[0] < segmentEnd[0] ?  +1 : 0);
+  const nextY = currentPixel[1] + (segmentStart[1] < segmentEnd[1] ?  +1 : 0);
   
   // position of the edge to the next pixel on the line 'segmentStart'->'segmentEnd'
-  var alphaX = (nextX - segmentStart[0])/ (segmentEnd[0] - segmentStart[0]);
-  var alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
+  const alphaX = (nextX - segmentStart[0])/ (segmentEnd[0] - segmentStart[0]);
+  const alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
   
   // neither value is valid
   if ((alphaX <= 0.0 || alphaX > 1.0) && (alphaY <= 0.0 || alphaY > 1.0)) {
@@ -3445,8 +3434,8 @@ function getNextPixel(segmentStart, segmentEnd, currentPixel) {
  * to be removed.
  */
 function rasterTriangle(p1, p2, p3) {
-  var points = [p1, p2, p3];
-  points.sort(function(p, q) {
+  const points = [p1, p2, p3];
+  points.sort((p, q) => {
     return p[1] < q[1];
   });
   p1 = points[0];
@@ -3459,9 +3448,9 @@ function rasterTriangle(p1, p2, p3) {
   if (p2[1] == p3[1])
     return rasterFlatTriangle( p2, p3, p1);
 
-  var alpha = (p2[1] - p1[1]) / (p3[1] - p1[1]);
+  const alpha = (p2[1] - p1[1]) / (p3[1] - p1[1]);
   //point on the line p1->p3 with the same y-value as p2
-  var p4 = [p1[0] + alpha*(p3[0]-p1[0]), p2[1]];
+  const p4 = [p1[0] + alpha*(p3[0]-p1[0]), p2[1]];
   
   /*  P3
    *   |\
@@ -3490,28 +3479,28 @@ function rasterTriangle(p1, p2, p3) {
 function rasterFlatTriangle( flat0, flat1, other ) {
 
   //console.log("RFT:\n%s\n%s\n%s", String(flat0), String(flat1), String(other));
-  var points = [];
+  const points = [];
   assert(flat0[1] === flat1[1], 'not a flat triangle');
   assert(other[1] !== flat0[1], 'not a triangle');
   assert(flat0[0] !== flat1[0], 'not a triangle');
 
   if (flat0[0] > flat1[0]) //guarantees that flat0 is always left of flat1
   {
-    var tmp = flat0;
+    const tmp = flat0;
     flat0 = flat1;
     flat1 = tmp;
   }
-  
-  var leftRasterPos = [other[0] <<0, other[1] <<0];
-  var rightRasterPos = leftRasterPos.slice(0);
-  points.push(leftRasterPos.slice(0));
-  var yDir = other[1] < flat0[1] ? +1 : -1;
-  var yStart = leftRasterPos[1];
-  var yBeyond= (flat0[1] <<0) + yDir;
-  var prevLeftRasterPos;
-  var prevRightRasterPos;
 
-  for (var y = yStart; (y*yDir) < (yBeyond*yDir); y+= yDir) {
+  let leftRasterPos = [other[0] <<0, other[1] <<0];
+  let rightRasterPos = leftRasterPos.slice(0);
+  points.push(leftRasterPos.slice(0));
+  const yDir = other[1] < flat0[1] ? +1 : -1;
+  const yStart = leftRasterPos[1];
+  const yBeyond= (flat0[1] <<0) + yDir;
+  let prevLeftRasterPos;
+  let prevRightRasterPos;
+
+  for (let y = yStart; (y*yDir) < (yBeyond*yDir); y+= yDir) {
     do {
       points.push( leftRasterPos.slice(0));
       prevLeftRasterPos = leftRasterPos;
@@ -3526,7 +3515,7 @@ function rasterFlatTriangle( flat0, flat1, other ) {
     } while (rightRasterPos[1]*yDir <= y*yDir);
     rightRasterPos = prevRightRasterPos;
     
-    for (var x = leftRasterPos[0]; x <= rightRasterPos[0]; x++) {
+    for (let x = leftRasterPos[0]; x <= rightRasterPos[0]; x++) {
       points.push([x, y]);
     }
   }
@@ -3540,15 +3529,15 @@ function rasterFlatTriangle( flat0, flat1, other ) {
  */
 function rasterConvexQuad(quad) {
   assert(quad.length == 4, 'Error: Quadrilateral with more or less than four vertices');
-  var res1 = rasterTriangle(quad[0], quad[1], quad[2]);
-  var res2 = rasterTriangle(quad[0], quad[2], quad[3]);
+  const res1 = rasterTriangle(quad[0], quad[1], quad[2]);
+  const res2 = rasterTriangle(quad[0], quad[2], quad[3]);
   return res1.concat(res2);
 }
 
 // computes the normal vector of the triangle a-b-c
 function normal(a, b, c) {
-  var d1 = sub3(a, b);
-  var d2 = sub3(b, c);
+  const d1 = sub3(a, b);
+  const d2 = sub3(b, c);
   // normalized cross product of d1 and d2.
   return norm3([ d1[1]*d2[2] - d1[2]*d2[1],
                  d1[2]*d2[0] - d1[0]*d2[2],
@@ -3632,20 +3621,20 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
  * current reference point (APP.position). 
  */
 function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height) {
-  var p0 = transformVec3(targetViewMatrix.data, points[0]);
-  var left = p0[0];
-  var right= p0[0];
-  var top  = p0[1];
-  var bottom=p0[1];
+  const p = transformVec3(targetViewMatrix.data, points[0]);
+  let left   = p[0];
+  let right  = p[0];
+  let top    = p[1];
+  let bottom = p[1];
 
-  for (var i = 0; i < points.length; i++) {
-    var p =  transformVec3(targetViewMatrix.data, points[i]);
-    left = Math.min( left,  p[0]);
-    right= Math.max( right, p[0]);
-    top  = Math.max( top,   p[1]);
-    bottom=Math.min( bottom,p[1]);
-  }
-  
+  points.forEach(point => {
+    const p = transformVec3(targetViewMatrix.data, point);
+    left   = Math.min( left,  p[0]);
+    right  = Math.max( right, p[0]);
+    top    = Math.max( top,   p[1]);
+    bottom = Math.min( bottom,p[1]);
+  });
+
   return new GLX.Matrix.Ortho(left, right, top, bottom, near, far);
 }
 
@@ -3656,10 +3645,10 @@ function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height)
  * vector is then converted back to a 3D Euler coordinates by dividing
  * its first three components each by its fourth component */
 function transformVec3(m, v) {
-  var x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + m[12];
-  var y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + m[13];
-  var z = v[0]*m[2] + v[1]*m[6] + v[2]*m[10] + m[14];
-  var w = v[0]*m[3] + v[1]*m[7] + v[2]*m[11] + m[15];
+  const x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + m[12];
+  const y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + m[13];
+  const z = v[0]*m[2] + v[1]*m[6] + v[2]*m[10] + m[14];
+  const w = v[0]*m[3] + v[1]*m[7] + v[2]*m[11] + m[15];
   return [x/w, y/w, z/w]; //convert homogenous to Euler coordinates
 }
 
@@ -3670,11 +3659,11 @@ function transformVec3(m, v) {
  * screen edge and y==+1.0 is the upper one.
  */
 function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
-  var v1 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 0]);
-  var v2 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
+  const v1 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 0]);
+  const v2 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
 
   // direction vector from v1 to v2
-  var vDir = sub3(v2, v1);
+  const vDir = sub3(v2, v1);
 
   if (vDir[2] >= 0) // ray would not intersect with the plane
   {
@@ -3684,8 +3673,8 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
    * (screenNdcX, screenNdcY) is:  p = v1 + λ*vDirNorm
    * For the intersection with the xy-plane (-> z=0) holds: v1[2] + λ*vDirNorm[2] = p[2] = 0.0.
    * Rearranged, this reads:   */
-  var lambda = -v1[2]/vDir[2];
-  var pos = add3( v1, mul3scalar(vDir, lambda));
+  const lambda = -v1[2]/vDir[2];
+  const pos = add3( v1, mul3scalar(vDir, lambda));
 
   return [pos[0], pos[1]];  // z==0 
 }
@@ -3699,40 +3688,40 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
  *       the tile intersects with a viewport edge. 
  */
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
-  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+  const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
                                  Math.cos(APP.position.latitude / 180 * Math.PI);
-  var tileLon = tile2lon(tileX, tileZoom);
-  var tileLat = tile2lat(tileY, tileZoom);
+  const tileLon = tile2lon(tileX, tileZoom);
+  const tileLat = tile2lat(tileY, tileZoom);
   
-  var modelMatrix = new GLX.Matrix();
+  const modelMatrix = new GLX.Matrix();
   modelMatrix.translate( (tileLon - APP.position.longitude)* metersPerDegreeLongitude,
                         -(tileLat - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
-  var size = getTileSizeInMeters( APP.position.latitude, tileZoom);
+  const size = getTileSizeInMeters( APP.position.latitude, tileZoom);
   
-  var mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
-  var tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
-  var tr = transformVec3(mvpMatrix, [size, 0   , 0]);
-  var bl = transformVec3(mvpMatrix, [0   , size, 0]);
-  var br = transformVec3(mvpMatrix, [size, size, 0]);
-  var verts = [tl, tr, bl, br];
-  for (var i in verts) { 
+  const mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
+  const tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
+  const tr = transformVec3(mvpMatrix, [size, 0   , 0]);
+  const bl = transformVec3(mvpMatrix, [0   , size, 0]);
+  const br = transformVec3(mvpMatrix, [size, size, 0]);
+  const res = [tl, tr, bl, br].map(vert => {
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * APP.width;
-    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * APP.height;
-  }
+    vert[0] = (vert[0] + 1.0) / 2.0 * APP.width;
+    vert[1] = (vert[1] + 1.0) / 2.0 * APP.height;
+    return vert;
+  });
   
-  return getConvexQuadArea( [tl, tr, br, bl]);
+  return getConvexQuadArea(res);
 }
 
 function getTriangleArea(p1, p2, p3) {
   //triangle edge lengths
-  var a = len2(sub2( p1, p2));
-  var b = len2(sub2( p1, p3));
-  var c = len2(sub2( p2, p3));
+  const a = len2(sub2( p1, p2));
+  const b = len2(sub2( p1, p3));
+  const c = len2(sub2( p2, p3));
   
   //Heron's formula
-  var s = 0.5 * (a+b+c);
+  const s = 0.5 * (a+b+c);
   return Math.sqrt( s * (s-a) * (s-b) * (s-c));
 }
 
@@ -3747,7 +3736,7 @@ function getTileSizeInMeters( latitude, zoom) {
 }
 
 function getPositionFromLocal(localXY) {
-  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
+  const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
                                  Math.cos(APP.position.latitude / 180 * Math.PI);
 
   return {
@@ -3773,7 +3762,7 @@ function tile2lon(x, z) {
 }
 
 function tile2lat(y, z) {
-  var n = Math.PI-2*Math.PI*y/Math.pow(2,z);
+  const n = Math.PI-2*Math.PI*y/Math.pow(2,z);
   return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 
@@ -3782,7 +3771,7 @@ function dot2(a,b) { return a[0]*b[0] + a[1]*b[1];}
 function sub2(a,b) { return [a[0]-b[0], a[1]-b[1]];}
 function add2(a,b) { return [a[0]+b[0], a[1]+b[1]];}
 function mul2scalar(a,f) { return [a[0]*f, a[1]*f];}
-function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l]; }
+function norm2(a)  { const l = len2(a); return [a[0]/l, a[1]/l]; }
 
 function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];}
 function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
@@ -3791,7 +3780,7 @@ function add3scalar(a,f) { return [a[0]+f, a[1]+f, a[2]+f];}
 function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
 function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
 function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}
-function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
+function norm3(a)  { const l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
 function dist3(a,b){ return len3(sub3(a,b));}
 function equal3(a, b) { return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];}
 
@@ -3831,7 +3820,7 @@ class render {
     render.Basemap = new Basemap();
 
     render.Overlay.init();
-    render.AmbientMap.init();
+    render.ambientMap = new AmbientMap();
     render.blurredAmbientMap = new Blur();
     render.MapShadows = new MapShadows();
     if (render.effects.shadows) {
@@ -3876,8 +3865,8 @@ class render {
 
           render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
           render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
-          render.AmbientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
-          render.blurredAmbientMap.render(render.AmbientMap.framebuffer.renderTexture, viewSize);
+          render.ambientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
+          render.blurredAmbientMap.render(render.ambientMap.framebuffer.renderTexture, viewSize);
           render.Buildings.render(render.sunGBuffer.framebuffer);
           render.Basemap.render();
 
@@ -3910,7 +3899,7 @@ class render {
 
           render.Marker.render();
 
-          // render.HudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
+          // render.hudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
         }
 
         // APP.markers.updateMarkerView();
@@ -4048,7 +4037,7 @@ class render {
       render.sunGBuffer.destroy();
     }
 
-    render.AmbientMap.destroy();
+    render.ambientMap.destroy();
     render.blurredAmbientMap.destroy();
 
     clearTimeout(this.speedTimer);
@@ -4065,9 +4054,7 @@ class Picking {
     this.size = [512, 512];
 
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.picking.vertex,
-      fragmentShader: Shaders.picking.fragment,
-      shaderName: 'picking shader',
+      source: pickingShader,
       attributes: ['aPosition', 'aPickingColor', 'aZScale'],
       uniforms: [
         'uModelMatrix',
@@ -4172,36 +4159,37 @@ class Picking {
   }
 }
 
-var Sun = {
+const Sun = {
 
-  setDate: function(date) {
-    var pos = suncalc(date, APP.position.latitude, APP.position.longitude);
-    this.direction = [
+  setDate: date => {
+    const pos = suncalc(date, APP.position.latitude, APP.position.longitude);
+
+    Sun.direction = [
       -Math.sin(pos.azimuth) * Math.cos(pos.altitude),
        Math.cos(pos.azimuth) * Math.cos(pos.altitude),
                                Math.sin(pos.altitude)
     ];
 
-    var rotationInDeg = pos.azimuth / (Math.PI/180);
-    var tiltInDeg     = 90 - pos.altitude / (Math.PI/180);
+    const rotationInDeg = pos.azimuth / (Math.PI/180);
+    const tiltInDeg     = 90 - pos.altitude / (Math.PI/180);
 
-    this.viewMatrix = new GLX.Matrix()
+    Sun.viewMatrix = new GLX.Matrix()
       .rotateZ(rotationInDeg)
       .rotateX(tiltInDeg)
       .translate(0, 0, -5000)
       .scale(1, -1, 1); // flip Y
   },
   
-  updateView: function(coveredGroundVertices) {
+  updateView: coveredGroundVertices => {
     // TODO: could parts be pre-calculated?
-    this.projMatrix = getCoveringOrthoProjection(
-      substituteZCoordinate(coveredGroundVertices, 0.0).concat(substituteZCoordinate(coveredGroundVertices,SHADOW_MAP_MAX_BUILDING_HEIGHT)),
-      this.viewMatrix,
+    Sun.projMatrix = getCoveringOrthoProjection(
+      substituteZCoordinate(coveredGroundVertices, 0.0).concat(substituteZCoordinate(coveredGroundVertices, SHADOW_MAP_MAX_BUILDING_HEIGHT)),
+      Sun.viewMatrix,
       1000,
       7500
     );
 
-    this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
+    Sun.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(Sun.viewMatrix, Sun.projMatrix));
   }
 };
 
@@ -4211,9 +4199,7 @@ class Buildings {
   constructor () {
     this.shader = !render.effects.shadows ?
       new GLX.Shader({
-        vertexShader: Shaders.buildings.vertex,
-        fragmentShader: Shaders.buildings.fragment,
-        shaderName: 'building shader',
+        source: buildingsShader,
         attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
         uniforms: [
           'uModelMatrix',
@@ -4229,9 +4215,7 @@ class Buildings {
           'uWallTexIndex'
         ]
       }) : new GLX.Shader({
-      vertexShader: Shaders['buildings_with_shadows'].vertex,
-      fragmentShader: Shaders['buildings_with_shadows'].fragment,
-      shaderName: 'quality building shader',
+      source: buildings_with_shadowsShader,
       attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
       uniforms: [
         'uFogDistance',
@@ -4342,9 +4326,7 @@ class MapShadows {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders['basemap_with_shadows'].vertex,
-      fragmentShader: Shaders['basemap_with_shadows'].fragment,
-      shaderName: 'map shadows shader',
+      source: basemap_with_shadowsShader,
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
         'uModelMatrix',
@@ -4413,9 +4395,7 @@ class Basemap {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.basemap.vertex,
-      fragmentShader: Shaders.basemap.fragment,
-      shaderName: 'basemap shader',
+      source: basemapShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uViewMatrix', 'uModelMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
     });
@@ -4504,29 +4484,28 @@ class Basemap {
 }
 
 
-/* 'HudRect' renders a textured rectangle to the top-right quarter of the viewport.
-   The intended use is visualize render-to-texture effects during development.
- */
-render.HudRect = {
+// HudRect renders a textured rectangle to the top-right quarter of the viewport.
+// The intended use is visualize render-to-texture effects during development.
 
-  init: function() {
-  
-    var geometry = this.createGeometry();
-    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
+class HudRect {
 
+  constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.texture.vertex,
-      fragmentShader: Shaders.texture.fragment,
-      shaderName: 'HUD rectangle shader',
+      source: textureShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [ 'uMatrix', 'uTexIndex']
     });
-  },
 
-  createGeometry: function() {
-    var vertices = [],
-        texCoords= [];
+    const geometry = this.createGeometry();
+    this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
+    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
+  }
+
+  createGeometry () {
+    const
+      vertices = [],
+      texCoords= [];
+
     vertices.push(0, 0, 1E-5,
                   1, 0, 1E-5,
                   1, 1, 1E-5);
@@ -4544,10 +4523,10 @@ render.HudRect = {
                    0.5,1.0);
 
     return { vertices: vertices , texCoords: texCoords };
-  },
+  }
 
-  render: function(texture) {
-    var shader = this.shader;
+  render (texture) {
+    const shader = this.shader;
 
     shader.enable();
     
@@ -4565,10 +4544,14 @@ render.HudRect = {
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     shader.disable();
-  },
+  }
 
-  destroy: function() {}
-};
+  destroy () {
+    this.shader.destroy();
+    this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+  }
+}
 
 
 // Renders the depth buffer and normals into textures.
@@ -4582,9 +4565,7 @@ class DepthNormal {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.depth_normal.vertex,
-      fragmentShader: Shaders.depth_normal.fragment,
-      shaderName: 'depth/normal shader',
+      source: depth_normalShader,
       attributes: ['aPosition', 'aNormal', 'aZScale'],
       uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uFade', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
     });
@@ -4657,18 +4638,16 @@ class DepthNormal {
 }
 
 
-render.AmbientMap = {
+class AmbientMap {
 
-  init: function() {
+  constructor () {
     this.shader = new GLX.Shader({
-      vertexShader:   Shaders.ambient_from_depth.vertex,
-      fragmentShader: Shaders.ambient_from_depth.fragment,
-      shaderName: 'SSAO shader',
+      source: ambient_from_depthShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });
 
-    this.framebuffer = new GLX.Framebuffer(128, 128); //dummy value, size will be set dynamically
+    this.framebuffer = new GLX.Framebuffer(128, 128); // size will be set dynamically
     
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array([
       -1, -1, 1E-5,
@@ -4687,11 +4666,10 @@ render.AmbientMap = {
       1,1,
       0,1
     ]));
-  },
+  }
 
-  render: function(depthTexture, fogTexture, framebufferSize, effectStrength) {
-
-    var
+  render (depthTexture, fogTexture, framebufferSize, effectStrength) {
+    const
       shader = this.shader,
       framebuffer = this.framebuffer;
 
@@ -4699,9 +4677,10 @@ render.AmbientMap = {
       effectStrength = 1.0;
     }
 
-    framebuffer.setSize( framebufferSize[0], framebufferSize[1] );
+    framebuffer.setSize(framebufferSize[0], framebufferSize[1]);
 
     GL.viewport(0, 0, framebufferSize[0], framebufferSize[1]);
+
     shader.enable();
     framebuffer.enable();
 
@@ -4725,11 +4704,15 @@ render.AmbientMap = {
     framebuffer.disable();
 
     GL.viewport(0, 0, APP.width, APP.height);
+  }
 
-  },
-
-  destroy: function() {}
-};
+  destroy () {
+    this.shader.destroy();
+    this.framebuffer.destroy();
+    this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+  }
+}
 
 
 /* 'Overlay' renders part of a texture over the whole viewport.
@@ -4744,9 +4727,7 @@ render.Overlay = {
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.texture.vertex,
-      fragmentShader: Shaders.texture.fragment,
-      shaderName: 'overlay texture shader',
+      source: textureShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uTexIndex']
     });
@@ -4806,9 +4787,7 @@ class Horizon {
     this.HORIZON_HEIGHT = 2000;
 
     this.skyShader = new GLX.Shader({
-      vertexShader: Shaders.horizon.vertex,
-      fragmentShader: Shaders.horizon.fragment,
-      shaderName: 'sky wall shader',
+      source: horizonShader,
       attributes: ['aPosition'],
       uniforms: ['uAbsoluteHeight', 'uMatrix', 'uFogColor']
     });
@@ -4817,8 +4796,7 @@ class Horizon {
     this.updateGeometry([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]);
 
     this.floorShader = new GLX.Shader({
-      vertexShader: Shaders.flat_color.vertex,
-      fragmentShader: Shaders.flat_color.fragment,
+      source: flat_colorShader,
       attributes: ['aPosition'],
       uniforms: ['uColor', 'uMatrix']
     });
@@ -4905,9 +4883,7 @@ class Blur {
 
   constructor () {
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.blur.vertex,
-      fragmentShader: Shaders.blur.fragment,
-      shaderName: 'blur shader',
+      source: blurShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uTexIndex']
     });
@@ -4975,9 +4951,7 @@ class MarkerRender {
   constructor () {
 
     this.shader = new GLX.Shader({
-      vertexShader: Shaders.marker.vertex,
-      fragmentShader: Shaders.marker.fragment,
-      shaderName: 'marker shader',
+      source: markerShader,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [
         'uProjMatrix',
@@ -5028,4 +5002,6 @@ class MarkerRender {
     this.shader.destroy();
   }
 }
+
+OSMBuildings.VERSION = '4.0.0';
 }());
