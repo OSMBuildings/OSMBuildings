@@ -17,7 +17,8 @@
     "url": "git@github.com:OSMBuildings/OSMBuildings.git"
   },
   "scripts": {
-    "docs": "documentation build src/index.js -f json -o docs/docs.json --sort-order 'alpha'"
+    "docs": "documentation build src/index.js -f json -o docs/docs.json --sort-order 'alpha'",
+    "build": "node build.js"
   },
   "dependencies": {
     "qolor": "^2.2.0",
@@ -28,7 +29,6 @@
     "documentation": "^5.3.0",
     "eslint": "^5.0.0",
     "file-zip": "^1.0.1",
-    "node-zip-dir": "^1.0.2",
     "uglify-es": "github:mishoo/UglifyJS2#harmony"
   },
   "optionalDependencies": {}

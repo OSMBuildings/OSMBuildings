@@ -3145,6 +3145,7 @@ class Feature {
   }
 
   load () {
+    // TODO: perhaps have some workers attached to collection and just ask for them
     APP.workers.get(worker => {
       worker.onMessage(res => {
         if (res === 'error') {

@@ -28,7 +28,7 @@ class Feature {
 
   load () {
     // TODO: perhaps have some workers attached to collection and just ask for them
-    APP.features.workers.get(worker => {
+    APP.workers.get(worker => {
       worker.onMessage(res => {
         if (res === 'error') {
           this.callback();
