@@ -1,151 +1,116 @@
-
 class Promise {
 
-  resolve(val) {
-
-    if (this.state !== Promise.STATE_PENDING) {
+  resolve (value) {
+    if (this.state !== STATE_PENDING) {
       return;
     }
 
-    if (val && (typeof val === 'function' || typeof val === 'object')) {
-      let firstTime = true;
-
-
+    if (value && (typeof value === 'function' || typeof value === 'object')) {
+      let first = true; // first time through?
       try {
-        const then = val.then;
+        const then = value.then;
         if (typeof then === 'function') {
-          // and call the val.then (which is now in 'then') with val as the context and the
+          // and call the value.then (which is now in 'then') with value as the context and the
           // resolve/reject functions per thenable spec
-          then.call(val, res => {
-            if (firstTime) {
-              firstTime = false;
-              this.resolve(res);
+          then.call(value, ra => {
+            if (first) {
+              first = false;
+              this.resolve(ra);
             }
-          }, err => {
-            if (firstTime) {
-              firstTime = false;
-              this.reject(err);
+          }, rr => {
+            if (first) {
+              first = false;
+              this.reject(rr);
             }
           });
           return;
         }
-      } catch (ex) {
-        if (firstTime) {
-          this.reject(ex);
+      }
+      catch (e) {
+        if (first) {
+          this.reject(e);
         }
         return;
       }
     }
 
-    this.state = Promise.STATE_FULFILLED;
-    this.val = val;
+    this.state = STATE_FULFILLED;
+    this.v = value;
 
-    if (this.listeners) {
-      setTimeout(() => {
-        this.listeners.forEach(listener => {
-          resolveListener(listener, this.val);
-        });
-      }, 0);
+    if (this.clients) {
+      setImmediate(e => {
+        this.clients.forEach(client => resolve(client, value));
+      });
     }
   }
 
-  reject(reason) {
-    if (this.state !== Promise.STATE_PENDING) {
+  reject (reason) {
+    if (this.state !== STATE_PENDING) {
       return;
     }
 
-    this.state = Promise.STATE_REJECTED;
-    this.val = reason;
+    this.state = STATE_REJECTED;
+    this.v = reason;
 
-    if (this.listeners) {
-      setTimeout(() => {
-        this.listeners.forEach(listener => {
-          rejectListener(listener, this.val);
-        });
-      }, 0);
+    if (this.clients) {
+      setImmediate(e => {
+        this.clients.forEach(client => reject(client, reason));
+      });
     }
   }
 
-  then(success, error) {
-    const promise = new Promise();
-    const listener = { success: success, error: error, promise: promise };
+  then (onF, onR) {
+    const p = new Promise();
+    const client = { y: onF, n: onR, p: p };
 
-    if (this.state === Promise.STATE_PENDING) {
-      // we are pending, so client must wait - so push client to end of this.c array (create if necessary for efficiency)
-      if (this.listeners) {
-        this.listeners.push(listener);
+    if (this.state === STATE_PENDING) {
+      // we are pending, so client must wait - so push client to end of this.clients array (create if necessary for efficiency)
+      if (this.clients) {
+        this.clients.push(client);
       } else {
-        this.listeners = [listener];
+        this.clients = [client];
       }
     } else { // if state was NOT pending, then we can just immediately (soon) call the resolve/reject handler
-      setTimeout(() => { // we are not pending, so yield script and resolve/reject as needed
-        if (this.state === Promise.STATE_FULFILLED) {
-          resolveListener(listener, this.val);
+      const s = this.state, a = this.v;
+      setImmediate(e => { // we are not pending, so yield script and resolve/reject as needed
+        if (s === STATE_FULFILLED) {
+          resolve(client, a);
         } else {
-          rejectListener(listener, this.val);
+          reject(client, a);
         }
-      }, 0);
-    }
-
-    return promise;
-  }
-}
-
-Promise.STATE_PENDING = [][0]; // undefined
-Promise.STATE_FULFILLED = 'fulfilled';
-Promise.STATE_REJECTED = 'rejected';
-
-Promise.all = function(tasks) {
-  const
-    res = [],
-    promise = new Promise(); // results and resolved count
-
-  let done = 0;
-  if (!tasks.length) {
-    promise.resolve(res);
-  } else {
-    tasks.forEach((task, i) => {
-      if (!task || typeof task.then !== 'function') {
-        task = Promise.resolve(task);
-      }
-
-      task.then(val => {
-        res[i] = val;
-        done++;
-        if (done === tasks.length) {
-          promise.resolve(res);
-        }
-      }, err => {
-        promise.reject(err);
       });
-    });
-  }
-
-  return promise;
-};
-
-function resolveListener(listener, val) {
-  if (typeof listener.success === 'function') {
-    try {
-      const res = listener.success(val);
-      listener.promise.resolve(res);
-    } catch (err) {
-      listener.promise.reject(err)
     }
-  } else {
-    listener.promise.resolve(val); // pass this along...
+
+    return p;
   }
 }
 
-function rejectListener(listener, reason) {
-  if (typeof listener.error === 'function') {
+const STATE_PENDING   = [][0]; // These are the three possible states (PENDING remains undefined - as intended)
+const STATE_FULFILLED = 'fulfilled'; // a promise can be in.  The state is stored
+const STATE_REJECTED  = 'rejected'; // in this.state as read-only
+
+function resolve(client, arg) {
+  if (typeof client.y === 'function') {
     try {
-      const res = listener.error(reason);
-      listener.promise.resolve(res);
+      const yret = client.y(arg);
+      client.p.resolve(yret);
     } catch (err) {
-      listener.promise.reject(err)
+      client.p.reject(err)
     }
   } else {
-    listener.promise.reject(reason); // pass this along...
+    client.p.resolve(arg); // pass this along...
+  }
+}
+
+function reject(client, reason) {
+  if (typeof client.n === 'function') {
+    try {
+      const yret = client.n(reason);
+      client.p.resolve(yret);
+    } catch (err) {
+      client.p.reject(err)
+    }
+  } else {
+    client.p.reject(reason); // pass this along...
   }
 }

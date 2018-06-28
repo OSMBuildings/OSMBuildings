@@ -2,39 +2,40 @@ class Marker {
 
   constructor (options = {}) {
     this.position = { altitude: 0, ...options.position };
-    this.source = options.source;
     this.anchor = options.anchor || 'bottom';
     this.scale = options.scale || 1; // TODO -> size
 
-    this.load();
+options.url = '../src/icons/default.svg';
+
+    this.load(options.url);
   }
 
-  load () {
-    if (!this.source) {
-      console.log('no marker icon, loading default');
+  load (url) {
+    if (!url) {
+      console.log('loading default icon');
       this.loadDefaultIcon();
       return;
     }
 
-    this.texture = new GLX.texture.Image().load(this.source, image => {
-      if (!image) {
-        console.log(`can't read marker icon ${this.source}`);
-        this.loadDefaultIcon();
-        return;
-      }
+    const icon = new Icon();
+    // TODO: or get it from iconcollection
+    icon.load(url, () => {
 
-      this.setTexture(image);
-      this.setBuffers();
-      APP.markers.add(this);
+    //   if (!image) {
+    //     console.log(`can't read marker icon ${url}`);
+    //     this.loadDefaultIcon();
+    //     return;
+    //   }
+    //
+    //   this.setTexture(image);
+    //   this.setBuffers();
+    //   APP.markers.add(this);
     });
   }
 
   loadDefaultIcon () {
-    this.texture = new GLX.texture.Image().load(MARKER_TEXTURE, image => {
-      if (!image) {
-        return;
-      }
-
+    this.texture = new GLX.texture.Image();
+    this.texture.load(MARKER_TEXTURE).then(image => {
       this.setTexture(image);
       this.setBuffers();
       APP.markers.add(this);
@@ -96,7 +97,7 @@ class Marker {
   destroy () {
     APP.markers.remove(this);
     this.texCoordBuffer && this.texCoordBuffer.destroy();
-    this.texCoordBuffer && this.vertexBuffer.destroy();
+    this.vertexBuffer && this.vertexBuffer.destroy();
     this.texture && this.texture.destroy();
   }
 }

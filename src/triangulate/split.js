@@ -15,9 +15,9 @@ const split = {
 
   triangle: (buffers, a, b, c, color) => {
     const n = vec3.normal(a, b, c);
-    [].push.apply(buffers.vertices, [].concat(a, c, b));
-    [].push.apply(buffers.normals,  [].concat(n, n, n));
-    [].push.apply(buffers.colors,   [].concat(color, color, color));
+    buffers.vertices.push(...a, ...c, ...b);
+    buffers.normals.push(...n, ...n, ...n);
+    buffers.colors.push(...color, ...color, ...color);
     buffers.texCoords.push(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   },
 
@@ -44,10 +44,7 @@ const split = {
       vertexBuffer = [],
       ringIndex = [];
 
-    let
-      index = 0,
-      i, il;
-
+    let index = 0;
     rings.forEach((ring, i) => {
       ring.forEach(point => {
         vertexBuffer.push(point[0], point[1], zPos + (point[2] || 0));
@@ -59,12 +56,11 @@ const split = {
     });
 
     const vertices = earcut(vertexBuffer, ringIndex, 3);
-    let v1, v2, v3;
 
-    for (i = 0, il = vertices.length-2; i < il; i+=3) {
-      v1 = vertices[i  ]*3;
-      v2 = vertices[i+1]*3;
-      v3 = vertices[i+2]*3;
+    for (let i = 0; i < vertices.length-2; i+=3) {
+      const v1 = vertices[i  ]*3;
+      const v2 = vertices[i+1]*3;
+      const v3 = vertices[i+2]*3;
       split.triangle(
         buffers,
         [ vertexBuffer[v1], vertexBuffer[v1+1], vertexBuffer[v1+2] ],

@@ -195,6 +195,7 @@ class OSMBuildings {
     GL = this.glx.GL;
 
     this.features = new FeatureCollection();
+    this.icons = new Collection();
     this.markers = new Collection();
 
     this.events = new Events(this.canvas);
