@@ -28,7 +28,8 @@ class BitmapTile extends Tile {
   }
 
   load (url, callback) {
-    this.texture = new GLX.texture.Image().load(url, image => {
+    this.texture = new GLX.texture.Image();
+    this.texture.load(url, image => {
       if (image) {
 
         /* Whole texture will be mapped to fit the tile exactly. So

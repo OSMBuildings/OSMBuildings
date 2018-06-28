@@ -36,13 +36,13 @@ GLX.texture.Image = class {
   load (url, callback) {
     const image = new Image();
     image.crossOrigin = '*';
-    image.onload = img => {
+    image.onload = e => {
       this.set(image);
       if (callback) {
         callback(image);
       }
     };
-    image.onerror = img => {
+    image.onerror = e => {
       if (callback) {
         callback();
       }
