@@ -4,14 +4,15 @@ class Icon {
     this.type = 'svg';
   }
 
-  load (url) {
+  load (url, callback) {
     Request.getText(url, (err, svg) => {
       if (err) {
-        // promise.reject(err);
+        callback(err);
         return;
       }
 
-      // promise.resolve(this.onLoad(svg));
+      this.onLoad(svg);
+      callback(null, this);
     });
   }
 
@@ -28,11 +29,11 @@ class Icon {
 
     this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
 
-    APP.markers.icons.add(this);
+    APP.icons.add(this);
   }
 
   destroy () {
-    APP.markers.icons.remove(this);
+    APP.icons.remove(this);
     this.vertexBuffer && this.vertexBuffer.destroy();
   }
 }

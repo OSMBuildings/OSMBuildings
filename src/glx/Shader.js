@@ -59,7 +59,6 @@ GLX.Shader = class {
     for (let name in this.attributes) {
       GL.enableVertexAttribArray(this.attributes[name]);
     }
-    return this;
   }
 
   disable () {

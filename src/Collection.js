@@ -1,4 +1,6 @@
 
+// TODO URGENT solve conflict between item exists and item is ready to use
+
 class Collection {
 
   constructor() {

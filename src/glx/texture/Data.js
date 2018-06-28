@@ -24,7 +24,6 @@ GLX.texture.Data = class {
   enable(index) {
     this.GL.activeTexture(this.GL.TEXTURE0 + (index || 0));
     this.GL.bindTexture(this.GL.TEXTURE_2D, this.id);
-    return this;
   }
 
   destroy() {

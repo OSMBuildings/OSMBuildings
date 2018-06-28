@@ -19,6 +19,7 @@ class MarkerRender {
   }
 
   render () {
+return
     const shader = this.shader;
 
     shader.enable();
