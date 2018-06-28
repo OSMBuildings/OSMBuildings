@@ -3,7 +3,6 @@ class Feature {
 
   constructor (type, url, options = {}, callback = function () {}) {
     this.type = type;
-    this.url = url;
     this.options = options;
     this.callback = callback;
 
@@ -23,10 +22,10 @@ class Feature {
       this.maxZoom = MAX_ZOOM;
     }
 
-    this.load();
+    this.load(url);
   }
 
-  load () {
+  load (url) {
     // TODO: perhaps have some workers attached to collection and just ask for them
     APP.workers.get(worker => {
       worker.onMessage(res => {
@@ -45,7 +44,7 @@ class Feature {
         worker.free();
       });
 
-      worker.postMessage({ type: this.type, url: this.url, options: this.options });
+      worker.postMessage({ type: this.type, url: url, options: this.options });
     });
   }
 

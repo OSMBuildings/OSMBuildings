@@ -48,7 +48,6 @@ GLX.texture.Image = class {
       }
     };
     image.src = url;
-    return this;
   }
 
   color (color) {

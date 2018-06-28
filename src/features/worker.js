@@ -135,7 +135,7 @@ function loadOBJ (params) {
       postMessage('load');
       processOBJ(obj, null);
     } else {
-      Request.getText(this.url.replace(/[^\/]+$/, '') + match[1], (err, mtl) => {
+      Request.getText(params.url.replace(/[^\/]+$/, '') + match[1], (err, mtl) => {
         if (err) {
           postMessage('error');
         } else {

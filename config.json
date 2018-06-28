@@ -16,7 +16,9 @@
 
   "libs": [
     "node_modules/qolor/dist/Qolor.debug.js",
-    "node_modules/suncalc/suncalc.js"
+    "node_modules/suncalc/suncalc.js",
+    "lib/triangulateSVG.js",
+    "lib/earcut.custom.js"
   ],
 
   "workers": {
@@ -24,11 +26,11 @@
       "src/Request.js",
       "node_modules/qolor/dist/Qolor.debug.js",
       "src/OBJ.js",
+      "lib/earcut.custom.js",
       "src/triangulate/index.js",
       "src/triangulate/roofs/index.js",
       "src/triangulate/roofs/Tools.js",
       "src/triangulate/split.js",
-      "src/triangulate/earcut.custom.js",
       "src/triangulate/geometry/vec3.js",
       "src/triangulate/geometry/vec2.js",
       "src/features/worker.js"
@@ -46,11 +48,12 @@
     "src/glx/texture/Data.js",
 
     "src/Collection.js",
-    
-    "src/markers/Marker.js",
 
     "src/workers/index.js",
     "src/workers/Wrapper.js",
+
+    "src/icons/Icon.js",
+    "src/markers/Marker.js",
 
     "src/index.js",
     "src/Events.js",
