@@ -8,18 +8,16 @@ class MarkerRender {
 
     this.shader = new GLX.Shader({
       source: markerShader,
-      attributes: ['aPosition', 'aTexCoord'],
+      attributes: ['aPosition'],
       uniforms: [
         'uProjMatrix',
         'uViewMatrix',
-        'uModelMatrix',
-        'uTexIndex'
+        'uModelMatrix'
       ]
     });
   }
 
   render () {
-return
     const shader = this.shader;
 
     shader.enable();
@@ -41,12 +39,9 @@ return
       shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
       shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-      shader.setBuffer('aPosition', item.vertexBuffer);
+      shader.setBuffer('aPosition', item.icon.vertexBuffer);
 
-      shader.setBuffer('aTexCoord', item.texCoordBuffer);
-      shader.setTexture('uTexIndex', 0, item.texture);
-
-      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
+      GL.drawArrays(GL.TRIANGLES, 0, item.icon.vertexBuffer.numItems);
     });
 
     GL.disable(GL.BLEND);

@@ -195,7 +195,7 @@ class OSMBuildings {
     GL = this.glx.GL;
 
     this.features = new FeatureCollection();
-    this.icons = new Collection();
+    this.icons = new IconCollection();
     this.markers = new Collection();
 
     this.events = new Events(this.canvas);
@@ -665,8 +665,8 @@ class OSMBuildings {
    * Adds a WebGL Marker to the map.
    * * @return {Object} Marker
    */
-  addMarker (options) {
-   return new Marker(options);
+  addMarker (position, options) {
+   return new Marker(position, options);
   }
 
   /**

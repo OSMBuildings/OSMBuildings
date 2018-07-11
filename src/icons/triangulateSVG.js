@@ -1,3 +1,5 @@
+// webpack src/icons/triangulateSVG.js -o lib/triangulateSVG.js --mode development
+
 const parseSVGPath = require('parse-svg-path');
 const getPathContours = require('svg-path-contours');
 
@@ -77,5 +79,3 @@ window.triangulateSVG = function (svg) {
 
   return res;
 };
-
-// webpack src/icons/triangulateSVG.js -o lib/triangulateSVG.js --mode development

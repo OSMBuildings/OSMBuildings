@@ -52,6 +52,7 @@
     "src/workers/index.js",
     "src/workers/Wrapper.js",
 
+    "src/icons/index.js",
     "src/icons/Icon.js",
     "src/markers/Marker.js",
 

@@ -7,9 +7,6 @@ uniform mat4 uProjMatrix;
 uniform mat4 uViewMatrix;
 uniform mat4 uModelMatrix;
 
-attribute vec2 aTexCoord;
-varying vec2 vTexCoord;
-
 void main() {
 
   mat4 modelView = uViewMatrix * uModelMatrix;
@@ -35,7 +32,4 @@ void main() {
   vec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);
 
   gl_Position =  mvp * pos;
-
-  vTexCoord = aTexCoord;
-
 }

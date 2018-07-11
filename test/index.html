@@ -170,7 +170,7 @@
       }]
     };
 
-    osmb.addGeoJSON('data/test.geo.json');
+    // osmb.addGeoJSON('data/test.geo.json');
     //  osmb.addGeoJSON(gj);
 
     //  for (let i = 0; i < 10; i++) {
@@ -317,26 +317,20 @@
     //   // temp.removeEventListener('click', (e) => console.log("clicked"));
     // }
 
-    //*****************************************************************
+    //***************************Marker WebGL**********************************
 
-    //***************************Marker WebGL******************************
+    let marker = osmb.addMarker({ latitude: 55.75079, longitude: 37.61828, altitude: 75 },
+      {
+        url: 'star-icon.svg',
+        scale: 0.1,
+        anchor: 'bottom_right'
+      });
 
-  let marker = osmb.addMarker({
-    position: { latitude: 55.75079, longitude: 37.61828, altitude: 75 },
-    url: './bubble.png',
-    scale: 0.1,
-    anchor: 'bottom_right'
-  });
-
-  let marker2 = osmb.addMarker({
-    position: { latitude: 55.750117, longitude: 37.618086 },
-    anchor : 'bottom',
-    scale: 0.1
-    // , scale: 0.5
-    // , offsetX :-5
-    // , offsetY:-5
-    // , url: "http://localhost/git/OSMBuildings/test/OSMBuildings/marker-15.png"
-  });
+    let marker2 = osmb.addMarker({ latitude: 55.75000, longitude: 37.61808, altitude: 5 },
+      {
+        anchor : 'bottom',
+        scale: 0.1
+      });
 
   // osmb.remove(marker); // will not work too early
 

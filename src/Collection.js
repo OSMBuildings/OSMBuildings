@@ -1,5 +1,5 @@
 
-// TODO URGENT solve conflict between item exists and item is ready to use
+// TODO URGENT solve conflict between item existing and item is ready to use
 
 class Collection {
 
