@@ -66,7 +66,7 @@ class Buildings {
         0, 0, 1
       ]);
 
-      shader.setUniformMatrix('uNormalTransform', '3fv', matrix3);
+      shader.setMatrix('uNormalTransform', '3fv', matrix3);
     }
 
     shader.setTexture('uWallTexIndex', 0, this.wallTexture);

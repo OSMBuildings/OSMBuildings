@@ -16,5 +16,5 @@ void main() {
   float fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;
   fogIntensity = clamp(fogIntensity, 0.0, 1.0);
 
-  gl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);
+  gl_FragColor = vec4(vColor * texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);
 }

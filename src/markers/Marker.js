@@ -12,7 +12,8 @@ class Marker {
   constructor (position, options = {}) {
     const anchor = options.anchor; // TODO
     const scale = options.scale || 1; // TODO
-    const color = options.color || '#ffcc00'; // TODO
+
+    this.color = Qolor.parse(options.color || Marker.defaultColor).toArray();
 
     this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(position.latitude / 180 * Math.PI);
 
@@ -80,3 +81,5 @@ class Marker {
     APP.markers.remove(this);
   }
 }
+
+Marker.defaultColor = '#ffcc00';
