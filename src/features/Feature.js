@@ -49,7 +49,6 @@ class Feature {
   }
 
   onLoad (res) {
-
     this.position = res.position;
     this.prevX = 0;
     this.prevY = 0;

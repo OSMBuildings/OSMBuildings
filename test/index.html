@@ -319,17 +319,13 @@
 
     //***************************Marker WebGL**********************************
 
-    let marker = osmb.addMarker({ latitude: 55.75079, longitude: 37.61828, altitude: 75 },
+    let marker = osmb.addMarker({ latitude: 55.75079, longitude: 37.61828, altitude: 25 },
       {
-        url: 'star-icon.svg',
-        scale: 0.1,
-        anchor: 'bottom_right'
+        url: 'star-icon.svg'
       });
 
-    let marker2 = osmb.addMarker({ latitude: 55.75000, longitude: 37.61808, altitude: 5 },
+    let marker2 = osmb.addMarker({ latitude: 55.75000, longitude: 37.61808, altitude: 3 },
       {
-        anchor : 'bottom',
-        scale: 0.1
       });
 
   // osmb.remove(marker); // will not work too early

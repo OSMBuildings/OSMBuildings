@@ -1,6 +1,3 @@
-// TODO: handle multiple markers
-// A: cluster them into 'tiles' that give close reference point and allow simpler visibility tests or
-// B: handle them as individual objects
 
 class MarkerRender {
 
@@ -21,31 +18,14 @@ class MarkerRender {
     const shader = this.shader;
 
     shader.enable();
-
-    const metersPerDegreeLongitude = render.metersPerDegreeLongitude;
-
-    // GL.disable(GL.DEPTH_TEST);
-    GL.enable(GL.BLEND);
-    GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
+    shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
+    shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
 
     APP.markers.forEach(item => {
-      const modelMatrix = new GLX.Matrix();
-      modelMatrix.translate(
-        (item.position.longitude - APP.position.longitude) * metersPerDegreeLongitude,
-        -(item.position.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE,
-        item.position.altitude
-      );
-
-      shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
-      shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
-      shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+      shader.setMatrix('uModelMatrix', '4fv', item.getMatrix().data);
       shader.setBuffer('aPosition', item.icon.vertexBuffer);
-
       GL.drawArrays(GL.TRIANGLES, 0, item.icon.vertexBuffer.numItems);
     });
-
-    GL.disable(GL.BLEND);
-    // GL.enable(GL.DEPTH_TEST);
 
     shader.disable();
   }
