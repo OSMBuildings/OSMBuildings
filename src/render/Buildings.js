@@ -78,7 +78,7 @@ class Buildings {
 
     APP.features.forEach(item => {
       // no visibility check needed, Grid.purge() is taking care
-      // TODO: but not for individual objects (and markers)!
+      // TODO: but not for individual features
 
       if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
         return;

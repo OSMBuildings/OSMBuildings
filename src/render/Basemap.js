@@ -67,12 +67,13 @@ class Basemap {
   renderTile (tile) {
     const shader = this.shader;
 
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
-
     const modelMatrix = new GLX.Matrix();
 
-    modelMatrix.translateBy( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
-                          -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+    modelMatrix.translateBy(
+      (tile.longitude - APP.position.longitude) * METERS_PER_DEGREE_LONGITUDE,
+      (-tile.latitude + APP.position.latitude) * METERS_PER_DEGREE_LATITUDE,
+      0
+    );
 
     GL.enable(GL.POLYGON_OFFSET_FILL);
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, MAX_USED_ZOOM_LEVEL - tile.zoom);

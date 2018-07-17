@@ -4,6 +4,7 @@
  * not the map itself. Result is used as a blended overlay
  * so that the map can be rendered independently from the shadows cast on it.
  */
+// TODO: independence is not required anymore. could be combined with Basemap?
 
 class MapShadows {
 

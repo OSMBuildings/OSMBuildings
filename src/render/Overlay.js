@@ -1,7 +1,9 @@
 
-/* 'Overlay' renders part of a texture over the whole viewport.
-   The intended use is for compositing of screen-space effects.
+/**
+ * 'Overlay' renders part of a texture over the whole viewport.
+ *  The intended use is for compositing of screen-space effects.
  */
+
 render.Overlay = {
 
   init: function() {

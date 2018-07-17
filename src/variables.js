@@ -27,6 +27,8 @@ const EARTH_RADIUS_IN_METERS = 6378137;
 const EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
 const METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
 
+let METERS_PER_DEGREE_LONGITUDE = METERS_PER_DEGREE_LATITUDE;
+
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
  * to cover everything that's also visible to the user. For this to work
  * reliably, we have to make assumptions on how high (in [m]) the buildings

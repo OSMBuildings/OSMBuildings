@@ -267,9 +267,7 @@ class OSMBuildings {
    * @return {Object} Screen position in pixels { x, y }
    */
   project (latitude, longitude, altitude) {
-    const
-      metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *  Math.cos(this.position.latitude / 180 * Math.PI),
-      worldPos = [(longitude - this.position.longitude) * metersPerDegreeLongitude, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, altitude];
+    const worldPos = [(longitude - this.position.longitude) * METERS_PER_DEGREE_LONGITUDE, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, altitude];
 
     // takes current cam pos into account.
     let posNDC = transformVec3(render.viewProjMatrix.data, worldPos);
@@ -303,11 +301,9 @@ class OSMBuildings {
       return;
     }
 
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(this.position.latitude / 180 * Math.PI);
-
     return {
-      latitude: this.position.latitude - worldPos[1] / METERS_PER_DEGREE_LATITUDE,
-      longitude: this.position.longitude + worldPos[0] / metersPerDegreeLongitude
+      longitude: this.position.longitude + worldPos[0] / METERS_PER_DEGREE_LONGITUDE,
+      latitude: this.position.latitude - worldPos[1] / METERS_PER_DEGREE_LATITUDE
     };
   }
 
@@ -575,6 +571,9 @@ class OSMBuildings {
     // { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
 
     this.position = pos;
+
+    METERS_PER_DEGREE_LONGITUDE = METERS_PER_DEGREE_LATITUDE * Math.cos(this.position.latitude / 180 * Math.PI);
+
     this.events.emit('change');
   }
 

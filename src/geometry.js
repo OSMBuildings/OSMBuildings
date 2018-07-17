@@ -311,13 +311,12 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
  *       the tile intersects with a viewport edge. 
  */
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
-  const metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
   const tileLon = tile2lon(tileX, tileZoom);
   const tileLat = tile2lat(tileY, tileZoom);
   
   const modelMatrix = new GLX.Matrix();
   modelMatrix.translateBy(
-    (tileLon - APP.position.longitude) * metersPerLon,
+    (tileLon - APP.position.longitude) * METERS_PER_DEGREE_LONGITUDE,
     (APP.position.latitude - tileLat) * METERS_PER_DEGREE_LATITUDE,
     0
   );
@@ -361,11 +360,9 @@ function getTileSizeInMeters( latitude, zoom) {
 }
 
 function getPositionFromLocal(localXY) {
-  const metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
-
   return {
-    longitude: APP.position.longitude + localXY[0]/metersPerLon,
-    latitude: APP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
+    longitude: APP.position.longitude + localXY[0] / METERS_PER_DEGREE_LONGITUDE,
+    latitude: APP.position.latitude - localXY[1] / METERS_PER_DEGREE_LATITUDE
   };
 }
 
