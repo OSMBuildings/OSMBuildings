@@ -10,18 +10,18 @@ class Marker {
   // TODO color
 
   constructor (position, options = {}) {
-    this.position = { altitude: 0, ...position };
-    this.anchor = options.anchor; // TODO
+    const anchor = options.anchor; // TODO
+    const scale = options.scale || 1; // TODO
+    const color = options.color || '#ffcc00'; // TODO
+
+    this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(position.latitude / 180 * Math.PI);
+
+    this.lon = position.longitude;
+    this.lat = position.latitude;
+    this.alt = (position.altitude || 0);
 
     this.matrix = new GLX.Matrix();
-    this.matrix.translate(0, 0, this.position.altitude);
-
-    // TODO apply scale - currently ignored by shader?
-    const scale = options.scale || 1;
-    this.matrix.scale(scale, scale, scale);
-
-    this.prevX = 0;
-    this.prevY = 0;
+    this.matrix.scale(scale, scale, scale); // TODO currently ignored by shader?
 
     if (!options.url) {
       APP.icons.get(Icon.defaultURL, (err, icon) => {
@@ -67,17 +67,11 @@ class Marker {
   // ];
 
   getMatrix () {
-    const
-      metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(this.position.latitude / 180 * Math.PI),
-      currX = (this.position.longitude - APP.position.longitude),
-      currY = (this.position.latitude - APP.position.latitude),
-      dx = currX - this.prevX,
-      dy = currY - this.prevY;
-
-    this.matrix.translate(dx * metersPerDegreeLongitude, -dy * METERS_PER_DEGREE_LATITUDE, 0);
-
-    this.prevX = currX;
-    this.prevY = currY;
+    this.matrix.translateTo(
+      (this.lon - APP.position.longitude) * this.metersPerLon,
+      (APP.position.latitude-this.lat) * METERS_PER_DEGREE_LATITUDE,
+      this.alt
+    );
 
     return this.matrix;
   }

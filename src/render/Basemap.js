@@ -71,7 +71,7 @@ class Basemap {
 
     const modelMatrix = new GLX.Matrix();
 
-    modelMatrix.translate( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
+    modelMatrix.translateBy( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
                           -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
     GL.enable(GL.POLYGON_OFFSET_FILL);

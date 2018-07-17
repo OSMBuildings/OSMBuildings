@@ -140,8 +140,8 @@
         // bounds
       });
 
-    //osmb.addOBJ('data/Fernsehturm.obj', { latitude:52.524133, longitude:13.407434 }, { id:'Fernsehturm', scale:2, color:'#ff0000', elevation:0, rotation:51 });
-    //osmb.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { elevation:-3, rotation:97, id:'London Eye' });
+    //osmb.addOBJ('data/Fernsehturm.obj', { latitude:52.524133, longitude:13.407434 }, { id:'Fernsehturm', scale:2, color:'#ff0000', altitude:0, rotation:51 });
+    //osmb.addOBJ('data/London Eye_MAT_LOW.obj', { latitude:51.50787, longitude:-0.12002 }, { altitude: -3, rotation:97, id:'London Eye' });
 
     // osmb.setPosition({ latitude:40.7484625, longitude:-73.9852667 });
 
@@ -253,8 +253,8 @@
         case 189: obj.scale -= scaleInc; break;
         case 65: obj.rotation += rotaInc; break;
         case 68: obj.rotation -= rotaInc; break;
-        case 87: obj.elevation += eleInc; break;
-        case 83: obj.elevation -= eleInc; break;
+        case 87: obj.altitude += eleInc; break;
+        case 83: obj.altitude -= eleInc; break;
         default: return;
         }
         console.log(JSON.stringify({
@@ -262,7 +262,7 @@
             latitude: parseFloat(obj.position.latitude.toFixed(5)),
             longitude: parseFloat(obj.position.longitude.toFixed(5))
           },
-          elevation: parseFloat(obj.elevation.toFixed(2)),
+          altitude: parseFloat(obj.altitude.toFixed(2)),
           scale: parseFloat(obj.scale.toFixed(2)),
           rotation: parseInt(obj.rotation, 10)
         }));
@@ -319,12 +319,12 @@
 
     //***************************Marker WebGL**********************************
 
-    let marker = osmb.addMarker({ latitude: 55.75079, longitude: 37.61828, altitude: 25 },
+    let marker = osmb.addMarker({ latitude: 55.75079, longitude: 37.61828, altitude: 75 },
       {
         url: 'star-icon.svg'
       });
 
-    let marker2 = osmb.addMarker({ latitude: 55.75000, longitude: 37.61808, altitude: 3 },
+    let marker2 = osmb.addMarker({ latitude: 55.75000, longitude: 37.61808, altitude: 5 },
       {
       });
 
@@ -333,7 +333,7 @@
   //   for(let i = 0;i< 15; i++ ){
   //
   //     let marker = osmb.addMarker({
-  //       elevation: 50,
+  //       altitude: 50,
   //       position: { latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100 },
   //       size: 3
   //       , url: "./bubble.png"

@@ -78,7 +78,14 @@ GLX.Matrix = class {
     return this;
   }
 
-  translate (x, y, z) {
+  translateTo (x, y, z) {
+    this.data[12] = x;
+    this.data[13] = y;
+    this.data[14] = z;
+    return this;
+  }
+
+  translateBy (x, y, z) {
     multiply(this.data, this.data, [
       1, 0, 0, 0,
       0, 1, 0, 0,

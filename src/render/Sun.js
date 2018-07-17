@@ -16,7 +16,7 @@ const Sun = {
     Sun.viewMatrix = new GLX.Matrix()
       .rotateZ(rotationInDeg)
       .rotateX(tiltInDeg)
-      .translate(0, 0, -5000)
+      .translateBy(0, 0, -5000)
       .scale(1, -1, 1); // flip Y
   },
   

@@ -263,13 +263,13 @@ class OSMBuildings {
    * Get screen position from a 3d point
    * @param {Number} latitude Latitude of the point
    * @param {Number} longitude Longitude of the point
-   * @param {Number} elevation Elevation of the point
+   * @param {Number} altitude Altitude of the point
    * @return {Object} Screen position in pixels { x, y }
    */
-  project (latitude, longitude, elevation) {
+  project (latitude, longitude, altitude) {
     const
       metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *  Math.cos(this.position.latitude / 180 * Math.PI),
-      worldPos = [(longitude - this.position.longitude) * metersPerDegreeLongitude, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, elevation];
+      worldPos = [(longitude - this.position.longitude) * metersPerDegreeLongitude, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, altitude];
 
     // takes current cam pos into account.
     let posNDC = transformVec3(render.viewProjMatrix.data, worldPos);
@@ -283,7 +283,7 @@ class OSMBuildings {
   }
 
   /**
-   * Turns a screen point (x, y) into a geographic position (latitude/longitude/elevation=0).
+   * Turns a screen point (x, y) into a geographic position (latitude/longitude/altitude=0).
    * Returns 'undefined' if point would be invisible or lies above horizon.
    * @param {Number} x X position on screen
    * @param {Number} y Y position om screen
@@ -330,7 +330,7 @@ class OSMBuildings {
    * @param {Object} [options] Options for rendering the object
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.elevation=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @return {Object} The added object
@@ -346,7 +346,7 @@ class OSMBuildings {
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.elevation=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show this feature, defaults to and limited by global minZoom
@@ -459,13 +459,13 @@ class OSMBuildings {
     }
 
     this.setPosition((state.lat !== undefined && state.lon !== undefined) ? {
-      latitude: state.lat,
-      longitude: state.lon
+      latitude: parseFloat(state.lat),
+      longitude: parseFloat(state.lon)
     } : this.position);
 
-    this.setZoom(state.zoom !== undefined ? state.zoom : this.zoom);
-    this.setRotation(state.rotation !== undefined ? state.rotation : this.rotation);
-    this.setTilt(state.tilt !== undefined ? state.tilt : this.tilt);
+    this.setZoom(state.zoom !== undefined ? parseFloat(state.zoom) : this.zoom);
+    this.setRotation(state.rotation !== undefined ? parseFloat(state.rotation) : this.rotation);
+    this.setTilt(state.tilt !== undefined ? parseFloat(state.tilt) : this.tilt);
   }
 
   /**
@@ -524,8 +524,6 @@ class OSMBuildings {
    * @param {Number} zoom The new zoom level
    */
   setZoom (zoom, e) {
-    zoom = parseFloat(zoom);
-
     zoom = Math.max(zoom, this.minZoom);
     zoom = Math.min(zoom, this.maxZoom);
 
@@ -571,13 +569,12 @@ class OSMBuildings {
    * @emits OSMBuildings#change
    */
   setPosition (pos) {
-    const
-      lat = parseFloat(pos.latitude),
-      lon = parseFloat(pos.longitude);
-    if (isNaN(lat) || isNaN(lon)) {
-      return;
-    }
-    this.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+    // if (isNaN(lat) || isNaN(lon)) {
+    //   return;
+    // }
+    // { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+
+    this.position = pos;
     this.events.emit('change');
   }
 
@@ -622,7 +619,7 @@ class OSMBuildings {
    * @emits OSMBuildings#change
    */
   setRotation (rotation) {
-    rotation = parseFloat(rotation) % 360;
+    rotation = rotation % 360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
       this.events.emit('rotate', { rotation: rotation });
@@ -645,7 +642,7 @@ class OSMBuildings {
    * @emits OSMBuildings#change
    */
   setTilt (tilt) {
-    tilt = clamp(parseFloat(tilt), 0, MAX_TILT); // bigger max increases shadow moire on base map
+    tilt = clamp(tilt, 0, MAX_TILT);
     if (this.tilt !== tilt) {
       this.tilt = tilt;
       this.events.emit('tilt', { tilt: tilt });

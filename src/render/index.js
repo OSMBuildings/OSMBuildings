@@ -154,8 +154,8 @@ class render {
     this.viewMatrix = new GLX.Matrix()
       .rotateZ(APP.rotation)
       .rotateX(APP.tilt)
-      .translate(0, 8 / scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
-      .translate(0, 0, -1220 / scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
+      .translateBy(0, 8 / scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
+      .translateBy(0, 0, -1220 / scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
     this.viewDirOnMap = [Math.sin(APP.rotation / 180 * Math.PI), -Math.cos(APP.rotation / 180 * Math.PI)];
 
@@ -201,10 +201,10 @@ class render {
     this.farPlane = 30000;
 
     this.projMatrix = new GLX.Matrix()
-      .translate(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
+      .translateBy(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
       .scale(1, -1, 1) // flip Y
       .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, this.nearPlane, this.farPlane))
-      .translate(0, -1, 0); // camera y offset
+      .translateBy(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
 

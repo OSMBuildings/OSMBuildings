@@ -317,7 +317,7 @@ function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
   const tileLat = tile2lat(tileY, tileZoom);
   
   const modelMatrix = new GLX.Matrix();
-  modelMatrix.translate( (tileLon - APP.position.longitude)* metersPerDegreeLongitude,
+  modelMatrix.translateBy( (tileLon - APP.position.longitude)* metersPerDegreeLongitude,
                         -(tileLat - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
 
   const size = getTileSizeInMeters( APP.position.latitude, tileZoom);

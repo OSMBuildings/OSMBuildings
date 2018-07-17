@@ -10,7 +10,6 @@ class Feature {
     this.color = options.color;
 
     this.matrix = new GLX.Matrix();
-    this.translate(0, 0, options.elevation || 0);
     this.scale(options.scale || 1);
     this.rotate(options.rotation || 0);
 
@@ -49,9 +48,9 @@ class Feature {
   }
 
   onLoad (res) {
-    this.position = res.position;
-    this.prevX = 0;
-    this.prevY = 0;
+    this.lon = res.position.longitude;
+    this.lat = res.position.latitude;
+    this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(this.lat / 180 * Math.PI);
 
     //****** init buffers *********************************
 
@@ -81,8 +80,8 @@ class Feature {
     }, 20);
   }
 
-  translate (x = 0, y = 0, z = 0) {
-    this.matrix.translate(x, y, z);
+  translateBy (x = 0, y = 0, z = 0) {
+    this.matrix.translateBy(x, y, z);
   }
 
   scale (scaling) {
@@ -94,20 +93,11 @@ class Feature {
   }
 
   getMatrix () {
-    const
-      currX = (this.position.longitude - APP.position.longitude),
-      currY = (this.position.latitude - APP.position.latitude),
-      dx = currX - this.prevX,
-      dy = currY - this.prevY;
-
-    // TODO: calc this once per renderFrame()
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
-
-    this.matrix.translate(dx * metersPerDegreeLongitude, -dy * METERS_PER_DEGREE_LATITUDE, 0);
-
-    this.prevX = currX;
-    this.prevY = currY;
-
+    this.matrix.translateTo(
+      (this.lon - APP.position.longitude) * this.metersPerLon,
+      (APP.position.latitude-this.lat) * METERS_PER_DEGREE_LATITUDE,
+      0
+    );
     return this.matrix;
   }
 

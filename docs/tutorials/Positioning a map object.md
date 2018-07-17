@@ -59,18 +59,18 @@
       case 189: obj.scale -= scaleInc; break;
       case 65: obj.rotation += rotaInc; break;
       case 68: obj.rotation -= rotaInc; break;
-      case 87: obj.elevation += eleInc; break;
-      case 83: obj.elevation -= eleInc; break;
+      case 87: obj.altitude += eleInc; break;
+      case 83: obj.altitude -= eleInc; break;
       default: return;
     }
     console.log(JSON.stringify({
-      position:{
-        latitude:parseFloat(obj.position.latitude.toFixed(5)),
-        longitude:parseFloat(obj.position.longitude.toFixed(5))
+      position: {
+        latitude: parseFloat(obj.position.latitude.toFixed(5)),
+        longitude: parseFloat(obj.position.longitude.toFixed(5))
       },
-      elevation:parseFloat(obj.elevation.toFixed(2)),
-      scale:parseFloat(obj.scale.toFixed(2)),
-      rotation:parseInt(obj.rotation, 10)
+      altitude: parseFloat(obj.altitude.toFixed(2)),
+      scale: parseFloat(obj.scale.toFixed(2)),
+      rotation: parseInt(obj.rotation, 10)
     }));
   });
 </script>
@@ -104,18 +104,18 @@ document.addEventListener('keydown', function(e) {
     case 189: obj.scale -= scaleInc; break;
     case 65: obj.rotation += rotaInc; break;
     case 68: obj.rotation -= rotaInc; break;
-    case 87: obj.elevation += eleInc; break;
-    case 83: obj.elevation -= eleInc; break;
+    case 87: obj.altitude += eleInc; break;
+    case 83: obj.altitude -= eleInc; break;
     default: return;
   }
   console.log(JSON.stringify({
     position:{
-      latitude:parseFloat(obj.position.latitude.toFixed(5)),
-      longitude:parseFloat(obj.position.longitude.toFixed(5))
+      latitude: parseFloat(obj.position.latitude.toFixed(5)),
+      longitude: parseFloat(obj.position.longitude.toFixed(5))
     },
-    elevation:parseFloat(obj.elevation.toFixed(2)),
-    scale:parseFloat(obj.scale.toFixed(2)),
-    rotation:parseInt(obj.rotation, 10)
+    altitude: parseFloat(obj.altitude.toFixed(2)),
+    scale: parseFloat(obj.scale.toFixed(2)),
+    rotation: parseInt(obj.rotation, 10)
   }));
 });
 ````
