@@ -48,9 +48,9 @@ class Feature {
   }
 
   onLoad (res) {
-    this.lon = res.position.longitude;
-    this.lat = res.position.latitude;
-    this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(this.lat / 180 * Math.PI);
+    this.longitude = res.position.longitude;
+    this.latitude = res.position.latitude;
+    this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(this.latitude / 180 * Math.PI);
 
     //****** init buffers *********************************
 
@@ -94,8 +94,8 @@ class Feature {
 
   getMatrix () {
     this.matrix.translateTo(
-      (this.lon - APP.position.longitude) * this.metersPerLon,
-      (APP.position.latitude-this.lat) * METERS_PER_DEGREE_LATITUDE,
+      (this.longitude - APP.position.longitude) * this.metersPerLon,
+      (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
       0
     );
     return this.matrix;

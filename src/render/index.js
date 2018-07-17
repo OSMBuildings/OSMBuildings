@@ -201,7 +201,7 @@ class render {
     this.farPlane = 30000;
 
     this.projMatrix = new GLX.Matrix()
-      .translateBy(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
+      .translateTo(0, -height / (2 * scale), 0) // 0, APP y offset to neutralize camera y offset,
       .scale(1, -1, 1) // flip Y
       .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, this.nearPlane, this.farPlane))
       .translateBy(0, -1, 0); // camera y offset

@@ -16,9 +16,9 @@ class Marker {
 
     this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(position.latitude / 180 * Math.PI);
 
-    this.lon = position.longitude;
-    this.lat = position.latitude;
-    this.alt = (position.altitude || 0);
+    this.longitude = position.longitude;
+    this.latitude = position.latitude;
+    this.altitude = (position.altitude || 0);
 
     this.matrix = new GLX.Matrix();
     this.matrix.scale(scale, scale, scale); // TODO currently ignored by shader?
@@ -68,9 +68,9 @@ class Marker {
 
   getMatrix () {
     this.matrix.translateTo(
-      (this.lon - APP.position.longitude) * this.metersPerLon,
-      (APP.position.latitude-this.lat) * METERS_PER_DEGREE_LATITUDE,
-      this.alt
+      (this.longitude - APP.position.longitude) * this.metersPerLon,
+      (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
+      this.altitude
     );
 
     return this.matrix;
