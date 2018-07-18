@@ -76,19 +76,19 @@
 
     "src/geometry.js",
 
-    "src/render/index.js",
-    "src/render/Picking.js",
-    "src/render/Sun.js",
-    "src/render/Buildings.js",
-    "src/render/Markers.js",
-    "src/render/MarkersSimple.js",
-    "src/render/MapShadows.js",
-    "src/render/Basemap.js",
-    "src/render/HudRect.js",
-    "src/render/DepthNormal.js",
-    "src/render/AmbientMap.js",
-    "src/render/Overlay.js",
-    "src/render/Horizon.js",
-    "src/render/Blur.js"
+    "src/view/index.js",
+    "src/view/Picking.js",
+    "src/view/Sun.js",
+    "src/view/Buildings.js",
+    "src/view/Markers.js",
+    "src/view/MarkersSimple.js",
+    "src/view/MapShadows.js",
+    "src/view/Basemap.js",
+    "src/view/HudRect.js",
+    "src/view/DepthNormal.js",
+    "src/view/AmbientMap.js",
+    "src/view/Overlay.js",
+    "src/view/Horizon.js",
+    "src/view/Blur.js"
   ]
 }
