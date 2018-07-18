@@ -662,8 +662,8 @@ class OSMBuildings {
    * Adds a WebGL Marker to the map.
    * * @return {Object} Marker
    */
-  addMarker (position, options) {
-   return new Marker(position, options);
+  addMarker (position, data, options) {
+   return new Marker(position, data, options);
   }
 
   /**

@@ -1,7 +1,6 @@
 precision highp float; // is default in vertex shaders anyway, using highp fixes #49
 
 attribute vec4 aPosition;
-// uniform mat4 uMatrix;
 
 uniform mat4 uProjMatrix;
 uniform mat4 uViewMatrix;
@@ -9,6 +8,8 @@ uniform mat4 uModelMatrix;
 uniform vec3 uColor;
 
 varying vec3 vColor;
+
+// TODO: fog distance handling is missing here
 
 void main() {
 

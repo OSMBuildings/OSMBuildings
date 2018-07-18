@@ -5,6 +5,7 @@
     "buildings_with_shadows",
     "markers_simple",
     "markers",
+    "markers_picking",
     "basemap",
     "basemap_with_shadows",
     "texture",

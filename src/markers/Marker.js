@@ -9,7 +9,9 @@ class Marker {
 
   // TODO color
 
-  constructor (position, options = {}) {
+  constructor (position, data = null, options = {}) {
+    this.data = data;
+
     const anchor = options.anchor; // TODO
     const scale = options.scale || 1; // TODO
 

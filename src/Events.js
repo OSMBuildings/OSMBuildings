@@ -197,7 +197,7 @@ class Events {
     } else {
       const pos = getEventXY(e);
       APP.view.Picking.getTarget(pos.x, pos.y, target => {
-        this.emit('pointerup', { buttons: e.buttons, target: target });
+        this.emit('pointerup', { buttons: e.buttons, ...target });
       });
     }
   }
@@ -354,7 +354,7 @@ class Events {
       } else {
         const pos = getEventXY(e);
         APP.view.Picking.getTarget(pos.x, pos.y, target => {
-          this.emit('pointerup', { buttons: 1, target: target });
+          this.emit('pointerup', { buttons: 1, ...target });
         });
       }
 
