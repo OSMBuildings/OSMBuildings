@@ -3,6 +3,8 @@
     "picking",
     "buildings",
     "buildings_with_shadows",
+    "markers_simple",
+    "markers",
     "basemap",
     "basemap_with_shadows",
     "texture",
@@ -10,8 +12,7 @@
     "ambient_from_depth",
     "flat_color",
     "horizon",
-    "blur",
-    "marker"
+    "blur"
   ],
 
   "libs": [
@@ -79,6 +80,8 @@
     "src/render/Picking.js",
     "src/render/Sun.js",
     "src/render/Buildings.js",
+    "src/render/Markers.js",
+    "src/render/MarkersSimple.js",
     "src/render/MapShadows.js",
     "src/render/Basemap.js",
     "src/render/HudRect.js",
@@ -86,7 +89,6 @@
     "src/render/AmbientMap.js",
     "src/render/Overlay.js",
     "src/render/Horizon.js",
-    "src/render/Blur.js",
-    "src/render/Marker.js"
+    "src/render/Blur.js"
   ]
 }

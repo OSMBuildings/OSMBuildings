@@ -24,7 +24,11 @@ class render {
     render.Picking = new Picking(); // renders only on demand
     render.Horizon = new Horizon();
     render.Buildings = new Buildings();
-    render.Marker = new MarkerRender();
+    if (render.effects.shadows) {
+      render.MarkersX = new render.Markers();
+    } else {
+      render.MarkersX = new render.MarkersSimple();
+    }
     render.Basemap = new Basemap();
 
     render.Overlay.init();
@@ -53,7 +57,7 @@ class render {
 
         if (!render.effects.shadows) {
           render.Buildings.render();
-          render.MarkerRender.render();
+          render.MarkersX.render();
 
           GL.enable(GL.BLEND);
 
@@ -75,6 +79,7 @@ class render {
           render.ambientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
           render.blurredAmbientMap.render(render.ambientMap.framebuffer.renderTexture, viewSize);
           render.Buildings.render(render.sunGBuffer.framebuffer);
+          render.MarkersX.render(render.sunGBuffer.framebuffer);
           render.Basemap.render();
 
           GL.enable(GL.BLEND);
@@ -103,8 +108,6 @@ class render {
           GL.enable(GL.DEPTH_TEST);
 
           GL.disable(GL.BLEND);
-
-          render.Marker.render();
 
           // render.hudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
         }
@@ -232,7 +235,7 @@ class render {
     render.Picking.destroy();
     render.Horizon.destroy();
     render.Buildings.destroy();
-    render.Marker.destroy();
+    render.MarkersX.destroy();
     render.Basemap.destroy();
     render.MapShadows.destroy();
 

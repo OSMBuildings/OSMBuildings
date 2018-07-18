@@ -1,10 +1,9 @@
 
-class MarkerRender {
+render.MarkersSimple = class {
 
   constructor () {
-
     this.shader = new GLX.Shader({
-      source: markerShader,
+      source: markers_simpleShader,
       attributes: ['aPosition'],
       uniforms: [
         'uProjMatrix',
@@ -36,4 +35,4 @@ class MarkerRender {
   destroy () {
     this.shader.destroy();
   }
-}
+};

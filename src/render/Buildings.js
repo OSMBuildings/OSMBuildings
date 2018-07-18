@@ -104,11 +104,12 @@ class Buildings {
       shader.setBuffer('aNormal', item.normalBuffer);
       shader.setBuffer('aColor', item.colorBuffer);
       shader.setBuffer('aHeight', item.heightBuffer);
-      shader.setBuffer('aTintColor',  item.tintBuffer);
-      shader.setBuffer('aZScale',  item.zScaleBuffer);
+      shader.setBuffer('aTintColor', item.tintBuffer);
+      shader.setBuffer('aZScale', item.zScaleBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });
+
 
     // if (this.showBackfaces) {
     //   GL.enable(GL.CULL_FACE);
