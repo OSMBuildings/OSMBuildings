@@ -4,7 +4,7 @@
  *  The intended use is for compositing of screen-space effects.
  */
 
-Renderer.Overlay = class {
+View.Overlay = class {
 
   constructor () {
     const geometry = this.createGeometry();

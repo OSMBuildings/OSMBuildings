@@ -1,5 +1,5 @@
 
-Renderer.MarkersSimple = class {
+View.MarkersSimple = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -18,8 +18,8 @@ Renderer.MarkersSimple = class {
     const shader = this.shader;
 
     shader.enable();
-    shader.setMatrix('uViewMatrix', '4fv', APP.renderer.viewMatrix.data);
-    shader.setMatrix('uProjMatrix', '4fv', APP.renderer.projMatrix.data);
+    shader.setMatrix('uViewMatrix', '4fv', APP.view.viewMatrix.data);
+    shader.setMatrix('uProjMatrix', '4fv', APP.view.projMatrix.data);
 
     APP.markers.forEach(item => {
       shader.setMatrix('uModelMatrix', '4fv', item.getMatrix().data);

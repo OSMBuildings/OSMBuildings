@@ -6,7 +6,7 @@
 // the depth buffer used by the GPU in depth testing while rendering the normals
 // to a dedicated texture.
 
-Renderer.DepthNormal = class {
+View.DepthNormal = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -35,10 +35,10 @@ Renderer.DepthNormal = class {
     GL.clearColor(0.0, 0.0, 0.0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setParam('uViewDirOnMap', '2fv', APP.renderer.viewDirOnMap);
-    shader.setParam('uLowerEdgePoint', '2fv', APP.renderer.lowerLeftOnMap);
-    shader.setParam('uFogDistance', '1f', APP.renderer.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f', APP.renderer.fogBlurDistance);
+    shader.setParam('uViewDirOnMap', '2fv', APP.view.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint', '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uFogDistance', '1f', APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f', APP.view.fogBlurDistance);
 
     // render all data items, but also a dummy map plane
     // Note: SSAO on the map plane has been disabled temporarily TODO: check

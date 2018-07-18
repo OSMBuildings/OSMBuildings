@@ -1,5 +1,5 @@
 
-Renderer.Sun = class {
+View.Sun = class {
 
   static setDate (date) {
     const pos = suncalc(date, APP.position.latitude, APP.position.longitude);

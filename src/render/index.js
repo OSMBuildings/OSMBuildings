@@ -1,18 +1,18 @@
 
-class Renderer {
+class View {
 
   getViewQuad () {
     return getViewQuad(this.viewProjMatrix.data,  (this.fogDistance + this.fogBlurDistance), this.viewDirOnMap);
   }
 
   start () {
-    this.effects = { shadows: true };
+    this.shadowsEnabled = true;
 
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
     if (!GL.depthTextureExtension) {
       console.warn('Shadows are disabled because your GPU does not support WEBGL_depth_texture');
-      this.effects.shadows = false;
+      this.shadowsEnabled = false;
     }
 
     this.setupViewport();
@@ -21,23 +21,23 @@ class Renderer {
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
 
-    this.Picking = new Renderer.Picking(); // renders only on demand
-    this.Horizon = new Renderer.Horizon();
-    this.Buildings = new Renderer.Buildings();
-    // if (this.effects.shadows) {
-    //   this.Markers = new Renderer.Markers();
+    this.Picking = new View.Picking(); // renders only on demand
+    this.Horizon = new View.Horizon();
+    this.Buildings = new View.Buildings();
+    // if (this.shadowsEnabled) {
+    //   this.Markers = new View.Markers();
     // } else {
-      this.Markers = new Renderer.MarkersSimple();
+      this.Markers = new View.MarkersSimple();
     // }
-    this.Basemap = new Renderer.Basemap();
+    this.Basemap = new View.Basemap();
 
-    this.Overlay = new Renderer.Overlay();
-    this.ambientMap = new Renderer.AmbientMap();
-    this.blurredAmbientMap = new Renderer.Blur();
-    this.MapShadows = new Renderer.MapShadows();
-    if (this.effects.shadows) {
-      this.cameraGBuffer = new Renderer.DepthNormal();
-      this.sunGBuffer = new Renderer.DepthNormal();
+    this.Overlay = new View.Overlay();
+    this.ambientMap = new View.AmbientMap();
+    this.blurredAmbientMap = new View.Blur();
+    this.MapShadows = new View.MapShadows();
+    if (this.shadowsEnabled) {
+      this.cameraGBuffer = new View.DepthNormal();
+      this.sunGBuffer = new View.DepthNormal();
     }
 
     this.speedUp();
@@ -55,7 +55,7 @@ class Renderer {
 
         const viewSize = [APP.width, APP.height];
 
-        if (!this.effects.shadows) {
+        if (!this.shadowsEnabled) {
           this.Buildings.render();
           this.Markers.render();
 
@@ -71,11 +71,11 @@ class Renderer {
         } else {
           const viewTrapezoid = this.getViewQuad();
 
-          Renderer.Sun.updateView(viewTrapezoid);
+          View.Sun.updateView(viewTrapezoid);
           this.Horizon.updateGeometry(viewTrapezoid);
 
           this.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
-          this.sunGBuffer.render(Renderer.Sun.viewMatrix, Renderer.Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
+          this.sunGBuffer.render(View.Sun.viewMatrix, View.Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
           this.ambientMap.render(this.cameraGBuffer.framebuffer.depthTexture, this.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
           this.blurredAmbientMap.render(this.ambientMap.framebuffer.renderTexture, viewSize);
           this.Buildings.render(this.sunGBuffer.framebuffer);

@@ -106,7 +106,7 @@ class Feature {
       return 1;
     }
 
-    APP.renderer.speedUp();
+    APP.view.speedUp();
 
     const fade = this.fade;
     this.fade += 1 / (1 * 60); // (duration * fps)

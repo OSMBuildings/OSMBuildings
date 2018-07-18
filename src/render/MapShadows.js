@@ -6,7 +6,7 @@
  */
 // TODO: independence is not required anymore. could be combined with Basemap?
 
-Renderer.MapShadows = class {
+View.MapShadows = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -42,11 +42,11 @@ Renderer.MapShadows = class {
 
     GL.disable(GL.CULL_FACE);
 
-    shader.setParam('uDirToSun', '3fv', Renderer.Sun.direction);
-    shader.setParam('uViewDirOnMap', '2fv',   APP.renderer.viewDirOnMap);
-    shader.setParam('uLowerEdgePoint', '2fv', APP.renderer.lowerLeftOnMap);
-    shader.setParam('uFogDistance', '1f', APP.renderer.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f', APP.renderer.fogBlurDistance);
+    shader.setParam('uDirToSun', '3fv', View.Sun.direction);
+    shader.setParam('uViewDirOnMap', '2fv',   APP.view.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint', '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uFogDistance', '1f', APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f', APP.view.fogBlurDistance);
     shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] );
     shader.setParam('uShadowStrength', '1f', shadowStrength);
 
@@ -58,8 +58,8 @@ Renderer.MapShadows = class {
     }
 
     shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.renderer.viewProjMatrix));
-    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Renderer.Sun.viewProjMatrix));
+    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.view.viewProjMatrix));
+    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, View.Sun.viewProjMatrix));
 
     shader.setBuffer('aPosition', item.vertexBuffer);
     shader.setBuffer('aNormal', item.normalBuffer);

@@ -1,8 +1,8 @@
 
-Renderer.Buildings = class {
+View.Buildings = class {
 
   constructor () {
-    this.shader = !APP.renderer.effects.shadows ?
+    this.shader = !APP.view.shadowsEnabled ?
       new GLX.Shader({
         source: buildingsShader,
         attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
@@ -52,14 +52,14 @@ Renderer.Buildings = class {
     //   GL.disable(GL.CULL_FACE);
     // }
 
-    shader.setParam('uFogDistance',     '1f',  APP.renderer.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f',  APP.renderer.fogBlurDistance);
+    shader.setParam('uFogDistance',     '1f',  APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  APP.view.fogBlurDistance);
     shader.setParam('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
-    shader.setParam('uLightDirection',  '3fv', Renderer.Sun.direction);
-    shader.setParam('uLowerEdgePoint',  '2fv', APP.renderer.lowerLeftOnMap);
-    shader.setParam('uViewDirOnMap',    '2fv', APP.renderer.viewDirOnMap);
+    shader.setParam('uLightDirection',  '3fv', View.Sun.direction);
+    shader.setParam('uLowerEdgePoint',  '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', APP.view.viewDirOnMap);
 
-    if (!APP.renderer.effects.shadows) {
+    if (!APP.view.shadowsEnabled) {
       const matrix3 = new Float32Array([
         1, 0, 0,
         0, 1, 0,
@@ -93,10 +93,10 @@ Renderer.Buildings = class {
       shader.setParam('uFade', '1f', item.getFade());
 
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-      shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.renderer.viewProjMatrix));
+      shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.view.viewProjMatrix));
 
-      if (APP.renderer.effects.shadows) {
-        shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Renderer.Sun.viewProjMatrix));
+      if (APP.view.shadowsEnabled) {
+        shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, View.Sun.viewProjMatrix));
       }
 
       shader.setBuffer('aPosition', item.vertexBuffer);

@@ -1,5 +1,5 @@
 
-Renderer.Markers = class {
+View.Markers = class {
 
   constructor () {
 
@@ -29,24 +29,24 @@ Renderer.Markers = class {
 
     shader.enable();
 
-    shader.setParam('uFogDistance',     '1f',  APP.renderer.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f',  APP.renderer.fogBlurDistance);
+    shader.setParam('uFogDistance',     '1f',  APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  APP.view.fogBlurDistance);
     shader.setParam('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
-    shader.setParam('uLightDirection',  '3fv', Renderer.Sun.direction);
-    shader.setParam('uLowerEdgePoint',  '2fv', APP.renderer.lowerLeftOnMap);
-    shader.setParam('uViewDirOnMap',    '2fv', APP.renderer.viewDirOnMap);
+    shader.setParam('uLightDirection',  '3fv', View.Sun.direction);
+    shader.setParam('uLowerEdgePoint',  '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', APP.view.viewDirOnMap);
     shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height]);
 
     shader.setTexture('uShadowTexIndex', 1, depthFramebuffer.depthTexture);
 
-    shader.setMatrix('uViewMatrix', '4fv', APP.renderer.viewMatrix.data);
-    shader.setMatrix('uProjMatrix', '4fv', APP.renderer.projMatrix.data);
+    shader.setMatrix('uViewMatrix', '4fv', APP.view.viewMatrix.data);
+    shader.setMatrix('uProjMatrix', '4fv', APP.view.projMatrix.data);
 
     APP.markers.forEach(item => {
       const modelMatrix = item.getMatrix();
 
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-      shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Renderer.Sun.viewProjMatrix));
+      shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, View.Sun.viewProjMatrix));
 
       shader.setBuffer('aPosition', item.icon.vertexBuffer);
 

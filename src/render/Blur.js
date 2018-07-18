@@ -1,4 +1,4 @@
-Renderer.Blur = class {
+View.Blur = class {
 
   constructor () {
     this.shader = new GLX.Shader({
