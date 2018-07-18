@@ -139,3 +139,4 @@ taskArchive('dist/OSMBuildings/', `dist/OSMBuildings-${package.version}.zip`, ()
 });
 
 // TODO: docs
+// TODO: webpack src/icons/triangulateSVG.js -o lib/triangulateSVG.js --mode development

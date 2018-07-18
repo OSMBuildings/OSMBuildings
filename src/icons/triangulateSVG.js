@@ -39,7 +39,7 @@ function getOffsetAndScale (polygons) {
   return { offset: [minX, minY], scale: Math.max(maxX-minX, maxY-minY) };
 }
 
-window.triangulateSVG = function (svg) {
+window.triangulateSVG = function (svg) { // window... exposes it in webpack
   const polygons = SVGtoPolygons(svg);
 
   const { offset, scale } = getOffsetAndScale(polygons);

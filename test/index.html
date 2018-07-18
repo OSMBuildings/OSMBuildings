@@ -331,18 +331,9 @@
 
   // osmb.remove(marker); // will not work too early
 
-  //   for(let i = 0;i< 15; i++ ){
-  //
-  //     let marker = osmb.addMarker({
-  //       altitude: 50,
-  //       position: { latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100 },
-  //       size: 3
-  //       , url: "./bubble.png"
-  //     });
-  //   }
-
-    //*****************************************************************
-
+    for (let i = 0;i< 15; i++) {
+      osmb.addMarker({ latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100, altitude: 10 + Math.random()*50 }, { color: 'rgb(0,60,100)' });
+    }
 
   </script>
 </body>
