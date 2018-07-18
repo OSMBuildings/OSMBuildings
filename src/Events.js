@@ -126,7 +126,7 @@ class Events {
   }
 
   onDoubleClick (e) {
-    render.speedUp();
+    APP.renderer.speedUp();
     this.cancelEvent(e);
 
     this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
@@ -137,7 +137,7 @@ class Events {
   }
 
   onMouseDown (e) {
-    render.speedUp();
+    APP.renderer.speedUp();
     this.cancelEvent(e);
 
     this.startZoom = APP.zoom;
@@ -159,11 +159,11 @@ class Events {
 
   onMouseMoveDocument (e) {
     if (this.buttons === 1) {
-      render.speedUp(); // do it here because no button means the event is not related to us
+      APP.renderer.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
       this.isMove = true;
     } else if (this.buttons === 2) {
-      render.speedUp(); // do it here because no button means the event is not related to us
+      APP.renderer.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
       this.isMove = true;
     }
@@ -196,14 +196,14 @@ class Events {
       this.emit('pointerup', { buttons: e.buttons });
     } else {
       const pos = getEventXY(e);
-      render.Picking.getTarget(pos.x, pos.y, target => {
+      APP.renderer.Picking.getTarget(pos.x, pos.y, target => {
         this.emit('pointerup', { buttons: e.buttons, target: target });
       });
     }
   }
 
   onMouseWheel (e) {
-    render.speedUp();
+    APP.renderer.speedUp();
     this.cancelEvent(e);
 
     let delta = 0;
@@ -281,7 +281,7 @@ class Events {
   //***************************************************************************
 
   onTouchStart (e) {
-    render.speedUp();
+    APP.renderer.speedUp();
     this.cancelEvent(e);
 
     this.buttons = 1;
@@ -314,7 +314,7 @@ class Events {
       return;
     }
 
-    render.speedUp();
+    APP.renderer.speedUp();
 
     const t1 = e.touches[0];
 
@@ -353,7 +353,7 @@ class Events {
         this.emit('pointerup', { buttons: 1 });
       } else {
         const pos = getEventXY(e);
-        render.Picking.getTarget(pos.x, pos.y, target => {
+        APP.renderer.Picking.getTarget(pos.x, pos.y, target => {
           this.emit('pointerup', { buttons: 1, target: target });
         });
       }
@@ -370,7 +370,7 @@ class Events {
       return;
     }
 
-    render.speedUp();
+    APP.renderer.speedUp();
     this.cancelEvent(e);
 
     if (!this.isDisabled) {

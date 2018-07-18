@@ -1,8 +1,8 @@
 
-class Buildings {
+Renderer.Buildings = class {
 
   constructor () {
-    this.shader = !render.effects.shadows ?
+    this.shader = !APP.renderer.effects.shadows ?
       new GLX.Shader({
         source: buildingsShader,
         attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
@@ -52,14 +52,14 @@ class Buildings {
     //   GL.disable(GL.CULL_FACE);
     // }
 
-    shader.setParam('uFogDistance',     '1f',  render.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    shader.setParam('uFogDistance',     '1f',  APP.renderer.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  APP.renderer.fogBlurDistance);
     shader.setParam('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
-    shader.setParam('uLightDirection',  '3fv', Sun.direction);
-    shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
-    shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    shader.setParam('uLightDirection',  '3fv', Renderer.Sun.direction);
+    shader.setParam('uLowerEdgePoint',  '2fv', APP.renderer.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', APP.renderer.viewDirOnMap);
 
-    if (!render.effects.shadows) {
+    if (!APP.renderer.effects.shadows) {
       const matrix3 = new Float32Array([
         1, 0, 0,
         0, 1, 0,
@@ -93,10 +93,10 @@ class Buildings {
       shader.setParam('uFade', '1f', item.getFade());
 
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-      shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+      shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.renderer.viewProjMatrix));
 
-      if (render.effects.shadows) {
-        shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+      if (APP.renderer.effects.shadows) {
+        shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Renderer.Sun.viewProjMatrix));
       }
 
       shader.setBuffer('aPosition', item.vertexBuffer);
@@ -119,4 +119,4 @@ class Buildings {
   }
 
   destroy () {}
-}
+};

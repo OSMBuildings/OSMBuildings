@@ -2,7 +2,7 @@
 // HudRect renders a textured rectangle to the top-right quarter of the viewport.
 // The intended use is visualize render-to-texture effects during development.
 
-class HudRect {
+Renderer.HudRect = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -66,4 +66,4 @@ class HudRect {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
   }
-}
+};

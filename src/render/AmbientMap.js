@@ -1,5 +1,5 @@
 
-class AmbientMap {
+Renderer.AmbientMap = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -50,8 +50,8 @@ class AmbientMap {
 
     shader.setParam('uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]);
     shader.setParam('uEffectStrength', '1f',  effectStrength);
-    shader.setParam('uNearPlane',      '1f',  render.nearPlane);
-    shader.setParam('uFarPlane',       '1f',  render.farPlane);
+    shader.setParam('uNearPlane',      '1f',  APP.renderer.nearPlane);
+    shader.setParam('uFarPlane',       '1f',  APP.renderer.farPlane);
 
     shader.setBuffer('aPosition', this.vertexBuffer);
     shader.setBuffer('aTexCoord', this.texCoordBuffer);
@@ -73,4 +73,4 @@ class AmbientMap {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
   }
-}
+};

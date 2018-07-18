@@ -1,7 +1,7 @@
 // TODO: perhaps render only clicked area
 // TODO: no picking if too far, too small (zoom levels)
 
-class Picking {
+Renderer.Picking = class {
 
   constructor () {
 
@@ -34,7 +34,7 @@ class Picking {
       GL.clearColor(0, 0, 0, 1);
       GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-      shader.setParam('uFogDistance', '1f', render.fogDistance);
+      shader.setParam('uFogDistance', '1f', APP.renderer.fogDistance);
 
       const renderedItems = [];
       APP.features.forEach(item => {
@@ -53,7 +53,7 @@ class Picking {
         shader.setParam('uIndex', '1f', renderedItems.length / 256);
 
         shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-        shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+        shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, APP.renderer.viewProjMatrix));
 
         shader.setBuffer('aPosition', item.vertexBuffer);
         shader.setBuffer('aPickingColor', item.pickingBuffer);
@@ -111,4 +111,4 @@ class Picking {
     this.shader.destroy();
     this.framebuffer.destroy();
   }
-}
+};

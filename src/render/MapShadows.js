@@ -6,7 +6,7 @@
  */
 // TODO: independence is not required anymore. could be combined with Basemap?
 
-class MapShadows {
+Renderer.MapShadows = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -30,7 +30,7 @@ class MapShadows {
     this.mapPlane = new MapPlane();
   }
 
-  render (Sun, depthFramebuffer, shadowStrength) {
+  render (depthFramebuffer, shadowStrength) {
     const item = this.mapPlane;
     if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
       return;
@@ -42,11 +42,11 @@ class MapShadows {
 
     GL.disable(GL.CULL_FACE);
 
-    shader.setParam('uDirToSun', '3fv', Sun.direction);
-    shader.setParam('uViewDirOnMap', '2fv',   render.viewDirOnMap);
-    shader.setParam('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
-    shader.setParam('uFogDistance', '1f', render.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f', render.fogBlurDistance);
+    shader.setParam('uDirToSun', '3fv', Renderer.Sun.direction);
+    shader.setParam('uViewDirOnMap', '2fv',   APP.renderer.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint', '2fv', APP.renderer.lowerLeftOnMap);
+    shader.setParam('uFogDistance', '1f', APP.renderer.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f', APP.renderer.fogBlurDistance);
     shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] );
     shader.setParam('uShadowStrength', '1f', shadowStrength);
 
@@ -58,8 +58,8 @@ class MapShadows {
     }
 
     shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.renderer.viewProjMatrix));
+    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Renderer.Sun.viewProjMatrix));
 
     shader.setBuffer('aPosition', item.vertexBuffer);
     shader.setBuffer('aNormal', item.normalBuffer);
@@ -72,4 +72,4 @@ class MapShadows {
   destroy () {
     this.mapPlane.destroy();
   }
-}
+};

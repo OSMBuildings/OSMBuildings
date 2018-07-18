@@ -1,4 +1,4 @@
-class Blur {
+Renderer.Blur = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -59,4 +59,4 @@ class Blur {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
   }
-}
+};

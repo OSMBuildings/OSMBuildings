@@ -87,7 +87,7 @@ class Grid {
       const parentY = (tile[1] << 0) / 2;
 
       if (parentTiles[[parentX, parentY]] === undefined) { //parent tile screen size unknown
-        const numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom - 1, render.viewProjMatrix);
+        const numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom - 1, APP.renderer.viewProjMatrix);
         parentTiles[[parentX, parentY]] = (numParentScreenPixels < pixelAreaThreshold);
       }
 
@@ -159,7 +159,7 @@ class Grid {
     // };
 
     let
-      viewQuad = render.getViewQuad(render.viewProjMatrix.data),
+      viewQuad = APP.renderer.getViewQuad(APP.renderer.viewProjMatrix.data),
       center = project([APP.position.longitude, APP.position.latitude], 1<< zoom);
 
     for (let i = 0; i < 4; i++) {

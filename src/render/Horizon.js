@@ -1,5 +1,5 @@
 
-class Horizon {
+Renderer.Horizon = class {
 
   constructor () {
     this.HORIZON_HEIGHT = 2000;
@@ -63,13 +63,13 @@ class Horizon {
     const
       skyShader = this.skyShader,
       floorShader = this.floorShader,
-      fogColor = render.fogColor;
+      fogColor = APP.renderer.fogColor;
 
     skyShader.enable();
 
     skyShader.setParam('uFogColor', '3fv', fogColor);
     skyShader.setParam('uAbsoluteHeight', '1f', this.HORIZON_HEIGHT * 10.0);
-    skyShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
+    skyShader.setMatrix('uMatrix', '4fv', APP.renderer.viewProjMatrix.data);
     skyShader.setBuffer('aPosition', this.skyVertexBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.skyVertexBuffer.numItems);
@@ -80,7 +80,7 @@ class Horizon {
     floorShader.enable();
 
     floorShader.setParam('uColor', '4fv', [...fogColor, 1.0]);
-    floorShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
+    floorShader.setMatrix('uMatrix', '4fv', APP.renderer.viewProjMatrix.data);
     floorShader.setBuffer('aPosition', this.floorVertexBuffer);
 
     GL.drawArrays(GL.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
@@ -95,4 +95,4 @@ class Horizon {
     this.floorVertexBuffer.destroy();
     this.floorShader.destroy();
   }
-}
+};

@@ -1,18 +1,18 @@
 
-class render {
+class Renderer {
 
-  static getViewQuad () {
+  getViewQuad () {
     return getViewQuad(this.viewProjMatrix.data,  (this.fogDistance + this.fogBlurDistance), this.viewDirOnMap);
   }
 
-  static start () {
-    render.effects = { shadows: true };
+  start () {
+    this.effects = { shadows: true };
 
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
     if (!GL.depthTextureExtension) {
       console.warn('Shadows are disabled because your GPU does not support WEBGL_depth_texture');
-      render.effects.shadows = false;
+      this.effects.shadows = false;
     }
 
     this.setupViewport();
@@ -21,23 +21,23 @@ class render {
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
 
-    render.Picking = new Picking(); // renders only on demand
-    render.Horizon = new Horizon();
-    render.Buildings = new Buildings();
-    // if (render.effects.shadows) {
-    //   render.MarkersX = new render.Markers();
+    this.Picking = new Renderer.Picking(); // renders only on demand
+    this.Horizon = new Renderer.Horizon();
+    this.Buildings = new Renderer.Buildings();
+    // if (this.effects.shadows) {
+    //   this.Markers = new Renderer.Markers();
     // } else {
-      render.MarkersX = new render.MarkersSimple();
+      this.Markers = new Renderer.MarkersSimple();
     // }
-    render.Basemap = new Basemap();
+    this.Basemap = new Renderer.Basemap();
 
-    render.Overlay.init();
-    render.ambientMap = new AmbientMap();
-    render.blurredAmbientMap = new Blur();
-    render.MapShadows = new MapShadows();
-    if (render.effects.shadows) {
-      render.cameraGBuffer = new DepthNormal();
-      render.sunGBuffer = new DepthNormal();
+    this.Overlay = new Renderer.Overlay();
+    this.ambientMap = new Renderer.AmbientMap();
+    this.blurredAmbientMap = new Renderer.Blur();
+    this.MapShadows = new Renderer.MapShadows();
+    if (this.effects.shadows) {
+      this.cameraGBuffer = new Renderer.DepthNormal();
+      this.sunGBuffer = new Renderer.DepthNormal();
     }
 
     this.speedUp();
@@ -45,7 +45,7 @@ class render {
     this.renderFrame();
   }
 
-  static renderFrame () {
+  renderFrame () {
     if (APP.zoom >= APP.minZoom && APP.zoom <= APP.maxZoom) {
       requestAnimationFrame(() => {
 
@@ -55,32 +55,32 @@ class render {
 
         const viewSize = [APP.width, APP.height];
 
-        if (!render.effects.shadows) {
-          render.Buildings.render();
-          render.MarkersX.render();
+        if (!this.effects.shadows) {
+          this.Buildings.render();
+          this.Markers.render();
 
           GL.enable(GL.BLEND);
 
           GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
           GL.disable(GL.DEPTH_TEST);
-          render.Horizon.render();
+          this.Horizon.render();
           GL.disable(GL.BLEND);
           GL.enable(GL.DEPTH_TEST);
 
-          render.Basemap.render();
+          this.Basemap.render();
         } else {
           const viewTrapezoid = this.getViewQuad();
 
-          Sun.updateView(viewTrapezoid);
-          render.Horizon.updateGeometry(viewTrapezoid);
+          Renderer.Sun.updateView(viewTrapezoid);
+          this.Horizon.updateGeometry(viewTrapezoid);
 
-          render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
-          render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
-          render.ambientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
-          render.blurredAmbientMap.render(render.ambientMap.framebuffer.renderTexture, viewSize);
-          render.Buildings.render(render.sunGBuffer.framebuffer);
-          render.MarkersX.render(render.sunGBuffer.framebuffer);
-          render.Basemap.render();
+          this.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
+          this.sunGBuffer.render(Renderer.Sun.viewMatrix, Renderer.Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
+          this.ambientMap.render(this.cameraGBuffer.framebuffer.depthTexture, this.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
+          this.blurredAmbientMap.render(this.ambientMap.framebuffer.renderTexture, viewSize);
+          this.Buildings.render(this.sunGBuffer.framebuffer);
+          this.Markers.render(this.sunGBuffer.framebuffer);
+          this.Basemap.render();
 
           GL.enable(GL.BLEND);
 
@@ -90,8 +90,8 @@ class render {
           // geometry should be blurred into the background in the next step) intact
           GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
 
-          render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
-          render.Overlay.render(render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
+          this.MapShadows.render(this.sunGBuffer.framebuffer, 0.5);
+          this.Overlay.render(this.blurredAmbientMap.framebuffer.renderTexture, viewSize);
 
           // linear interpolation between the colors of the current framebuffer
           // ( =building geometries) and of the sky. The interpolation factor
@@ -104,12 +104,12 @@ class render {
 
 
           GL.disable(GL.DEPTH_TEST);
-          render.Horizon.render();
+          this.Horizon.render();
           GL.enable(GL.DEPTH_TEST);
 
           GL.disable(GL.BLEND);
 
-          // render.hudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
+          // this.hudRect.render( this.sunGBuffer.getFogNormalTexture(), config );
         }
 
         // APP.markers.updateMarkerView();
@@ -130,7 +130,7 @@ class render {
   }
 
   // initialize view and projection matrix, fog distance, etc.
-  static setupViewport () {
+  setupViewport () {
     if (GL.canvas.width !== APP.width) {
       GL.canvas.width = APP.width;
     }
@@ -221,7 +221,7 @@ class render {
     this.fogBlurDistance = 10000;
   }
 
-  static speedUp () {
+  speedUp () {
     this.isFast = true;
     // console.log('FAST');
     clearTimeout(this.speedTimer);
@@ -231,24 +231,24 @@ class render {
     }, 1000);
   }
 
-  static destroy () {
-    render.Picking.destroy();
-    render.Horizon.destroy();
-    render.Buildings.destroy();
-    render.MarkersX.destroy();
-    render.Basemap.destroy();
-    render.MapShadows.destroy();
+  destroy () {
+    this.Picking.destroy();
+    this.Horizon.destroy();
+    this.Buildings.destroy();
+    this.Markers.destroy();
+    this.Basemap.destroy();
+    this.MapShadows.destroy();
 
-    if (render.cameraGBuffer) {
-      render.cameraGBuffer.destroy();
+    if (this.cameraGBuffer) {
+      this.cameraGBuffer.destroy();
     }
 
-    if (render.sunGBuffer) {
-      render.sunGBuffer.destroy();
+    if (this.sunGBuffer) {
+      this.sunGBuffer.destroy();
     }
 
-    render.ambientMap.destroy();
-    render.blurredAmbientMap.destroy();
+    this.ambientMap.destroy();
+    this.blurredAmbientMap.destroy();
 
     clearTimeout(this.speedTimer);
   }

@@ -4,10 +4,9 @@
  *  The intended use is for compositing of screen-space effects.
  */
 
-render.Overlay = {
+Renderer.Overlay = class {
 
-  init: function() {
-  
+  constructor () {
     const geometry = this.createGeometry();
     this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
@@ -17,11 +16,13 @@ render.Overlay = {
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uTexIndex']
     });
-  },
+  }
 
-  createGeometry: function() {
-    const vertices = [],
-        texCoords= [];
+  createGeometry () {
+    const
+      vertices = [],
+      texCoords= [];
+
     vertices.push(-1,-1, 1E-5,
                    1,-1, 1E-5,
                    1, 1, 1E-5);
@@ -39,15 +40,16 @@ render.Overlay = {
                    0.0,1.0);
 
     return { vertices: vertices , texCoords: texCoords };
-  },
+  }
 
-  render: function(texture, framebufferSize) {
+  render (texture) {
 
     const shader = this.shader;
 
     shader.enable();
-    /* we are rendering an *overlay*, which is supposed to be rendered on top of the
-     * scene no matter what its actual depth is. */
+
+    // we are rendering an *overlay*, which is supposed to be rendered on top of the
+    // scene no matter what its actual depth is.
     GL.disable(GL.DEPTH_TEST);
     
     shader.setMatrix('uMatrix', '4fv', GLX.Matrix.identity().data);
@@ -60,8 +62,13 @@ render.Overlay = {
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     GL.enable(GL.DEPTH_TEST);
-    shader.disable();
-  },
 
-  destroy: function() {}
+    shader.disable();
+  }
+
+  destroy () {
+    this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+    this.shader.destroy();
+  }
 };

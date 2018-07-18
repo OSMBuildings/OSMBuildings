@@ -1,5 +1,5 @@
 
-class Basemap {
+Renderer.Basemap = class {
 
   constructor () {
     this.shader = new GLX.Shader({
@@ -24,10 +24,10 @@ class Basemap {
 
     shader.enable();
 
-    shader.setParam('uFogDistance',     '1f',  render.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
-    shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
-    shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    shader.setParam('uFogDistance',     '1f',  APP.renderer.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  APP.renderer.fogBlurDistance);
+    shader.setParam('uLowerEdgePoint',  '2fv', APP.renderer.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', APP.renderer.viewDirOnMap);
 
     const zoom = Math.round(APP.zoom);
 
@@ -79,7 +79,7 @@ class Basemap {
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, MAX_USED_ZOOM_LEVEL - tile.zoom);
 
     shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-    shader.setMatrix('uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    shader.setMatrix('uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, APP.renderer.viewProjMatrix));
 
     shader.setBuffer('aPosition', tile.vertexBuffer);
     shader.setBuffer('aTexCoord', tile.texCoordBuffer);
@@ -90,4 +90,4 @@ class Basemap {
   }
 
   destroy () {}
-}
+};

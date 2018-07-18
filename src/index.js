@@ -136,8 +136,9 @@ class OSMBuildings {
       }
     }
 
-    render.backgroundColor = Qolor.parse(options.backgroundColor || BACKGROUND_COLOR).toArray();
-    render.fogColor = Qolor.parse(options.fogColor || FOG_COLOR).toArray();
+    this.renderer = new Renderer();
+    this.renderer.backgroundColor = Qolor.parse(options.backgroundColor || BACKGROUND_COLOR).toArray();
+    this.renderer.fogColor = Qolor.parse(options.fogColor || FOG_COLOR).toArray();
 
     this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
@@ -214,7 +215,7 @@ class OSMBuildings {
     this._updateAttribution();
 
     this.setDate(new Date());
-    render.start();
+    this.renderer.start();
 
     this.emit('load', this);
   }
@@ -256,7 +257,7 @@ class OSMBuildings {
    * @param {Date} date
    */
   setDate (date) {
-    Sun.setDate(typeof date === 'string' ? new Date(date) : date);
+    Renderer.Sun.setDate(typeof date === 'string' ? new Date(date) : date);
   }
 
   /**
@@ -270,7 +271,7 @@ class OSMBuildings {
     const worldPos = [(longitude - this.position.longitude) * METERS_PER_DEGREE_LONGITUDE, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, altitude];
 
     // takes current cam pos into account.
-    let posNDC = transformVec3(render.viewProjMatrix.data, worldPos);
+    let posNDC = transformVec3(this.renderer.viewProjMatrix.data, worldPos);
     posNDC = mul3scalar(add3(posNDC, [1, 1, 1]), 1 / 2); // from [-1..1] to [0..1]
 
     return {
@@ -288,7 +289,7 @@ class OSMBuildings {
    * @return {Object} Geographic position { latitude, longitude }
    */
   unproject (x, y) {
-    const inverseViewMatrix = GLX.Matrix.invert(render.viewProjMatrix.data);
+    const inverseViewMatrix = GLX.Matrix.invert(this.renderer.viewProjMatrix.data);
     // convert window/viewport coordinates to NDC [0..1]. Note that the browser
     // screen coordinates are y-down, while the WebGL NDC coordinates are y-up,
     // so we have to invert the y value here
@@ -509,7 +510,7 @@ class OSMBuildings {
    * @return {Array} Bounding coordinates in unspecific order [{ latitude, longitude }, ...]
    */
   getBounds () {
-    const viewQuad = render.getViewQuad();
+    const viewQuad = this.renderer.getViewQuad();
     return viewQuad.map(point => getPositionFromLocal(point));
   }
 
@@ -669,7 +670,7 @@ class OSMBuildings {
    * Destroys the map
    */
   destroy () {
-    render.destroy();
+    this.renderer.destroy();
 
     // this.basemapGrid.destroy();
     // this.dataGrid.destroy();
