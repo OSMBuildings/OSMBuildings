@@ -24,11 +24,11 @@ class render {
     render.Picking = new Picking(); // renders only on demand
     render.Horizon = new Horizon();
     render.Buildings = new Buildings();
-    if (render.effects.shadows) {
-      render.MarkersX = new render.Markers();
-    } else {
+    // if (render.effects.shadows) {
+    //   render.MarkersX = new render.Markers();
+    // } else {
       render.MarkersX = new render.MarkersSimple();
-    }
+    // }
     render.Basemap = new Basemap();
 
     render.Overlay.init();
