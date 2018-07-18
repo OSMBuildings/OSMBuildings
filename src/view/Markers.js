@@ -4,7 +4,7 @@ View.Markers = class {
   constructor () {
 
     this.shader = new GLX.Shader({
-      source: markersShader,
+      source: shaders.markers,
       attributes: ['aPosition'],
       uniforms: [
         'uFogDistance',

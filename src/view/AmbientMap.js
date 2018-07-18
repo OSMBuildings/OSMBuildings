@@ -3,7 +3,7 @@ View.AmbientMap = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: ambient_from_depthShader,
+      source: shaders.ambient_from_depth,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });

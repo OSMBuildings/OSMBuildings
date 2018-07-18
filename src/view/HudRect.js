@@ -6,7 +6,7 @@ View.HudRect = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: textureShader,
+      source: shaders.texture,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [ 'uMatrix', 'uTexIndex']
     });

@@ -10,7 +10,7 @@ View.MapShadows = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: basemap_with_shadowsShader,
+      source: shaders.basemap_with_shadows,
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
         'uModelMatrix',

@@ -45,17 +45,22 @@ function escapeCode (str) {
 function taskShaders (shaders) {
   const src = 'src/shader';
 
-  return shaders.map(name => {
-    return `const ${name}Shader = ${JSON.stringify({
+  let str = 'const shaders = {};\n\n';
+
+  shaders.forEach(name => {
+    str += `shaders['${name}'] = ${JSON.stringify({
       name: name,
       vs: escapeCode(readFiles([`${src}/${name}.vs`]), 'ascii'),
       fs: escapeCode(readFiles([`${src}/${name}.fs`]), 'ascii')
-    })};`;
-  }).join('\n\n');
+    })};\n\n`;
+  });
+
+  return str;
 }
 
 function taskWorkers (workers) {
-  let str = '';
+  let str = 'const workers = {};\n\n';
+
   for (let name in workers) {
     const content = readFiles(workers[name]);
 
@@ -64,7 +69,7 @@ function taskWorkers (workers) {
     const minified = minify(content);
     const escaped = escapeCode(minified);
 
-    str += `const ${name}Worker = '${escaped}';\n\n`;
+    str += `workers['${name}'] = '${escaped}';\n\n`;
   }
 
   return str;

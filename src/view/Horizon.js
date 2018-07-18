@@ -5,7 +5,7 @@ View.Horizon = class {
     this.HORIZON_HEIGHT = 2000;
 
     this.skyShader = new GLX.Shader({
-      source: horizonShader,
+      source: shaders.horizon,
       attributes: ['aPosition'],
       uniforms: ['uAbsoluteHeight', 'uMatrix', 'uFogColor']
     });
@@ -14,7 +14,7 @@ View.Horizon = class {
     this.updateGeometry([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]);
 
     this.floorShader = new GLX.Shader({
-      source: flat_colorShader,
+      source: shaders.flat_color,
       attributes: ['aPosition'],
       uniforms: ['uColor', 'uMatrix']
     });

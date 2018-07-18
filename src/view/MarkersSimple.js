@@ -3,7 +3,7 @@ View.MarkersSimple = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: markers_simpleShader,
+      source: shaders.markers_simple,
       attributes: ['aPosition'],
       uniforms: [
         'uProjMatrix',

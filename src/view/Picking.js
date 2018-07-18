@@ -8,7 +8,7 @@ View.Picking = class {
     this.size = [512, 512];
 
     this.shader = new GLX.Shader({
-      source: pickingShader,
+      source: shaders.picking,
       attributes: ['aPosition', 'aPickingColor', 'aZScale'],
       uniforms: [
         'uModelMatrix',

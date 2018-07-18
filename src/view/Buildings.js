@@ -4,7 +4,7 @@ View.Buildings = class {
   constructor () {
     this.shader = !APP.view.shadowsEnabled ?
       new GLX.Shader({
-        source: buildingsShader,
+        source: shaders.buildings,
         attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
         uniforms: [
           'uModelMatrix',
@@ -20,7 +20,7 @@ View.Buildings = class {
           'uWallTexIndex'
         ]
       }) : new GLX.Shader({
-      source: buildings_with_shadowsShader,
+      source: shaders.buildings_with_shadows,
       attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
       uniforms: [
         'uFogDistance',

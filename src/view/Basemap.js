@@ -3,7 +3,7 @@ View.Basemap = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: basemapShader,
+      source: shaders.basemap,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uViewMatrix', 'uModelMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
     });

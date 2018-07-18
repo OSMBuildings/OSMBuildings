@@ -12,7 +12,7 @@ View.Overlay = class {
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
     this.shader = new GLX.Shader({
-      source: textureShader,
+      source: shaders.texture,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uTexIndex']
     });

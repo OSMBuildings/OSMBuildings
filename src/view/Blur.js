@@ -2,7 +2,7 @@ View.Blur = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: blurShader,
+      source: shaders.blur,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uTexIndex']
     });
