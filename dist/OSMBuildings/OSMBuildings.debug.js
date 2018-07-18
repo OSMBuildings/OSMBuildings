@@ -432,30 +432,866 @@ var suncalc = (function () {
 }());
 
 
-const pickingShader = {"name":"picking","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aPickingColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogDistance;\nuniform float uFade;\nuniform float uIndex;\nvarying vec4 vColor;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec4 mPosition = vec4(uModelMatrix * pos);\nfloat distance = length(mPosition);\nif (distance > uFogDistance) {\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvColor = vec4(clamp(uIndex, 0.0, 1.0), aPickingColor.g, aPickingColor.b, 1.0);\n}\n}\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\ngl_FragColor = vColor;\n}\n"};
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/icons/triangulateSVG.js");
+/******/ })
+/************************************************************************/
+/******/ ({
 
-const buildingsShader = {"name":"buildings","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvec3 transformedNormal = aNormal * uNormalTransform;\nfloat lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\ncolor = color + uLightColor * lightIntensity;\nvTexCoord = aTexCoord;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4( vColor* texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"};
+/***/ "./node_modules/abs-svg-path/index.js":
+/*!********************************************!*\
+  !*** ./node_modules/abs-svg-path/index.js ***!
+  \********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-const buildings_with_shadowsShader = {"name":"buildings_with_shadows","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec2 aTexCoord;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvNormal = aNormal;\nvTexCoord = aTexCoord;\n//vec3 transformedNormal = aNormal * uNormalTransform;\n//float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n//color = color + uLightColor * lightIntensity;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n// *** shadow mapping ********\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n}\n}\n","fs":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\nvec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\nfloat diffuse = dot(uLightDirection, normal);\ndiffuse = max(diffuse, 0.0);\n// reduce shadow strength with:\n// - lowering sun positions, to be consistent with the shadows on the basemap (there,\n// shadows are faded out with lowering sun positions to hide shadow artifacts caused\n// when sun direction and map surface are almost perpendicular\n// - large angles between the sun direction and the surface normal, to hide shadow\n// artifacts that occur when surface normal and sun direction are almost perpendicular\nfloat shadowStrength = pow( max( min(\ndot(uLightDirection, vec3(0.0, 0.0, 1.0)),\ndot(uLightDirection, normal)\n), 0.0), 1.5);\nif (diffuse > 0.0 && shadowStrength > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat occludedBySun = mix(\nmix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\ndiffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n}\nvec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n(diffuse/1.5) * uLightColor;\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\n//gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\ngl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"};
+eval("\nmodule.exports = absolutize\n\n/**\n * redefine `path` with absolute coordinates\n *\n * @param {Array} path\n * @return {Array}\n */\n\nfunction absolutize(path){\n\tvar startX = 0\n\tvar startY = 0\n\tvar x = 0\n\tvar y = 0\n\n\treturn path.map(function(seg){\n\t\tseg = seg.slice()\n\t\tvar type = seg[0]\n\t\tvar command = type.toUpperCase()\n\n\t\t// is relative\n\t\tif (type != command) {\n\t\t\tseg[0] = command\n\t\t\tswitch (type) {\n\t\t\t\tcase 'a':\n\t\t\t\t\tseg[6] += x\n\t\t\t\t\tseg[7] += y\n\t\t\t\t\tbreak\n\t\t\t\tcase 'v':\n\t\t\t\t\tseg[1] += y\n\t\t\t\t\tbreak\n\t\t\t\tcase 'h':\n\t\t\t\t\tseg[1] += x\n\t\t\t\t\tbreak\n\t\t\t\tdefault:\n\t\t\t\t\tfor (var i = 1; i < seg.length;) {\n\t\t\t\t\t\tseg[i++] += x\n\t\t\t\t\t\tseg[i++] += y\n\t\t\t\t\t}\n\t\t\t}\n\t\t}\n\n\t\t// update cursor state\n\t\tswitch (command) {\n\t\t\tcase 'Z':\n\t\t\t\tx = startX\n\t\t\t\ty = startY\n\t\t\t\tbreak\n\t\t\tcase 'H':\n\t\t\t\tx = seg[1]\n\t\t\t\tbreak\n\t\t\tcase 'V':\n\t\t\t\ty = seg[1]\n\t\t\t\tbreak\n\t\t\tcase 'M':\n\t\t\t\tx = startX = seg[1]\n\t\t\t\ty = startY = seg[2]\n\t\t\t\tbreak\n\t\t\tdefault:\n\t\t\t\tx = seg[seg.length - 2]\n\t\t\t\ty = seg[seg.length - 1]\n\t\t}\n\n\t\treturn seg\n\t})\n}\n\n\n//# sourceURL=webpack:///./node_modules/abs-svg-path/index.js?");
 
-const basemapShader = {"name":"basemap","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\ngl_Position = uViewMatrix * aPosition;\nvTexCoord = aTexCoord;\nvec4 worldPos = uModelMatrix * aPosition;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"};
+/***/ }),
 
-const basemap_with_shadowsShader = {"name":"basemap_with_shadows","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\nvec4 pos = vec4(aPosition.xyz, 1.0);\ngl_Position = uMatrix * pos;\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\nvNormal = aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fs":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not*\n* render the map texture itself, but is instead intended to be blended on top\n* of an already rendered map.\n* Note: this shader is not (and does not attempt to) be physically correct.\n* It is intented to be a blend between a useful illustration of cast\n* shadows and a mitigation of shadow casting artifacts occuring at\n* low angles on incidence.\n* Map brightness is only affected by shadows, not by light direction.\n* Shadows are darkest when light comes from straight above (and thus\n* shadows can be computed reliably) and become less and less visible\n* with the light source close to horizon (where moiré and offset\n* artifacts would otherwise be visible).\n*/\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n//vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n//gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n//return;\nfloat diffuse = dot(uDirToSun, normalize(vNormal));\ndiffuse = max(diffuse, 0.0);\n\nfloat shadowStrength = uShadowStrength * pow(diffuse, 1.5);\nif (diffuse > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\ndiffuse = mix( mix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\n}\ndiffuse = mix(1.0, diffuse, shadowStrength);\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\nfloat darkness = (1.0 - diffuse);\ndarkness *= (1.0 - fogIntensity);\ngl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"};
+/***/ "./node_modules/adaptive-bezier-curve/function.js":
+/*!********************************************************!*\
+  !*** ./node_modules/adaptive-bezier-curve/function.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-const textureShader = {"name":"texture","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"};
+eval("function clone(point) { //TODO: use gl-vec2 for this\n    return [point[0], point[1]]\n}\n\nfunction vec2(x, y) {\n    return [x, y]\n}\n\nmodule.exports = function createBezierBuilder(opt) {\n    opt = opt||{}\n\n    var RECURSION_LIMIT = typeof opt.recursion === 'number' ? opt.recursion : 8\n    var FLT_EPSILON = typeof opt.epsilon === 'number' ? opt.epsilon : 1.19209290e-7\n    var PATH_DISTANCE_EPSILON = typeof opt.pathEpsilon === 'number' ? opt.pathEpsilon : 1.0\n\n    var curve_angle_tolerance_epsilon = typeof opt.angleEpsilon === 'number' ? opt.angleEpsilon : 0.01\n    var m_angle_tolerance = opt.angleTolerance || 0\n    var m_cusp_limit = opt.cuspLimit || 0\n\n    return function bezierCurve(start, c1, c2, end, scale, points) {\n        if (!points)\n            points = []\n\n        scale = typeof scale === 'number' ? scale : 1.0\n        var distanceTolerance = PATH_DISTANCE_EPSILON / scale\n        distanceTolerance *= distanceTolerance\n        begin(start, c1, c2, end, points, distanceTolerance)\n        return points\n    }\n\n\n    ////// Based on:\n    ////// https://github.com/pelson/antigrain/blob/master/agg-2.4/src/agg_curves.cpp\n\n    function begin(start, c1, c2, end, points, distanceTolerance) {\n        points.push(clone(start))\n        var x1 = start[0],\n            y1 = start[1],\n            x2 = c1[0],\n            y2 = c1[1],\n            x3 = c2[0],\n            y3 = c2[1],\n            x4 = end[0],\n            y4 = end[1]\n        recursive(x1, y1, x2, y2, x3, y3, x4, y4, points, distanceTolerance, 0)\n        points.push(clone(end))\n    }\n\n    function recursive(x1, y1, x2, y2, x3, y3, x4, y4, points, distanceTolerance, level) {\n        if(level > RECURSION_LIMIT) \n            return\n\n        var pi = Math.PI\n\n        // Calculate all the mid-points of the line segments\n        //----------------------\n        var x12   = (x1 + x2) / 2\n        var y12   = (y1 + y2) / 2\n        var x23   = (x2 + x3) / 2\n        var y23   = (y2 + y3) / 2\n        var x34   = (x3 + x4) / 2\n        var y34   = (y3 + y4) / 2\n        var x123  = (x12 + x23) / 2\n        var y123  = (y12 + y23) / 2\n        var x234  = (x23 + x34) / 2\n        var y234  = (y23 + y34) / 2\n        var x1234 = (x123 + x234) / 2\n        var y1234 = (y123 + y234) / 2\n\n        if(level > 0) { // Enforce subdivision first time\n            // Try to approximate the full cubic curve by a single straight line\n            //------------------\n            var dx = x4-x1\n            var dy = y4-y1\n\n            var d2 = Math.abs((x2 - x4) * dy - (y2 - y4) * dx)\n            var d3 = Math.abs((x3 - x4) * dy - (y3 - y4) * dx)\n\n            var da1, da2\n\n            if(d2 > FLT_EPSILON && d3 > FLT_EPSILON) {\n                // Regular care\n                //-----------------\n                if((d2 + d3)*(d2 + d3) <= distanceTolerance * (dx*dx + dy*dy)) {\n                    // If the curvature doesn't exceed the distanceTolerance value\n                    // we tend to finish subdivisions.\n                    //----------------------\n                    if(m_angle_tolerance < curve_angle_tolerance_epsilon) {\n                        points.push(vec2(x1234, y1234))\n                        return\n                    }\n\n                    // Angle & Cusp Condition\n                    //----------------------\n                    var a23 = Math.atan2(y3 - y2, x3 - x2)\n                    da1 = Math.abs(a23 - Math.atan2(y2 - y1, x2 - x1))\n                    da2 = Math.abs(Math.atan2(y4 - y3, x4 - x3) - a23)\n                    if(da1 >= pi) da1 = 2*pi - da1\n                    if(da2 >= pi) da2 = 2*pi - da2\n\n                    if(da1 + da2 < m_angle_tolerance) {\n                        // Finally we can stop the recursion\n                        //----------------------\n                        points.push(vec2(x1234, y1234))\n                        return\n                    }\n\n                    if(m_cusp_limit !== 0.0) {\n                        if(da1 > m_cusp_limit) {\n                            points.push(vec2(x2, y2))\n                            return\n                        }\n\n                        if(da2 > m_cusp_limit) {\n                            points.push(vec2(x3, y3))\n                            return\n                        }\n                    }\n                }\n            }\n            else {\n                if(d2 > FLT_EPSILON) {\n                    // p1,p3,p4 are collinear, p2 is considerable\n                    //----------------------\n                    if(d2 * d2 <= distanceTolerance * (dx*dx + dy*dy)) {\n                        if(m_angle_tolerance < curve_angle_tolerance_epsilon) {\n                            points.push(vec2(x1234, y1234))\n                            return\n                        }\n\n                        // Angle Condition\n                        //----------------------\n                        da1 = Math.abs(Math.atan2(y3 - y2, x3 - x2) - Math.atan2(y2 - y1, x2 - x1))\n                        if(da1 >= pi) da1 = 2*pi - da1\n\n                        if(da1 < m_angle_tolerance) {\n                            points.push(vec2(x2, y2))\n                            points.push(vec2(x3, y3))\n                            return\n                        }\n\n                        if(m_cusp_limit !== 0.0) {\n                            if(da1 > m_cusp_limit) {\n                                points.push(vec2(x2, y2))\n                                return\n                            }\n                        }\n                    }\n                }\n                else if(d3 > FLT_EPSILON) {\n                    // p1,p2,p4 are collinear, p3 is considerable\n                    //----------------------\n                    if(d3 * d3 <= distanceTolerance * (dx*dx + dy*dy)) {\n                        if(m_angle_tolerance < curve_angle_tolerance_epsilon) {\n                            points.push(vec2(x1234, y1234))\n                            return\n                        }\n\n                        // Angle Condition\n                        //----------------------\n                        da1 = Math.abs(Math.atan2(y4 - y3, x4 - x3) - Math.atan2(y3 - y2, x3 - x2))\n                        if(da1 >= pi) da1 = 2*pi - da1\n\n                        if(da1 < m_angle_tolerance) {\n                            points.push(vec2(x2, y2))\n                            points.push(vec2(x3, y3))\n                            return\n                        }\n\n                        if(m_cusp_limit !== 0.0) {\n                            if(da1 > m_cusp_limit)\n                            {\n                                points.push(vec2(x3, y3))\n                                return\n                            }\n                        }\n                    }\n                }\n                else {\n                    // Collinear case\n                    //-----------------\n                    dx = x1234 - (x1 + x4) / 2\n                    dy = y1234 - (y1 + y4) / 2\n                    if(dx*dx + dy*dy <= distanceTolerance) {\n                        points.push(vec2(x1234, y1234))\n                        return\n                    }\n                }\n            }\n        }\n\n        // Continue subdivision\n        //----------------------\n        recursive(x1, y1, x12, y12, x123, y123, x1234, y1234, points, distanceTolerance, level + 1) \n        recursive(x1234, y1234, x234, y234, x34, y34, x4, y4, points, distanceTolerance, level + 1) \n    }\n}\n\n\n//# sourceURL=webpack:///./node_modules/adaptive-bezier-curve/function.js?");
 
-const depth_normalShader = {"name":"depth_normal","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute float aZScale;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nverticalDistanceToLowerEdge = 0.0;\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvNormal = uNormalMatrix * aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fs":"\n#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\ngl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"};
+/***/ }),
 
-const ambient_from_depthShader = {"name":"ambient_from_depth","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n// we need high precision for the depth values\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize; //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\nfloat z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\nreturn (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how\n* much the fragment at 'pos' with depth 'depthHere'is occluded by the\n* fragment that is (dx, dy) texels away from it.\n*/\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset) {\nfloat depthThere = getDepth(pos, offset);\n/* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there),\n* then 'here' is not occluded (result 1.0) */\nif (depthThere == 0.0)\nreturn 1.0;\n/* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n* 'here is not occluded' */\nif (depthHere < depthThere )\nreturn 1.0;\nfloat relDepthDiff = depthThere / depthHere;\nfloat depthDiff = abs(depthThere - depthHere) * uFarPlane;\n/* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n* 'here'. The occlusion is the higher the bigger the depth difference between the two\n* locations is.\n* However, if the depth difference is too high, we assume that 'there' lies in a\n* completely different depth region of the scene than 'here' and thus cannot occlude\n* 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n*/\nreturn depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO).\n* It is based on the assumption that a pixel will be occluded by neighboring\n* pixels iff. those have a depth value closer to the camera than the original\n* pixel itself (the function getOcclusionFactor() computes this occlusion\n* by a single other pixel).\n*\n* A naive approach would sample all pixels within a given distance. For an\n* interesting-looking effect, the sampling area needs to be at least 9 pixels\n* wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n* This overburdens many GPUs.\n* To make the ambient occlusion computation faster, we do not consider all\n* texels in the sampling area, but only 16. This causes some sampling artifacts\n* that are later removed by blurring the ambient occlusion texture (this is\n* done in a separate shader).\n*/\nvoid main() {\nfloat depthHere = getDepth(vTexCoord, ivec2(0, 0));\nfloat fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\nif (depthHere == 0.0)\n{\n\t//there was nothing rendered 'here' --> it can't be occluded\ngl_FragColor = vec4(1.0);\nreturn;\n}\nfloat occlusionFactor = 1.0;\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\nocclusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\nocclusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\ngl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"};
+/***/ "./node_modules/adaptive-bezier-curve/index.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/adaptive-bezier-curve/index.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
 
-const flat_colorShader = {"name":"flat_color","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\ngl_Position = uMatrix * aPosition;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\ngl_FragColor = uColor;\n}\n"};
+eval("module.exports = __webpack_require__(/*! ./function */ \"./node_modules/adaptive-bezier-curve/function.js\")()\n\n//# sourceURL=webpack:///./node_modules/adaptive-bezier-curve/index.js?");
 
-const horizonShader = {"name":"horizon","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nuniform float uAbsoluteHeight;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvRelativeHeight = aPosition.z / uAbsoluteHeight;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec3 uFogColor;\nvarying float vRelativeHeight;\nvoid main() {\nfloat blendFactor = min(100.0 * vRelativeHeight, 1.0);\nvec4 skyColor = vec4(0.9, 0.85, 1.0, 1.0);\ngl_FragColor = mix(vec4(uFogColor, 1.0), skyColor, blendFactor);\n}\n"};
+/***/ }),
 
-const blurShader = {"name":"blur","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize; // as 1/n pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n// Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'.\nvec4 getTexel(vec2 pos, vec2 offset) {\nreturn texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\nvec4 center = texture2D(uTexIndex, vTexCoord);\nvec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, 0.0)) +\ngetTexel(vTexCoord, vec2(+1.0, 0.0)) +\ngetTexel(vTexCoord, vec2( 0.0, -1.0)) +\ngetTexel(vTexCoord, vec2( 0.0, +1.0));\nvec4 diagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, -1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(-1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, -1.0));\n\n// approximate Gaussian blur (mean 0.0, stdev 1.0)\ngl_FragColor = 0.2/1.0 * center +\n0.5/4.0 * nonDiagonalNeighbors +\n0.3/4.0 * diagonalNeighbors;\n}\n"};
+/***/ "./node_modules/normalize-svg-path/index.js":
+/*!**************************************************!*\
+  !*** ./node_modules/normalize-svg-path/index.js ***!
+  \**************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-const markerShader = {"name":"marker","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\n// uniform mat4 uMatrix;\nuniform mat4 uProjMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\nmat4 modelView = uViewMatrix * uModelMatrix;\nmodelView[0][0] = 1.0;\nmodelView[0][1] = 0.0;\nmodelView[0][2] = 0.0;\nmodelView[1][0] = 0.0;\nmodelView[1][1] = 1.0;\nmodelView[1][2] = 0.0;\nmodelView[2][0] = 0.0;\nmodelView[2][1] = 0.0;\nmodelView[2][2] = 1.0;\nmat4 mvp = uProjMatrix * modelView;\nfloat reciprScaleOnscreen = 0.02;\nfloat w = (mvp * vec4(0,0,0,1)).w;\nw *= reciprScaleOnscreen;\nvec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);\ngl_Position = mvp * pos;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = texture2D(uTexIndex, vTexCoord);\n}\n"};
-const featureWorker = 'class Request{static load(e,t){const r=new XMLHttpRequest,n=setTimeout(e=>{4!==r.readyState&&(r.abort(),t("status"))},1e4);return r.onreadystatechange=(()=>{4===r.readyState&&(clearTimeout(n),!r.status||r.status<200||r.status>299?t("status"):t(null,r))}),r.open("GET",e),r.send(null),{abort:()=>{r.abort()}}}static getText(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseText?t(null,r.responseText):t("content")})}static getXML(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseXML?t(null,r.responseXML):t("content")})}static getJSON(e,t){return this.load(e,(r,n)=>{if(r)return void t(r);if(!n.responseText)return void t("content");let o;try{o=JSON.parse(n.responseText),t(null,o)}catch(r){console.warn(`Could not parse JSON from ${e}\\n${r.message}`),t("content")}})}}var Qolor=function(){var e={aliceblue:"#f0f8ff",antiquewhite:"#faebd7",aqua:"#00ffff",aquamarine:"#7fffd4",azure:"#f0ffff",beige:"#f5f5dc",bisque:"#ffe4c4",black:"#000000",blanchedalmond:"#ffebcd",blue:"#0000ff",blueviolet:"#8a2be2",brown:"#a52a2a",burlywood:"#deb887",cadetblue:"#5f9ea0",chartreuse:"#7fff00",chocolate:"#d2691e",coral:"#ff7f50",cornflowerblue:"#6495ed",cornsilk:"#fff8dc",crimson:"#dc143c",cyan:"#00ffff",darkblue:"#00008b",darkcyan:"#008b8b",darkgoldenrod:"#b8860b",darkgray:"#a9a9a9",darkgrey:"#a9a9a9",darkgreen:"#006400",darkkhaki:"#bdb76b",darkmagenta:"#8b008b",darkolivegreen:"#556b2f",darkorange:"#ff8c00",darkorchid:"#9932cc",darkred:"#8b0000",darksalmon:"#e9967a",darkseagreen:"#8fbc8f",darkslateblue:"#483d8b",darkslategray:"#2f4f4f",darkslategrey:"#2f4f4f",darkturquoise:"#00ced1",darkviolet:"#9400d3",deeppink:"#ff1493",deepskyblue:"#00bfff",dimgray:"#696969",dimgrey:"#696969",dodgerblue:"#1e90ff",firebrick:"#b22222",floralwhite:"#fffaf0",forestgreen:"#228b22",fuchsia:"#ff00ff",gainsboro:"#dcdcdc",ghostwhite:"#f8f8ff",gold:"#ffd700",goldenrod:"#daa520",gray:"#808080",grey:"#808080",green:"#008000",greenyellow:"#adff2f",honeydew:"#f0fff0",hotpink:"#ff69b4",indianred:"#cd5c5c",indigo:"#4b0082",ivory:"#fffff0",khaki:"#f0e68c",lavender:"#e6e6fa",lavenderblush:"#fff0f5",lawngreen:"#7cfc00",lemonchiffon:"#fffacd",lightblue:"#add8e6",lightcoral:"#f08080",lightcyan:"#e0ffff",lightgoldenrodyellow:"#fafad2",lightgray:"#d3d3d3",lightgrey:"#d3d3d3",lightgreen:"#90ee90",lightpink:"#ffb6c1",lightsalmon:"#ffa07a",lightseagreen:"#20b2aa",lightskyblue:"#87cefa",lightslategray:"#778899",lightslategrey:"#778899",lightsteelblue:"#b0c4de",lightyellow:"#ffffe0",lime:"#00ff00",limegreen:"#32cd32",linen:"#faf0e6",magenta:"#ff00ff",maroon:"#800000",mediumaquamarine:"#66cdaa",mediumblue:"#0000cd",mediumorchid:"#ba55d3",mediumpurple:"#9370db",mediumseagreen:"#3cb371",mediumslateblue:"#7b68ee",mediumspringgreen:"#00fa9a",mediumturquoise:"#48d1cc",mediumvioletred:"#c71585",midnightblue:"#191970",mintcream:"#f5fffa",mistyrose:"#ffe4e1",moccasin:"#ffe4b5",navajowhite:"#ffdead",navy:"#000080",oldlace:"#fdf5e6",olive:"#808000",olivedrab:"#6b8e23",orange:"#ffa500",orangered:"#ff4500",orchid:"#da70d6",palegoldenrod:"#eee8aa",palegreen:"#98fb98",paleturquoise:"#afeeee",palevioletred:"#db7093",papayawhip:"#ffefd5",peachpuff:"#ffdab9",peru:"#cd853f",pink:"#ffc0cb",plum:"#dda0dd",powderblue:"#b0e0e6",purple:"#800080",rebeccapurple:"#663399",red:"#ff0000",rosybrown:"#bc8f8f",royalblue:"#4169e1",saddlebrown:"#8b4513",salmon:"#fa8072",sandybrown:"#f4a460",seagreen:"#2e8b57",seashell:"#fff5ee",sienna:"#a0522d",silver:"#c0c0c0",skyblue:"#87ceeb",slateblue:"#6a5acd",slategray:"#708090",slategrey:"#708090",snow:"#fffafa",springgreen:"#00ff7f",steelblue:"#4682b4",tan:"#d2b48c",teal:"#008080",thistle:"#d8bfd8",tomato:"#ff6347",turquoise:"#40e0d0",violet:"#ee82ee",wheat:"#f5deb3",white:"#ffffff",whitesmoke:"#f5f5f5",yellow:"#ffff00",yellowgreen:"#9acd32"};function t(e,t,r){return r<0&&(r+=1),r>1&&(r-=1),r<1/6?e+6*(t-e)*r:r<.5?t:r<2/3?e+(t-e)*(2/3-r)*6:e}function r(e,t){if(void 0!==e)return Math.min(t,Math.max(0,e||0))}var n=function(e,t,n,o){this.r=r(e,1),this.g=r(t,1),this.b=r(n,1),this.a=r(o,1)||1};return n.parse=function(t){if("string"==typeof t){var r;if(t=t.toLowerCase(),r=(t=e[t]||t).match(/^#?(\\w{2})(\\w{2})(\\w{2})$/))return new n(parseInt(r[1],16)/255,parseInt(r[2],16)/255,parseInt(r[3],16)/255);if(r=t.match(/^#?(\\w)(\\w)(\\w)$/))return new n(parseInt(r[1]+r[1],16)/255,parseInt(r[2]+r[2],16)/255,parseInt(r[3]+r[3],16)/255);if(r=t.match(/rgba?\\((\\d+)\\D+(\\d+)\\D+(\\d+)(\\D+([\\d.]+))?\\)/))return new n(parseFloat(r[1])/255,parseFloat(r[2])/255,parseFloat(r[3])/255,r[4]?parseFloat(r[5]):1)}return new n},n.fromHSL=function(e,t,r){var o=(new n).fromHSL(e,t,r);return o.a=a,o},n.prototype={isValid:function(){return void 0!==this.r&&void 0!==this.g&&void 0!==this.b},toHSL:function(){if(this.isValid()){var e,t,r=Math.max(this.r,this.g,this.b),n=Math.min(this.r,this.g,this.b),o=(r+n)/2,a=r-n;if(a){switch(t=o>.5?a/(2-r-n):a/(r+n),r){case this.r:e=(this.g-this.b)/a+(this.g<this.b?6:0);break;case this.g:e=(this.b-this.r)/a+2;break;case this.b:e=(this.r-this.g)/a+4}e*=60}else e=t=0;return{h:e,s:t,l:o}}},fromHSL:function(e,r,n){if(0===r)return this.r=this.g=this.b=n,this;var o=n<.5?n*(1+r):n+r-n*r,a=2*n-o;return e/=360,this.r=t(a,o,e+1/3),this.g=t(a,o,e),this.b=t(a,o,e-1/3),this},toString:function(){if(this.isValid())return 1===this.a?"#"+((1<<24)+(Math.round(255*this.r)<<16)+(Math.round(255*this.g)<<8)+Math.round(255*this.b)).toString(16).slice(1,7):"rgba("+[Math.round(255*this.r),Math.round(255*this.g),Math.round(255*this.b),this.a.toFixed(2)].join(",")+")"},toArray:function(){if(this.isValid)return[this.r,this.g,this.b]},hue:function(e){var t=this.toHSL();return this.fromHSL(t.h+e,t.s,t.l)},saturation:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s*e,t.l)},lightness:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s,t.l*e)},clone:function(){return new n(this.r,this.g,this.b,this.a)}},n}();"object"==typeof module&&(module.exports=Qolor);class OBJ{constructor(e,t){this.materialIndex={},this.vertexIndex=[],t&&this.readMTL(t),this.meshes=[],this.readOBJ(e)}readMTL(e){const t=e.split(/[\\r\\n]/g);let r,n=[];t.forEach(e=>{const t=e.trim().split(/\\s+/);switch(t[0]){case"newmtl":r&&(this.materialIndex[r]=n),r=t[1],n=[];break;case"Kd":n=[parseFloat(t[1]),parseFloat(t[2]),parseFloat(t[3])]}}),r&&(this.materialIndex[r]=n),e=null}readOBJ(e){let t,r,n=[];e.split(/[\\r\\n]/g).forEach(e=>{const o=e.trim().split(/\\s+/);switch(o[0]){case"g":case"o":this.storeMesh(t,r,n),t=o[1],n=[];break;case"usemtl":this.storeMesh(t,r,n),this.materialIndex[o[1]]&&(r=this.materialIndex[o[1]]),n=[];break;case"v":this.vertexIndex.push([parseFloat(o[1]),parseFloat(o[2]),parseFloat(o[3])]);break;case"f":n.push([parseFloat(o[1])-1,parseFloat(o[2])-1,parseFloat(o[3])-1])}}),this.storeMesh(t,r,n)}storeMesh(e,t,r){if(r.length){const n=this.createGeometry(r);this.meshes.push({...n,color:t,id:e})}}sub(e,t){return[e[0]-t[0],e[1]-t[1],e[2]-t[2]]}unit(e){const t=this.len(e);return[e[0]/t,e[1]/t,e[2]/t]}normal(e,t,r){const n=this.sub(e,t),o=this.sub(t,r);return this.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}createGeometry(e){const t=[],r=[],n=[];let o=-1/0;return e.forEach(e=>{const a=this.vertexIndex[e[0]],i=this.vertexIndex[e[1]],s=this.vertexIndex[e[2]],l=this.normal(a,i,s);t.push(a[0],a[2],a[1],i[0],i[2],i[1],s[0],s[2],s[1]),r.push(l[0],l[1],l[2],l[0],l[1],l[2],l[0],l[1],l[2]),n.push(0,0,0,0,0,0),o=Math.max(o,a[1],i[1],s[1])}),{vertices:t,normals:r,texCoords:n,height:o}}}OBJ.parse=function(e,t){return new OBJ(e,t).meshes};const triangulate=function(){const e=10,t=[.8627450980392157,.8235294117647058,.7843137254901961];METERS_PER_LEVEL=3;const r={brick:"#cc7755",bronze:"#ffeecc",canvas:"#fff8f0",concrete:"#999999",copper:"#a0e0d0",glass:"#e8f8f8",gold:"#ffcc00",plants:"#009933",metal:"#aaaaaa",panel:"#fff8f0",plaster:"#999999",roof_tiles:"#f08060",silver:"#cccccc",slate:"#666666",stone:"#996666",tar_paper:"#333333",wood:"#deb887"},n={asphalt:"tar_paper",bitumen:"tar_paper",block:"stone",bricks:"brick",glas:"glass",glassfront:"glass",grass:"plants",masonry:"stone",granite:"stone",panels:"panel",paving_stones:"stone",plastered:"plaster",rooftiles:"roof_tiles",roofingfelt:"tar_paper",sandstone:"stone",sheet:"canvas",sheets:"canvas",shingle:"tar_paper",shingles:"tar_paper",slates:"slate",steel:"metal",tar:"tar_paper",tent:"canvas",thatch:"plants",tile:"roof_tiles",tiles:"roof_tiles"},o=.5,a=6378137*Math.PI/180;function i(e){return"string"!=typeof e?null:"#"===(e=e.toLowerCase())[0]?e:r[n[e]||e]||null}function s(e,r){r=r||0;let n,o=Qolor.parse(e);return[(n=o.isValid()?o.saturation(.7).toArray():t)[0]+r,n[1]+r,n[2]+r]}return function(t,r,n,l,f){const c=[a*Math.cos(n[1]/180*Math.PI),a];(function(e){switch(e.type){case"MultiPolygon":return e.coordinates;case"Polygon":return[e.coordinates];default:return[]}})(r.geometry).map(a=>{const u=function(e,t,r){return e.map((e,n)=>(0===n!==function(e){return 0<e.reduce((e,t,r,n)=>e+(r<n.length-1?(n[r+1][0]-t[0])*(n[r+1][1]+t[1]):0),0)}(e)&&e.reverse(),e.map(function(e){return[(e[0]-t[0])*r[0],-(e[1]-t[1])*r[1]]})))}(a,n,c);!function(t,r,n,a,l){const f=function(t,r){const n={};switch(n.center=[r.minX+(r.maxX-r.minX)/2,r.minY+(r.maxY-r.minY)/2],n.radius=(r.maxX-r.minX)/2,n.roofHeight=t.roofHeight||(t.roofLevels?t.roofLevels*METERS_PER_LEVEL:0),t.roofShape){case"cone":case"pyramid":case"dome":case"onion":n.roofHeight=n.roofHeight||1*n.radius;break;case"gabled":case"hipped":case"half-hipped":case"skillion":case"gambrel":case"mansard":case"round":n.roofHeight=n.roofHeight||1*METERS_PER_LEVEL;break;case"flat":n.roofHeight=0;break;default:n.roofHeight=0}let o;if(n.wallZ=t.minHeight||(t.minLevel?t.minLevel*METERS_PER_LEVEL:0),void 0!==t.height)o=t.height,n.roofHeight=Math.min(n.roofHeight,o),n.roofZ=o-n.roofHeight,n.wallHeight=o-n.roofHeight-n.wallZ;else if(void 0!==t.levels)o=t.levels*METERS_PER_LEVEL,n.roofZ=o,n.wallHeight=o-n.wallZ;else{switch(t.shape){case"cone":case"dome":case"pyramid":o=2*n.radius,n.roofHeight=0;break;case"sphere":o=4*n.radius,n.roofHeight=0;break;default:o=e}n.roofZ=o,n.wallHeight=o-n.wallZ}return n}(r,function(e){let t=1/0,r=1/0,n=-1/0,o=-1/0;for(let a=0;a<e.length;a++)t=Math.min(t,e[a][0]),r=Math.min(r,e[a][1]),n=Math.max(n,e[a][0]),o=Math.max(o,e[a][1]);return{minX:t,minY:r,maxX:n,maxY:o}}(n[0])),c=s(a||r.wallColor||r.color||i(r.material),l),u=s(a||r.roofColor||i(r.roofMaterial),l);switch(r.shape){case"cone":return void split.cylinder(t,f.center,f.radius,0,f.wallHeight,f.wallZ,c);case"dome":return void split.dome(t,f.center,f.radius,f.wallHeight,f.wallZ,c);case"pyramid":return void split.pyramid(t,n,f.center,f.wallHeight,f.wallZ,c);case"sphere":return void split.sphere(t,f.center,f.radius,f.wallHeight,f.wallZ,c)}switch(createRoof(t,r,n,f,u,c),r.shape){case"none":return;case"cylinder":return void split.cylinder(t,f.center,f.radius,f.radius,f.wallHeight,f.wallZ,c);default:let e=.2,a=.4;"glass"!==r.material&&(e=0,a=0,r.levels&&(a=parseFloat(r.levels)-parseFloat(r.minLevel||0)<<0)),split.extrusion(t,n,f.wallHeight,f.wallZ,c,[0,o,e/f.wallHeight,a/f.wallHeight])}}(t,r.properties,u,l,f)})}}();var createRoof;function pointOnSegment(e,t){return e[0]>=Math.min(t[0][0],t[1][0])&&e[0]<=Math.max(t[1][0],t[0][0])&&e[1]>=Math.min(t[0][1],t[1][1])&&e[1]<=Math.max(t[1][1],t[0][1])}function getVectorSegmentIntersection(e,t,r){var n,o,a,i,s,l=r[0],f=[r[1][0]-r[0][0],r[1][1]-r[0][1]];if(0!==t[0]||0!==f[0]){if(0!==t[0]&&(a=t[1]/t[0],n=e[1]-a*e[0]),0!==f[0]&&(i=f[1]/f[0],o=l[1]-i*l[0]),0===t[0]&&pointOnSegment(s=[e[0],i*e[0]+o],r))return s;if(0===f[0]&&pointOnSegment(s=[l[0],a*l[0]+n],r))return s;if(a!==i){var c=(o-n)/(a-i);return pointOnSegment(s=[c,a*c+n],r)?s:void 0}}}function getDistanceToLine(e,t){var r=t[0],n=t[1];if(r[0]!==n[0]||r[1]!==n[1]){var o=(n[1]-r[1])/(n[0]-r[0]),a=r[1]-o*r[0];if(0===o)return Math.abs(a-e[1]);if(o===1/0)return Math.abs(r[0]-e[0]);var i=-1/o,s=(e[1]-i*e[0]-a)/(o-i),l=o*s+a,f=e[0]-s,c=e[1]-l;return Math.sqrt(f*f+c*c)}}!function(){function e(e,r,n,o,a,i,s){if(0,n.length>1||void 0===r.roofDirection)return t(e,r,n,a,i);var l=(r.roofDirection/180-.5)*Math.PI,f=[Math.cos(l),Math.sin(l)],c=function(e,t,r){for(var n,o=[],a=0;a<r.length-1;a++)if(void 0!==(n=getVectorSegmentIntersection(e,t,[r[a],r[a+1]]))){if(2===o.length)return;a++,r.splice(a,0,n),o.push(a)}if(!(o.length<2))return{index:o,roof:r}}(a.center,f,n[0]);if(!c)return t(e,r,n,a,i);for(var u,h=c.index,p=c.roof,d=[],g=0,x=[p[h[0]],p[h[1]]],v=0;v<p.length;v++)d[v]=getDistanceToLine(p[v],x),g=Math.max(g,d[v]);for(v=0;v<p.length;v++)p[v][2]=(1-d[v]/g)*a.roofHeight;for(u=p.slice(h[0],h[1]+1),split.polygon(e,[u],a.roofZ,i),u=(u=p.slice(h[1],p.length-1)).concat(p.slice(0,h[0]+1)),split.polygon(e,[u],a.roofZ,i),v=0;v<p.length-1;v++)0===p[v][2]&&0===p[v+1][2]||split.quad(e,[p[v][0],p[v][1],a.roofZ+p[v][2]],[p[v][0],p[v][1],a.roofZ],[p[v+1][0],p[v+1][1],a.roofZ],[p[v+1][0],p[v+1][1],a.roofZ+p[v+1][2]],s)}function t(e,t,r,n,o){"cylinder"===t.shape?split.circle(e,n.center,n.radius,n.roofZ,o):split.polygon(e,r,n.roofZ,o)}createRoof=function(r,n,o,a,i,s){switch(n.roofShape){case"cone":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.cylinder(e,r.center,r.radius,0,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"dome":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.dome(e,r.center,r.radius,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"pyramid":return function(e,t,r,n,o){"cylinder"===t.shape?split.cylinder(e,n.center,n.radius,0,n.roofHeight,n.roofZ,o):split.pyramid(e,r,n.center,n.roofHeight,n.roofZ,o)}(r,n,o,a,i);case"skillion":return function(e,r,n,o,a,i){if(void 0===r.roofDirection)return t(e,r,n,o,a);var s,l,f=r.roofDirection/180*Math.PI,c=1/0,u=-1/0;n[0].forEach(function(e){var t=e[1]*Math.cos(-f)+e[0]*Math.sin(-f);t<c&&(c=t,s=e),t>u&&(u=t,l=e)});var h=n[0],p=[Math.cos(f),Math.sin(f)],d=[s,[s[0]+p[0],s[1]+p[1]]],g=getDistanceToLine(l,d);n.forEach(function(e){e.forEach(function(e){var t=getDistanceToLine(e,d);e[2]=t/g*o.roofHeight})}),split.polygon(e,[h],o.roofZ,a),n.forEach(function(t){for(var r=0;r<t.length-1;r++)0===t[r][2]&&0===t[r+1][2]||split.quad(e,[t[r][0],t[r][1],o.roofZ+t[r][2]],[t[r][0],t[r][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ+t[r+1][2]],i)})}(r,n,o,a,i,s);case"gabled":return e(r,n,o,0,a,i,s);case"hipped":case"half-hipped":return t(r,n,o,a,i);case"gambrel":case"mansard":return e(r,n,o,0,a,i,s);case"round":return function(e,r,n,o,a,i){if(n.length>1||void 0===r.roofDirection)return t(e,r,n,o,a);return t(e,r,n,o,a)}(r,n,o,a,i);case"onion":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n);for(var o,a,i=[{rScale:.8,hScale:0},{rScale:.9,hScale:.18},{rScale:.9,hScale:.35},{rScale:.8,hScale:.47},{rScale:.6,hScale:.59},{rScale:.5,hScale:.65},{rScale:.2,hScale:.82},{rScale:0,hScale:1}],s=0,l=i.length-1;s<l;s++)o=r.roofHeight*i[s].hScale,a=r.roofHeight*i[s+1].hScale,split.cylinder(e,r.center,r.radius*i[s].rScale,r.radius*i[s+1].rScale,a-o,r.roofZ+o,n)}(r,o,a,i);default:return t(r,n,o,a,i)}}}();const split={NUM_Y_SEGMENTS:24,NUM_X_SEGMENTS:32,quad:(e,t,r,n,o,a)=>{split.triangle(e,t,r,n,a),split.triangle(e,n,o,t,a)},triangle:(e,t,r,n,o)=>{const a=vec3.normal(t,r,n);[].push.apply(e.vertices,[].concat(t,n,r)),[].push.apply(e.normals,[].concat(a,a,a)),[].push.apply(e.colors,[].concat(o,o,o)),e.texCoords.push(0,0,0,0,0,0)},circle:(e,t,r,n,o)=>{let a,i;n=n||0;for(let s=0;s<split.NUM_X_SEGMENTS;s++)a=s/split.NUM_X_SEGMENTS,i=(s+1)/split.NUM_X_SEGMENTS,split.triangle(e,[t[0]+r*Math.sin(a*Math.PI*2),t[1]+r*Math.cos(a*Math.PI*2),n],[t[0],t[1],n],[t[0]+r*Math.sin(i*Math.PI*2),t[1]+r*Math.cos(i*Math.PI*2),n],o)},polygon:(e,t,r,n)=>{r=r||0;const o=[],a=[];let i,s,l=0;t.forEach((e,n)=>{e.forEach(e=>{o.push(e[0],e[1],r+(e[2]||0))}),n&&(l+=t[n-1].length,a.push(l))});const f=earcut(o,a,3);let c,u,h;for(i=0,s=f.length-2;i<s;i+=3)c=3*f[i],u=3*f[i+1],h=3*f[i+2],split.triangle(e,[o[c],o[c+1],o[c+2]],[o[u],o[u+1],o[u+2]],[o[h],o[h+1],o[h+2]],n)},cube:(e,t,r,n,o,a,i,s)=>{const l=[o=o||0,a=a||0,i=i||0],f=[o+t,a,i],c=[o+t,a+r,i],u=[o,a+r,i],h=[o,a,i+n],p=[o+t,a,i+n],d=[o+t,a+r,i+n],g=[o,a+r,i+n];split.quad(e,f,l,u,c,s),split.quad(e,h,p,d,g,s),split.quad(e,l,f,p,h,s),split.quad(e,f,c,d,p,s),split.quad(e,c,u,g,d,s),split.quad(e,u,l,h,g,s)},cylinder:(e,t,r,n,o,a,i)=>{a=a||0;const s=split.NUM_X_SEGMENTS,l=2*Math.PI;let f,c,u,h,p,d;for(let g=0;g<s;g++)f=g/s*l,c=(g+1)/s*l,u=Math.sin(f),h=Math.cos(f),p=Math.sin(c),d=Math.cos(c),split.triangle(e,[t[0]+r*u,t[1]+r*h,a],[t[0]+n*p,t[1]+n*d,a+o],[t[0]+r*p,t[1]+r*d,a],i),0!==n&&split.triangle(e,[t[0]+n*u,t[1]+n*h,a+o],[t[0]+n*p,t[1]+n*d,a+o],[t[0]+r*u,t[1]+r*h,a],i)},dome:(e,t,r,n,o,a,i)=>{o=o||0;const s=split.NUM_Y_SEGMENTS/2,l=Math.PI/2,f=i?0:-l;let c,u,h,p,d,g,x,v,m,y;for(let i=0;i<s;i++)c=i/s*l+f,u=(i+1)/s*l+f,h=Math.cos(c),p=Math.sin(c),x=h*r,v=(d=Math.cos(u))*r,m=((g=Math.sin(u))-p)*n,y=o-g*n,split.cylinder(e,t,v,x,m,y,a)},sphere:(e,t,r,n,o,a)=>{o=o||0;let i=0;return i+=split.dome(e,t,r,n/2,o+n/2,a,!0),i+=split.dome(e,t,r,n/2,o+n/2,a)},pyramid:(e,t,r,n,o,a)=>{o=o||0;for(let i=0,s=(t=t[0]).length-1;i<s;i++)split.triangle(e,[t[i][0],t[i][1],o],[t[i+1][0],t[i+1][1],o],[r[0],r[1],o+n],a)},extrusion:(e,t,r,n,o,a)=>{n=n||0;let i,s,l,f,c,u,h,p,d,g,x,v,m=a[2]*r,y=a[3]*r;t.forEach(t=>{for(x=0,v=t.length-1;x<v;x++)i=t[x],s=t[x+1],l=vec2.len(vec2.sub(i,s)),f=[i[0],i[1],n],c=[s[0],s[1],n],u=[s[0],s[1],n+r],h=[i[0],i[1],n+r],p=vec3.normal(f,c,u),[].push.apply(e.vertices,[].concat(f,u,c,f,h,u)),[].push.apply(e.normals,[].concat(p,p,p,p,p,p)),[].push.apply(e.colors,[].concat(o,o,o,o,o,o)),d=a[0]*l<<0,g=a[1]*l<<0,e.texCoords.push(d,y,g,m,g,y,d,y,d,m,g,m)})}};var earcut=function(){function e(e,o,a){a=a||2;var i,s,c,h,p,d,g,x=o&&o.length,v=x?o[0]*a:e.length,m=t(e,0,v,a,!0),y=[];if(!m)return y;if(x&&(m=function(e,n,o,a){var i,s,c,h,p,d=[];for(i=0,s=n.length;i<s;i++)c=n[i]*a,h=i<s-1?n[i+1]*a:e.length,(p=t(e,c,h,a,!1))===p.next&&(p.steiner=!0),d.push(u(p));for(d.sort(l),i=0;i<d.length;i++)f(d[i],o),o=r(o,o.next);return o}(e,o,m,a)),e.length>80*a){i=c=e[0],s=h=e[1];for(var b=a;b<v;b+=a)(p=e[b])<i&&(i=p),(d=e[b+1])<s&&(s=d),p>c&&(c=p),d>h&&(h=d);g=Math.max(c-i,h-s)}return n(m,y,a,i,s,g),y}function t(e,t,r,n,o){var a,i;if(o===w(e,t,r,n)>0)for(a=t;a<r;a+=n)i=y(a,e[a],e[a+1],i);else for(a=r-n;a>=t;a-=n)i=y(a,e[a],e[a+1],i);return i&&g(i,i.next)&&(b(i),i=i.next),i}function r(e,t){if(!e)return e;t||(t=e);var r,n=e;do{if(r=!1,n.steiner||!g(n,n.next)&&0!==d(n.prev,n,n.next))n=n.next;else{if(b(n),(n=t=n.prev)===n.next)return null;r=!0}}while(r||n!==t);return t}function n(e,t,l,f,u,h,p){if(e){!p&&h&&function(e,t,r,n){var o=e;do{null===o.z&&(o.z=c(o.x,o.y,t,r,n)),o.prevZ=o.prev,o.nextZ=o.next,o=o.next}while(o!==e);o.prevZ.nextZ=null,o.prevZ=null,function(e){var t,r,n,o,a,i,s,l,f=1;do{for(r=e,e=null,a=null,i=0;r;){for(i++,n=r,s=0,t=0;t<f&&(s++,n=n.nextZ);t++);for(l=f;s>0||l>0&&n;)0===s?(o=n,n=n.nextZ,l--):0!==l&&n?r.z<=n.z?(o=r,r=r.nextZ,s--):(o=n,n=n.nextZ,l--):(o=r,r=r.nextZ,s--),a?a.nextZ=o:e=o,o.prevZ=a,a=o;r=n}a.nextZ=null,f*=2}while(i>1)}(o)}(e,f,u,h);for(var d,g,x=e;e.prev!==e.next;)if(d=e.prev,g=e.next,h?a(e,f,u,h):o(e))t.push(d.i/l),t.push(e.i/l),t.push(g.i/l),b(e),e=g.next,x=g.next;else if((e=g)===x){p?1===p?n(e=i(e,t,l),t,l,f,u,h,2):2===p&&s(e,t,l,f,u,h):n(r(e),t,l,f,u,h,1);break}}}function o(e){var t=e.prev,r=e,n=e.next;if(d(t,r,n)>=0)return!1;for(var o=e.next.next;o!==e.prev;){if(h(t.x,t.y,r.x,r.y,n.x,n.y,o.x,o.y)&&d(o.prev,o,o.next)>=0)return!1;o=o.next}return!0}function a(e,t,r,n){var o=e.prev,a=e,i=e.next;if(d(o,a,i)>=0)return!1;for(var s=o.x<a.x?o.x<i.x?o.x:i.x:a.x<i.x?a.x:i.x,l=o.y<a.y?o.y<i.y?o.y:i.y:a.y<i.y?a.y:i.y,f=o.x>a.x?o.x>i.x?o.x:i.x:a.x>i.x?a.x:i.x,u=o.y>a.y?o.y>i.y?o.y:i.y:a.y>i.y?a.y:i.y,p=c(s,l,t,r,n),g=c(f,u,t,r,n),x=e.nextZ;x&&x.z<=g;){if(x!==e.prev&&x!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,x.x,x.y)&&d(x.prev,x,x.next)>=0)return!1;x=x.nextZ}for(x=e.prevZ;x&&x.z>=p;){if(x!==e.prev&&x!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,x.x,x.y)&&d(x.prev,x,x.next)>=0)return!1;x=x.prevZ}return!0}function i(e,t,r){var n=e;do{var o=n.prev,a=n.next.next;!g(o,a)&&x(o,n,n.next,a)&&v(o,a)&&v(a,o)&&(t.push(o.i/r),t.push(n.i/r),t.push(a.i/r),b(n),b(n.next),n=e=a),n=n.next}while(n!==e);return n}function s(e,t,o,a,i,s){var l=e;do{for(var f=l.next.next;f!==l.prev;){if(l.i!==f.i&&p(l,f)){var c=m(l,f);return l=r(l,l.next),c=r(c,c.next),n(l,t,o,a,i,s),void n(c,t,o,a,i,s)}f=f.next}l=l.next}while(l!==e)}function l(e,t){return e.x-t.x}function f(e,t){if(t=function(e,t){var r,n=t,o=e.x,a=e.y,i=-1/0;do{if(a<=n.y&&a>=n.next.y){var s=n.x+(a-n.y)*(n.next.x-n.x)/(n.next.y-n.y);if(s<=o&&s>i){if(i=s,s===o){if(a===n.y)return n;if(a===n.next.y)return n.next}r=n.x<n.next.x?n:n.next}}n=n.next}while(n!==t);if(!r)return null;if(o===i)return r.prev;var l,f=r,c=r.x,u=r.y,p=1/0;n=r.next;for(;n!==f;)o>=n.x&&n.x>=c&&h(a<u?o:i,a,c,u,a<u?i:o,a,n.x,n.y)&&((l=Math.abs(a-n.y)/(o-n.x))<p||l===p&&n.x>r.x)&&v(n,e)&&(r=n,p=l),n=n.next;return r}(e,t)){var n=m(t,e);r(n,n.next)}}function c(e,t,r,n,o){return(e=1431655765&((e=858993459&((e=252645135&((e=16711935&((e=32767*(e-r)/o)|e<<8))|e<<4))|e<<2))|e<<1))|(t=1431655765&((t=858993459&((t=252645135&((t=16711935&((t=32767*(t-n)/o)|t<<8))|t<<4))|t<<2))|t<<1))<<1}function u(e){var t=e,r=e;do{t.x<r.x&&(r=t),t=t.next}while(t!==e);return r}function h(e,t,r,n,o,a,i,s){return(o-i)*(t-s)-(e-i)*(a-s)>=0&&(e-i)*(n-s)-(r-i)*(t-s)>=0&&(r-i)*(a-s)-(o-i)*(n-s)>=0}function p(e,t){return e.next.i!==t.i&&e.prev.i!==t.i&&!function(e,t){var r=e;do{if(r.i!==e.i&&r.next.i!==e.i&&r.i!==t.i&&r.next.i!==t.i&&x(r,r.next,e,t))return!0;r=r.next}while(r!==e);return!1}(e,t)&&v(e,t)&&v(t,e)&&function(e,t){var r=e,n=!1,o=(e.x+t.x)/2,a=(e.y+t.y)/2;do{r.y>a!=r.next.y>a&&o<(r.next.x-r.x)*(a-r.y)/(r.next.y-r.y)+r.x&&(n=!n),r=r.next}while(r!==e);return n}(e,t)}function d(e,t,r){return(t.y-e.y)*(r.x-t.x)-(t.x-e.x)*(r.y-t.y)}function g(e,t){return e.x===t.x&&e.y===t.y}function x(e,t,r,n){return!!(g(e,t)&&g(r,n)||g(e,n)&&g(r,t))||d(e,t,r)>0!=d(e,t,n)>0&&d(r,n,e)>0!=d(r,n,t)>0}function v(e,t){return d(e.prev,e,e.next)<0?d(e,t,e.next)>=0&&d(e,e.prev,t)>=0:d(e,t,e.prev)<0||d(e,e.next,t)<0}function m(e,t){var r=new M(e.i,e.x,e.y),n=new M(t.i,t.x,t.y),o=e.next,a=t.prev;return e.next=t,t.prev=e,r.next=o,o.prev=r,n.next=r,r.prev=n,a.next=n,n.prev=a,n}function y(e,t,r,n){var o=new M(e,t,r);return n?(o.next=n.next,o.prev=n,n.next.prev=o,n.next=o):(o.prev=o,o.next=o),o}function b(e){e.next.prev=e.prev,e.prev.next=e.next,e.prevZ&&(e.prevZ.nextZ=e.nextZ),e.nextZ&&(e.nextZ.prevZ=e.prevZ)}function M(e,t,r){this.i=e,this.x=t,this.y=r,this.prev=null,this.next=null,this.z=null,this.prevZ=null,this.nextZ=null,this.steiner=!1}function w(e,t,r,n){for(var o=0,a=t,i=r-n;a<r;a+=n)o+=(e[i]-e[a])*(e[a+1]+e[i+1]),i=a;return o}return e.deviation=function(e,t,r,n){var o,a,i=t&&t.length,s=i?t[0]*r:e.length,l=Math.abs(w(e,0,s,r));if(i)for(o=0,a=t.length;o<a;o++){var f=t[o]*r,c=o<a-1?t[o+1]*r:e.length;l-=Math.abs(w(e,f,c,r))}var u=0;for(o=0,a=n.length;o<a;o+=3){var h=n[o]*r,p=n[o+1]*r,d=n[o+2]*r;u+=Math.abs((e[h]-e[d])*(e[p+1]-e[h+1])-(e[h]-e[p])*(e[d+1]-e[h+1]))}return 0===l&&0===u?0:Math.abs((u-l)/l)},e.flatten=function(e){for(var t=e[0][0].length,r={vertices:[],holes:[],dimensions:t},n=0,o=0;o<e.length;o++){for(var a=0;a<e[o].length;a++)for(var i=0;i<t;i++)r.vertices.push(e[o][a][i]);o>0&&(n+=e[o-1].length,r.holes.push(n))}return r},e}();const vec3={len:e=>Math.sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]),sub:(e,t)=>[e[0]-t[0],e[1]-t[1],e[2]-t[2]],unit:e=>{const t=vec3.len(e);return[e[0]/t,e[1]/t,e[2]/t]},normal:(e,t,r)=>{const n=vec3.sub(e,t),o=vec3.sub(t,r);return vec3.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}},vec2={len:e=>Math.sqrt(e[0]*e[0]+e[1]*e[1]),add:(e,t)=>[e[0]+t[0],e[1]+t[1]],sub:(e,t)=>[e[0]-t[0],e[1]-t[1]],dot:(e,t)=>e[1]*t[0]-e[0]*t[1],scale:(e,t)=>[e[0]*t,e[1]*t],equals:(e,t)=>e[0]===t[0]&&e[1]===t[1]};function getOrigin(e){const t=e.coordinates;switch(e.type){case"Point":return t;case"MultiPoint":case"LineString":return t[0];case"MultiLineString":case"Polygon":return t[0][0];case"MultiPolygon":return t[0][0][0]}}function getPickingColor(e){return[0,(255&++e)/255,(e>>8&255)/255]}function postResult(e,t,r){const n={items:e,position:t,vertices:new Float32Array(r.vertices),normals:new Float32Array(r.normals),colors:new Float32Array(r.colors),texCoords:new Float32Array(r.texCoords),heights:new Float32Array(r.heights),pickingColors:new Float32Array(r.pickingColors)};postMessage(n,[n.vertices.buffer,n.normals.buffer,n.colors.buffer,n.texCoords.buffer,n.heights.buffer,n.pickingColors.buffer])}function loadGeoJSON(e){"object"==typeof e.url?(postMessage("load"),processGeoJSON(e.url,e.options)):Request.getJSON(e.url,(t,r)=>{t?postMessage("error"):(postMessage("load"),processGeoJSON(r,e.options))})}function processGeoJSON(e,t){if(!e||!e.features.length)return void postMessage("error");const r={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},n=[],o=getOrigin(e.features[0].geometry),a={latitude:o[1],longitude:o[0]};e.features.forEach((e,a)=>{const i=e.properties,s=t.id||e.id,l=getPickingColor(a);let f=r.vertices.length;triangulate(r,e,o),f=(r.vertices.length-f)/3;for(let e=0;e<f;e++)r.heights.push(i.height),r.pickingColors.push(...l);n.push({id:s,properties:i,vertexCount:f})}),postResult(n,a,r)}function loadOBJ(e){Request.getText(e.url,(e,t)=>{if(e)return void postMessage("error");let r=t.match(/^mtllib\\s+(.*)$/m);r?Request.getText(this.url.replace(/[^\\/]+$/,"")+r[1],(e,r)=>{e?postMessage("error"):(postMessage("load"),processOBJ(t,r))}):(postMessage("load"),processOBJ(t,null))})}function processOBJ(e,t,r){const n={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},o=[],a=Qolor.parse(r.color).toArray(),s=r.position;OBJ.parse(e,t).forEach((e,t)=>{n.vertices.push(...e.vertices),n.normals.push(...e.normals),n.texCoords.push(...e.texCoords);const s=r.id||e.id,l=(s/2%2?-1:1)*(s%2?.03:.06),f=a||e.color||DEFAULT_COLOR,c=e.vertices.length/3,u=getPickingColor(i);for(let t=0;t<c;t++)n.colors.push(f[0]+l,f[1]+l,f[2]+l),n.heights.push(e.height),n.pickingColors.push(...u);o.push({id:s,properties:{},vertexCount:c})}),postResult(o,s,n)}onmessage=function(e){const t=e.data;"GeoJSON"===t.type&&loadGeoJSON(t),"OBJ"===t.type&&loadOBJ(t)};';
+eval("\nvar π = Math.PI\nvar _120 = radians(120)\n\nmodule.exports = normalize\n\n/**\n * describe `path` in terms of cubic bézier \n * curves and move commands\n *\n * @param {Array} path\n * @return {Array}\n */\n\nfunction normalize(path){\n\t// init state\n\tvar prev\n\tvar result = []\n\tvar bezierX = 0\n\tvar bezierY = 0\n\tvar startX = 0\n\tvar startY = 0\n\tvar quadX = null\n\tvar quadY = null\n\tvar x = 0\n\tvar y = 0\n\n\tfor (var i = 0, len = path.length; i < len; i++) {\n\t\tvar seg = path[i]\n\t\tvar command = seg[0]\n\t\tswitch (command) {\n\t\t\tcase 'M':\n\t\t\t\tstartX = seg[1]\n\t\t\t\tstartY = seg[2]\n\t\t\t\tbreak\n\t\t\tcase 'A':\n\t\t\t\tseg = arc(x, y,seg[1],seg[2],radians(seg[3]),seg[4],seg[5],seg[6],seg[7])\n\t\t\t\t// split multi part\n\t\t\t\tseg.unshift('C')\n\t\t\t\tif (seg.length > 7) {\n\t\t\t\t\tresult.push(seg.splice(0, 7))\n\t\t\t\t\tseg.unshift('C')\n\t\t\t\t}\n\t\t\t\tbreak\n\t\t\tcase 'S':\n\t\t\t\t// default control point\n\t\t\t\tvar cx = x\n\t\t\t\tvar cy = y\n\t\t\t\tif (prev == 'C' || prev == 'S') {\n\t\t\t\t\tcx += cx - bezierX // reflect the previous command's control\n\t\t\t\t\tcy += cy - bezierY // point relative to the current point\n\t\t\t\t}\n\t\t\t\tseg = ['C', cx, cy, seg[1], seg[2], seg[3], seg[4]]\n\t\t\t\tbreak\n\t\t\tcase 'T':\n\t\t\t\tif (prev == 'Q' || prev == 'T') {\n\t\t\t\t\tquadX = x * 2 - quadX // as with 'S' reflect previous control point\n\t\t\t\t\tquadY = y * 2 - quadY\n\t\t\t\t} else {\n\t\t\t\t\tquadX = x\n\t\t\t\t\tquadY = y\n\t\t\t\t}\n\t\t\t\tseg = quadratic(x, y, quadX, quadY, seg[1], seg[2])\n\t\t\t\tbreak\n\t\t\tcase 'Q':\n\t\t\t\tquadX = seg[1]\n\t\t\t\tquadY = seg[2]\n\t\t\t\tseg = quadratic(x, y, seg[1], seg[2], seg[3], seg[4])\n\t\t\t\tbreak\n\t\t\tcase 'L':\n\t\t\t\tseg = line(x, y, seg[1], seg[2])\n\t\t\t\tbreak\n\t\t\tcase 'H':\n\t\t\t\tseg = line(x, y, seg[1], y)\n\t\t\t\tbreak\n\t\t\tcase 'V':\n\t\t\t\tseg = line(x, y, x, seg[1])\n\t\t\t\tbreak\n\t\t\tcase 'Z':\n\t\t\t\tseg = line(x, y, startX, startY)\n\t\t\t\tbreak\n\t\t}\n\n\t\t// update state\n\t\tprev = command\n\t\tx = seg[seg.length - 2]\n\t\ty = seg[seg.length - 1]\n\t\tif (seg.length > 4) {\n\t\t\tbezierX = seg[seg.length - 4]\n\t\t\tbezierY = seg[seg.length - 3]\n\t\t} else {\n\t\t\tbezierX = x\n\t\t\tbezierY = y\n\t\t}\n\t\tresult.push(seg)\n\t}\n\n\treturn result\n}\n\nfunction line(x1, y1, x2, y2){\n\treturn ['C', x1, y1, x2, y2, x2, y2]\n}\n\nfunction quadratic(x1, y1, cx, cy, x2, y2){\n\treturn [\n\t\t'C',\n\t\tx1/3 + (2/3) * cx,\n\t\ty1/3 + (2/3) * cy,\n\t\tx2/3 + (2/3) * cx,\n\t\ty2/3 + (2/3) * cy,\n\t\tx2,\n\t\ty2\n\t]\n}\n\n// This function is ripped from \n// github.com/DmitryBaranovskiy/raphael/blob/4d97d4/raphael.js#L2216-L2304 \n// which references w3.org/TR/SVG11/implnote.html#ArcImplementationNotes\n// TODO: make it human readable\n\nfunction arc(x1, y1, rx, ry, angle, large_arc_flag, sweep_flag, x2, y2, recursive) {\n\tif (!recursive) {\n\t\tvar xy = rotate(x1, y1, -angle)\n\t\tx1 = xy.x\n\t\ty1 = xy.y\n\t\txy = rotate(x2, y2, -angle)\n\t\tx2 = xy.x\n\t\ty2 = xy.y\n\t\tvar x = (x1 - x2) / 2\n\t\tvar y = (y1 - y2) / 2\n\t\tvar h = (x * x) / (rx * rx) + (y * y) / (ry * ry)\n\t\tif (h > 1) {\n\t\t\th = Math.sqrt(h)\n\t\t\trx = h * rx\n\t\t\try = h * ry\n\t\t}\n\t\tvar rx2 = rx * rx\n\t\tvar ry2 = ry * ry\n\t\tvar k = (large_arc_flag == sweep_flag ? -1 : 1)\n\t\t\t* Math.sqrt(Math.abs((rx2 * ry2 - rx2 * y * y - ry2 * x * x) / (rx2 * y * y + ry2 * x * x)))\n\t\tif (k == Infinity) k = 1 // neutralize\n\t\tvar cx = k * rx * y / ry + (x1 + x2) / 2\n\t\tvar cy = k * -ry * x / rx + (y1 + y2) / 2\n\t\tvar f1 = Math.asin(((y1 - cy) / ry).toFixed(9))\n\t\tvar f2 = Math.asin(((y2 - cy) / ry).toFixed(9))\n\n\t\tf1 = x1 < cx ? π - f1 : f1\n\t\tf2 = x2 < cx ? π - f2 : f2\n\t\tif (f1 < 0) f1 = π * 2 + f1\n\t\tif (f2 < 0) f2 = π * 2 + f2\n\t\tif (sweep_flag && f1 > f2) f1 = f1 - π * 2\n\t\tif (!sweep_flag && f2 > f1) f2 = f2 - π * 2\n\t} else {\n\t\tf1 = recursive[0]\n\t\tf2 = recursive[1]\n\t\tcx = recursive[2]\n\t\tcy = recursive[3]\n\t}\n\t// greater than 120 degrees requires multiple segments\n\tif (Math.abs(f2 - f1) > _120) {\n\t\tvar f2old = f2\n\t\tvar x2old = x2\n\t\tvar y2old = y2\n\t\tf2 = f1 + _120 * (sweep_flag && f2 > f1 ? 1 : -1)\n\t\tx2 = cx + rx * Math.cos(f2)\n\t\ty2 = cy + ry * Math.sin(f2)\n\t\tvar res = arc(x2, y2, rx, ry, angle, 0, sweep_flag, x2old, y2old, [f2, f2old, cx, cy])\n\t}\n\tvar t = Math.tan((f2 - f1) / 4)\n\tvar hx = 4 / 3 * rx * t\n\tvar hy = 4 / 3 * ry * t\n\tvar curve = [\n\t\t2 * x1 - (x1 + hx * Math.sin(f1)),\n\t\t2 * y1 - (y1 - hy * Math.cos(f1)),\n\t\tx2 + hx * Math.sin(f2),\n\t\ty2 - hy * Math.cos(f2),\n\t\tx2,\n\t\ty2\n\t]\n\tif (recursive) return curve\n\tif (res) curve = curve.concat(res)\n\tfor (var i = 0; i < curve.length;) {\n\t\tvar rot = rotate(curve[i], curve[i+1], angle)\n\t\tcurve[i++] = rot.x\n\t\tcurve[i++] = rot.y\n\t}\n\treturn curve\n}\n\nfunction rotate(x, y, rad){\n\treturn {\n\t\tx: x * Math.cos(rad) - y * Math.sin(rad),\n\t\ty: x * Math.sin(rad) + y * Math.cos(rad)\n\t}\n}\n\nfunction radians(degress){\n\treturn degress * (π / 180)\n}\n\n\n//# sourceURL=webpack:///./node_modules/normalize-svg-path/index.js?");
+
+/***/ }),
+
+/***/ "./node_modules/parse-svg-path/index.js":
+/*!**********************************************!*\
+  !*** ./node_modules/parse-svg-path/index.js ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("\nmodule.exports = parse\n\n/**\n * expected argument lengths\n * @type {Object}\n */\n\nvar length = {a: 7, c: 6, h: 1, l: 2, m: 2, q: 4, s: 4, t: 2, v: 1, z: 0}\n\n/**\n * segment pattern\n * @type {RegExp}\n */\n\nvar segment = /([astvzqmhlc])([^astvzqmhlc]*)/ig\n\n/**\n * parse an svg path data string. Generates an Array\n * of commands where each command is an Array of the\n * form `[command, arg1, arg2, ...]`\n *\n * @param {String} path\n * @return {Array}\n */\n\nfunction parse(path) {\n\tvar data = []\n\tpath.replace(segment, function(_, command, args){\n\t\tvar type = command.toLowerCase()\n\t\targs = parseValues(args)\n\n\t\t// overloaded moveTo\n\t\tif (type == 'm' && args.length > 2) {\n\t\t\tdata.push([command].concat(args.splice(0, 2)))\n\t\t\ttype = 'l'\n\t\t\tcommand = command == 'm' ? 'l' : 'L'\n\t\t}\n\n\t\twhile (true) {\n\t\t\tif (args.length == length[type]) {\n\t\t\t\targs.unshift(command)\n\t\t\t\treturn data.push(args)\n\t\t\t}\n\t\t\tif (args.length < length[type]) throw new Error('malformed path data')\n\t\t\tdata.push([command].concat(args.splice(0, length[type])))\n\t\t}\n\t})\n\treturn data\n}\n\nvar number = /-?[0-9]*\\.?[0-9]+(?:e[-+]?\\d+)?/ig\n\nfunction parseValues(args) {\n\tvar numbers = args.match(number)\n\treturn numbers ? numbers.map(Number) : []\n}\n\n\n//# sourceURL=webpack:///./node_modules/parse-svg-path/index.js?");
+
+/***/ }),
+
+/***/ "./node_modules/svg-path-contours/index.js":
+/*!*************************************************!*\
+  !*** ./node_modules/svg-path-contours/index.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("var bezier = __webpack_require__(/*! adaptive-bezier-curve */ \"./node_modules/adaptive-bezier-curve/index.js\")\nvar abs = __webpack_require__(/*! abs-svg-path */ \"./node_modules/abs-svg-path/index.js\")\nvar norm = __webpack_require__(/*! normalize-svg-path */ \"./node_modules/normalize-svg-path/index.js\")\nvar copy = __webpack_require__(/*! vec2-copy */ \"./node_modules/vec2-copy/index.js\")\n\nfunction set(out, x, y) {\n    out[0] = x\n    out[1] = y\n    return out\n}\n\nvar tmp1 = [0,0],\n    tmp2 = [0,0],\n    tmp3 = [0,0]\n\nfunction bezierTo(points, scale, start, seg) {\n    bezier(start, \n        set(tmp1, seg[1], seg[2]), \n        set(tmp2, seg[3], seg[4]),\n        set(tmp3, seg[5], seg[6]), scale, points)\n}\n\nmodule.exports = function contours(svg, scale) {\n    var paths = []\n\n    var points = []\n    var pen = [0, 0]\n    norm(abs(svg)).forEach(function(segment, i, self) {\n        if (segment[0] === 'M') {\n            copy(pen, segment.slice(1))\n            if (points.length>0) {\n                paths.push(points)\n                points = []\n            }\n        } else if (segment[0] === 'C') {\n            bezierTo(points, scale, pen, segment)\n            set(pen, segment[5], segment[6])\n        } else {\n            throw new Error('illegal type in SVG: '+segment[0])\n        }\n    })\n    if (points.length>0)\n        paths.push(points)\n    return paths\n}\n\n//# sourceURL=webpack:///./node_modules/svg-path-contours/index.js?");
+
+/***/ }),
+
+/***/ "./node_modules/vec2-copy/index.js":
+/*!*****************************************!*\
+  !*** ./node_modules/vec2-copy/index.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+eval("module.exports = function vec2Copy(out, a) {\n    out[0] = a[0]\n    out[1] = a[1]\n    return out\n}\n\n//# sourceURL=webpack:///./node_modules/vec2-copy/index.js?");
+
+/***/ }),
+
+/***/ "./src/icons/triangulateSVG.js":
+/*!*************************************!*\
+  !*** ./src/icons/triangulateSVG.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("// webpack src/icons/triangulateSVG.js -o lib/triangulateSVG.js --mode development\n\nconst parseSVGPath = __webpack_require__(/*! parse-svg-path */ \"./node_modules/parse-svg-path/index.js\");\nconst getPathContours = __webpack_require__(/*! svg-path-contours */ \"./node_modules/svg-path-contours/index.js\");\n\nfunction SVGtoPolygons (svg) {\n  const rx = /<path\\s+d=\"([^\"]+)\"/mg;\n\n  const res = [];\n  let match;\n  do {\n    match = rx.exec(svg);\n    if (match) {\n      const path = parseSVGPath(match[1]);\n      const contours = getPathContours(path);\n      res.push(contours);\n    }\n  } while (match);\n\n  return res;\n}\n\nfunction getOffsetAndScale (polygons) {\n  let\n    minX = Infinity, maxX = -Infinity,\n    minY = Infinity, maxY = -Infinity;\n\n  polygons.forEach(poly => {\n    poly.forEach(ring => {\n      ring.forEach(point => {\n        minX = Math.min(minX, point[0]);\n        maxX = Math.max(maxX, point[0]);\n        minY = Math.min(minY, point[1]);\n        maxY = Math.max(maxY, point[1]);\n      });\n    });\n  });\n\n  return { offset: [minX, minY], scale: Math.max(maxX-minX, maxY-minY) };\n}\n\nwindow.triangulateSVG = function (svg) { // window... exposes it in webpack\n  const polygons = SVGtoPolygons(svg);\n\n  const { offset, scale } = getOffsetAndScale(polygons);\n\n  const res = [];\n\n  polygons.forEach(poly => {\n    const\n      vertices = [],\n      ringIndex = [];\n\n    let r = 0;\n    poly.forEach((ring, i) => {\n      ring.forEach(point => {\n        vertices.push(...point);\n      });\n\n      if (i) {\n        r += poly[i - 1].length;\n        ringIndex.push(r);\n      }\n    });\n\n    const triangles = earcut(vertices, ringIndex);\n    for (let t = 0; t < triangles.length-2; t+=3) {\n      const i1 = triangles[t  ];\n      const i2 = triangles[t+1];\n      const i3 = triangles[t+2];\n\n      const a = [ (vertices[i1*2]-offset[0])/scale, (vertices[i1*2+1]-offset[1])/scale ];\n      const b = [ (vertices[i2*2]-offset[0])/scale, (vertices[i2*2+1]-offset[1])/scale ];\n      const c = [ (vertices[i3*2]-offset[0])/scale, (vertices[i3*2+1]-offset[1])/scale ];\n\n      res.push([a, b, c]);\n    }\n  });\n\n  return res;\n};\n\n\n//# sourceURL=webpack:///./src/icons/triangulateSVG.js?");
+
+/***/ })
+
+/******/ });
+
+var earcut = (function() {
+
+  function earcut(data, holeIndices, dim) {
+
+    dim = dim || 2;
+
+    var hasHoles = holeIndices && holeIndices.length,
+      outerLen = hasHoles ? holeIndices[0]*dim : data.length,
+      outerNode = linkedList(data, 0, outerLen, dim, true),
+      triangles = [];
+
+    if (!outerNode) return triangles;
+
+    var minX, minY, maxX, maxY, x, y, size;
+
+    if (hasHoles) outerNode = eliminateHoles(data, holeIndices, outerNode, dim);
+
+    // if the shape is not too simple, we'll use z-order curve hash later; calculate polygon bbox
+    if (data.length>80*dim) {
+      minX = maxX = data[0];
+      minY = maxY = data[1];
+
+      for (var i = dim; i<outerLen; i += dim) {
+        x = data[i];
+        y = data[i + 1];
+        if (x<minX) minX = x;
+        if (y<minY) minY = y;
+        if (x>maxX) maxX = x;
+        if (y>maxY) maxY = y;
+      }
+
+      // minX, minY and size are later used to transform coords into integers for z-order calculation
+      size = Math.max(maxX - minX, maxY - minY);
+    }
+
+    earcutLinked(outerNode, triangles, dim, minX, minY, size);
+
+    return triangles;
+  }
+
+// create a circular doubly linked list from polygon points in the specified winding order
+  function linkedList(data, start, end, dim, clockwise) {
+    var i, last;
+
+    if (clockwise === (signedArea(data, start, end, dim)>0)) {
+      for (i = start; i<end; i += dim) last = insertNode(i, data[i], data[i + 1], last);
+    } else {
+      for (i = end - dim; i>=start; i -= dim) last = insertNode(i, data[i], data[i + 1], last);
+    }
+
+    if (last && equals(last, last.next)) {
+      removeNode(last);
+      last = last.next;
+    }
+
+    return last;
+  }
+
+// eliminate colinear or duplicate points
+  function filterPoints(start, end) {
+    if (!start) return start;
+    if (!end) end = start;
+
+    var p = start,
+      again;
+    do {
+      again = false;
+
+      if (!p.steiner && (equals(p, p.next) || area(p.prev, p, p.next) === 0)) {
+        removeNode(p);
+        p = end = p.prev;
+        if (p === p.next) return null;
+        again = true;
+
+      } else {
+        p = p.next;
+      }
+    } while (again || p !== end);
+
+    return end;
+  }
+
+// main ear slicing loop which triangulates a polygon (given as a linked list)
+  function earcutLinked(ear, triangles, dim, minX, minY, size, pass) {
+    if (!ear) return;
+
+    // interlink polygon nodes in z-order
+    if (!pass && size) indexCurve(ear, minX, minY, size);
+
+    var stop = ear,
+      prev, next;
+
+    // iterate through ears, slicing them one by one
+    while (ear.prev !== ear.next) {
+      prev = ear.prev;
+      next = ear.next;
+
+      if (size ? isEarHashed(ear, minX, minY, size) : isEar(ear)) {
+        // cut off the triangle
+        triangles.push(prev.i/dim);
+        triangles.push(ear.i/dim);
+        triangles.push(next.i/dim);
+
+        removeNode(ear);
+
+        // skipping the next vertice leads to less sliver triangles
+        ear = next.next;
+        stop = next.next;
+
+        continue;
+      }
+
+      ear = next;
+
+      // if we looped through the whole remaining polygon and can't find any more ears
+      if (ear === stop) {
+        // try filtering points and slicing again
+        if (!pass) {
+          earcutLinked(filterPoints(ear), triangles, dim, minX, minY, size, 1);
+
+          // if this didn't work, try curing all small self-intersections locally
+        } else if (pass === 1) {
+          ear = cureLocalIntersections(ear, triangles, dim);
+          earcutLinked(ear, triangles, dim, minX, minY, size, 2);
+
+          // as a last resort, try splitting the remaining polygon into two
+        } else if (pass === 2) {
+          splitEarcut(ear, triangles, dim, minX, minY, size);
+        }
+
+        break;
+      }
+    }
+  }
+
+// check whether a polygon node forms a valid ear with adjacent nodes
+  function isEar(ear) {
+    var a = ear.prev,
+      b = ear,
+      c = ear.next;
+
+    if (area(a, b, c)>=0) return false; // reflex, can't be an ear
+
+    // now make sure we don't have other points inside the potential ear
+    var p = ear.next.next;
+
+    while (p !== ear.prev) {
+      if (pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+        area(p.prev, p, p.next)>=0) return false;
+      p = p.next;
+    }
+
+    return true;
+  }
+
+  function isEarHashed(ear, minX, minY, size) {
+    var a = ear.prev,
+      b = ear,
+      c = ear.next;
+
+    if (area(a, b, c)>=0) return false; // reflex, can't be an ear
+
+    // triangle bbox; min & max are calculated like this for speed
+    var minTX = a.x<b.x ? (a.x<c.x ? a.x : c.x) : (b.x<c.x ? b.x : c.x),
+      minTY = a.y<b.y ? (a.y<c.y ? a.y : c.y) : (b.y<c.y ? b.y : c.y),
+      maxTX = a.x>b.x ? (a.x>c.x ? a.x : c.x) : (b.x>c.x ? b.x : c.x),
+      maxTY = a.y>b.y ? (a.y>c.y ? a.y : c.y) : (b.y>c.y ? b.y : c.y);
+
+    // z-order range for the current triangle bbox;
+    var minZ = zOrder(minTX, minTY, minX, minY, size),
+      maxZ = zOrder(maxTX, maxTY, minX, minY, size);
+
+    // first look for points inside the triangle in increasing z-order
+    var p = ear.nextZ;
+
+    while (p && p.z<=maxZ) {
+      if (p !== ear.prev && p !== ear.next &&
+        pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+        area(p.prev, p, p.next)>=0) return false;
+      p = p.nextZ;
+    }
+
+    // then look for points in decreasing z-order
+    p = ear.prevZ;
+
+    while (p && p.z>=minZ) {
+      if (p !== ear.prev && p !== ear.next &&
+        pointInTriangle(a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y) &&
+        area(p.prev, p, p.next)>=0) return false;
+      p = p.prevZ;
+    }
+
+    return true;
+  }
+
+// go through all polygon nodes and cure small local self-intersections
+  function cureLocalIntersections(start, triangles, dim) {
+    var p = start;
+    do {
+      var a = p.prev,
+        b = p.next.next;
+
+      if (!equals(a, b) && intersects(a, p, p.next, b) && locallyInside(a, b) && locallyInside(b, a)) {
+
+        triangles.push(a.i/dim);
+        triangles.push(p.i/dim);
+        triangles.push(b.i/dim);
+
+        // remove two nodes involved
+        removeNode(p);
+        removeNode(p.next);
+
+        p = start = b;
+      }
+      p = p.next;
+    } while (p !== start);
+
+    return p;
+  }
+
+// try splitting polygon into two and triangulate them independently
+  function splitEarcut(start, triangles, dim, minX, minY, size) {
+    // look for a valid diagonal that divides the polygon into two
+    var a = start;
+    do {
+      var b = a.next.next;
+      while (b !== a.prev) {
+        if (a.i !== b.i && isValidDiagonal(a, b)) {
+          // split the polygon in two by the diagonal
+          var c = splitPolygon(a, b);
+
+          // filter colinear points around the cuts
+          a = filterPoints(a, a.next);
+          c = filterPoints(c, c.next);
+
+          // run earcut on each half
+          earcutLinked(a, triangles, dim, minX, minY, size);
+          earcutLinked(c, triangles, dim, minX, minY, size);
+          return;
+        }
+        b = b.next;
+      }
+      a = a.next;
+    } while (a !== start);
+  }
+
+// link every hole into the outer loop, producing a single-ring polygon without holes
+  function eliminateHoles(data, holeIndices, outerNode, dim) {
+    var queue = [],
+      i, len, start, end, list;
+
+    for (i = 0, len = holeIndices.length; i<len; i++) {
+      start = holeIndices[i]*dim;
+      end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
+      list = linkedList(data, start, end, dim, false);
+      if (list === list.next) list.steiner = true;
+      queue.push(getLeftmost(list));
+    }
+
+    queue.sort(compareX);
+
+    // process holes from left to right
+    for (i = 0; i<queue.length; i++) {
+      eliminateHole(queue[i], outerNode);
+      outerNode = filterPoints(outerNode, outerNode.next);
+    }
+
+    return outerNode;
+  }
+
+  function compareX(a, b) {
+    return a.x - b.x;
+  }
+
+// find a bridge between vertices that connects hole with an outer ring and and link it
+  function eliminateHole(hole, outerNode) {
+    outerNode = findHoleBridge(hole, outerNode);
+    if (outerNode) {
+      var b = splitPolygon(outerNode, hole);
+      filterPoints(b, b.next);
+    }
+  }
+
+// David Eberly's algorithm for finding a bridge between hole and outer polygon
+  function findHoleBridge(hole, outerNode) {
+    var p = outerNode,
+      hx = hole.x,
+      hy = hole.y,
+      qx = -Infinity,
+      m;
+
+    // find a segment intersected by a ray from the hole's leftmost point to the left;
+    // segment's endpoint with lesser x will be potential connection point
+    do {
+      if (hy<=p.y && hy>=p.next.y) {
+        var x = p.x + (hy - p.y)*(p.next.x - p.x)/(p.next.y - p.y);
+        if (x<=hx && x>qx) {
+          qx = x;
+          if (x === hx) {
+            if (hy === p.y) return p;
+            if (hy === p.next.y) return p.next;
+          }
+          m = p.x<p.next.x ? p : p.next;
+        }
+      }
+      p = p.next;
+    } while (p !== outerNode);
+
+    if (!m) return null;
+
+    if (hx === qx) return m.prev; // hole touches outer segment; pick lower endpoint
+
+    // look for points inside the triangle of hole point, segment intersection and endpoint;
+    // if there are no points found, we have a valid connection;
+    // otherwise choose the point of the minimum angle with the ray as connection point
+
+    var stop = m,
+      mx = m.x,
+      my = m.y,
+      tanMin = Infinity,
+      tan;
+
+    p = m.next;
+
+    while (p !== stop) {
+      if (hx>=p.x && p.x>=mx &&
+        pointInTriangle(hy<my ? hx : qx, hy, mx, my, hy<my ? qx : hx, hy, p.x, p.y)) {
+
+        tan = Math.abs(hy - p.y)/(hx - p.x); // tangential
+
+        if ((tan<tanMin || (tan === tanMin && p.x>m.x)) && locallyInside(p, hole)) {
+          m = p;
+          tanMin = tan;
+        }
+      }
+
+      p = p.next;
+    }
+
+    return m;
+  }
+
+// interlink polygon nodes in z-order
+  function indexCurve(start, minX, minY, size) {
+    var p = start;
+    do {
+      if (p.z === null) p.z = zOrder(p.x, p.y, minX, minY, size);
+      p.prevZ = p.prev;
+      p.nextZ = p.next;
+      p = p.next;
+    } while (p !== start);
+
+    p.prevZ.nextZ = null;
+    p.prevZ = null;
+
+    sortLinked(p);
+  }
+
+// Simon Tatham's linked list merge sort algorithm
+// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+  function sortLinked(list) {
+    var i, p, q, e, tail, numMerges, pSize, qSize,
+      inSize = 1;
+
+    do {
+      p = list;
+      list = null;
+      tail = null;
+      numMerges = 0;
+
+      while (p) {
+        numMerges++;
+        q = p;
+        pSize = 0;
+        for (i = 0; i<inSize; i++) {
+          pSize++;
+          q = q.nextZ;
+          if (!q) break;
+        }
+
+        qSize = inSize;
+
+        while (pSize>0 || (qSize>0 && q)) {
+
+          if (pSize === 0) {
+            e = q;
+            q = q.nextZ;
+            qSize--;
+          } else if (qSize === 0 || !q) {
+            e = p;
+            p = p.nextZ;
+            pSize--;
+          } else if (p.z<=q.z) {
+            e = p;
+            p = p.nextZ;
+            pSize--;
+          } else {
+            e = q;
+            q = q.nextZ;
+            qSize--;
+          }
+
+          if (tail) tail.nextZ = e;
+          else list = e;
+
+          e.prevZ = tail;
+          tail = e;
+        }
+
+        p = q;
+      }
+
+      tail.nextZ = null;
+      inSize *= 2;
+
+    } while (numMerges>1);
+
+    return list;
+  }
+
+// z-order of a point given coords and size of the data bounding box
+  function zOrder(x, y, minX, minY, size) {
+    // coords are transformed into non-negative 15-bit integer range
+    x = 32767*(x - minX)/size;
+    y = 32767*(y - minY)/size;
+
+    x = (x | (x<<8)) & 0x00FF00FF;
+    x = (x | (x<<4)) & 0x0F0F0F0F;
+    x = (x | (x<<2)) & 0x33333333;
+    x = (x | (x<<1)) & 0x55555555;
+
+    y = (y | (y<<8)) & 0x00FF00FF;
+    y = (y | (y<<4)) & 0x0F0F0F0F;
+    y = (y | (y<<2)) & 0x33333333;
+    y = (y | (y<<1)) & 0x55555555;
+
+    return x | (y<<1);
+  }
+
+// find the leftmost node of a polygon ring
+  function getLeftmost(start) {
+    var p = start,
+      leftmost = start;
+    do {
+      if (p.x<leftmost.x) leftmost = p;
+      p = p.next;
+    } while (p !== start);
+
+    return leftmost;
+  }
+
+// check if a point lies within a convex triangle
+  function pointInTriangle(ax, ay, bx, by, cx, cy, px, py) {
+    return (cx - px)*(ay - py) - (ax - px)*(cy - py)>=0 &&
+      (ax - px)*(by - py) - (bx - px)*(ay - py)>=0 &&
+      (bx - px)*(cy - py) - (cx - px)*(by - py)>=0;
+  }
+
+// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
+  function isValidDiagonal(a, b) {
+    return a.next.i !== b.i && a.prev.i !== b.i && !intersectsPolygon(a, b) &&
+      locallyInside(a, b) && locallyInside(b, a) && middleInside(a, b);
+  }
+
+// signed area of a triangle
+  function area(p, q, r) {
+    return (q.y - p.y)*(r.x - q.x) - (q.x - p.x)*(r.y - q.y);
+  }
+
+// check if two points are equal
+  function equals(p1, p2) {
+    return p1.x === p2.x && p1.y === p2.y;
+  }
+
+// check if two segments intersect
+  function intersects(p1, q1, p2, q2) {
+    if ((equals(p1, q1) && equals(p2, q2)) ||
+      (equals(p1, q2) && equals(p2, q1))) return true;
+    return area(p1, q1, p2)>0 !== area(p1, q1, q2)>0 &&
+      area(p2, q2, p1)>0 !== area(p2, q2, q1)>0;
+  }
+
+// check if a polygon diagonal intersects any polygon segments
+  function intersectsPolygon(a, b) {
+    var p = a;
+    do {
+      if (p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
+        intersects(p, p.next, a, b)) return true;
+      p = p.next;
+    } while (p !== a);
+
+    return false;
+  }
+
+// check if a polygon diagonal is locally inside the polygon
+  function locallyInside(a, b) {
+    return area(a.prev, a, a.next)<0 ?
+    area(a, b, a.next)>=0 && area(a, a.prev, b)>=0 :
+    area(a, b, a.prev)<0 || area(a, a.next, b)<0;
+  }
+
+// check if the middle point of a polygon diagonal is inside the polygon
+  function middleInside(a, b) {
+    var p = a,
+      inside = false,
+      px = (a.x + b.x)/2,
+      py = (a.y + b.y)/2;
+    do {
+      if (((p.y>py) !== (p.next.y>py)) && (px<(p.next.x - p.x)*(py - p.y)/(p.next.y - p.y) + p.x))
+        inside = !inside;
+      p = p.next;
+    } while (p !== a);
+
+    return inside;
+  }
+
+// link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
+// if one belongs to the outer ring and another to a hole, it merges it into a single ring
+  function splitPolygon(a, b) {
+    var a2 = new Node(a.i, a.x, a.y),
+      b2 = new Node(b.i, b.x, b.y),
+      an = a.next,
+      bp = b.prev;
+
+    a.next = b;
+    b.prev = a;
+
+    a2.next = an;
+    an.prev = a2;
+
+    b2.next = a2;
+    a2.prev = b2;
+
+    bp.next = b2;
+    b2.prev = bp;
+
+    return b2;
+  }
+
+// create a node and optionally link it with previous one (in a circular doubly linked list)
+  function insertNode(i, x, y, last) {
+    var p = new Node(i, x, y);
+
+    if (!last) {
+      p.prev = p;
+      p.next = p;
+
+    } else {
+      p.next = last.next;
+      p.prev = last;
+      last.next.prev = p;
+      last.next = p;
+    }
+    return p;
+  }
+
+  function removeNode(p) {
+    p.next.prev = p.prev;
+    p.prev.next = p.next;
+
+    if (p.prevZ) p.prevZ.nextZ = p.nextZ;
+    if (p.nextZ) p.nextZ.prevZ = p.prevZ;
+  }
+
+  function Node(i, x, y) {
+    // vertice index in coordinates array
+    this.i = i;
+
+    // vertex coordinates
+    this.x = x;
+    this.y = y;
+
+    // previous and next vertice nodes in a polygon ring
+    this.prev = null;
+    this.next = null;
+
+    // z-order curve value
+    this.z = null;
+
+    // previous and next nodes in z-order
+    this.prevZ = null;
+    this.nextZ = null;
+
+    // indicates whether this is a steiner point
+    this.steiner = false;
+  }
+
+// return a percentage difference between the polygon area and its triangulation area;
+// used to verify correctness of triangulation
+  earcut.deviation = function(data, holeIndices, dim, triangles) {
+    var hasHoles = holeIndices && holeIndices.length;
+    var outerLen = hasHoles ? holeIndices[0]*dim : data.length;
+    var i, len;
+
+    var polygonArea = Math.abs(signedArea(data, 0, outerLen, dim));
+    if (hasHoles) {
+      for (i = 0, len = holeIndices.length; i<len; i++) {
+        var start = holeIndices[i]*dim;
+        var end = i<len - 1 ? holeIndices[i + 1]*dim : data.length;
+        polygonArea -= Math.abs(signedArea(data, start, end, dim));
+      }
+    }
+
+    var trianglesArea = 0;
+    for (i = 0, len = triangles.length; i < len; i += 3) {
+      var a = triangles[i]*dim;
+      var b = triangles[i + 1]*dim;
+      var c = triangles[i + 2]*dim;
+      trianglesArea += Math.abs(
+        (data[a] - data[c])*(data[b + 1] - data[a + 1]) -
+        (data[a] - data[b])*(data[c + 1] - data[a + 1]));
+    }
+
+    return polygonArea === 0 && trianglesArea === 0 ? 0 :
+      Math.abs((trianglesArea - polygonArea)/polygonArea);
+  };
+
+  function signedArea(data, start, end, dim) {
+    var sum = 0;
+    for (var i = start, j = end - dim; i<end; i += dim) {
+      sum += (data[j] - data[i])*(data[i + 1] + data[j + 1]);
+      j = i;
+    }
+    return sum;
+  }
+
+// turn a polygon in a multi-dimensional array form (e.g. as in GeoJSON) into a form Earcut accepts
+  earcut.flatten = function(data) {
+    var dim = data[0][0].length,
+      result = { vertices: [], holes: [], dimensions: dim },
+      holeIndex = 0;
+
+    for (var i = 0; i<data.length; i++) {
+      for (var j = 0; j<data[i].length; j++) {
+        for (var d = 0; d<dim; d++) result.vertices.push(data[i][j][d]);
+      }
+      if (i>0) {
+        holeIndex += data[i - 1].length;
+        result.holes.push(holeIndex);
+      }
+    }
+    return result;
+  };
+
+  return earcut;
+
+}(this));
+
+const shaders = {};
+
+shaders['picking'] = {"name":"picking","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec3 aPickingColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform float uFogDistance;\nuniform float uFade;\nuniform float uIndex;\nvarying vec4 vColor;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec4 mPosition = vec4(uModelMatrix * pos);\nfloat distance = length(mPosition);\nif (distance > uFogDistance) {\nvColor = vec4(0.0, 0.0, 0.0, 0.0);\n} else {\nvColor = vec4(clamp(uIndex, 0.0, 1.0), aPickingColor.g, aPickingColor.b, 1.0);\n}\n}\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec4 vColor;\nvoid main() {\ngl_FragColor = vColor;\n}\n"};
+
+shaders['buildings'] = {"name":"buildings","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat3 uNormalTransform;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nconst float gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvec3 transformedNormal = aNormal * uNormalTransform;\nfloat lightIntensity = max( dot(transformedNormal, uLightDirection), 0.0) / 1.5;\ncolor = color + uLightColor * lightIntensity;\nvTexCoord = aTexCoord;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform sampler2D uWallTexIndex;\nvoid main() {\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4(vColor * texture2D(uWallTexIndex, vTexCoord).rgb, 1.0-fogIntensity);\n}\n"};
+
+shaders['buildings_with_shadows'] = {"name":"buildings_with_shadows","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute vec3 aColor;\nattribute vec2 aTexCoord;\nattribute float aHeight;\nattribute vec4 aTintColor;\nattribute float aZScale;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform mat3 uNormalTransform;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying vec3 vColor;\nvarying vec2 vTexCoord;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nfloat gradientStrength = 0.4;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvec3 color = aColor;\n// tint ***********************************************\nif (aTintColor.a > 0.0) {\ncolor = mix(aColor, aTintColor.rgb, 0.5);\n}\n//*** light intensity, defined by light direction on surface ****************\nvNormal = aNormal;\nvTexCoord = aTexCoord;\n//vec3 transformedNormal = aNormal * uNormalTransform;\n//float lightIntensity = max( dot(aNormal, uLightDirection), 0.0) / 1.5;\n//color = color + uLightColor * lightIntensity;\n//*** vertical shading ******************************************************\nfloat verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);\n//***************************************************************************\nvColor = color-verticalShading;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n// *** shadow mapping ********\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n}\n}\n","fs":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec2 vTexCoord;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform sampler2D uWallTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\nvec3 normal = normalize(vNormal); //may degenerate during per-pixel interpolation\nfloat diffuse = dot(uLightDirection, normal);\ndiffuse = max(diffuse, 0.0);\n// reduce shadow strength with:\n// - lowering sun positions, to be consistent with the shadows on the basemap (there,\n// shadows are faded out with lowering sun positions to hide shadow artifacts caused\n// when sun direction and map surface are almost perpendicular\n// - large angles between the sun direction and the surface normal, to hide shadow\n// artifacts that occur when surface normal and sun direction are almost perpendicular\nfloat shadowStrength = pow( max( min(\ndot(uLightDirection, vec3(0.0, 0.0, 1.0)),\ndot(uLightDirection, normal)\n), 0.0), 1.5);\nif (diffuse > 0.0 && shadowStrength > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat occludedBySun = mix(\nmix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\ndiffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n}\nvec3 color = vColor* texture2D( uWallTexIndex, vTexCoord.st).rgb +\n(diffuse/1.5) * uLightColor;\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\n//gl_FragColor = vec4( mix(color, uFogColor, fogIntensity), 1.0);\ngl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"};
+
+shaders['markers_simple'] = {"name":"markers_simple","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uProjMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nuniform vec3 uColor;\nvarying vec3 vColor;\n// TODO: fog distance handling is missing here\nvoid main() {\nmat4 modelView = uViewMatrix * uModelMatrix;\nmodelView[0][0] = 1.0;\nmodelView[0][1] = 0.0;\nmodelView[0][2] = 0.0;\nmodelView[1][0] = 0.0;\nmodelView[1][1] = 1.0;\nmodelView[1][2] = 0.0;\nmodelView[2][0] = 0.0;\nmodelView[2][1] = 0.0;\nmodelView[2][2] = 1.0;\nmat4 mvp = uProjMatrix * modelView;\nfloat reciprScaleOnscreen = 0.02;\nfloat w = (mvp * vec4(0,0,0,1)).w;\nw *= reciprScaleOnscreen;\nvec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);\ngl_Position = mvp * pos;\nvColor = uColor;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\ngl_FragColor = vec4(vColor, 1.0);\n}\n"};
+
+shaders['markers'] = {"name":"markers","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uProjMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nuniform vec3 uColor;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\n// TODO: fog distance handling is missing here\nvoid main() {\nmat4 modelView = uViewMatrix * uModelMatrix;\nmodelView[0][0] = 1.0;\nmodelView[0][1] = 0.0;\nmodelView[0][2] = 0.0;\nmodelView[1][0] = 0.0;\nmodelView[1][1] = 1.0;\nmodelView[1][2] = 0.0;\nmodelView[2][0] = 0.0;\nmodelView[2][1] = 0.0;\nmodelView[2][2] = 1.0;\nmat4 mvp = uProjMatrix * modelView;\nfloat reciprScaleOnscreen = 0.02;\nfloat w = (mvp * vec4(0,0,0,1)).w;\nw *= reciprScaleOnscreen;\nvec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);\ngl_Position = mvp * pos;\nvColor = uColor;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n// *** shadow mapping ********\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\n}\n","fs":"#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvarying vec3 vNormal;\nvarying vec3 vSunRelPosition;\nvarying float verticalDistanceToLowerEdge;\nuniform vec3 uFogColor;\nuniform vec2 uShadowTexDimensions;\nuniform sampler2D uShadowTexIndex;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nuniform float uShadowStrength;\nuniform vec3 uLightDirection;\nuniform vec3 uLightColor;\nfloat isSeenBySun(const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) // not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n// compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\nvec3 normal = normalize(vec3(0.0, -1.0, 0.0)); //may degenerate during per-pixel interpolation\nfloat diffuse = dot(uLightDirection, normal);\ndiffuse = max(diffuse, 0.0);\n// reduce shadow strength with:\n// - lowering sun positions, to be consistent with the shadows on the basemap (there,\n// shadows are faded out with lowering sun positions to hide shadow artifacts caused\n// when sun direction and map surface are almost perpendicular\n// - large angles between the sun direction and the surface normal, to hide shadow\n// artifacts that occur when surface normal and sun direction are almost perpendicular\nfloat shadowStrength = pow( max( min(\ndot(uLightDirection, vec3(0.0, 0.0, 1.0)),\ndot(uLightDirection, normal)\n), 0.0), 1.5);\nif (diffuse > 0.0 && shadowStrength > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat occludedBySun = mix(\nmix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\ndiffuse *= 1.0 - (shadowStrength * (1.0 - occludedBySun));\n}\nvec3 color = vColor + (diffuse/1.5) * uLightColor;\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4( color, 1.0-fogIntensity);\n}\n"};
+
+shaders['markers_picking'] = {"name":"markers_picking","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform vec3 uPickingColor;\nuniform mat4 uProjMatrix;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nuniform float uFogDistance;\nuniform float uIndex;\nvarying vec3 vColor;\nvoid main() {\nmat4 modelView = uViewMatrix * uModelMatrix;\nmodelView[0][0] = 1.0;\nmodelView[0][1] = 0.0;\nmodelView[0][2] = 0.0;\nmodelView[1][0] = 0.0;\nmodelView[1][1] = 1.0;\nmodelView[1][2] = 0.0;\nmodelView[2][0] = 0.0;\nmodelView[2][1] = 0.0;\nmodelView[2][2] = 1.0;\nmat4 mvp = uProjMatrix * modelView;\nfloat reciprScaleOnscreen = 0.02;\nfloat w = (mvp * vec4(0,0,0,1)).w;\nw *= reciprScaleOnscreen;\nvec4 pos = vec4((aPosition.x * w), (aPosition.y * w) , aPosition.z * w, 1);\ngl_Position = mvp * pos;\n// vec4 pos = aPosition.x;\n// gl_Position = uMatrix * pos;\nvec4 mPosition = vec4(uModelMatrix * pos);\nfloat distance = length(mPosition);\nif (distance > uFogDistance) {\nvColor = vec3(0.0, 0.0, 0.0);\n} else {\nvColor = vec3(clamp(uIndex, 0.0, 1.0), uPickingColor.g, uPickingColor.b);\n}\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nvarying vec3 vColor;\nvoid main() {\ngl_FragColor = vec4(vColor, 1.0);\n}\n"};
+
+shaders['basemap'] = {"name":"basemap","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uViewMatrix;\nuniform mat4 uModelMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\ngl_Position = uViewMatrix * aPosition;\nvTexCoord = aTexCoord;\nvec4 worldPos = uModelMatrix * aPosition;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec3 uFogColor;\nvarying vec2 vTexCoord;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\ngl_FragColor = vec4(texture2D(uTexIndex, vec2(vTexCoord.x, 1.0-vTexCoord.y)).rgb, 1.0-fogIntensity);\n}\n"};
+
+shaders['basemap_with_shadows'] = {"name":"basemap_with_shadows","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\nvec4 pos = vec4(aPosition.xyz, 1.0);\ngl_Position = uMatrix * pos;\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\nvNormal = aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fs":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not*\n* render the map texture itself, but is instead intended to be blended on top\n* of an already rendered map.\n* Note: this shader is not (and does not attempt to) be physically correct.\n* It is intented to be a blend between a useful illustration of cast\n* shadows and a mitigation of shadow casting artifacts occuring at\n* low angles on incidence.\n* Map brightness is only affected by shadows, not by light direction.\n* Shadows are darkest when light comes from straight above (and thus\n* shadows can be computed reliably) and become less and less visible\n* with the light source close to horizon (where moiré and offset\n* artifacts would otherwise be visible).\n*/\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n//vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n//gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n//return;\nfloat diffuse = dot(uDirToSun, normalize(vNormal));\ndiffuse = max(diffuse, 0.0);\n\nfloat shadowStrength = uShadowStrength * pow(diffuse, 1.5);\nif (diffuse > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\ndiffuse = mix( mix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\n}\ndiffuse = mix(1.0, diffuse, shadowStrength);\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\nfloat darkness = (1.0 - diffuse);\ndarkness *= (1.0 - fogIntensity);\ngl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"};
+
+shaders['texture'] = {"name":"texture","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"};
+
+shaders['depth_normal'] = {"name":"depth_normal","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute float aZScale;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nverticalDistanceToLowerEdge = 0.0;\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvNormal = uNormalMatrix * aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fs":"\n#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\ngl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"};
+
+shaders['ambient_from_depth'] = {"name":"ambient_from_depth","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_FRAGMENT_PRECISION_HIGH\n// we need high precision for the depth values\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nuniform sampler2D uDepthTexIndex;\nuniform sampler2D uFogTexIndex;\nuniform vec2 uInverseTexSize; //in 1/pixels, e.g. 1/512 if the texture is 512px wide\nuniform float uEffectStrength;\nuniform float uNearPlane;\nuniform float uFarPlane;\nvarying vec2 vTexCoord;\n/* Retrieves the depth value 'offset' pixels away from 'pos' from texture 'uDepthTexIndex'. */\nfloat getDepth(vec2 pos, ivec2 offset)\n{\nfloat z = texture2D(uDepthTexIndex, pos + float(offset) * uInverseTexSize).x;\nreturn (2.0 * uNearPlane) / (uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane)); // linearize depth\n}\n/* getOcclusionFactor() determines a heuristic factor (from [0..1]) for how\n* much the fragment at 'pos' with depth 'depthHere'is occluded by the\n* fragment that is (dx, dy) texels away from it.\n*/\nfloat getOcclusionFactor(float depthHere, vec2 pos, ivec2 offset) {\nfloat depthThere = getDepth(pos, offset);\n/* if the fragment at (dx, dy) has no depth (i.e. there was nothing rendered there),\n* then 'here' is not occluded (result 1.0) */\nif (depthThere == 0.0)\nreturn 1.0;\n/* if the fragment at (dx, dy) is further away from the viewer than 'here', then\n* 'here is not occluded' */\nif (depthHere < depthThere )\nreturn 1.0;\nfloat relDepthDiff = depthThere / depthHere;\nfloat depthDiff = abs(depthThere - depthHere) * uFarPlane;\n/* if the fragment at (dx, dy) is closer to the viewer than 'here', then it occludes\n* 'here'. The occlusion is the higher the bigger the depth difference between the two\n* locations is.\n* However, if the depth difference is too high, we assume that 'there' lies in a\n* completely different depth region of the scene than 'here' and thus cannot occlude\n* 'here'. This last assumption gets rid of very dark artifacts around tall buildings.\n*/\nreturn depthDiff < 50.0 ? mix(0.99, 1.0, 1.0 - clamp(depthDiff, 0.0, 1.0)) : 1.0;\n}\n/* This shader approximates the ambient occlusion in screen space (SSAO).\n* It is based on the assumption that a pixel will be occluded by neighboring\n* pixels iff. those have a depth value closer to the camera than the original\n* pixel itself (the function getOcclusionFactor() computes this occlusion\n* by a single other pixel).\n*\n* A naive approach would sample all pixels within a given distance. For an\n* interesting-looking effect, the sampling area needs to be at least 9 pixels\n* wide (-/+ 4), requiring 81 texture lookups per pixel for ambient occlusion.\n* This overburdens many GPUs.\n* To make the ambient occlusion computation faster, we do not consider all\n* texels in the sampling area, but only 16. This causes some sampling artifacts\n* that are later removed by blurring the ambient occlusion texture (this is\n* done in a separate shader).\n*/\nvoid main() {\nfloat depthHere = getDepth(vTexCoord, ivec2(0, 0));\nfloat fogIntensity = texture2D(uFogTexIndex, vTexCoord).w;\nif (depthHere == 0.0)\n{\n\t//there was nothing rendered 'here' --> it can't be occluded\ngl_FragColor = vec4(1.0);\nreturn;\n}\nfloat occlusionFactor = 1.0;\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+1, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +1));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+2, -2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-2, +2));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, 0));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2( 0, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, +4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(+4, -4));\nocclusionFactor *= getOcclusionFactor(depthHere, vTexCoord, ivec2(-4, +4));\nocclusionFactor = pow(occlusionFactor, 4.0) + 55.0/255.0; // empirical bias determined to let SSAO have no effect on the map plane\nocclusionFactor = 1.0 - ((1.0 - occlusionFactor) * uEffectStrength * (1.0-fogIntensity));\ngl_FragColor = vec4(vec3(occlusionFactor), 1.0);\n}\n"};
+
+shaders['flat_color'] = {"name":"flat_color","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nvoid main() {\ngl_Position = uMatrix * aPosition;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec4 uColor;\nvoid main() {\ngl_FragColor = uColor;\n}\n"};
+
+shaders['horizon'] = {"name":"horizon","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\n#define halfPi 1.57079632679\nattribute vec4 aPosition;\nuniform mat4 uMatrix;\nuniform float uAbsoluteHeight;\nvarying vec2 vTexCoord;\nvarying float vRelativeHeight;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvRelativeHeight = aPosition.z / uAbsoluteHeight;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform vec3 uFogColor;\nvarying float vRelativeHeight;\nvoid main() {\nfloat blendFactor = min(100.0 * vRelativeHeight, 1.0);\nvec4 skyColor = vec4(0.9, 0.85, 1.0, 1.0);\ngl_FragColor = mix(vec4(uFogColor, 1.0), skyColor, blendFactor);\n}\n"};
+
+shaders['blur'] = {"name":"blur","vs":"precision highp float; // is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nuniform vec2 uInverseTexSize; // as 1/n pixels, e.g. 1/512 if the texture is 512px wide\nvarying vec2 vTexCoord;\n// Retrieves the texel color 'offset' pixels away from 'pos' from texture 'uTexIndex'.\nvec4 getTexel(vec2 pos, vec2 offset) {\nreturn texture2D(uTexIndex, pos + offset * uInverseTexSize);\n}\nvoid main() {\nvec4 center = texture2D(uTexIndex, vTexCoord);\nvec4 nonDiagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, 0.0)) +\ngetTexel(vTexCoord, vec2(+1.0, 0.0)) +\ngetTexel(vTexCoord, vec2( 0.0, -1.0)) +\ngetTexel(vTexCoord, vec2( 0.0, +1.0));\nvec4 diagonalNeighbors = getTexel(vTexCoord, vec2(-1.0, -1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(-1.0, +1.0)) +\ngetTexel(vTexCoord, vec2(+1.0, -1.0));\n\n// approximate Gaussian blur (mean 0.0, stdev 1.0)\ngl_FragColor = 0.2/1.0 * center +\n0.5/4.0 * nonDiagonalNeighbors +\n0.3/4.0 * diagonalNeighbors;\n}\n"};
+
+
+const workers = {};
+
+workers['feature'] = 'class Request{static load(e,t){const r=new XMLHttpRequest,n=setTimeout(e=>{4!==r.readyState&&(r.abort(),t("status"))},1e4);return r.onreadystatechange=(()=>{4===r.readyState&&(clearTimeout(n),!r.status||r.status<200||r.status>299?t("status"):t(null,r))}),r.open("GET",e),r.send(null),{abort:()=>{r.abort()}}}static getText(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseText?t(null,r.responseText):t("content")})}static getXML(e,t){return this.load(e,(e,r)=>{e?t(e):void 0!==r.responseXML?t(null,r.responseXML):t("content")})}static getJSON(e,t){return this.load(e,(r,n)=>{if(r)return void t(r);if(!n.responseText)return void t("content");let o;try{o=JSON.parse(n.responseText),t(null,o)}catch(r){console.warn(`Could not parse JSON from ${e}\\n${r.message}`),t("content")}})}}var Qolor=function(){var e={aliceblue:"#f0f8ff",antiquewhite:"#faebd7",aqua:"#00ffff",aquamarine:"#7fffd4",azure:"#f0ffff",beige:"#f5f5dc",bisque:"#ffe4c4",black:"#000000",blanchedalmond:"#ffebcd",blue:"#0000ff",blueviolet:"#8a2be2",brown:"#a52a2a",burlywood:"#deb887",cadetblue:"#5f9ea0",chartreuse:"#7fff00",chocolate:"#d2691e",coral:"#ff7f50",cornflowerblue:"#6495ed",cornsilk:"#fff8dc",crimson:"#dc143c",cyan:"#00ffff",darkblue:"#00008b",darkcyan:"#008b8b",darkgoldenrod:"#b8860b",darkgray:"#a9a9a9",darkgrey:"#a9a9a9",darkgreen:"#006400",darkkhaki:"#bdb76b",darkmagenta:"#8b008b",darkolivegreen:"#556b2f",darkorange:"#ff8c00",darkorchid:"#9932cc",darkred:"#8b0000",darksalmon:"#e9967a",darkseagreen:"#8fbc8f",darkslateblue:"#483d8b",darkslategray:"#2f4f4f",darkslategrey:"#2f4f4f",darkturquoise:"#00ced1",darkviolet:"#9400d3",deeppink:"#ff1493",deepskyblue:"#00bfff",dimgray:"#696969",dimgrey:"#696969",dodgerblue:"#1e90ff",firebrick:"#b22222",floralwhite:"#fffaf0",forestgreen:"#228b22",fuchsia:"#ff00ff",gainsboro:"#dcdcdc",ghostwhite:"#f8f8ff",gold:"#ffd700",goldenrod:"#daa520",gray:"#808080",grey:"#808080",green:"#008000",greenyellow:"#adff2f",honeydew:"#f0fff0",hotpink:"#ff69b4",indianred:"#cd5c5c",indigo:"#4b0082",ivory:"#fffff0",khaki:"#f0e68c",lavender:"#e6e6fa",lavenderblush:"#fff0f5",lawngreen:"#7cfc00",lemonchiffon:"#fffacd",lightblue:"#add8e6",lightcoral:"#f08080",lightcyan:"#e0ffff",lightgoldenrodyellow:"#fafad2",lightgray:"#d3d3d3",lightgrey:"#d3d3d3",lightgreen:"#90ee90",lightpink:"#ffb6c1",lightsalmon:"#ffa07a",lightseagreen:"#20b2aa",lightskyblue:"#87cefa",lightslategray:"#778899",lightslategrey:"#778899",lightsteelblue:"#b0c4de",lightyellow:"#ffffe0",lime:"#00ff00",limegreen:"#32cd32",linen:"#faf0e6",magenta:"#ff00ff",maroon:"#800000",mediumaquamarine:"#66cdaa",mediumblue:"#0000cd",mediumorchid:"#ba55d3",mediumpurple:"#9370db",mediumseagreen:"#3cb371",mediumslateblue:"#7b68ee",mediumspringgreen:"#00fa9a",mediumturquoise:"#48d1cc",mediumvioletred:"#c71585",midnightblue:"#191970",mintcream:"#f5fffa",mistyrose:"#ffe4e1",moccasin:"#ffe4b5",navajowhite:"#ffdead",navy:"#000080",oldlace:"#fdf5e6",olive:"#808000",olivedrab:"#6b8e23",orange:"#ffa500",orangered:"#ff4500",orchid:"#da70d6",palegoldenrod:"#eee8aa",palegreen:"#98fb98",paleturquoise:"#afeeee",palevioletred:"#db7093",papayawhip:"#ffefd5",peachpuff:"#ffdab9",peru:"#cd853f",pink:"#ffc0cb",plum:"#dda0dd",powderblue:"#b0e0e6",purple:"#800080",rebeccapurple:"#663399",red:"#ff0000",rosybrown:"#bc8f8f",royalblue:"#4169e1",saddlebrown:"#8b4513",salmon:"#fa8072",sandybrown:"#f4a460",seagreen:"#2e8b57",seashell:"#fff5ee",sienna:"#a0522d",silver:"#c0c0c0",skyblue:"#87ceeb",slateblue:"#6a5acd",slategray:"#708090",slategrey:"#708090",snow:"#fffafa",springgreen:"#00ff7f",steelblue:"#4682b4",tan:"#d2b48c",teal:"#008080",thistle:"#d8bfd8",tomato:"#ff6347",turquoise:"#40e0d0",violet:"#ee82ee",wheat:"#f5deb3",white:"#ffffff",whitesmoke:"#f5f5f5",yellow:"#ffff00",yellowgreen:"#9acd32"};function t(e,t,r){return r<0&&(r+=1),r>1&&(r-=1),r<1/6?e+6*(t-e)*r:r<.5?t:r<2/3?e+(t-e)*(2/3-r)*6:e}function r(e,t){if(void 0!==e)return Math.min(t,Math.max(0,e||0))}var n=function(e,t,n,o){this.r=r(e,1),this.g=r(t,1),this.b=r(n,1),this.a=r(o,1)||1};return n.parse=function(t){if("string"==typeof t){var r;if(t=t.toLowerCase(),r=(t=e[t]||t).match(/^#?(\\w{2})(\\w{2})(\\w{2})$/))return new n(parseInt(r[1],16)/255,parseInt(r[2],16)/255,parseInt(r[3],16)/255);if(r=t.match(/^#?(\\w)(\\w)(\\w)$/))return new n(parseInt(r[1]+r[1],16)/255,parseInt(r[2]+r[2],16)/255,parseInt(r[3]+r[3],16)/255);if(r=t.match(/rgba?\\((\\d+)\\D+(\\d+)\\D+(\\d+)(\\D+([\\d.]+))?\\)/))return new n(parseFloat(r[1])/255,parseFloat(r[2])/255,parseFloat(r[3])/255,r[4]?parseFloat(r[5]):1)}return new n},n.fromHSL=function(e,t,r){var o=(new n).fromHSL(e,t,r);return o.a=a,o},n.prototype={isValid:function(){return void 0!==this.r&&void 0!==this.g&&void 0!==this.b},toHSL:function(){if(this.isValid()){var e,t,r=Math.max(this.r,this.g,this.b),n=Math.min(this.r,this.g,this.b),o=(r+n)/2,a=r-n;if(a){switch(t=o>.5?a/(2-r-n):a/(r+n),r){case this.r:e=(this.g-this.b)/a+(this.g<this.b?6:0);break;case this.g:e=(this.b-this.r)/a+2;break;case this.b:e=(this.r-this.g)/a+4}e*=60}else e=t=0;return{h:e,s:t,l:o}}},fromHSL:function(e,r,n){if(0===r)return this.r=this.g=this.b=n,this;var o=n<.5?n*(1+r):n+r-n*r,a=2*n-o;return e/=360,this.r=t(a,o,e+1/3),this.g=t(a,o,e),this.b=t(a,o,e-1/3),this},toString:function(){if(this.isValid())return 1===this.a?"#"+((1<<24)+(Math.round(255*this.r)<<16)+(Math.round(255*this.g)<<8)+Math.round(255*this.b)).toString(16).slice(1,7):"rgba("+[Math.round(255*this.r),Math.round(255*this.g),Math.round(255*this.b),this.a.toFixed(2)].join(",")+")"},toArray:function(){if(this.isValid)return[this.r,this.g,this.b]},hue:function(e){var t=this.toHSL();return this.fromHSL(t.h+e,t.s,t.l)},saturation:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s*e,t.l)},lightness:function(e){var t=this.toHSL();return this.fromHSL(t.h,t.s,t.l*e)},clone:function(){return new n(this.r,this.g,this.b,this.a)}},n}();"object"==typeof module&&(module.exports=Qolor);class OBJ{constructor(e,t){this.materialIndex={},this.vertexIndex=[],t&&this.readMTL(t),this.meshes=[],this.readOBJ(e)}readMTL(e){const t=e.split(/[\\r\\n]/g);let r,n=[];t.forEach(e=>{const t=e.trim().split(/\\s+/);switch(t[0]){case"newmtl":r&&(this.materialIndex[r]=n),r=t[1],n=[];break;case"Kd":n=[parseFloat(t[1]),parseFloat(t[2]),parseFloat(t[3])]}}),r&&(this.materialIndex[r]=n),e=null}readOBJ(e){let t,r,n=[];e.split(/[\\r\\n]/g).forEach(e=>{const o=e.trim().split(/\\s+/);switch(o[0]){case"g":case"o":this.storeMesh(t,r,n),t=o[1],n=[];break;case"usemtl":this.storeMesh(t,r,n),this.materialIndex[o[1]]&&(r=this.materialIndex[o[1]]),n=[];break;case"v":this.vertexIndex.push([parseFloat(o[1]),parseFloat(o[2]),parseFloat(o[3])]);break;case"f":n.push([parseFloat(o[1])-1,parseFloat(o[2])-1,parseFloat(o[3])-1])}}),this.storeMesh(t,r,n)}storeMesh(e,t,r){if(r.length){const n=this.createGeometry(r);this.meshes.push({...n,color:t,id:e})}}sub(e,t){return[e[0]-t[0],e[1]-t[1],e[2]-t[2]]}unit(e){const t=this.len(e);return[e[0]/t,e[1]/t,e[2]/t]}normal(e,t,r){const n=this.sub(e,t),o=this.sub(t,r);return this.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}createGeometry(e){const t=[],r=[],n=[];let o=-1/0;return e.forEach(e=>{const a=this.vertexIndex[e[0]],i=this.vertexIndex[e[1]],s=this.vertexIndex[e[2]],l=this.normal(a,i,s);t.push(a[0],a[2],a[1],i[0],i[2],i[1],s[0],s[2],s[1]),r.push(l[0],l[1],l[2],l[0],l[1],l[2],l[0],l[1],l[2]),n.push(0,0,0,0,0,0),o=Math.max(o,a[1],i[1],s[1])}),{vertices:t,normals:r,texCoords:n,height:o}}}OBJ.parse=function(e,t){return new OBJ(e,t).meshes};var earcut=function(){function e(e,o,a){a=a||2;var i,s,c,h,p,d,g,x=o&&o.length,v=x?o[0]*a:e.length,m=t(e,0,v,a,!0),y=[];if(!m)return y;if(x&&(m=function(e,n,o,a){var i,s,c,h,p,d=[];for(i=0,s=n.length;i<s;i++)c=n[i]*a,h=i<s-1?n[i+1]*a:e.length,(p=t(e,c,h,a,!1))===p.next&&(p.steiner=!0),d.push(u(p));for(d.sort(l),i=0;i<d.length;i++)f(d[i],o),o=r(o,o.next);return o}(e,o,m,a)),e.length>80*a){i=c=e[0],s=h=e[1];for(var b=a;b<v;b+=a)(p=e[b])<i&&(i=p),(d=e[b+1])<s&&(s=d),p>c&&(c=p),d>h&&(h=d);g=Math.max(c-i,h-s)}return n(m,y,a,i,s,g),y}function t(e,t,r,n,o){var a,i;if(o===w(e,t,r,n)>0)for(a=t;a<r;a+=n)i=y(a,e[a],e[a+1],i);else for(a=r-n;a>=t;a-=n)i=y(a,e[a],e[a+1],i);return i&&g(i,i.next)&&(b(i),i=i.next),i}function r(e,t){if(!e)return e;t||(t=e);var r,n=e;do{if(r=!1,n.steiner||!g(n,n.next)&&0!==d(n.prev,n,n.next))n=n.next;else{if(b(n),(n=t=n.prev)===n.next)return null;r=!0}}while(r||n!==t);return t}function n(e,t,l,f,u,h,p){if(e){!p&&h&&function(e,t,r,n){var o=e;do{null===o.z&&(o.z=c(o.x,o.y,t,r,n)),o.prevZ=o.prev,o.nextZ=o.next,o=o.next}while(o!==e);o.prevZ.nextZ=null,o.prevZ=null,function(e){var t,r,n,o,a,i,s,l,f=1;do{for(r=e,e=null,a=null,i=0;r;){for(i++,n=r,s=0,t=0;t<f&&(s++,n=n.nextZ);t++);for(l=f;s>0||l>0&&n;)0===s?(o=n,n=n.nextZ,l--):0!==l&&n?r.z<=n.z?(o=r,r=r.nextZ,s--):(o=n,n=n.nextZ,l--):(o=r,r=r.nextZ,s--),a?a.nextZ=o:e=o,o.prevZ=a,a=o;r=n}a.nextZ=null,f*=2}while(i>1)}(o)}(e,f,u,h);for(var d,g,x=e;e.prev!==e.next;)if(d=e.prev,g=e.next,h?a(e,f,u,h):o(e))t.push(d.i/l),t.push(e.i/l),t.push(g.i/l),b(e),e=g.next,x=g.next;else if((e=g)===x){p?1===p?n(e=i(e,t,l),t,l,f,u,h,2):2===p&&s(e,t,l,f,u,h):n(r(e),t,l,f,u,h,1);break}}}function o(e){var t=e.prev,r=e,n=e.next;if(d(t,r,n)>=0)return!1;for(var o=e.next.next;o!==e.prev;){if(h(t.x,t.y,r.x,r.y,n.x,n.y,o.x,o.y)&&d(o.prev,o,o.next)>=0)return!1;o=o.next}return!0}function a(e,t,r,n){var o=e.prev,a=e,i=e.next;if(d(o,a,i)>=0)return!1;for(var s=o.x<a.x?o.x<i.x?o.x:i.x:a.x<i.x?a.x:i.x,l=o.y<a.y?o.y<i.y?o.y:i.y:a.y<i.y?a.y:i.y,f=o.x>a.x?o.x>i.x?o.x:i.x:a.x>i.x?a.x:i.x,u=o.y>a.y?o.y>i.y?o.y:i.y:a.y>i.y?a.y:i.y,p=c(s,l,t,r,n),g=c(f,u,t,r,n),x=e.nextZ;x&&x.z<=g;){if(x!==e.prev&&x!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,x.x,x.y)&&d(x.prev,x,x.next)>=0)return!1;x=x.nextZ}for(x=e.prevZ;x&&x.z>=p;){if(x!==e.prev&&x!==e.next&&h(o.x,o.y,a.x,a.y,i.x,i.y,x.x,x.y)&&d(x.prev,x,x.next)>=0)return!1;x=x.prevZ}return!0}function i(e,t,r){var n=e;do{var o=n.prev,a=n.next.next;!g(o,a)&&x(o,n,n.next,a)&&v(o,a)&&v(a,o)&&(t.push(o.i/r),t.push(n.i/r),t.push(a.i/r),b(n),b(n.next),n=e=a),n=n.next}while(n!==e);return n}function s(e,t,o,a,i,s){var l=e;do{for(var f=l.next.next;f!==l.prev;){if(l.i!==f.i&&p(l,f)){var c=m(l,f);return l=r(l,l.next),c=r(c,c.next),n(l,t,o,a,i,s),void n(c,t,o,a,i,s)}f=f.next}l=l.next}while(l!==e)}function l(e,t){return e.x-t.x}function f(e,t){if(t=function(e,t){var r,n=t,o=e.x,a=e.y,i=-1/0;do{if(a<=n.y&&a>=n.next.y){var s=n.x+(a-n.y)*(n.next.x-n.x)/(n.next.y-n.y);if(s<=o&&s>i){if(i=s,s===o){if(a===n.y)return n;if(a===n.next.y)return n.next}r=n.x<n.next.x?n:n.next}}n=n.next}while(n!==t);if(!r)return null;if(o===i)return r.prev;var l,f=r,c=r.x,u=r.y,p=1/0;n=r.next;for(;n!==f;)o>=n.x&&n.x>=c&&h(a<u?o:i,a,c,u,a<u?i:o,a,n.x,n.y)&&((l=Math.abs(a-n.y)/(o-n.x))<p||l===p&&n.x>r.x)&&v(n,e)&&(r=n,p=l),n=n.next;return r}(e,t)){var n=m(t,e);r(n,n.next)}}function c(e,t,r,n,o){return(e=1431655765&((e=858993459&((e=252645135&((e=16711935&((e=32767*(e-r)/o)|e<<8))|e<<4))|e<<2))|e<<1))|(t=1431655765&((t=858993459&((t=252645135&((t=16711935&((t=32767*(t-n)/o)|t<<8))|t<<4))|t<<2))|t<<1))<<1}function u(e){var t=e,r=e;do{t.x<r.x&&(r=t),t=t.next}while(t!==e);return r}function h(e,t,r,n,o,a,i,s){return(o-i)*(t-s)-(e-i)*(a-s)>=0&&(e-i)*(n-s)-(r-i)*(t-s)>=0&&(r-i)*(a-s)-(o-i)*(n-s)>=0}function p(e,t){return e.next.i!==t.i&&e.prev.i!==t.i&&!function(e,t){var r=e;do{if(r.i!==e.i&&r.next.i!==e.i&&r.i!==t.i&&r.next.i!==t.i&&x(r,r.next,e,t))return!0;r=r.next}while(r!==e);return!1}(e,t)&&v(e,t)&&v(t,e)&&function(e,t){var r=e,n=!1,o=(e.x+t.x)/2,a=(e.y+t.y)/2;do{r.y>a!=r.next.y>a&&o<(r.next.x-r.x)*(a-r.y)/(r.next.y-r.y)+r.x&&(n=!n),r=r.next}while(r!==e);return n}(e,t)}function d(e,t,r){return(t.y-e.y)*(r.x-t.x)-(t.x-e.x)*(r.y-t.y)}function g(e,t){return e.x===t.x&&e.y===t.y}function x(e,t,r,n){return!!(g(e,t)&&g(r,n)||g(e,n)&&g(r,t))||d(e,t,r)>0!=d(e,t,n)>0&&d(r,n,e)>0!=d(r,n,t)>0}function v(e,t){return d(e.prev,e,e.next)<0?d(e,t,e.next)>=0&&d(e,e.prev,t)>=0:d(e,t,e.prev)<0||d(e,e.next,t)<0}function m(e,t){var r=new M(e.i,e.x,e.y),n=new M(t.i,t.x,t.y),o=e.next,a=t.prev;return e.next=t,t.prev=e,r.next=o,o.prev=r,n.next=r,r.prev=n,a.next=n,n.prev=a,n}function y(e,t,r,n){var o=new M(e,t,r);return n?(o.next=n.next,o.prev=n,n.next.prev=o,n.next=o):(o.prev=o,o.next=o),o}function b(e){e.next.prev=e.prev,e.prev.next=e.next,e.prevZ&&(e.prevZ.nextZ=e.nextZ),e.nextZ&&(e.nextZ.prevZ=e.prevZ)}function M(e,t,r){this.i=e,this.x=t,this.y=r,this.prev=null,this.next=null,this.z=null,this.prevZ=null,this.nextZ=null,this.steiner=!1}function w(e,t,r,n){for(var o=0,a=t,i=r-n;a<r;a+=n)o+=(e[i]-e[a])*(e[a+1]+e[i+1]),i=a;return o}return e.deviation=function(e,t,r,n){var o,a,i=t&&t.length,s=i?t[0]*r:e.length,l=Math.abs(w(e,0,s,r));if(i)for(o=0,a=t.length;o<a;o++){var f=t[o]*r,c=o<a-1?t[o+1]*r:e.length;l-=Math.abs(w(e,f,c,r))}var u=0;for(o=0,a=n.length;o<a;o+=3){var h=n[o]*r,p=n[o+1]*r,d=n[o+2]*r;u+=Math.abs((e[h]-e[d])*(e[p+1]-e[h+1])-(e[h]-e[p])*(e[d+1]-e[h+1]))}return 0===l&&0===u?0:Math.abs((u-l)/l)},e.flatten=function(e){for(var t=e[0][0].length,r={vertices:[],holes:[],dimensions:t},n=0,o=0;o<e.length;o++){for(var a=0;a<e[o].length;a++)for(var i=0;i<t;i++)r.vertices.push(e[o][a][i]);o>0&&(n+=e[o-1].length,r.holes.push(n))}return r},e}();const triangulate=function(){const e=10,t=[.8627450980392157,.8235294117647058,.7843137254901961];METERS_PER_LEVEL=3;const r={brick:"#cc7755",bronze:"#ffeecc",canvas:"#fff8f0",concrete:"#999999",copper:"#a0e0d0",glass:"#e8f8f8",gold:"#ffcc00",plants:"#009933",metal:"#aaaaaa",panel:"#fff8f0",plaster:"#999999",roof_tiles:"#f08060",silver:"#cccccc",slate:"#666666",stone:"#996666",tar_paper:"#333333",wood:"#deb887"},n={asphalt:"tar_paper",bitumen:"tar_paper",block:"stone",bricks:"brick",glas:"glass",glassfront:"glass",grass:"plants",masonry:"stone",granite:"stone",panels:"panel",paving_stones:"stone",plastered:"plaster",rooftiles:"roof_tiles",roofingfelt:"tar_paper",sandstone:"stone",sheet:"canvas",sheets:"canvas",shingle:"tar_paper",shingles:"tar_paper",slates:"slate",steel:"metal",tar:"tar_paper",tent:"canvas",thatch:"plants",tile:"roof_tiles",tiles:"roof_tiles"},o=.5,a=6378137*Math.PI/180;function i(e){return"string"!=typeof e?null:"#"===(e=e.toLowerCase())[0]?e:r[n[e]||e]||null}function s(e,r){r=r||0;let n,o=Qolor.parse(e);return[(n=o.isValid()?o.saturation(.7).toArray():t)[0]+r,n[1]+r,n[2]+r]}return function(t,r,n,l,f){const c=[a*Math.cos(n[1]/180*Math.PI),a];(function(e){switch(e.type){case"MultiPolygon":return e.coordinates;case"Polygon":return[e.coordinates];default:return[]}})(r.geometry).map(a=>{const u=function(e,t,r){return e.map((e,n)=>(0===n!==function(e){return 0<e.reduce((e,t,r,n)=>e+(r<n.length-1?(n[r+1][0]-t[0])*(n[r+1][1]+t[1]):0),0)}(e)&&e.reverse(),e.map(function(e){return[(e[0]-t[0])*r[0],-(e[1]-t[1])*r[1]]})))}(a,n,c);!function(t,r,n,a,l){const f=function(t,r){const n={};switch(n.center=[r.minX+(r.maxX-r.minX)/2,r.minY+(r.maxY-r.minY)/2],n.radius=(r.maxX-r.minX)/2,n.roofHeight=t.roofHeight||(t.roofLevels?t.roofLevels*METERS_PER_LEVEL:0),t.roofShape){case"cone":case"pyramid":case"dome":case"onion":n.roofHeight=n.roofHeight||1*n.radius;break;case"gabled":case"hipped":case"half-hipped":case"skillion":case"gambrel":case"mansard":case"round":n.roofHeight=n.roofHeight||1*METERS_PER_LEVEL;break;case"flat":n.roofHeight=0;break;default:n.roofHeight=0}let o;if(n.wallZ=t.minHeight||(t.minLevel?t.minLevel*METERS_PER_LEVEL:0),void 0!==t.height)o=t.height,n.roofHeight=Math.min(n.roofHeight,o),n.roofZ=o-n.roofHeight,n.wallHeight=o-n.roofHeight-n.wallZ;else if(void 0!==t.levels)o=t.levels*METERS_PER_LEVEL,n.roofZ=o,n.wallHeight=o-n.wallZ;else{switch(t.shape){case"cone":case"dome":case"pyramid":o=2*n.radius,n.roofHeight=0;break;case"sphere":o=4*n.radius,n.roofHeight=0;break;default:o=e}n.roofZ=o,n.wallHeight=o-n.wallZ}return n}(r,function(e){let t=1/0,r=1/0,n=-1/0,o=-1/0;for(let a=0;a<e.length;a++)t=Math.min(t,e[a][0]),r=Math.min(r,e[a][1]),n=Math.max(n,e[a][0]),o=Math.max(o,e[a][1]);return{minX:t,minY:r,maxX:n,maxY:o}}(n[0])),c=s(a||r.wallColor||r.color||i(r.material),l),u=s(a||r.roofColor||i(r.roofMaterial),l);switch(r.shape){case"cone":return void split.cylinder(t,f.center,f.radius,0,f.wallHeight,f.wallZ,c);case"dome":return void split.dome(t,f.center,f.radius,f.wallHeight,f.wallZ,c);case"pyramid":return void split.pyramid(t,n,f.center,f.wallHeight,f.wallZ,c);case"sphere":return void split.sphere(t,f.center,f.radius,f.wallHeight,f.wallZ,c)}switch(createRoof(t,r,n,f,u,c),r.shape){case"none":return;case"cylinder":return void split.cylinder(t,f.center,f.radius,f.radius,f.wallHeight,f.wallZ,c);default:let e=.2,a=.4;"glass"!==r.material&&(e=0,a=0,r.levels&&(a=parseFloat(r.levels)-parseFloat(r.minLevel||0)<<0)),split.extrusion(t,n,f.wallHeight,f.wallZ,c,[0,o,e/f.wallHeight,a/f.wallHeight])}}(t,r.properties,u,l,f)})}}();var createRoof;function pointOnSegment(e,t){return e[0]>=Math.min(t[0][0],t[1][0])&&e[0]<=Math.max(t[1][0],t[0][0])&&e[1]>=Math.min(t[0][1],t[1][1])&&e[1]<=Math.max(t[1][1],t[0][1])}function getVectorSegmentIntersection(e,t,r){var n,o,a,i,s,l=r[0],f=[r[1][0]-r[0][0],r[1][1]-r[0][1]];if(0!==t[0]||0!==f[0]){if(0!==t[0]&&(a=t[1]/t[0],n=e[1]-a*e[0]),0!==f[0]&&(i=f[1]/f[0],o=l[1]-i*l[0]),0===t[0]&&pointOnSegment(s=[e[0],i*e[0]+o],r))return s;if(0===f[0]&&pointOnSegment(s=[l[0],a*l[0]+n],r))return s;if(a!==i){var c=(o-n)/(a-i);return pointOnSegment(s=[c,a*c+n],r)?s:void 0}}}function getDistanceToLine(e,t){var r=t[0],n=t[1];if(r[0]!==n[0]||r[1]!==n[1]){var o=(n[1]-r[1])/(n[0]-r[0]),a=r[1]-o*r[0];if(0===o)return Math.abs(a-e[1]);if(o===1/0)return Math.abs(r[0]-e[0]);var i=-1/o,s=(e[1]-i*e[0]-a)/(o-i),l=o*s+a,f=e[0]-s,c=e[1]-l;return Math.sqrt(f*f+c*c)}}!function(){function e(e,r,n,o,a,i,s){if(0,n.length>1||void 0===r.roofDirection)return t(e,r,n,a,i);var l=(r.roofDirection/180-.5)*Math.PI,f=[Math.cos(l),Math.sin(l)],c=function(e,t,r){for(var n,o=[],a=0;a<r.length-1;a++)if(void 0!==(n=getVectorSegmentIntersection(e,t,[r[a],r[a+1]]))){if(2===o.length)return;a++,r.splice(a,0,n),o.push(a)}if(!(o.length<2))return{index:o,roof:r}}(a.center,f,n[0]);if(!c)return t(e,r,n,a,i);for(var u,h=c.index,p=c.roof,d=[],g=0,x=[p[h[0]],p[h[1]]],v=0;v<p.length;v++)d[v]=getDistanceToLine(p[v],x),g=Math.max(g,d[v]);for(v=0;v<p.length;v++)p[v][2]=(1-d[v]/g)*a.roofHeight;for(u=p.slice(h[0],h[1]+1),split.polygon(e,[u],a.roofZ,i),u=(u=p.slice(h[1],p.length-1)).concat(p.slice(0,h[0]+1)),split.polygon(e,[u],a.roofZ,i),v=0;v<p.length-1;v++)0===p[v][2]&&0===p[v+1][2]||split.quad(e,[p[v][0],p[v][1],a.roofZ+p[v][2]],[p[v][0],p[v][1],a.roofZ],[p[v+1][0],p[v+1][1],a.roofZ],[p[v+1][0],p[v+1][1],a.roofZ+p[v+1][2]],s)}function t(e,t,r,n,o){"cylinder"===t.shape?split.circle(e,n.center,n.radius,n.roofZ,o):split.polygon(e,r,n.roofZ,o)}createRoof=function(r,n,o,a,i,s){switch(n.roofShape){case"cone":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.cylinder(e,r.center,r.radius,0,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"dome":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n),split.dome(e,r.center,r.radius,r.roofHeight,r.roofZ,n)}(r,o,a,i);case"pyramid":return function(e,t,r,n,o){"cylinder"===t.shape?split.cylinder(e,n.center,n.radius,0,n.roofHeight,n.roofZ,o):split.pyramid(e,r,n.center,n.roofHeight,n.roofZ,o)}(r,n,o,a,i);case"skillion":return function(e,r,n,o,a,i){if(void 0===r.roofDirection)return t(e,r,n,o,a);var s,l,f=r.roofDirection/180*Math.PI,c=1/0,u=-1/0;n[0].forEach(function(e){var t=e[1]*Math.cos(-f)+e[0]*Math.sin(-f);t<c&&(c=t,s=e),t>u&&(u=t,l=e)});var h=n[0],p=[Math.cos(f),Math.sin(f)],d=[s,[s[0]+p[0],s[1]+p[1]]],g=getDistanceToLine(l,d);n.forEach(function(e){e.forEach(function(e){var t=getDistanceToLine(e,d);e[2]=t/g*o.roofHeight})}),split.polygon(e,[h],o.roofZ,a),n.forEach(function(t){for(var r=0;r<t.length-1;r++)0===t[r][2]&&0===t[r+1][2]||split.quad(e,[t[r][0],t[r][1],o.roofZ+t[r][2]],[t[r][0],t[r][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ],[t[r+1][0],t[r+1][1],o.roofZ+t[r+1][2]],i)})}(r,n,o,a,i,s);case"gabled":return e(r,n,o,0,a,i,s);case"hipped":case"half-hipped":return t(r,n,o,a,i);case"gambrel":case"mansard":return e(r,n,o,0,a,i,s);case"round":return function(e,r,n,o,a,i){if(n.length>1||void 0===r.roofDirection)return t(e,r,n,o,a);return t(e,r,n,o,a)}(r,n,o,a,i);case"onion":return function(e,t,r,n){split.polygon(e,t,r.roofZ,n);for(var o,a,i=[{rScale:.8,hScale:0},{rScale:.9,hScale:.18},{rScale:.9,hScale:.35},{rScale:.8,hScale:.47},{rScale:.6,hScale:.59},{rScale:.5,hScale:.65},{rScale:.2,hScale:.82},{rScale:0,hScale:1}],s=0,l=i.length-1;s<l;s++)o=r.roofHeight*i[s].hScale,a=r.roofHeight*i[s+1].hScale,split.cylinder(e,r.center,r.radius*i[s].rScale,r.radius*i[s+1].rScale,a-o,r.roofZ+o,n)}(r,o,a,i);default:return t(r,n,o,a,i)}}}();const split={NUM_Y_SEGMENTS:24,NUM_X_SEGMENTS:32,quad:(e,t,r,n,o,a)=>{split.triangle(e,t,r,n,a),split.triangle(e,n,o,t,a)},triangle:(e,t,r,n,o)=>{const a=vec3.normal(t,r,n);e.vertices.push(...t,...n,...r),e.normals.push(...a,...a,...a),e.colors.push(...o,...o,...o),e.texCoords.push(0,0,0,0,0,0)},circle:(e,t,r,n,o)=>{let a,i;n=n||0;for(let s=0;s<split.NUM_X_SEGMENTS;s++)a=s/split.NUM_X_SEGMENTS,i=(s+1)/split.NUM_X_SEGMENTS,split.triangle(e,[t[0]+r*Math.sin(a*Math.PI*2),t[1]+r*Math.cos(a*Math.PI*2),n],[t[0],t[1],n],[t[0]+r*Math.sin(i*Math.PI*2),t[1]+r*Math.cos(i*Math.PI*2),n],o)},polygon:(e,t,r,n)=>{r=r||0;const o=[],a=[];let i=0;t.forEach((e,n)=>{e.forEach(e=>{o.push(e[0],e[1],r+(e[2]||0))}),n&&(i+=t[n-1].length,a.push(i))});const s=earcut(o,a,3);for(let t=0;t<s.length-2;t+=3){const r=3*s[t],a=3*s[t+1],i=3*s[t+2];split.triangle(e,[o[r],o[r+1],o[r+2]],[o[a],o[a+1],o[a+2]],[o[i],o[i+1],o[i+2]],n)}},cube:(e,t,r,n,o,a,i,s)=>{const l=[o=o||0,a=a||0,i=i||0],f=[o+t,a,i],c=[o+t,a+r,i],u=[o,a+r,i],h=[o,a,i+n],p=[o+t,a,i+n],d=[o+t,a+r,i+n],g=[o,a+r,i+n];split.quad(e,f,l,u,c,s),split.quad(e,h,p,d,g,s),split.quad(e,l,f,p,h,s),split.quad(e,f,c,d,p,s),split.quad(e,c,u,g,d,s),split.quad(e,u,l,h,g,s)},cylinder:(e,t,r,n,o,a,i)=>{a=a||0;const s=split.NUM_X_SEGMENTS,l=2*Math.PI;let f,c,u,h,p,d;for(let g=0;g<s;g++)f=g/s*l,c=(g+1)/s*l,u=Math.sin(f),h=Math.cos(f),p=Math.sin(c),d=Math.cos(c),split.triangle(e,[t[0]+r*u,t[1]+r*h,a],[t[0]+n*p,t[1]+n*d,a+o],[t[0]+r*p,t[1]+r*d,a],i),0!==n&&split.triangle(e,[t[0]+n*u,t[1]+n*h,a+o],[t[0]+n*p,t[1]+n*d,a+o],[t[0]+r*u,t[1]+r*h,a],i)},dome:(e,t,r,n,o,a,i)=>{o=o||0;const s=split.NUM_Y_SEGMENTS/2,l=Math.PI/2,f=i?0:-l;let c,u,h,p,d,g,x,v,m,y;for(let i=0;i<s;i++)c=i/s*l+f,u=(i+1)/s*l+f,h=Math.cos(c),p=Math.sin(c),x=h*r,v=(d=Math.cos(u))*r,m=((g=Math.sin(u))-p)*n,y=o-g*n,split.cylinder(e,t,v,x,m,y,a)},sphere:(e,t,r,n,o,a)=>{o=o||0;let i=0;return i+=split.dome(e,t,r,n/2,o+n/2,a,!0),i+=split.dome(e,t,r,n/2,o+n/2,a)},pyramid:(e,t,r,n,o,a)=>{o=o||0;for(let i=0,s=(t=t[0]).length-1;i<s;i++)split.triangle(e,[t[i][0],t[i][1],o],[t[i+1][0],t[i+1][1],o],[r[0],r[1],o+n],a)},extrusion:(e,t,r,n,o,a)=>{n=n||0;let i,s,l,f,c,u,h,p,d,g,x,v,m=a[2]*r,y=a[3]*r;t.forEach(t=>{for(x=0,v=t.length-1;x<v;x++)i=t[x],s=t[x+1],l=vec2.len(vec2.sub(i,s)),f=[i[0],i[1],n],c=[s[0],s[1],n],u=[s[0],s[1],n+r],h=[i[0],i[1],n+r],p=vec3.normal(f,c,u),[].push.apply(e.vertices,[].concat(f,u,c,f,h,u)),[].push.apply(e.normals,[].concat(p,p,p,p,p,p)),[].push.apply(e.colors,[].concat(o,o,o,o,o,o)),d=a[0]*l<<0,g=a[1]*l<<0,e.texCoords.push(d,y,g,m,g,y,d,y,d,m,g,m)})}},vec3={len:e=>Math.sqrt(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]),sub:(e,t)=>[e[0]-t[0],e[1]-t[1],e[2]-t[2]],unit:e=>{const t=vec3.len(e);return[e[0]/t,e[1]/t,e[2]/t]},normal:(e,t,r)=>{const n=vec3.sub(e,t),o=vec3.sub(t,r);return vec3.unit([n[1]*o[2]-n[2]*o[1],n[2]*o[0]-n[0]*o[2],n[0]*o[1]-n[1]*o[0]])}},vec2={len:e=>Math.sqrt(e[0]*e[0]+e[1]*e[1]),add:(e,t)=>[e[0]+t[0],e[1]+t[1]],sub:(e,t)=>[e[0]-t[0],e[1]-t[1]],dot:(e,t)=>e[1]*t[0]-e[0]*t[1],scale:(e,t)=>[e[0]*t,e[1]*t],equals:(e,t)=>e[0]===t[0]&&e[1]===t[1]};function getOrigin(e){const t=e.coordinates;switch(e.type){case"Point":return t;case"MultiPoint":case"LineString":return t[0];case"MultiLineString":case"Polygon":return t[0][0];case"MultiPolygon":return t[0][0][0]}}function getPickingColor(e){return[0,(255&++e)/255,(e>>8&255)/255]}function postResult(e,t,r){const n={items:e,position:t,vertices:new Float32Array(r.vertices),normals:new Float32Array(r.normals),colors:new Float32Array(r.colors),texCoords:new Float32Array(r.texCoords),heights:new Float32Array(r.heights),pickingColors:new Float32Array(r.pickingColors)};postMessage(n,[n.vertices.buffer,n.normals.buffer,n.colors.buffer,n.texCoords.buffer,n.heights.buffer,n.pickingColors.buffer])}function loadGeoJSON(e){"object"==typeof e.url?(postMessage("load"),processGeoJSON(e.url,e.options)):Request.getJSON(e.url,(t,r)=>{t?postMessage("error"):(postMessage("load"),processGeoJSON(r,e.options))})}function processGeoJSON(e,t){if(!e||!e.features.length)return void postMessage("error");const r={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},n=[],o=getOrigin(e.features[0].geometry),a={latitude:o[1],longitude:o[0]};e.features.forEach((e,a)=>{const i=e.properties,s=t.id||e.id,l=getPickingColor(a);let f=r.vertices.length;triangulate(r,e,o),f=(r.vertices.length-f)/3;for(let e=0;e<f;e++)r.heights.push(i.height),r.pickingColors.push(...l);n.push({id:s,properties:i,vertexCount:f})}),postResult(n,a,r)}function loadOBJ(e){Request.getText(e.url,(t,r)=>{if(t)return void postMessage("error");let n=r.match(/^mtllib\\s+(.*)$/m);n?Request.getText(e.url.replace(/[^\\/]+$/,"")+n[1],(e,t)=>{e?postMessage("error"):(postMessage("load"),processOBJ(r,t))}):(postMessage("load"),processOBJ(r,null))})}function processOBJ(e,t,r){const n={vertices:[],normals:[],colors:[],texCoords:[],heights:[],pickingColors:[]},o=[],a=Qolor.parse(r.color).toArray(),s=r.position;OBJ.parse(e,t).forEach((e,t)=>{n.vertices.push(...e.vertices),n.normals.push(...e.normals),n.texCoords.push(...e.texCoords);const s=r.id||e.id,l=(s/2%2?-1:1)*(s%2?.03:.06),f=a||e.color||DEFAULT_COLOR,c=e.vertices.length/3,u=getPickingColor(i);for(let t=0;t<c;t++)n.colors.push(f[0]+l,f[1]+l,f[2]+l),n.heights.push(e.height),n.pickingColors.push(...u);o.push({id:s,properties:{},vertexCount:c})}),postResult(o,s,n)}onmessage=function(e){const t=e.data;"GeoJSON"===t.type&&loadGeoJSON(t),"OBJ"===t.type&&loadOBJ(t)};';
 
 
 
@@ -714,7 +1550,6 @@ GLX.Shader = class {
     for (let name in this.attributes) {
       GL.enableVertexAttribArray(this.attributes[name]);
     }
-    return this;
   }
 
   disable () {
@@ -838,7 +1673,14 @@ GLX.Matrix = class {
     return this;
   }
 
-  translate (x, y, z) {
+  translateTo (x, y, z) {
+    this.data[12] = x;
+    this.data[13] = y;
+    this.data[14] = z;
+    return this;
+  }
+
+  translateBy (x, y, z) {
     multiply(this.data, this.data, [
       1, 0, 0, 0,
       0, 1, 0, 0,
@@ -1121,19 +1963,18 @@ GLX.texture.Image = class {
   load (url, callback) {
     const image = new Image();
     image.crossOrigin = '*';
-    image.onload = img => {
+    image.onload = e => {
       this.set(image);
       if (callback) {
         callback(image);
       }
     };
-    image.onerror = img => {
+    image.onerror = e => {
       if (callback) {
         callback();
       }
     };
     image.src = url;
-    return this;
   }
 
   color (color) {
@@ -1142,7 +1983,6 @@ GLX.texture.Image = class {
     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
     GL.texImage2D(GL.TEXTURE_2D, 0, GL.RGBA, 1, 1, 0, GL.RGBA, GL.UNSIGNED_BYTE, new Uint8Array([color[0]*255, color[1]*255, color[2]*255, (color[3] === undefined ? 1 : color[3])*255]));
     GL.bindTexture(GL.TEXTURE_2D, null);
-    return this;
   }
 
   set (image) {
@@ -1165,7 +2005,6 @@ GLX.texture.Image = class {
     }
 
     GL.bindTexture(GL.TEXTURE_2D, null);
-    return this;
   }
 
   enable (index) {
@@ -1174,7 +2013,6 @@ GLX.texture.Image = class {
     }
     GL.activeTexture(GL.TEXTURE0 + (index || 0));
     GL.bindTexture(GL.TEXTURE_2D, this.id);
-    return this;
   }
 
   destroy () {
@@ -1210,7 +2048,6 @@ GLX.texture.Data = class {
   enable(index) {
     this.GL.activeTexture(this.GL.TEXTURE0 + (index || 0));
     this.GL.bindTexture(this.GL.TEXTURE_2D, this.id);
-    return this;
   }
 
   destroy() {
@@ -1220,6 +2057,8 @@ GLX.texture.Data = class {
   }
 };
 
+
+// TODO URGENT solve conflict between item existing and item is ready to use
 
 class Collection {
 
@@ -1242,109 +2081,6 @@ class Collection {
   destroy () {
     this.forEach(item => item.destroy());
     this.items = [];
-  }
-}
-
-class Marker {
-
-  constructor (options = {}) {
-    this.position = { altitude: 0, ...options.position };
-    this.source = options.source;
-    this.anchor = options.anchor || 'bottom';
-    this.scale = options.scale || 1; // TODO -> size
-
-    this.load();
-  }
-
-  load () {
-    if (!this.source) {
-      console.log('no marker icon, loading default');
-      this.loadDefaultIcon();
-      return;
-    }
-
-    this.texture = new GLX.texture.Image().load(this.source, image => {
-      if (!image) {
-        console.log(`can't read marker icon ${this.source}`);
-        this.loadDefaultIcon();
-        return;
-      }
-
-      this.setTexture(image);
-      this.setBuffers();
-      APP.markers.add(this);
-    });
-  }
-
-  loadDefaultIcon () {
-    this.texture = new GLX.texture.Image().load(MARKER_TEXTURE, image => {
-      if (!image) {
-        return;
-      }
-
-      this.setTexture(image);
-      this.setBuffers();
-      APP.markers.add(this);
-    });
-  }
-
-  setTexture (image) {
-    // Whole texture will be mapped to fit the tile exactly.
-    // So don't attempt to wrap around the texture coordinates.
-
-    GL.pixelStorei(GL.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-    GL.bindTexture(GL.TEXTURE_2D, this.texture.id);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE);
-    GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR); // fit texture to vertex
-
-    this.size = image.width / 20 * this.scale;
-    // this.size = image.width / 100 * this.scale; // for default icon?
-  }
-
-  setBuffers () {
-    const texCoords = [
-      0, 0,
-      1, 0,
-      0, 1,
-      1, 1,
-      0, 1,
-      1, 0
-    ];
-
-    const halfSize = this.size / 2;
-    const anchorsCoordPool = {
-      center: [halfSize, halfSize, halfSize, halfSize],
-      top: [0, halfSize, this.size, halfSize],
-      bottom: [this.size, halfSize, 0, halfSize],
-      left: [halfSize, 0, halfSize, this.size],
-      right: [halfSize, this.size, halfSize, 0],
-      top_left: [0, 0, this.size, this.size],
-      top_right: [0, this.size, this.size, 0],
-      bottom_left: [this.size, -this.size, 0, 0],
-      bottom_right: [this.size, this.size, 0, 0]
-    };
-
-    const anchorCoord = anchorsCoordPool[this.anchor] || anchorsCoordPool.center;
-
-    const vertices = [
-      -anchorCoord[1], -anchorCoord[0], 0, // upper left
-       anchorCoord[3], -anchorCoord[0], 0, // upper right
-      -anchorCoord[1],  anchorCoord[2], 0, // bottom left
-       anchorCoord[3],  anchorCoord[2], 0, // bottom right
-      -anchorCoord[1],  anchorCoord[2], 0, // bottom left
-       anchorCoord[3], -anchorCoord[0], 0  // upper right
-    ];
-
-    this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(texCoords));
-    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
-  }
-
-  destroy () {
-    APP.markers.remove(this);
-    this.texCoordBuffer && this.texCoordBuffer.destroy();
-    this.texCoordBuffer && this.vertexBuffer.destroy();
-    this.texture && this.texture.destroy();
   }
 }
 
@@ -1410,6 +2146,159 @@ class WorkerWrapper {
     this.thread.close();
   }
 }
+
+
+// TODO URGENT Solve conflict between item existing and item is ready to use.
+
+class IconCollection extends Collection {
+
+  get (url, callback) {
+    for (let i = 0; i < this.items.length; i++) {
+      if (this.items[i].url === url) {
+        callback(null, this.items[i]);
+        return;
+      }
+    }
+
+    const icon = new Icon(url);
+    icon.load(callback);
+    // this.add(icon); // already done by icon itself
+  }
+}
+
+class Icon {
+
+  constructor (url = Icon.defaultURL) {
+    this.type = 'svg';
+    this.url = url;
+  }
+
+  load (callback) {
+    if (this.url === Icon.defaultURL) {
+      this.onLoad (DEFAULT_ICON, callback);
+      return;
+    }
+
+    Request.getText(this.url, (err, svg) => {
+      if (err) {
+        callback(err);
+        return;
+      }
+      this.onLoad (svg, callback);
+    });
+  }
+
+  onLoad (svg, callback) {
+    const vertices = [];
+    triangulateSVG(svg).forEach(triangle => {
+      const a = [triangle[0][0], triangle[0][1], 0];
+      const b = [triangle[1][0], triangle[1][1], 0];
+      const c = [triangle[2][0], triangle[2][1], 0];
+
+      vertices.push(...a, ...b, ...c);
+    });
+
+    this.vertexBuffer = new GLX.Buffer(3, new Float32Array(vertices));
+    APP.icons.add(this);
+
+    callback(null, this);
+  }
+
+  destroy () {
+    APP.icons.remove(this);
+    this.vertexBuffer && this.vertexBuffer.destroy();
+  }
+}
+
+Icon.defaultURL = 'default_icon';
+
+
+// TODO: handle multiple markers
+// A: cluster them into 'tiles' that give close reference point and allow simpler visibility tests or
+// B: handle them as individual objects
+// TODO: idea: attach marker to building: adopts its height & visibility
+// TODO: vertical shading
+
+class Marker {
+
+  // TODO color
+
+  constructor (position, data = null, options = {}) {
+    this.data = data;
+
+    const anchor = options.anchor; // TODO
+    const scale = options.scale || 1; // TODO
+
+    this.color = Qolor.parse(options.color || Marker.defaultColor).toArray();
+
+    this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(position.latitude / 180 * Math.PI);
+
+    this.longitude = position.longitude;
+    this.latitude = position.latitude;
+    this.altitude = (position.altitude || 0);
+
+    this.matrix = new GLX.Matrix();
+    this.matrix.scale(scale, scale, scale); // TODO currently ignored by shader?
+
+    if (!options.url) {
+      APP.icons.get(Icon.defaultURL, (err, icon) => {
+        if (!err) {
+          this.icon = icon;
+          APP.markers.add(this);
+        }
+      });
+      return;
+    }
+
+    APP.icons.get(options.url, (err, icon) => {
+      if (!err) {
+        this.icon = icon;
+        APP.markers.add(this);
+      }
+    });
+  }
+
+  // const halfSize = this.size / 2;
+
+  // const anchorsCoordPool = {
+  //   center: [halfSize, halfSize, halfSize, halfSize],
+  //   top: [0, halfSize, this.size, halfSize],
+  //   bottom: [this.size, halfSize, 0, halfSize],
+  //   left: [halfSize, 0, halfSize, this.size],
+  //   right: [halfSize, this.size, halfSize, 0],
+  //   top_left: [0, 0, this.size, this.size],
+  //   top_right: [0, this.size, this.size, 0],
+  //   bottom_left: [this.size, -this.size, 0, 0],
+  //   bottom_right: [this.size, this.size, 0, 0]
+  // };
+  //
+  // const anchorCoord = anchorsCoordPool[this.anchor] || anchorsCoordPool.center;
+  //
+  // const vertices = [
+  //   -anchorCoord[1], -anchorCoord[0], 0, // upper left
+  //    anchorCoord[3], -anchorCoord[0], 0, // upper right
+  //   -anchorCoord[1],  anchorCoord[2], 0, // bottom left
+  //    anchorCoord[3],  anchorCoord[2], 0, // bottom right
+  //   -anchorCoord[1],  anchorCoord[2], 0, // bottom left
+  //    anchorCoord[3], -anchorCoord[0], 0  // upper right
+  // ];
+
+  getMatrix () {
+    this.matrix.translateTo(
+      (this.longitude - APP.position.longitude) * this.metersPerLon,
+      (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
+      this.altitude
+    );
+
+    return this.matrix;
+  }
+
+  destroy () {
+    APP.markers.remove(this);
+  }
+}
+
+Marker.defaultColor = '#ffcc00';
 
 /*
  * NOTE: OSMBuildings cannot use a single global world coordinate system.
@@ -1549,8 +2438,9 @@ class OSMBuildings {
       }
     }
 
-    render.backgroundColor = Qolor.parse(options.backgroundColor || BACKGROUND_COLOR).toArray();
-    render.fogColor = Qolor.parse(options.fogColor || FOG_COLOR).toArray();
+    this.view = new View();
+    this.view.backgroundColor = Qolor.parse(options.backgroundColor || BACKGROUND_COLOR).toArray();
+    this.view.fogColor = Qolor.parse(options.fogColor || FOG_COLOR).toArray();
 
     this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
 
@@ -1574,7 +2464,7 @@ class OSMBuildings {
 
     const numProc = Math.min(window.navigator.hardwareConcurrency, 4);
 
-    const blob = new Blob([featureWorker], { type: 'application/javascript' });
+    const blob = new Blob([workers.feature], { type: 'application/javascript' });
     this.workers = new WorkerPool(URL.createObjectURL(blob), numProc * 4);
 
     //*** create container ********************************
@@ -1608,6 +2498,7 @@ class OSMBuildings {
     GL = this.glx.GL;
 
     this.features = new FeatureCollection();
+    this.icons = new IconCollection();
     this.markers = new Collection();
 
     this.events = new Events(this.canvas);
@@ -1626,7 +2517,7 @@ class OSMBuildings {
     this._updateAttribution();
 
     this.setDate(new Date());
-    render.start();
+    this.view.start();
 
     this.emit('load', this);
   }
@@ -1668,23 +2559,21 @@ class OSMBuildings {
    * @param {Date} date
    */
   setDate (date) {
-    Sun.setDate(typeof date === 'string' ? new Date(date) : date);
+    View.Sun.setDate(typeof date === 'string' ? new Date(date) : date);
   }
 
   /**
    * Get screen position from a 3d point
    * @param {Number} latitude Latitude of the point
    * @param {Number} longitude Longitude of the point
-   * @param {Number} elevation Elevation of the point
+   * @param {Number} altitude Altitude of the point
    * @return {Object} Screen position in pixels { x, y }
    */
-  project (latitude, longitude, elevation) {
-    const
-      metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *  Math.cos(this.position.latitude / 180 * Math.PI),
-      worldPos = [(longitude - this.position.longitude) * metersPerDegreeLongitude, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, elevation];
+  project (latitude, longitude, altitude) {
+    const worldPos = [(longitude - this.position.longitude) * METERS_PER_DEGREE_LONGITUDE, -(latitude - this.position.latitude) * METERS_PER_DEGREE_LATITUDE, altitude];
 
     // takes current cam pos into account.
-    let posNDC = transformVec3(render.viewProjMatrix.data, worldPos);
+    let posNDC = transformVec3(this.view.viewProjMatrix.data, worldPos);
     posNDC = mul3scalar(add3(posNDC, [1, 1, 1]), 1 / 2); // from [-1..1] to [0..1]
 
     return {
@@ -1695,14 +2584,14 @@ class OSMBuildings {
   }
 
   /**
-   * Turns a screen point (x, y) into a geographic position (latitude/longitude/elevation=0).
+   * Turns a screen point (x, y) into a geographic position (latitude/longitude/altitude=0).
    * Returns 'undefined' if point would be invisible or lies above horizon.
    * @param {Number} x X position on screen
    * @param {Number} y Y position om screen
    * @return {Object} Geographic position { latitude, longitude }
    */
   unproject (x, y) {
-    const inverseViewMatrix = GLX.Matrix.invert(render.viewProjMatrix.data);
+    const inverseViewMatrix = GLX.Matrix.invert(this.view.viewProjMatrix.data);
     // convert window/viewport coordinates to NDC [0..1]. Note that the browser
     // screen coordinates are y-down, while the WebGL NDC coordinates are y-up,
     // so we have to invert the y value here
@@ -1715,11 +2604,9 @@ class OSMBuildings {
       return;
     }
 
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(this.position.latitude / 180 * Math.PI);
-
     return {
-      latitude: this.position.latitude - worldPos[1] / METERS_PER_DEGREE_LATITUDE,
-      longitude: this.position.longitude + worldPos[0] / metersPerDegreeLongitude
+      longitude: this.position.longitude + worldPos[0] / METERS_PER_DEGREE_LONGITUDE,
+      latitude: this.position.latitude - worldPos[1] / METERS_PER_DEGREE_LATITUDE
     };
   }
 
@@ -1742,7 +2629,7 @@ class OSMBuildings {
    * @param {Object} [options] Options for rendering the object
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.elevation=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @return {Object} The added object
@@ -1758,7 +2645,7 @@ class OSMBuildings {
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.elevation=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show this feature, defaults to and limited by global minZoom
@@ -1871,13 +2758,13 @@ class OSMBuildings {
     }
 
     this.setPosition((state.lat !== undefined && state.lon !== undefined) ? {
-      latitude: state.lat,
-      longitude: state.lon
+      latitude: parseFloat(state.lat),
+      longitude: parseFloat(state.lon)
     } : this.position);
 
-    this.setZoom(state.zoom !== undefined ? state.zoom : this.zoom);
-    this.setRotation(state.rotation !== undefined ? state.rotation : this.rotation);
-    this.setTilt(state.tilt !== undefined ? state.tilt : this.tilt);
+    this.setZoom(state.zoom !== undefined ? parseFloat(state.zoom) : this.zoom);
+    this.setRotation(state.rotation !== undefined ? parseFloat(state.rotation) : this.rotation);
+    this.setTilt(state.tilt !== undefined ? parseFloat(state.tilt) : this.tilt);
   }
 
   /**
@@ -1925,7 +2812,7 @@ class OSMBuildings {
    * @return {Array} Bounding coordinates in unspecific order [{ latitude, longitude }, ...]
    */
   getBounds () {
-    const viewQuad = render.getViewQuad();
+    const viewQuad = this.view.getViewQuad();
     return viewQuad.map(point => getPositionFromLocal(point));
   }
 
@@ -1936,8 +2823,6 @@ class OSMBuildings {
    * @param {Number} zoom The new zoom level
    */
   setZoom (zoom, e) {
-    zoom = parseFloat(zoom);
-
     zoom = Math.max(zoom, this.minZoom);
     zoom = Math.min(zoom, this.maxZoom);
 
@@ -1983,13 +2868,15 @@ class OSMBuildings {
    * @emits OSMBuildings#change
    */
   setPosition (pos) {
-    const
-      lat = parseFloat(pos.latitude),
-      lon = parseFloat(pos.longitude);
-    if (isNaN(lat) || isNaN(lon)) {
-      return;
-    }
-    this.position = { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+    // if (isNaN(lat) || isNaN(lon)) {
+    //   return;
+    // }
+    // { latitude: clamp(lat, -90, 90), longitude: clamp(lon, -180, 180) };
+
+    this.position = pos;
+
+    METERS_PER_DEGREE_LONGITUDE = METERS_PER_DEGREE_LATITUDE * Math.cos(this.position.latitude / 180 * Math.PI);
+
     this.events.emit('change');
   }
 
@@ -2034,7 +2921,7 @@ class OSMBuildings {
    * @emits OSMBuildings#change
    */
   setRotation (rotation) {
-    rotation = parseFloat(rotation) % 360;
+    rotation = rotation % 360;
     if (this.rotation !== rotation) {
       this.rotation = rotation;
       this.events.emit('rotate', { rotation: rotation });
@@ -2057,7 +2944,7 @@ class OSMBuildings {
    * @emits OSMBuildings#change
    */
   setTilt (tilt) {
-    tilt = clamp(parseFloat(tilt), 0, MAX_TILT); // bigger max increases shadow moire on base map
+    tilt = clamp(tilt, 0, MAX_TILT);
     if (this.tilt !== tilt) {
       this.tilt = tilt;
       this.events.emit('tilt', { tilt: tilt });
@@ -2077,15 +2964,15 @@ class OSMBuildings {
    * Adds a WebGL Marker to the map.
    * * @return {Object} Marker
    */
-  addMarker (options) {
-   return new Marker(options);
+  addMarker (position, data, options) {
+   return new Marker(position, data, options);
   }
 
   /**
    * Destroys the map
    */
   destroy () {
-    render.destroy();
+    this.view.destroy();
 
     // this.basemapGrid.destroy();
     // this.dataGrid.destroy();
@@ -2257,7 +3144,7 @@ class Events {
   }
 
   onDoubleClick (e) {
-    render.speedUp();
+    APP.view.speedUp();
     this.cancelEvent(e);
 
     this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
@@ -2268,7 +3155,7 @@ class Events {
   }
 
   onMouseDown (e) {
-    render.speedUp();
+    APP.view.speedUp();
     this.cancelEvent(e);
 
     this.startZoom = APP.zoom;
@@ -2290,11 +3177,11 @@ class Events {
 
   onMouseMoveDocument (e) {
     if (this.buttons === 1) {
-      render.speedUp(); // do it here because no button means the event is not related to us
+      APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
       this.isMove = true;
     } else if (this.buttons === 2) {
-      render.speedUp(); // do it here because no button means the event is not related to us
+      APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
       this.isMove = true;
     }
@@ -2327,14 +3214,14 @@ class Events {
       this.emit('pointerup', { buttons: e.buttons });
     } else {
       const pos = getEventXY(e);
-      render.Picking.getTarget(pos.x, pos.y, target => {
-        this.emit('pointerup', { buttons: e.buttons, target: target });
+      APP.view.Picking.getTarget(pos.x, pos.y, target => {
+        this.emit('pointerup', { buttons: e.buttons, ...target });
       });
     }
   }
 
   onMouseWheel (e) {
-    render.speedUp();
+    APP.view.speedUp();
     this.cancelEvent(e);
 
     let delta = 0;
@@ -2412,7 +3299,7 @@ class Events {
   //***************************************************************************
 
   onTouchStart (e) {
-    render.speedUp();
+    APP.view.speedUp();
     this.cancelEvent(e);
 
     this.buttons = 1;
@@ -2445,7 +3332,7 @@ class Events {
       return;
     }
 
-    render.speedUp();
+    APP.view.speedUp();
 
     const t1 = e.touches[0];
 
@@ -2484,8 +3371,8 @@ class Events {
         this.emit('pointerup', { buttons: 1 });
       } else {
         const pos = getEventXY(e);
-        render.Picking.getTarget(pos.x, pos.y, target => {
-          this.emit('pointerup', { buttons: 1, target: target });
+        APP.view.Picking.getTarget(pos.x, pos.y, target => {
+          this.emit('pointerup', { buttons: 1, ...target });
         });
       }
 
@@ -2501,7 +3388,7 @@ class Events {
       return;
     }
 
-    render.speedUp();
+    APP.view.speedUp();
     this.cancelEvent(e);
 
     if (!this.isDisabled) {
@@ -2566,6 +3453,7 @@ const document = window.document;
 const EARTH_RADIUS_IN_METERS = 6378137;
 const EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
 const METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+let METERS_PER_DEGREE_LONGITUDE = METERS_PER_DEGREE_LATITUDE; // variable
 
 /* For shadow mapping, the camera rendering the scene as seen by the sun has
  * to cover everything that's also visible to the user. For this to work
@@ -2585,11 +3473,11 @@ const SHADOW_MAP_MAX_BUILDING_HEIGHT = 100;
  * shadow depth map size impacts rendering performance */
 const SHADOW_DEPTH_MAP_SIZE = 2048;
 
-//the building wall texture as a data url
+// building wall texture as a data url
 const BUILDING_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wwCCAUQLpaUSQAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAAGUExURebm5v///zFES9kAAAAcSURBVCjPY/gPBQyUMh4wAAH/KAPCoFaoDnYGAAKtZsamTRFlAAAAAElFTkSuQmCC';
 
-//the Marker texture as a data url
-const MARKER_TEXTURE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4gUHDxACbf+ToAAABKBJREFUeNrt3YFtKjEURFGWBmiE/iuhka0AOgCxWpDte04DP/nxG88zkbJdWMLjdnv+89+77/vmf31+foiGXDgIAAy8QBAAGHiBIAAw9MJAAGDohYEAwNALAwGAwRcEAgCDLwgEAAZfEAgADL4gEAAGH0EgAAw+gkAAGHwEgQAw/AgBAWDwEQQCwPAjBASA4UcICACDjyAQAIYfISAADD9CQAAYfoSAADD4CAIBYPgRAgLA8CMEBIDhRwgIAMOPEBAAhh8hcIqrHzd0ZZLO7Y8WEA0Aw48QiAaA4UcIRAPA8CMEogFg+BECn/kUAMKWTDW3P1pANAAMP0LACgDUGoDbHy0gGgCGHyFgBQBqDcDtjxagAQC1BuD2RwvQAIBaA3D7owVoAECtAbj90QI0AKDWANz+aAEaAFBrAG5/tAANABAAQGYFUP+xBmgAgAAAMiuA+o81QAMABACQWQHUf6wBGgAgAAABAKz/BmD/xzuABgAIAEAAAOu/Adj/8Q6gAQACABAAgAAABAAgAIAjhv14wkeArGTUjwI1ALACAAIAEACAAAAEACAAAAEACABAAAACABAAgAAABAAgAAABAAgAQAAAAgAQAIAAAAQAIAAAAQD8zjbyF+ePg7CCUf8oiAYAVgBAAAACAOjYRv8CPQQys5EfADUAsAIAAgDwBuAdABr7vwYAVgDACmANgFT91wDACgAIAJUKBADQuawEAIRNV6t9GoDbXwMABACQWgGsAaj/GgBQDQC/EwAaALiUBABw1NRV2mMgbn8NACgGgMdA0ADAJSQAgG8tUaE9BuL21wCAYgPQAnD7awBAtQFoAbj9NQCgGgB+MQg0AHDJVANACwANAFwuAgB4Z9m67CNB3P4aAFBsAFoAbn8NAKg2AC0At78GAFQbgBaA218DAKoNQAvA7R8PACGA4bcCANUGoAXg9tcAgGoD0AJw+2sAQLUBaAG4/TUA0ADK37wWQPn21wBAA2jTAtz+5e9fA8DwCwCHAKwAVgEEvwYAaABaAG5/DQDQALQA3P4aABh+AeCQgBXAKoBg1wAADUALwO2vAYDhFwAOD1gBrAIIcA0A0AC0ANz+GgAYfgHgUIEAAEEtABwu+DMH+gAPggJaAwDDLwAcNrACWAUQyBoAGH4B4PCBAAAB7A3AWwCGXwNwGEEAgMAVAA4leAPwHoCg1QDA8AsAhxSsAFYBBKsGAIZfADi0IAAQpHgD8BZg+NEAHGIQAAhOrABWAcOPBuBQgwBAUGIFsAoYfjQAhxwEAIIRK4BVwPCjATj0IAAQhFYArAKGXwPAECAAQPBZAbAKGH4BgBAw/FYADAcCAAScFQCrgOHXADAsCAAQaFYArAKGXwPA8CAAQIBZAciuAoZfABANAcNvBcBQIQAQVFgBSKwChl8DwJAhABBMWAFIrAKGXwAQDQHDbwXA8CEAEEBYAUisAoZfA8BNjABA4GAFILEKGH4BQDQEDL8VAPUcAYBgwQpAYhUw/AKAaAgYfisAajsaALUmIEA0ALQHBACGGSsAiVVAYAgAoiFg+K0AWBUQABhyrAAkVgHBAMEQmPEPj3KeFy7fLVanpR7MAAAAAElFTkSuQmCC';
+// TODO: automate
+const DEFAULT_ICON = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="512px" height="512px" viewBox="0 0 512 512"><path d="M256,0C167.641,0,96,71.625,96,160c0,24.75,5.625,48.219,15.672,69.125C112.234,230.313,256,512,256,512l142.594-279.375C409.719,210.844,416,186.156,416,160C416,71.625,344.375,0,256,0z M256,256c-53.016,0-96-43-96-96s42.984-96,96-96c53,0,96,43,96,96S309,256,256,256z"/></svg>';
 
 
 class Request {
@@ -2782,7 +3670,7 @@ class Grid {
       const parentY = (tile[1] << 0) / 2;
 
       if (parentTiles[[parentX, parentY]] === undefined) { //parent tile screen size unknown
-        const numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom - 1, render.viewProjMatrix);
+        const numParentScreenPixels = getTileSizeOnScreen(parentX, parentY, zoom - 1, APP.view.viewProjMatrix);
         parentTiles[[parentX, parentY]] = (numParentScreenPixels < pixelAreaThreshold);
       }
 
@@ -2854,7 +3742,7 @@ class Grid {
     // };
 
     let
-      viewQuad = render.getViewQuad(render.viewProjMatrix.data),
+      viewQuad = APP.view.getViewQuad(APP.view.viewProjMatrix.data),
       center = project([APP.position.longitude, APP.position.latitude], 1<< zoom);
 
     for (let i = 0; i < 4; i++) {
@@ -3043,7 +3931,8 @@ class BitmapTile extends Tile {
   }
 
   load (url, callback) {
-    this.texture = new GLX.texture.Image().load(url, image => {
+    this.texture = new GLX.texture.Image();
+    this.texture.load(url, image => {
       if (image) {
 
         /* Whole texture will be mapped to fit the tile exactly. So
@@ -3121,7 +4010,6 @@ class Feature {
 
   constructor (type, url, options = {}, callback = function () {}) {
     this.type = type;
-    this.url = url;
     this.options = options;
     this.callback = callback;
 
@@ -3129,7 +4017,6 @@ class Feature {
     this.color = options.color;
 
     this.matrix = new GLX.Matrix();
-    this.translate(0, 0, options.elevation || 0);
     this.scale(options.scale || 1);
     this.rotate(options.rotation || 0);
 
@@ -3141,10 +4028,10 @@ class Feature {
       this.maxZoom = MAX_ZOOM;
     }
 
-    this.load();
+    this.load(url);
   }
 
-  load () {
+  load (url) {
     // TODO: perhaps have some workers attached to collection and just ask for them
     APP.workers.get(worker => {
       worker.onMessage(res => {
@@ -3163,15 +4050,14 @@ class Feature {
         worker.free();
       });
 
-      worker.postMessage({ type: this.type, url: this.url, options: this.options });
+      worker.postMessage({ type: this.type, url: url, options: this.options });
     });
   }
 
   onLoad (res) {
-
-    this.position = res.position;
-    this.prevX = 0;
-    this.prevY = 0;
+    this.longitude = res.position.longitude;
+    this.latitude = res.position.latitude;
+    this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(this.latitude / 180 * Math.PI);
 
     //****** init buffers *********************************
 
@@ -3201,8 +4087,8 @@ class Feature {
     }, 20);
   }
 
-  translate (x = 0, y = 0, z = 0) {
-    this.matrix.translate(x, y, z);
+  translateBy (x = 0, y = 0, z = 0) {
+    this.matrix.translateBy(x, y, z);
   }
 
   scale (scaling) {
@@ -3214,20 +4100,11 @@ class Feature {
   }
 
   getMatrix () {
-    const
-      currX = (this.position.longitude - APP.position.longitude),
-      currY = (this.position.latitude - APP.position.latitude),
-      dx = currX - this.prevX,
-      dy = currY - this.prevY;
-
-    // TODO: calc this once per renderFrame()
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
-
-    this.matrix.translate(dx * metersPerDegreeLongitude, -dy * METERS_PER_DEGREE_LATITUDE, 0);
-
-    this.prevX = currX;
-    this.prevY = currY;
-
+    this.matrix.translateTo(
+      (this.longitude - APP.position.longitude) * this.metersPerLon,
+      (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
+      0
+    );
     return this.matrix;
   }
 
@@ -3236,7 +4113,7 @@ class Feature {
       return 1;
     }
 
-    render.speedUp();
+    APP.view.speedUp();
 
     const fade = this.fade;
     this.fade += 1 / (1 * 60); // (duration * fps)
@@ -3689,14 +4566,15 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
  *       the tile intersects with a viewport edge. 
  */
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
-  const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-                                 Math.cos(APP.position.latitude / 180 * Math.PI);
   const tileLon = tile2lon(tileX, tileZoom);
   const tileLat = tile2lat(tileY, tileZoom);
   
   const modelMatrix = new GLX.Matrix();
-  modelMatrix.translate( (tileLon - APP.position.longitude)* metersPerDegreeLongitude,
-                        -(tileLat - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+  modelMatrix.translateBy(
+    (tileLon - APP.position.longitude) * METERS_PER_DEGREE_LONGITUDE,
+    (APP.position.latitude - tileLat) * METERS_PER_DEGREE_LATITUDE,
+    0
+  );
 
   const size = getTileSizeInMeters( APP.position.latitude, tileZoom);
   
@@ -3737,12 +4615,9 @@ function getTileSizeInMeters( latitude, zoom) {
 }
 
 function getPositionFromLocal(localXY) {
-  const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE *
-                                 Math.cos(APP.position.latitude / 180 * Math.PI);
-
   return {
-    longitude: APP.position.longitude + localXY[0]/metersPerDegreeLongitude,
-    latitude: APP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
+    longitude: APP.position.longitude + localXY[0] / METERS_PER_DEGREE_LONGITUDE,
+    latitude: APP.position.latitude - localXY[1] / METERS_PER_DEGREE_LATITUDE
   };
 }
 
@@ -3786,26 +4661,20 @@ function dist3(a,b){ return len3(sub3(a,b));}
 function equal3(a, b) { return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];}
 
 
-class render {
+class View {
 
-  constructor(){
-    this.metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
-  }
-
-  static getViewQuad () {
+  getViewQuad () {
     return getViewQuad(this.viewProjMatrix.data,  (this.fogDistance + this.fogBlurDistance), this.viewDirOnMap);
   }
 
-  static start () {
-    render.effects = { shadows: true };
-
-    this.metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
+  start () {
+    this.shadowsEnabled = true;
 
     // disable effects if they rely on WebGL extensions
     // that the current hardware does not support
     if (!GL.depthTextureExtension) {
       console.warn('Shadows are disabled because your GPU does not support WEBGL_depth_texture');
-      render.effects.shadows = false;
+      this.shadowsEnabled = false;
     }
 
     this.setupViewport();
@@ -3814,19 +4683,23 @@ class render {
     GL.enable(GL.CULL_FACE);
     GL.enable(GL.DEPTH_TEST);
 
-    render.Picking = new Picking(); // renders only on demand
-    render.Horizon = new Horizon();
-    render.Buildings = new Buildings();
-    render.Marker = new MarkerRender();
-    render.Basemap = new Basemap();
+    this.Picking = new View.Picking(); // renders only on demand
+    this.Horizon = new View.Horizon();
+    this.Buildings = new View.Buildings();
+    // if (this.shadowsEnabled) {
+    //   this.Markers = new View.Markers();
+    // } else {
+      this.Markers = new View.MarkersSimple();
+    // }
+    this.Basemap = new View.Basemap();
 
-    render.Overlay.init();
-    render.ambientMap = new AmbientMap();
-    render.blurredAmbientMap = new Blur();
-    render.MapShadows = new MapShadows();
-    if (render.effects.shadows) {
-      render.cameraGBuffer = new DepthNormal();
-      render.sunGBuffer = new DepthNormal();
+    this.Overlay = new View.Overlay();
+    this.ambientMap = new View.AmbientMap();
+    this.blurredAmbientMap = new View.Blur();
+    this.MapShadows = new View.MapShadows();
+    if (this.shadowsEnabled) {
+      this.cameraGBuffer = new View.DepthNormal();
+      this.sunGBuffer = new View.DepthNormal();
     }
 
     this.speedUp();
@@ -3834,42 +4707,42 @@ class render {
     this.renderFrame();
   }
 
-  static renderFrame () {
+  renderFrame () {
     if (APP.zoom >= APP.minZoom && APP.zoom <= APP.maxZoom) {
       requestAnimationFrame(() => {
 
         this.setupViewport();
-        this.metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
         GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
         const viewSize = [APP.width, APP.height];
 
-        if (!render.effects.shadows) {
-          render.Buildings.render();
-          render.MarkerRender.render();
+        if (!this.shadowsEnabled) {
+          this.Buildings.render();
+          this.Markers.render();
 
           GL.enable(GL.BLEND);
 
           GL.blendFuncSeparate(GL.ONE_MINUS_DST_ALPHA, GL.DST_ALPHA, GL.ONE, GL.ONE);
           GL.disable(GL.DEPTH_TEST);
-          render.Horizon.render();
+          this.Horizon.render();
           GL.disable(GL.BLEND);
           GL.enable(GL.DEPTH_TEST);
 
-          render.Basemap.render();
+          this.Basemap.render();
         } else {
           const viewTrapezoid = this.getViewQuad();
 
-          Sun.updateView(viewTrapezoid);
-          render.Horizon.updateGeometry(viewTrapezoid);
+          View.Sun.updateView(viewTrapezoid);
+          this.Horizon.updateGeometry(viewTrapezoid);
 
-          render.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
-          render.sunGBuffer.render(Sun.viewMatrix, Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
-          render.ambientMap.render(render.cameraGBuffer.framebuffer.depthTexture, render.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
-          render.blurredAmbientMap.render(render.ambientMap.framebuffer.renderTexture, viewSize);
-          render.Buildings.render(render.sunGBuffer.framebuffer);
-          render.Basemap.render();
+          this.cameraGBuffer.render(this.viewMatrix, this.projMatrix, viewSize, true);
+          this.sunGBuffer.render(View.Sun.viewMatrix, View.Sun.projMatrix, [SHADOW_DEPTH_MAP_SIZE, SHADOW_DEPTH_MAP_SIZE]);
+          this.ambientMap.render(this.cameraGBuffer.framebuffer.depthTexture, this.cameraGBuffer.framebuffer.renderTexture, viewSize, 2.0);
+          this.blurredAmbientMap.render(this.ambientMap.framebuffer.renderTexture, viewSize);
+          this.Buildings.render(this.sunGBuffer.framebuffer);
+          this.Markers.render(this.sunGBuffer.framebuffer);
+          this.Basemap.render();
 
           GL.enable(GL.BLEND);
 
@@ -3879,8 +4752,8 @@ class render {
           // geometry should be blurred into the background in the next step) intact
           GL.blendFuncSeparate(GL.ZERO, GL.SRC_COLOR, GL.ZERO, GL.ONE);
 
-          render.MapShadows.render(Sun, render.sunGBuffer.framebuffer, 0.5);
-          render.Overlay.render(render.blurredAmbientMap.framebuffer.renderTexture, viewSize);
+          this.MapShadows.render(this.sunGBuffer.framebuffer, 0.5);
+          this.Overlay.render(this.blurredAmbientMap.framebuffer.renderTexture, viewSize);
 
           // linear interpolation between the colors of the current framebuffer
           // ( =building geometries) and of the sky. The interpolation factor
@@ -3893,14 +4766,12 @@ class render {
 
 
           GL.disable(GL.DEPTH_TEST);
-          render.Horizon.render();
+          this.Horizon.render();
           GL.enable(GL.DEPTH_TEST);
 
           GL.disable(GL.BLEND);
 
-          render.Marker.render();
-
-          // render.hudRect.render( render.sunGBuffer.getFogNormalTexture(), config );
+          // this.hudRect.render( this.sunGBuffer.getFogNormalTexture(), config );
         }
 
         // APP.markers.updateMarkerView();
@@ -3921,7 +4792,7 @@ class render {
   }
 
   // initialize view and projection matrix, fog distance, etc.
-  static setupViewport () {
+  setupViewport () {
     if (GL.canvas.width !== APP.width) {
       GL.canvas.width = APP.width;
     }
@@ -3941,8 +4812,8 @@ class render {
     this.viewMatrix = new GLX.Matrix()
       .rotateZ(APP.rotation)
       .rotateX(APP.tilt)
-      .translate(0, 8 / scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
-      .translate(0, 0, -1220 / scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
+      .translateBy(0, 8 / scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
+      .translateBy(0, 0, -1220 / scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
 
     this.viewDirOnMap = [Math.sin(APP.rotation / 180 * Math.PI), -Math.cos(APP.rotation / 180 * Math.PI)];
 
@@ -3988,10 +4859,10 @@ class render {
     this.farPlane = 30000;
 
     this.projMatrix = new GLX.Matrix()
-      .translate(0, -height / (2.0 * scale), 0) // 0, APP y offset to neutralize camera y offset,
+      .translateTo(0, -height / (2 * scale), 0) // 0, APP y offset to neutralize camera y offset,
       .scale(1, -1, 1) // flip Y
       .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, this.nearPlane, this.farPlane))
-      .translate(0, -1, 0); // camera y offset
+      .translateBy(0, -1, 0); // camera y offset
 
     this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
 
@@ -4012,7 +4883,7 @@ class render {
     this.fogBlurDistance = 10000;
   }
 
-  static speedUp () {
+  speedUp () {
     this.isFast = true;
     // console.log('FAST');
     clearTimeout(this.speedTimer);
@@ -4022,24 +4893,24 @@ class render {
     }, 1000);
   }
 
-  static destroy () {
-    render.Picking.destroy();
-    render.Horizon.destroy();
-    render.Buildings.destroy();
-    render.Marker.destroy();
-    render.Basemap.destroy();
-    render.MapShadows.destroy();
+  destroy () {
+    this.Picking.destroy();
+    this.Horizon.destroy();
+    this.Buildings.destroy();
+    this.Markers.destroy();
+    this.Basemap.destroy();
+    this.MapShadows.destroy();
 
-    if (render.cameraGBuffer) {
-      render.cameraGBuffer.destroy();
+    if (this.cameraGBuffer) {
+      this.cameraGBuffer.destroy();
     }
 
-    if (render.sunGBuffer) {
-      render.sunGBuffer.destroy();
+    if (this.sunGBuffer) {
+      this.sunGBuffer.destroy();
     }
 
-    render.ambientMap.destroy();
-    render.blurredAmbientMap.destroy();
+    this.ambientMap.destroy();
+    this.blurredAmbientMap.destroy();
 
     clearTimeout(this.speedTimer);
   }
@@ -4048,14 +4919,11 @@ class render {
 // TODO: perhaps render only clicked area
 // TODO: no picking if too far, too small (zoom levels)
 
-class Picking {
+View.Picking = class {
 
   constructor () {
-
-    this.size = [512, 512];
-
-    this.shader = new GLX.Shader({
-      source: pickingShader,
+    this.featuresShader = new GLX.Shader({
+      source: shaders.picking,
       attributes: ['aPosition', 'aPickingColor', 'aZScale'],
       uniforms: [
         'uModelMatrix',
@@ -4066,53 +4934,131 @@ class Picking {
       ]
     });
 
+    this.markersShader = new GLX.Shader({
+      source: shaders.markers_picking,
+      attributes: ['aPosition'],
+      uniforms: [
+        'uPickingColor',
+        'uModelMatrix',
+        'uProjMatrix',
+        'uViewMatrix',
+        'uFogDistance',
+        'uIndex'
+      ]
+    });
+
+    this.size = [512, 512];
     this.framebuffer = new GLX.Framebuffer(this.size[0], this.size[1]);
+  }
+
+  renderFeatures () {
+    const shader = this.featuresShader;
+
+    shader.enable();
+
+    shader.setParam('uFogDistance', '1f', APP.view.fogDistance);
+
+    const renderedFeatures = [];
+    APP.features.forEach(item => {
+      if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
+        return;
+      }
+
+      let modelMatrix = item.getMatrix();
+      if (!modelMatrix) {
+        return;
+      }
+
+      renderedFeatures.push(item.items);
+
+      shader.setParam('uFade', '1f', item.getFade());
+      shader.setParam('uIndex', '1f', renderedFeatures.length / 256);
+
+      shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+      shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, APP.view.viewProjMatrix));
+
+      shader.setBuffer('aPosition', item.vertexBuffer);
+      shader.setBuffer('aPickingColor', item.pickingBuffer);
+      shader.setBuffer('aZScale', item.zScaleBuffer);
+
+      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
+    });
+
+    shader.disable();
+
+    return renderedFeatures;
+  }
+
+  renderMarkers (renderedFeaturesLength) {
+    const shader = this.markersShader;
+
+    shader.enable();
+
+    shader.setParam('uFogDistance', '1f', APP.view.fogDistance);
+
+    const renderedMarkers = [];
+    APP.markers.forEach((item, i) => {
+      let modelMatrix = item.getMatrix();
+
+      renderedMarkers.push(item);
+
+      shader.setParam('uIndex', '1f', (renderedFeaturesLength+1) / 256);
+
+      shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+      shader.setMatrix('uViewMatrix', '4fv', APP.view.viewMatrix.data);
+      shader.setMatrix('uProjMatrix', '4fv', APP.view.projMatrix.data);
+
+      shader.setBuffer('aPosition', item.icon.vertexBuffer);
+
+      // TODO: do this in Marker, early
+      i++;
+      const pickingColor = [0, (i & 0xff) / 255, ((i >> 8) & 0xff) / 255];
+
+      shader.setParam('uPickingColor', '3fv', pickingColor);
+
+      GL.drawArrays(GL.TRIANGLES, 0, item.icon.vertexBuffer.numItems);
+    });
+
+    shader.disable();
+
+    return renderedMarkers;
+  }
+
+  findFeatures (renderedFeatures, i, f) {
+    if (!renderedFeatures[i] || !renderedFeatures[i][f]) {
+      return;
+    }
+
+    const feature = renderedFeatures[i][f];
+    // callback({ id: feature.id, properties: feature.properties });
+
+    // find related items (across tiles)
+    const res = [];
+    const id = feature.properties.building || feature.id;
+    APP.features.forEach(item => { // all tiles...
+      item.items.forEach(feature => { // ...and their features
+        if ((feature.id === id || feature.properties.building === id) && !res.some(f => f.id === feature.id)) {
+          res.push({id: feature.id, properties: feature.properties});
+        }
+      });
+    });
+
+    return res;
   }
 
   getTarget (x, y, callback) {
     requestAnimationFrame(() => {
-      const shader = this.shader;
-
-      shader.enable();
-      this.framebuffer.enable();
-
       GL.viewport(0, 0, this.size[0], this.size[1]);
+
+      this.framebuffer.enable();
 
       GL.clearColor(0, 0, 0, 1);
       GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-      shader.setParam('uFogDistance', '1f', render.fogDistance);
+      const renderedFeatures = this.renderFeatures();
+      const renderedMarkers = this.renderMarkers(renderedFeatures.length);
 
-      const renderedItems = [];
-      APP.features.forEach(item => {
-        if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
-          return;
-        }
-
-        let modelMatrix = item.getMatrix();
-        if (!modelMatrix) {
-          return;
-        }
-
-        renderedItems.push(item.items);
-
-        shader.setParam('uFade', '1f', item.getFade());
-        shader.setParam('uIndex', '1f', renderedItems.length / 256);
-
-        shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-        shader.setMatrix('uMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-
-        shader.setBuffer('aPosition', item.vertexBuffer);
-        shader.setBuffer('aPickingColor', item.pickingBuffer);
-        shader.setBuffer('aZScale', item.zScaleBuffer);
-
-        GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-      });
-
-      shader.disable();
       GL.viewport(0, 0, APP.width, APP.height);
-
-      //***************************************************
 
       const
         X = x / APP.width * this.size[0] << 0,
@@ -4128,44 +5074,29 @@ class Picking {
 
       const
         i = imgData[0] - 1,
-        f = (imgData[1] | (imgData[2] << 8)) - 1;
+        f = (imgData[1] | (imgData[2] << 8)) - 1,
+        res = {};
 
-      if (!renderedItems[i] || !renderedItems[i][f]) {
-        callback();
-        return;
-      }
-
-      const feature = renderedItems[i][f];
-      // callback({ id: feature.id, properties: feature.properties });
-
-      // find related items (across tiles)
-      const res = [];
-      const id = feature.properties.building || feature.id;
-      APP.features.forEach(item => { // all tiles...
-        item.items.forEach(feature => { // ...and their features
-          if ((feature.id === id || feature.properties.building === id) && !res.some(f => f.id === feature.id)) {
-            res.push({ id: feature.id, properties: feature.properties });
-          }
-        });
-      });
+      res.features = this.findFeatures(renderedFeatures, i, f);
+      res.marker = (renderedMarkers[f] && renderedMarkers[f].data);
 
       callback(res);
-
     }); // end requestAnimationFrame()
   }
 
   destroy () {
-    this.shader.destroy();
+    this.featuresShader.destroy();
+    this.markersShader.destroy();
     this.framebuffer.destroy();
   }
-}
+};
 
-const Sun = {
+View.Sun = class {
 
-  setDate: date => {
+  static setDate (date) {
     const pos = suncalc(date, APP.position.latitude, APP.position.longitude);
 
-    Sun.direction = [
+    this.direction = [
       -Math.sin(pos.azimuth) * Math.cos(pos.altitude),
        Math.cos(pos.azimuth) * Math.cos(pos.altitude),
                                Math.sin(pos.altitude)
@@ -4174,33 +5105,33 @@ const Sun = {
     const rotationInDeg = pos.azimuth / (Math.PI/180);
     const tiltInDeg     = 90 - pos.altitude / (Math.PI/180);
 
-    Sun.viewMatrix = new GLX.Matrix()
+    this.viewMatrix = new GLX.Matrix()
       .rotateZ(rotationInDeg)
       .rotateX(tiltInDeg)
-      .translate(0, 0, -5000)
+      .translateTo(0, 0, -5000)
       .scale(1, -1, 1); // flip Y
-  },
+  }
   
-  updateView: coveredGroundVertices => {
+  static updateView (coveredGroundVertices) {
     // TODO: could parts be pre-calculated?
-    Sun.projMatrix = getCoveringOrthoProjection(
+    this.projMatrix = getCoveringOrthoProjection(
       substituteZCoordinate(coveredGroundVertices, 0.0).concat(substituteZCoordinate(coveredGroundVertices, SHADOW_MAP_MAX_BUILDING_HEIGHT)),
-      Sun.viewMatrix,
+      this.viewMatrix,
       1000,
       7500
     );
 
-    Sun.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(Sun.viewMatrix, Sun.projMatrix));
+    this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
   }
 };
 
 
-class Buildings {
+View.Buildings = class {
 
   constructor () {
-    this.shader = !render.effects.shadows ?
+    this.shader = !APP.view.shadowsEnabled ?
       new GLX.Shader({
-        source: buildingsShader,
+        source: shaders.buildings,
         attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
         uniforms: [
           'uModelMatrix',
@@ -4216,7 +5147,7 @@ class Buildings {
           'uWallTexIndex'
         ]
       }) : new GLX.Shader({
-      source: buildings_with_shadowsShader,
+      source: shaders.buildings_with_shadows,
       attributes: ['aPosition', 'aTexCoord', 'aColor', 'aNormal', 'aHeight', 'aTintColor', 'aZScale'],
       uniforms: [
         'uFogDistance',
@@ -4248,21 +5179,21 @@ class Buildings {
     //   GL.disable(GL.CULL_FACE);
     // }
 
-    shader.setParam('uFogDistance',     '1f',  render.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
+    shader.setParam('uFogDistance',     '1f',  APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  APP.view.fogBlurDistance);
     shader.setParam('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
-    shader.setParam('uLightDirection',  '3fv', Sun.direction);
-    shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
-    shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    shader.setParam('uLightDirection',  '3fv', View.Sun.direction);
+    shader.setParam('uLowerEdgePoint',  '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', APP.view.viewDirOnMap);
 
-    if (!render.effects.shadows) {
+    if (!APP.view.shadowsEnabled) {
       const matrix3 = new Float32Array([
         1, 0, 0,
         0, 1, 0,
         0, 0, 1
       ]);
 
-      shader.setUniformMatrix('uNormalTransform', '3fv', matrix3);
+      shader.setMatrix('uNormalTransform', '3fv', matrix3);
     }
 
     shader.setTexture('uWallTexIndex', 0, this.wallTexture);
@@ -4274,7 +5205,7 @@ class Buildings {
 
     APP.features.forEach(item => {
       // no visibility check needed, Grid.purge() is taking care
-      // TODO: but not for individual objects (and markers)!
+      // TODO: but not for individual features
 
       if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
         return;
@@ -4289,10 +5220,10 @@ class Buildings {
       shader.setParam('uFade', '1f', item.getFade());
 
       shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-      shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+      shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.view.viewProjMatrix));
 
-      if (render.effects.shadows) {
-        shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+      if (APP.view.shadowsEnabled) {
+        shader.setMatrix('uSunMatrix', '4fv', GLX.Matrix.multiply(modelMatrix, View.Sun.viewProjMatrix));
       }
 
       shader.setBuffer('aPosition', item.vertexBuffer);
@@ -4300,11 +5231,12 @@ class Buildings {
       shader.setBuffer('aNormal', item.normalBuffer);
       shader.setBuffer('aColor', item.colorBuffer);
       shader.setBuffer('aHeight', item.heightBuffer);
-      shader.setBuffer('aTintColor',  item.tintBuffer);
-      shader.setBuffer('aZScale',  item.zScaleBuffer);
+      shader.setBuffer('aTintColor', item.tintBuffer);
+      shader.setBuffer('aZScale', item.zScaleBuffer);
 
       GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
     });
+
 
     // if (this.showBackfaces) {
     //   GL.enable(GL.CULL_FACE);
@@ -4314,7 +5246,110 @@ class Buildings {
   }
 
   destroy () {}
-}
+};
+
+View.Markers = class {
+
+  constructor () {
+
+    this.shader = new GLX.Shader({
+      source: shaders.markers,
+      attributes: ['aPosition'],
+      uniforms: [
+        'uFogDistance',
+        'uFogBlurDistance',
+        'uLightColor',
+        'uLightDirection',
+        'uLowerEdgePoint',
+        'uModelMatrix',
+        'uSunMatrix',
+        'uShadowTexIndex',
+        'uShadowTexDimensions',
+        'uViewDirOnMap',
+        'uProjMatrix',
+        'uViewMatrix',
+        'uColor'
+      ]
+    });
+  }
+
+  render (depthFramebuffer) {
+    const shader = this.shader;
+
+    shader.enable();
+
+    shader.setParam('uFogDistance',     '1f',  APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  APP.view.fogBlurDistance);
+    shader.setParam('uLightColor',      '3fv', [0.5, 0.5, 0.5]);
+    shader.setParam('uLightDirection',  '3fv', View.Sun.direction);
+    shader.setParam('uLowerEdgePoint',  '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', APP.view.viewDirOnMap);
+    shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height]);
+
+    shader.setTexture('uShadowTexIndex', 1, depthFramebuffer.depthTexture);
+
+    shader.setMatrix('uViewMatrix', '4fv', APP.view.viewMatrix.data);
+    shader.setMatrix('uProjMatrix', '4fv', APP.view.projMatrix.data);
+
+    APP.markers.forEach(item => {
+      const modelMatrix = item.getMatrix();
+
+      shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
+      shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, View.Sun.viewProjMatrix));
+
+      shader.setBuffer('aPosition', item.icon.vertexBuffer);
+
+      shader.setParam('uColor', '3fv', item.color);
+
+      GL.drawArrays(GL.TRIANGLES, 0, item.icon.vertexBuffer.numItems);
+    });
+
+    shader.disable();
+  }
+
+  destroy () {
+    this.shader.destroy();
+  }
+};
+
+
+View.MarkersSimple = class {
+
+  constructor () {
+    this.shader = new GLX.Shader({
+      source: shaders.markers_simple,
+      attributes: ['aPosition'],
+      uniforms: [
+        'uProjMatrix',
+        'uViewMatrix',
+        'uModelMatrix',
+        'uColor'
+      ]
+    });
+  }
+
+  render () {
+    const shader = this.shader;
+
+    shader.enable();
+    shader.setMatrix('uViewMatrix', '4fv', APP.view.viewMatrix.data);
+    shader.setMatrix('uProjMatrix', '4fv', APP.view.projMatrix.data);
+
+    APP.markers.forEach(item => {
+      shader.setMatrix('uModelMatrix', '4fv', item.getMatrix().data);
+      shader.setBuffer('aPosition', item.icon.vertexBuffer);
+      shader.setParam('uColor', '3fv', item.color);
+
+      GL.drawArrays(GL.TRIANGLES, 0, item.icon.vertexBuffer.numItems);
+    });
+
+    shader.disable();
+  }
+
+  destroy () {
+    this.shader.destroy();
+  }
+};
 
 
 /**
@@ -4322,12 +5357,13 @@ class Buildings {
  * not the map itself. Result is used as a blended overlay
  * so that the map can be rendered independently from the shadows cast on it.
  */
+// TODO: independence is not required anymore. could be combined with Basemap?
 
-class MapShadows {
+View.MapShadows = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: basemap_with_shadowsShader,
+      source: shaders.basemap_with_shadows,
       attributes: ['aPosition', 'aNormal'],
       uniforms: [
         'uModelMatrix',
@@ -4347,7 +5383,7 @@ class MapShadows {
     this.mapPlane = new MapPlane();
   }
 
-  render (Sun, depthFramebuffer, shadowStrength) {
+  render (depthFramebuffer, shadowStrength) {
     const item = this.mapPlane;
     if (APP.zoom < item.minZoom || APP.zoom > item.maxZoom) {
       return;
@@ -4359,11 +5395,11 @@ class MapShadows {
 
     GL.disable(GL.CULL_FACE);
 
-    shader.setParam('uDirToSun', '3fv', Sun.direction);
-    shader.setParam('uViewDirOnMap', '2fv',   render.viewDirOnMap);
-    shader.setParam('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
-    shader.setParam('uFogDistance', '1f', render.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f', render.fogBlurDistance);
+    shader.setParam('uDirToSun', '3fv', View.Sun.direction);
+    shader.setParam('uViewDirOnMap', '2fv',   APP.view.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint', '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uFogDistance', '1f', APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f', APP.view.fogBlurDistance);
     shader.setParam('uShadowTexDimensions', '2fv', [depthFramebuffer.width, depthFramebuffer.height] );
     shader.setParam('uShadowStrength', '1f', shadowStrength);
 
@@ -4375,8 +5411,8 @@ class MapShadows {
     }
 
     shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
-    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, Sun.viewProjMatrix));
+    shader.setMatrix('uMatrix',      '4fv', GLX.Matrix.multiply(modelMatrix, APP.view.viewProjMatrix));
+    shader.setMatrix('uSunMatrix',   '4fv', GLX.Matrix.multiply(modelMatrix, View.Sun.viewProjMatrix));
 
     shader.setBuffer('aPosition', item.vertexBuffer);
     shader.setBuffer('aNormal', item.normalBuffer);
@@ -4389,14 +5425,13 @@ class MapShadows {
   destroy () {
     this.mapPlane.destroy();
   }
-}
+};
 
-
-class Basemap {
+View.Basemap = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: basemapShader,
+      source: shaders.basemap,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uViewMatrix', 'uModelMatrix', 'uTexIndex', 'uFogDistance', 'uFogBlurDistance', 'uLowerEdgePoint', 'uViewDirOnMap']
     });
@@ -4417,10 +5452,10 @@ class Basemap {
 
     shader.enable();
 
-    shader.setParam('uFogDistance',     '1f',  render.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f',  render.fogBlurDistance);
-    shader.setParam('uLowerEdgePoint',  '2fv', render.lowerLeftOnMap);
-    shader.setParam('uViewDirOnMap',    '2fv', render.viewDirOnMap);
+    shader.setParam('uFogDistance',     '1f',  APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f',  APP.view.fogBlurDistance);
+    shader.setParam('uLowerEdgePoint',  '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uViewDirOnMap',    '2fv', APP.view.viewDirOnMap);
 
     const zoom = Math.round(APP.zoom);
 
@@ -4460,18 +5495,19 @@ class Basemap {
   renderTile (tile) {
     const shader = this.shader;
 
-    const metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * Math.cos(APP.position.latitude / 180 * Math.PI);
-
     const modelMatrix = new GLX.Matrix();
 
-    modelMatrix.translate( (tile.longitude- APP.position.longitude)* metersPerDegreeLongitude,
-                          -(tile.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+    modelMatrix.translateBy(
+      (tile.longitude - APP.position.longitude) * METERS_PER_DEGREE_LONGITUDE,
+      (-tile.latitude + APP.position.latitude) * METERS_PER_DEGREE_LATITUDE,
+      0
+    );
 
     GL.enable(GL.POLYGON_OFFSET_FILL);
     GL.polygonOffset(MAX_USED_ZOOM_LEVEL - tile.zoom, MAX_USED_ZOOM_LEVEL - tile.zoom);
 
     shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-    shader.setMatrix('uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, render.viewProjMatrix));
+    shader.setMatrix('uViewMatrix',  '4fv', GLX.Matrix.multiply(modelMatrix, APP.view.viewProjMatrix));
 
     shader.setBuffer('aPosition', tile.vertexBuffer);
     shader.setBuffer('aTexCoord', tile.texCoordBuffer);
@@ -4482,17 +5518,16 @@ class Basemap {
   }
 
   destroy () {}
-}
-
+};
 
 // HudRect renders a textured rectangle to the top-right quarter of the viewport.
 // The intended use is visualize render-to-texture effects during development.
 
-class HudRect {
+View.HudRect = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: textureShader,
+      source: shaders.texture,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: [ 'uMatrix', 'uTexIndex']
     });
@@ -4552,8 +5587,7 @@ class HudRect {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
   }
-}
-
+};
 
 // Renders the depth buffer and normals into textures.
 // Depth is stored as a 24bit depth texture using the WEBGL_depth_texture extension,
@@ -4562,11 +5596,11 @@ class HudRect {
 // the depth buffer used by the GPU in depth testing while rendering the normals
 // to a dedicated texture.
 
-class DepthNormal {
+View.DepthNormal = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: depth_normalShader,
+      source: shaders.depth_normal,
       attributes: ['aPosition', 'aNormal', 'aZScale'],
       uniforms: ['uMatrix', 'uModelMatrix', 'uNormalMatrix', 'uFade', 'uFogDistance', 'uFogBlurDistance', 'uViewDirOnMap', 'uLowerEdgePoint']
     });
@@ -4591,10 +5625,10 @@ class DepthNormal {
     GL.clearColor(0.0, 0.0, 0.0, 1);
     GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
-    shader.setParam('uViewDirOnMap', '2fv', render.viewDirOnMap);
-    shader.setParam('uLowerEdgePoint', '2fv', render.lowerLeftOnMap);
-    shader.setParam('uFogDistance', '1f', render.fogDistance);
-    shader.setParam('uFogBlurDistance', '1f', render.fogBlurDistance);
+    shader.setParam('uViewDirOnMap', '2fv', APP.view.viewDirOnMap);
+    shader.setParam('uLowerEdgePoint', '2fv', APP.view.lowerLeftOnMap);
+    shader.setParam('uFogDistance', '1f', APP.view.fogDistance);
+    shader.setParam('uFogBlurDistance', '1f', APP.view.fogBlurDistance);
 
     // render all data items, but also a dummy map plane
     // Note: SSAO on the map plane has been disabled temporarily TODO: check
@@ -4636,14 +5670,14 @@ class DepthNormal {
     this.framebuffer.destroy();
     this.mapPlane.destroy();
   }
-}
+};
 
 
-class AmbientMap {
+View.AmbientMap = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: ambient_from_depthShader,
+      source: shaders.ambient_from_depth,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uNearPlane', 'uFarPlane', 'uDepthTexIndex', 'uFogTexIndex', 'uEffectStrength']
     });
@@ -4690,8 +5724,8 @@ class AmbientMap {
 
     shader.setParam('uInverseTexSize', '2fv', [1/framebufferSize[0], 1/framebufferSize[1]]);
     shader.setParam('uEffectStrength', '1f',  effectStrength);
-    shader.setParam('uNearPlane',      '1f',  render.nearPlane);
-    shader.setParam('uFarPlane',       '1f',  render.farPlane);
+    shader.setParam('uNearPlane',      '1f',  APP.view.nearPlane);
+    shader.setParam('uFarPlane',       '1f',  APP.view.farPlane);
 
     shader.setBuffer('aPosition', this.vertexBuffer);
     shader.setBuffer('aTexCoord', this.texCoordBuffer);
@@ -4713,30 +5747,32 @@ class AmbientMap {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
   }
-}
+};
 
-
-/* 'Overlay' renders part of a texture over the whole viewport.
-   The intended use is for compositing of screen-space effects.
+/**
+ * 'Overlay' renders part of a texture over the whole viewport.
+ *  The intended use is for compositing of screen-space effects.
  */
-render.Overlay = {
 
-  init: function() {
-  
+View.Overlay = class {
+
+  constructor () {
     const geometry = this.createGeometry();
     this.vertexBuffer   = new GLX.Buffer(3, new Float32Array(geometry.vertices));
     this.texCoordBuffer = new GLX.Buffer(2, new Float32Array(geometry.texCoords));
 
     this.shader = new GLX.Shader({
-      source: textureShader,
+      source: shaders.texture,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uMatrix', 'uTexIndex']
     });
-  },
+  }
 
-  createGeometry: function() {
-    const vertices = [],
-        texCoords= [];
+  createGeometry () {
+    const
+      vertices = [],
+      texCoords= [];
+
     vertices.push(-1,-1, 1E-5,
                    1,-1, 1E-5,
                    1, 1, 1E-5);
@@ -4754,15 +5790,16 @@ render.Overlay = {
                    0.0,1.0);
 
     return { vertices: vertices , texCoords: texCoords };
-  },
+  }
 
-  render: function(texture, framebufferSize) {
+  render (texture) {
 
     const shader = this.shader;
 
     shader.enable();
-    /* we are rendering an *overlay*, which is supposed to be rendered on top of the
-     * scene no matter what its actual depth is. */
+
+    // we are rendering an *overlay*, which is supposed to be rendered on top of the
+    // scene no matter what its actual depth is.
     GL.disable(GL.DEPTH_TEST);
     
     shader.setMatrix('uMatrix', '4fv', GLX.Matrix.identity().data);
@@ -4775,20 +5812,25 @@ render.Overlay = {
     GL.drawArrays(GL.TRIANGLES, 0, this.vertexBuffer.numItems);
 
     GL.enable(GL.DEPTH_TEST);
-    shader.disable();
-  },
 
-  destroy: function() {}
+    shader.disable();
+  }
+
+  destroy () {
+    this.vertexBuffer.destroy();
+    this.texCoordBuffer.destroy();
+    this.shader.destroy();
+  }
 };
 
 
-class Horizon {
+View.Horizon = class {
 
   constructor () {
     this.HORIZON_HEIGHT = 2000;
 
     this.skyShader = new GLX.Shader({
-      source: horizonShader,
+      source: shaders.horizon,
       attributes: ['aPosition'],
       uniforms: ['uAbsoluteHeight', 'uMatrix', 'uFogColor']
     });
@@ -4797,7 +5839,7 @@ class Horizon {
     this.updateGeometry([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]);
 
     this.floorShader = new GLX.Shader({
-      source: flat_colorShader,
+      source: shaders.flat_color,
       attributes: ['aPosition'],
       uniforms: ['uColor', 'uMatrix']
     });
@@ -4846,13 +5888,13 @@ class Horizon {
     const
       skyShader = this.skyShader,
       floorShader = this.floorShader,
-      fogColor = render.fogColor;
+      fogColor = APP.view.fogColor;
 
     skyShader.enable();
 
     skyShader.setParam('uFogColor', '3fv', fogColor);
     skyShader.setParam('uAbsoluteHeight', '1f', this.HORIZON_HEIGHT * 10.0);
-    skyShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
+    skyShader.setMatrix('uMatrix', '4fv', APP.view.viewProjMatrix.data);
     skyShader.setBuffer('aPosition', this.skyVertexBuffer);
 
     GL.drawArrays(GL.TRIANGLES, 0, this.skyVertexBuffer.numItems);
@@ -4863,7 +5905,7 @@ class Horizon {
     floorShader.enable();
 
     floorShader.setParam('uColor', '4fv', [...fogColor, 1.0]);
-    floorShader.setMatrix('uMatrix', '4fv', render.viewProjMatrix.data);
+    floorShader.setMatrix('uMatrix', '4fv', APP.view.viewProjMatrix.data);
     floorShader.setBuffer('aPosition', this.floorVertexBuffer);
 
     GL.drawArrays(GL.TRIANGLE_FAN, 0, this.floorVertexBuffer.numItems);
@@ -4878,13 +5920,12 @@ class Horizon {
     this.floorVertexBuffer.destroy();
     this.floorShader.destroy();
   }
-}
-
-class Blur {
+};
+View.Blur = class {
 
   constructor () {
     this.shader = new GLX.Shader({
-      source: blurShader,
+      source: shaders.blur,
       attributes: ['aPosition', 'aTexCoord'],
       uniforms: ['uInverseTexSize', 'uTexIndex']
     });
@@ -4941,68 +5982,6 @@ class Blur {
     this.vertexBuffer.destroy();
     this.texCoordBuffer.destroy();
   }
-}
-
-// TODO: handle multiple markers
-// A: cluster them into 'tiles' that give close reference point and allow simpler visibility tests or
-// B: handle them as individual objects
-
-class MarkerRender {
-
-  constructor () {
-
-    this.shader = new GLX.Shader({
-      source: markerShader,
-      attributes: ['aPosition', 'aTexCoord'],
-      uniforms: [
-        'uProjMatrix',
-        'uViewMatrix',
-        'uModelMatrix',
-        'uTexIndex'
-      ]
-    });
-  }
-
-  render () {
-    const shader = this.shader;
-
-    shader.enable();
-
-    const metersPerDegreeLongitude = render.metersPerDegreeLongitude;
-
-    // GL.disable(GL.DEPTH_TEST);
-    GL.enable(GL.BLEND);
-    GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
-
-    APP.markers.forEach(item => {
-      const modelMatrix = new GLX.Matrix();
-      modelMatrix.translate(
-        (item.position.longitude - APP.position.longitude) * metersPerDegreeLongitude,
-        -(item.position.latitude - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE,
-        item.position.altitude
-      );
-
-      shader.setMatrix('uProjMatrix', '4fv', render.projMatrix.data);
-      shader.setMatrix('uViewMatrix', '4fv', render.viewMatrix.data);
-      shader.setMatrix('uModelMatrix', '4fv', modelMatrix.data);
-      shader.setBuffer('aPosition', item.vertexBuffer);
-
-      shader.setBuffer('aTexCoord', item.texCoordBuffer);
-      shader.setTexture('uTexIndex', 0, item.texture);
-
-      GL.drawArrays(GL.TRIANGLES, 0, item.vertexBuffer.numItems);
-    });
-
-    GL.disable(GL.BLEND);
-    // GL.enable(GL.DEPTH_TEST);
-
-    shader.disable();
-  }
-
-  destroy () {
-    this.shader.destroy();
-  }
-}
-
+};
 OSMBuildings.VERSION = '4.0.0';
 }());
