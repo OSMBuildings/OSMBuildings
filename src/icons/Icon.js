@@ -43,4 +43,3 @@ class Icon {
 }
 
 Icon.defaultURL = 'default_icon';
-
