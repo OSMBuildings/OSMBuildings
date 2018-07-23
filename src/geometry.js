@@ -1,11 +1,4 @@
 
-function distance2(a, b) {
-  var
-    dx = a[0]-b[0],
-    dy = a[1]-b[1];
-  return dx*dx + dy*dy;
-}
-
 function assert(condition, message) {
   if (!condition) {
     throw message;
@@ -19,8 +12,8 @@ function assert(condition, message) {
 function getDistancePointLine2( line1, line2, p) {
 
   //v: a unit-length vector perpendicular to the line;
-  var v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
-  var r = sub2( line1, p);
+  const v = norm2( [ line2[1] - line1[1], line1[0] - line2[0] ] );
+  const r = sub2( line1, p);
   return Math.abs(dot2(v, r));
 } */
 
@@ -31,16 +24,15 @@ function getDistancePointLine2( line1, line2, p) {
  *  would lie beyond 'segmentEnd'. )
  */
 function getNextPixel(segmentStart, segmentEnd, currentPixel) {
-
-  var vInc = [segmentStart[0] < segmentEnd[0] ? 1 : -1, 
+  const vInc = [segmentStart[0] < segmentEnd[0] ? 1 : -1,
               segmentStart[1] < segmentEnd[1] ? 1 : -1];
          
-  var nextX = currentPixel[0] + (segmentStart[0] < segmentEnd[0] ?  +1 : 0);
-  var nextY = currentPixel[1] + (segmentStart[1] < segmentEnd[1] ?  +1 : 0);
+  const nextX = currentPixel[0] + (segmentStart[0] < segmentEnd[0] ?  +1 : 0);
+  const nextY = currentPixel[1] + (segmentStart[1] < segmentEnd[1] ?  +1 : 0);
   
   // position of the edge to the next pixel on the line 'segmentStart'->'segmentEnd'
-  var alphaX = (nextX - segmentStart[0])/ (segmentEnd[0] - segmentStart[0]);
-  var alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
+  const alphaX = (nextX - segmentStart[0])/ (segmentEnd[0] - segmentStart[0]);
+  const alphaY = (nextY - segmentStart[1])/ (segmentEnd[1] - segmentStart[1]);
   
   // neither value is valid
   if ((alphaX <= 0.0 || alphaX > 1.0) && (alphaY <= 0.0 || alphaY > 1.0)) {
@@ -65,8 +57,8 @@ function getNextPixel(segmentStart, segmentEnd, currentPixel) {
  * to be removed.
  */
 function rasterTriangle(p1, p2, p3) {
-  var points = [p1, p2, p3];
-  points.sort(function(p, q) {
+  const points = [p1, p2, p3];
+  points.sort((p, q) => {
     return p[1] < q[1];
   });
   p1 = points[0];
@@ -79,9 +71,9 @@ function rasterTriangle(p1, p2, p3) {
   if (p2[1] == p3[1])
     return rasterFlatTriangle( p2, p3, p1);
 
-  var alpha = (p2[1] - p1[1]) / (p3[1] - p1[1]);
+  const alpha = (p2[1] - p1[1]) / (p3[1] - p1[1]);
   //point on the line p1->p3 with the same y-value as p2
-  var p4 = [p1[0] + alpha*(p3[0]-p1[0]), p2[1]];
+  const p4 = [p1[0] + alpha*(p3[0]-p1[0]), p2[1]];
   
   /*  P3
    *   |\
@@ -110,28 +102,28 @@ function rasterTriangle(p1, p2, p3) {
 function rasterFlatTriangle( flat0, flat1, other ) {
 
   //console.log("RFT:\n%s\n%s\n%s", String(flat0), String(flat1), String(other));
-  var points = [];
+  const points = [];
   assert(flat0[1] === flat1[1], 'not a flat triangle');
   assert(other[1] !== flat0[1], 'not a triangle');
   assert(flat0[0] !== flat1[0], 'not a triangle');
 
   if (flat0[0] > flat1[0]) //guarantees that flat0 is always left of flat1
   {
-    var tmp = flat0;
+    const tmp = flat0;
     flat0 = flat1;
     flat1 = tmp;
   }
-  
-  var leftRasterPos = [other[0] <<0, other[1] <<0];
-  var rightRasterPos = leftRasterPos.slice(0);
-  points.push(leftRasterPos.slice(0));
-  var yDir = other[1] < flat0[1] ? +1 : -1;
-  var yStart = leftRasterPos[1];
-  var yBeyond= (flat0[1] <<0) + yDir;
-  var prevLeftRasterPos;
-  var prevRightRasterPos;
 
-  for (var y = yStart; (y*yDir) < (yBeyond*yDir); y+= yDir) {
+  let leftRasterPos = [other[0] <<0, other[1] <<0];
+  let rightRasterPos = leftRasterPos.slice(0);
+  points.push(leftRasterPos.slice(0));
+  const yDir = other[1] < flat0[1] ? +1 : -1;
+  const yStart = leftRasterPos[1];
+  const yBeyond= (flat0[1] <<0) + yDir;
+  let prevLeftRasterPos;
+  let prevRightRasterPos;
+
+  for (let y = yStart; (y*yDir) < (yBeyond*yDir); y+= yDir) {
     do {
       points.push( leftRasterPos.slice(0));
       prevLeftRasterPos = leftRasterPos;
@@ -146,7 +138,7 @@ function rasterFlatTriangle( flat0, flat1, other ) {
     } while (rightRasterPos[1]*yDir <= y*yDir);
     rightRasterPos = prevRightRasterPos;
     
-    for (var x = leftRasterPos[0]; x <= rightRasterPos[0]; x++) {
+    for (let x = leftRasterPos[0]; x <= rightRasterPos[0]; x++) {
       points.push([x, y]);
     }
   }
@@ -160,85 +152,86 @@ function rasterFlatTriangle( flat0, flat1, other ) {
  */
 function rasterConvexQuad(quad) {
   assert(quad.length == 4, 'Error: Quadrilateral with more or less than four vertices');
-  var res1  = rasterTriangle(quad[0], quad[1], quad[2]);
-  var res2 =  rasterTriangle(quad[0], quad[2], quad[3]);
+  const res1 = rasterTriangle(quad[0], quad[1], quad[2]);
+  const res2 = rasterTriangle(quad[0], quad[2], quad[3]);
   return res1.concat(res2);
 }
 
 // computes the normal vector of the triangle a-b-c
 function normal(a, b, c) {
-  var d1 = sub3(a, b);
-  var d2 = sub3(b, c);
+  const d1 = sub3(a, b);
+  const d2 = sub3(b, c);
   // normalized cross product of d1 and d2.
   return norm3([ d1[1]*d2[2] - d1[2]*d2[1],
                  d1[2]*d2[0] - d1[0]*d2[2],
                  d1[0]*d2[1] - d1[1]*d2[0] ]);
 }
 
-/* returns the quadrilateral part of the XY plane that is currently visible on
+
+
+/**
+ * returns the quadrilateral part of the XY plane that is currently visible on
  * screen. The quad is returned in tile coordinates for tile zoom level
  * 'tileZoomLevel', and thus can directly be used to determine which basemap
  * and geometry tiles need to be loaded.
  * Note: if the horizon is level (as should usually be the case for 
- * OSMBuildings) then said quad is also a trapezoid. */
+ * OSMBuildings) then said quad is also a trapezoid.
+ */
 function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
-  /* maximum distance from the map center at which
-   * geometry is still visible */
-  //console.log("FMED:", MAX_FAR_EDGE_DISTANCE);
+  // maxFarEdgeDistance: maximum distance from the map center at which geometry is still visible
 
-  var inverse = GLX.Matrix.invert(viewProjectionMatrix);
+  const inverseViewMatrix = GLX.Matrix.invert(viewProjectionMatrix);
 
-  var vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverse);
-  var vBottomRight = getIntersectionWithXYPlane( 1, -1, inverse);
-  var vTopRight    = getIntersectionWithXYPlane( 1,  1, inverse);
-  var vTopLeft     = getIntersectionWithXYPlane(-1,  1, inverse);
+  let
+    vBottomLeft  = getIntersectionWithXYPlane(-1, -1, inverseViewMatrix),
+    vBottomRight = getIntersectionWithXYPlane( 1, -1, inverseViewMatrix),
+    vTopRight    = getIntersectionWithXYPlane( 1,  1, inverseViewMatrix),
+    vTopLeft     = getIntersectionWithXYPlane(-1,  1, inverseViewMatrix);
 
-  /* If even the lower edge of the screen does not intersect with the map plane,
-   * then the map plane is not visible at all.
-   * (Or somebody screwed up the projection matrix, putting the view upside-down 
-   *  or something. But in any case we won't attempt to create a view rectangle).
-   */
+  // If even the lower edge of the screen does not intersect with the map plane,
+  // then the map plane is not visible at all. We won't attempt to create a view rectangle.
+
   if (!vBottomLeft || !vBottomRight) {
     return;
   }
 
-  var vLeftDir, vRightDir, vLeftPoint, vRightPoint;
-  var f;
+  let
+    vLeftDir, vRightDir, vLeftPoint, vRightPoint,
+    f;
 
-  /* The lower screen edge shows the map layer, but the upper one does not.
-   * This usually happens when the camera is close to parallel to the ground
-   * so that the upper screen edge lies above the horizon. This is not a bug
-   * and can legitimately happen. But from a theoretical standpoint, this means 
-   * that the view 'trapezoid' stretches infinitely toward the horizon. Since this
-   * is not a practically useful result - though formally correct - we instead
-   * manually bound that area.*/
+  // The lower screen edge intersects map plane, but the upper one does not.
+  // Usually happens when the camera is close to parallel to the ground
+  // so that the upper screen edge lies above the horizon. This is not a bug
+  // and can legitimately happen. But from a theoretical standpoint, this means
+  // that the view 'trapezoid' stretches infinitely toward the horizon. Since this
+  // is not useful we manually limit that area.
+
   if (!vTopLeft || !vTopRight) {
-    /* point on the left screen edge with the same y-value as the map center*/
-    vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverse);
-    vLeftDir = norm2(sub2( vLeftPoint, vBottomLeft));
+    // point on the left screen edge with the same y-value as the map center*/
+    vLeftPoint = getIntersectionWithXYPlane(-1, -0.9, inverseViewMatrix);
+    vLeftDir = norm2(sub2(vLeftPoint, vBottomLeft));
     f = dot2(vLeftDir, viewDirOnMap);
     vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
     
-    vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverse);
+    vRightPoint = getIntersectionWithXYPlane( 1, -0.9, inverseViewMatrix);
     vRightDir = norm2(sub2(vRightPoint, vBottomRight));
     f = dot2(vRightDir, viewDirOnMap);
     vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
   }
 
-  /* if vTopLeft is further than maxFarEdgeDistance away vertically from the lower edge,
-   * move it closer. */
- if (dot2( viewDirOnMap, sub2(vTopLeft, vBottomLeft)) > maxFarEdgeDistance) {
-    vLeftDir = norm2(sub2( vTopLeft, vBottomLeft));
+  // If vTopLeft is further than maxFarEdgeDistance away vertically from the lower edge, move it closer.
+  if (dot2(viewDirOnMap, sub2(vTopLeft, vBottomLeft)) > maxFarEdgeDistance) {
+    vLeftDir = norm2(sub2(vTopLeft, vBottomLeft));
     f = dot2(vLeftDir, viewDirOnMap);
-    vTopLeft = add2( vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
- }
+    vTopLeft = add2(vBottomLeft, mul2scalar(vLeftDir, maxFarEdgeDistance/f));
+  }
 
- /* dito for vTopRight*/
- if (dot2( viewDirOnMap, sub2(vTopRight, vBottomRight)) > maxFarEdgeDistance) {
-    vRightDir = norm2(sub2( vTopRight, vBottomRight));
+  // Same for vTopRight
+  if (dot2(viewDirOnMap, sub2(vTopRight, vBottomRight)) > maxFarEdgeDistance) {
+    vRightDir = norm2(sub2(vTopRight, vBottomRight));
     f = dot2(vRightDir, viewDirOnMap);
-    vTopRight = add2( vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
- }
+    vTopRight = add2(vBottomRight, mul2scalar(vRightDir, maxFarEdgeDistance/f));
+  }
  
   return [vBottomLeft, vBottomRight, vTopRight, vTopLeft];
 }
@@ -251,20 +244,20 @@ function getViewQuad(viewProjectionMatrix, maxFarEdgeDistance, viewDirOnMap) {
  * current reference point (APP.position). 
  */
 function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height) {
-  var p0 = transformVec3(targetViewMatrix.data, points[0]);
-  var left = p0[0];
-  var right= p0[0];
-  var top  = p0[1];
-  var bottom=p0[1];
+  const p = transformVec3(targetViewMatrix.data, points[0]);
+  let left   = p[0];
+  let right  = p[0];
+  let top    = p[1];
+  let bottom = p[1];
 
-  for (var i = 0; i < points.length; i++) {
-    var p =  transformVec3(targetViewMatrix.data, points[i]);
-    left = Math.min( left,  p[0]);
-    right= Math.max( right, p[0]);
-    top  = Math.max( top,   p[1]);
-    bottom=Math.min( bottom,p[1]);
-  }
-  
+  points.forEach(point => {
+    const p = transformVec3(targetViewMatrix.data, point);
+    left   = Math.min( left,  p[0]);
+    right  = Math.max( right, p[0]);
+    top    = Math.max( top,   p[1]);
+    bottom = Math.min( bottom,p[1]);
+  });
+
   return new GLX.Matrix.Ortho(left, right, top, bottom, near, far);
 }
 
@@ -275,10 +268,10 @@ function getCoveringOrthoProjection(points, targetViewMatrix, near, far, height)
  * vector is then converted back to a 3D Euler coordinates by dividing
  * its first three components each by its fourth component */
 function transformVec3(m, v) {
-  var x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + m[12];
-  var y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + m[13];
-  var z = v[0]*m[2] + v[1]*m[6] + v[2]*m[10] + m[14];
-  var w = v[0]*m[3] + v[1]*m[7] + v[2]*m[11] + m[15];
+  const x = v[0]*m[0] + v[1]*m[4] + v[2]*m[8]  + m[12];
+  const y = v[0]*m[1] + v[1]*m[5] + v[2]*m[9]  + m[13];
+  const z = v[0]*m[2] + v[1]*m[6] + v[2]*m[10] + m[14];
+  const w = v[0]*m[3] + v[1]*m[7] + v[2]*m[11] + m[15];
   return [x/w, y/w, z/w]; //convert homogenous to Euler coordinates
 }
 
@@ -289,11 +282,11 @@ function transformVec3(m, v) {
  * screen edge and y==+1.0 is the upper one.
  */
 function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
-  var v1 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 0]);
-  var v2 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
+  const v1 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 0]);
+  const v2 = transformVec3(inverseTransform, [screenNdcX, screenNdcY, 1]);
 
   // direction vector from v1 to v2
-  var vDir = sub3(v2, v1);
+  const vDir = sub3(v2, v1);
 
   if (vDir[2] >= 0) // ray would not intersect with the plane
   {
@@ -303,8 +296,8 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
    * (screenNdcX, screenNdcY) is:  p = v1 + λ*vDirNorm
    * For the intersection with the xy-plane (-> z=0) holds: v1[2] + λ*vDirNorm[2] = p[2] = 0.0.
    * Rearranged, this reads:   */
-  var lambda = -v1[2]/vDir[2];
-  var pos = add3( v1, mul3scalar(vDir, lambda));
+  const lambda = -v1[2]/vDir[2];
+  const pos = add3( v1, mul3scalar(vDir, lambda));
 
   return [pos[0], pos[1]];  // z==0 
 }
@@ -318,40 +311,41 @@ function getIntersectionWithXYPlane(screenNdcX, screenNdcY, inverseTransform) {
  *       the tile intersects with a viewport edge. 
  */
 function getTileSizeOnScreen(tileX, tileY, tileZoom, viewProjMatrix) {
-  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                 Math.cos(APP.position.latitude / 180 * Math.PI);
-  var tileLon = tile2lon(tileX, tileZoom);
-  var tileLat = tile2lat(tileY, tileZoom);
+  const tileLon = tile2lon(tileX, tileZoom);
+  const tileLat = tile2lat(tileY, tileZoom);
   
-  var modelMatrix = new GLX.Matrix();
-  modelMatrix.translate( (tileLon - APP.position.longitude)* metersPerDegreeLongitude,
-                        -(tileLat - APP.position.latitude) * METERS_PER_DEGREE_LATITUDE, 0);
+  const modelMatrix = new GLX.Matrix();
+  modelMatrix.translateBy(
+    (tileLon - APP.position.longitude) * METERS_PER_DEGREE_LONGITUDE,
+    (APP.position.latitude - tileLat) * METERS_PER_DEGREE_LATITUDE,
+    0
+  );
 
-  var size = getTileSizeInMeters( APP.position.latitude, tileZoom);
+  const size = getTileSizeInMeters( APP.position.latitude, tileZoom);
   
-  var mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
-  var tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
-  var tr = transformVec3(mvpMatrix, [size, 0   , 0]);
-  var bl = transformVec3(mvpMatrix, [0   , size, 0]);
-  var br = transformVec3(mvpMatrix, [size, size, 0]);
-  var verts = [tl, tr, bl, br];
-  for (var i in verts) { 
+  const mvpMatrix = GLX.Matrix.multiply(modelMatrix, viewProjMatrix);
+  const tl = transformVec3(mvpMatrix, [0   , 0   , 0]);
+  const tr = transformVec3(mvpMatrix, [size, 0   , 0]);
+  const bl = transformVec3(mvpMatrix, [0   , size, 0]);
+  const br = transformVec3(mvpMatrix, [size, size, 0]);
+  const res = [tl, tr, bl, br].map(vert => {
     // transformation from NDC [-1..1] to viewport [0.. width/height] coordinates
-    verts[i][0] = (verts[i][0] + 1.0) / 2.0 * APP.width;
-    verts[i][1] = (verts[i][1] + 1.0) / 2.0 * APP.height;
-  }
+    vert[0] = (vert[0] + 1.0) / 2.0 * APP.width;
+    vert[1] = (vert[1] + 1.0) / 2.0 * APP.height;
+    return vert;
+  });
   
-  return getConvexQuadArea( [tl, tr, br, bl]);
+  return getConvexQuadArea(res);
 }
 
 function getTriangleArea(p1, p2, p3) {
   //triangle edge lengths
-  var a = len2(sub2( p1, p2));
-  var b = len2(sub2( p1, p3));
-  var c = len2(sub2( p2, p3));
+  const a = len2(sub2( p1, p2));
+  const b = len2(sub2( p1, p3));
+  const c = len2(sub2( p2, p3));
   
   //Heron's formula
-  var s = 0.5 * (a+b+c);
+  const s = 0.5 * (a+b+c);
   return Math.sqrt( s * (s-a) * (s-b) * (s-c));
 }
 
@@ -366,27 +360,30 @@ function getTileSizeInMeters( latitude, zoom) {
 }
 
 function getPositionFromLocal(localXY) {
-  var metersPerDegreeLongitude = METERS_PER_DEGREE_LATITUDE * 
-                                 Math.cos(APP.position.latitude / 180 * Math.PI);
-
   return {
-    longitude: APP.position.longitude + localXY[0]/metersPerDegreeLongitude,
-    latitude: APP.position.latitude - localXY[1]/METERS_PER_DEGREE_LATITUDE
+    longitude: APP.position.longitude + localXY[0] / METERS_PER_DEGREE_LONGITUDE,
+    latitude: APP.position.latitude - localXY[1] / METERS_PER_DEGREE_LATITUDE
   };
 }
 
 function getTilePositionFromLocal(localXY, zoom) {
-  var pos = getPositionFromLocal(localXY);
-  
-  return [long2tile(pos.longitude, zoom), lat2tile(pos.latitude, zoom)];
+  const pos = getPositionFromLocal(localXY);
+  return project([pos.longitude,  pos.latitude], 1<<zoom);
 }
 
-//all four were taken from http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-function long2tile(lon,zoom) { return (lon+180)/360*Math.pow(2,zoom); }
-function lat2tile(lat,zoom)  { return (1-Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180))/Math.PI)/2 *Math.pow(2,zoom); }
-function tile2lon(x,z) { return (x/Math.pow(2,z)*360-180); }
-function tile2lat(y,z) { 
-  var n = Math.PI-2*Math.PI*y/Math.pow(2,z);
+function project(point, scale = 1) {
+  return [
+    (point[0]/360 + 0.5) * scale,
+    (1-Math.log(Math.tan(point[1] * Math.PI / 180) + 1 / Math.cos(point[1] * Math.PI/180)) / Math.PI)/2 * scale
+  ];
+}
+
+function tile2lon(x, z) {
+  return (x/Math.pow(2,z)*360-180);
+}
+
+function tile2lat(y, z) {
+  const n = Math.PI-2*Math.PI*y/Math.pow(2,z);
   return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 
@@ -395,7 +392,7 @@ function dot2(a,b) { return a[0]*b[0] + a[1]*b[1];}
 function sub2(a,b) { return [a[0]-b[0], a[1]-b[1]];}
 function add2(a,b) { return [a[0]+b[0], a[1]+b[1]];}
 function mul2scalar(a,f) { return [a[0]*f, a[1]*f];}
-function norm2(a)  { var l = len2(a); return [a[0]/l, a[1]/l]; }
+function norm2(a)  { const l = len2(a); return [a[0]/l, a[1]/l]; }
 
 function dot3(a,b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];}
 function sub3(a,b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];}
@@ -404,6 +401,6 @@ function add3scalar(a,f) { return [a[0]+f, a[1]+f, a[2]+f];}
 function mul3scalar(a,f) { return [a[0]*f, a[1]*f, a[2]*f];}
 function len3(a)   { return Math.sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);}
 function squaredLength(a) { return a[0]*a[0] + a[1]*a[1] + a[2]*a[2];}
-function norm3(a)  { var l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
+function norm3(a)  { const l = len3(a); return [a[0]/l, a[1]/l, a[2]/l]; }
 function dist3(a,b){ return len3(sub3(a,b));}
 function equal3(a, b) { return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];}

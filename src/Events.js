@@ -1,179 +1,212 @@
-// gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
-// MIT License
 
 /**
  * @private
  */
-function add2(a, b) {
+function add2 (a, b) {
   return [a[0] + b[0], a[1] + b[1]];
 }
 
 /**
  * @private
  */
-function mul2scalar(a, f) {
-  return [a[0]*f, a[1]*f];
-}
-
-function getPos(e) {
-  var el = e.target;
-
-  if (el.getBoundingClientRect) {
-    var box = el.getBoundingClientRect();
-    if (box !== undefined) {
-      return { x: e.x-box.left, y: e.y-box.top };
-    }
-  }
-
-  var res = { x: 0, y: 0 };
-  while (el.nodeType === 1) {
-    res.x += el.offsetLeft;
-    res.y += el.offsetTop;
-    el = el.parentNode;
-  }
-  return { x: e.x-res.s, y: e.y-res.y };
+function mul2scalar (a, f) {
+  return [a[0] * f, a[1] * f];
 }
 
 /**
  * @private
  */
-function cancelEvent(e) {
-  if (e.preventDefault) {
-    e.preventDefault();
-  }
-  //if (e.stopPropagation) {
-  //  e.stopPropagation();
-  //}
-  e.returnValue = false;
+function getEventXY (e) {
+  const el = e.target;
+  const box = el.getBoundingClientRect();
+  return { x: e.x - box.left, y: e.y - box.top };
 }
 
 /**
  * @private
  */
-function addListener(target, type, fn) {
+function addListener (target, type, fn) {
   target.addEventListener(type, fn, false);
 }
 
-/**
- * @private
- */
-var Events = {};
 
-/**
- * @private
- */
-Events.disabled = false;
+class Events {
 
-/**
- * @private
- */
-Events.init = function(container) {
-  var win = top || window;
+  /**
+   * @param container {HTMLElement} DOM element for local pointer events.
+   */
+  constructor (container) {
+    this.window = top || window;
 
-  if ('ontouchstart' in win) {
-    addListener(container,    'touchstart', onTouchStart);
-    addListener(win.document, 'touchmove', onTouchMoveDocument);
-    addListener(container,    'touchmove', onTouchMove);
-    addListener(win.document, 'touchend', onTouchEnd);
-    addListener(win.document, 'gesturechange', onGestureChange);
-  } else {
-    addListener(container,    'mousedown', onMouseDown);
-    addListener(win.document, 'mousemove', onMouseMoveDocument);
-    addListener(container,    'mousemove', onMouseMove);
-    addListener(win.document, 'mouseup', onMouseUp);
-    addListener(container,    'dblclick', onDoubleClick);
-    addListener(container,    'mousewheel', onMouseWheel);
-    addListener(container,    'DOMMouseScroll', onMouseWheel);
-    addListener(container,    'contextmenu', onContextMenu);
+    this.listeners = {};
+    this.isDisabled = false;
+
+    this.prevX = 0;
+    this.prevY = 0;
+    this.startZoom = 0;
+    this.prevRotation = 0;
+    this.prevTilt = 0;
+    this.startDist = 0;
+    this.startAngle = 0;
+    this.buttons = 0;
+
+    this.addAllListeners(this.window, container);
   }
 
-  var resizeDebounce;
-  addListener(window, 'resize', function() {
-    if (resizeDebounce) {
-      return;
+  addAllListeners (win, container) {
+    const doc = win.document;
+
+    if ('ontouchstart' in win) {
+      addListener(container, 'touchstart', e => {
+        this.onTouchStart(e);
+      });
+
+      addListener(doc, 'touchmove', e => {
+        this.onTouchMoveDocument(e);
+      });
+      addListener(container, 'touchmove', e => {
+        this.onTouchMove(e);
+      });
+      addListener(doc, 'touchend', e => {
+        this.onTouchEndDocument(e);
+      });
+      addListener(doc, 'gesturechange', e => {
+        this.onGestureChangeDocument(e);
+      });
+    } else {
+      addListener(container, 'mousedown', e => {
+        this.onMouseDown(e);
+      });
+      addListener(doc, 'mousemove', e => {
+        this.onMouseMoveDocument(e);
+      });
+      addListener(container, 'mousemove', e => {
+        this.onMouseMove(e);
+      });
+      addListener(doc, 'mouseup', e => {
+        this.onMouseUpDocument(e);
+      });
+      addListener(container, 'mouseup', e => {
+        this.onMouseUp(e);
+      });
+      addListener(container, 'dblclick', e => {
+        this.onDoubleClick(e);
+      });
+      addListener(container, 'mousewheel', e => {
+        this.onMouseWheel(e);
+      });
+      addListener(container, 'DOMMouseScroll', e => {
+        this.onMouseWheel(e);
+      });
+      addListener(container, 'contextmenu', e => {
+        this.onContextMenu(e);
+      });
     }
-    resizeDebounce = setTimeout(function() {
-      resizeDebounce = null;
-      APP.setSize({ width: container.offsetWidth, height: container.offsetHeight });
-    }, 250);
-  });
 
-  //***************************************************************************
+    let resizeTimer;
+    addListener(window, 'resize', e => {
+      if (resizeTimer) {
+        return;
+      }
+      resizeTimer = setTimeout(() => {
+        resizeTimer = null;
+        APP.setSize(APP.container.offsetWidth, APP.container.offsetHeight);
+      }, 250);
+    });
+  }
 
-  var
-    startX = 0,
-    startY = 0,
-    prevX = 0,
-    prevY = 0,
-    startZoom = 0,
-    prevRotation = 0,
-    prevTilt = 0,
-    button = 0;
+  cancelEvent (e) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+    //if (e.stopPropagation) {
+    //  e.stopPropagation();
+    //}
+    e.returnValue = false;
+  }
 
-  function onDoubleClick(e) {
-    cancelEvent(e);
-    if (!Events.disabled) {
+  onDoubleClick (e) {
+    APP.view.speedUp();
+    this.cancelEvent(e);
+
+    this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
+
+    if (!this.isDisabled) {
       APP.setZoom(APP.zoom + 1, e);
     }
-    var pos = getPos(e);
-    APP.emit('doubleclick', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
   }
 
-  function onMouseDown(e) {
-    cancelEvent(e);
+  onMouseDown (e) {
+    APP.view.speedUp();
+    this.cancelEvent(e);
 
-    startZoom = APP.zoom;
-    prevRotation = APP.rotation;
-    prevTilt = APP.tilt;
+    this.startZoom = APP.zoom;
+    this.prevRotation = APP.rotation;
+    this.prevTilt = APP.tilt;
 
-    startX = prevX = e.clientX;
-    startY = prevY = e.clientY;
+    this.prevX = e.clientX;
+    this.prevY = e.clientY;
+    this.isMove = false;
 
     if ((e.buttons === 1 && e.altKey) || e.buttons === 2) {
-      button = 2;
+      this.buttons = 2;
     } else if (e.buttons === 1) {
-      button = 1;
+      this.buttons = 1;
     }
 
-    var pos = getPos(e);
-    APP.emit('pointerdown', { x: pos.x, y: pos.y, button: e.button, buttons: e.buttons });
+    this.emit('pointerdown', { ...getEventXY(e), buttons: e.buttons });
   }
 
-  function onMouseMoveDocument(e) {
-    if (button === 1) {
-      moveMap(e);
-    } else if (button === 2) {
-      rotateMap(e);
+  onMouseMoveDocument (e) {
+    if (this.buttons === 1) {
+      APP.view.speedUp(); // do it here because no button means the event is not related to us
+      this.moveMap(e);
+      this.isMove = true;
+    } else if (this.buttons === 2) {
+      APP.view.speedUp(); // do it here because no button means the event is not related to us
+      this.rotateMap(e);
+      this.isMove = true;
     }
 
-    prevX = e.clientX;
-    prevY = e.clientY;
+    this.prevX = e.clientX;
+    this.prevY = e.clientY;
   }
 
-  function onMouseMove(e) {
-    APP.emit('pointermove', getPos(e));
+  onMouseMove (e) {
+    this.emit('pointermove', getEventXY(e));
   }
 
-  function onMouseUp(e) {
+  onMouseUpDocument (e) {
     // prevents clicks on other page elements
-    if (!button) {
+    if (!this.buttons) {
       return;
     }
 
-    if (button === 1) {
-      moveMap(e);
-    } else if (button === 2) {
-      rotateMap(e);
+    if (this.buttons === 1) {
+      this.moveMap(e);
+    } else if (this.buttons === 2) {
+      this.rotateMap(e);
     }
 
-    button = 0;
-    APP.emit('pointerup', { button: e.button, buttons: e.buttons });
+    this.buttons = 0;
   }
 
-  function onMouseWheel(e) {
-    cancelEvent(e);
+  onMouseUp (e) {
+    if (this.isMove){
+      this.emit('pointerup', { buttons: e.buttons });
+    } else {
+      const pos = getEventXY(e);
+      APP.view.Picking.getTarget(pos.x, pos.y, target => {
+        this.emit('pointerup', { buttons: e.buttons, ...target });
+      });
+    }
+  }
 
-    var delta = 0;
+  onMouseWheel (e) {
+    APP.view.speedUp();
+    this.cancelEvent(e);
+
+    let delta = 0;
     if (e.wheelDeltaY) {
       delta = e.wheelDeltaY;
     } else if (e.wheelDelta) {
@@ -182,162 +215,194 @@ Events.init = function(container) {
       delta = -e.detail;
     }
 
-    if (!Events.disabled) {
-      var adjust = 0.2*(delta>0 ? 1 : delta<0 ? -1 : 0);
+    if (!this.isDisabled) {
+      const adjust = 0.2 * (delta > 0 ? 1 : delta < 0 ? -1 : 0);
       APP.setZoom(APP.zoom + adjust, e);
     }
-
-    // we don't emit mousewheel here as we don't want to run into a loop of death
   }
 
-  function onContextMenu(e) {
-    e.preventDefault();
+  onContextMenu (e) {
+    this.cancelEvent(e);
   }
 
   //***************************************************************************
 
-  function moveMap(e) {
-    if (Events.disabled) {
+  moveMap (e) {
+    if (this.isDisabled) {
       return;
     }
 
     // FIXME: make movement exact
     // the constant 0.86 was chosen experimentally for the map movement to be
     // "pinned" to the cursor movement when the map is shown top-down
-    var
-      scale = 0.86*Math.pow(2, -APP.zoom),
-      lonScale = 1/Math.cos(APP.position.latitude/180*Math.PI),
-      dx = e.clientX - prevX,
-      dy = e.clientY - prevY,
-      angle = APP.rotation*Math.PI/180,
+
+    const
+      scale = 0.86 * Math.pow(2, -APP.zoom),
+      lonScale = 1 / Math.cos(APP.position.latitude / 180 * Math.PI),
+      dx = e.clientX - this.prevX,
+      dy = e.clientY - this.prevY,
+      angle = APP.rotation * Math.PI / 180,
       vRight = [Math.cos(angle), Math.sin(angle)],
-      vForward = [Math.cos(angle - Math.PI/2), Math.sin(angle - Math.PI/2)],
+      vForward = [Math.cos(angle - Math.PI / 2), Math.sin(angle - Math.PI / 2)],
       dir = add2(mul2scalar(vRight, dx), mul2scalar(vForward, -dy));
 
-    var newPosition = {
-      longitude: APP.position.longitude - dir[0]*scale*lonScale,
-      latitude: APP.position.latitude + dir[1]*scale
+    const newPosition = {
+      longitude: APP.position.longitude - dir[0] * scale * lonScale,
+      latitude: APP.position.latitude + dir[1] * scale
     };
 
     APP.setPosition(newPosition);
-    APP.emit('move', newPosition);
+    this.emit('move', newPosition);
   }
 
-  function rotateMap(e) {
-    if (Events.disabled) {
+  rotateMap (e) {
+    if (this.isDisabled) {
       return;
     }
-    prevRotation += (e.clientX - prevX)*(360/innerWidth);
-    prevTilt -= (e.clientY - prevY)*(360/innerHeight);
-    APP.setRotation(prevRotation);
-    APP.setTilt(prevTilt);
+
+    this.prevRotation += (e.clientX - this.prevX) * (360 / this.window.innerWidth);
+    this.prevTilt -= (e.clientY - this.prevY) * (360 / this.window.innerHeight);
+    APP.setRotation(this.prevRotation);
+    APP.setTilt(this.prevTilt);
   }
 
-  //***************************************************************************
-
-  var
-    dist1 = 0,
-    angle1 = 0,
-    gestureStarted = false;
-
-  function emitGestureChange(e) {
-    var
+  emitGestureChange (e) {
+    const
       t1 = e.touches[0],
       t2 = e.touches[1],
       dx = t1.clientX - t2.clientX,
       dy = t1.clientY - t2.clientY,
-      dist2 = dx*dx + dy*dy,
-      angle2 = Math.atan2(dy, dx);
+      dist = dx * dx + dy * dy,
+      angle = Math.atan2(dy, dx);
 
-    onGestureChange({ rotation: ((angle2 - angle1)*(180/Math.PI))%360, scale: Math.sqrt(dist2/dist1) });
+    this.onGestureChangeDocument({ rotation: ((angle - this.startAngle) * (180 / Math.PI)) % 360, scale: Math.sqrt(dist / this.startDist) });
   }
 
-  function onTouchStart(e) {
-    button = 1;
-    cancelEvent(e);
+  //***************************************************************************
 
-    var t1 = e.touches[0];
+  onTouchStart (e) {
+    APP.view.speedUp();
+    this.cancelEvent(e);
 
-    // gesturechange polyfill
-    if (e.touches.length === 2 && !('ongesturechange' in win)) {
-      var t2 = e.touches[1];
-      var dx = t1.clientX - t2.clientX;
-      var dy = t1.clientY - t2.clientY;
-      dist1 = dx*dx + dy*dy;
-      angle1 = Math.atan2(dy, dx);
-      gestureStarted = true;
+    this.buttons = 1;
+    this.isMove = false;
+
+    const t1 = e.touches[0];
+
+    // gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
+    // MIT License
+    if (e.touches.length === 2 && !('ongesturechange' in this.window)) {
+      const t2 = e.touches[1];
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      this.startDist = dx * dx + dy * dy;
+      this.startAngle = Math.atan2(dy, dx);
     }
 
-    startZoom = APP.zoom;
-    prevRotation = APP.rotation;
-    prevTilt = APP.tilt;
+    this.startZoom = APP.zoom;
+    this.prevRotation = APP.rotation;
+    this.prevTilt = APP.tilt;
 
-    startX = prevX = t1.clientX;
-    startY = prevY = t1.clientY;
+    this.prevX = t1.clientX;
+    this.prevY = t1.clientY;
 
-    APP.emit('pointerdown', { x: e.x, y: e.y, button: 0, buttons: 1 });
+    this.emit('pointerdown', { x: e.x, y: e.y, buttons: 1 });
   }
 
-  function onTouchMoveDocument(e) {
-    if (!button) {
+  onTouchMoveDocument (e) {
+    if (!this.buttons) {
       return;
     }
 
-    var t1 = e.touches[0];
+    APP.view.speedUp();
 
-    if (e.touches.length>1) {
-      APP.setTilt(prevTilt + (prevY - t1.clientY)*(360/innerHeight));
-      prevTilt = APP.tilt;
-      // gesturechange polyfill
-      if (!('ongesturechange' in win)) {
-        emitGestureChange(e);
+    const t1 = e.touches[0];
+
+    if (e.touches.length > 1) {
+      APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / this.window.innerHeight));
+      this.prevTilt = APP.tilt;
+      if (!('ongesturechange' in this.window)) {
+        this.emitGestureChange(e);
       }
+      this.isMove = true;
     } else {
-      moveMap(t1);
+      this.moveMap(t1);
+      this.isMove = true;
     }
-    prevX = t1.clientX;
-    prevY = t1.clientY;
+    this.prevX = t1.clientX;
+    this.prevY = t1.clientY;
   }
 
-  function onTouchMove(e) {
+  onTouchMove (e) {
     if (e.touches.length === 1) {
-      var pos = getPos(e.touches[0]);
-      APP.emit('pointermove', { x: pos.x, y: pos.y, button: 0, buttons: 1 });
+      this.emit('pointermove', { ...getEventXY(e.touches[0]), buttons: 1 });
     }
   }
 
-  function onTouchEnd(e) {
-    if (!button) {
+  onTouchEndDocument (e) {
+    if (!this.buttons) {
       return;
     }
 
-    // gesturechange polyfill
-    gestureStarted = false;
-
-    var t1 = e.touches[0];
+    const t1 = e.touches[0];
 
     if (e.touches.length === 0) {
-      button = 0;
-      APP.emit('pointerup', { button: 0, buttons: 1 });
+      this.buttons = 0;
+
+      if (this.isMove) {
+        this.emit('pointerup', { buttons: 1 });
+      } else {
+        const pos = getEventXY(e);
+        APP.view.Picking.getTarget(pos.x, pos.y, target => {
+          this.emit('pointerup', { buttons: 1, ...target });
+        });
+      }
+
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
-      prevX = t1.clientX;
-      prevY = t1.clientY;
+      this.prevX = t1.clientX;
+      this.prevY = t1.clientY;
     }
   }
 
-  function onGestureChange(e) {
-    if (!button) {
+  onGestureChangeDocument (e) {
+    if (!this.buttons) {
       return;
     }
 
-    cancelEvent(e);
+    APP.view.speedUp();
+    this.cancelEvent(e);
 
-    if (!Events.disabled) {
-      APP.setZoom(startZoom + (e.scale - 1));
-      APP.setRotation(prevRotation - e.rotation);
+    if (!this.isDisabled) {
+      APP.setZoom(this.startZoom + (e.scale - 1));
+      APP.setRotation(this.prevRotation - e.rotation);
     }
 
-    APP.emit('gesture', e);
+    this.emit('gesture', e);
   }
-};
+
+  //***************************************************************************
+
+  on (type, fn) {
+    (this.listeners[type] || (this.listeners[type] = [])).push(fn);
+  }
+
+  off (type, fn) {
+    this.listeners[type] = (this.listeners[type] || []).filter(item => item !== fn);
+  }
+
+  emit (type, payload) {
+    if (this.listeners[type] === undefined) {
+      return;
+    }
+
+    setTimeout(() => {
+      this.listeners[type].forEach(listener => listener(payload));
+    }, 0);
+  }
+
+  destroy() {
+    // TODO: remove all DOM listeners
+    this.listeners = {};
+  }
+}

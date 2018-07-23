@@ -6,9 +6,9 @@ attribute vec4 aPosition;
 attribute vec2 aTexCoord;
 attribute vec3 aNormal;
 attribute vec3 aColor;
-attribute vec3 aId;
-attribute vec4 aFilter;
 attribute float aHeight;
+attribute vec4 aTintColor;
+attribute float aZScale;
 
 uniform mat4 uModelMatrix;
 uniform mat4 uMatrix;
@@ -17,12 +17,10 @@ uniform mat3 uNormalTransform;
 uniform vec3 uLightDirection;
 uniform vec3 uLightColor;
 
-uniform vec3 uHighlightColor;
-uniform vec3 uHighlightId;
 uniform vec2 uViewDirOnMap;
 uniform vec2 uLowerEdgePoint;
 
-uniform float uTime;
+uniform float uFade;
 
 varying vec3 vColor;
 varying vec2 vTexCoord;
@@ -32,8 +30,7 @@ const float gradientStrength = 0.4;
 
 void main() {
 
-  float t = clamp((uTime-aFilter.r) / (aFilter.g-aFilter.r), 0.0, 1.0);
-  float f = aFilter.b + (aFilter.a-aFilter.b) * t;
+  float f = clamp(uFade*aZScale, 0.0, 1.0);
 
   if (f == 0.0) {
     gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
@@ -43,11 +40,12 @@ void main() {
     vec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);
     gl_Position = uMatrix * pos;
 
-    //*** highlight object ******************************************************
-
     vec3 color = aColor;
-    if (uHighlightId == aId) {
-      color = mix(aColor, uHighlightColor, 0.5);
+
+    // tint ***********************************************
+
+    if (aTintColor.a > 0.0) {
+      color = mix(aColor, aTintColor.rgb, 0.5);
     }
 
     //*** light intensity, defined by light direction on surface ****************
@@ -59,7 +57,7 @@ void main() {
 
     //*** vertical shading ******************************************************
 
-    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / aHeight), 0.0, gradientStrength);
+    float verticalShading = clamp(gradientStrength - ((pos.z*gradientStrength) / (aHeight * f)), 0.0, gradientStrength);
 
     //***************************************************************************
 

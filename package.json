@@ -2,34 +2,37 @@
   "name": "OSMBuildings",
   "private": false,
   "description": "OSM Buildings",
-  "version": "3.2.11",
+  "version": "4.0.0",
   "homepage": "http://osmbuildings.org",
   "author": "@kekscom",
   "contributors": [],
+  "license": "MIT",
   "maintainers": [
     "Jan Marsch (@kekscom)",
     "Robert Buchholz (@rbuch703)",
-    "Derek Kniffin (@dkniffin)"
+    "Sebastian Settgast (@setti84)"
   ],
   "repository": {
     "type": "git",
     "url": "git@github.com:OSMBuildings/OSMBuildings.git"
   },
   "scripts": {
-    "docs": "documentation build src/index.js -f json -o docs/docs.json --sort-order 'alpha'"
+    "docs": "documentation build src/index.js -f json -o docs/docs.json --sort-order 'alpha'",
+    "build": "node build.js"
   },
   "dependencies": {
+    "parse-svg-path": "^0.1.2",
     "qolor": "^2.2.0",
-    "suncalc": "git://github.com/OSMBuildings/suncalc.git"
+    "suncalc": "git://github.com/OSMBuildings/suncalc.git",
+    "svg-path-contours": "^2.0.0"
   },
   "devDependencies": {
     "documentation": "^5.3.0",
-    "grunt": "^0.4.4",
-    "grunt-contrib-compress": "^1.0.0",
-    "grunt-contrib-concat": "~0.5.1",
-    "grunt-contrib-copy": "~0.8.2",
-    "grunt-contrib-jshint": "^0.11.0",
-    "grunt-contrib-uglify": "~0.9.2"
+    "eslint": "^5.0.0",
+    "file-zip": "^1.0.1",
+    "uglify-es": "github:mishoo/UglifyJS2#harmony",
+    "webpack": "^4.12.2",
+    "webpack-cli": "^3.0.8"
   },
   "optionalDependencies": {}
 }

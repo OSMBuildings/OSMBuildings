@@ -1,67 +1,88 @@
 
-// TODO: introduce promises
+class Request {
 
-var Request = {};
+  static load (url, callback) {
+    const req = new XMLHttpRequest();
 
-(function() {
+    const timer = setTimeout(t => {
+      if (req.readyState !== 4) {
+        req.abort();
+        callback('status');
+      }
+    }, 10000);
 
-  function load(url, callback) {
-    var req = new XMLHttpRequest();
-
-    req.onreadystatechange = function() {
+    req.onreadystatechange = () => {
       if (req.readyState !== 4) {
         return;
       }
 
-      if (!req.status || req.status<200 || req.status>299) {
+      clearTimeout(timer);
+
+      if (!req.status || req.status < 200 || req.status > 299) {
+        callback('status');
         return;
       }
 
-      callback(req);
+      callback(null, req);
     };
 
     req.open('GET', url);
     req.send(null);
 
     return {
-      abort: function() {
+      abort: () => {
         req.abort();
       }
     };
   }
 
-  //***************************************************************************
-
-  Request.getText = function(url, callback) {
-    return load(url, function(res) {
+  static getText (url, callback) {
+    return this.load(url, (err, res) => {
+      if (err) {
+        callback(err);
+        return;
+      }
       if (res.responseText !== undefined) {
-        callback(res.responseText);
+        callback(null, res.responseText);
+      } else {
+        callback('content');
       }
     });
-  };
+  }
 
-  Request.getXML = function(url, callback) {
-    return load(url, function(res) {
+  static getXML (url, callback) {
+    return this.load(url, (err, res) => {
+      if (err) {
+        callback(err);
+        return;
+      }
       if (res.responseXML !== undefined) {
-        callback(res.responseXML);
+        callback(null, res.responseXML);
+      } else {
+        callback('content');
       }
     });
-  };
+  }
 
-  Request.getJSON = function(url, callback) {
-    return load(url, function(res) {
-      if (res.responseText) {
-        var json;
-        try {
-          json = JSON.parse(res.responseText);
-        } catch(ex) {
-          console.warn('Could not parse JSON from '+ url +'\n'+ ex.message);
-        }
-        callback(json);
+  static getJSON (url, callback) {
+    return this.load(url, (err, res) => {
+      if (err) {
+        callback(err);
+        return;
+      }
+      if (!res.responseText) {
+        callback('content');
+        return;
+      }
+
+      let json;
+      try {
+        json = JSON.parse(res.responseText);
+        callback(null, json);
+      } catch (ex) {
+        console.warn(`Could not parse JSON from ${url}\n${ex.message}`);
+        callback('content');
       }
     });
-  };
-
-  Request.destroy = function() {};
-
-}());
+  }
+}
