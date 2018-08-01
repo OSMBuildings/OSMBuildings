@@ -13,7 +13,7 @@ const TILE_SIZE = 256;
 const DEFAULT_HEIGHT = 10;
 
 const MAX_USED_ZOOM_LEVEL = 25;
-const DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
+let DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
 
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to horizon into

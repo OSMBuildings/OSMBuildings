@@ -1,11 +1,11 @@
 
 class GLX {
 
-  constructor(canvas, quickRender) {
+  constructor(canvas, fastMode) {
     let GL;
 
     const canvasOptions = {
-      antialias: !quickRender,
+      antialias: !fastMode,
       depth: true,
       premultipliedAlpha: false
     };
@@ -38,7 +38,7 @@ class GLX {
     GL.enable(GL.DEPTH_TEST);
     GL.clearColor(0.5, 0.5, 0.5, 1);
 
-    if (!quickRender) { // TODO OSMB4 always activate but use dynamically
+    if (!fastMode) { // TODO OSMB4 always activate but use dynamically
       GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
       if (GL.anisotropyExtension) {
         GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT);

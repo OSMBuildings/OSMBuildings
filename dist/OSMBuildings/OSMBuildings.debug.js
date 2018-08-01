@@ -1297,11 +1297,11 @@ workers['feature'] = 'class Request{static load(e,t){const r=new XMLHttpRequest,
 
 class GLX {
 
-  constructor(canvas, quickRender) {
+  constructor(canvas, fastMode) {
     let GL;
 
     const canvasOptions = {
-      antialias: !quickRender,
+      antialias: !fastMode,
       depth: true,
       premultipliedAlpha: false
     };
@@ -1334,7 +1334,7 @@ class GLX {
     GL.enable(GL.DEPTH_TEST);
     GL.clearColor(0.5, 0.5, 0.5, 1);
 
-    if (!quickRender) { // TODO OSMB4 always activate but use dynamically
+    if (!fastMode) { // TODO OSMB4 always activate but use dynamically
       GL.anisotropyExtension = GL.getExtension('EXT_texture_filter_anisotropic');
       if (GL.anisotropyExtension) {
         GL.anisotropyExtension.maxAnisotropyLevel = GL.getParameter(GL.anisotropyExtension.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
@@ -3440,7 +3440,7 @@ const TILE_SIZE = 256;
 const DEFAULT_HEIGHT = 10;
 
 const MAX_USED_ZOOM_LEVEL = 25;
-const DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
+let DEFAULT_COLOR = Qolor.parse('rgb(220, 210, 200)').toArray();
 
 // #E8E0D8 is the background color of the current OSMBuildings map layer,
 // and thus a good fog color to blend map tiles and buildings close to horizon into

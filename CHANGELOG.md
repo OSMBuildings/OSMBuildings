@@ -3,6 +3,7 @@
 
 ## Changed
 
+- remove() function added to explicitly remove objects, markers or layers
 - code optimizations for overall performance
 - reduced loading lag by using web workers
 - less CPU load by throttling renderer if there is no activity
@@ -20,13 +21,22 @@
 - loaded buildings are growing in again
 - document events now acting on top rather than window
 
-
 ## Fixed
 
 - Skillion roof with inner rings rendering fixed
 - viewer resize fixed
 - previous color adjustments reduced
 - tile loading order reverted
+
+## Breaking changes
+
+- OSMBuildings() - options 'baseURL', 'showBackfaces', 'highlightColor', 'fogColor', 'effects[]' removed
+- OSMBuildings now initializes with option 'container' instead of using method appendTo()
+- methods appendTo(), show(), getTarget(), screenshot() removed
+- setSize() - now takes width, height instead of { width: x, height: y }
+- addGeoJSON() - option 'fadeIn' removed
+- addOBJ() - option 'fadeIn' removed
+- all keys/variables 'elevation' are renamed to 'altitude'
 
 
 # 3.2.7 @ 2018-01-30
