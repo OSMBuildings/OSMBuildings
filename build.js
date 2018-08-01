@@ -1,7 +1,7 @@
 
 const fs = require('fs');
 const Uglify = require('uglify-es');
-const FileZip = require('file-zip');
+const zipFolder = require('zip-folder');
 const ESLint = require('eslint').linter;
 const package = require('./package.json');
 const config = require('./config.json');
@@ -102,7 +102,7 @@ function taskLint (str) {
 }
 
 function taskArchive (src, dst, callback) {
-  FileZip.zipFolder([src], dst, err => {
+  zipFolder(src, dst, err => {
     if (err) {
       throw new Error(err);
     }
