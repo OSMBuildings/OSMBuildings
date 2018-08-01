@@ -33,78 +33,12 @@ let APP, GL;
  * @class OSMBuildings
  */
 
-
-
-/**
- * Fired when a 3d object has been loaded
- * @event OSMBuildings#loadfeature
- */
-
-/**
- * Fired when map has been zoomed
- * @event OSMBuildings#zoom
- */
-
-/**
- * Fired when map view has been rotated
- * @event OSMBuildings#rotate
- */
-
-/**
- * Fired when map view has been tilted
- * @event OSMBuildings#tilt
- */
-
-/**
- * Fired when map view has been changed, i.e. zoom, pan, tilt, rotation
- * @event OSMBuildings#change
- */
-
-/**
- * Fired when map container has been resized
- * @event OSMBuildings#resize
- */
-
-/**
- * Fired when map container has been double clicked/tapped
- * @event OSMBuildings#doubleclick
- */
-
-/**
- * Fired when map container has been clicked/tapped
- * @event OSMBuildings#pointerdown
- */
-
-/**
- * Fired when mouse/finger has been moved
- * @event OSMBuildings#pointermove
- */
-
-/**
- * Fired when mouse button/finger been lifted
- * @event OSMBuildings#pointerup
- */
-
-/**
- * Fired when gesture has been performed on the map
- * @event OSMBuildings#gesture
- */
-
-/**
- * Fired when data loading starts
- * @event OSMBuildings#busy
- */
-
-/**
- * Fired when data loading ends
- * @event OSMBuildings#idle
- */
-
 class OSMBuildings {
+
   /**
    * @constructor
    * @param {Object} [options] OSMBuildings options
-   * @param {HTMLElement|String} [options.container] A DOM Element or its id to append the viewer to
+   * @param {String} options.container A DOM Element or its id to append the viewer to
    * @param {Number} [options.minZoom=14.5] Global minimum allowed zoom
    * @param {Number} [options.maxZoom=20] Global maximum allowed zoom
    * @param {Object} [options.bounds] A bounding box to restrict the map to
@@ -117,11 +51,11 @@ class OSMBuildings {
    * @param {Object} [options.position] Initial position
    * @param {Number} [options.position.latitude=52.520000] position latitude
    * @param {Number} [options.position.longitude=13.410000] Position longitude
-   * @deprecated {String} [options.baseURL='.'] For locating assets. This is relative to calling html page
-   * @deprecated {Boolean} [options.showBackfaces=false] Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-   * @deprecated {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients and distance fog
-   * @deprecated {String} [options.highlightColor='#f08000'] Default color for highlighting features
-   * @deprecated {Array} [options.effects=[]] Which effects to enable. The only effect at the moment is 'shadows'
+   * @param {String} [options.baseURL='.'] DEPRECATED For locating assets. This is relative to calling html page
+   * @param {Boolean} [options.showBackfaces=false] DEPRECATED Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
+   * @param {String} [options.fogColor='#e8e0d8'] DEPRECATED Color to be used for sky gradients and distance fog
+   * @param {String} [options.highlightColor='#f08000'] DEPRECATED Default color for highlighting features
+   * @param {Array} [options.effects=[]] DEPRECATED Which effects to enable. The only effect at the moment is 'shadows'
    * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
    * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality.
    * @param {Object} [options.style] Sets the default building style
@@ -221,7 +155,7 @@ class OSMBuildings {
   }
 
   /**
-   * @deprecated
+   * DEPRECATED
    */
   appendTo () {}
 
@@ -235,7 +169,7 @@ class OSMBuildings {
   }
 
   /**
-   * Removes event listeners
+   * Removes an even listener
    * @param {String} type Event type to listen for
    * @param {eventCallback} [fn] If callback is given, only remove that particular listener
    */
@@ -244,9 +178,9 @@ class OSMBuildings {
   }
 
   /**
-   * Trigger a specific event
+   * Triggers a specific event
    * @param {String} event Event type to listen for
-   * @param {any} [payload] Any kind of payload
+   * @param {} [payload] Any kind of payload
    */
   emit (type, payload) {
     this.events.emit(type, payload);
@@ -261,7 +195,7 @@ class OSMBuildings {
   }
 
   /**
-   * Get screen position from a 3d point
+   * Gets 2d screen position from a 3d point
    * @param {Number} latitude Latitude of the point
    * @param {Number} longitude Longitude of the point
    * @param {Number} altitude Altitude of the point
@@ -309,7 +243,7 @@ class OSMBuildings {
   }
 
   /**
-   * Removes an object from the map.
+   * Removes a feature, layer or marker from the map.
    */
   remove (item) {
     if (item.destroy) {
@@ -318,8 +252,8 @@ class OSMBuildings {
   }
 
   /**
-   * Adds an 3D object (OBJ format) file to the map.
-   * <em>Important</em>: objects with exactly the same url are cached and only loaded once.
+   * Adds an 3d object (OBJ format) file to the map.
+   * <em>Important</em> objects with exactly the same url are cached and only loaded once.
    * @param {String} url URL of the OBJ file
    * @param {Object} position Where to render the object
    * @param {Number} position.latitude Position latitude for the object
@@ -348,7 +282,7 @@ class OSMBuildings {
    * @param {String} [options.color] A color to apply to the model
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show this feature, defaults to and limited by global minZoom
    * @param {Number} [options.maxZoom=maxZoom] Maximum zoom level to show this feature, defaults to and limited by global maxZoom
-   * @deprecated {Boolean} [options.fadeIn=true] Fade GeoJSON features; if `false`, then display immediately
+   * @param {Boolean} [options.fadeIn=true] DEPRECATED Fade GeoJSON features; if `false`, then display immediately
    * @return {Object} The added object
    */
   addGeoJSON (url, options) {
@@ -409,17 +343,17 @@ class OSMBuildings {
   }
 
   /**
-   * @deprecated
+   * DEPRECATED
    */
   show () {}
 
   /**
-   * @deprecated
+   * DEPRECATED
    */
   getTarget () {}
 
   /**
-   * @deprecated
+   * DEPRECATED
    */
   screenshot () {}
 
@@ -485,10 +419,18 @@ class OSMBuildings {
     }, 1000);
   }
 
+  /**
+   * Disables map interaction
+   * @param {Boolean} flag
+   */
   setDisabled (flag) {
     this.events.isDisabled = !!flag;
   }
 
+  /**
+   * Checks for map interaction disabled
+   * @return {Boolean} flag
+   */
   isDisabled () {
     return !!this.events.isDisabled;
   }
@@ -589,9 +531,9 @@ class OSMBuildings {
   /**
    * Set map view's size in pixels
    * @public
-   * @deprecated {Object} size
-   * @deprecated {Integer} size.width
-   * @deprecated {Integer} size.height
+   * @param {Object} size DEPRECATED
+   * @param {Integer} size.width DEPRECATED
+   * @param {Integer} size.height DEPRECATED
    * @param {Integer} width
    * @param {Integer} height
    * @emits OSMBuildings#resize
@@ -659,8 +601,16 @@ class OSMBuildings {
   }
 
   /**
-   * Adds a WebGL Marker to the map.
-   * * @return {Object} Marker
+   * Adds a marker to the map in 3d space.
+   * @param {Object} position geographic position including altitude
+   * @param {Number} position.latitude latitude
+   * @param {Number} position.longitude longitude
+   * @param {Number} [position.altitude=0] altitude in meters
+   * @param {Object} [data] custom data properties to attach to the marker, i.e. an id
+   * @param {Object} [options] additional options
+   * @param {String} [options.url] url to an SVG file to use as custom marker. Currently only path properties are supported. Overlapping path's may create strange results.
+   * @param {String} [options.color] color which whole marker will be tinted
+   * @return {Object} Marker
    */
   addMarker (position, data, options) {
    return new Marker(position, data, options);
@@ -690,6 +640,72 @@ class OSMBuildings {
   //   this._worker.terminate();
   // }
 }
+
+
+/**
+ * Fired when a 3d object has been loaded
+ * @event OSMBuildings#loadfeature
+ */
+
+/**
+ * Fired when map has been zoomed
+ * @event OSMBuildings#zoom
+ */
+
+/**
+ * Fired when map view has been rotated
+ * @event OSMBuildings#rotate
+ */
+
+/**
+ * Fired when map view has been tilted
+ * @event OSMBuildings#tilt
+ */
+
+/**
+ * Fired when map view has been changed, i.e. zoom, pan, tilt, rotation
+ * @event OSMBuildings#change
+ */
+
+/**
+ * Fired when map container has been resized
+ * @event OSMBuildings#resize
+ */
+
+/**
+ * Fired when map container has been double clicked/tapped
+ * @event OSMBuildings#doubleclick
+ */
+
+/**
+ * Fired when map container has been clicked/tapped
+ * @event OSMBuildings#pointerdown
+ */
+
+/**
+ * Fired when mouse/finger has been moved
+ * @event OSMBuildings#pointermove
+ */
+
+/**
+ * Fired when mouse button/finger been lifted
+ * @event OSMBuildings#pointerup
+ */
+
+/**
+ * Fired when gesture has been performed on the map
+ * @event OSMBuildings#gesture
+ */
+
+/**
+ * DEPRECATED Fired when data loading starts
+ * @event OSMBuildings#busy
+ */
+
+/**
+ * DEPRECATED Fired when data loading ends
+ * @event OSMBuildings#idle
+ */
 
 /**
  * (String) OSMBuildings version

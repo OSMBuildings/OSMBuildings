@@ -33,6 +33,7 @@
 - OSMBuildings() - options 'baseURL', 'showBackfaces', 'highlightColor', 'fogColor', 'effects[]' removed
 - OSMBuildings now initializes with option 'container' instead of using method appendTo()
 - methods appendTo(), show(), getTarget(), screenshot() removed
+- events 'busy' and 'idle' removed
 - setSize() - now takes width, height instead of { width: x, height: y }
 - addGeoJSON() - option 'fadeIn' removed
 - addOBJ() - option 'fadeIn' removed
