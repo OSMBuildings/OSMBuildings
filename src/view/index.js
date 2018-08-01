@@ -2,7 +2,7 @@
 class View {
 
   getViewQuad () {
-    return getViewQuad(this.viewProjMatrix.data,  (this.fogDistance + this.fogBlurDistance), this.viewDirOnMap);
+    return getViewQuad(this.viewProjMatrix.data, (this.fogDistance + this.fogBlurDistance), this.viewDirOnMap);
   }
 
   start () {
@@ -27,7 +27,7 @@ class View {
     // if (this.shadowsEnabled) {
     //   this.Markers = new View.Markers();
     // } else {
-      this.Markers = new View.MarkersSimple();
+    this.Markers = new View.MarkersSimple();
     // }
     this.Basemap = new View.Basemap();
 
@@ -40,10 +40,99 @@ class View {
       this.sunGBuffer = new View.DepthNormal();
     }
 
+    this.initWebVr();
+
     this.speedUp();
 
-    this.renderFrame();
+    // this.renderFrame();
   }
+
+  initWebVr () {
+    if (!navigator.getVRDisplays) {
+      console.warn('WebVR not supported');
+      return;
+    }
+
+    navigator.getVRDisplays().then(displays => {
+      if (!displays.length) {
+        return;
+      }
+
+      this.vrDisplay = displays[0];
+
+      document.addEventListener('click', e => {
+        this.vrDisplay.requestPresent([{source: canvas}]).then(vr => {
+          console.log('using WebVR display');
+
+          const leftEye = this.vrDisplay.getEyeParameters('left');
+          const rightEye = this.vrDisplay.getEyeParameters('right');
+
+          APP.setSize(
+            Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2,
+            Math.max(leftEye.renderHeight, rightEye.renderHeight)
+          );
+
+          this.renderVR();
+        });
+
+        // this.vrDisplay.exitPresent();
+        // console.log('Stopped presenting to WebVR display');
+
+        // // Stop the VR presentation, and start the normal presentation
+        // this.vrDisplay.cancelAnimationFrame(vrSceneFrame);
+      });
+    });
+  }
+
+  renderVR () {
+    // WebVR: Request the next frame of the animation
+    // var vrSceneFrame = vrDisplay.requestAnimationFrame(drawVRScene);
+    const frameData = new VRFrameData();
+console.log(frameData);
+
+    // Populate frameData with the data of the next frame to display
+    this.vrDisplay.getFrameData(frameData);
+
+    // // You can get the position, orientation, etc. of the display from the current frame's pose
+    // const curFramePose = frameData.pose;
+    // const curPos = curFramePose.position;
+    // const curOrient = curFramePose.orientation;
+
+    // Clear the canvas before we start drawing on it.
+
+    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+
+    // WebVR: Render the left eye’s view to the left half of the canvas
+    GL.viewport(0, 0, GL.width * 0.5, GL.height);
+
+    GL.uniformMatrix4fv(projectionMatrixLocation, false, frameData.leftProjectionMatrix);
+    GL.uniformMatrix4fv(viewMatrixLocation, false, frameData.leftViewMatrix);
+    perspectiveMatrix = makePerspective(45, 640.0 / 480.0, 0.1, 100.0);
+    renderFrame ();
+
+    // WebVR: Render the right eye’s view to the right half of the canvas
+    GL.viewport(GL.width * 0.5, 0, GL.width * 0.5, GL.height);
+    GL.uniformMatrix4fv(projectionMatrixLocation, false, frameData.rightProjectionMatrix);
+    GL.uniformMatrix4fv(viewMatrixLocation, false, frameData.rightViewMatrix);
+    perspectiveMatrix = makePerspective(45, 640.0 / 480.0, 0.1, 100.0);
+    renderFrame ();
+
+    // WebVR: Indicate that we are ready to present the rendered frame to the VR display
+    this.vrDisplay.submitFrame();
+  }
+
+  // window.addEventListener('vrdisplaypresentchange', function(e) {
+  //   console.log('Display ' + e.display.displayId + ' presentation has changed. Reason given: ' + e.reason + '.');
+  // });
+
+  // function displayPoseStats(pose) {
+  //   var pos = pose.position;
+  //   var orient = pose.orientation;
+  //   var linVel = pose.linearVelocity;
+  //   var linAcc = pose.linearAcceleration;
+  //   var angVel = pose.angularVelocity;
+  //   var angAcc = pose.angularAcceleration;
+  // }
 
   renderFrame () {
     if (APP.zoom >= APP.minZoom && APP.zoom <= APP.maxZoom) {
