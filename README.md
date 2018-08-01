@@ -4,8 +4,7 @@ OSM Buildings is a JavaScript library for visualizing OpenStreetMap building geo
 
 <img src='http://i.imgur.com/pxh2Cpt.png' width='100%' />
 
-- [Documentation](http://osmbuildings.github.io/OSMBuildings)
-- [Github](http://github.com/OSMBuildings/OSMBuildings)
+- [Documentation](https://osmbuildings.org/documentation/)
 - [Example](http://osmbuildings.org)
 
 ## Info
