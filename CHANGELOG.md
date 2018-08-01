@@ -1,4 +1,34 @@
 
+# 4.0.0 @ 2018-08-01
+
+## Changed
+
+- code optimizations for overall performance
+- reduced loading lag by using web workers
+- less CPU load by throttling renderer if there is no activity
+- native markers enabled, source is SVG
+- code base rewritten to ES6
+- 'pointerup' event now returns target objects
+- new 'load' event when viewer is ready
+- multiple objects can be highlighted at once
+- multiple objects can be hidden at once
+
+- build process simplified
+- sky texture dependency removed
+- no picking on pointer movement removed
+- some API methods and options changed
+- loaded buildings are growing in again
+- document events now acting on top rather than window
+
+
+## Fixed
+
+- Skillion roof with inner rings rendering fixed
+- viewer resize fixed
+- previous color adjustments reduced
+- tile loading order reverted
+
+
 # 3.2.7 @ 2018-01-30
 
 ## Changed
