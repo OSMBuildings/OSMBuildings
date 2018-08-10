@@ -85,7 +85,10 @@ class OBJ {
     if (faces.length) {
       const geometry = this.createGeometry(faces);
       this.meshes.push({
-        ...geometry,
+        vertices: geometry.vertices,
+        normals: geometry.normals,
+        texCoords: geometry.texCoords,
+        height: geometry.height,
         color: color,
         id: id
       });

@@ -129,7 +129,8 @@ class Events {
     APP.view.speedUp();
     this.cancelEvent(e);
 
-    this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
+    const pos = getEventXY(e);
+    this.emit('doubleclick', { x: pos.x, y: pos.y, buttons: e.buttons });
 
     if (!this.isDisabled) {
       APP.setZoom(APP.zoom + 1, e);
@@ -154,7 +155,8 @@ class Events {
       this.buttons = 1;
     }
 
-    this.emit('pointerdown', { ...getEventXY(e), buttons: e.buttons });
+    const pos = getEventXY(e);
+    this.emit('pointerdown', { x: pos.x, y: pos.y, buttons: e.buttons });
   }
 
   onMouseMoveDocument (e) {
@@ -173,7 +175,8 @@ class Events {
   }
 
   onMouseMove (e) {
-    this.emit('pointermove', getEventXY(e));
+    const pos = getEventXY(e);
+    this.emit('pointermove', pos);
   }
 
   onMouseUpDocument (e) {
@@ -197,7 +200,7 @@ class Events {
     } else {
       const pos = getEventXY(e);
       APP.view.Picking.getTarget(pos.x, pos.y, target => {
-        this.emit('pointerup', { buttons: e.buttons, ...target });
+        this.emit('pointerup', { buttons: e.buttons, features: target.features, marker: target.marker });
       });
     }
   }
@@ -335,7 +338,8 @@ class Events {
 
   onTouchMove (e) {
     if (e.touches.length === 1) {
-      this.emit('pointermove', { ...getEventXY(e.touches[0]), buttons: 1 });
+      const pos = getEventXY(e.touches[0]);
+      this.emit('pointermove', { x: pos.x, y: pos.y, buttons: 1 });
     }
   }
 
@@ -354,7 +358,7 @@ class Events {
       } else {
         const pos = getEventXY(e);
         APP.view.Picking.getTarget(pos.x, pos.y, target => {
-          this.emit('pointerup', { buttons: 1, ...target });
+          this.emit('pointerup', { buttons: 1, features: target.features, marker: target.marker });
         });
       }
 

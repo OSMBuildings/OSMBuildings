@@ -3,7 +3,7 @@
 
 class Collection {
 
-  constructor() {
+  constructor () {
     this.items = [];
   }
 

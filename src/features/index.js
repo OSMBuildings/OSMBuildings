@@ -3,8 +3,8 @@
 
 class FeatureCollection extends Collection {
 
-  constructor (...args) {
-    super(...args);
+  constructor () {
+    super();
     this.tintCallback = () => {};
     this.zScaleCallback = () => {};
   }
