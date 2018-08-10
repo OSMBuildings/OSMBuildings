@@ -130,6 +130,8 @@ View.Picking = class {
 
   getTarget (x, y, callback) {
     requestAnimationFrame(() => {
+      const res = {};
+
       GL.viewport(0, 0, this.size[0], this.size[1]);
 
       this.framebuffer.enable();
@@ -149,18 +151,14 @@ View.Picking = class {
       const imgData = this.framebuffer.getPixel(X, this.size[1] - 1 - Y);
       this.framebuffer.disable();
 
-      if (!imgData) {
-        callback();
-        return;
+      if (imgData) {
+        const
+          i = imgData[0] - 1,
+          f = (imgData[1] | (imgData[2] << 8)) - 1;
+
+        res.features = this.findFeatures(renderedFeatures, i, f);
+        res.marker = (renderedMarkers[f] && renderedMarkers[f].data);
       }
-
-      const
-        i = imgData[0] - 1,
-        f = (imgData[1] | (imgData[2] << 8)) - 1,
-        res = {};
-
-      res.features = this.findFeatures(renderedFeatures, i, f);
-      res.marker = (renderedMarkers[f] && renderedMarkers[f].data);
 
       callback(res);
     }); // end requestAnimationFrame()
