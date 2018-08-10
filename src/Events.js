@@ -48,7 +48,7 @@ class Events {
     this.prevTilt = 0;
     this.startDist = 0;
     this.startAngle = 0;
-    this.buttons = 0;
+    this.button = null;
 
     this.addAllListeners(this.window, container);
   }
@@ -130,7 +130,7 @@ class Events {
     this.cancelEvent(e);
 
     const pos = getEventXY(e);
-    this.emit('doubleclick', { x: pos.x, y: pos.y, buttons: e.buttons });
+    this.emit('doubleclick', { x: pos.x, y: pos.y });
 
     if (!this.isDisabled) {
       APP.setZoom(APP.zoom + 1, e);
@@ -149,22 +149,22 @@ class Events {
     this.prevY = e.clientY;
     this.isMove = false;
 
-    if ((e.buttons === 1 && e.altKey) || e.buttons === 2) {
-      this.buttons = 2;
-    } else if (e.buttons === 1) {
-      this.buttons = 1;
+    if (((e.buttons === 1 || e.button === 0) && e.altKey) || e.buttons === 2 || e.button === 2) {
+      this.button = 2;
+    } else if (e.buttons === 1 || e.button === 0) {
+      this.button = 0;
     }
 
     const pos = getEventXY(e);
-    this.emit('pointerdown', { x: pos.x, y: pos.y, buttons: e.buttons });
+    this.emit('pointerdown', { x: pos.x, y: pos.y, button: this.button });
   }
 
   onMouseMoveDocument (e) {
-    if (this.buttons === 1) {
+    if (this.button === 0) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
       this.isMove = true;
-    } else if (this.buttons === 2) {
+    } else if (this.button === 2) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
       this.isMove = true;
@@ -181,26 +181,26 @@ class Events {
 
   onMouseUpDocument (e) {
     // prevents clicks on other page elements
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 
-    if (this.buttons === 1) {
+    if (this.button === 0) {
       this.moveMap(e);
-    } else if (this.buttons === 2) {
+    } else if (this.button === 2) {
       this.rotateMap(e);
     }
 
-    this.buttons = 0;
+    this.button = null;
   }
 
   onMouseUp (e) {
     if (this.isMove){
-      this.emit('pointerup', { buttons: e.buttons });
+      this.emit('pointerup', {});
     } else {
       const pos = getEventXY(e);
       APP.view.Picking.getTarget(pos.x, pos.y, target => {
-        this.emit('pointerup', { buttons: e.buttons, features: target.features, marker: target.marker });
+        this.emit('pointerup', { features: target.features, marker: target.marker });
       });
     }
   }
@@ -287,7 +287,7 @@ class Events {
     APP.view.speedUp();
     this.cancelEvent(e);
 
-    this.buttons = 1;
+    this.button = 0;
     this.isMove = false;
 
     const t1 = e.touches[0];
@@ -309,11 +309,11 @@ class Events {
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
 
-    this.emit('pointerdown', { x: e.x, y: e.y, buttons: 1 });
+    this.emit('pointerdown', { x: e.x, y: e.y, button: 0 });
   }
 
   onTouchMoveDocument (e) {
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 
@@ -339,26 +339,26 @@ class Events {
   onTouchMove (e) {
     if (e.touches.length === 1) {
       const pos = getEventXY(e.touches[0]);
-      this.emit('pointermove', { x: pos.x, y: pos.y, buttons: 1 });
+      this.emit('pointermove', { x: pos.x, y: pos.y, button: 0 });
     }
   }
 
   onTouchEndDocument (e) {
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 
     const t1 = e.touches[0];
 
     if (e.touches.length === 0) {
-      this.buttons = 0;
+      this.button = null;
 
       if (this.isMove) {
-        this.emit('pointerup', { buttons: 1 });
+        this.emit('pointerup', {});
       } else {
         const pos = getEventXY(e);
         APP.view.Picking.getTarget(pos.x, pos.y, target => {
-          this.emit('pointerup', { buttons: 1, features: target.features, marker: target.marker });
+          this.emit('pointerup', { features: target.features, marker: target.marker });
         });
       }
 
@@ -370,7 +370,7 @@ class Events {
   }
 
   onGestureChangeDocument (e) {
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 
