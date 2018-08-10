@@ -1,4 +1,14 @@
 
+# 4.0.1 @ 2018-08-10 Bugfix
+
+## Fixed
+
+- fixed broken OBJ loading
+- picking always returns object rather than undefined in case of miss
+- compatibility with event property e.button restored for Safari
+- navigator.hardwareConcurrency workaround for Safari
+
+
 # 4.0.0 @ 2018-08-01
 
 ## Changed

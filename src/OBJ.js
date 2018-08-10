@@ -99,6 +99,10 @@ class OBJ {
     return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
   }
 
+  len (v) {
+    return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+  }
+
   unit (a) {
     const len = this.len(a);
     return [a[0]/len, a[1]/len, a[2]/len];
