@@ -36,8 +36,6 @@ class Events {
    * @param container {HTMLElement} DOM element for local pointer events.
    */
   constructor (container) {
-    this.window = top || window;
-
     this.listeners = {};
     this.isDisabled = false;
 
@@ -50,13 +48,13 @@ class Events {
     this.startAngle = 0;
     this.button = null;
 
-    this.addAllListeners(this.window, container);
+    this.addAllListeners(container);
   }
 
-  addAllListeners (win, container) {
-    const doc = win.document;
+  addAllListeners (container) {
+    const doc = window.document;
 
-    if ('ontouchstart' in win) {
+    if ('ontouchstart' in window) {
       addListener(container, 'touchstart', e => {
         this.onTouchStart(e);
       });
@@ -263,8 +261,8 @@ class Events {
       return;
     }
 
-    this.prevRotation += (e.clientX - this.prevX) * (360 / this.window.innerWidth);
-    this.prevTilt -= (e.clientY - this.prevY) * (360 / this.window.innerHeight);
+    this.prevRotation += (e.clientX - this.prevX) * (360 / window.innerWidth);
+    this.prevTilt -= (e.clientY - this.prevY) * (360 / window.innerHeight);
     APP.setRotation(this.prevRotation);
     APP.setTilt(this.prevTilt);
   }
@@ -294,7 +292,7 @@ class Events {
 
     // gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
     // MIT License
-    if (e.touches.length === 2 && !('ongesturechange' in this.window)) {
+    if (e.touches.length === 2 && !('ongesturechange' in window)) {
       const t2 = e.touches[1];
       const dx = t1.clientX - t2.clientX;
       const dy = t1.clientY - t2.clientY;
@@ -322,9 +320,9 @@ class Events {
     const t1 = e.touches[0];
 
     if (e.touches.length > 1) {
-      APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / this.window.innerHeight));
+      APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / window.innerHeight));
       this.prevTilt = APP.tilt;
-      if (!('ongesturechange' in this.window)) {
+      if (!('ongesturechange' in window)) {
         this.emitGestureChange(e);
       }
       this.isMove = true;
