@@ -1,12 +1,33 @@
 
 const fs = require('fs');
+const path = require('path');
 const Uglify = require('uglify-es');
+const webpack = require('webpack');
 const zipFolder = require('zip-folder');
 const ESLint = require('eslint').linter;
 const package = require('./package.json');
 const config = require('./config.json');
 
 //*****************************************************************************
+
+function packModules (callback) {
+  webpack({
+    mode: 'development',
+    entry: path.resolve('./src/icons/triangulateSVG.js'),
+    output: {
+      path: path.resolve('./lib'),
+      filename: 'triangulateSVG.js'
+    },
+  }, (err, stats) => {
+    if (err) {
+      callback(err);
+    }
+
+    const content = fs.readFileSync('./lib/triangulateSVG.js').toString().replace(/π/g, 'PI');
+    fs.writeFileSync('./lib/triangulateSVG.js', content);
+    callback();
+  });
+}
 
 function readFiles (files) {
   return files.map(f => {
@@ -114,29 +135,30 @@ function taskArchive (src, dst, callback) {
 
 const startTime = Date.now();
 
-const code = [
-  '(function(){',
-  readFiles(config.libs),
-  taskShaders(config.shaders),
-  taskWorkers(config.workers),
-  readFiles(config.src),
-  'OSMBuildings.VERSION = \'' + package.version + '\';',
-  '}());'
-].join('\n');
+packModules(err => {
+  const code = [
+    '(function(){',
+    readFiles(config.libs),
+    taskShaders(config.shaders),
+    taskWorkers(config.workers),
+    readFiles(config.src),
+    'OSMBuildings.VERSION = \'' + package.version + '\';',
+    '}());'
+  ].join('\n');
 
-taskLint(code);
+  taskLint(code);
 
-safeMkdirSync('dist');
-safeMkdirSync('dist/OSMBuildings');
+  safeMkdirSync('dist');
+  safeMkdirSync('dist/OSMBuildings');
 
-fs.writeFileSync('dist/OSMBuildings/OSMBuildings.debug.js', code);
-copy('src/style.css', 'dist/OSMBuildings/OSMBuildings.css');
+  fs.writeFileSync('dist/OSMBuildings/OSMBuildings.debug.js', code);
+  copy('src/style.css', 'dist/OSMBuildings/OSMBuildings.css');
 
-fs.writeFileSync('dist/OSMBuildings/OSMBuildings.js', minify(code));
+  fs.writeFileSync('dist/OSMBuildings/OSMBuildings.js', minify(code));
 
-taskArchive('dist/OSMBuildings/', `dist/OSMBuildings-${package.version}.zip`, () => {
-  console.log(`done in ${((Date.now()-startTime)/1000).toFixed(3)}s`);
+  taskArchive('dist/OSMBuildings/', `dist/OSMBuildings-${package.version}.zip`, () => {
+    console.log(`done in ${((Date.now()-startTime)/1000).toFixed(3)}s`);
+  });
+
+  // TODO: docs
 });
-
-// TODO: docs
-// TODO: webpack src/icons/triangulateSVG.js -o lib/triangulateSVG.js --mode development
