@@ -163,7 +163,7 @@ class Events {
       const
         dx = e.clientX-this.prevX,
         dy = e.clientY-this.prevY;
-      this.isClick = (dx*dx+dy*dy < 15)
+      this.isClick = (dx*dx+dy*dy < 15);
     }
 
     if (this.button === 0) {
@@ -194,9 +194,7 @@ class Events {
   }
 
   onMouseUp (e) {
-    if (!this.isClick) {
-      this.emit('pointerup', {});
-    } else {
+    if (this.isClick) {
       const pos = getEventXY(e);
       APP.view.Picking.getTarget(pos.x, pos.y, target => {
         this.emit('pointerup', { features: target.features, marker: target.marker });
@@ -325,7 +323,7 @@ class Events {
       const
         dx = t1.clientX-this.prevX,
         dy = t1.clientY-this.prevY;
-      this.isClick = (dx*dx+dy*dy < 15)
+      this.isClick = (dx*dx+dy*dy < 15);
     }
     
     if (e.touches.length > 1) {
