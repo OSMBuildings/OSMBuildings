@@ -5,6 +5,8 @@ const Uglify = require('uglify-es');
 const webpack = require('webpack');
 const zipFolder = require('zip-folder');
 const ESLint = require('eslint').linter;
+const documentation = require('documentation');
+const DocToHTML = require('./build/DocToHTML.js');
 const package = require('./package.json');
 const config = require('./config.json');
 
@@ -160,5 +162,12 @@ packModules(err => {
     console.log(`done in ${((Date.now()-startTime)/1000).toFixed(3)}s`);
   });
 
-  // TODO: docs
+
+
+  documentation.build(['src/index.js'], { 'sort-order': 'alpha' })
+    .then(documentation.formats.json)
+    .then(json => {
+      const html = DocToHTML.convert(JSON.parse(json));
+      fs.writeFileSync('docs/docs.html', html);
+    });
 });

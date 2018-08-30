@@ -1,7 +1,7 @@
 
 module.exports = class DocToHTML {
 
-  constructor (json) {
+  static convert (json) {
     this.classes = [];
     this.events  = [];
     this.globals = [];
@@ -29,74 +29,76 @@ module.exports = class DocToHTML {
         });
       }
     });
-  }
 
-  getTOC () {
     let html = '';
+    html += '<html>\n<body>\n';
+    html += '<a name="top"></a>\n';
 
-    html += '<h3><a href="#class-' + this.classes[0].name + '">' + this.classes[0].name + '</a></h3>';
+    html += '<div class="doc-toc">\n';
+    html += '<h3><a href="#class-' + this.classes[0].name + '">' + this.classes[0].name + '</a></h3>\n\n';
     html += this.createTOCItems('method', this.methods);
 
-    html += '<h3>Static</h3>';
+    html += '<h3>Static</h3>\n\n';
     html += this.createTOCItems('static', this.statics);
 
-    html += '<h3>Events</h3>';
+    html += '<h3>Events</h3>\n\n';
     html += this.createTOCItems('event', this.events);
 
-    html += '<h3>Global</h3>';
+    html += '<h3>Global</h3>\n\n';
     html += this.createTOCItems('global', this.globals);
+    html += '</div>\n';
 
-    return html;
-  }
 
-  getContent () {
-    let html = '';
-
-    html += '<h2>Class</h2>';
+    html += '<div class="doc-content">\n';
+    html += '<h2>Class</h2>\n\n';
     html += this.createContentItems('class', this.classes);
 
-    html += '<h2>Methods</h2>';
+    html += '<h2>Methods</h2>\n\n';
     html += this.createContentItems('method', this.methods);
 
-    html += '<h2>Static</h2>';
+    html += '<h2>Static</h2>\n\n';
     html += this.createContentItems('static', this.statics);
 
-    html += '<h2>Events</h2>';
+    html += '<h2>Events</h2>\n\n';
     html += this.createContentItems('event', this.events);
 
-    html += '<h2>Global</h2>';
+    html += '<h2>Global</h2>\n\n';
     html += this.createContentItems('global', this.globals);
+    html += '</div>\n';
+
+
+    html += '</body>\n</html>';
 
     return html;
   }
 
-  getDescription (description) {
+  static getDescription (description) {
     let html = '';
-    if (description !== undefined && description.children) {
+    if (description && description.children) {
       description.children.forEach(item => {
         let openTag = '';
         let closeTag = '';
 
         switch (item.type) {
           case 'paragraph':
-            openTag = '<p>';
-            closeTag = '</p>';
+            // openTag = '<p>';
+            // closeTag = '</p>\n\n';
             break;
           case 'list':
             openTag = '<ul>';
-            closeTag = '</ul>';
+            closeTag = '</ul>\n\n';
             break;
           case 'listItem':
             openTag = '<li>';
-            closeTag = '</li>';
+            closeTag = '</li>\n';
             break;
         }
 
-        if (item.value !== undefined) {
+        if (item.value) {
           html += openTag + item.value + closeTag;
         }
 
-        if (item.children !== undefined) {
+        if (item.children) {
           html += openTag + this.getDescription(item) + closeTag;
         }
       });
@@ -105,39 +107,37 @@ module.exports = class DocToHTML {
     return html;
   }
 
-  getType (type) {
-    if (type === undefined) {
-      return null;
+  static getType (type) {
+    if (!type) {
+      return;
     }
 
     if (type.type === 'NameExpression') {
-      return { name: type.name, optional: null };
+      return { name: type.name };
     }
 
     if (type.type === 'OptionalType') {
       return { name: type.expression.name, optional: true };
     }
-
-    return null;
   }
 
-  getParams (params) {
+  static getParams (params) {
     let res = [];
 
     params.forEach(item => {
-      const type = this.getType(item.type !== undefined ? item.type : null);
+      const type = this.getType(item.type);
 
-      if (type !== null) {
+      if (type) {
         res.push({
           name: item.name,
-          description: this.getDescription(item.description !== undefined ? item.description : null),
-          default: item.default !== undefined ? item.default : null,
+          description: this.getDescription(item.description),
+          default: item.default,
           type: type.name,
           optional: type.optional
         });
       }
 
-      if (item.properties !== undefined) {
+      if (item.properties) {
         res = res.concat(this.getParams(item.properties));
       }
     });
@@ -145,15 +145,13 @@ module.exports = class DocToHTML {
     if (res.length) {
       return res;
     }
-
-    return null;
   }
 
-  getReturns (returns) {
+  static getReturns (returns) {
     const res = [];
     returns.forEach(item => {
       const type = this.getType(item.type);
-      if (type !== null) {
+      if (type) {
         res.push({
           description: this.getDescription(item.description),
           type: type.name
@@ -164,11 +162,9 @@ module.exports = class DocToHTML {
     if (res.length) {
       return res;
     }
-
-    return null;
   }
 
-  getItem (item) {
+  static getItem (item) {
     return {
       name: item.name.replace(/^[a-z0-9]+#/i, ''),
       description: this.getDescription(item.description),
@@ -177,91 +173,91 @@ module.exports = class DocToHTML {
     };
   }
 
-  createTOCItems (type, data) {
+  static createTOCItems (type, data) {
     let html = '';
-    html += '<ul>';
+    html += '<ul>\n';
     data.forEach(item => {
-      html += '<li><a href="#' + type + '-' + item.name + '">' + item.name + '</a></li>';
+      html += '<li><a href="#' + type + '-' + item.name + '">' + item.name + '</a></li>\n';
     });
-    html += '</ul>';
+    html += '</ul>\n\n';
     return html;
   }
 
-  createContentItems (type, data) {
+  static createContentItems (type, data) {
     let html = '';
     data.forEach(item => {
-      html += '<article>';
-      html += '<a name="' + type + '-' + item.name + '"></a><h3>' + item.name + '</h3>';
-      html += '<p>' + item.description + '</p>';
+      html += '<article>\n';
+      html += '<a name="' + type + '-' + item.name + '"></a>\n<h3>' + item.name + '</h3>\n\n';
+      html += '<p>' + item.description + '</p>\n\n';
 
-      if (item.params !== undefined) {
-        html += '<em>Parameters</em>';
+      if (item.params) {
+        html += '<em>Parameters</em>\n';
         html += this.createParamItems(item.params);
       }
 
-      if (item.returns !== undefined) {
-        html += '<em>Returns</em>';
+      if (item.returns) {
+        html += '<em>Returns</em>\n';
         html += this.createReturnItems(item.returns);
       }
 
-      html += '<div class="top"><a href="#top">Top</a></div>';
-      html += '</article>';
+      html += '<div class="top"><a href="#top">Top</a></div>\n';
+      html += '</article>\n\n';
     });
 
     return html;
   }
 
-  createParamItems (params) {
+  static createParamItems (params) {
     let html = '';
-    html += '<table style="width:100%">';
+    html += '<table style="width:100%">\n';
 
-    html += '<colgroup>';
-    html += '<col width="120">';
-    html += '<col width="80">';
-    html += '<col width="100">';
-    html += '<col width="50">';
-    html += '<col>';
-    html += '</colgroup>';
+    html += '<colgroup>\n';
+    html += '<col width="120">\n';
+    html += '<col width="80">\n';
+    html += '<col width="100">\n';
+    html += '<col width="50">\n';
+    html += '<col>\n';
+    html += '</colgroup>\n\n';
 
-    html += '<thead>';
-    html += '<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>';
-    html += '</thead>';
+    html += '<thead>\n';
+    html += '<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>\n';
+    html += '</thead>\n\n';
 
-    html += '<tbody>';
+    html += '<tbody>\n';
 
     params.forEach(item => {
-      html += '<tr>';
-      html += '<td>' + item.name + '</td>';
-      html += '<td>' + item.type + '</td>';
-      html += '<td>' + (item.default ? item.default : '') + '</td>';
-      html += '<td>' + (item.optional ? 'optional' : '') + '</td>';
-      html += '<td>' + item.description + '</td>';
-      html += '</tr>';
+      html += '<tr>\n';
+      html += '<td>' + item.name + '</td>\n';
+      html += '<td>' + item.type + '</td>\n';
+      html += '<td>' + (item.default ? item.default : '') + '</td>\n';
+      html += '<td>' + (item.optional ? 'optional' : '') + '</td>\n';
+      html += '<td>' + item.description + '</td>\n';
+      html += '</tr>\n\n';
     });
 
-    html += '</tbody>';
-    html += '</table>';
+    html += '</tbody>\n';
+    html += '</table>\n\n';
     return html;
   }
 
-  createReturnItems (returns) {
+  static createReturnItems (returns) {
     let html = '';
-    html += '<table>';
-    html += '<thead>';
-    html += '<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>';
-    html += '</thead>';
+    html += '<table>\n';
+    html += '<thead>\n';
+    html += '<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>\n';
+    html += '</thead>\n\n';
 
-    html += '<tbody>';
+    html += '<tbody>\n';
 
     returns.forEach(item => {
-      html += '<tr>';
-      html += '<td class="returns-type">' + item.type + '</td>';
-      html += '<td class="returns-description">' + item.description + '</td>';
-      html += '</tr>';
+      html += '<tr>\n';
+      html += '<td class="returns-type">' + item.type + '</td>\n';
+      html += '<td class="returns-description">' + item.description + '</td>\n';
+      html += '</tr>\n\n';
     });
 
-    html += '</tbody>';
-    html += '</table>';
+    html += '</tbody>\n';
+    html += '</table>\n\n';
     return html;
   }
-}
+};

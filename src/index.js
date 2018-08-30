@@ -169,7 +169,7 @@ class OSMBuildings {
   }
 
   /**
-   * Removes an even listener
+   * Removes an event listener
    * @param {String} type Event type to listen for
    * @param {eventCallback} [fn] If callback is given, only remove that particular listener
    */
@@ -261,7 +261,7 @@ class OSMBuildings {
    * @param {Object} [options] Options for rendering the object
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=0] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @return {Object} The added object
@@ -277,7 +277,7 @@ class OSMBuildings {
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=0] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show this feature, defaults to and limited by global minZoom
