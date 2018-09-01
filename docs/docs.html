@@ -72,7 +72,10 @@
 </ul>
 
 </div>
+
 <div class="doc-content">
+<h1>Documentation</h1>
+
 <h2>Class</h2>
 
 <article>
@@ -80,6 +83,208 @@
 <h3>OSMBuildings</h3>
 
 <p></p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>options</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>OSMBuildings options</td>
+</tr>
+
+<tr>
+<td>options.container</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>A DOM Element or its id to append the viewer to</td>
+</tr>
+
+<tr>
+<td>options.minZoom</td>
+<td>Number</td>
+<td>14.5</td>
+<td></td>
+<td>Global minimum allowed zoom</td>
+</tr>
+
+<tr>
+<td>options.maxZoom</td>
+<td>Number</td>
+<td>20</td>
+<td></td>
+<td>Global maximum allowed zoom</td>
+</tr>
+
+<tr>
+<td>options.bounds</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>A bounding box to restrict the map to</td>
+</tr>
+
+<tr>
+<td>options.state</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>Store the map state in the URL</td>
+</tr>
+
+<tr>
+<td>options.disabled</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>Disable user input</td>
+</tr>
+
+<tr>
+<td>options.attribution</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>An attribution string</td>
+</tr>
+
+<tr>
+<td>options.zoom</td>
+<td>Number</td>
+<td>minZoom..maxZoom</td>
+<td></td>
+<td>Initial zoom, default is middle between global minZoom and maxZoom</td>
+</tr>
+
+<tr>
+<td>options.rotation</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>Initial rotation</td>
+</tr>
+
+<tr>
+<td>options.tilt</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>Initial tilt</td>
+</tr>
+
+<tr>
+<td>options.position</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>Initial position</td>
+</tr>
+
+<tr>
+<td>options.position.latitude</td>
+<td>Number</td>
+<td>52.520000</td>
+<td></td>
+<td>position latitude</td>
+</tr>
+
+<tr>
+<td>options.position.longitude</td>
+<td>Number</td>
+<td>13.410000</td>
+<td></td>
+<td>Position longitude</td>
+</tr>
+
+<tr>
+<td>options.baseURL</td>
+<td>String</td>
+<td>'.'</td>
+<td></td>
+<td>DEPRECATED For locating assets. This is relative to calling html page</td>
+</tr>
+
+<tr>
+<td>options.showBackfaces</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>DEPRECATED Render front and backsides of polygons. false increases performance, true might be needed for bad geometries</td>
+</tr>
+
+<tr>
+<td>options.fogColor</td>
+<td>String</td>
+<td>'#e8e0d8'</td>
+<td></td>
+<td>DEPRECATED Color to be used for sky gradients and distance fog</td>
+</tr>
+
+<tr>
+<td>options.highlightColor</td>
+<td>String</td>
+<td>'#f08000'</td>
+<td></td>
+<td>DEPRECATED Default color for highlighting features</td>
+</tr>
+
+<tr>
+<td>options.effects</td>
+<td>Array</td>
+<td>[]</td>
+<td></td>
+<td>DEPRECATED Which effects to enable. The only effect at the moment is 'shadows'</td>
+</tr>
+
+<tr>
+<td>options.backgroundColor</td>
+<td>String</td>
+<td>'#efe8e0'</td>
+<td></td>
+<td>Overall background color</td>
+</tr>
+
+<tr>
+<td>options.fastMode</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>Enables faster rendering at cost of image quality.</td>
+</tr>
+
+<tr>
+<td>options.style</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>Sets the default building style</td>
+</tr>
+
+<tr>
+<td>options.style.color</td>
+<td>String</td>
+<td>'rgb(220, 210, 200)'</td>
+<td></td>
+<td>Sets the default building color</td>
+</tr>
+
+</tbody>
+</table>
 
 <div class="top"><a href="#top">Top</a></div>
 </article>
@@ -104,11 +309,11 @@
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -147,11 +352,11 @@
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -190,11 +395,11 @@
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -225,11 +430,11 @@
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -260,11 +465,11 @@
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -327,11 +532,11 @@ Returns 'undefined' if point would be invisible or lies above horizon.</p>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -395,11 +600,11 @@ Returns 'undefined' if point would be invisible or lies above horizon.</p>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -517,11 +722,11 @@ Returns 'undefined' if point would be invisible or lies above horizon.</p>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -640,11 +845,11 @@ This is for continuous building coverage.</p>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -722,11 +927,11 @@ This is for continuous building coverage.</p>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -817,11 +1022,11 @@ This is for continuous building coverage.</p>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -914,11 +1119,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -973,11 +1178,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -1048,11 +1253,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -1139,11 +1344,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -1198,11 +1403,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -1257,11 +1462,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -1513,11 +1718,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>
@@ -1556,11 +1761,11 @@ so their top may be visible and they may still be out of bounds.</li>
 <em>Parameters</em>
 <table style="width:100%">
 <colgroup>
-<col width="120">
-<col width="80">
-<col width="100">
-<col width="50">
-<col>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
 </colgroup>
 
 <thead>

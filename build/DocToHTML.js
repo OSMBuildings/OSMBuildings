@@ -46,10 +46,13 @@ module.exports = class DocToHTML {
 
     html += '<h3>Global</h3>\n\n';
     html += this.createTOCItems('global', this.globals);
-    html += '</div>\n';
+    html += '</div>\n\n';
+
 
 
     html += '<div class="doc-content">\n';
+    html += '<h1>Documentation</h1>\n\n';
+
     html += '<h2>Class</h2>\n\n';
     html += this.createContentItems('class', this.classes);
 
@@ -165,11 +168,19 @@ module.exports = class DocToHTML {
   }
 
   static getItem (item) {
+    const name = item.name.replace(/^[a-z0-9]+#/i, '');
+
+    let doc = item;
+    if (item.constructorComment) {
+      debugger
+      doc = item.constructorComment;
+    }
+
     return {
-      name: item.name.replace(/^[a-z0-9]+#/i, ''),
-      description: this.getDescription(item.description),
-      params: this.getParams(item.params),
-      returns: this.getReturns(item.returns)
+      name: name,
+      description: this.getDescription(doc.description),
+      params: this.getParams(doc.params),
+      returns: this.getReturns(doc.returns)
     };
   }
 
@@ -212,11 +223,11 @@ module.exports = class DocToHTML {
     html += '<table style="width:100%">\n';
 
     html += '<colgroup>\n';
-    html += '<col width="120">\n';
-    html += '<col width="80">\n';
-    html += '<col width="100">\n';
-    html += '<col width="50">\n';
-    html += '<col>\n';
+    html += '<col width="120"/>\n';
+    html += '<col width="80"/>\n';
+    html += '<col width="100"/>\n';
+    html += '<col width="50"/>\n';
+    html += '<col/>\n';
     html += '</colgroup>\n\n';
 
     html += '<thead>\n';
