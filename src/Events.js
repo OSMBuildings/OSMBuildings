@@ -145,7 +145,7 @@ class Events {
 
     this.prevX = e.clientX;
     this.prevY = e.clientY;
-    this.isMove = false;
+    this.isClick = true;
 
     if (((e.buttons === 1 || e.button === 0) && e.altKey) || e.buttons === 2 || e.button === 2) {
       this.button = 2;
@@ -158,14 +158,20 @@ class Events {
   }
 
   onMouseMoveDocument (e) {
+    // detect if it is really a move after some tolerance
+    if (this.isClick) {
+      const
+        dx = e.clientX-this.prevX,
+        dy = e.clientY-this.prevY;
+      this.isClick = (dx*dx+dy*dy < 15);
+    }
+
     if (this.button === 0) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
-      this.isMove = true;
     } else if (this.button === 2) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
-      this.isMove = true;
     }
 
     this.prevX = e.clientX;
@@ -178,24 +184,17 @@ class Events {
   }
 
   onMouseUpDocument (e) {
-    // prevents clicks on other page elements
-    if (this.button === null) {
-      return;
-    }
-
     if (this.button === 0) {
       this.moveMap(e);
+      this.button = null;
     } else if (this.button === 2) {
       this.rotateMap(e);
+      this.button = null;
     }
-
-    this.button = null;
   }
 
   onMouseUp (e) {
-    if (this.isMove){
-      this.emit('pointerup', {});
-    } else {
+    if (this.isClick) {
       const pos = getEventXY(e);
       APP.view.Picking.getTarget(pos.x, pos.y, target => {
         this.emit('pointerup', { features: target.features, marker: target.marker });
@@ -286,7 +285,7 @@ class Events {
     this.cancelEvent(e);
 
     this.button = 0;
-    this.isMove = false;
+    this.isClick = true;
 
     const t1 = e.touches[0];
 
@@ -319,17 +318,24 @@ class Events {
 
     const t1 = e.touches[0];
 
+    // detect if it is really a move after some tolerance
+    if (this.isClick) {
+      const
+        dx = t1.clientX-this.prevX,
+        dy = t1.clientY-this.prevY;
+      this.isClick = (dx*dx+dy*dy < 15);
+    }
+    
     if (e.touches.length > 1) {
       APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / window.innerHeight));
       this.prevTilt = APP.tilt;
       if (!('ongesturechange' in window)) {
         this.emitGestureChange(e);
       }
-      this.isMove = true;
     } else {
       this.moveMap(t1);
-      this.isMove = true;
     }
+    
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
   }
@@ -351,7 +357,7 @@ class Events {
     if (e.touches.length === 0) {
       this.button = null;
 
-      if (this.isMove) {
+      if (!this.isClick) {
         this.emit('pointerup', {});
       } else {
         const pos = getEventXY(e);

@@ -2471,7 +2471,7 @@ class OSMBuildings {
   }
 
   /**
-   * Removes an even listener
+   * Removes an event listener
    * @param {String} type Event type to listen for
    * @param {eventCallback} [fn] If callback is given, only remove that particular listener
    */
@@ -2563,7 +2563,7 @@ class OSMBuildings {
    * @param {Object} [options] Options for rendering the object
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=0] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @return {Object} The added object
@@ -2579,7 +2579,7 @@ class OSMBuildings {
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
-   * @param {Number} [options.altitude=<ground height>] The height above ground to place the model at
+   * @param {Number} [options.altitude=0] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
    * @param {Number} [options.minZoom=14.5] Minimum zoom level to show this feature, defaults to and limited by global minZoom
@@ -3179,7 +3179,7 @@ class Events {
 
     this.prevX = e.clientX;
     this.prevY = e.clientY;
-    this.isMove = false;
+    this.isClick = true;
 
     if (((e.buttons === 1 || e.button === 0) && e.altKey) || e.buttons === 2 || e.button === 2) {
       this.button = 2;
@@ -3192,14 +3192,20 @@ class Events {
   }
 
   onMouseMoveDocument (e) {
+    // detect if it is really a move after some tolerance
+    if (this.isClick) {
+      const
+        dx = e.clientX-this.prevX,
+        dy = e.clientY-this.prevY;
+      this.isClick = (dx*dx+dy*dy < 15);
+    }
+
     if (this.button === 0) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
-      this.isMove = true;
     } else if (this.button === 2) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
-      this.isMove = true;
     }
 
     this.prevX = e.clientX;
@@ -3212,24 +3218,17 @@ class Events {
   }
 
   onMouseUpDocument (e) {
-    // prevents clicks on other page elements
-    if (this.button === null) {
-      return;
-    }
-
     if (this.button === 0) {
       this.moveMap(e);
+      this.button = null;
     } else if (this.button === 2) {
       this.rotateMap(e);
+      this.button = null;
     }
-
-    this.button = null;
   }
 
   onMouseUp (e) {
-    if (this.isMove){
-      this.emit('pointerup', {});
-    } else {
+    if (this.isClick) {
       const pos = getEventXY(e);
       APP.view.Picking.getTarget(pos.x, pos.y, target => {
         this.emit('pointerup', { features: target.features, marker: target.marker });
@@ -3320,7 +3319,7 @@ class Events {
     this.cancelEvent(e);
 
     this.button = 0;
-    this.isMove = false;
+    this.isClick = true;
 
     const t1 = e.touches[0];
 
@@ -3353,17 +3352,24 @@ class Events {
 
     const t1 = e.touches[0];
 
+    // detect if it is really a move after some tolerance
+    if (this.isClick) {
+      const
+        dx = t1.clientX-this.prevX,
+        dy = t1.clientY-this.prevY;
+      this.isClick = (dx*dx+dy*dy < 15);
+    }
+    
     if (e.touches.length > 1) {
       APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / window.innerHeight));
       this.prevTilt = APP.tilt;
       if (!('ongesturechange' in window)) {
         this.emitGestureChange(e);
       }
-      this.isMove = true;
     } else {
       this.moveMap(t1);
-      this.isMove = true;
     }
+    
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
   }
@@ -3385,7 +3391,7 @@ class Events {
     if (e.touches.length === 0) {
       this.button = null;
 
-      if (this.isMove) {
+      if (!this.isClick) {
         this.emit('pointerup', {});
       } else {
         const pos = getEventXY(e);

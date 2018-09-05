@@ -1,0 +1,1800 @@
+<html>
+<body>
+<a name="top"></a>
+<div class="doc-toc">
+<h3><a href="#class-OSMBuildings">OSMBuildings</a></h3>
+
+<ul>
+<li><a href="#method-appendTo">appendTo</a></li>
+<li><a href="#method-on">on</a></li>
+<li><a href="#method-off">off</a></li>
+<li><a href="#method-emit">emit</a></li>
+<li><a href="#method-setDate">setDate</a></li>
+<li><a href="#method-project">project</a></li>
+<li><a href="#method-unproject">unproject</a></li>
+<li><a href="#method-remove">remove</a></li>
+<li><a href="#method-addOBJ">addOBJ</a></li>
+<li><a href="#method-addGeoJSON">addGeoJSON</a></li>
+<li><a href="#method-addGeoJSONTiles">addGeoJSONTiles</a></li>
+<li><a href="#method-addMapTiles">addMapTiles</a></li>
+<li><a href="#method-highlight">highlight</a></li>
+<li><a href="#method-hide">hide</a></li>
+<li><a href="#method-show">show</a></li>
+<li><a href="#method-getTarget">getTarget</a></li>
+<li><a href="#method-screenshot">screenshot</a></li>
+<li><a href="#method-setDisabled">setDisabled</a></li>
+<li><a href="#method-isDisabled">isDisabled</a></li>
+<li><a href="#method-getBounds">getBounds</a></li>
+<li><a href="#method-setZoom">setZoom</a></li>
+<li><a href="#method-getZoom">getZoom</a></li>
+<li><a href="#method-setPosition">setPosition</a></li>
+<li><a href="#method-getPosition">getPosition</a></li>
+<li><a href="#method-setSize">setSize</a></li>
+<li><a href="#method-getSize">getSize</a></li>
+<li><a href="#method-setRotation">setRotation</a></li>
+<li><a href="#method-getRotation">getRotation</a></li>
+<li><a href="#method-setTilt">setTilt</a></li>
+<li><a href="#method-getTilt">getTilt</a></li>
+<li><a href="#method-addMarker">addMarker</a></li>
+<li><a href="#method-destroy">destroy</a></li>
+</ul>
+
+<h3>Static</h3>
+
+<ul>
+<li><a href="#static-VERSION">VERSION</a></li>
+<li><a href="#static-ATTRIBUTION">ATTRIBUTION</a></li>
+</ul>
+
+<h3>Events</h3>
+
+<ul>
+<li><a href="#event-loadfeature">loadfeature</a></li>
+<li><a href="#event-zoom">zoom</a></li>
+<li><a href="#event-rotate">rotate</a></li>
+<li><a href="#event-tilt">tilt</a></li>
+<li><a href="#event-change">change</a></li>
+<li><a href="#event-resize">resize</a></li>
+<li><a href="#event-doubleclick">doubleclick</a></li>
+<li><a href="#event-pointerdown">pointerdown</a></li>
+<li><a href="#event-pointermove">pointermove</a></li>
+<li><a href="#event-pointerup">pointerup</a></li>
+<li><a href="#event-gesture">gesture</a></li>
+<li><a href="#event-busy">busy</a></li>
+<li><a href="#event-idle">idle</a></li>
+</ul>
+
+<h3>Global</h3>
+
+<ul>
+<li><a href="#global-eventCallback">eventCallback</a></li>
+<li><a href="#global-selectorCallback">selectorCallback</a></li>
+</ul>
+
+</div>
+
+<div class="doc-content">
+<h1>Documentation</h1>
+
+<h2>Class</h2>
+
+<article>
+<a name="class-OSMBuildings"></a>
+<h3>OSMBuildings</h3>
+
+<p></p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>options</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>OSMBuildings options</td>
+</tr>
+
+<tr>
+<td>options.container</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>A DOM Element or its id to append the viewer to</td>
+</tr>
+
+<tr>
+<td>options.minZoom</td>
+<td>Number</td>
+<td>14.5</td>
+<td></td>
+<td>Global minimum allowed zoom</td>
+</tr>
+
+<tr>
+<td>options.maxZoom</td>
+<td>Number</td>
+<td>20</td>
+<td></td>
+<td>Global maximum allowed zoom</td>
+</tr>
+
+<tr>
+<td>options.bounds</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>A bounding box to restrict the map to</td>
+</tr>
+
+<tr>
+<td>options.state</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>Store the map state in the URL</td>
+</tr>
+
+<tr>
+<td>options.disabled</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>Disable user input</td>
+</tr>
+
+<tr>
+<td>options.attribution</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>An attribution string</td>
+</tr>
+
+<tr>
+<td>options.zoom</td>
+<td>Number</td>
+<td>minZoom..maxZoom</td>
+<td></td>
+<td>Initial zoom, default is middle between global minZoom and maxZoom</td>
+</tr>
+
+<tr>
+<td>options.rotation</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>Initial rotation</td>
+</tr>
+
+<tr>
+<td>options.tilt</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>Initial tilt</td>
+</tr>
+
+<tr>
+<td>options.position</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>Initial position</td>
+</tr>
+
+<tr>
+<td>options.position.latitude</td>
+<td>Number</td>
+<td>52.520000</td>
+<td></td>
+<td>position latitude</td>
+</tr>
+
+<tr>
+<td>options.position.longitude</td>
+<td>Number</td>
+<td>13.410000</td>
+<td></td>
+<td>Position longitude</td>
+</tr>
+
+<tr>
+<td>options.baseURL</td>
+<td>String</td>
+<td>'.'</td>
+<td></td>
+<td>DEPRECATED For locating assets. This is relative to calling html page</td>
+</tr>
+
+<tr>
+<td>options.showBackfaces</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>DEPRECATED Render front and backsides of polygons. false increases performance, true might be needed for bad geometries</td>
+</tr>
+
+<tr>
+<td>options.fogColor</td>
+<td>String</td>
+<td>'#e8e0d8'</td>
+<td></td>
+<td>DEPRECATED Color to be used for sky gradients and distance fog</td>
+</tr>
+
+<tr>
+<td>options.highlightColor</td>
+<td>String</td>
+<td>'#f08000'</td>
+<td></td>
+<td>DEPRECATED Default color for highlighting features</td>
+</tr>
+
+<tr>
+<td>options.effects</td>
+<td>Array</td>
+<td>[]</td>
+<td></td>
+<td>DEPRECATED Which effects to enable. The only effect at the moment is 'shadows'</td>
+</tr>
+
+<tr>
+<td>options.backgroundColor</td>
+<td>String</td>
+<td>'#efe8e0'</td>
+<td></td>
+<td>Overall background color</td>
+</tr>
+
+<tr>
+<td>options.fastMode</td>
+<td>Boolean</td>
+<td>false</td>
+<td></td>
+<td>Enables faster rendering at cost of image quality.</td>
+</tr>
+
+<tr>
+<td>options.style</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>Sets the default building style</td>
+</tr>
+
+<tr>
+<td>options.style.color</td>
+<td>String</td>
+<td>'rgb(220, 210, 200)'</td>
+<td></td>
+<td>Sets the default building color</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<h2>Methods</h2>
+
+<article>
+<a name="method-appendTo"></a>
+<h3>appendTo</h3>
+
+<p>DEPRECATED</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-on"></a>
+<h3>on</h3>
+
+<p>Adds an event listener</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>type</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>Event type to listen for</td>
+</tr>
+
+<tr>
+<td>fn</td>
+<td>eventCallback</td>
+<td></td>
+<td></td>
+<td>Callback function</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-off"></a>
+<h3>off</h3>
+
+<p>Removes an event listener</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>type</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>Event type to listen for</td>
+</tr>
+
+<tr>
+<td>fn</td>
+<td>eventCallback</td>
+<td></td>
+<td>optional</td>
+<td>If callback is given, only remove that particular listener</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-emit"></a>
+<h3>emit</h3>
+
+<p>Triggers a specific event</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>event</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>Event type to listen for</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-setDate"></a>
+<h3>setDate</h3>
+
+<p>Set date for shadow calculations</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>date</td>
+<td>Date</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-project"></a>
+<h3>project</h3>
+
+<p>Gets 2d screen position from a 3d point</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>latitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>Latitude of the point</td>
+</tr>
+
+<tr>
+<td>longitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>Longitude of the point</td>
+</tr>
+
+<tr>
+<td>altitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>Altitude of the point</td>
+</tr>
+
+</tbody>
+</table>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">Screen position in pixels { x, y }</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-unproject"></a>
+<h3>unproject</h3>
+
+<p>Turns a screen point (x, y) into a geographic position (latitude/longitude/altitude=0).
+Returns 'undefined' if point would be invisible or lies above horizon.</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>x</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>X position on screen</td>
+</tr>
+
+<tr>
+<td>y</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>Y position om screen</td>
+</tr>
+
+</tbody>
+</table>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">Geographic position { latitude, longitude }</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-remove"></a>
+<h3>remove</h3>
+
+<p>Removes a feature, layer or marker from the map.</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-addOBJ"></a>
+<h3>addOBJ</h3>
+
+<p>Adds an 3d object (OBJ format) file to the map.
+<em>Important</em> objects with exactly the same url are cached and only loaded once.</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>url</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>URL of the OBJ file</td>
+</tr>
+
+<tr>
+<td>position</td>
+<td>Object</td>
+<td></td>
+<td></td>
+<td>Where to render the object</td>
+</tr>
+
+<tr>
+<td>position.latitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>Position latitude for the object</td>
+</tr>
+
+<tr>
+<td>position.longitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>Position longitude for the object</td>
+</tr>
+
+<tr>
+<td>options</td>
+<td>Object</td>
+<td>{}</td>
+<td>optional</td>
+<td>Options for rendering the object</td>
+</tr>
+
+<tr>
+<td>options.scale</td>
+<td>Number</td>
+<td>1</td>
+<td></td>
+<td>Scale the model by this value before rendering</td>
+</tr>
+
+<tr>
+<td>options.rotation</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>Rotate the model by this much before rendering</td>
+</tr>
+
+<tr>
+<td>options.altitude</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>The height above ground to place the model at</td>
+</tr>
+
+<tr>
+<td>options.id</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>An identifier for the object. This is used for getting info about the object later</td>
+</tr>
+
+<tr>
+<td>options.color</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>A color to apply to the model</td>
+</tr>
+
+</tbody>
+</table>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">The added object</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-addGeoJSON"></a>
+<h3>addGeoJSON</h3>
+
+<p>Adds a GeoJSON object to the map.</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>url</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>URL of the GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection</td>
+</tr>
+
+<tr>
+<td>options</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>Options to apply to the GeoJSON being rendered</td>
+</tr>
+
+<tr>
+<td>options.scale</td>
+<td>Number</td>
+<td>1</td>
+<td></td>
+<td>Scale the model by this value before rendering</td>
+</tr>
+
+<tr>
+<td>options.rotation</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>Rotate the model by this much before rendering</td>
+</tr>
+
+<tr>
+<td>options.altitude</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>The height above ground to place the model at</td>
+</tr>
+
+<tr>
+<td>options.id</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>An identifier for the object. This is used for getting info about the object later</td>
+</tr>
+
+<tr>
+<td>options.color</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>A color to apply to the model</td>
+</tr>
+
+<tr>
+<td>options.minZoom</td>
+<td>Number</td>
+<td>14.5</td>
+<td></td>
+<td>Minimum zoom level to show this feature, defaults to and limited by global minZoom</td>
+</tr>
+
+<tr>
+<td>options.maxZoom</td>
+<td>Number</td>
+<td>maxZoom</td>
+<td></td>
+<td>Maximum zoom level to show this feature, defaults to and limited by global maxZoom</td>
+</tr>
+
+<tr>
+<td>options.fadeIn</td>
+<td>Boolean</td>
+<td>true</td>
+<td></td>
+<td>DEPRECATED Fade GeoJSON features; if false, then display immediately</td>
+</tr>
+
+</tbody>
+</table>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">The added object</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-addGeoJSONTiles"></a>
+<h3>addGeoJSONTiles</h3>
+
+<p>Adds a GeoJSON tile layer to the map.
+This is for continuous building coverage.</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>url</td>
+<td>String</td>
+<td>https://{s}.data.osmbuildings.org/0.2/{k}/tile/{z}/{x}/{y}.json</td>
+<td></td>
+<td>url The URL of the GeoJSON tile server</td>
+</tr>
+
+<tr>
+<td>options</td>
+<td>Object</td>
+<td>{}</td>
+<td>optional</td>
+<td></td>
+</tr>
+
+<tr>
+<td>options.fixedZoom</td>
+<td>Number</td>
+<td>15</td>
+<td></td>
+<td>Tiles are fetched for this zoom level only. Other zoom levels are scaled up/down to this value</td>
+</tr>
+
+<tr>
+<td>options.minZoom</td>
+<td>Number</td>
+<td>14.5</td>
+<td></td>
+<td>Minimum zoom level to show features from this layer. Defaults to and limited by global minZoom.</td>
+</tr>
+
+<tr>
+<td>options.maxZoom</td>
+<td>Number</td>
+<td>maxZoom</td>
+<td></td>
+<td>Maximum zoom level to show features from this layer. Defaults to and limited by global maxZoom.</td>
+</tr>
+
+</tbody>
+</table>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">The added layer object</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-addMapTiles"></a>
+<h3>addMapTiles</h3>
+
+<p>Adds a 2d base map source. This renders below the buildings.</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>url</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>The URL of the map server. This could be from Mapbox or other tile servers</td>
+</tr>
+
+</tbody>
+</table>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">The added layer object</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-highlight"></a>
+<h3>highlight</h3>
+
+<p>This replaces any previous highlighting.</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-hide"></a>
+<h3>hide</h3>
+
+<p>This replaces any previous show/hide rule.</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-show"></a>
+<h3>show</h3>
+
+<p>DEPRECATED</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-getTarget"></a>
+<h3>getTarget</h3>
+
+<p>DEPRECATED</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-screenshot"></a>
+<h3>screenshot</h3>
+
+<p>DEPRECATED</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-setDisabled"></a>
+<h3>setDisabled</h3>
+
+<p>Disables map interaction</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>flag</td>
+<td>Boolean</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-isDisabled"></a>
+<h3>isDisabled</h3>
+
+<p>Checks for map interaction disabled</p>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Boolean</td>
+<td class="returns-description">flag</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-getBounds"></a>
+<h3>getBounds</h3>
+
+<p>Returns geographical bounds of the current view<ul><li>since the bounds are always axis-aligned they will contain areas that are
+not currently visible if the current view is not also axis-aligned.</li>
+<li>The bounds only contain the map area that OSMBuildings considers for rendering.
+OSMBuildings has a rendering distance of about 3.5km, so the bounds will
+never extend beyond that, even if the horizon is visible (in which case the
+bounds would mathematically be infinite).</li>
+<li>the bounds only consider ground level. For example, buildings whose top
+is seen at the lower edge of the screen, but whose footprint is outside</li>
+<li>The bounds only consider ground level. For example, buildings whose top
+is seen at the lower edge of the screen, but whose footprint is outside
+of the current view below the lower edge do not contribute to the bounds.
+so their top may be visible and they may still be out of bounds.</li>
+</ul>
+
+</p>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Array</td>
+<td class="returns-description">Bounding coordinates in unspecific order { latitude, longitude }, ...</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-setZoom"></a>
+<h3>setZoom</h3>
+
+<p>Set zoom level</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>zoom</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>The new zoom level</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-getZoom"></a>
+<h3>getZoom</h3>
+
+<p>Get current zoom level</p>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Number</td>
+<td class="returns-description">zoom level</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-setPosition"></a>
+<h3>setPosition</h3>
+
+<p>Set map's geographic position</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>pos</td>
+<td>Object</td>
+<td></td>
+<td></td>
+<td>The new position</td>
+</tr>
+
+<tr>
+<td>pos.latitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>pos.longitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-getPosition"></a>
+<h3>getPosition</h3>
+
+<p>Get map's current geographic position</p>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">Geographic position { latitude, longitude }</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-setSize"></a>
+<h3>setSize</h3>
+
+<p>Set map view's size in pixels</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>width</td>
+<td>Integer</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>height</td>
+<td>Integer</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+<tr>
+<td>size</td>
+<td>Object</td>
+<td></td>
+<td></td>
+<td>DEPRECATED</td>
+</tr>
+
+<tr>
+<td>size.width</td>
+<td>Integer</td>
+<td></td>
+<td></td>
+<td>DEPRECATED</td>
+</tr>
+
+<tr>
+<td>size.height</td>
+<td>Integer</td>
+<td></td>
+<td></td>
+<td>DEPRECATED</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-getSize"></a>
+<h3>getSize</h3>
+
+<p>Get map's current view size in pixels</p>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">View size { width, height }</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-setRotation"></a>
+<h3>setRotation</h3>
+
+<p>Set map's rotation</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>rotation</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>The new rotation angle in degrees</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-getRotation"></a>
+<h3>getRotation</h3>
+
+<p>Get map's current rotation</p>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Number</td>
+<td class="returns-description">Rotation in degrees</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-setTilt"></a>
+<h3>setTilt</h3>
+
+<p>Set map's tilt</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>tilt</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>The new tilt in degree</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-getTilt"></a>
+<h3>getTilt</h3>
+
+<p>Get map's current tilt</p>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Number</td>
+<td class="returns-description">Tilt in degrees</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-addMarker"></a>
+<h3>addMarker</h3>
+
+<p>Adds a marker to the map in 3d space.</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>position</td>
+<td>Object</td>
+<td></td>
+<td></td>
+<td>geographic position including altitude</td>
+</tr>
+
+<tr>
+<td>position.latitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>latitude</td>
+</tr>
+
+<tr>
+<td>position.longitude</td>
+<td>Number</td>
+<td></td>
+<td></td>
+<td>longitude</td>
+</tr>
+
+<tr>
+<td>position.altitude</td>
+<td>Number</td>
+<td>0</td>
+<td></td>
+<td>altitude in meters</td>
+</tr>
+
+<tr>
+<td>data</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>custom data properties to attach to the marker, i.e. an id</td>
+</tr>
+
+<tr>
+<td>options</td>
+<td>Object</td>
+<td></td>
+<td>optional</td>
+<td>additional options</td>
+</tr>
+
+<tr>
+<td>options.url</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>url to an SVG file to use as custom marker. Currently only path properties are supported. Overlapping path's may create strange results.</td>
+</tr>
+
+<tr>
+<td>options.color</td>
+<td>String</td>
+<td></td>
+<td>optional</td>
+<td>color which whole marker will be tinted</td>
+</tr>
+
+</tbody>
+</table>
+
+<em>Returns</em>
+<table>
+<thead>
+<tr><th class="returns-type">Type</th><th class="returns-description">Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td class="returns-type">Object</td>
+<td class="returns-description">Marker</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="method-destroy"></a>
+<h3>destroy</h3>
+
+<p>Destroys the map</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<h2>Static</h2>
+
+<article>
+<a name="static-VERSION"></a>
+<h3>VERSION</h3>
+
+<p>(String) OSMBuildings version</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="static-ATTRIBUTION"></a>
+<h3>ATTRIBUTION</h3>
+
+<p>(String) OSMBuildings attribution</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<h2>Events</h2>
+
+<article>
+<a name="event-loadfeature"></a>
+<h3>loadfeature</h3>
+
+<p>Fired when a 3d object has been loaded</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-zoom"></a>
+<h3>zoom</h3>
+
+<p>Fired when map has been zoomed</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-rotate"></a>
+<h3>rotate</h3>
+
+<p>Fired when map view has been rotated</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-tilt"></a>
+<h3>tilt</h3>
+
+<p>Fired when map view has been tilted</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-change"></a>
+<h3>change</h3>
+
+<p>Fired when map view has been changed, i.e. zoom, pan, tilt, rotation</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-resize"></a>
+<h3>resize</h3>
+
+<p>Fired when map container has been resized</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-doubleclick"></a>
+<h3>doubleclick</h3>
+
+<p>Fired when map container has been double clicked/tapped</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-pointerdown"></a>
+<h3>pointerdown</h3>
+
+<p>Fired when map container has been clicked/tapped</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-pointermove"></a>
+<h3>pointermove</h3>
+
+<p>Fired when mouse/finger has been moved</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-pointerup"></a>
+<h3>pointerup</h3>
+
+<p>Fired when mouse button/finger been lifted</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-gesture"></a>
+<h3>gesture</h3>
+
+<p>Fired when gesture has been performed on the map</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-busy"></a>
+<h3>busy</h3>
+
+<p>DEPRECATED Fired when data loading starts</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="event-idle"></a>
+<h3>idle</h3>
+
+<p>DEPRECATED Fired when data loading ends</p>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<h2>Global</h2>
+
+<article>
+<a name="global-eventCallback"></a>
+<h3>eventCallback</h3>
+
+<p>User defined function that will be called when an event is fired</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>type</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>Event type</td>
+</tr>
+
+<tr>
+<td>payload</td>
+<td>any</td>
+<td></td>
+<td>optional</td>
+<td>Payload of any type</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+<article>
+<a name="global-selectorCallback"></a>
+<h3>selectorCallback</h3>
+
+<p>User defined function that will be called on each feature, for modification before rendering</p>
+
+<em>Parameters</em>
+<table style="width:100%">
+<colgroup>
+<col width="120"/>
+<col width="80"/>
+<col width="100"/>
+<col width="50"/>
+<col/>
+</colgroup>
+
+<thead>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Optional</th><th>Description</th></tr>
+</thead>
+
+<tbody>
+<tr>
+<td>id</td>
+<td>String</td>
+<td></td>
+<td></td>
+<td>The feature's id</td>
+</tr>
+
+<tr>
+<td>feature</td>
+<td>Object</td>
+<td></td>
+<td></td>
+<td>The feature</td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="top"><a href="#top">Top</a></div>
+</article>
+
+</div>
+</body>
+</html>
