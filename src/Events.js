@@ -36,8 +36,6 @@ class Events {
    * @param container {HTMLElement} DOM element for local pointer events.
    */
   constructor (container) {
-    this.window = top || window;
-
     this.listeners = {};
     this.isDisabled = false;
 
@@ -48,15 +46,15 @@ class Events {
     this.prevTilt = 0;
     this.startDist = 0;
     this.startAngle = 0;
-    this.buttons = 0;
+    this.button = null;
 
-    this.addAllListeners(this.window, container);
+    this.addAllListeners(container);
   }
 
-  addAllListeners (win, container) {
-    const doc = win.document;
+  addAllListeners (container) {
+    const doc = window.document;
 
-    if ('ontouchstart' in win) {
+    if ('ontouchstart' in window) {
       addListener(container, 'touchstart', e => {
         this.onTouchStart(e);
       });
@@ -129,7 +127,8 @@ class Events {
     APP.view.speedUp();
     this.cancelEvent(e);
 
-    this.emit('doubleclick', { ...getEventXY(e), buttons: e.buttons });
+    const pos = getEventXY(e);
+    this.emit('doubleclick', { x: pos.x, y: pos.y });
 
     if (!this.isDisabled) {
       APP.setZoom(APP.zoom + 1, e);
@@ -148,21 +147,22 @@ class Events {
     this.prevY = e.clientY;
     this.isMove = false;
 
-    if ((e.buttons === 1 && e.altKey) || e.buttons === 2) {
-      this.buttons = 2;
-    } else if (e.buttons === 1) {
-      this.buttons = 1;
+    if (((e.buttons === 1 || e.button === 0) && e.altKey) || e.buttons === 2 || e.button === 2) {
+      this.button = 2;
+    } else if (e.buttons === 1 || e.button === 0) {
+      this.button = 0;
     }
 
-    this.emit('pointerdown', { ...getEventXY(e), buttons: e.buttons });
+    const pos = getEventXY(e);
+    this.emit('pointerdown', { x: pos.x, y: pos.y, button: this.button });
   }
 
   onMouseMoveDocument (e) {
-    if (this.buttons === 1) {
+    if (this.button === 0) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.moveMap(e);
       this.isMove = true;
-    } else if (this.buttons === 2) {
+    } else if (this.button === 2) {
       APP.view.speedUp(); // do it here because no button means the event is not related to us
       this.rotateMap(e);
       this.isMove = true;
@@ -173,31 +173,32 @@ class Events {
   }
 
   onMouseMove (e) {
-    this.emit('pointermove', getEventXY(e));
+    const pos = getEventXY(e);
+    this.emit('pointermove', pos);
   }
 
   onMouseUpDocument (e) {
     // prevents clicks on other page elements
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 
-    if (this.buttons === 1) {
+    if (this.button === 0) {
       this.moveMap(e);
-    } else if (this.buttons === 2) {
+    } else if (this.button === 2) {
       this.rotateMap(e);
     }
 
-    this.buttons = 0;
+    this.button = null;
   }
 
   onMouseUp (e) {
     if (this.isMove){
-      this.emit('pointerup', { buttons: e.buttons });
+      this.emit('pointerup', {});
     } else {
       const pos = getEventXY(e);
       APP.view.Picking.getTarget(pos.x, pos.y, target => {
-        this.emit('pointerup', { buttons: e.buttons, ...target });
+        this.emit('pointerup', { features: target.features, marker: target.marker });
       });
     }
   }
@@ -260,8 +261,8 @@ class Events {
       return;
     }
 
-    this.prevRotation += (e.clientX - this.prevX) * (360 / this.window.innerWidth);
-    this.prevTilt -= (e.clientY - this.prevY) * (360 / this.window.innerHeight);
+    this.prevRotation += (e.clientX - this.prevX) * (360 / window.innerWidth);
+    this.prevTilt -= (e.clientY - this.prevY) * (360 / window.innerHeight);
     APP.setRotation(this.prevRotation);
     APP.setTilt(this.prevTilt);
   }
@@ -284,14 +285,14 @@ class Events {
     APP.view.speedUp();
     this.cancelEvent(e);
 
-    this.buttons = 1;
+    this.button = 0;
     this.isMove = false;
 
     const t1 = e.touches[0];
 
     // gesture polyfill adapted from https://raw.githubusercontent.com/seznam/JAK/master/lib/polyfills/gesturechange.js
     // MIT License
-    if (e.touches.length === 2 && !('ongesturechange' in this.window)) {
+    if (e.touches.length === 2 && !('ongesturechange' in window)) {
       const t2 = e.touches[1];
       const dx = t1.clientX - t2.clientX;
       const dy = t1.clientY - t2.clientY;
@@ -306,11 +307,11 @@ class Events {
     this.prevX = t1.clientX;
     this.prevY = t1.clientY;
 
-    this.emit('pointerdown', { x: e.x, y: e.y, buttons: 1 });
+    this.emit('pointerdown', { x: e.x, y: e.y, button: 0 });
   }
 
   onTouchMoveDocument (e) {
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 
@@ -319,9 +320,9 @@ class Events {
     const t1 = e.touches[0];
 
     if (e.touches.length > 1) {
-      APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / this.window.innerHeight));
+      APP.setTilt(this.prevTilt + (this.prevY - t1.clientY) * (360 / window.innerHeight));
       this.prevTilt = APP.tilt;
-      if (!('ongesturechange' in this.window)) {
+      if (!('ongesturechange' in window)) {
         this.emitGestureChange(e);
       }
       this.isMove = true;
@@ -335,26 +336,27 @@ class Events {
 
   onTouchMove (e) {
     if (e.touches.length === 1) {
-      this.emit('pointermove', { ...getEventXY(e.touches[0]), buttons: 1 });
+      const pos = getEventXY(e.touches[0]);
+      this.emit('pointermove', { x: pos.x, y: pos.y, button: 0 });
     }
   }
 
   onTouchEndDocument (e) {
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 
     const t1 = e.touches[0];
 
     if (e.touches.length === 0) {
-      this.buttons = 0;
+      this.button = null;
 
       if (this.isMove) {
-        this.emit('pointerup', { buttons: 1 });
+        this.emit('pointerup', {});
       } else {
         const pos = getEventXY(e);
         APP.view.Picking.getTarget(pos.x, pos.y, target => {
-          this.emit('pointerup', { buttons: 1, ...target });
+          this.emit('pointerup', { features: target.features, marker: target.marker });
         });
       }
 
@@ -366,7 +368,7 @@ class Events {
   }
 
   onGestureChangeDocument (e) {
-    if (!this.buttons) {
+    if (this.button === null) {
       return;
     }
 

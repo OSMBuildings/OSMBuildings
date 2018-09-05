@@ -85,7 +85,10 @@ class OBJ {
     if (faces.length) {
       const geometry = this.createGeometry(faces);
       this.meshes.push({
-        ...geometry,
+        vertices: geometry.vertices,
+        normals: geometry.normals,
+        texCoords: geometry.texCoords,
+        height: geometry.height,
         color: color,
         id: id
       });
@@ -94,6 +97,10 @@ class OBJ {
 
   sub (a, b) {
     return [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+  }
+
+  len (v) {
+    return Math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
   }
 
   unit (a) {

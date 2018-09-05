@@ -29,11 +29,11 @@ onmessage = function(e) {
   const params = e.data;
 
   if (params.type === 'GeoJSON') {
-    loadGeoJSON(params);
+    loadGeoJSON(params.url, params.options);
   }
 
   if (params.type === 'OBJ') {
-    loadOBJ(params);
+    loadOBJ(params.url, params.options);
   }
 };
 
@@ -61,17 +61,17 @@ function postResult(items, position, tri) {
 
 //*****************************************************************************
 
-function loadGeoJSON (params) {
-  if (typeof params.url === 'object') {
+function loadGeoJSON (url, options = {}) {
+  if (typeof url === 'object') {
     postMessage('load');
-    processGeoJSON(params.url, params.options);
+    processGeoJSON(url, options);
   } else {
-    Request.getJSON(params.url, (err, geojson) => {
+    Request.getJSON(url, (err, geojson) => {
       if (err) {
         postMessage('error');
       } else {
         postMessage('load');
-        processGeoJSON(geojson, params.options);
+        processGeoJSON(geojson, options);
       }
     });
   }
@@ -103,7 +103,7 @@ function processGeoJSON (geojson, options) {
     const
       properties = feature.properties,
       id = options.id || feature.id,
-      pickingColor = getPickingColor(i); // still picks per part id - could perhaps use building id
+      pickingColor = getPickingColor(i); // picks per part id - could perhaps use building id
 
     let vertexCount = tri.vertices.length;
     triangulate(tri, feature, origin);
@@ -122,9 +122,8 @@ function processGeoJSON (geojson, options) {
 
 //*****************************************************************************
 
-function loadOBJ (params) {
-
-  Request.getText(params.url, (err, obj) => {
+function loadOBJ (url, options = {}) {
+  Request.getText(url, (err, obj) => {
     if (err) {
       postMessage('error');
       return;
@@ -133,21 +132,21 @@ function loadOBJ (params) {
     let match = obj.match(/^mtllib\s+(.*)$/m);
     if (!match) {
       postMessage('load');
-      processOBJ(obj, null);
+      processOBJ(obj, null, options);
     } else {
-      Request.getText(params.url.replace(/[^\/]+$/, '') + match[1], (err, mtl) => {
+      Request.getText(url.replace(/[^\/]+$/, '') + match[1], (err, mtl) => {
         if (err) {
           postMessage('error');
         } else {
           postMessage('load');
-          processOBJ(obj, mtl);
+          processOBJ(obj, mtl, options);
         }
       });
     }
   });
 }
 
-function processOBJ(obj, mtl, options) {
+function processOBJ(obj, mtl, options = {}) {
   const tri = {
     vertices: [],
     normals: [],
@@ -176,7 +175,7 @@ function processOBJ(obj, mtl, options) {
       colorVariance = (id / 2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
       color = optionColor || mesh.color || DEFAULT_COLOR,
       vertexCount = mesh.vertices.length / 3,
-      pickingColor = getPickingColor(i);
+      pickingColor = getPickingColor(0);
 
     for (let i = 0; i < vertexCount; i++) {
       tri.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
