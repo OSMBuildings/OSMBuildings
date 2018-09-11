@@ -47,9 +47,37 @@ class GLX {
     }
 
     this.GL = GL;
+
+    if (navigator.getVRDisplays) {
+      navigator.getVRDisplays().then(displays => {
+        if (!displays.length) {
+          return;
+        }
+
+        const display = displays[0];
+        const left = this.VR.getEyeParameters('left');
+        const right = this.VR.getEyeParameters('right');
+
+        APP.setSize(Math.max(left.renderWidth, right.renderWidth) * 2, Math.max(left.renderHeight, right.renderHeight));
+
+        window.addEventListener('vrdisplaypresentchange', e => {
+          console.log(e.display.displayId, 'vr presentation changed', e.reason);
+        });
+
+        display.requestPresent([{ source: canvas }]).then(() => {
+          this.VR = display;
+        });
+      });
+    }
   }
 
   destroy () {
+    if (this.VR) {
+      this.VR.exitPresent();
+    // this.VR.cancelAnimationFrame(vrSceneFrame);
+      this.VR = null;
+    }
+
     const ext = this.GL.getExtension('WEBGL_lose_context');
     ext.loseContext();
     this.GL = null;

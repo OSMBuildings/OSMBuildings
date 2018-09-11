@@ -13,7 +13,7 @@
  *       can accurately be represented within the limited accuracy of IEEE floats.
  */
 
-let APP, GL;
+let APP, GL, VR;
 
 /**
  * User defined function that will be called when an event is fired
@@ -128,6 +128,7 @@ class OSMBuildings {
 
     this.glx = new GLX(this.canvas, options.fastMode);
     GL = this.glx.GL;
+    VR = this.glx.VR;
 
     this.features = new FeatureCollection();
     this.icons = new IconCollection();

@@ -40,105 +40,55 @@ class View {
       this.sunGBuffer = new View.DepthNormal();
     }
 
-    this.initWebVr();
-
     this.speedUp();
 
-    // this.renderFrame();
+    this.renderVRFrame();
   }
 
-  initWebVr () {
-    if (!navigator.getVRDisplays) {
-      console.warn('WebVR not supported');
+  renderVRFrame () {
+    if (!VR) {
+      setTimeout(() => {
+        this.renderFrame();
+      }, 250);
       return;
     }
 
-    navigator.getVRDisplays().then(displays => {
-      if (!displays.length) {
-        return;
-      }
+    // const frame = VR.requestAnimationFrame();
 
-      this.vrDisplay = displays[0];
-
-      document.addEventListener('click', e => {
-        this.vrDisplay.requestPresent([{source: canvas}]).then(vr => {
-          console.log('using WebVR display');
-
-          const leftEye = this.vrDisplay.getEyeParameters('left');
-          const rightEye = this.vrDisplay.getEyeParameters('right');
-
-          APP.setSize(
-            Math.max(leftEye.renderWidth, rightEye.renderWidth) * 2,
-            Math.max(leftEye.renderHeight, rightEye.renderHeight)
-          );
-
-          this.renderVR();
-        });
-
-        // this.vrDisplay.exitPresent();
-        // console.log('Stopped presenting to WebVR display');
-
-        // // Stop the VR presentation, and start the normal presentation
-        // this.vrDisplay.cancelAnimationFrame(vrSceneFrame);
-      });
-    });
-  }
-
-  renderVR () {
-    // WebVR: Request the next frame of the animation
-    // var vrSceneFrame = vrDisplay.requestAnimationFrame(drawVRScene);
     const frameData = new VRFrameData();
 console.log(frameData);
 
     // Populate frameData with the data of the next frame to display
-    this.vrDisplay.getFrameData(frameData);
+    // VR.getFrameData(frameData);
 
-    // // You can get the position, orientation, etc. of the display from the current frame's pose
-    // const curFramePose = frameData.pose;
-    // const curPos = curFramePose.position;
-    // const curOrient = curFramePose.orientation;
-
-    // Clear the canvas before we start drawing on it.
-
-    GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+    // get the position, orientation, etc. of the display from the current frame's pose
+    const pose = frameData.pose;
+    const position = pose.position;
+    const orientation = pose.orientation;
 
     // WebVR: Render the left eye’s view to the left half of the canvas
-    GL.viewport(0, 0, GL.width * 0.5, GL.height);
+    GL.viewport(0, 0, GL.width / 2, GL.height);
+    this.projMatrix = frameData.leftProjectionMatrix;
+    this.viewMatrix = frameData.leftViewMatrix;
+    // let perspectiveMatrix = new GLX.Matrix.Perspective(0.5,  GL.width / GL.height, 1, 30000);
+    this.renderFrame ();
 
-    GL.uniformMatrix4fv(projectionMatrixLocation, false, frameData.leftProjectionMatrix);
-    GL.uniformMatrix4fv(viewMatrixLocation, false, frameData.leftViewMatrix);
-    perspectiveMatrix = makePerspective(45, 640.0 / 480.0, 0.1, 100.0);
-    renderFrame ();
 
     // WebVR: Render the right eye’s view to the right half of the canvas
-    GL.viewport(GL.width * 0.5, 0, GL.width * 0.5, GL.height);
-    GL.uniformMatrix4fv(projectionMatrixLocation, false, frameData.rightProjectionMatrix);
-    GL.uniformMatrix4fv(viewMatrixLocation, false, frameData.rightViewMatrix);
-    perspectiveMatrix = makePerspective(45, 640.0 / 480.0, 0.1, 100.0);
-    renderFrame ();
+    GL.viewport(GL.width / 2, 0, GL.width / 2, GL.height);
+    this.projMatrix = frameData.rightProjectionMatrix;
+    this.viewMatrix = frameData.rightViewMatrix;
+    // let perspectiveMatrix = new GLX.Matrix.Perspective(0.5,  GL.width / GL.height, 1, 30000);
 
-    // WebVR: Indicate that we are ready to present the rendered frame to the VR display
-    this.vrDisplay.submitFrame();
+    this.renderFrame ();
+    // VR.submitFrame();
   }
-
-  // window.addEventListener('vrdisplaypresentchange', function(e) {
-  //   console.log('Display ' + e.display.displayId + ' presentation has changed. Reason given: ' + e.reason + '.');
-  // });
-
-  // function displayPoseStats(pose) {
-  //   var pos = pose.position;
-  //   var orient = pose.orientation;
-  //   var linVel = pose.linearVelocity;
-  //   var linAcc = pose.linearAcceleration;
-  //   var angVel = pose.angularVelocity;
-  //   var angAcc = pose.angularAcceleration;
-  // }
 
   renderFrame () {
     if (APP.zoom >= APP.minZoom && APP.zoom <= APP.maxZoom) {
       requestAnimationFrame(() => {
 
-        this.setupViewport();
+        // this.setupViewport();
         GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
         GL.clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
 
@@ -183,7 +133,7 @@ console.log(frameData);
           this.Overlay.render(this.blurredAmbientMap.framebuffer.renderTexture, viewSize);
 
           // linear interpolation between the colors of the current framebuffer
-          // ( =building geometries) and of the sky. The interpolation factor
+          // (=building geometries) and of the sky. The interpolation factor
           // is the geometry alpha value, which contains the 'foggyness' of each pixel
           // the alpha interpolation functions is set to GL.ONE for both operands
           // to ensure that the alpha channel will become 1.0 for each pixel after this
@@ -205,9 +155,6 @@ console.log(frameData);
 
         if (this.isFast) {
           this.renderFrame();
-          // setTimeout(() => {
-          //   this.renderFrame();
-          // }, 5);
         } else {
           setTimeout(() => {
             this.renderFrame();
@@ -217,6 +164,91 @@ console.log(frameData);
       }); // end requestAnimationFrame()
     }
   }
+
+  setupLeftViewport (width, height) {
+    const
+      scale = 1.3567 * Math.pow(2, APP.zoom - 17),
+      refHeight = 1024,
+      refVFOV = 45;
+
+    // GL.viewport(0, 0, width, height);
+
+    this.viewMatrix = new GLX.Matrix()
+      .rotateZ(APP.rotation)
+      .rotateX(APP.tilt)
+      .translateBy(0, 8 / scale, 0) // corrective offset to match Leaflet's coordinate system (value was determined empirically)
+      .translateBy(0, 0, -1220 / scale); //move away to simulate zoom; -1220 scales APP tiles to ~256px
+
+    this.viewDirOnMap = [Math.sin(APP.rotation / 180 * Math.PI), -Math.cos(APP.rotation / 180 * Math.PI)];
+
+    // First, we need to determine the field-of-view so that our map scale does
+    // not change when the viewport size changes. The map scale is given by the
+    // 'refFOV' (e.g. 45°) at a WebGL viewport height of 'refHeight' pixels.
+    // Since our viewport will not usually be 1024 pixels high, we'll need to
+    // find the FOV that corresponds to our viewport height.
+    // The half viewport height and half FOV form a leg and the opposite angle
+    // of a right triangle (see sketch below). Since the relation between the
+    // two is non-linear, we cannot simply scale the reference FOV by the ratio
+    // of reference height to actual height to get the desired FOV.
+    // But be can use the reference height and reference FOV to determine the
+    // virtual distance to the camera and then use that virtual distance to
+    // compute the FOV corresponding to the actual height.
+    //
+    //                   ____/|
+    //              ____/     |
+    //         ____/          | refHeight/2
+    //    ____/  \            |
+    //   /refFOV/2|           |
+    //  ----------------------|
+    //     "virtual distance"
+    const virtualDistance = refHeight / (2 * Math.tan((refVFOV / 2) / 180 * Math.PI));
+    const verticalFOV = 2 * Math.atan((height / 2.0) / virtualDistance) / Math.PI * 180;
+
+    // OSMBuildings' perspective camera is ... special: The reference point for
+    // camera movement, rotation and zoom is at the screen center (as usual).
+    // But the center of projection is not at the screen center as well but at
+    // the bottom center of the screen. This projection was chosen for artistic
+    // reasons so that when the map is seen from straight above, vertical building
+    // walls would not be seen to face towards the screen center but would
+    // uniformly face downward on the screen.
+
+    // To achieve this projection, we need to
+    // 1. shift the whole geometry up half a screen (so that the desired
+    //    center of projection aligns with the view center) *in world coordinates*.
+    // 2. perform the actual perspective projection (and flip the y coordinate for
+    //    internal reasons).
+    // 3. shift the geometry back down half a screen now *in screen coordinates*
+
+    this.nearPlane = 1;
+    this.farPlane = 30000;
+
+    this.projMatrix = new GLX.Matrix()
+      .translateTo(0, -height / (2 * scale), 0) // 0, APP y offset to neutralize camera y offset,
+      .scale(1, -1, 1) // flip Y
+      .multiply(new GLX.Matrix.Perspective(verticalFOV, width / height, this.nearPlane, this.farPlane))
+      .translateBy(0, -1, 0); // camera y offset
+
+    this.viewProjMatrix = new GLX.Matrix(GLX.Matrix.multiply(this.viewMatrix, this.projMatrix));
+
+    // need to store this as a reference point to determine fog distance
+    this.lowerLeftOnMap = getIntersectionWithXYPlane(-1, -1, GLX.Matrix.invert(this.viewProjMatrix.data));
+    if (this.lowerLeftOnMap === undefined) {
+      return;
+    }
+
+    // const lowerLeftDistanceToCenter = len2(this.lowerLeftOnMap);
+
+    // fogDistance: closest distance at which the fog affects the geometry
+    // this.fogDistance = Math.max(5000, lowerLeftDistanceToCenter);
+
+    this.fogDistance = 5000;
+
+    // fogBlurDistance: closest distance *beyond* fogDistance at which everything is completely enclosed in fog.
+    this.fogBlurDistance = 10000;
+  }
+
+
+
 
   // initialize view and projection matrix, fog distance, etc.
   setupViewport () {
