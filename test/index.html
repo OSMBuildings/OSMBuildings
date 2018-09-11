@@ -207,7 +207,7 @@
       const featureIDList = e.features.map(feature => feature.id);
       osmb.highlight(feature => {
         if (featureIDList.indexOf(feature.id) > -1) {
-          return '#ffffff';
+          return '#ffcc00';
         }
       });
 
@@ -246,7 +246,7 @@
         let rotaInc = e.altKey ? 10 : 1;
         let eleInc = e.altKey ? 10 : 1;
 
-        switch (e.which) {
+        switch (e.keyCode) {
         case 37: obj.position.longitude -= transInc; break;
         case 39: obj.position.longitude += transInc; break;
         case 38: obj.position.latitude += transInc; break;
