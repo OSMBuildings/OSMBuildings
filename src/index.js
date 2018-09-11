@@ -323,10 +323,10 @@ class OSMBuildings {
    *   if (building.properties.height > 200) return 'red';
    *   if (building.properties.height > 100) return 'green';
    * });
-   * @param callback {Function} A function that does user defined filtering and highlights by returning a color
+   * @param callback {Function} A function that does user defined filtering and highlights by returning a color. Can be falsy in order to reset highlighting.
    */
   highlight (tintCallback) {
-    this.features.setTintCallback(tintCallback);
+    return this.features.setTintCallback(tintCallback || (() => false));
   }
 
   /**
