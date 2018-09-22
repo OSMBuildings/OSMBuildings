@@ -18,6 +18,7 @@
   },
   "scripts": {
     "docs": "documentation build src/index.js -f json -o docs/docs.json --sort-order 'alpha'",
+    "webpack": "webpack --mode development --entry ./src/icons/triangulateSVG.js --output-path ./lib --output-filename triangulateSVG.js",
     "build": "node build.js"
   },
   "dependencies": {

@@ -3,7 +3,7 @@ const triangulate = (function() {
 
   const
     DEFAULT_HEIGHT = 10,
-    DEFAULT_COLOR = [ 0.8627450980392157, 0.8235294117647058, 0.7843137254901961 ]; //Qolor.parse('rgb(220, 210, 200)').toArray(),
+    DEFAULT_COLOR = [ 0.8627450980392157, 0.8235294117647058, 0.7843137254901961 ], //Qolor.parse('rgb(220, 210, 200)').toArray(),
     METERS_PER_LEVEL = 3;
 
 
@@ -279,7 +279,10 @@ const triangulate = (function() {
           dim.roofHeight = 0;
           break;
 
-        // case 'none': // no walls at all
+        case 'none': // no walls at all
+          maxHeight = 0;
+          break;
+
         // case 'cylinder':
         default:
           maxHeight = DEFAULT_HEIGHT;
