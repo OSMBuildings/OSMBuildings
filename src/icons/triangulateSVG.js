@@ -3,10 +3,22 @@
 const parseSVGPath = require('parse-svg-path');
 const getPathContours = require('svg-path-contours');
 
-function SVGtoPolygons (svg) {
-  const rx = /<path\s+d="([^"]+)"/mg;
+// TODO
+// rectangles, circles
+// colors from geometry
+// scale
+// simplify
+// ignore fill:none
+// <rect x="7.256" y="17.315" fill="none" width="57.489" height="35.508"/>
+// <rect x="7.256" y="49.216" fill="#F07D00" width="56.363" height="3.607"/>
+// <polygon fill="#003C64" stroke="#003C64" stroke-miterlimit="10" points="18.465,18.011 12.628,29.15 12.628,18.011 7.256,18.011 7.256,42.903 12.628,42.903 12.628,29.867 18.789,42.903 24.84,42.903 17.75,29.365 24.195,18.011"/>
+// <circle cx="25" cy="75" r="20" stroke="red" fill="transparent" stroke-width="5"/>
+// <ellipse cx="75" cy="75" rx="20" ry="5" stroke="red" fill="transparent" stroke-width="5"/>
 
+function SVGtoPolygons (svg) {
   const res = [];
+
+  let rx = /<path[^/]+d="([^"]+)"/g;
   let match;
   do {
     match = rx.exec(svg);
@@ -14,6 +26,23 @@ function SVGtoPolygons (svg) {
       const path = parseSVGPath(match[1]);
       const contours = getPathContours(path);
       res.push(contours);
+    }
+  } while (match);
+
+  rx = /<polygon[^/]+points="([^"]+)"/g;
+  do {
+    match = rx.exec(svg);
+    if (match) {
+      const points = match[1]
+        .split(/\s+/g)
+        .map(point => {
+          const p = point.split(',');
+          return [
+            parseFloat(p[0]),
+            parseFloat(p[1]),
+          ];
+        });
+      res.push([points]);
     }
   } while (match);
 
