@@ -35,6 +35,7 @@
       "src/triangulate/split.js",
       "src/triangulate/geometry/vec3.js",
       "src/triangulate/geometry/vec2.js",
+      "src/features/bounds.js",
       "src/features/worker.js"
     ]
   },

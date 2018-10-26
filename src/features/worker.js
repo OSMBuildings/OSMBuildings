@@ -1,4 +1,11 @@
 
+// const EARTH_RADIUS_IN_METERS = 6378137;
+// const EARTH_CIRCUMFERENCE_IN_METERS = EARTH_RADIUS_IN_METERS * Math.PI * 2;
+// const METERS_PER_DEGREE_LATITUDE = EARTH_CIRCUMFERENCE_IN_METERS / 360;
+const METERS_PER_DEGREE_LATITUDE = 6378137 * Math.PI / 180;
+
+//*****************************************************************************
+
 function getOrigin (geometry) {
   const coordinates = geometry.coordinates;
   switch (geometry.type) {
@@ -97,13 +104,13 @@ function processGeoJSON (geojson, options) {
     origin = getOrigin(geojson.features[0].geometry),
     position = { latitude: origin[1], longitude: origin[0] };
 
-  geojson.features.forEach((feature, i) => {
+  geojson.features.forEach((feature, index) => {
     // APP.events.emit('loadfeature', feature); // TODO
 
     const
       properties = feature.properties,
       id = options.id || feature.id,
-      pickingColor = getPickingColor(i); // picks per part id - could perhaps use building id
+      pickingColor = getPickingColor(index); // picks per part id - could perhaps use building id
 
     let vertexCount = tri.vertices.length;
     triangulate(tri, feature, origin);
@@ -114,6 +121,7 @@ function processGeoJSON (geojson, options) {
       tri.pickingColors.push(...pickingColor);
     }
 
+    properties.bounds = getGeoJSONBounds(feature.geometry);
     items.push({ id: id, properties: properties, vertexCount: vertexCount });
   });
 
@@ -172,10 +180,11 @@ function processOBJ(obj, mtl, options = {}) {
 
     const
       id = options.id || mesh.id,
+      properties = {},
       colorVariance = (id / 2 % 2 ? -1 : +1) * (id % 2 ? 0.03 : 0.06),
       color = optionColor || mesh.color || DEFAULT_COLOR,
       vertexCount = mesh.vertices.length / 3,
-      pickingColor = getPickingColor(0);
+      pickingColor = getPickingColor(index);
 
     for (let i = 0; i < vertexCount; i++) {
       tri.colors.push(color[0]+colorVariance, color[1]+colorVariance, color[2]+colorVariance);
@@ -183,7 +192,11 @@ function processOBJ(obj, mtl, options = {}) {
       tri.pickingColors.push(...pickingColor);
     }
 
-    items.push({ id: id, properties: {}, vertexCount: vertexCount });
+    properties.height = mesh.height;
+    properties.color = mesh.color;
+    properties.bounds = getOBJBounds(mesh.vertices);
+
+    items.push({ id: id, properties: properties, vertexCount: vertexCount });
   });
 
   postResult(items, position, tri);

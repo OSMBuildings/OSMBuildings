@@ -321,18 +321,18 @@
 
     //***************************Marker WebGL**********************************
 
-    let marker = osmb.addMarker({ latitude: 55.75079, longitude: 37.61828, altitude: 75 },
-      { id: 1 },
-      {
-        // url: 'star-icon.svg',
-        url: 'k+p.svg',
-        color: 'rgb(0,60,100)'
-      });
+    // let marker = osmb.addMarker({ latitude: 55.75079, longitude: 37.61828, altitude: 75 },
+    //   { id: 1 },
+    //   {
+    //     // url: 'star-icon.svg',
+    //     url: 'k+p.svg',
+    //     color: 'rgb(0,60,100)'
+    //   });
 
     let marker2 = osmb.addMarker({ latitude: 55.75000, longitude: 37.61808, altitude: 5 },
       { payload: [] });
 
-  // osmb.remove(marker); // will not work too early
+  // // osmb.remove(marker); // will not work too early
 
     for (let i = 0;i< 15; i++) {
       osmb.addMarker({ latitude: 55.751 + Math.random()/100, longitude: 37.617 + Math.random()/100, altitude: 10 + Math.random()*50 }, { index: i }, { color: 'rgb(0,60,100)' });
