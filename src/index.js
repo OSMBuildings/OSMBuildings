@@ -90,10 +90,6 @@ class OSMBuildings {
     this.rotation = options.rotation || 0;
     this.tilt = options.tilt || 0;
 
-    if (options.disabled) {
-      this.setDisabled(true);
-    }
-
     const numProc = Math.min(window.navigator.hardwareConcurrency || 2, 4);
 
     const blob = new Blob([workers.feature], { type: 'application/javascript' });
@@ -134,6 +130,9 @@ class OSMBuildings {
     this.markers = new Collection();
 
     this.events = new Events(this.canvas);
+    if (options.disabled) {
+      this.setDisabled(true);
+    }
 
     this._getStateFromUrl();
     if (options.state) {
