@@ -1,6 +1,7 @@
 class OBJ {
 
-  constructor (obj, mtl) {
+  constructor (obj, mtl, flipYZ) {
+    this.flipYZ = flipYZ;
     this.materialIndex = {};
     this.vertexIndex = [];
 
@@ -69,7 +70,11 @@ class OBJ {
           break;
 
         case 'v':
-          this.vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
+          if (this.flipYZ) {
+            this.vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[3]), parseFloat(cols[2])]);
+          } else {
+            this.vertexIndex.push([parseFloat(cols[1]), parseFloat(cols[2]), parseFloat(cols[3])]);
+          }
           break;
 
         case 'f':
@@ -161,7 +166,7 @@ class OBJ {
   }
 }
 
-OBJ.parse = function (obj, mtl) {
-  const parser = new OBJ(obj, mtl);
+OBJ.parse = function (obj, mtl, flipYZ) {
+  const parser = new OBJ(obj, mtl, flipYZ);
   return parser.meshes;
 };

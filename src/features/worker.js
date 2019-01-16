@@ -169,7 +169,7 @@ function processOBJ(obj, mtl, options = {}) {
     optionColor = Qolor.parse(options.color).toArray(),
     position = options.position;
 
-  const meshes = OBJ.parse(obj, mtl);
+  const meshes = OBJ.parse(obj, mtl, options.flipYZ);
 
   meshes.forEach((mesh, index) => {
     // APP.events.emit('loadfeature', mesh); // TODO

@@ -263,6 +263,7 @@ class OSMBuildings {
    * @param {Number} [options.altitude=0] The height above ground to place the model at
    * @param {String} [options.id] An identifier for the object. This is used for getting info about the object later
    * @param {String} [options.color] A color to apply to the model
+   * @param {Boolean} [options.swapYZ] Swap y and z coordinates. Use this if your model is standing upright on one side
    * @return {Object} The added object
    */
   addOBJ (url, position, options = {}) {
