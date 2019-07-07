@@ -53,10 +53,10 @@ class OSMBuildings {
    * @param {Number} [options.position.longitude=13.410000] Position longitude
    * @param {String} [options.baseURL='.'] DEPRECATED For locating assets. This is relative to calling html page
    * @param {Boolean} [options.showBackfaces=false] DEPRECATED Render front and backsides of polygons. false increases performance, true might be needed for bad geometries
-   * @param {String} [options.fogColor='#e8e0d8'] DEPRECATED Color to be used for sky gradients and distance fog
+   * @param {String} [options.fogColor='#e8e0d8'] Color to be used for sky gradients, distance fog and color benath the map
    * @param {String} [options.highlightColor='#f08000'] DEPRECATED Default color for highlighting features
-   * @param {Array} [options.effects=[]] DEPRECATED Which effects to enable. The only effect at the moment is 'shadows'
-   * @param {String} [options.backgroundColor='#efe8e0'] Overall background color
+   * @param {Array} [options.effects] DEPRECATED Which effects to enable. The only effect at the moment is 'shadows'
+   * @param {String} [options.backgroundColor] DEPRECATED Overall background color
    * @param {Boolean} [options.fastMode=false] Enables faster rendering at cost of image quality.
    * @param {Object} [options.style] Sets the default building style
    * @param {String} [options.style.color='rgb(220, 210, 200)'] Sets the default building color
@@ -71,7 +71,6 @@ class OSMBuildings {
     }
 
     this.view = new View();
-    this.view.backgroundColor = Qolor.parse(options.backgroundColor || BACKGROUND_COLOR).toArray();
     this.view.fogColor = Qolor.parse(options.fogColor || FOG_COLOR).toArray();
 
     this.attribution = options.attribution || OSMBuildings.ATTRIBUTION;
@@ -253,7 +252,7 @@ class OSMBuildings {
   /**
    * Adds an 3d object (OBJ format) file to the map.
    * <em>Important</em> objects with exactly the same url are cached and only loaded once.
-   * @param {String} url URL of the OBJ file
+   * @param {String} url Absolute URL to OBJ file
    * @param {Object} position Where to render the object
    * @param {Number} position.latitude Position latitude for the object
    * @param {Number} position.longitude Position longitude for the object
@@ -273,7 +272,7 @@ class OSMBuildings {
 
   /**
    * Adds a GeoJSON object to the map.
-   * @param {String} url URL of the GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
+   * @param {String} url Absolute URL to GeoJSON file or a JavaScript Object representing a GeoJSON FeatureCollection
    * @param {Object} [options] Options to apply to the GeoJSON being rendered
    * @param {Number} [options.scale=1] Scale the model by this value before rendering
    * @param {Number} [options.rotation=0] Rotate the model by this much before rendering
