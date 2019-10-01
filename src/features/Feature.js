@@ -8,7 +8,7 @@ class Feature {
 
     this.id = options.id;
     this.color = options.color;
-
+    this.altitude = options.altitude || 0;
     this.matrix = new GLX.Matrix();
     this.scale(options.scale || 1);
     this.rotate(options.rotation || 0);
@@ -96,7 +96,7 @@ class Feature {
     this.matrix.translateTo(
       (this.longitude - APP.position.longitude) * this.metersPerLon,
       (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
-      0
+      , this.altitude
     );
     return this.matrix;
   }
