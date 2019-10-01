@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "parse-svg-path": "^0.1.2",
-    "qolor": "^2.2.0",
+    "qolor": "^2.2.1",
     "suncalc": "git://github.com/OSMBuildings/suncalc.git",
     "svg-path-contours": "^2.0.0"
   },
