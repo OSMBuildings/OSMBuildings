@@ -96,7 +96,7 @@ class Feature {
     this.matrix.translateTo(
       (this.longitude - APP.position.longitude) * this.metersPerLon,
       (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
-      , this.altitude
+      this.altitude
     );
     return this.matrix;
   }
