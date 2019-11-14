@@ -29,10 +29,10 @@
   },
   "devDependencies": {
     "documentation": "^5.3.0",
-    "eslint": "^5.0.0",
+    "eslint": "^5.16.0",
     "uglify-es": "github:mishoo/UglifyJS2#harmony",
-    "webpack": "^4.23.1",
-    "webpack-cli": "^3.0.8",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
     "zip-folder": "^1.0.0"
   },
   "optionalDependencies": {}
