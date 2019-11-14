@@ -32,7 +32,7 @@ In a script section initialize OSM Buildings and add it to a DOM container.
   });
 
   osmb.addMapTiles(
-    'https://{s}.tiles.mapbox.com/v3/osmbuildings.kbpalbpk/{z}/{x}/{y}.png',
+    YOUR_TILESET_URL,
     {
       attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">Mapbox</a>'
     }
