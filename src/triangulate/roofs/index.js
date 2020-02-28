@@ -52,7 +52,7 @@ var createRoof;
     }
 
     // requires at least 2 intersections
-    if (index.length <2) {
+    if (index.length < 2) {
       return;
     }
 

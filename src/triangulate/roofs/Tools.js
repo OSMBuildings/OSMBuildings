@@ -1,5 +1,15 @@
 
+function roundPoint(point, f) {
+  return [
+    Math.round(point[0]*f) / f,
+    Math.round(point[1]*f) / f
+  ];
+}
+
 function pointOnSegment(point, segment) {
+  point = roundPoint(point, 1e6);
+  segment[0] = roundPoint(segment[0], 1e6);
+  segment[1] = roundPoint(segment[1], 1e6);
   return (
     point[0] >= Math.min(segment[0][0], segment[1][0]) &&
     point[0] <= Math.max(segment[1][0], segment[0][0]) &&
