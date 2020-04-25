@@ -211,7 +211,7 @@ const split = {
 
     // goes top-down
     for (let i = 0; i < yNum; i++) {
-      currYAngle = ( i/yNum)*quarterCircle + circleOffset;
+      currYAngle = (i/yNum)*quarterCircle + circleOffset;
       nextYAngle = ((i + 1)/yNum)*quarterCircle + circleOffset;
 
       x1 = Math.cos(currYAngle);

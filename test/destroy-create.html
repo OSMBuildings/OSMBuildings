@@ -1,0 +1,66 @@
+<html>
+<body>
+
+<link rel="stylesheet" href="../src/style.css">
+<script src="loader.js"></script>
+
+<div id="map"></div>
+
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+
+<script>
+  const map = new OSMBuildings({
+    container: 'map',
+    position: { latitude: 52.52128, longitude: 13.40894 },
+    zoom: 16,
+    minZoom: 15,
+    maxZoom: 20,
+    tilt: 40,
+    rotation: 300,
+    effects: ['shadows'],
+    attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> © Map <a href="https://mapbox.com/">Mapbox</a> © 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
+  });
+
+  map.addMapTiles('https://api.mapbox.com/styles/v1/osmbuildings/cjt9gq35s09051fo7urho3m0f/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoib3NtYnVpbGRpbmdzIiwiYSI6IjNldU0tNDAifQ.c5EU_3V8b87xO24tuWil0w');
+  map.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+
+  setTimeout(() => {
+    map.destroy();
+
+    setTimeout(() => {
+      alert('new');
+
+      const map = new OSMBuildings({
+        container: 'map',
+        position: { latitude: 52.52128, longitude: 13.40894 },
+        zoom: 16,
+        minZoom: 15,
+        maxZoom: 20,
+        tilt: 40,
+        rotation: 300,
+        effects: ['shadows'],
+        attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> © Map <a href="https://mapbox.com/">Mapbox</a> © 3D <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
+      });
+
+      map.addMapTiles('https://api.mapbox.com/styles/v1/osmbuildings/cjt9gq35s09051fo7urho3m0f/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoib3NtYnVpbGRpbmdzIiwiYSI6IjNldU0tNDAifQ.c5EU_3V8b87xO24tuWil0w');
+      map.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/dixw8kmb/tile/{z}/{x}/{y}.json');
+    }, 5000)
+
+  }, 5000)
+
+</script>
+</body>
+</html>

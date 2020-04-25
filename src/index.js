@@ -96,18 +96,18 @@ class OSMBuildings {
 
     //*** create container ********************************
 
-    let container = options.container;
-    if (typeof container === 'string') {
-      container = document.getElementById(options.container);
+    this.domNode = options.container;
+    if (typeof this.domNode === 'string') {
+      this.domNode = document.getElementById(options.container);
     }
 
     this.container = document.createElement('DIV');
     this.container.className = 'osmb';
-    if (container.offsetHeight === 0) {
-      container.style.height = '100%';
+    if (this.domNode.offsetHeight === 0) {
+      this.domNode.style.height = '100%';
       console.warn('Container height should be set. Now defaults to 100%.');
     }
-    container.appendChild(this.container);
+    this.domNode.appendChild(this.container);
 
     //*** create canvas ***********************************
 
@@ -117,8 +117,8 @@ class OSMBuildings {
     // const devicePixelRatio = window.devicePixelRatio || 1;
     const devicePixelRatio = 1; // this also affects building height and zoom
 
-    this.canvas.width = this.width = container.offsetWidth*devicePixelRatio;
-    this.canvas.height = this.height = container.offsetHeight*devicePixelRatio;
+    this.canvas.width = this.width = this.domNode.offsetWidth*devicePixelRatio;
+    this.canvas.height = this.height = this.domNode.offsetHeight*devicePixelRatio;
     this.container.appendChild(this.canvas);
 
     this.glx = new GLX(this.canvas, options.fastMode);
@@ -632,7 +632,7 @@ class OSMBuildings {
     this.features.destroy();
     this.markers.destroy();
 
-    this.container.innerHTML = '';
+    this.domNode.innerHTML = '';
   }
 
   // destroyWorker () {
