@@ -360,12 +360,17 @@ class Events {
       if (!this.isClick) {
         this.emit('pointerup', {});
       } else {
+        if (e.x === undefined) {
+          e.x = this.prevX <<0;
+        }
+        if (e.y === undefined) {
+          e.y = this.prevY <<0;
+        }
         const pos = getEventXY(e);
         APP.view.Picking.getTarget(pos.x, pos.y, target => {
           this.emit('pointerup', { features: target.features, marker: target.marker });
         });
       }
-
     } else if (e.touches.length === 1) {
       // There is one touch currently on the surface => gesture ended. Prepare for continued single touch move
       this.prevX = t1.clientX;
