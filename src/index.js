@@ -252,6 +252,9 @@ class OSMBuildings {
   /**
    * Adds an 3d object (OBJ format) file to the map.
    * <em>Important</em> objects with exactly the same url are cached and only loaded once.
+   * @example
+   * osmb.addOBJ(`${location.protocol}//${location.hostname}/${location.pathname}/Fernsehturm.obj`, { latitude:52.52000, longitude:13.41000 }, { id:'Fernsehturm', scale:1, color:'#ff0000', altitude:0, rotation:51 });
+   *
    * @param {String} url Absolute URL to OBJ file
    * @param {Object} position Where to render the object
    * @param {Number} position.latitude Position latitude for the object
