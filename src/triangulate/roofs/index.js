@@ -16,16 +16,17 @@ var createRoof;
       case 'gabled':
         return roofWithRidge(triangles, properties, polygon, 0, dim, roofColor, wallColor);
       case 'hipped':
-        // temp solution with gabled roof was too bad
-        return FlatRoof(triangles, properties, polygon, dim, roofColor);
+        return roofWithRidge(triangles, properties, polygon, 0, dim, roofColor, wallColor);
+        // return FlatRoof(triangles, properties, polygon, dim, roofColor);
       case 'half-hipped':
-        // temp solution with gabled roof was too bad
-        return FlatRoof(triangles, properties, polygon, dim, roofColor);
+        return roofWithRidge(triangles, properties, polygon, 0, dim, roofColor, wallColor);
+        // return FlatRoof(triangles, properties, polygon, dim, roofColor);
       case 'gambrel':
         return roofWithRidge(triangles, properties, polygon, 0, dim, roofColor, wallColor);
       case 'mansard':
         return roofWithRidge(triangles, properties, polygon, 0, dim, roofColor, wallColor);
       case 'round':
+roofColor = [1, 0, 1];
         return RoundRoof(triangles, properties, polygon, dim, roofColor, wallColor);
       case 'onion':
         return OnionRoof(triangles, polygon, dim, roofColor);
@@ -59,44 +60,49 @@ var createRoof;
     return { index: index, roof: polygon };
   }
 
+  function getRidge (direction, center, polygon) {
+    const rad = (direction / 180 - 0.5) * Math.PI;
+    return getRidgeIntersections(center, [Math.cos(rad), Math.sin(rad)], polygon);
+  }
+
+  function getRidgeDistances (polygon, index) {
+    const ridge = [ polygon[index[0]], roofPolygon[index[1]] ];
+    return polygon.map(point => {
+      return getDistanceToLine(point, ridge);
+    });
+  }
+
   function roofWithRidge(triangles, properties, polygon, offset, dim, roofColor, wallColor) {
     offset = 0; // TODO
 
     // no gabled roofs for polygons with holes, roof direction required
-    if (polygon.length>1 || properties.roofDirection === undefined) {
+    if (polygon.length > 1 || properties.roofDirection === undefined) {
       return FlatRoof(triangles, properties, polygon, dim, roofColor);
     }
 
-    var
-      rad = (properties.roofDirection / 180 - 0.5) * Math.PI,
-      roofDirection = [Math.cos(rad), Math.sin(rad)];
-
-    var ridge = getRidgeIntersections(dim.center, roofDirection, polygon[0]);
+    const ridge = getRidge (properties.roofDirection, dim.center, polygon[0]);
     if (!ridge) {
       return FlatRoof(triangles, properties, polygon, dim, roofColor);
     }
 
-    var ridgeIndex = ridge.index, roofPolygon = ridge.roof;
+    const ridgeIndex = ridge.index;
+    let roofPolygon = ridge.roof;
 
     if (!offset) {
-      var
-        distances = [],
-        maxDistance = 0,
-        ridgeLine = [ roofPolygon[ridgeIndex[0]], roofPolygon[ridgeIndex[1]] ];
-
-      for (var i = 0; i<roofPolygon.length; i++) {
-        distances[i] = getDistanceToLine(roofPolygon[i], ridgeLine);
-        maxDistance = Math.max(maxDistance, distances[i]);
-      }
+      const distances = getRidgeDistances(roofPolygon, ridge);
+      const maxDistance = Math.max(...distances);
 
       // set z of all vertices
-      for (i = 0; i<roofPolygon.length; i++) {
-        roofPolygon[i][2] = (1 - distances[i]/maxDistance)*dim.roofHeight;
-      }
+      roofPolygon = roofPolygon.map((point, i) => {
+        return [
+          point[0],
+          point[1],
+          (1 - distances[i]/maxDistance)*dim.roofHeight // closer to ridge -> closer to roof height
+        ];
+      });
 
       // create roof faces
-      var roof;
-      roof = roofPolygon.slice(ridgeIndex[0], ridgeIndex[1] + 1);
+      let roof = roofPolygon.slice(ridgeIndex[0], ridgeIndex[1] + 1);
       split.polygon(triangles, [roof], dim.roofZ, roofColor);
 
       roof = roofPolygon.slice(ridgeIndex[1], roofPolygon.length - 1);
@@ -104,7 +110,7 @@ var createRoof;
       split.polygon(triangles, [roof], dim.roofZ, roofColor);
 
       // create extra wall faces
-      for (i = 0; i<roofPolygon.length - 1; i++) {
+      for (let i = 0; i < roofPolygon.length - 1; i++) {
         // skip degenerate quads - could even skip degenerate triangles
         if (roofPolygon[i][2] === 0 && roofPolygon[i + 1][2] === 0) {
           continue;
@@ -208,47 +214,118 @@ var createRoof;
 
   function RoundRoof(triangles, properties, polygon, dim, roofColor, wallColor) {
     // no round roofs for polygons with holes
-    if (polygon.length>1 || properties.roofDirection === undefined) {
+    if (polygon.length > 1 || properties.roofDirection === undefined) {
       return FlatRoof(triangles, properties, polygon, dim, roofColor);
     }
 
-    return FlatRoof(triangles, properties, polygon, dim, roofColor);
-    // var ridge = getRidgeIntersections(dim.center, properties.roofDirection, polygon[0]);
-    // if (!ridge) {
-    //   return FlatRoof(triangles, properties, polygon, dim, roofColor);
-    // }
-    //
-    // var ridgeIndex = ridge.index, roofPolygon = ridge.roof;
-    //
-    //
-    // //   zPos = zPos || 0;
-    // var
-    //   yNum = 12,
-    //   currYAngle, nextYAngle,
-    //   x1, y1,
-    //   x2, y2,
-    //   w1, w2,
-    //   quarterCircle = Math.PI/2,
-    //   circleOffset = -quarterCircle,
-    //   newHeight, newZPos;
-    //
-    // // goes top-down
-    // for (var i = 0; i < yNum; i++) {
-    //   currYAngle = ( i/yNum)*quarterCircle + circleOffset;
-    //
-    //   x1 = Math.cos(currYAngle);
-    //   y1 = Math.sin(currYAngle);
-    //
-    //   x2 = Math.cos(nextYAngle);
-    //   y2 = Math.sin(nextYAngle);
-    //
-    //   w1 = x1*width;
-    //   w2 = x2*width;
-    //
-    //   newHeight = (y2-y1)*height;
-    //   newZPos = zPos - y2*height;
-    // }
+    const ridge = getRidge (properties.roofDirection, dim.center, polygon[0]);
+    if (!ridge) {
+      return FlatRoof(triangles, properties, polygon, dim, roofColor);
+    }
+
+    const distances = getRidgeDistances(roofPolygon, ridge);
+    const maxDistance = Math.max(...distances);
+
+    
+
+
+
+    const zPos = dim.roofZ;
+    const yNum = split.NUM_Y_SEGMENTS/2;
+
+    const quarterCircle = Math.PI/2;
+    const circleOffset = -quarterCircle;
+
+    let currYAngle, nextYAngle;
+    let x1, y1;
+    let x2, y2;
+    let size1, size2;
+    let newHeight, newZPos;
+
+    // goes top-down
+    for (let i = 0; i < yNum; i++) {
+      currYAngle = ( i   /yNum)*quarterCircle + circleOffset;
+      nextYAngle = ((i+1)/yNum)*quarterCircle + circleOffset;
+
+      x1 = Math.cos(currYAngle);
+      y1 = Math.sin(currYAngle);
+
+      x2 = Math.cos(nextYAngle);
+      y2 = Math.sin(nextYAngle);
+
+      // size1 = x1*dim.size; // width
+      // size2 = x2*dim.size; // width
+
+      newHeight = (y2-y1)*dim.roofHeight;
+      newZPos = zPos - y2*dim.roofHeight;
+
+      // split.cylinder(buffers, center, radius2, radius1, newHeight, newZPos, color);
+    }
   }
+
+/***
+  function RoundRoof2 (roofHeight) {
+    // extends RoofWithRidge
+    const ROOF_SUBDIVISION_METER = 2.5;
+
+    const capSegments = [];
+    let rings;
+    let radius;
+
+    if (roofHeight < maxDistanceToRidge) {
+      const squaredHeight = roofHeight * roofHeight;
+      const squaredDist = maxDistanceToRidge * maxDistanceToRidge;
+      const centerY =  (squaredDist - squaredHeight) / (2 * roofHeight);
+      radius = Math.sqrt(squaredDist + centerY * centerY);
+    } else {
+      radius = 0;
+    }
+
+    rings = Math.max(3, roofHeight/ROOF_SUBDIVISION_METER);
+
+    // TODO: vary step size with slope
+    const step = 0.5 / (rings.length + 1);
+    for (let i = 1; i <= rings; i++) {
+      capSegments.push([
+        interpolate(cap1.p1, cap1.p2, i * step),
+        interpolate(cap1.p1, cap1.p2, 1 - i * step)
+      ]);
+
+      capSegments.push([
+        interpolate(cap2.p1, cap2.p2, i * step),
+        interpolate(cap2.p1, cap2.p2, 1 - i * step)
+      ]);
+    }
+
+    function getPolygon() {
+      let newOuter = polygon.getOuter();
+
+      newOuter = insertIntoPolygon(newOuter, ridge.p1, 0.2);
+      newOuter = insertIntoPolygon(newOuter, ridge.p2, 0.2);
+
+      for (LineSegmentXZ capPart : capSegments){
+        newOuter = insertIntoPolygon(newOuter, capPart.p1, 0.2);
+        newOuter = insertIntoPolygon(newOuter, capPart.p2, 0.2);
+      }
+
+      //TODO: add intersections of additional edges with outline?
+      return new PolygonWithHolesXZ(
+        newOuter.asSimplePolygon(),
+        polygon.getHoles());
+    }
+
+    if (radius > 0) {
+      double relativePlacement = distRidge / radius;
+      ele = getMaxRoofEle() - radius + sqrt(1.0 - relativePlacement * relativePlacement) * radius;
+    } else {
+      // This could be any interpolator
+      double relativePlacement = distRidge / maxDistanceToRidge;
+      ele = getMaxRoofEle() - roofHeight + (1 - (Math.pow(relativePlacement, 2.5))) * roofHeight;
+    }
+
+    return Math.max(ele, getMaxRoofEle() - roofHeight);
+  }
+***/
 
   function OnionRoof(triangles, polygon, dim, roofColor) {
     split.polygon(triangles, polygon, dim.roofZ, roofColor);
