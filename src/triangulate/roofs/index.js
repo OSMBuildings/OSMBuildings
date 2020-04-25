@@ -36,7 +36,7 @@ roofColor = [1, 0, 1];
     }
   };
 
-  function getRidgeIntersections(center, direction, polygon) {
+  function getRidgeIntersections (center, direction, polygon) {
     // create polygon intersections
     var index = [], point;
     for (var i = 0; i<polygon.length - 1; i++) {
@@ -66,7 +66,7 @@ roofColor = [1, 0, 1];
   }
 
   function getRidgeDistances (polygon, index) {
-    const ridge = [ polygon[index[0]], roofPolygon[index[1]] ];
+    const ridge = [ polygon[index[0]], polygon[index[1]] ];
     return polygon.map(point => {
       return getDistanceToLine(point, ridge);
     });
@@ -89,7 +89,7 @@ roofColor = [1, 0, 1];
     let roofPolygon = ridge.roof;
 
     if (!offset) {
-      const distances = getRidgeDistances(roofPolygon, ridge);
+      const distances = getRidgeDistances(roofPolygon, ridge.index);
       const maxDistance = Math.max(...distances);
 
       // set z of all vertices
@@ -223,7 +223,7 @@ roofColor = [1, 0, 1];
       return FlatRoof(triangles, properties, polygon, dim, roofColor);
     }
 
-    const distances = getRidgeDistances(roofPolygon, ridge);
+    const distances = getRidgeDistances(polygon[0], ridge.index); // TODO: polygon[0] ???
     const maxDistance = Math.max(...distances);
 
     
