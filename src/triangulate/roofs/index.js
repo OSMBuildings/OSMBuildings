@@ -26,7 +26,7 @@ var createRoof;
       case 'mansard':
         return roofWithRidge(triangles, properties, polygon, 0, dim, roofColor, wallColor);
       case 'round':
-roofColor = [1, 0, 1];
+        // roofColor = [1, 0, 1];
         return RoundRoof(triangles, properties, polygon, dim, roofColor, wallColor);
       case 'onion':
         return OnionRoof(triangles, polygon, dim, roofColor);
