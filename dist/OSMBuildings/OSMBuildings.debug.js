@@ -3818,14 +3818,14 @@ class Grid {
       return b.distance - a.distance;
     });
 
-    setTimeout(() => {
+    this.updateTimer = setTimeout(() => {
       this.update();
     }, 100);
   }
 
   queueNext () {
     if (!this.queue.length) {
-      setTimeout(this.queueNext.bind(this), 200);
+      this.queueTimer = setTimeout(this.queueNext.bind(this), 200);
       return;
     }
 
@@ -3888,7 +3888,8 @@ class Grid {
     this.tiles = {};
     this.queue = [];
 
-    // TODO: stop update timer, stop queue timers
+    clearTimeout(this.updateTimer);
+    clearTimeout(this.queueTimer);
   }
 }
 
@@ -6005,5 +6006,5 @@ View.Blur = class {
     this.texCoordBuffer.destroy();
   }
 };
-OSMBuildings.VERSION = '4.0.8';
+OSMBuildings.VERSION = '4.0.9';
 }());

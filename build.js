@@ -15,9 +15,9 @@ const config = require('./config.json');
 function packModules (callback) {
   webpack({
     mode: 'development',
-    entry: path.resolve('./src/icons/triangulateSVG.js'),
+    entry: `${__dirname}/src/icons/triangulateSVG.js`,
     output: {
-      path: path.resolve('./lib'),
+      path: `${__dirname}/lib`,
       filename: 'triangulateSVG.js'
     },
   }, (err, stats) => {
@@ -25,8 +25,8 @@ function packModules (callback) {
       callback(err);
     }
 
-    const content = fs.readFileSync('./lib/triangulateSVG.js').toString().replace(/π/g, 'PI');
-    fs.writeFileSync('./lib/triangulateSVG.js', content);
+    const content = fs.readFileSync(`${__dirname}/lib/triangulateSVG.js`).toString().replace(/π/g, 'PI');
+    fs.writeFileSync(`${__dirname}/lib/triangulateSVG.js`, content);
     callback();
   });
 }

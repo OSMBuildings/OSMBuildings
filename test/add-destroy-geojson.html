@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!--  <link href="https://cdn.osmbuildings.org/4.0.0/OSMBuildings.css" rel="stylesheet">-->
+<!--  <script src="https://cdn.osmbuildings.org/4.0.0/OSMBuildings.js"></script>-->
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="loader.js"></script>
+
+  <link rel="stylesheet" href="../dist/OSMBuildings/OSMBuildings.css">
+  <script src="../dist/OSMBuildings/OSMBuildings.js"></script>
+
+</head>
+
+<body>
+<div style="width: 500px; height: 500px;" id="my-map"></div>
+<button id='remove-layer'>Remove layer</button>
+<button id='add-layer'>Add layer</button>
+</body>
+<script>
+  const osmb = new OSMBuildings(
+    {
+      container: 'my-map',
+      position: { latitude: 51.7592, longitude: 19.456 },
+      zoom: 16,
+      minZoom: 15,
+      maxZoom: 22
+    });
+
+  osmb.addMapTiles('http://a.tile.stamen.com/toner/{z}/{x}/{y}.png',
+    { attribution: '© Data <a href="http://openstreetmap.org/copyright/">OpenStreetMap</a> · © Map <a href="http://mapbox.com">Mapbox</a>' });
+
+  let layer = osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+
+  const button = document.querySelector('#remove-layer')
+  button.onclick = (ev) => {
+    console.log(layer);
+    layer.destroy();
+  }
+
+  const button2 = document.querySelector('#add-layer')
+  button2.onclick = (ev) => {
+    layer = osmb.addGeoJSONTiles('http://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+  }
+
+</script>
+
+</html>

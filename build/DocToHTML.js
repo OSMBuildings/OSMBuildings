@@ -172,7 +172,6 @@ module.exports = class DocToHTML {
 
     let doc = item;
     if (item.constructorComment) {
-      debugger
       doc = item.constructorComment;
     }
 
