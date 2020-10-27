@@ -1,3 +1,6 @@
+# Our project name was seized by a multimillion dollar organization for profit.
+Read more: https://medium.com/@osmbuildings/why-were-not-going-to-support-a-multimillion-dollar-company-bde6116a954d
+    
 # <img src="http://osmbuildings.org/logo.svg" width="100" height="88"/> OSM Buildings
 
 OSM Buildings is a library for visualizing 3d building geometry.
