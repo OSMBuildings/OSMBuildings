@@ -47,7 +47,7 @@ class View {
 
   renderFrame () {
     if (APP.zoom >= APP.minZoom && APP.zoom <= APP.maxZoom) {
-      requestAnimationFrame(() => {
+      this.RequestAnimationFrame = requestAnimationFrame(() => {
 
         this.setupViewport();
         GL.clearColor(this.fogColor[0], this.fogColor[1], this.fogColor[2], 0.0);
@@ -120,7 +120,7 @@ class View {
           //   this.renderFrame();
           // }, 5);
         } else {
-          setTimeout(() => {
+          this.RenderTimeout = setTimeout(() => {
             this.renderFrame();
           }, 250);
         }
@@ -232,6 +232,8 @@ class View {
   }
 
   destroy () {
+    clearTimeout(this.RenderTimeout);
+    cancelAnimationFrame(this.RequestAnimationFrame);
     this.Picking.destroy();
     this.Horizon.destroy();
     this.Buildings.destroy();
