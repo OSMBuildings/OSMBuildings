@@ -1,7 +1,7 @@
-
 class Feature {
 
-  constructor (type, url, options = {}, callback = function () {}) {
+  constructor(type, url, options = {}, callback = function () {
+  }) {
     this.type = type;
     this.options = options;
     this.callback = callback;
@@ -24,7 +24,7 @@ class Feature {
     this.load(url);
   }
 
-  load (url) {
+  load(url) {
     // TODO: perhaps have some workers attached to collection and just ask for them
     APP.workers.get(worker => {
       worker.onMessage(res => {
@@ -43,11 +43,11 @@ class Feature {
         worker.free();
       });
 
-      worker.postMessage({ type: this.type, url: url, options: this.options });
+      worker.postMessage({type: this.type, url: url, options: this.options});
     });
   }
 
-  onLoad (res) {
+  onLoad(res) {
     this.longitude = res.position.longitude;
     this.latitude = res.position.latitude;
     this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(this.latitude / 180 * Math.PI);
@@ -80,28 +80,28 @@ class Feature {
     }, 20);
   }
 
-  translateBy (x = 0, y = 0, z = 0) {
+  translateBy(x = 0, y = 0, z = 0) {
     this.matrix.translateBy(x, y, z);
   }
 
-  scale (scaling) {
+  scale(scaling) {
     this.matrix.scale(scaling, scaling, scaling);
   }
 
-  rotate (angle) {
+  rotate(angle) {
     this.matrix.rotateZ(-angle);
   }
 
-  getMatrix () {
+  getMatrix() {
     this.matrix.translateTo(
       (this.longitude - APP.position.longitude) * this.metersPerLon,
-      (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
+      (APP.position.latitude - this.latitude) * METERS_PER_DEGREE_LATITUDE,
       this.altitude
     );
     return this.matrix;
   }
 
-  getFade () {
+  getFade() {
     if (this.fade >= 1) {
       return 1;
     }
@@ -114,16 +114,16 @@ class Feature {
     return fade;
   }
 
-  applyTintAndZScale () {
+  applyTintAndZScale() {
     const tintColors = [];
     const tintCallback = APP.features.tintCallback;
     const zScales = [];
     const zScaleCallback = APP.features.zScaleCallback;
 
     this.items.forEach(item => {
-      const f = { id: item.id, properties: item.properties }; // perhaps pass center/bbox as well
+      const f = {id: item.id, properties: item.properties}; // perhaps pass center/bbox as well
       const tintColor = tintCallback(f);
-      const col = tintColor ? [...Qolor.parse(tintColor).toArray(), 1] : [0, 0, 0, 0];
+      const col = tintColor || [0, 0, 0, 0];
       const hideFlag = zScaleCallback(f);
       for (let i = 0; i < item.vertexCount; i++) {
         tintColors.push(...col);
@@ -136,7 +136,7 @@ class Feature {
     this.zScaleBuffer = new GLX.Buffer(1, new Float32Array(zScales));
   }
 
-  destroy () {
+  destroy() {
     APP.features.remove(this);
 
     // if (this.request) {

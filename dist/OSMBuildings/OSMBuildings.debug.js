@@ -1269,7 +1269,7 @@ shaders['basemap'] = {"name":"basemap","vs":"precision highp float; // is defaul
 
 shaders['basemap_with_shadows'] = {"name":"basemap_with_shadows","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec3 aPosition;\nattribute vec3 aNormal;\nuniform mat4 uModelMatrix;\nuniform mat4 uMatrix;\nuniform mat4 uSunMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\n//varying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nvoid main() {\nvec4 pos = vec4(aPosition.xyz, 1.0);\ngl_Position = uMatrix * pos;\nvec4 sunRelPosition = uSunMatrix * pos;\nvSunRelPosition = (sunRelPosition.xyz / sunRelPosition.w + 1.0) / 2.0;\nvNormal = aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n","fs":"\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n/* This shader computes the diffuse brightness of the map layer. It does *not*\n* render the map texture itself, but is instead intended to be blended on top\n* of an already rendered map.\n* Note: this shader is not (and does not attempt to) be physically correct.\n* It is intented to be a blend between a useful illustration of cast\n* shadows and a mitigation of shadow casting artifacts occuring at\n* low angles on incidence.\n* Map brightness is only affected by shadows, not by light direction.\n* Shadows are darkest when light comes from straight above (and thus\n* shadows can be computed reliably) and become less and less visible\n* with the light source close to horizon (where moiré and offset\n* artifacts would otherwise be visible).\n*/\n//uniform sampler2D uTexIndex;\nuniform sampler2D uShadowTexIndex;\nuniform vec3 uFogColor;\nuniform vec3 uDirToSun;\nuniform vec2 uShadowTexDimensions;\nuniform float uShadowStrength;\nvarying vec2 vTexCoord;\nvarying vec3 vSunRelPosition;\nvarying vec3 vNormal;\nvarying float verticalDistanceToLowerEdge;\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nfloat isSeenBySun( const vec2 sunViewNDC, const float depth, const float bias) {\nif ( clamp( sunViewNDC, 0.0, 1.0) != sunViewNDC) //not inside sun's viewport\nreturn 1.0;\n\nfloat depthFromTexture = texture2D( uShadowTexIndex, sunViewNDC.xy).x;\n\n//compare depth values not in reciprocal but in linear depth\nreturn step(1.0/depthFromTexture, 1.0/depth + bias);\n}\nvoid main() {\n//vec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\n//gl_FragColor = vec4(vec3(texture2D( uShadowTexIndex, tl).x), 1.0);\n//return;\nfloat diffuse = dot(uDirToSun, normalize(vNormal));\ndiffuse = max(diffuse, 0.0);\n\nfloat shadowStrength = uShadowStrength * pow(diffuse, 1.5);\nif (diffuse > 0.0) {\n// note: the diffuse term is also the cosine between the surface normal and the\n// light direction\nfloat bias = clamp(0.0007*tan(acos(diffuse)), 0.0, 0.01);\n\nvec2 pos = fract( vSunRelPosition.xy * uShadowTexDimensions);\n\nvec2 tl = floor(vSunRelPosition.xy * uShadowTexDimensions) / uShadowTexDimensions;\nfloat tlVal = isSeenBySun( tl, vSunRelPosition.z, bias);\nfloat trVal = isSeenBySun( tl + vec2(1.0, 0.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat blVal = isSeenBySun( tl + vec2(0.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\nfloat brVal = isSeenBySun( tl + vec2(1.0, 1.0) / uShadowTexDimensions, vSunRelPosition.z, bias);\ndiffuse = mix( mix(tlVal, trVal, pos.x),\nmix(blVal, brVal, pos.x),\npos.y);\n}\ndiffuse = mix(1.0, diffuse, shadowStrength);\n\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\nfogIntensity = clamp(fogIntensity, 0.0, 1.0);\nfloat darkness = (1.0 - diffuse);\ndarkness *= (1.0 - fogIntensity);\ngl_FragColor = vec4(vec3(1.0 - darkness), 1.0);\n}\n"};
 
-shaders['texture'] = {"name":"texture","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 1.0);\n}\n"};
+shaders['texture'] = {"name":"texture","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec2 aTexCoord;\nuniform mat4 uMatrix;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_Position = uMatrix * aPosition;\nvTexCoord = aTexCoord;\n}\n","fs":"#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform sampler2D uTexIndex;\nvarying vec2 vTexCoord;\nvoid main() {\ngl_FragColor = vec4(texture2D(uTexIndex, vTexCoord.st).rgb, 0.5);\n}\n"};
 
 shaders['depth_normal'] = {"name":"depth_normal","vs":"precision highp float; //is default in vertex shaders anyway, using highp fixes #49\nattribute vec4 aPosition;\nattribute vec3 aNormal;\nattribute float aZScale;\nuniform mat4 uMatrix;\nuniform mat4 uModelMatrix;\nuniform mat3 uNormalMatrix;\nuniform vec2 uViewDirOnMap;\nuniform vec2 uLowerEdgePoint;\nuniform float uFade;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat f = clamp(uFade*aZScale, 0.0, 1.0);\nif (f == 0.0) {\ngl_Position = vec4(0.0, 0.0, 0.0, 0.0);\nverticalDistanceToLowerEdge = 0.0;\n} else {\nvec4 pos = vec4(aPosition.x, aPosition.y, aPosition.z*f, aPosition.w);\ngl_Position = uMatrix * pos;\nvNormal = uNormalMatrix * aNormal;\nvec4 worldPos = uModelMatrix * pos;\nvec2 dirFromLowerEdge = worldPos.xy / worldPos.w - uLowerEdgePoint;\nverticalDistanceToLowerEdge = dot(dirFromLowerEdge, uViewDirOnMap);\n}\n}\n","fs":"\n#ifdef GL_ES\nprecision mediump float;\n#endif\nuniform float uFogDistance;\nuniform float uFogBlurDistance;\nvarying float verticalDistanceToLowerEdge;\nvarying vec3 vNormal;\nvoid main() {\nfloat fogIntensity = (verticalDistanceToLowerEdge - uFogDistance) / uFogBlurDistance;\ngl_FragColor = vec4(normalize(vNormal) / 2.0 + 0.5, clamp(fogIntensity, 0.0, 1.0));\n}\n"};
 
@@ -4030,10 +4030,10 @@ class FeatureCollection extends Collection {
   }
 }
 
-
 class Feature {
 
-  constructor (type, url, options = {}, callback = function () {}) {
+  constructor(type, url, options = {}, callback = function () {
+  }) {
     this.type = type;
     this.options = options;
     this.callback = callback;
@@ -4056,7 +4056,7 @@ class Feature {
     this.load(url);
   }
 
-  load (url) {
+  load(url) {
     // TODO: perhaps have some workers attached to collection and just ask for them
     APP.workers.get(worker => {
       worker.onMessage(res => {
@@ -4075,11 +4075,11 @@ class Feature {
         worker.free();
       });
 
-      worker.postMessage({ type: this.type, url: url, options: this.options });
+      worker.postMessage({type: this.type, url: url, options: this.options});
     });
   }
 
-  onLoad (res) {
+  onLoad(res) {
     this.longitude = res.position.longitude;
     this.latitude = res.position.latitude;
     this.metersPerLon = METERS_PER_DEGREE_LATITUDE * Math.cos(this.latitude / 180 * Math.PI);
@@ -4112,28 +4112,28 @@ class Feature {
     }, 20);
   }
 
-  translateBy (x = 0, y = 0, z = 0) {
+  translateBy(x = 0, y = 0, z = 0) {
     this.matrix.translateBy(x, y, z);
   }
 
-  scale (scaling) {
+  scale(scaling) {
     this.matrix.scale(scaling, scaling, scaling);
   }
 
-  rotate (angle) {
+  rotate(angle) {
     this.matrix.rotateZ(-angle);
   }
 
-  getMatrix () {
+  getMatrix() {
     this.matrix.translateTo(
       (this.longitude - APP.position.longitude) * this.metersPerLon,
-      (APP.position.latitude-this.latitude) * METERS_PER_DEGREE_LATITUDE,
+      (APP.position.latitude - this.latitude) * METERS_PER_DEGREE_LATITUDE,
       this.altitude
     );
     return this.matrix;
   }
 
-  getFade () {
+  getFade() {
     if (this.fade >= 1) {
       return 1;
     }
@@ -4146,16 +4146,16 @@ class Feature {
     return fade;
   }
 
-  applyTintAndZScale () {
+  applyTintAndZScale() {
     const tintColors = [];
     const tintCallback = APP.features.tintCallback;
     const zScales = [];
     const zScaleCallback = APP.features.zScaleCallback;
 
     this.items.forEach(item => {
-      const f = { id: item.id, properties: item.properties }; // perhaps pass center/bbox as well
+      const f = {id: item.id, properties: item.properties}; // perhaps pass center/bbox as well
       const tintColor = tintCallback(f);
-      const col = tintColor ? [...Qolor.parse(tintColor).toArray(), 1] : [0, 0, 0, 0];
+      const col = tintColor || [0, 0, 0, 0];
       const hideFlag = zScaleCallback(f);
       for (let i = 0; i < item.vertexCount; i++) {
         tintColors.push(...col);
@@ -4168,7 +4168,7 @@ class Feature {
     this.zScaleBuffer = new GLX.Buffer(1, new Float32Array(zScales));
   }
 
-  destroy () {
+  destroy() {
     APP.features.remove(this);
 
     // if (this.request) {
@@ -5272,6 +5272,7 @@ View.Buildings = class {
 
   destroy () {}
 };
+
 
 View.Markers = class {
 
