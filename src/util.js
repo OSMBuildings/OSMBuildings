@@ -8,5 +8,9 @@ function substituteZCoordinate(points, zValue) {
 }
 
 function clamp(value, min, max) {
+	if(max===undefined)
+	{
+		return value;
+	}
   return Math.min(max, Math.max(value, min));
 }
