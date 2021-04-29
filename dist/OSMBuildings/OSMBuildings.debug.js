@@ -3452,7 +3452,7 @@ class Events {
 
 const
   // MIN_ZOOM = 11,
-  MIN_ZOOM = 15,
+  MIN_ZOOM = 14,
   MAX_ZOOM = 22,
 
   // MAX_TILT = 75;
