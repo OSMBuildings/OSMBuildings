@@ -122,6 +122,7 @@ function processGeoJSON (geojson, options) {
     }
 
     properties.bounds = getGeoJSONBounds(feature.geometry);
+    properties.geometry = feature.geometry;
     items.push({ id: id, properties: properties, vertexCount: vertexCount });
   });
 
